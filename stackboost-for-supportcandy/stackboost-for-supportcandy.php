@@ -3,8 +3,8 @@
  * Plugin Name: StackBoost - For SupportCandy
  * Description: A collection of enhancements for the SupportCandy plugin, rebranded and refactored.
  * Version: 3.0.0
- * Author: Jules
- * Author URI: https://example.com
+ * Author: StackBoost
+ * Author URI: https://stackboost.com
  * Text Domain: stackboost-for-supportcandy
  * Domain Path: /languages
  */
