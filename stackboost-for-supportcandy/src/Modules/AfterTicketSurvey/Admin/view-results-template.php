@@ -1,0 +1,68 @@
+<?php
+/**
+ * Template for the "View Results" tab in the After Ticket Survey admin page.
+ *
+ * @var array $questions   List of survey questions.
+ * @var array $submissions List of survey submissions with answers.
+ * @var int   $ticket_question_id The ID of the question designated for the ticket number.
+ * @var string $ticket_url_base The base URL for linking to tickets.
+ */
+?>
+<h2><?php _e('View Survey Results', 'stackboost-for-supportcandy'); ?></h2>
+<table class="wp-list-table widefat fixed striped stackboost-ats-results-table">
+    <thead>
+        <tr>
+            <th><?php _e('ID', 'stackboost-for-supportcandy'); ?></th>
+            <th><?php _e('Date', 'stackboost-for-supportcandy'); ?></th>
+            <th><?php _e('User', 'stackboost-for-supportcandy'); ?></th>
+            <?php foreach ( $questions as $q ) : ?>
+                <th>
+                    <?php echo esc_html( ! empty( $q['report_heading'] ) ? $q['report_heading'] : $q['question_text'] ); ?>
+                    <span class="dashicons dashicons-edit stackboost-ats-edit-heading"
+                          data-question-id="<?php echo esc_attr( $q['id'] ); ?>"
+                          data-question-text="<?php echo esc_attr( $q['question_text'] ); ?>"
+                          data-report-heading="<?php echo esc_attr( $q['report_heading'] ); ?>"
+                          title="<?php _e('Edit Report Heading', 'stackboost-for-supportcandy'); ?>"></span>
+                </th>
+            <?php endforeach; ?>
+        </tr>
+    </thead>
+    <tbody>
+    <?php foreach ( $submissions as $sub ) : ?>
+        <tr>
+            <td><?php echo esc_html($sub['id']); ?></td>
+            <td><?php echo esc_html($sub['submission_date']); ?></td>
+            <td><?php echo esc_html( $sub['display_name'] ?? __('Guest', 'stackboost-for-supportcandy') ); ?></td>
+            <?php
+            global $wpdb;
+            $answers = $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM {$wpdb->prefix}stackboost_ats_survey_answers WHERE submission_id = %d", $sub['id'] ), OBJECT_K );
+            foreach ( $questions as $q ) {
+                $answer = $answers[ $q['id'] ]->answer_value ?? '';
+                if ( $q['id'] == $ticket_question_id && !empty($ticket_url_base) && is_numeric( $answer ) ) {
+                    echo '<td><a href="' . esc_url( $ticket_url_base . $answer ) . '" target="_blank">' . esc_html( $answer ) . '</a></td>';
+                } else {
+                    echo '<td>' . nl2br(esc_html( $answer )) . '</td>';
+                }
+            }
+            ?>
+        </tr>
+    <?php endforeach; ?>
+    </tbody>
+</table>
+
+<!-- Modal for editing heading -->
+<div id="stackboost-ats-heading-modal" class="stackboost-ats-modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3><?php _e('Edit Report Heading', 'stackboost-for-supportcandy'); ?></h3>
+        <p><strong><?php _e('Full Question:', 'stackboost-for-supportcandy'); ?></strong> <span id="stackboost-ats-modal-question-text"></span></p>
+        <form id="stackboost-ats-heading-form">
+            <input type="hidden" id="stackboost-ats-modal-question-id" name="question_id">
+            <p>
+                <label for="stackboost-ats-modal-report-heading"><strong><?php _e('Report Heading:', 'stackboost-for-supportcandy'); ?></strong></label><br>
+                <input type="text" id="stackboost-ats-modal-report-heading" name="report_heading" class="regular-text">
+            </p>
+            <button type="submit" class="button button-primary"><?php _e('Save Heading', 'stackboost-for-supportcandy'); ?></button>
+        </form>
+    </div>
+</div>

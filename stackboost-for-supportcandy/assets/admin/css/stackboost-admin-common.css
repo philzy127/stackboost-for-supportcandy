@@ -1,0 +1,132 @@
+/* StackBoost Common Admin Styles */
+
+.stackboost-rule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background-color: #f6f7f7;
+}
+
+.stackboost-rule select {
+    min-width: 150px;
+}
+
+.stackboost-rule-columns {
+    flex-grow: 1;
+}
+
+.stackboost-remove-rule {
+    background: #f8f9fa;
+    border: 1px solid #d1d1d1;
+    color: #b02a2a;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    line-height: 26px;
+    text-align: center;
+    padding: 0;
+}
+
+.stackboost-remove-rule:hover {
+    background: #e9eaeb;
+    border-color: #b1b1b1;
+    color: #a01a1a;
+}
+
+#stackboost-no-rules-message {
+    color: #666;
+    font-style: italic;
+}
+
+/* Dual List Box Styles */
+.stackboost-dual-list-container {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.stackboost-dual-list-container .dual-list-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.stackboost-dual-list-container .dual-list-box h3 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.stackboost-dual-list-container .dual-list-box select {
+    min-width: 250px;
+    height: 180px !important;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.stackboost-dual-list-container .dual-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-self: center;
+    justify-content: center;
+}
+
+.stackboost-dual-list-container .dual-buttons button {
+    width: 40px;
+    cursor: pointer;
+}
+
+/* How To Use Page Styles */
+.stackboost-how-to-use hr {
+    margin: 40px 0;
+    border: 0;
+    border-top: 1px solid #ddd;
+}
+
+.stackboost-how-to-use h2 {
+    font-size: 22px;
+    color: #2c3338;
+    border-bottom: 2px solid #2271b1;
+    padding-bottom: 8px;
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+
+.stackboost-how-to-use h3 {
+    font-size: 18px;
+    color: #444;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.stackboost-how-to-use p,
+.stackboost-how-to-use li {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.stackboost-how-to-use ul,
+.stackboost-how-to-use ol {
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+.stackboost-how-to-use ul {
+    list-style: disc;
+}
+
+.stackboost-how-to-use code {
+    background-color: #f0f0f1;
+    color: #333;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+}
