@@ -28,6 +28,45 @@ class Settings {
 	private function __construct() {
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
+		add_action( 'admin_post_stackboost_clear_all_settings', [ $this, 'handle_clear_settings' ] );
+		add_action( 'admin_notices', [ $this, 'display_admin_notices' ] );
+	}
+
+	/**
+	 * Handle the request to clear all settings.
+	 */
+	public function handle_clear_settings() {
+		if ( ! isset( $_POST['_wpnonce_stackboost_clear_settings'] ) || ! wp_verify_nonce( $_POST['_wpnonce_stackboost_clear_settings'], 'stackboost_clear_settings_nonce' ) ) {
+			wp_die( __( 'Invalid nonce.', 'stackboost-for-supportcandy' ) );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( __( 'You do not have sufficient permissions to perform this action.', 'stackboost-for-supportcandy' ) );
+		}
+
+		delete_option( 'stackboost_settings' );
+		delete_option( 'stackboost_ats_db_version' );
+		delete_option( 'stackboost_license_tier' );
+
+		wp_redirect( admin_url( 'admin.php?page=stackboost-for-supportcandy&message=settings-cleared' ) );
+		exit;
+	}
+
+	/**
+	 * Display admin notices for settings changes.
+	 */
+	public function display_admin_notices() {
+		if ( ! isset( $_GET['page'] ) || false === strpos( $_GET['page'], 'stackboost' ) || ! isset( $_GET['message'] ) ) {
+			return;
+		}
+
+		if ( 'settings-cleared' === $_GET['message'] ) {
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><?php _e( 'All StackBoost settings have been successfully cleared.', 'stackboost-for-supportcandy' ); ?></p>
+			</div>
+			<?php
+		}
 	}
 
 	/**
@@ -127,6 +166,25 @@ class Settings {
 				submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) );
 				?>
 			</form>
+
+			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
+				<hr style="margin-top: 20px;">
+				<h2><?php _e( 'Danger Zone', 'stackboost-for-supportcandy' ); ?></h2>
+				<p><?php _e( 'This action will permanently delete all StackBoost settings from the database. This cannot be undone.', 'stackboost-for-supportcandy' ); ?></p>
+				<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
+					<input type="hidden" name="action" value="stackboost_clear_all_settings">
+					<?php wp_nonce_field( 'stackboost_clear_settings_nonce', '_wpnonce_stackboost_clear_settings' ); ?>
+					<?php
+					submit_button(
+						__( 'Clear All Settings', 'stackboost-for-supportcandy' ),
+						'delete', // Use 'delete' for red styling
+						'stackboost-clear-settings-submit',
+						false,
+						[ 'onclick' => 'return confirm("' . esc_js( __( 'Are you sure you want to delete all StackBoost settings? This action cannot be undone.', 'stackboost-for-supportcandy' ) ) . '");' ]
+					);
+					?>
+				</form>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
