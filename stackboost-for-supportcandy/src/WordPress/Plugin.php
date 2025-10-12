@@ -86,9 +86,9 @@ final class Plugin {
 	public function enqueue_and_localize_frontend_scripts() {
 		wp_register_script(
 			'stackboost-frontend',
-			STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-frontend.js',
+			\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-frontend.js',
 			[ 'jquery' ],
-			STACKBOOST_VERSION,
+			\STACKBOOST_VERSION,
 			true
 		);
 
@@ -148,15 +148,15 @@ final class Plugin {
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
 			wp_enqueue_style(
 				'stackboost-admin-common',
-				STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-admin-common.css',
+				\STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-admin-common.css',
 				[],
-				STACKBOOST_VERSION
+				\STACKBOOST_VERSION
 			);
 			wp_enqueue_script(
 				'stackboost-admin-common',
-				STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-admin-common.js',
+				\STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-admin-common.js',
 				[ 'jquery', 'jquery-ui-sortable' ],
-				STACKBOOST_VERSION,
+				\STACKBOOST_VERSION,
 				true
 			);
 			wp_localize_script(

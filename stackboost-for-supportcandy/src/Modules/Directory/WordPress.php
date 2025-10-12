@@ -109,9 +109,9 @@ final class WordPress {
             // Enqueue custom CSS
             wp_enqueue_style(
                 'stackboost-directory',
-                STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
+                \STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
                 [],
-                STACKBOOST_VERSION
+                \STACKBOOST_VERSION
             );
 
             // Enqueue DataTables JS
@@ -120,9 +120,9 @@ final class WordPress {
             // Enqueue custom JS
             wp_enqueue_script(
                 'stackboost-directory',
-                STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-directory.js',
+                \STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-directory.js',
                 [ 'jquery', 'datatables-js' ],
-                STACKBOOST_VERSION,
+                \STACKBOOST_VERSION,
                 true
             );
         }
