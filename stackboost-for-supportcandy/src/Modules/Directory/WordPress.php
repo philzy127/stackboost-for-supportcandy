@@ -65,14 +65,13 @@ class WordPress {
 	 * Add the admin menu page.
 	 */
 	public function add_admin_menu() {
-		add_menu_page(
+		add_submenu_page(
+			'stackboost-for-supportcandy',
 			__( 'Company Directory', 'stackboost-for-supportcandy' ),
 			__( 'Company Directory', 'stackboost-for-supportcandy' ),
 			'manage_options',
 			'stackboost-directory',
-			array( $this, 'render_admin_page' ),
-			'dashicons-groups',
-			26
+			array( $this, 'render_admin_page' )
 		);
 	}
 
@@ -81,7 +80,7 @@ class WordPress {
 	 */
 	public function enqueue_admin_scripts() {
 		$screen = get_current_screen();
-		if ( 'toplevel_page_stackboost-directory' !== $screen->id ) {
+		if ( 'stackboost_page_stackboost-directory' !== $screen->id ) {
 			return;
 		}
 
