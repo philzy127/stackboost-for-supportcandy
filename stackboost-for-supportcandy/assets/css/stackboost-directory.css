@@ -201,40 +201,41 @@
 }
 
 .dataTables_wrapper .dataTables_length {
-    margin-bottom: 1em;
-    text-align: left; /* Align length dropdown to the left */
-    position: relative; /* Set position context for the arrow */
-    display: inline-block; /* Ensure the wrapper fits the content */
+    margin-bottom: 1em !important;
+    text-align: left !important; /* Align length dropdown to the left */
+    position: relative !important; /* Set position context for the arrow */
+    display: inline-block !important; /* Ensure the wrapper fits the content */
 }
 
 .dataTables_wrapper .dataTables_length::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 15px; /* Position arrow inside the select box padding */
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 5px solid #555;
-    pointer-events: none; /* Allow clicks to pass through to the select */
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    right: 15px !important; /* Position arrow inside the select box padding */
+    transform: translateY(-50%) !important;
+    width: 0 !important;
+    height: 0 !important;
+    border-left: 5px solid transparent !important;
+    border-right: 5px solid transparent !important;
+    border-top: 5px solid #555 !important;
+    pointer-events: none !important; /* Allow clicks to pass through to the select */
+    z-index: 9999 !important; /* Ensure the arrow is on top of everything */
 }
 
 .dataTables_wrapper .dataTables_length select {
-    margin: 0 0.5em;
-    display: inline-block;
-    width: auto;
+    margin: 0 0.5em !important;
+    display: inline-block !important;
+    width: auto !important;
     padding-right: 30px !important; /* Make space for the custom arrow */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding-left: 10px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-color: white !important;
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    padding-left: 10px !important;
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
 }
 
 .dataTables_wrapper .dataTables_filter {
