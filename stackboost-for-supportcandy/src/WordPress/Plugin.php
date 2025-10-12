@@ -50,7 +50,7 @@ final class Plugin {
 	 * Include module files that need to be loaded on every request.
 	 */
 	private function include_module_files() {
-		require_once STACKBOOST_PLUGIN_DIR . 'src/Modules/DirectoryIntegration/plugin.php';
+		require_once \STACKBOOST_PLUGIN_DIR . 'src/Modules/DirectoryIntegration/plugin.php';
 	}
 
 	/**
