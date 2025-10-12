@@ -203,8 +203,6 @@
 .dataTables_wrapper .dataTables_length {
     margin-bottom: 1em;
     text-align: left; /* Align length dropdown to the left */
-    position: relative; /* Ensure dropdown is not clipped */
-    z-index: 2; /* Make sure it appears above the table content */
 }
 
 .dataTables_wrapper .dataTables_length select {
@@ -212,6 +210,18 @@
     display: inline-block;
     width: auto;
     padding-right: 25px !important; /* Add padding to the right to make space for the arrow */
+    background-color: white; /* Ensure background is solid */
+    border: 1px solid #ccc; /* Add border for consistency */
+    border-radius: 4px; /* Slightly rounded corners */
+    -webkit-appearance: none; /* Remove default styling on WebKit browsers */
+    -moz-appearance: none; /* Remove default styling on Firefox */
+    appearance: none; /* Remove default styling */
+    /* Add a custom arrow */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5z%22%20fill%3D%22%23555%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 5px center;
+    background-size: 16px 16px;
+    padding-left: 10px; /* Add some padding to the left */
 }
 
 .dataTables_wrapper .dataTables_filter {
