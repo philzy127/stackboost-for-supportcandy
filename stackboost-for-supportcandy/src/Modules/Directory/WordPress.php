@@ -223,6 +223,8 @@ class WordPress {
 						?>
 						<form method="post">
 							<?php
+							$staff_list_table->views();
+							$staff_list_table->search_box( 'search', 'search_id' );
 							$staff_list_table->display();
 							?>
 						</form>
@@ -234,6 +236,8 @@ class WordPress {
 						?>
 						<form method="post">
 							<?php
+							$locations_list_table->views();
+							$locations_list_table->search_box( 'search', 'search_id' );
 							$locations_list_table->display();
 							?>
 						</form>
@@ -245,6 +249,8 @@ class WordPress {
 						?>
 						<form method="post">
 							<?php
+							$departments_list_table->views();
+							$departments_list_table->search_box( 'search', 'search_id' );
 							$departments_list_table->display();
 							?>
 						</form>

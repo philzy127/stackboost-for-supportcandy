@@ -304,6 +304,10 @@ class StaffListTable extends \WP_List_Table {
 		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( $_REQUEST['orderby'] ) : 'title';
 		$order   = ( ! empty( $_REQUEST['order'] ) ) ? sanitize_key( $_REQUEST['order'] ) : 'asc';
 
+		if ( isset( $_REQUEST['s'] ) ) {
+			$args['s'] = sanitize_text_field( $_REQUEST['s'] );
+		}
+
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
 			if ( 'chp_department_program' === $orderby ) {
 				$args['meta_key'] = '_department_program';
