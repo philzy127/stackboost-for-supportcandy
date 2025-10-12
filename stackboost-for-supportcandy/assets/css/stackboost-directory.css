@@ -209,6 +209,7 @@
     margin: 0 0.5em;
     display: inline-block;
     width: auto;
+    padding-right: 25px !important; /* Add padding to the right to make space for the arrow */
 }
 
 .dataTables_wrapper .dataTables_filter {
