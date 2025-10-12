@@ -7,6 +7,19 @@ jQuery(document).ready(function($) {
         "language": {
             "search": "Filter results:",
             "lengthMenu": "Show _MENU_ entries"
+        },
+        "initComplete": function(settings, json) {
+            var lengthSelect = $('.dataTables_length select');
+            if (lengthSelect.length > 0 && !lengthSelect.parent().hasClass('stackboost-select-wrapper')) {
+                lengthSelect.wrap('<div class="stackboost-select-wrapper"></div>');
+                $('.stackboost-select-wrapper').css({
+                    'position': 'relative',
+                    'display': 'inline-block'
+                });
+                $('<style>')
+                    .text('.stackboost-select-wrapper::after { content: ""; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #555; pointer-events: none; } .stackboost-select-wrapper select { -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 25px; }')
+                    .appendTo('head');
+            }
         }
     });
 
