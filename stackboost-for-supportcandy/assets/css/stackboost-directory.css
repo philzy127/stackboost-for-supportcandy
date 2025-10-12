@@ -1,6 +1,6 @@
-/* CHP Staff Directory Public Styles */
+/* StackBoost Staff Directory Public Styles */
 
-.chp-staff-directory-container {
+.stackboost-staff-directory-container {
     margin: 20px 0;
     padding: 20px;
     border: 1px solid #eee;
@@ -9,12 +9,12 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.chp-staff-directory-search-wrapper {
+.stackboost-staff-directory-search-wrapper {
     margin-bottom: 20px;
     text-align: center;
 }
 
-.chp-staff-directory-search-input {
+.stackboost-staff-directory-search-input {
     padding: 10px 15px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -25,13 +25,13 @@
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.chp-staff-directory-search-input:focus {
+.stackboost-staff-directory-search-input:focus {
     border-color: #0073aa;
     box-shadow: 0 0 5px rgba(0, 115, 170, 0.5);
     outline: none;
 }
 
-.chp-staff-directory-newest-entries {
+.stackboost-staff-directory-newest-entries {
     background-color: #f9f9f9;
     padding: 15px;
     border-radius: 8px;
@@ -39,7 +39,7 @@
     margin-bottom: 20px;
 }
 
-.chp-staff-directory-newest-entries h3 {
+.stackboost-staff-directory-newest-entries h3 {
     margin-top: 0;
     color: #333;
     font-size: 1.2em;
@@ -48,13 +48,13 @@
     margin-bottom: 15px;
 }
 
-.chp-staff-directory-newest-entries ul {
+.stackboost-staff-directory-newest-entries ul {
     list-style: none;
     margin: 0;
     padding: 0;
 }
 
-.chp-staff-directory-newest-entries li {
+.stackboost-staff-directory-newest-entries li {
     padding: 8px 0;
     border-bottom: 1px dashed #eee;
     display: flex;
@@ -62,23 +62,23 @@
     align-items: center;
 }
 
-.chp-staff-directory-newest-entries li:last-child {
+.stackboost-staff-directory-newest-entries li:last-child {
     border-bottom: none;
 }
 
-.chp-staff-directory-newest-entries .entry-name {
+.stackboost-staff-directory-newest-entries .entry-name {
     font-weight: bold;
     color: #0073aa; /* WordPress blue */
 }
 
-.chp-staff-directory-newest-entries .entry-title {
+.stackboost-staff-directory-newest-entries .entry-title {
     font-style: italic;
     color: #555;
     font-size: 0.9em;
 }
 
 /* Styles for the DataTables table */
-.chp-staff-directory-table {
+.stackboost-staff-directory-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
@@ -88,14 +88,14 @@
     /* Removed initial display: none; from here. JS will control visibility via its wrapper. */
 }
 
-.chp-staff-directory-table th,
-.chp-staff-directory-table td {
+.stackboost-staff-directory-table th,
+.stackboost-staff-directory-table td {
     border: 1px solid #e0e0e0; /* Lighter border for cells */
     padding: 12px 15px; /* Increased padding */
     text-align: left;
 }
 
-.chp-staff-directory-table th {
+.stackboost-staff-directory-table th {
     background-color: #f5f5f5; /* Slightly darker header background */
     font-weight: bold;
     color: #333;
@@ -103,51 +103,51 @@
     font-size: 0.9em; /* Slightly smaller font for headers */
 }
 
-.chp-staff-directory-table tr:nth-child(even) {
+.stackboost-staff-directory-table tr:nth-child(even) {
     background-color: #fcfcfc; /* Lighter even row background */
 }
 
-.chp-staff-directory-table tr:hover {
+.stackboost-staff-directory-table tr:hover {
     background-color: #e9f5fe; /* Light blue hover effect */
     cursor: pointer; /* Indicate clickable rows */
 }
 
 /* Styling for links within the table */
-.chp-staff-directory-table a {
+.stackboost-staff-directory-table a {
     color: #0073aa;
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
-.chp-staff-directory-table a:hover {
+.stackboost-staff-directory-table a:hover {
     color: #005177;
     text-decoration: underline;
 }
 
 /* Responsive adjustments for smaller screens */
 @media (max-width: 768px) {
-    .chp-staff-directory-container {
+    .stackboost-staff-directory-container {
         padding: 15px;
         margin: 10px 0;
     }
 
-    .chp-staff-directory-search-input {
+    .stackboost-staff-directory-search-input {
         font-size: 14px;
         padding: 8px 10px;
     }
 
-    .chp-staff-directory-newest-entries li {
+    .stackboost-staff-directory-newest-entries li {
         flex-direction: column;
         align-items: flex-start;
         padding: 10px 0;
     }
 
-    .chp-staff-directory-newest-entries .entry-name {
+    .stackboost-staff-directory-newest-entries .entry-name {
         width: 100%;
         margin-bottom: 5px;
     }
 
-    .chp-staff-directory-newest-entries .entry-title {
+    .stackboost-staff-directory-newest-entries .entry-title {
         width: 100%;
         text-align: left;
     }
@@ -155,7 +155,7 @@
     /* DataTables responsive behavior will handle the table columns */
 }
 
-.chp-loading-message {
+.stackboost-loading-message {
     text-align: center;
     font-style: italic;
     color: #777;
@@ -217,13 +217,13 @@
 /* Ensure table and its rows are visible when needed */
 /* Removed specific display: table !important; from here, as it's handled by JS */
 
-#chpStaffDirectoryTable tbody tr {
+#stackboostStaffDirectoryTable tbody tr {
     display: table-row !important; /* Ensure table rows are displayed as table-row */
     visibility: visible !important; /* Ensure rows are visible */
 }
 
-#chpStaffDirectoryTable tbody td,
-#chpStaffDirectoryTable tbody th {
+#stackboostStaffDirectoryTable tbody td,
+#stackboostStaffDirectoryTable tbody th {
     visibility: visible !important; /* Ensure cells are visible */
     width: auto !important; /* Reset any problematic fixed widths */
 }
@@ -355,7 +355,7 @@
 }
 
 /* Styling for the email copy icon */
-.chp-copy-email-icon {
+.stackboost-copy-email-icon {
     display: inline-block;
     vertical-align: middle;
     width: 16px; /* Match SVG width */
@@ -366,22 +366,22 @@
     transition: color 0.2s ease, transform 0.2s ease;
 }
 
-.chp-copy-email-icon:hover {
+.stackboost-copy-email-icon:hover {
     color: #005177; /* Darker blue on hover */
     transform: scale(1.1); /* Slightly enlarge on hover */
 }
 
-.chp-copy-email-icon svg {
+.stackboost-copy-email-icon svg {
     display: block; /* Ensure SVG fills its container */
 }
 
 /* NEW: Styles for Export Buttons */
-.chp-export-buttons-wrapper {
+.stackboost-export-buttons-wrapper {
     margin-bottom: 15px;
     text-align: right; /* Align buttons to the right */
 }
 
-.chp-export-button {
+.stackboost-export-button {
     background-color: #0073aa; /* WordPress blue */
     color: white;
     border: none;
@@ -394,17 +394,17 @@
     box-shadow: 0 2px 3px rgba(0,0,0,0.1);
 }
 
-.chp-export-button:hover {
+.stackboost-export-button:hover {
     background-color: #005177; /* Darker blue on hover */
     transform: translateY(-1px); /* Slight lift effect */
 }
 
-.chp-export-button:active {
+.stackboost-export-button:active {
     transform: translateY(0);
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-.chp-export-button:disabled {
+.stackboost-export-button:disabled {
     background-color: #a0a0a0;
     cursor: not-allowed;
     box-shadow: none;
