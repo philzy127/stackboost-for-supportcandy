@@ -7,8 +7,7 @@ jQuery(document).ready(function($) {
         "language": {
             "search": "Filter results:",
             "lengthMenu": "Show _MENU_ entries"
-        },
-        "dom": '<"stackboost-select-wrapper"l>frtip'
+        }
     });
 
     // Copy to clipboard functionality for email

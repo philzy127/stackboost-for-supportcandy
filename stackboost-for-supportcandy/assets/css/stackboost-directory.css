@@ -200,36 +200,16 @@
     text-align: left; /* Align info to the left */
 }
 
-.stackboost-select-wrapper {
-    position: relative;
+.dataTables_wrapper .dataTables_length {
+    margin-bottom: 1em;
+    text-align: left; /* Align length dropdown to the left */
+}
+
+.dataTables_wrapper .dataTables_length select {
+    margin: 0 0.5em;
     display: inline-block;
-}
-
-.stackboost-select-wrapper::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 1.5em;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 5px solid #555;
-    pointer-events: none;
-}
-
-.stackboost-select-wrapper select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    padding-right: 2.5em;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding-left: 1em;
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
+    width: auto;
+    padding-right: 25px !important; /* Add padding to the right to make space for the arrow */
 }
 
 .dataTables_wrapper .dataTables_filter {
