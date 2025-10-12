@@ -1,14 +1,28 @@
 jQuery(document).ready(function($) {
-    // Initialize DataTables
-    $('#stackboostStaffDirectoryTable').DataTable({
-        "pageLength": 25,
-        "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
-        "responsive": true,
-        "language": {
-            "search": "Filter results:",
-            "lengthMenu": "Show _MENU_ entries"
-        }
-    });
+    console.log('StackBoost Directory script loaded.');
+
+    var $table = $('#stackboostStaffDirectoryTable');
+    console.log('Table element selected:', $table);
+
+    if ($table.length) {
+        console.log('Initializing DataTables...');
+        var dataTableInstance = $table.DataTable({
+            "pageLength": 25,
+            "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+            "responsive": true,
+            "language": {
+                "search": "Filter results:",
+                "lengthMenu": "Show _MENU_ entries"
+            },
+            "initComplete": function(settings, json) {
+                console.log('DataTables initialization complete.');
+                console.log('DataTables instance:', this.api());
+                console.log('Length dropdown element:', $('.dataTables_length select'));
+            }
+        });
+    } else {
+        console.log('StackBoost Directory table not found. Skipping DataTables initialization.');
+    }
 
     // Copy to clipboard functionality for email
     $(document).on('click', '.stackboost-copy-email-icon', function() {
