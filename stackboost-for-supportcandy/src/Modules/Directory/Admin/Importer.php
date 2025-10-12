@@ -161,10 +161,18 @@ class Importer {
 		$current_import_date = current_time( 'Y-m-d' );
 
 		while ( ( $row = fgetcsv( $handle ) ) !== false ) {
-			if ( count( $row ) !== count( $header ) || empty( array_filter( $row ) ) ) {
+			if ( empty( array_filter( $row ) ) ) {
 				$skipped_count++;
 				$skipped_details[] = array(
-					'reason' => __( 'Empty or malformed row', 'stackboost-for-supportcandy' ),
+					'reason' => __( 'Skipped empty row', 'stackboost-for-supportcandy' ),
+					'data'   => '',
+				);
+				continue;
+			}
+			if ( count( $row ) !== count( $header ) ) {
+				$skipped_count++;
+				$skipped_details[] = array(
+					'reason' => __( 'Incorrect number of columns', 'stackboost-for-supportcandy' ),
 					'data'   => implode( ', ', $row ),
 				);
 				continue;
