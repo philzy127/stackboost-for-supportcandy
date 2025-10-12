@@ -189,7 +189,16 @@ class WordPress {
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Company Directory', 'stackboost-for-supportcandy' ); ?></h1>
+			<h1>
+				<?php esc_html_e( 'Company Directory', 'stackboost-for-supportcandy' ); ?>
+				<?php if ( 'staff' === $active_tab ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . $this->core->cpts->post_type ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New', 'stackboost-for-supportcandy' ); ?></a>
+				<?php elseif ( 'locations' === $active_tab ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . $this->core->cpts->location_post_type ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New', 'stackboost-for-supportcandy' ); ?></a>
+				<?php elseif ( 'departments' === $active_tab ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . $this->core->cpts->department_post_type ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New', 'stackboost-for-supportcandy' ); ?></a>
+				<?php endif; ?>
+			</h1>
 			<h2 class="nav-tab-wrapper">
 				<?php
 				foreach ( $tabs as $tab_id => $tab_name ) {
