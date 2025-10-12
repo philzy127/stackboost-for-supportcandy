@@ -16,8 +16,22 @@ jQuery(document).ready(function($) {
             },
             "initComplete": function(settings, json) {
                 console.log('DataTables initialization complete.');
-                console.log('DataTables instance:', this.api());
-                console.log('Length dropdown element:', $('.dataTables_length select'));
+                var $select = $(this).closest('.dataTables_wrapper').find('.dataTables_length select');
+
+                if ($select.length) {
+                    console.log('--- Dropdown Element Debug ---');
+                    console.log('Select Element:', $select[0]);
+                    console.log('Parent Element:', $select.parent()[0]);
+
+                    var styles = window.getComputedStyle($select[0]);
+                    console.log('Computed CSS - z-index:', styles.zIndex);
+                    console.log('Computed CSS - position:', styles.position);
+                    console.log('Computed CSS - padding-right:', styles.paddingRight);
+                    console.log('Computed CSS - appearance:', styles.webkitAppearance || styles.mozAppearance || styles.appearance);
+                    console.log('--- End Debug ---');
+                } else {
+                    console.log('Could not find the length dropdown select element.');
+                }
             }
         });
     } else {
