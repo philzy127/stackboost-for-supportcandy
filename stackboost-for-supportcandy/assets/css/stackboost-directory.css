@@ -78,8 +78,8 @@
 }
 
 /* Styles for the DataTables table */
-.stackboost-staff-directory-table {
-    width: 100%;
+#stackboostStaffDirectoryTable.dataTable {
+    width: 100% !important;
     border-collapse: collapse;
     margin-top: 20px;
     border: 1px solid #ddd; /* Added table border */
