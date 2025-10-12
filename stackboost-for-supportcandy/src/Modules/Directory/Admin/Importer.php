@@ -220,9 +220,17 @@ class Importer {
 			$processed_location_name = trim( sanitize_text_field( $data['Location'] ) );
 
 			if ( ! empty( $processed_location_name ) ) {
-				$existing_location_post = get_page_by_title( $processed_location_name, OBJECT, self::$location_post_type_static, 'publish' );
+				$existing_location_query = new \WP_Query(
+					array(
+						'post_type'      => self::$location_post_type_static,
+						'title'          => $processed_location_name,
+						'post_status'    => 'publish',
+						'posts_per_page' => 1,
+					)
+				);
+				$existing_location_post  = $existing_location_query->get_posts();
 
-				if ( ! $existing_location_post ) {
+				if ( empty( $existing_location_post ) ) {
 					$new_location_post_data = array(
 						'post_title'  => $processed_location_name,
 						'post_status' => 'publish',
@@ -230,12 +238,17 @@ class Importer {
 					);
 					$new_location_id        = wp_insert_post( $new_location_post_data );
 
-					if ( ! is_wp_error( $new_location_id ) ) {
+					if ( is_wp_error( $new_location_id ) ) {
+						$skipped_details[] = array(
+							'reason' => __( 'Failed to create new location', 'stackboost-for-supportcandy' ),
+							'data'   => $processed_location_name . ' (Error: ' . $new_location_id->get_error_message() . ')',
+						);
+					} else {
 						update_post_meta( $new_location_id, '_needs_completion', 'yes' );
 						$location_id_for_staff = $new_location_id;
 					}
 				} else {
-					$location_id_for_staff = $existing_location_post->ID;
+					$location_id_for_staff = $existing_location_post[0]->ID;
 				}
 			}
 
@@ -249,15 +262,30 @@ class Importer {
 			update_post_meta( $inserted_staff_post_id, '_room_number', sanitize_text_field( $data['Room #'] ) );
 			$department_name = sanitize_text_field( $data['Department / Program'] );
 			if ( ! empty( $department_name ) ) {
-				$existing_department = get_page_by_title( $department_name, OBJECT, self::$department_post_type_static, 'publish' );
-				if ( ! $existing_department ) {
-					wp_insert_post(
+				$existing_department_query = new \WP_Query(
+					array(
+						'post_type'      => self::$department_post_type_static,
+						'title'          => $department_name,
+						'post_status'    => 'publish',
+						'posts_per_page' => 1,
+					)
+				);
+				$existing_department     = $existing_department_query->get_posts();
+
+				if ( empty( $existing_department ) ) {
+					$new_department_id = wp_insert_post(
 						array(
 							'post_title'  => $department_name,
 							'post_status' => 'publish',
 							'post_type'   => self::$department_post_type_static,
 						)
 					);
+					if ( is_wp_error( $new_department_id ) ) {
+						$skipped_details[] = array(
+							'reason' => __( 'Failed to create new department', 'stackboost-for-supportcandy' ),
+							'data'   => $department_name . ' (Error: ' . $new_department_id->get_error_message() . ')',
+						);
+					}
 				}
 			}
 			update_post_meta( $inserted_staff_post_id, '_department_program', $department_name );
