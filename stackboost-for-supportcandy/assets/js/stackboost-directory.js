@@ -16,7 +16,9 @@ jQuery(document).ready(function($) {
             },
             "initComplete": function(settings, json) {
                 console.log('DataTables initialization complete.');
-                var $select = $(this).closest('.dataTables_wrapper').find('.dataTables_length select');
+                // Corrected selector: Use the settings object to get the table wrapper
+                // and check for both modern and legacy class names for the length container.
+                var $select = $(settings.nTableWrapper).find('.dt-length select, .dataTables_length select');
 
                 if ($select.length) {
                     console.log('--- Dropdown Element Debug ---');
