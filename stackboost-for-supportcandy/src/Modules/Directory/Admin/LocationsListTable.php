@@ -118,8 +118,14 @@ class LocationsListTable extends \WP_List_Table {
 	public function column_title( $item ) {
 		$actions = array(
 			'edit'   => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item->ID ), __( 'Edit', 'stackboost-for-supportcandy' ) ),
-			'delete' => sprintf( '<a href="%s" class="submitdelete">%s</a>', get_delete_post_link( $item->ID ), __( 'Trash', 'stackboost-for-supportcandy' ) ),
 		);
+
+		if ( 'trash' === ( $_REQUEST['post_status'] ?? '' ) ) {
+			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=locations&action=untrash&post=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
+			$actions['delete']  = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=locations&action=delete&post=' . $item->ID ), 'delete-post_' . $item->ID ), __( 'Delete Permanently', 'stackboost-for-supportcandy' ) );
+		} else {
+			$actions['trash'] = sprintf( '<a href="%s" class="submitdelete">%s</a>', get_delete_post_link( $item->ID ), __( 'Trash', 'stackboost-for-supportcandy' ) );
+		}
 
 		return sprintf( '<strong><a class="row-title" href="%s">%s</a></strong>%s', get_edit_post_link( $item->ID ), $item->post_title, $this->row_actions( $actions ) );
 	}
@@ -148,13 +154,14 @@ class LocationsListTable extends \WP_List_Table {
 	protected function get_views() {
 		$status_links = array();
 		$num_posts    = wp_count_posts( $this->post_type, 'readable' );
-		$class        = '';
-		$post_status  = $_REQUEST['post_status'] ?? '';
+		$post_status  = $_REQUEST['post_status'] ?? 'all';
 
-		$status_links['all'] = "<a href='admin.php?page=stackboost-directory&tab=locations'>All <span class='count'>(" . sum_object_property( $num_posts, 'publish' ) . ')</span></a>';
+		$all_class           = ( 'all' === $post_status && ! isset( $_REQUEST['post_status'] ) ) ? ' class="current"' : '';
+		$status_links['all'] = "<a href='admin.php?page=stackboost-directory&tab=locations'{$all_class}>All <span class='count'>(" . ( $num_posts->publish + $num_posts->draft ) . ')</span></a>';
 
 		if ( ! empty( $num_posts->trash ) ) {
-			$status_links['trash'] = "<a href='admin.php?page=stackboost-directory&tab=locations&post_status=trash'>Trash <span class='count'>(" . $num_posts->trash . ')</span></a>';
+			$trash_class           = ( 'trash' === $post_status ) ? ' class="current"' : '';
+			$status_links['trash'] = "<a href='admin.php?page=stackboost-directory&tab=locations&post_status=trash'{$trash_class}>Trash <span class='count'>(" . $num_posts->trash . ')</span></a>';
 		}
 
 		return $status_links;
@@ -175,6 +182,9 @@ class LocationsListTable extends \WP_List_Table {
 	 * Adds a dropdown filter for "Needs Completion" status.
 	 */
 	public function add_location_needs_completion_filter() {
+		if ( isset( $_REQUEST['post_status'] ) && 'trash' === $_REQUEST['post_status'] ) {
+			return;
+		}
 		$current_filter = isset( $_REQUEST['chp_needs_completion_filter'] ) ? sanitize_text_field( $_REQUEST['chp_needs_completion_filter'] ) : 'all';
 		?>
 		<div class="alignleft actions">
@@ -201,6 +211,8 @@ class LocationsListTable extends \WP_List_Table {
 		if ( empty( $post_ids ) ) {
 			return;
 		}
+
+		check_admin_referer( 'bulk-' . $this->_args['plural'] );
 
 		switch ( $action ) {
 			case 'trash':
@@ -240,7 +252,7 @@ class LocationsListTable extends \WP_List_Table {
 			'post_type'      => $this->post_type,
 			'posts_per_page' => $per_page,
 			'offset'         => $offset,
-			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( $_REQUEST['post_status'] ) : 'publish' ),
+			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( $_REQUEST['post_status'] ) : 'any' ),
 		);
 
 		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( $_REQUEST['orderby'] ) : 'title';
