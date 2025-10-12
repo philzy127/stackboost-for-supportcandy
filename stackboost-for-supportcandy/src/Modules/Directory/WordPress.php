@@ -27,19 +27,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WordPress {
 
 	/**
-	 * CustomPostTypes instance.
+	 * The single instance of the class.
 	 *
-	 * @var CustomPostTypes
+	 * @var WordPress|null
 	 */
-	private $cpts;
+	private static ?WordPress $instance = null;
+
+	/**
+	 * Core instance.
+	 *
+	 * @var Core
+	 */
+	private $core;
+
+	/**
+	 * Get the single instance of the class.
+	 */
+	public static function get_instance(): WordPress {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
 
 	/**
 	 * Constructor.
-	 *
-	 * @param CustomPostTypes $cpts An instance of the CustomPostTypes class.
 	 */
-	public function __construct( CustomPostTypes $cpts ) {
-		$this->cpts = $cpts;
+	private function __construct() {
+		$this->core = new Core();
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_public_scripts' ) );
@@ -194,7 +210,7 @@ class WordPress {
 				<?php
 				switch ( $active_tab ) {
 					case 'staff':
-						$staff_list_table = new StaffListTable( $this->cpts->post_type );
+						$staff_list_table = new StaffListTable( $this->core->cpts->post_type );
 						$staff_list_table->prepare_items();
 						?>
 						<form method="post">
@@ -205,7 +221,7 @@ class WordPress {
 						<?php
 						break;
 					case 'locations':
-						$locations_list_table = new LocationsListTable( $this->cpts->location_post_type );
+						$locations_list_table = new LocationsListTable( $this->core->cpts->location_post_type );
 						$locations_list_table->prepare_items();
 						?>
 						<form method="post">
@@ -216,7 +232,7 @@ class WordPress {
 						<?php
 						break;
 					case 'departments':
-						$departments_list_table = new DepartmentsListTable( $this->cpts->department_post_type );
+						$departments_list_table = new DepartmentsListTable( $this->core->cpts->department_post_type );
 						$departments_list_table->prepare_items();
 						?>
 						<form method="post">
