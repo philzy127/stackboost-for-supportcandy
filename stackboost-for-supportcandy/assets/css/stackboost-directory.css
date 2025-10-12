@@ -1,0 +1,411 @@
+/* CHP Staff Directory Public Styles */
+
+.chp-staff-directory-container {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.chp-staff-directory-search-wrapper {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.chp-staff-directory-search-input {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 400px; /* Limit width for better aesthetics */
+    font-size: 16px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chp-staff-directory-search-input:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 5px rgba(0, 115, 170, 0.5);
+    outline: none;
+}
+
+.chp-staff-directory-newest-entries {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.chp-staff-directory-newest-entries h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.2em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.chp-staff-directory-newest-entries ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.chp-staff-directory-newest-entries li {
+    padding: 8px 0;
+    border-bottom: 1px dashed #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chp-staff-directory-newest-entries li:last-child {
+    border-bottom: none;
+}
+
+.chp-staff-directory-newest-entries .entry-name {
+    font-weight: bold;
+    color: #0073aa; /* WordPress blue */
+}
+
+.chp-staff-directory-newest-entries .entry-title {
+    font-style: italic;
+    color: #555;
+    font-size: 0.9em;
+}
+
+/* Styles for the DataTables table */
+.chp-staff-directory-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border: 1px solid #ddd; /* Added table border */
+    border-radius: 8px; /* Rounded corners for the table */
+    overflow: hidden; /* Ensures rounded corners apply to content */
+    /* Removed initial display: none; from here. JS will control visibility via its wrapper. */
+}
+
+.chp-staff-directory-table th,
+.chp-staff-directory-table td {
+    border: 1px solid #e0e0e0; /* Lighter border for cells */
+    padding: 12px 15px; /* Increased padding */
+    text-align: left;
+}
+
+.chp-staff-directory-table th {
+    background-color: #f5f5f5; /* Slightly darker header background */
+    font-weight: bold;
+    color: #333;
+    /* Removed text-transform: uppercase; */
+    font-size: 0.9em; /* Slightly smaller font for headers */
+}
+
+.chp-staff-directory-table tr:nth-child(even) {
+    background-color: #fcfcfc; /* Lighter even row background */
+}
+
+.chp-staff-directory-table tr:hover {
+    background-color: #e9f5fe; /* Light blue hover effect */
+    cursor: pointer; /* Indicate clickable rows */
+}
+
+/* Styling for links within the table */
+.chp-staff-directory-table a {
+    color: #0073aa;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.chp-staff-directory-table a:hover {
+    color: #005177;
+    text-decoration: underline;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .chp-staff-directory-container {
+        padding: 15px;
+        margin: 10px 0;
+    }
+
+    .chp-staff-directory-search-input {
+        font-size: 14px;
+        padding: 8px 10px;
+    }
+
+    .chp-staff-directory-newest-entries li {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 0;
+    }
+
+    .chp-staff-directory-newest-entries .entry-name {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .chp-staff-directory-newest-entries .entry-title {
+        width: 100%;
+        text-align: left;
+    }
+
+    /* DataTables responsive behavior will handle the table columns */
+}
+
+.chp-loading-message {
+    text-align: center;
+    font-style: italic;
+    color: #777;
+    padding: 20px;
+}
+
+/* Basic styling for DataTables elements to ensure they fit */
+.dataTables_wrapper .dataTables_paginate {
+    margin-top: 15px;
+    text-align: right; /* Align pagination to the right */
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.7em 1.2em; /* Slightly larger buttons */
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    margin: 0 3px; /* More spacing */
+    border-radius: 5px; /* More rounded corners */
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #555;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background-color: #0073aa;
+    color: white !important;
+    border-color: #0073aa;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.dataTables_wrapper .dataTables_info {
+    padding-top: 0.85em;
+    font-size: 0.9em;
+    color: #666;
+    text-align: left; /* Align info to the left */
+}
+
+.dataTables_wrapper .dataTables_length {
+    margin-bottom: 1em;
+    text-align: left; /* Align length dropdown to the left */
+}
+
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: 1em;
+}
+
+/* Explicitly hide DataTables default search input */
+.dataTables_filter {
+    display: none !important; /* Use !important to ensure override */
+}
+
+/* Ensure table and its rows are visible when needed */
+/* Removed specific display: table !important; from here, as it's handled by JS */
+
+#chpStaffDirectoryTable tbody tr {
+    display: table-row !important; /* Ensure table rows are displayed as table-row */
+    visibility: visible !important; /* Ensure rows are visible */
+}
+
+#chpStaffDirectoryTable tbody td,
+#chpStaffDirectoryTable tbody th {
+    visibility: visible !important; /* Ensure cells are visible */
+    width: auto !important; /* Reset any problematic fixed widths */
+}
+
+/* Styling for the single staff detail page */
+.staff-detail-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 30px; /* Space between photo and info */
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.staff-photo {
+    flex: 0 0 auto; /* Don't grow, don't shrink, base on content */
+    width: 250px; /* Fixed width for photo container */
+    height: 250px; /* Fixed height for photo container */
+    border-radius: 8px;
+    overflow: hidden; /* Ensures image stays within bounds */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: flex-start; /* Aligns content (image) to the top */
+    justify-content: center;
+    background-color: #f0f0f0; /* Placeholder background */
+}
+
+.staff-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Changed back to 'cover' to work with object-position from plugin */
+    object-position: center; /* Default, will be overridden by plugin's data */
+    border-radius: 8px; /* Apply rounded corners to the image */
+}
+
+.staff-info {
+    flex: 1; /* Take up remaining space */
+    min-width: 300px; /* Minimum width before wrapping */
+}
+
+/* Styling for the staff details table on the single page */
+.staff-details-table {
+    width: 100%; /* Ensure table takes full available width */
+    border-collapse: collapse;
+    margin: 0; /* Remove default table margins */
+}
+
+.staff-details-table tr {
+    border-bottom: 1px solid #eee; /* Light separator between rows */
+}
+
+.staff-details-table tr:last-child {
+    border-bottom: none; /* No border on the last row */
+}
+
+.staff-details-table th,
+.staff-details-table td {
+    padding: 8px 0; /* Padding for cells */
+    vertical-align: top; /* Align content to the top */
+    border: none; /* Remove individual cell borders if present */
+}
+
+.staff-details-table th {
+    width: 175px; /* Fixed width for the header column */
+    font-weight: bold;
+    color: #555;
+    text-align: left;
+    padding-right: 15px; /* Space between header and data */
+}
+
+.staff-details-table td {
+    text-align: left;
+    color: #333;
+}
+
+.staff-info p {
+    margin-bottom: 10px;
+    line-height: 1.6;
+    font-size: 1.05em;
+    color: #444;
+}
+
+.staff-info p strong {
+    color: #222;
+    display: inline-block;
+    min-width: 120px; /* Align labels */
+}
+
+/* Responsive adjustments for single staff page */
+@media (max-width: 768px) {
+    .staff-detail-container {
+        flex-direction: column; /* Stack vertically */
+        align-items: center; /* Center items */
+        gap: 20px;
+    }
+
+    .staff-photo {
+        width: 200px; /* Smaller photo on mobile */
+        height: 200px;
+    }
+
+    .staff-info {
+        min-width: unset; /* Remove min-width for full flexibility */
+        width: 100%;
+        /* text-align: center; Removed this as table handles alignment */
+    }
+
+    .staff-details-table th,
+    .staff-details-table td {
+        display: block; /* Stack header and data vertically on small screens */
+        width: 100%; /* Take full width */
+        padding: 5px 0;
+        text-align: left; /* Align text left */
+    }
+
+    .staff-details-table th {
+        padding-right: 0; /* Remove right padding */
+        margin-bottom: 3px; /* Space between label and value */
+    }
+
+    .staff-info p strong {
+        min-width: unset; /* Remove min-width for mobile */
+        display: block; /* Stack label and value */
+        margin-bottom: 5px;
+    }
+}
+
+/* Styling for the email copy icon */
+.chp-copy-email-icon {
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px; /* Match SVG width */
+    height: 16px; /* Match SVG height */
+    margin-left: 8px; /* Space from the name */
+    cursor: pointer;
+    color: #0073aa; /* Default icon color */
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.chp-copy-email-icon:hover {
+    color: #005177; /* Darker blue on hover */
+    transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+.chp-copy-email-icon svg {
+    display: block; /* Ensure SVG fills its container */
+}
+
+/* NEW: Styles for Export Buttons */
+.chp-export-buttons-wrapper {
+    margin-bottom: 15px;
+    text-align: right; /* Align buttons to the right */
+}
+
+.chp-export-button {
+    background-color: #0073aa; /* WordPress blue */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin-left: 10px; /* Space between buttons */
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+}
+
+.chp-export-button:hover {
+    background-color: #005177; /* Darker blue on hover */
+    transform: translateY(-1px); /* Slight lift effect */
+}
+
+.chp-export-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.chp-export-button:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+    box-shadow: none;
+}
