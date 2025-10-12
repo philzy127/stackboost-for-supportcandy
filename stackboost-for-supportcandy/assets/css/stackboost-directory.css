@@ -217,17 +217,6 @@
 /* Ensure table and its rows are visible when needed */
 /* Removed specific display: table !important; from here, as it's handled by JS */
 
-#stackboostStaffDirectoryTable tbody tr {
-    display: table-row !important; /* Ensure table rows are displayed as table-row */
-    visibility: visible !important; /* Ensure rows are visible */
-}
-
-#stackboostStaffDirectoryTable tbody td,
-#stackboostStaffDirectoryTable tbody th {
-    visibility: visible !important; /* Ensure cells are visible */
-    width: auto !important; /* Reset any problematic fixed widths */
-}
-
 /* Styling for the single staff detail page */
 .staff-detail-container {
     display: flex;
