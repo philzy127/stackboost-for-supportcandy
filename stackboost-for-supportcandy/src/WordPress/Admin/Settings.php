@@ -119,6 +119,17 @@ class Settings {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+			<div class="notice notice-info inline">
+				<p>
+					<?php
+					if ( is_supportcandy_pro_active() ) {
+						echo '<strong>' . esc_html__( 'SupportCandy Pro detected.', 'stackboost-for-supportcandy' ) . '</strong>';
+					} else {
+						echo '<strong>' . esc_html__( 'SupportCandy (Free) detected.', 'stackboost-for-supportcandy' ) . '</strong>';
+					}
+					?>
+				</p>
+			</div>
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'stackboost_settings' );
