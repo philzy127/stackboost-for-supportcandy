@@ -200,16 +200,51 @@
     text-align: left; /* Align info to the left */
 }
 
-.dataTables_wrapper .dataTables_length {
+/*
+ * Robust Dropdown Arrow Styling for DataTables
+ * This replaces the unreliable padding-based approach for the custom arrow.
+ * We create a positioning context on the wrapper and use a pseudo-element for the arrow,
+ * ensuring correct layering and display across browsers.
+ */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dt-length {
+    position: relative;      /* Create a positioning context for the pseudo-element */
+    display: inline-block;   /* Ensure the wrapper only takes up as much space as needed */
     margin-bottom: 1em;
-    text-align: left; /* Align length dropdown to the left */
+    text-align: left;
 }
 
-.dataTables_wrapper .dataTables_length select {
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dt-length select {
+    /* Reset browser default appearance */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    /* Add padding to make space for our custom arrow */
+    padding-right: 30px !important;
+    /* Other existing styles */
     margin: 0 0.5em;
     display: inline-block;
     width: auto;
-    padding-right: 25px !important; /* Add padding to the right to make space for the arrow */
+    background-color: #fff; /* Ensure select has a background for the arrow to sit on */
+    cursor: pointer;
+}
+
+/* The custom arrow pseudo-element */
+.dataTables_wrapper .dataTables_length::after,
+.dataTables_wrapper .dt-length::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 12px; /* Position inside the select's padding area */
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #666; /* Arrow color */
+    pointer-events: none; /* Allow clicks to pass through to the select element */
+    z-index: 2; /* Ensure arrow is on top of other elements */
 }
 
 .dataTables_wrapper .dataTables_filter {
