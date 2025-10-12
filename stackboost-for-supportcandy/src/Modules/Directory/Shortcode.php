@@ -6,73 +6,30 @@ namespace StackBoost\ForSupportCandy\Modules\Directory;
  * Class Shortcode
  *
  * Handles the [stackboost_directory] shortcode to display the staff directory.
+ * This is a direct port from the standalone CHP Staff Directory plugin.
  *
  * @package StackBoost\ForSupportCandy\Modules\Directory
  */
 class Shortcode {
 
     /**
-     * The core directory service.
-     *
-     * @var Core
-     */
-    private Core $core;
-
-    /**
      * Shortcode constructor.
      */
     public function __construct() {
-        $this->core = Core::get_instance();
-        add_shortcode( 'stackboost_directory', [ $this, 'render_directory' ] );
+        add_shortcode( 'stackboost_directory', [ $this, 'render_directory_shortcode' ] );
     }
 
     /**
-     * Render the HTML for the staff directory.
+     * Render the directory shortcode content.
      *
-     * @return string The rendered HTML.
+     * @param array $atts Shortcode attributes.
+     * @return string HTML output for the directory table.
      */
-    public function render_directory(): string {
-        $employees = $this->get_all_active_employees();
-
-        ob_start();
-        ?>
-        <div class="stackboost-directory-wrapper">
-            <table id="stackboost-directory-table" class="display" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Job Title</th>
-                        <th>Department</th>
-                        <th>Office Phone</th>
-                        <th>Email</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ( $employees as $employee ) : ?>
-                        <tr>
-                            <td><?php echo esc_html( $employee['name'] ); ?></td>
-                            <td><?php echo esc_html( $employee['job_title'] ); ?></td>
-                            <td><?php echo esc_html( $employee['department'] ); ?></td>
-                            <td><?php echo esc_html( $employee['office_phone'] ); ?></td>
-                            <td><a href="mailto:<?php echo esc_attr( $employee['email'] ); ?>"><?php echo esc_html( $employee['email'] ); ?></a></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get all active employees from the directory.
-     *
-     * @return array An array of employee data.
-     */
-    private function get_all_active_employees(): array {
-        $args = [
+    public function render_directory_shortcode( $atts ) {
+        $full_table_args = [
             'post_type'      => 'chp_staff_directory',
             'posts_per_page' => -1,
+            'post_status'    => 'publish',
             'meta_query'     => [
                 [
                     'key'     => '_active',
@@ -80,22 +37,61 @@ class Shortcode {
                     'compare' => '=',
                 ],
             ],
+            'orderby'        => 'title',
+            'order'          => 'ASC',
         ];
+        $full_directory_entries = new \WP_Query( $full_table_args );
 
-        $query = new \WP_Query( $args );
-        $employees = [];
-
-        if ( $query->have_posts() ) {
-            while ( $query->have_posts() ) {
-                $query->the_post();
-                $profile_id = get_the_ID();
-                $employee_data = $this->core->get_employee_data( $profile_id );
-                $employee_data['name'] = get_the_title();
-                $employees[] = $employee_data;
-            }
-        }
+        ob_start();
+        ?>
+        <div class="stackboost-directory-container">
+            <table id="stackboostDirectoryTable" class="display stackboost-directory-table">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e( 'Name', 'stackboost-for-supportcandy' ); ?></th>
+                        <th><?php esc_html_e( 'Phone', 'stackboost-for-supportcandy' ); ?></th>
+                        <th><?php esc_html_e( 'Department / Program', 'stackboost-for-supportcandy' ); ?></th>
+                        <th><?php esc_html_e( 'Title', 'stackboost-for-supportcandy' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    while ( $full_directory_entries->have_posts() ) : $full_directory_entries->the_post();
+                        $post_id = get_the_ID();
+                        $office_phone = get_post_meta( $post_id, '_office_phone', true );
+                        $extension = get_post_meta( $post_id, '_extension', true );
+                        $department_program = get_post_meta( $post_id, '_department_program', true );
+                        $job_title = get_post_meta( $post_id, '_chp_staff_job_title', true );
+                        $email = get_post_meta( $post_id, '_email_address', true );
+                        ?>
+                        <tr>
+                            <td>
+                                <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+                                <?php if ( ! empty( $email ) ) : ?>
+                                    <a href="mailto:<?php echo esc_attr( $email ); ?>" style="margin-left: 5px;">(Email)</a>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php
+                                if ( ! empty( $office_phone ) ) {
+                                    echo esc_html( $office_phone );
+                                    if ( ! empty( $extension ) ) {
+                                        echo ' ext. ' . esc_html( $extension );
+                                    }
+                                } else {
+                                    echo '&mdash;';
+                                }
+                                ?>
+                            </td>
+                            <td><?php echo esc_html( $department_program ); ?></td>
+                            <td><?php echo esc_html( $job_title ); ?></td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
         wp_reset_postdata();
-
-        return $employees;
+        return ob_get_clean();
     }
 }

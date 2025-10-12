@@ -5,7 +5,8 @@ namespace StackBoost\ForSupportCandy\Modules\Directory\Admin;
 /**
  * Class Meta_Boxes
  *
- * Handles the custom meta boxes for the Staff Directory CPT.
+ * Handles the creation and saving of custom meta boxes for staff entries and locations.
+ * This is a direct port from the standalone CHP Staff Directory plugin.
  *
  * @package StackBoost\ForSupportCandy\Modules\Directory\Admin
  */
@@ -15,18 +16,27 @@ class Meta_Boxes {
      * Meta_Boxes constructor.
      */
     public function __construct() {
-        add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
-        add_action( 'save_post', [ $this, 'save_meta_box_data' ] );
+        add_action( 'add_meta_boxes', [ $this, 'add_all_meta_boxes' ] );
+        add_action( 'save_post', [ $this, 'save_directory_meta_box_data' ] );
+        add_action( 'save_post', [ $this, 'save_location_details_meta_box_data' ] );
     }
 
     /**
-     * Add the meta boxes.
+     * Add all meta boxes.
      */
-    public function add_meta_boxes() {
+    public function add_all_meta_boxes() {
+        $this->add_directory_meta_box();
+        $this->add_location_details_meta_box();
+    }
+
+    /**
+     * Add the custom meta box for Staff Directory.
+     */
+    public function add_directory_meta_box() {
         add_meta_box(
-            'stackboost_staff_details',
-            'Staff Details',
-            [ $this, 'render_staff_details_meta_box' ],
+            'chp_staff_directory_details',
+            __( 'Staff Details', 'stackboost-for-supportcandy' ),
+            [ $this, 'render_directory_meta_box' ],
             'chp_staff_directory',
             'normal',
             'high'
@@ -34,142 +44,190 @@ class Meta_Boxes {
     }
 
     /**
-     * Render the staff details meta box.
+     * Render the custom meta box content for Staff Directory.
      *
-     * @param \WP_Post $post The post object.
+     * @param \WP_Post $post The current post object.
      */
-    public function render_staff_details_meta_box( $post ) {
-        wp_nonce_field( 'stackboost_save_meta_box_data', 'stackboost_meta_box_nonce' );
+    public function render_directory_meta_box( $post ) {
+        wp_nonce_field( 'chp_staff_directory_meta_box', 'chp_staff_directory_meta_box_nonce' );
 
         $fields = [
-            '_chp_staff_job_title' => 'Job Title',
-            '_office_phone'        => 'Office Phone',
-            '_extension'           => 'Extension',
-            '_mobile_phone'        => 'Mobile Phone',
-            '_email_address'       => 'Email Address',
-            '_room_number'         => 'Room Number',
+            'chp_staff_job_title' => 'Title',
+            'office_phone'        => 'Office Phone',
+            'extension'           => 'Extension',
+            'mobile_phone'        => 'Mobile Phone',
+            'email_address'       => 'Email Address',
+            'room_number'         => 'Room #',
         ];
 
         echo '<table class="form-table">';
 
         foreach ( $fields as $key => $label ) {
-            $value = get_post_meta( $post->ID, $key, true );
+            $value = get_post_meta( $post->ID, '_' . $key, true );
             echo '<tr>';
             echo '<th scope="row"><label for="' . esc_attr( $key ) . '">' . esc_html( $label ) . '</label></th>';
             echo '<td><input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $value ) . '" class="regular-text" /></td>';
             echo '</tr>';
         }
 
-        // Location Dropdown
         $this->render_location_dropdown( $post->ID );
-
-        // Department Dropdown
         $this->render_department_dropdown( $post->ID );
-
-        // Active Status
         $this->render_active_status( $post->ID );
 
         echo '</table>';
     }
 
-    /**
-     * Render the location dropdown.
-     *
-     * @param int $post_id The post ID.
-     */
     private function render_location_dropdown( int $post_id ) {
-        $locations = get_posts( [ 'post_type' => 'chp_location', 'posts_per_page' => -1 ] );
-        $selected_location = get_post_meta( $post_id, '_location_id', true );
-
-        echo '<tr>';
-        echo '<th scope="row"><label for="_location_id">Location</label></th>';
-        echo '<td><select name="_location_id" id="_location_id">';
-        echo '<option value="">Select a Location</option>';
-        foreach ( $locations as $location ) {
-            echo '<option value="' . esc_attr( $location->ID ) . '" ' . selected( $selected_location, $location->ID, false ) . '>' . esc_html( $location->post_title ) . '</option>';
-        }
-        echo '</select></td>';
-        echo '</tr>';
-    }
-
-    /**
-     * Render the department dropdown.
-     *
-     * @param int $post_id The post ID.
-     */
-    private function render_department_dropdown( int $post_id ) {
-        $departments = get_posts( [ 'post_type' => 'chp_department', 'posts_per_page' => -1 ] );
-        $selected_department = get_post_meta( $post_id, '_department_program', true );
-
-        echo '<tr>';
-        echo '<th scope="row"><label for="_department_program">Department</label></th>';
-        echo '<td><select name="_department_program" id="_department_program">';
-        echo '<option value="">Select a Department</option>';
-        foreach ( $departments as $department ) {
-            echo '<option value="' . esc_attr( $department->post_title ) . '" ' . selected( $selected_department, $department->post_title, false ) . '>' . esc_html( $department->post_title ) . '</option>';
-        }
-        echo '</select></td>';
-        echo '</tr>';
-    }
-
-    /**
-     * Render the active status radio buttons.
-     *
-     * @param int $post_id The post ID.
-     */
-    private function render_active_status( int $post_id ) {
-        $active_status = get_post_meta( $post_id, '_active', true );
+        $locations = get_posts( [ 'post_type' => 'chp_location', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC' ] );
+        $current_location_id = get_post_meta( $post_id, '_location_id', true );
         ?>
         <tr>
-            <th scope="row">Active Status</th>
+            <th scope="row"><label for="location"><?php esc_html_e( 'Location', 'stackboost-for-supportcandy' ); ?></label></th>
             <td>
-                <label><input type="radio" name="_active" value="Yes" <?php checked( $active_status, 'Yes' ); ?> /> Yes</label>
-                <label style="margin-left: 10px;"><input type="radio" name="_active" value="No" <?php checked( $active_status, 'No' ); ?> /> No</label>
+                <select name="location" id="location" class="postbox-select-location">
+                    <option value=""><?php esc_html_e( 'Select a Location', 'stackboost-for-supportcandy' ); ?></option>
+                    <?php foreach ( $locations as $location_post ) : ?>
+                        <option value="<?php echo esc_attr( $location_post->ID ); ?>" <?php selected( $current_location_id, $location_post->ID ); ?>><?php echo esc_html( $location_post->post_title ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <input type="hidden" id="chp_staff_directory_location_name_hidden" name="chp_staff_directory_location_name_hidden" value="<?php echo esc_attr( get_post_meta( $post_id, '_location', true ) ); ?>">
+            </td>
+        </tr>
+        <?php
+    }
+
+    private function render_department_dropdown( int $post_id ) {
+        $departments = get_posts( [ 'post_type' => 'chp_department', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC' ] );
+        $current_department = get_post_meta( $post_id, '_department_program', true );
+        ?>
+        <tr>
+            <th scope="row"><label for="department_program"><?php esc_html_e( 'Department / Program', 'stackboost-for-supportcandy' ); ?></label></th>
+            <td>
+                <select name="department_program" id="department_program" class="postbox-select-department">
+                    <option value=""><?php esc_html_e( 'Select a Department/Program', 'stackboost-for-supportcandy' ); ?></option>
+                    <?php foreach ( $departments as $department_post ) : ?>
+                        <option value="<?php echo esc_attr( $department_post->post_title ); ?>" <?php selected( $current_department, $department_post->post_title ); ?>><?php echo esc_html( $department_post->post_title ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </td>
+        </tr>
+        <?php
+    }
+
+    private function render_active_status( int $post_id ) {
+        $value = get_post_meta( $post_id, '_active', true );
+        $checked = ( $value === 'Yes' || $value === '1' ) ? 'checked' : '';
+        ?>
+        <tr>
+            <th scope="row"><label for="active"><?php esc_html_e( 'Active', 'stackboost-for-supportcandy' ); ?></label></th>
+            <td>
+                <input type="checkbox" id="active" name="active" value="Yes" <?php echo $checked; ?> />
+                <p class="description"><?php esc_html_e( 'Check if this entry is active; uncheck if deprecated.', 'stackboost-for-supportcandy' ); ?></p>
             </td>
         </tr>
         <?php
     }
 
     /**
-     * Save the meta box data.
-     *
-     * @param int $post_id The post ID.
+     * Add the custom meta box for Location Details.
      */
-    public function save_meta_box_data( $post_id ) {
-        if ( ! isset( $_POST['stackboost_meta_box_nonce'] ) || ! wp_verify_nonce( $_POST['stackboost_meta_box_nonce'], 'stackboost_save_meta_box_data' ) ) {
+    public function add_location_details_meta_box() {
+        add_meta_box(
+            'chp_location_details',
+            __( 'Location Details', 'stackboost-for-supportcandy' ),
+            [ $this, 'render_location_details_meta_box' ],
+            'chp_location',
+            'normal',
+            'high'
+        );
+    }
+
+    /**
+     * Render the custom meta box content for Location Details.
+     *
+     * @param \WP_Post $post The current post object.
+     */
+    public function render_location_details_meta_box( $post ) {
+        wp_nonce_field( 'chp_location_details_meta_box', 'chp_location_details_meta_box_nonce' );
+        $fields = [
+            'address_line1' => 'Address Line 1',
+            'city' => 'City',
+            'state' => 'State',
+            'zip' => 'Zip',
+            'location_phone_number' => 'Phone Number',
+            'location_department_program' => 'Department / Program (Optional)',
+        ];
+
+        echo '<table class="form-table">';
+        foreach ( $fields as $key => $label ) {
+            $value = get_post_meta( $post->ID, '_' . $key, true );
+            echo '<tr>';
+            echo '<th scope="row"><label for="' . esc_attr( $key ) . '">' . esc_html( $label ) . '</label></th>';
+            echo '<td><input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $value ) . '" class="regular-text" /></td>';
+            echo '</tr>';
+        }
+        echo '</table>';
+    }
+
+    /**
+     * Save custom meta box data when the Staff Directory post is saved.
+     *
+     * @param int $post_id The ID of the post being saved.
+     */
+    public function save_directory_meta_box_data( $post_id ) {
+        if ( ! isset( $_POST['chp_staff_directory_meta_box_nonce'] ) || ! wp_verify_nonce( $_POST['chp_staff_directory_meta_box_nonce'], 'chp_staff_directory_meta_box' ) ) {
             return;
         }
-
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
             return;
         }
-
-        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+        if ( 'chp_staff_directory' !== get_post_type( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) {
             return;
         }
 
-        $fields = [
-            '_chp_staff_job_title',
-            '_office_phone',
-            '_extension',
-            '_mobile_phone',
-            '_email_address',
-            '_room_number',
-            '_location_id',
-            '_department_program',
-            '_active',
+        $fields_to_save = [
+            'office_phone', 'extension', 'mobile_phone', 'room_number', 'department_program', 'chp_staff_job_title', 'email_address'
         ];
 
-        foreach ( $fields as $key ) {
-            if ( isset( $_POST[ $key ] ) ) {
-                update_post_meta( $post_id, $key, sanitize_text_field( $_POST[ $key ] ) );
+        foreach ( $fields_to_save as $field ) {
+            if ( isset( $_POST[ $field ] ) ) {
+                update_post_meta( $post_id, '_' . $field, sanitize_text_field( $_POST[ $field ] ) );
             }
         }
 
-        // Also save the location name for convenience
-        if ( isset( $_POST['_location_id'] ) ) {
-            $location_name = get_the_title( $_POST['_location_id'] );
-            update_post_meta( $post_id, '_location', $location_name );
+        if ( isset( $_POST['location'] ) ) {
+            $location_id = sanitize_text_field( $_POST['location'] );
+            update_post_meta( $post_id, '_location_id', $location_id );
+            if ( isset( $_POST['chp_staff_directory_location_name_hidden'] ) ) {
+                update_post_meta( $post_id, '_location', sanitize_text_field( $_POST['chp_staff_directory_location_name_hidden'] ) );
+            }
+        }
+
+        $active_status = isset( $_POST['active'] ) && $_POST['active'] === 'Yes' ? 'Yes' : 'No';
+        update_post_meta( $post_id, '_active', $active_status );
+    }
+
+    /**
+     * Save custom meta box data when the Location post is saved.
+     *
+     * @param int $post_id The ID of the post being saved.
+     */
+    public function save_location_details_meta_box_data( $post_id ) {
+        if ( ! isset( $_POST['chp_location_details_meta_box_nonce'] ) || ! wp_verify_nonce( $_POST['chp_location_details_meta_box_nonce'], 'chp_location_details_meta_box' ) ) {
+            return;
+        }
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+        if ( 'chp_location' !== get_post_type( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
+        $fields = [ 'address_line1', 'city', 'state', 'zip', 'location_phone_number', 'location_department_program' ];
+        foreach ( $fields as $field ) {
+            if ( isset( $_POST[ $field ] ) ) {
+                update_post_meta( $post_id, '_' . $field, sanitize_text_field( $_POST[ $field ] ) );
+            }
         }
     }
 }
