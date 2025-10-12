@@ -100,7 +100,7 @@ class CustomPostTypes {
 			'label'               => __( 'Staff Directory', 'stackboost-for-supportcandy' ),
 			'description'         => __( 'Staff directory entries.', 'stackboost-for-supportcandy' ),
 			'labels'              => $labels,
-			'supports'            => array( 'title', 'editor', 'thumbnail' ),
+			'supports'            => array( 'title', 'thumbnail' ),
 			'hierarchical'        => false,
 			'public'              => true,
 			'show_ui'             => true,

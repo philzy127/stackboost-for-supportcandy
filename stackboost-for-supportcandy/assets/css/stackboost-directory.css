@@ -203,6 +203,8 @@
 .dataTables_wrapper .dataTables_length {
     margin-bottom: 1em;
     text-align: left; /* Align length dropdown to the left */
+    position: relative; /* Ensure dropdown is not clipped */
+    z-index: 2; /* Make sure it appears above the table content */
 }
 
 .dataTables_wrapper .dataTables_length select {
