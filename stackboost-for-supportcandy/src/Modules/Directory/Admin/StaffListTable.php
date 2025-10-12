@@ -210,9 +210,25 @@ class StaffListTable extends \WP_List_Table {
 	}
 
 	/**
+	 * Process bulk actions.
+	 */
+	public function process_bulk_action() {
+		// Detect when a bulk action is being triggered.
+		if ( 'trash' === $this->current_action() ) {
+			$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( (array) $_REQUEST['post'] ) : array();
+			if ( ! empty( $post_ids ) ) {
+				foreach ( $post_ids as $post_id ) {
+					wp_trash_post( $post_id );
+				}
+			}
+		}
+	}
+
+	/**
 	 * Prepare the items for the table to process.
 	 */
 	public function prepare_items() {
+		$this->process_bulk_action();
 		$columns  = $this->get_columns();
 		$hidden   = array();
 		$sortable = $this->get_sortable_columns();
