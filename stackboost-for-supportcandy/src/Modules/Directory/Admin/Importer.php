@@ -220,7 +220,7 @@ class Importer {
 			$processed_location_name = trim( sanitize_text_field( $data['Location'] ) );
 
 			if ( ! empty( $processed_location_name ) ) {
-				$existing_location_post = get_page_by_title( $processed_location_name, OBJECT, self::$location_post_type_static );
+				$existing_location_post = get_page_by_title( $processed_location_name, OBJECT, self::$location_post_type_static, 'publish' );
 
 				if ( ! $existing_location_post ) {
 					$new_location_post_data = array(
@@ -249,7 +249,7 @@ class Importer {
 			update_post_meta( $inserted_staff_post_id, '_room_number', sanitize_text_field( $data['Room #'] ) );
 			$department_name = sanitize_text_field( $data['Department / Program'] );
 			if ( ! empty( $department_name ) ) {
-				$existing_department = get_page_by_title( $department_name, OBJECT, self::$department_post_type_static );
+				$existing_department = get_page_by_title( $department_name, OBJECT, self::$department_post_type_static, 'publish' );
 				if ( ! $existing_department ) {
 					wp_insert_post(
 						array(

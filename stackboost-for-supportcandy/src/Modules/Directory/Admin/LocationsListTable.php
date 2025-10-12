@@ -130,9 +130,34 @@ class LocationsListTable extends \WP_List_Table {
 	 * @return array
 	 */
 	protected function get_bulk_actions() {
-		return array(
-			'trash' => __( 'Trash', 'stackboost-for-supportcandy' ),
-		);
+		$actions = array();
+		if ( 'trash' === ( $_REQUEST['post_status'] ?? '' ) ) {
+			$actions['untrash'] = __( 'Restore', 'stackboost-for-supportcandy' );
+			$actions['delete']  = __( 'Delete Permanently', 'stackboost-for-supportcandy' );
+		} else {
+			$actions['trash'] = __( 'Trash', 'stackboost-for-supportcandy' );
+		}
+		return $actions;
+	}
+
+	/**
+	 * Get the views for the list table.
+	 *
+	 * @return array
+	 */
+	protected function get_views() {
+		$status_links = array();
+		$num_posts    = wp_count_posts( $this->post_type, 'readable' );
+		$class        = '';
+		$post_status  = $_REQUEST['post_status'] ?? '';
+
+		$status_links['all'] = "<a href='admin.php?page=stackboost-directory&tab=locations'>All <span class='count'>(" . sum_object_property( $num_posts, 'publish' ) . ')</span></a>';
+
+		if ( ! empty( $num_posts->trash ) ) {
+			$status_links['trash'] = "<a href='admin.php?page=stackboost-directory&tab=locations&post_status=trash'>Trash <span class='count'>(" . $num_posts->trash . ')</span></a>';
+		}
+
+		return $status_links;
 	}
 
 	/**
@@ -168,14 +193,31 @@ class LocationsListTable extends \WP_List_Table {
 	 * Process bulk actions.
 	 */
 	public function process_bulk_action() {
-		// Detect when a bulk action is being triggered.
-		if ( 'trash' === $this->current_action() ) {
-			$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( (array) $_REQUEST['post'] ) : array();
-			if ( ! empty( $post_ids ) ) {
+		$action = $this->current_action();
+		if ( ! $action ) {
+			return;
+		}
+		$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( (array) $_REQUEST['post'] ) : array();
+		if ( empty( $post_ids ) ) {
+			return;
+		}
+
+		switch ( $action ) {
+			case 'trash':
 				foreach ( $post_ids as $post_id ) {
 					wp_trash_post( $post_id );
 				}
-			}
+				break;
+			case 'untrash':
+				foreach ( $post_ids as $post_id ) {
+					wp_untrash_post( $post_id );
+				}
+				break;
+			case 'delete':
+				foreach ( $post_ids as $post_id ) {
+					wp_delete_post( $post_id, true );
+				}
+				break;
 		}
 	}
 
@@ -198,7 +240,7 @@ class LocationsListTable extends \WP_List_Table {
 			'post_type'      => $this->post_type,
 			'posts_per_page' => $per_page,
 			'offset'         => $offset,
-			'post_status'    => 'publish',
+			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( $_REQUEST['post_status'] ) : 'publish' ),
 		);
 
 		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( $_REQUEST['orderby'] ) : 'title';
