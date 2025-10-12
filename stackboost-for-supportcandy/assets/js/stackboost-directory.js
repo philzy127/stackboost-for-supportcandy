@@ -1,4 +1,6 @@
 jQuery(document).ready(function($) {
+    console.log('stackboost-directory.js loaded and document is ready.');
+
     // Initialize DataTables
     $('#stackboostStaffDirectoryTable').DataTable({
         "pageLength": 25,
@@ -9,8 +11,12 @@ jQuery(document).ready(function($) {
             "lengthMenu": "Show _MENU_ entries"
         },
         "initComplete": function(settings, json) {
+            console.log('DataTable initComplete callback fired.');
             var lengthSelect = $('.dataTables_length select');
+            console.log('Found dropdown element:', lengthSelect);
+
             if (lengthSelect.length > 0 && !lengthSelect.parent().hasClass('stackboost-select-wrapper')) {
+                console.log('Applying dropdown fix...');
                 lengthSelect.wrap('<div class="stackboost-select-wrapper"></div>');
                 $('.stackboost-select-wrapper').css({
                     'position': 'relative',
@@ -19,6 +25,9 @@ jQuery(document).ready(function($) {
                 $('<style>')
                     .text('.stackboost-select-wrapper::after { content: ""; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #555; pointer-events: none; } .stackboost-select-wrapper select { -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 25px; }')
                     .appendTo('head');
+                console.log('Dropdown fix applied.');
+            } else {
+                console.log('Dropdown fix not applied. Condition not met.');
             }
         }
     });
