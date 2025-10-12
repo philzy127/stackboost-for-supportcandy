@@ -73,7 +73,7 @@ class DirectoryShortcode {
 
 		ob_start();
 		?>
-		<div class="stackboost-staff-directory-container">
+		<div id="stackboost-directory-wrapper" class="stackboost-staff-directory-container">
 			<div id="stackboost-full-directory-table-wrapper">
 				<?php if ( $full_directory_entries->have_posts() ) : ?>
 					<table id="stackboostStaffDirectoryTable" class="display stackboost-staff-directory-table">
