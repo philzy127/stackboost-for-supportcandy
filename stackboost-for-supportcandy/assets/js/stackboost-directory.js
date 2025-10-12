@@ -1,44 +1,15 @@
 jQuery(document).ready(function($) {
-    console.log('StackBoost Directory script loaded.');
-
-    var $table = $('#stackboostStaffDirectoryTable');
-    console.log('Table element selected:', $table);
-
-    if ($table.length) {
-        console.log('Initializing DataTables...');
-        var dataTableInstance = $table.DataTable({
-            "pageLength": 25,
-            "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
-            "responsive": true,
-            "language": {
-                "search": "Filter results:",
-                "lengthMenu": "Show _MENU_ entries"
-            },
-            "initComplete": function(settings, json) {
-                console.log('DataTables initialization complete.');
-                // Corrected selector: Use the settings object to get the table wrapper
-                // and check for both modern and legacy class names for the length container.
-                var $select = $(settings.nTableWrapper).find('.dt-length select, .dataTables_length select');
-
-                if ($select.length) {
-                    console.log('--- Dropdown Element Debug ---');
-                    console.log('Select Element:', $select[0]);
-                    console.log('Parent Element:', $select.parent()[0]);
-
-                    var styles = window.getComputedStyle($select[0]);
-                    console.log('Computed CSS - z-index:', styles.zIndex);
-                    console.log('Computed CSS - position:', styles.position);
-                    console.log('Computed CSS - padding-right:', styles.paddingRight);
-                    console.log('Computed CSS - appearance:', styles.webkitAppearance || styles.mozAppearance || styles.appearance);
-                    console.log('--- End Debug ---');
-                } else {
-                    console.log('Could not find the length dropdown select element.');
-                }
-            }
-        });
-    } else {
-        console.log('StackBoost Directory table not found. Skipping DataTables initialization.');
-    }
+    // Initialize DataTables
+    $('#stackboostStaffDirectoryTable').DataTable({
+        "pageLength": 25,
+        "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+        "responsive": true,
+        "language": {
+            "search": "Filter results:",
+            "lengthMenu": "Show _MENU_ entries"
+        },
+        "dom": '<"stackboost-dt-top-bar" <"stackboost-dt-length-wrapper"l> f> t <"stackboost-dt-bottom-bar" i p>'
+    });
 
     // Copy to clipboard functionality for email
     $(document).on('click', '.stackboost-copy-email-icon', function() {

@@ -187,42 +187,6 @@ class DirectoryShortcode {
 		<?php
 		wp_reset_postdata();
 
-		$output = ob_get_clean();
-
-		// Inject CSS directly into the page to override theme/plugin conflicts.
-		$style_override = '
-			<style>
-				.dataTables_wrapper .dataTables_length,
-				.dataTables_wrapper .dt-length {
-					position: relative !important;
-					display: inline-block !important;
-				}
-				.dataTables_wrapper .dataTables_length select,
-				.dataTables_wrapper .dt-length select {
-					-webkit-appearance: none !important;
-					-moz-appearance: none !important;
-					appearance: none !important;
-					padding-right: 30px !important;
-					background-color: #fff !important;
-				}
-				.dataTables_wrapper .dataTables_length::after,
-				.dataTables_wrapper .dt-length::after {
-					content: "" !important;
-					position: absolute !important;
-					top: 50% !important;
-					right: 12px !important;
-					transform: translateY(-50%) !important;
-					width: 0 !important;
-					height: 0 !important;
-					border-left: 5px solid transparent !important;
-					border-right: 5px solid transparent !important;
-					border-top: 6px solid #666 !important;
-					pointer-events: none !important;
-					z-index: 2 !important;
-				}
-			</style>
-		';
-
-		return $output . $style_override;
+		return ob_get_clean();
 	}
 }
