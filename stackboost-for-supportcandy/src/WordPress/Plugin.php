@@ -8,6 +8,7 @@ use StackBoost\ForSupportCandy\Modules\ConditionalViews;
 use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\QueueMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
+use StackBoost\ForSupportCandy\Modules\Directory;
 
 /**
  * Main plugin class.
@@ -57,6 +58,7 @@ final class Plugin {
 		$this->modules['conditional_views']   = ConditionalViews\WordPress::get_instance();
 		$this->modules['queue_macro']         = QueueMacro\WordPress::get_instance();
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
+		$this->modules['directory']           = Directory\WordPress::get_instance();
 	}
 
 	/**
