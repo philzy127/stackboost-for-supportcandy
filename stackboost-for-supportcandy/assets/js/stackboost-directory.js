@@ -13,8 +13,9 @@ jQuery(document).ready(function($) {
         "initComplete": function(settings, json) {
             console.log('[DEBUG] stackboost-directory.js: DataTable initComplete callback fired.');
             var table = this.api();
-            var lengthSelect = $(table.table().container()).find('.dataTables_length select');
-            console.log('[DEBUG] stackboost-directory.js: Found dropdown element using API:', lengthSelect);
+            var wrapper = $(table.table().container()).closest('.dataTables_wrapper');
+            var lengthSelect = wrapper.find('.dataTables_length select');
+            console.log('[DEBUG] stackboost-directory.js: Found dropdown element using corrected selector:', lengthSelect);
             console.log('[DEBUG] stackboost-directory.js: Number of dropdowns found:', lengthSelect.length);
 
             if (lengthSelect.length > 0 && !lengthSelect.parent().hasClass('stackboost-select-wrapper')) {
