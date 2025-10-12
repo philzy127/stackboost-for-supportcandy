@@ -73,6 +73,35 @@ class DirectoryShortcode {
 
 		ob_start();
 		?>
+		<style>
+			#stackboost-directory-wrapper .dataTables_length {
+				position: relative !important;
+				display: inline-block !important;
+			}
+			#stackboost-directory-wrapper .dataTables_length::after {
+				content: '' !important;
+				position: absolute !important;
+				top: 50% !important;
+				right: 1.5em !important;
+				transform: translateY(-50%) !important;
+				width: 0 !important;
+				height: 0 !important;
+				border-left: 5px solid transparent !important;
+				border-right: 5px solid transparent !important;
+				border-top: 5px solid #555 !important;
+				pointer-events: none !important;
+				z-index: 999 !important;
+			}
+			#stackboost-directory-wrapper .dataTables_length select {
+				-webkit-appearance: none !important;
+				-moz-appearance: none !important;
+				appearance: none !important;
+				padding-right: 2em !important;
+				background-color: #fff !important;
+				border: 1px solid #ccc !important;
+				border-radius: 4px !important;
+			}
+		</style>
 		<div id="stackboost-directory-wrapper" class="stackboost-staff-directory-container">
 			<div id="stackboost-full-directory-table-wrapper">
 				<?php if ( $full_directory_entries->have_posts() ) : ?>
