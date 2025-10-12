@@ -5,7 +5,8 @@ jQuery(document).ready(function($) {
         "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
         "responsive": true,
         "language": {
-            "search": "Filter results:"
+            "search": "Filter results:",
+            "lengthMenu": "Show _MENU_ entries"
         }
     });
 

@@ -205,6 +205,12 @@
     text-align: left; /* Align length dropdown to the left */
 }
 
+.dataTables_wrapper .dataTables_length select {
+    margin: 0 0.5em;
+    display: inline-block;
+    width: auto;
+}
+
 .dataTables_wrapper .dataTables_filter {
     margin-bottom: 1em;
 }
