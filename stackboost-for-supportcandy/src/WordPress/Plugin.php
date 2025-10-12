@@ -9,6 +9,7 @@ use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\QueueMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
+use StackBoost\ForSupportCandy\Modules\DirectoryIntegration;
 
 /**
  * Main plugin class.
@@ -40,8 +41,16 @@ final class Plugin {
 	 * Constructor.
 	 */
 	private function __construct() {
+		$this->include_module_files();
 		$this->load_dependencies();
 		$this->init_hooks();
+	}
+
+	/**
+	 * Include module files that need to be loaded on every request.
+	 */
+	private function include_module_files() {
+		require_once STACKBOOST_PLUGIN_DIR . 'src/Modules/DirectoryIntegration/plugin.php';
 	}
 
 	/**
@@ -53,12 +62,13 @@ final class Plugin {
 		Settings::get_instance();
 
 		// Load all module adapters.
-		$this->modules['directory']           = Directory\WordPress::get_instance();
-		$this->modules['qol_enhancements']    = QolEnhancements\WordPress::get_instance();
-		$this->modules['after_hours_notice']  = AfterHoursNotice\WordPress::get_instance();
-		$this->modules['conditional_views']   = ConditionalViews\WordPress::get_instance();
-		$this->modules['queue_macro']         = QueueMacro\WordPress::get_instance();
-		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
+		$this->modules['directory']              = Directory\WordPress::get_instance();
+		$this->modules['directory_integration']  = new DirectoryIntegration\WordPress();
+		$this->modules['qol_enhancements']       = QolEnhancements\WordPress::get_instance();
+		$this->modules['after_hours_notice']     = AfterHoursNotice\WordPress::get_instance();
+		$this->modules['conditional_views']      = ConditionalViews\WordPress::get_instance();
+		$this->modules['queue_macro']            = QueueMacro\WordPress::get_instance();
+		$this->modules['after_ticket_survey']    = AfterTicketSurvey\WordPress::get_instance();
 	}
 
 	/**
