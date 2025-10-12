@@ -202,23 +202,23 @@
 
 /*
  * Robust Dropdown Arrow Styling for DataTables
- * This targets the custom wrapper we defined in the `dom` option.
+ * This targets the default wrapper and forcefully hides the default arrow.
  */
-.stackboost-dt-length-wrapper {
+.dataTables_wrapper .dataTables_length {
     position: relative;
     display: inline-block;
 }
 
-.stackboost-dt-length-wrapper select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
+.dataTables_wrapper .dataTables_length select {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
     padding-right: 30px !important;
     background-color: #fff;
     cursor: pointer;
 }
 
-.stackboost-dt-length-wrapper::after {
+.dataTables_wrapper .dataTables_length::after {
     content: '';
     position: absolute;
     top: 50%;

@@ -9,12 +9,12 @@ async def main():
         # Navigate to the provided URL
         await page.goto("https://stackboost.net/company-directory/")
 
-        # Wait for the table's length dropdown label to be visible
-        dropdown_label = page.locator('label[for="dt-length-0"]')
-        await expect(dropdown_label).to_be_visible(timeout=15000)
+        # Wait for the table's length dropdown to be visible
+        dropdown_wrapper = page.locator(".dataTables_length")
+        await expect(dropdown_wrapper).to_be_visible(timeout=15000)
 
         # Take a screenshot of the dropdown area
-        await dropdown_label.screenshot(path="jules-scratch/verification/verification.png")
+        await dropdown_wrapper.screenshot(path="jules-scratch/verification/verification.png")
 
         await browser.close()
 
