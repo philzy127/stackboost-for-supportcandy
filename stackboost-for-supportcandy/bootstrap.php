@@ -45,7 +45,6 @@ spl_autoload_register( function ( $class ) {
  * @since 3.0.0
  */
 function stackboost_run() {
-	stackboost_debug_log( 'stackboost_run() called.' );
 	return Plugin::get_instance();
 }
 
@@ -54,5 +53,4 @@ require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/src/WordPress/supportcandy-pro-check.php';
 
 // Get the plugin running.
-stackboost_debug_log( 'Bootstrap: Loading helper functions and running plugin.' );
 stackboost_run();

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: StackBoost - For SupportCandy
  * Description: A collection of enhancements for the SupportCandy plugin, rebranded and refactored.
- * Version: 3.0.1
+ * Version: 3.0.2
  * Author: Jules
  * Author URI: https://example.com
  * Text Domain: stackboost-for-supportcandy
@@ -14,15 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'STACKBOOST_VERSION', '3.0.1' );
+define( 'STACKBOOST_VERSION', '3.0.2' );
 define( 'STACKBOOST_PLUGIN_FILE', __FILE__ );
 define( 'STACKBOOST_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'STACKBOOST_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 // Include the bootstrap file.
 require_once STACKBOOST_PLUGIN_PATH . 'bootstrap.php';
-
-// Initial log to confirm the plugin is loading.
-if ( function_exists( 'stackboost_debug_log' ) ) {
-	stackboost_debug_log( 'StackBoost plugin file loaded.' );
-}
