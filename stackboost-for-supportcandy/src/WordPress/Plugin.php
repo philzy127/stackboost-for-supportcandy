@@ -10,6 +10,7 @@ use StackBoost\ForSupportCandy\Modules\QueueMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\Migration;
+use StackBoost\ForSupportCandy\WordPress\Upgrade;
 
 /**
  * Main plugin class.
@@ -61,6 +62,7 @@ final class Plugin {
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
 		$this->modules['directory']           = Directory\WordPress::get_instance();
 		new Migration();
+		new Upgrade();
 	}
 
 	/**
