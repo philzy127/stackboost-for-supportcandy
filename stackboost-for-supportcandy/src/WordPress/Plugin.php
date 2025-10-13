@@ -113,7 +113,7 @@ final class Plugin {
 			],
 			'directory'       => [
 				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
-				'slug'  => 'edit.php?post_type=chp_staff_directory',
+				'slug'  => 'stackboost-directory',
 			],
 			'how-to'          => [
 				'title' => __( 'How To Use', 'stackboost-for-supportcandy' ),
