@@ -117,7 +117,7 @@ class DirectoryShortcode {
 								$extension            = get_post_meta( $post_id, '_extension', true );
 								$mobile_phone         = get_post_meta( $post_id, '_mobile_phone', true );
 								$department_program   = get_post_meta( $post_id, '_department_program', true );
-								$job_title            = get_post_meta( $post_id, '_chp_staff_job_title', true );
+								$job_title            = get_post_meta( $post_id, '_stackboost_staff_job_title', true );
 								$email                = get_post_meta( $post_id, '_email_address', true );
 								$staff_permalink      = get_permalink( $post_id );
 								$edit_post_link       = get_edit_post_link( $post_id );
