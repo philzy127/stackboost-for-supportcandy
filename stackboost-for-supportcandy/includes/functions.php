@@ -1,45 +1,37 @@
 <?php
+/**
+ * General helper functions for the StackBoost plugin.
+ *
+ * @package StackBoost
+ */
 
-use StackBoost\ForSupportCandy\Core\License;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 /**
- * Checks if a specific feature is active based on the current license tier.
+ * Check if a StackBoost feature is active.
  *
- * This function acts as a central gatekeeper for all tiered features.
- *
- * @param string $feature_slug The unique identifier for the feature.
- * @return bool True if the feature is available, false otherwise.
+ * @param string $feature_slug The slug of the feature to check.
+ * @return bool True if the feature is active, false otherwise.
  */
 function stackboost_is_feature_active( string $feature_slug ): bool {
-    $current_tier = License::get_tier();
+	$options = get_option( 'stackboost_settings' );
+	return ! empty( $options[ 'enable_' . $feature_slug ] );
+}
 
-    $features_by_tier = [
-        'free' => [
-            'qol_enhancements',
-            'after_hours_notice',
-        ],
-        'plus' => [
-            'qol_enhancements',
-            'after_hours_notice',
-            'conditional_views',
-            'queue_macro',
-            'after_ticket_survey',
-        ],
-        'operations_suite' => [
-            'qol_enhancements',
-            'after_hours_notice',
-            'conditional_views',
-            'queue_macro',
-            'after_ticket_survey',
-            'onboarding_dashboard', // Coming soon
-            'staff_directory',      // Coming soon
-        ],
-    ];
-
-    // Check if the tier exists and if the feature is in the list for that tier.
-    if ( isset( $features_by_tier[ $current_tier ] ) ) {
-        return in_array( $feature_slug, $features_by_tier[ $current_tier ], true );
-    }
-
-    return false;
+/**
+ * Custom debug logging function.
+ *
+ * @param string $message The message to log.
+ */
+function stackboost_debug_log( $message ) {
+	// Ensure the path constant is defined before using it.
+	if ( ! defined( 'STACKBOOST_PLUGIN_PATH' ) ) {
+		return;
+	}
+	$log_file = STACKBOOST_PLUGIN_PATH . 'stackboost-debug.log';
+	$timestamp = date( 'Y-m-d H:i:s' );
+	$formatted_message = sprintf( "[%s] %s\n", $timestamp, print_r( $message, true ) );
+	file_put_contents( $log_file, $formatted_message, FILE_APPEND );
 }

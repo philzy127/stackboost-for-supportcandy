@@ -21,3 +21,8 @@ define( 'STACKBOOST_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 // Include the bootstrap file.
 require_once STACKBOOST_PLUGIN_PATH . 'bootstrap.php';
+
+// Initial log to confirm the plugin is loading.
+if ( function_exists( 'stackboost_debug_log' ) ) {
+	stackboost_debug_log( 'StackBoost plugin file loaded.' );
+}

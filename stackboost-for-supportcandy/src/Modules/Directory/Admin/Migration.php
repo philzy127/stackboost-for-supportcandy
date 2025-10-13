@@ -33,15 +33,19 @@ class Migration {
 	 * Constructor.
 	 */
 	public function __construct() {
+		stackboost_debug_log( 'Migration constructor started.' );
 		add_action( 'admin_notices', array( $this, 'show_migration_notice' ) );
 		add_action( 'wp_ajax_stackboost_directory_run_migration', array( $this, 'run_migration' ) );
+		stackboost_debug_log( 'Migration constructor finished.' );
 	}
 
 	/**
 	 * Show the migration notice if the migration has not been run.
 	 */
 	public function show_migration_notice() {
+		stackboost_debug_log( 'Checking whether to show migration notice.' );
 		if ( 'completed' !== get_option( self::MIGRATION_OPTION ) ) {
+			stackboost_debug_log( 'Showing migration notice.' );
 			?>
 			<div class="notice notice-info is-dismissible">
 				<p>
@@ -86,32 +90,41 @@ class Migration {
 	 * Run the data migration.
 	 */
 	public function run_migration() {
+		stackboost_debug_log( 'run_migration AJAX called.' );
 		if ( ! current_user_can( 'activate_plugins' ) ) {
+			stackboost_debug_log( 'Migration failed: insufficient permissions.' );
 			wp_send_json_error( array( 'message' => __( 'You do not have sufficient permissions to perform this action.', 'stackboost-for-supportcandy' ) ) );
 		}
 
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'stackboost_directory_migration_nonce' ) ) {
+			stackboost_debug_log( 'Migration failed: nonce verification failed.' );
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'stackboost-for-supportcandy' ) ) );
 		}
 
 		if ( 'completed' === get_option( self::MIGRATION_OPTION ) ) {
+			stackboost_debug_log( 'Migration failed: already completed.' );
 			wp_send_json_error( array( 'message' => __( 'Migration has already been completed.', 'stackboost-for-supportcandy' ) ) );
 		}
 
 		global $wpdb;
 
+		stackboost_debug_log( 'Starting database updates.' );
 		// Rename post types
 		$wpdb->query( "UPDATE {$wpdb->posts} SET post_type = 'stackboost_staff_directory' WHERE post_type = 'chp_staff_directory'" );
 		$wpdb->query( "UPDATE {$wpdb->posts} SET post_type = 'stackboost_location' WHERE post_type = 'chp_location'" );
 		$wpdb->query( "UPDATE {$wpdb->posts} SET post_type = 'stackboost_department' WHERE post_type = 'chp_department'" );
+		stackboost_debug_log( 'Post types renamed.' );
 
 		// Rename meta keys
 		$wpdb->query( "UPDATE {$wpdb->postmeta} SET meta_key = '_stackboost_staff_job_title' WHERE meta_key = '_chp_staff_job_title'" );
+		stackboost_debug_log( 'Meta keys renamed.' );
 
 		update_option( self::MIGRATION_OPTION, 'completed' );
+		stackboost_debug_log( 'Migration option set to completed.' );
 
 		// Flush rewrite rules to ensure the new post types are recognized.
 		flush_rewrite_rules();
+		stackboost_debug_log( 'Rewrite rules flushed.' );
 
 		wp_send_json_success( array( 'message' => __( 'Migration completed successfully.', 'stackboost-for-supportcandy' ) ) );
 	}

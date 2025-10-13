@@ -42,8 +42,10 @@ final class Plugin {
 	 * Constructor.
 	 */
 	private function __construct() {
+		stackboost_debug_log( 'Plugin constructor started.' );
 		$this->load_dependencies();
 		$this->init_hooks();
+		stackboost_debug_log( 'Plugin constructor finished.' );
 	}
 
 	/**
@@ -51,6 +53,7 @@ final class Plugin {
 	 * Their constructors will register their own hooks.
 	 */
 	private function load_dependencies() {
+		stackboost_debug_log( 'Loading dependencies.' );
 		// Load admin settings handler first, so menus are created.
 		Settings::get_instance();
 
@@ -63,15 +66,18 @@ final class Plugin {
 		$this->modules['directory']           = Directory\WordPress::get_instance();
 		new Migration();
 		new Upgrade();
+		stackboost_debug_log( 'Finished loading dependencies.' );
 	}
 
 	/**
 	 * Initialize WordPress hooks that are central to the plugin.
 	 */
 	private function init_hooks() {
+		stackboost_debug_log( 'Initializing main hooks.' );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_and_localize_frontend_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_menu' ], 999 );
+		stackboost_debug_log( 'Finished initializing main hooks.' );
 	}
 
 	/**

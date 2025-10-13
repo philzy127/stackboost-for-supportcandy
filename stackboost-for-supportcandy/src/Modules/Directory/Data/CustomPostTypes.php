@@ -51,24 +51,31 @@ class CustomPostTypes {
 	 * Hooks the registration of CPTs into the 'init' action.
 	 */
 	public function __construct() {
+		stackboost_debug_log( 'CustomPostTypes constructor started.' );
 		add_action( 'init', array( $this, 'register_all_cpts' ) );
 		$this->conditionally_register_old_cpts();
+		stackboost_debug_log( 'CustomPostTypes constructor finished.' );
 	}
 
 	/**
 	 * Register all custom post types.
 	 */
 	public function register_all_cpts() {
+		stackboost_debug_log( 'Registering all new CPTs.' );
 		$this->register_staff_directory_cpt();
 		$this->register_location_cpt();
 		$this->register_department_cpt();
+		stackboost_debug_log( 'Finished registering new CPTs.' );
 	}
 
 	/**
 	 * Conditionally register old CPTs for backward compatibility if the migration has not run.
 	 */
 	private function conditionally_register_old_cpts() {
-		if ( 'completed' !== get_option( 'stackboost_directory_migration_status' ) ) {
+		$migration_status = get_option( 'stackboost_directory_migration_status' );
+		stackboost_debug_log( 'Migration status: ' . $migration_status );
+		if ( 'completed' !== $migration_status ) {
+			stackboost_debug_log( 'Migration not complete, adding hook to register old CPTs.' );
 			add_action( 'init', array( $this, 'register_old_cpts_for_migration' ) );
 		}
 	}
@@ -77,6 +84,7 @@ class CustomPostTypes {
 	 * Register old CPTs with minimal settings to avoid errors during migration period.
 	 */
 	public function register_old_cpts_for_migration() {
+		stackboost_debug_log( 'Registering old CPTs for migration.' );
 		$cpts = array(
 			'chp_staff_directory' => array( 'slug' => 'staff' ),
 			'chp_location'        => array( 'slug' => 'location' ),
