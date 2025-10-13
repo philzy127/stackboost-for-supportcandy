@@ -22,13 +22,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Upgrade {
 
 	/**
-	 * The option name to store the plugin version.
-	 *
-	 * @var string
-	 */
-	const VERSION_OPTION = 'stackboost_version';
-
-	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -49,7 +42,7 @@ class Upgrade {
 	 * This fixes the "Invalid post type" error for users who updated to 3.0.0 and ran the migration.
 	 */
 	private function run_one_time_flush() {
-		$flush_flag = 'stackboost_rules_flushed_for_3_0_2';
+		$flush_flag = 'stackboost_rules_flushed_for_3_0_3';
 		if ( ! get_option( $flush_flag ) ) {
 			if ( 'completed' === get_option( 'stackboost_directory_migration_status' ) ) {
 				flush_rewrite_rules();

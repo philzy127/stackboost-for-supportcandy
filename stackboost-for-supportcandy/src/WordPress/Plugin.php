@@ -11,6 +11,7 @@ use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\Migration;
 use StackBoost\ForSupportCandy\WordPress\Upgrade;
+use StackBoost\ForSupportCandy\WordPress\Upgrade;
 
 /**
  * Main plugin class.
