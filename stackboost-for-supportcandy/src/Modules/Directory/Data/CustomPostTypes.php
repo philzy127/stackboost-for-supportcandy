@@ -52,6 +52,7 @@ class CustomPostTypes {
 	 */
 	public function __construct() {
 		add_action( 'init', array( $this, 'register_all_cpts' ) );
+		$this->conditionally_register_old_cpts();
 	}
 
 	/**
@@ -61,6 +62,48 @@ class CustomPostTypes {
 		$this->register_staff_directory_cpt();
 		$this->register_location_cpt();
 		$this->register_department_cpt();
+	}
+
+	/**
+	 * Conditionally register old CPTs for backward compatibility if the migration has not run.
+	 */
+	private function conditionally_register_old_cpts() {
+		if ( 'completed' !== get_option( 'stackboost_directory_migration_status' ) ) {
+			add_action( 'init', array( $this, 'register_old_cpts_for_migration' ) );
+		}
+	}
+
+	/**
+	 * Register old CPTs with minimal settings to avoid errors during migration period.
+	 */
+	public function register_old_cpts_for_migration() {
+		$cpts = array(
+			'chp_staff_directory' => array( 'slug' => 'staff' ),
+			'chp_location'        => array( 'slug' => 'location' ),
+			'chp_department'      => array( 'slug' => 'department' ),
+		);
+
+		foreach ( $cpts as $post_type => $args ) {
+			register_post_type(
+				$post_type,
+				array(
+					'public'              => false,
+					'show_ui'             => false,
+					'show_in_menu'        => false,
+					'show_in_admin_bar'   => false,
+					'show_in_nav_menus'   => false,
+					'can_export'          => false,
+					'has_archive'         => false,
+					'exclude_from_search' => true,
+					'publicly_queryable'  => false,
+					'rewrite'             => false,
+					'supports'            => array( 'title' ),
+					'labels'              => array(
+						'name' => 'Legacy ' . ucwords( str_replace( '_', ' ', $post_type ) ),
+					),
+				)
+			);
+		}
 	}
 
 	/**

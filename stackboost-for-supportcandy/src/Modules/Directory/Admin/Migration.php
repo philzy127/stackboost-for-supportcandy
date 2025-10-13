@@ -94,6 +94,10 @@ class Migration {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'stackboost-for-supportcandy' ) ) );
 		}
 
+		if ( 'completed' === get_option( self::MIGRATION_OPTION ) ) {
+			wp_send_json_error( array( 'message' => __( 'Migration has already been completed.', 'stackboost-for-supportcandy' ) ) );
+		}
+
 		global $wpdb;
 
 		// Rename post types
@@ -105,6 +109,9 @@ class Migration {
 		$wpdb->query( "UPDATE {$wpdb->postmeta} SET meta_key = '_stackboost_staff_job_title' WHERE meta_key = '_chp_staff_job_title'" );
 
 		update_option( self::MIGRATION_OPTION, 'completed' );
+
+		// Flush rewrite rules to ensure the new post types are recognized.
+		flush_rewrite_rules();
 
 		wp_send_json_success( array( 'message' => __( 'Migration completed successfully.', 'stackboost-for-supportcandy' ) ) );
 	}
