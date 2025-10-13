@@ -80,6 +80,13 @@ class WordPress {
 	 */
 	public function enqueue_admin_scripts() {
 		$screen = get_current_screen();
+
+		// Enqueue datepicker on the staff post type edit screens.
+		if ( in_array( $screen->id, array( 'stackboost_staff_directory', 'edit-stackboost_staff_directory' ) ) ) {
+			wp_enqueue_script( 'jquery-ui-datepicker' );
+			wp_enqueue_style( 'jquery-ui-style', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css' );
+		}
+
 		if ( 'stackboost_page_stackboost-directory' !== $screen->id ) {
 			return;
 		}

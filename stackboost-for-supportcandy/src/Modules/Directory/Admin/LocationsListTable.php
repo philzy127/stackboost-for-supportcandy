@@ -57,9 +57,9 @@ class LocationsListTable extends \WP_List_Table {
 	 */
 	public function get_columns() {
 		return array(
-			'cb'                   => '<input type="checkbox" />',
-			'title'                => __( 'Location Name', 'stackboost-for-supportcandy' ),
-			'chp_needs_completion' => __( 'Needs Completion', 'stackboost-for-supportcandy' ),
+			'cb'                         => '<input type="checkbox" />',
+			'title'                      => __( 'Location Name', 'stackboost-for-supportcandy' ),
+			'stackboost_needs_completion' => __( 'Needs Completion', 'stackboost-for-supportcandy' ),
 		);
 	}
 
@@ -70,8 +70,8 @@ class LocationsListTable extends \WP_List_Table {
 	 */
 	public function get_sortable_columns() {
 		return array(
-			'title'                => array( 'title', false ),
-			'chp_needs_completion' => array( 'chp_needs_completion', false ),
+			'title'                      => array( 'title', false ),
+			'stackboost_needs_completion' => array( 'stackboost_needs_completion', false ),
 		);
 	}
 
@@ -84,8 +84,8 @@ class LocationsListTable extends \WP_List_Table {
 	 */
 	public function column_default( $item, $column_name ) {
 		switch ( $column_name ) {
-			case 'chp_needs_completion':
-				$needs_completion = get_post_meta( $item->ID, '_needs_completion', true );
+			case 'stackboost_needs_completion':
+				$needs_completion = get_post_meta( $item->ID, '_stackboost_needs_completion', true );
 				if ( 'yes' === $needs_completion ) {
 					return '<span style="color: red; font-weight: bold;">' . esc_html__( 'Yes', 'stackboost-for-supportcandy' ) . '</span>';
 				} else {
@@ -185,11 +185,11 @@ class LocationsListTable extends \WP_List_Table {
 		if ( isset( $_REQUEST['post_status'] ) && 'trash' === $_REQUEST['post_status'] ) {
 			return;
 		}
-		$current_filter = isset( $_REQUEST['chp_needs_completion_filter'] ) ? sanitize_text_field( $_REQUEST['chp_needs_completion_filter'] ) : 'all';
+		$current_filter = isset( $_REQUEST['stackboost_needs_completion_filter'] ) ? sanitize_text_field( $_REQUEST['stackboost_needs_completion_filter'] ) : 'all';
 		?>
 		<div class="alignleft actions">
-			<label class="screen-reader-text" for="chp_needs_completion_filter"><?php esc_html_e( 'Filter by Completion Status', 'stackboost-for-supportcandy' ); ?></label>
-			<select name="chp_needs_completion_filter" id="chp_needs_completion_filter">
+			<label class="screen-reader-text" for="stackboost_needs_completion_filter"><?php esc_html_e( 'Filter by Completion Status', 'stackboost-for-supportcandy' ); ?></label>
+			<select name="stackboost_needs_completion_filter" id="stackboost_needs_completion_filter">
 				<option value="all" <?php selected( $current_filter, 'all' ); ?>><?php esc_html_e( 'All Completion Statuses', 'stackboost-for-supportcandy' ); ?></option>
 				<option value="yes" <?php selected( $current_filter, 'yes' ); ?>><?php esc_html_e( 'Needs Completion', 'stackboost-for-supportcandy' ); ?></option>
 				<option value="no" <?php selected( $current_filter, 'no' ); ?>><?php esc_html_e( 'Completed', 'stackboost-for-supportcandy' ); ?></option>
@@ -263,8 +263,8 @@ class LocationsListTable extends \WP_List_Table {
 		}
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
-			if ( 'chp_needs_completion' === $orderby ) {
-				$args['meta_key'] = '_needs_completion';
+			if ( 'stackboost_needs_completion' === $orderby ) {
+				$args['meta_key'] = '_stackboost_needs_completion';
 				$args['orderby']  = 'meta_value';
 			} else {
 				$args['orderby'] = $orderby;
@@ -272,11 +272,11 @@ class LocationsListTable extends \WP_List_Table {
 			$args['order'] = $order;
 		}
 
-		$current_filter = isset( $_REQUEST['chp_needs_completion_filter'] ) ? sanitize_text_field( $_REQUEST['chp_needs_completion_filter'] ) : 'all';
+		$current_filter = isset( $_REQUEST['stackboost_needs_completion_filter'] ) ? sanitize_text_field( $_REQUEST['stackboost_needs_completion_filter'] ) : 'all';
 		if ( 'all' !== $current_filter ) {
 			$args['meta_query'] = array(
 				array(
-					'key'   => '_needs_completion',
+					'key'   => '_stackboost_needs_completion',
 					'value' => $current_filter,
 				),
 			);

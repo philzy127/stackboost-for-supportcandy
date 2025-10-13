@@ -198,14 +198,13 @@ class Importer {
 				'post_type'   => self::$staff_post_type_static,
 			);
 
-			$inserted_staff_post_id = wp_insert_post( $post_data, true );
+			$inserted_staff_post_id = wp_insert_post( $post_data );
 
-			if ( is_wp_error( $inserted_staff_post_id ) || 0 === $inserted_staff_post_id ) {
-				$error_message = is_wp_error( $inserted_staff_post_id ) ? $inserted_staff_post_id->get_error_message() : 'wp_insert_post returned 0.';
+			if ( is_wp_error( $inserted_staff_post_id ) ) {
 				$skipped_count++;
 				$skipped_details[] = array(
-					'reason' => __( 'Staff post insertion failed', 'stackboost-for-supportcandy' ),
-					'data'   => 'Name: ' . $name . ' | Error: ' . $error_message . ' | Post Data: ' . wp_json_encode( $post_data ),
+					'reason' => __( 'Staff post insertion failed (e.g., duplicate title)', 'stackboost-for-supportcandy' ),
+					'data'   => $name . ' (Error: ' . $inserted_staff_post_id->get_error_message() . ')',
 				);
 				continue;
 			}
@@ -239,11 +238,10 @@ class Importer {
 					);
 					$new_location_id        = wp_insert_post( $new_location_post_data );
 
-					if ( is_wp_error( $new_location_id ) || 0 === $new_location_id ) {
-						$error_message = is_wp_error( $new_location_id ) ? $new_location_id->get_error_message() : 'wp_insert_post returned 0.';
+					if ( is_wp_error( $new_location_id ) ) {
 						$skipped_details[] = array(
 							'reason' => __( 'Failed to create new location', 'stackboost-for-supportcandy' ),
-							'data'   => 'Name: ' . $processed_location_name . ' | Error: ' . $error_message . ' | Post Data: ' . wp_json_encode( $new_location_post_data ),
+							'data'   => $processed_location_name . ' (Error: ' . $new_location_id->get_error_message() . ')',
 						);
 					} else {
 						update_post_meta( $new_location_id, '_needs_completion', 'yes' );
@@ -282,17 +280,16 @@ class Importer {
 							'post_type'   => self::$department_post_type_static,
 						)
 					);
-					if ( is_wp_error( $new_department_id ) || 0 === $new_department_id ) {
-						$error_message = is_wp_error( $new_department_id ) ? $new_department_id->get_error_message() : 'wp_insert_post returned 0.';
+					if ( is_wp_error( $new_department_id ) ) {
 						$skipped_details[] = array(
 							'reason' => __( 'Failed to create new department', 'stackboost-for-supportcandy' ),
-							'data'   => 'Name: ' . $department_name . ' | Error: ' . $error_message . ' | Post Data: ' . wp_json_encode( array( 'post_title' => $department_name, 'post_status' => 'publish', 'post_type' => self::$department_post_type_static ) ),
+							'data'   => $department_name . ' (Error: ' . $new_department_id->get_error_message() . ')',
 						);
 					}
 				}
 			}
 			update_post_meta( $inserted_staff_post_id, '_department_program', $department_name );
-			update_post_meta( $inserted_staff_post_id, '_chp_staff_job_title', sanitize_text_field( $data['Title'] ) );
+			update_post_meta( $inserted_staff_post_id, '_stackboost_staff_job_title', sanitize_text_field( $data['Title'] ) );
 			update_post_meta( $inserted_staff_post_id, '_email_address', sanitize_email( $data['Email Address'] ) );
 
 			$active_status_from_csv = sanitize_text_field( $data['Active'] );
