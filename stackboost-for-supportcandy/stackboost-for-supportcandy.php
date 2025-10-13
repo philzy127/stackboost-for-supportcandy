@@ -26,9 +26,17 @@ require_once STACKBOOST_PLUGIN_PATH . 'bootstrap.php';
  * Display an admin notice if the migration needs to be run.
  */
 function stackboost_migration_notice() {
+	$log_file = fopen( \STACKBOOST_PLUGIN_PATH . 'migration_trigger_debug.log', 'a' );
+	fwrite( $log_file, "migration_notice triggered at " . date( 'Y-m-d H:i:s' ) . "\n" );
+
 	if ( ! get_option( 'stackboost_prefix_migration_v1_complete' ) ) {
+		fwrite( $log_file, "Migration not complete, showing notice.\n" );
 		$migration_url = add_query_arg( array( 'stackboost_migrate' => 'true' ) );
 		echo '<div class="notice notice-warning is-dismissible">';
+	} else {
+		fwrite( $log_file, "Migration already complete, not showing notice.\n" );
+	}
+	fclose( $log_file );
 		echo '<p>' . esc_html__( 'The StackBoost plugin needs to update your database to be compatible with the latest version. Please back up your database and then', 'stackboost-for-supportcandy' ) . ' <a href="' . esc_url( $migration_url ) . '">' . esc_html__( 'click here to run the migration', 'stackboost-for-supportcandy' ) . '</a>.</p>';
 		echo '</div>';
 	}
