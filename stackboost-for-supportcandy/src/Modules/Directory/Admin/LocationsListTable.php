@@ -85,7 +85,7 @@ class LocationsListTable extends \WP_List_Table {
 	public function column_default( $item, $column_name ) {
 		switch ( $column_name ) {
 			case 'stackboost_needs_completion':
-				$needs_completion = get_post_meta( $item->ID, '_needs_completion', true );
+				$needs_completion = get_post_meta( $item->ID, '_stackboost_needs_completion', true );
 				if ( 'yes' === $needs_completion ) {
 					return '<span style="color: red; font-weight: bold;">' . esc_html__( 'Yes', 'stackboost-for-supportcandy' ) . '</span>';
 				} else {
@@ -264,7 +264,7 @@ class LocationsListTable extends \WP_List_Table {
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
 			if ( 'stackboost_needs_completion' === $orderby ) {
-				$args['meta_key'] = '_needs_completion';
+				$args['meta_key'] = '_stackboost_needs_completion';
 				$args['orderby']  = 'meta_value';
 			} else {
 				$args['orderby'] = $orderby;
@@ -276,7 +276,7 @@ class LocationsListTable extends \WP_List_Table {
 		if ( 'all' !== $current_filter ) {
 			$args['meta_query'] = array(
 				array(
-					'key'   => '_needs_completion',
+					'key'   => '_stackboost_needs_completion',
 					'value' => $current_filter,
 				),
 			);
