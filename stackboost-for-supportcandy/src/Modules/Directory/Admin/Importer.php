@@ -96,12 +96,7 @@ class Importer {
 	 * Handle the CSV file upload and import process.
 	 */
 	public static function handle_csv_upload() {
-		$log_file = fopen( \STACKBOOST_PLUGIN_PATH . 'importer_debug.log', 'w' );
-		fwrite( $log_file, "Importer started at " . date( 'Y-m-d H:i:s' ) . "\n" );
-
 		if ( ! current_user_can( 'activate_plugins' ) ) {
-			fwrite( $log_file, "Permission check failed.\n" );
-			fclose( $log_file );
 			wp_send_json_error( array( 'message' => __( 'You do not have sufficient permissions to perform this action.', 'stackboost-for-supportcandy' ) ) );
 		}
 
@@ -203,19 +198,17 @@ class Importer {
 				'post_type'   => self::$staff_post_type_static,
 			);
 
-			$inserted_staff_post_id = wp_insert_post( $post_data );
+			$inserted_staff_post_id = wp_insert_post( $post_data, true );
 
-			if ( is_wp_error( $inserted_staff_post_id ) ) {
-				$error_string = $inserted_staff_post_id->get_error_message();
-				fwrite( $log_file, "Failed to create staff: {$name}. Error: {$error_string}\n" );
+			if ( is_wp_error( $inserted_staff_post_id ) || 0 === $inserted_staff_post_id ) {
+				$error_message = is_wp_error( $inserted_staff_post_id ) ? $inserted_staff_post_id->get_error_message() : 'wp_insert_post returned 0.';
 				$skipped_count++;
 				$skipped_details[] = array(
-					'reason' => __( 'Staff post insertion failed (e.g., duplicate title)', 'stackboost-for-supportcandy' ),
-					'data'   => 'Name: ' . $name . ' | Error: ' . $error_string,
+					'reason' => __( 'Staff post insertion failed', 'stackboost-for-supportcandy' ),
+					'data'   => 'Name: ' . $name . ' | Error: ' . $error_message . ' | Post Data: ' . wp_json_encode( $post_data ),
 				);
 				continue;
 			}
-			fwrite( $log_file, "Successfully created staff: {$name} (ID: {$inserted_staff_post_id})\n" );
 
 			$imported_count++;
 
@@ -246,10 +239,11 @@ class Importer {
 					);
 					$new_location_id        = wp_insert_post( $new_location_post_data );
 
-					if ( is_wp_error( $new_location_id ) ) {
+					if ( is_wp_error( $new_location_id ) || 0 === $new_location_id ) {
+						$error_message = is_wp_error( $new_location_id ) ? $new_location_id->get_error_message() : 'wp_insert_post returned 0.';
 						$skipped_details[] = array(
 							'reason' => __( 'Failed to create new location', 'stackboost-for-supportcandy' ),
-							'data'   => $processed_location_name . ' (Error: ' . $new_location_id->get_error_message() . ')',
+							'data'   => 'Name: ' . $processed_location_name . ' | Error: ' . $error_message . ' | Post Data: ' . wp_json_encode( $new_location_post_data ),
 						);
 					} else {
 						update_post_meta( $new_location_id, '_needs_completion', 'yes' );
@@ -288,20 +282,17 @@ class Importer {
 							'post_type'   => self::$department_post_type_static,
 						)
 					);
-					if ( is_wp_error( $new_department_id ) ) {
-						$error_string = $new_department_id->get_error_message();
-						fwrite( $log_file, "Failed to create department: {$department_name}. Error: {$error_string}\n" );
+					if ( is_wp_error( $new_department_id ) || 0 === $new_department_id ) {
+						$error_message = is_wp_error( $new_department_id ) ? $new_department_id->get_error_message() : 'wp_insert_post returned 0.';
 						$skipped_details[] = array(
 							'reason' => __( 'Failed to create new department', 'stackboost-for-supportcandy' ),
-							'data'   => 'Name: ' . $department_name . ' | Error: ' . $error_string,
+							'data'   => 'Name: ' . $department_name . ' | Error: ' . $error_message . ' | Post Data: ' . wp_json_encode( array( 'post_title' => $department_name, 'post_status' => 'publish', 'post_type' => self::$department_post_type_static ) ),
 						);
-					} else {
-						fwrite( $log_file, "Successfully created department: {$department_name} (ID: {$new_department_id})\n" );
 					}
 				}
 			}
 			update_post_meta( $inserted_staff_post_id, '_department_program', $department_name );
-			update_post_meta( $inserted_staff_post_id, '_stackboost_staff_job_title', sanitize_text_field( $data['Title'] ) );
+			update_post_meta( $inserted_staff_post_id, '_chp_staff_job_title', sanitize_text_field( $data['Title'] ) );
 			update_post_meta( $inserted_staff_post_id, '_email_address', sanitize_email( $data['Email Address'] ) );
 
 			$active_status_from_csv = sanitize_text_field( $data['Active'] );
@@ -336,7 +327,5 @@ class Importer {
 				'skipped_details' => $skipped_details,
 			)
 		);
-		fwrite( $log_file, "Importer finished at " . date( 'Y-m-d H:i:s' ) . "\n" );
-		fclose( $log_file );
 	}
 }
