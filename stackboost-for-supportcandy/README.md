@@ -1,11 +1,12 @@
-# SupportCandy Plus
+# StackBoost for SupportCandy
 
-SupportCandy Plus is a powerful enhancement plugin for the SupportCandy helpdesk system in WordPress. It adds a suite of advanced features designed to streamline ticket management, improve agent workflow, and provide greater control over the user interface.
+StackBoost for SupportCandy is a powerful enhancement plugin for the SupportCandy helpdesk system in WordPress. It adds a suite of advanced features designed to streamline ticket management, improve agent workflow, and provide greater control over the user interface.
 
 ## Features
 
 This plugin includes several modules that can be enabled or disabled based on your needs:
 
+*   **Company Directory:** A complete, filterable, and searchable staff directory integrated directly into WordPress.
 *   **Ticket Hover Card:** Quickly view ticket details by hovering over them in the ticket list.
 *   **General Cleanup:** Automatically hide empty columns or the priority column to reduce clutter.
 *   **Ticket Type Hiding:** Restrict which ticket types are visible to non-agent users.
@@ -16,7 +17,7 @@ This plugin includes several modules that can be enabled or disabled based on yo
 
 ## Conditional Column Hiding
 
-This is one of the most powerful features of SupportCandy Plus. It allows you to create a set of rules to control the visibility of columns in the ticket list based on the currently selected ticket view (filter). This creates a dynamic and context-aware ticket list, showing agents only the information they need for a specific task.
+This is one of the most powerful features of StackBoost. It allows you to create a set of rules to control the visibility of columns in the ticket list based on the currently selected ticket view (filter). This creates a dynamic and context-aware ticket list, showing agents only the information they need for a specific task.
 
 ### How the Rule Builder Works
 

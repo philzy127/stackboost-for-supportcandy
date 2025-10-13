@@ -29,21 +29,21 @@ class CustomPostTypes {
 	 *
 	 * @var string
 	 */
-	public $post_type = 'chp_staff_directory';
+	public $post_type = 'stackboost_staff_directory';
 
 	/**
 	 * The custom post type slug for locations.
 	 *
 	 * @var string
 	 */
-	public $location_post_type = 'chp_location';
+	public $location_post_type = 'stackboost_location';
 
 	/**
 	 * The custom post type slug for departments.
 	 *
 	 * @var string
 	 */
-	public $department_post_type = 'chp_department';
+	public $department_post_type = 'stackboost_department';
 
 	/**
 	 * Constructor.

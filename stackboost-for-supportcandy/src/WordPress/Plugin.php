@@ -9,6 +9,7 @@ use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\QueueMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
+use StackBoost\ForSupportCandy\Modules\DirectoryMigration;
 
 /**
  * Main plugin class.
@@ -59,6 +60,7 @@ final class Plugin {
 		$this->modules['queue_macro']         = QueueMacro\WordPress::get_instance();
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
 		$this->modules['directory']           = Directory\WordPress::get_instance();
+		$this->modules['directory_migration'] = DirectoryMigration\WordPress::get_instance();
 	}
 
 	/**
