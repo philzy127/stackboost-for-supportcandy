@@ -206,9 +206,9 @@
 }
 
 .dataTables_wrapper .dataTables_length select {
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
     padding-right: 30px;
     background-color: #fff;
     cursor: pointer;
@@ -218,7 +218,7 @@
     content: '';
     position: absolute;
     top: 50%;
-    right: 8px;
+    right: 12px;
     transform: translateY(-50%);
     width: 0;
     height: 0;
@@ -226,7 +226,6 @@
     border-right: 5px solid transparent;
     border-top: 6px solid #666;
     pointer-events: none;
-    z-index: 2;
 }
 
 .dataTables_wrapper .dataTables_filter {

@@ -6,7 +6,7 @@ jQuery(document).ready(function($) {
         "responsive": true,
         "language": {
             "search": "Filter results:",
-            "lengthMenu": "Show _MENU_ entries"
+            "lengthMenu": "Show entries _MENU_"
         }
     });
 
