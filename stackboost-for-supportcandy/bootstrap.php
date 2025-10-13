@@ -50,6 +50,7 @@ function stackboost_run() {
 
 // Include helper functions.
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/src/WordPress/supportcandy-pro-check.php';
 
 // Get the plugin running.
 stackboost_run();

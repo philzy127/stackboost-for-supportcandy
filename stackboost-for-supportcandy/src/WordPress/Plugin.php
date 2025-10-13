@@ -67,6 +67,72 @@ final class Plugin {
 	private function init_hooks() {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_and_localize_frontend_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
+		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_menu' ], 999 );
+	}
+
+	/**
+	 * Add a "StackBoost" menu to the admin bar.
+	 *
+	 * @param \WP_Admin_Bar $wp_admin_bar The WP_Admin_Bar instance.
+	 */
+	public function add_admin_bar_menu( \WP_Admin_Bar $wp_admin_bar ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$main_menu_slug = 'stackboost-for-supportcandy';
+
+		// Add the main "StackBoost" parent menu item.
+		$wp_admin_bar->add_node( [
+			'id'    => 'stackboost-menu',
+			'title' => '<span class="ab-icon dashicons-superhero"></span>' . __( 'StackBoost', 'stackboost-for-supportcandy' ),
+			'href'  => admin_url( 'admin.php?page=' . $main_menu_slug ),
+		] );
+
+		// Add submenu items.
+		$submenus = [
+			'settings'        => [
+				'title' => __( 'General Settings', 'stackboost-for-supportcandy' ),
+				'slug'  => $main_menu_slug,
+			],
+			'conditional'     => [
+				'title' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-conditional-views',
+			],
+			'queue-macro'     => [
+				'title' => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-queue-macro',
+			],
+			'after-hours'     => [
+				'title' => __( 'After Hours Notice', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-after-hours',
+			],
+			'ats'             => [
+				'title' => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-ats-settings',
+			],
+			'directory'       => [
+				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-directory',
+			],
+			'how-to'          => [
+				'title' => __( 'How To Use', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-how-to-use',
+			],
+		];
+
+		foreach ( $submenus as $id => $menu ) {
+			// For CPTs, the URL structure is different.
+			$is_cpt = str_contains( $menu['slug'], '.php' );
+			$href   = $is_cpt ? admin_url( $menu['slug'] ) : admin_url( 'admin.php?page=' . $menu['slug'] );
+
+			$wp_admin_bar->add_node( [
+				'id'     => 'stackboost-' . $id,
+				'parent' => 'stackboost-menu',
+				'title'  => $menu['title'],
+				'href'   => $href,
+			] );
+		}
 	}
 
 	/**
