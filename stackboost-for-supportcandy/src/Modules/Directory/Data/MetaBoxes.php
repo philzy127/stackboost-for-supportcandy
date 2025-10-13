@@ -90,17 +90,17 @@ class MetaBoxes {
 		$is_add_new_screen = ( $current_screen && 'add' === $current_screen->action );
 
 		$fields = array(
-			'office_phone'        => 'Office Phone',
-			'extension'           => 'Extension',
-			'mobile_phone'        => 'Mobile Phone',
-			'location'            => 'Location',
-			'room_number'         => 'Room #',
-			'department_program'  => 'Department / Program',
-			'chp_staff_job_title' => 'Title',
-			'email_address'       => 'Email Address',
-			'active'              => 'Active',
-			'active_as_of_date'   => 'Active as of:',
-			'planned_exit_date'   => 'Inactive as of:',
+			'office_phone'              => 'Office Phone',
+			'extension'                 => 'Extension',
+			'mobile_phone'              => 'Mobile Phone',
+			'location'                  => 'Location',
+			'room_number'               => 'Room #',
+			'department_program'        => 'Department / Program',
+			'stackboost_staff_job_title' => 'Title',
+			'email_address'             => 'Email Address',
+			'active'                    => 'Active',
+			'active_as_of_date'         => 'Active as of:',
+			'planned_exit_date'         => 'Inactive as of:',
 		);
 
 		if ( ! $is_add_new_screen ) {
@@ -296,7 +296,7 @@ class MetaBoxes {
 			'mobile_phone',
 			'room_number',
 			'department_program',
-			'chp_staff_job_title',
+			'stackboost_staff_job_title',
 			'email_address',
 			'active_as_of_date',
 			'planned_exit_date',
