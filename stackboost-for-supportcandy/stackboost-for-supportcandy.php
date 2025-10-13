@@ -26,7 +26,7 @@ require_once STACKBOOST_PLUGIN_PATH . 'bootstrap.php';
  * Display an admin notice if the migration needs to be run.
  */
 function stackboost_migration_notice() {
-	if ( ! get_option( 'stackboost_migration_complete' ) ) {
+	if ( ! get_option( 'stackboost_prefix_migration_v1_complete' ) ) {
 		$migration_url = add_query_arg( array( 'stackboost_migrate' => 'true' ) );
 		echo '<div class="notice notice-warning is-dismissible">';
 		echo '<p>' . esc_html__( 'The StackBoost plugin needs to update your database to be compatible with the latest version. Please back up your database and then', 'stackboost-for-supportcandy' ) . ' <a href="' . esc_url( $migration_url ) . '">' . esc_html__( 'click here to run the migration', 'stackboost-for-supportcandy' ) . '</a>.</p>';
@@ -43,7 +43,7 @@ function stackboost_handle_migration() {
 		if ( file_exists( STACKBOOST_PLUGIN_PATH . 'src/Modules/Directory/Admin/Migration.php' ) ) {
 			require_once STACKBOOST_PLUGIN_PATH . 'src/Modules/Directory/Admin/Migration.php';
 			\StackBoost\ForSupportCandy\Modules\Directory\Admin\Migration::run();
-			update_option( 'stackboost_migration_complete', true );
+			update_option( 'stackboost_prefix_migration_v1_complete', true );
 			wp_safe_redirect( remove_query_arg( 'stackboost_migrate' ) );
 			exit;
 		}
