@@ -96,7 +96,12 @@ class Importer {
 	 * Handle the CSV file upload and import process.
 	 */
 	public static function handle_csv_upload() {
+		$log_file = fopen( \STACKBOOST_PLUGIN_PATH . 'importer_debug.log', 'w' );
+		fwrite( $log_file, "Importer started at " . date( 'Y-m-d H:i:s' ) . "\n" );
+
 		if ( ! current_user_can( 'activate_plugins' ) ) {
+			fwrite( $log_file, "Permission check failed.\n" );
+			fclose( $log_file );
 			wp_send_json_error( array( 'message' => __( 'You do not have sufficient permissions to perform this action.', 'stackboost-for-supportcandy' ) ) );
 		}
 
@@ -201,13 +206,16 @@ class Importer {
 			$inserted_staff_post_id = wp_insert_post( $post_data );
 
 			if ( is_wp_error( $inserted_staff_post_id ) ) {
+				$error_string = $inserted_staff_post_id->get_error_message();
+				fwrite( $log_file, "Failed to create staff: {$name}. Error: {$error_string}\n" );
 				$skipped_count++;
 				$skipped_details[] = array(
 					'reason' => __( 'Staff post insertion failed (e.g., duplicate title)', 'stackboost-for-supportcandy' ),
-					'data'   => $name . ' (Error: ' . $inserted_staff_post_id->get_error_message() . ')',
+					'data'   => 'Name: ' . $name . ' | Error: ' . $error_string,
 				);
 				continue;
 			}
+			fwrite( $log_file, "Successfully created staff: {$name} (ID: {$inserted_staff_post_id})\n" );
 
 			$imported_count++;
 
@@ -281,10 +289,14 @@ class Importer {
 						)
 					);
 					if ( is_wp_error( $new_department_id ) ) {
+						$error_string = $new_department_id->get_error_message();
+						fwrite( $log_file, "Failed to create department: {$department_name}. Error: {$error_string}\n" );
 						$skipped_details[] = array(
 							'reason' => __( 'Failed to create new department', 'stackboost-for-supportcandy' ),
-							'data'   => $department_name . ' (Error: ' . $new_department_id->get_error_message() . ')',
+							'data'   => 'Name: ' . $department_name . ' | Error: ' . $error_string,
 						);
+					} else {
+						fwrite( $log_file, "Successfully created department: {$department_name} (ID: {$new_department_id})\n" );
 					}
 				}
 			}
@@ -324,5 +336,7 @@ class Importer {
 				'skipped_details' => $skipped_details,
 			)
 		);
+		fwrite( $log_file, "Importer finished at " . date( 'Y-m-d H:i:s' ) . "\n" );
+		fclose( $log_file );
 	}
 }
