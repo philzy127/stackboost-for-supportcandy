@@ -18,22 +18,32 @@ define( 'STACKBOOST_VERSION', '1.0.0' );
 define( 'STACKBOOST_PLUGIN_FILE', __FILE__ );
 define( 'STACKBOOST_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'STACKBOOST_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'STACKBOOST_REQUIRED_UPDATE_TIMESTAMP', '202510131839' );
 
-// Include the bootstrap file.
+// Include the bootstrap file to run the plugin.
 require_once STACKBOOST_PLUGIN_PATH . 'bootstrap.php';
 
 /**
- * Flush rewrite rules on plugin activation.
+ * Handles one-time upgrade routines.
  *
- * This ensures that the new custom post type slugs are recognized by WordPress.
+ * This function runs on 'admin_init' and checks if the plugin has been updated
+ * by comparing a timestamp in the code with one in the database. If an update
+ * is needed, it runs the necessary functions.
  */
-function stackboost_activate() {
-	error_log('[StackBoost DEBUG] Plugin activation hook fired.');
-	// Manually trigger the plugin's initialization to ensure CPTs are registered.
-	stackboost_run();
-	error_log('[StackBoost DEBUG] stackboost_run() called to register CPTs.');
-	// Now flush the rewrite rules.
-	flush_rewrite_rules();
-	error_log('[StackBoost DEBUG] flush_rewrite_rules() called.');
+function stackboost_upgrade_routine() {
+	if ( ! is_admin() ) {
+		return;
+	}
+
+	$last_update = get_option( 'stackboost_last_update_completed_timestamp', 0 );
+
+	error_log('[StackBoost DEBUG] Checking for upgrades. Required timestamp: ' . STACKBOOST_REQUIRED_UPDATE_TIMESTAMP . ', Completed timestamp: ' . $last_update);
+
+	if ( STACKBOOST_REQUIRED_UPDATE_TIMESTAMP > $last_update ) {
+		error_log('[StackBoost DEBUG] Upgrade needed. Flushing rewrite rules.');
+		flush_rewrite_rules();
+		update_option( 'stackboost_last_update_completed_timestamp', time() );
+		error_log('[StackBoost DEBUG] Upgrade complete. New completed timestamp: ' . time());
+	}
 }
-register_activation_hook( __FILE__, 'stackboost_activate' );
+add_action( 'admin_init', 'stackboost_upgrade_routine' );
