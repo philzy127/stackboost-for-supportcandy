@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
         if (locationId) {
             // Set the hidden field with the location name
             var locationName = $(this).find('option:selected').text();
-            $('#stackboost_staff_directory_location_name_hidden').val(locationName);
+            $('#sb_staff_dir_location_name_hidden').val(locationName);
         }
     });
 });

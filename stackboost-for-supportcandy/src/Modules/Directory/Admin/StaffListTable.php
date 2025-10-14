@@ -64,7 +64,7 @@ class StaffListTable extends \WP_List_Table {
 			'title'                => __( 'Staff Name', 'stackboost-for-supportcandy' ),
 			'stackboost_contact_phone'    => __( 'Phone', 'stackboost-for-supportcandy' ),
 			'stackboost_email_address'    => __( 'Email', 'stackboost-for-supportcandy' ),
-			'stackboost_department_program' => __( 'Department / Program', 'stackboost-for-supportcandy' ),
+			'sb_department_program' => __( 'Department / Program', 'stackboost-for-supportcandy' ),
 			'stackboost_job_title'        => __( 'Job Title', 'stackboost-for-supportcandy' ),
 		);
 
@@ -83,7 +83,7 @@ class StaffListTable extends \WP_List_Table {
 	public function get_sortable_columns() {
 		return array(
 			'title'                => array( 'title', false ),
-			'stackboost_department_program' => array( 'stackboost_department_program', false ),
+			'sb_department_program' => array( 'sb_department_program', false ),
 			'stackboost_job_title'        => array( 'stackboost_job_title', false ),
 		);
 	}
@@ -125,7 +125,7 @@ class StaffListTable extends \WP_List_Table {
 				} else {
 					return '&mdash;';
 				}
-			case 'stackboost_department_program':
+			case 'sb_department_program':
 				return esc_html( get_post_meta( $item->ID, '_department_program', true ) );
 			case 'stackboost_job_title':
 				return esc_html( get_post_meta( $item->ID, '_stackboost_staff_job_title', true ) );
@@ -310,7 +310,7 @@ class StaffListTable extends \WP_List_Table {
 		}
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
-			if ( 'stackboost_department_program' === $orderby ) {
+			if ( 'sb_department_program' === $orderby ) {
 				$args['meta_key'] = '_department_program';
 				$args['orderby']  = 'meta_value';
 			} elseif ( 'stackboost_job_title' === $orderby ) {
