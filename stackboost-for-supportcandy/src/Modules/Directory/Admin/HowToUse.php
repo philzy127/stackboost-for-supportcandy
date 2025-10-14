@@ -36,7 +36,7 @@ class HowToUse {
 			<div class="postbox">
 				<h2 class="hndle"><span><?php esc_html_e( 'Adding & Managing Staff, Locations, and Departments', 'stackboost-for-supportcandy' ); ?></span></h2>
 				<div class="inside">
-					<p><?php esc_html_e( 'The <strong>Staff</strong>, <strong>Locations</strong>, and <strong>Departments</strong> tabs allow you to manage the core data of your directory. To add a new item to any of these categories, simply click the "Add New" button at the top of the respective table.', 'stackboost-for-supportcandy' ); ?></p>
+					<p><?php echo wp_kses_post( __( 'The <strong>Staff</strong>, <strong>Locations</strong>, and <strong>Departments</strong> tabs allow you to manage the core data of your directory. To add a new item to any of these categories, simply click the "Add New" button at the top of the respective table.', 'stackboost-for-supportcandy' ) ); ?></p>
 					<p><?php echo wp_kses_post( __( '<strong>Note:</strong> The ability to add and edit these items is controlled by the roles defined in the <strong>Settings</strong> tab. By default, only Administrators can manage these listings.', 'stackboost-for-supportcandy' ) ); ?></p>
 				</div>
 			</div>
