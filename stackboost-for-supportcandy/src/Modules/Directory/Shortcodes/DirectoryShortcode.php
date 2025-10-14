@@ -190,7 +190,7 @@ class DirectoryShortcode {
 
 		$tel_link = 'tel:' . $phone_digits;
 		if ( ! empty( $extension ) ) {
-			$tel_link .= ',' . $extension;
+			$tel_link .= ';ext=' . $extension;
 			$display_phone .= ', ext. ' . esc_html( $extension );
 		}
 
