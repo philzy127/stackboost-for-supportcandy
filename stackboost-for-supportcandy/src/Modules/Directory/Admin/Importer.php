@@ -289,7 +289,7 @@ class Importer {
 				}
 			}
 			update_post_meta( $inserted_staff_post_id, '_department_program', $department_name );
-			update_post_meta( $inserted_staff_post_id, '_chp_staff_job_title', sanitize_text_field( $data['Title'] ) );
+			update_post_meta( $inserted_staff_post_id, '_stackboost_staff_job_title', sanitize_text_field( $data['Title'] ) );
 			update_post_meta( $inserted_staff_post_id, '_email_address', sanitize_email( $data['Email Address'] ) );
 
 			$active_status_from_csv = sanitize_text_field( $data['Active'] );
