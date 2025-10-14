@@ -40,7 +40,6 @@ class StaffListTable extends \WP_List_Table {
 	 */
 	public function __construct( $post_type ) {
 		$this->post_type = $post_type;
-		error_log('[StackBoost DEBUG] StaffListTable instantiated with CPT: ' . $post_type);
 
 		parent::__construct(
 			array(
@@ -332,12 +331,9 @@ class StaffListTable extends \WP_List_Table {
 			);
 		}
 
-		error_log('[StackBoost DEBUG] StaffListTable Query Args: ' . print_r($args, true));
 		$query      = new \WP_Query( $args );
 		if ($query->have_posts()) {
-			error_log('[StackBoost DEBUG] StaffListTable Query FOUND ' . $query->found_posts . ' posts.');
 		} else {
-			error_log('[StackBoost DEBUG] StaffListTable Query found NO posts.');
 		}
 		$this->items = $query->posts;
 

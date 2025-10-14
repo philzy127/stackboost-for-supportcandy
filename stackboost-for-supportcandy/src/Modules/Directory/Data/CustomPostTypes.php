@@ -58,7 +58,6 @@ class CustomPostTypes {
 	 * Register all custom post types.
 	 */
 	public function register_all_cpts() {
-		error_log('[StackBoost DEBUG] Firing register_all_cpts()');
 		$this->register_staff_directory_cpt();
 		$this->register_location_cpt();
 		$this->register_department_cpt();
@@ -117,12 +116,9 @@ class CustomPostTypes {
 			'capability_type'     => 'post',
 			'rewrite'             => array( 'slug' => 'staff' ),
 		);
-		error_log('[StackBoost DEBUG] Registering CPT: ' . $this->post_type);
 		$result = register_post_type( $this->post_type, $args );
 		if (is_wp_error($result)) {
-			error_log('[StackBoost DEBUG] FAILED to register CPT ' . $this->post_type . '. Error: ' . $result->get_error_message());
 		} else {
-			error_log('[StackBoost DEBUG] Successfully registered CPT: ' . $this->post_type);
 		}
 	}
 
@@ -174,12 +170,9 @@ class CustomPostTypes {
 			'capability_type'     => 'post',
 			'rewrite'             => false,
 		);
-		error_log('[StackBoost DEBUG] Registering CPT: ' . $this->location_post_type);
 		$result = register_post_type( $this->location_post_type, $args );
 		if (is_wp_error($result)) {
-			error_log('[StackBoost DEBUG] FAILED to register CPT ' . $this->location_post_type . '. Error: ' . $result->get_error_message());
 		} else {
-			error_log('[StackBoost DEBUG] Successfully registered CPT: ' . $this->location_post_type);
 		}
 	}
 
@@ -231,12 +224,9 @@ class CustomPostTypes {
 			'capability_type'     => 'post',
 			'rewrite'             => false,
 		);
-		error_log('[StackBoost DEBUG] Registering CPT: ' . $this->department_post_type);
 		$result = register_post_type( $this->department_post_type, $args );
 		if (is_wp_error($result)) {
-			error_log('[StackBoost DEBUG] FAILED to register CPT ' . $this->department_post_type . '. Error: ' . $result->get_error_message());
 		} else {
-			error_log('[StackBoost DEBUG] Successfully registered CPT: ' . $this->department_post_type);
 		}
 	}
 }
