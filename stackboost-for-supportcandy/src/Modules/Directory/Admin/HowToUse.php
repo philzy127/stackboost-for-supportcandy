@@ -68,6 +68,7 @@ class HowToUse {
 			<div class="postbox">
 				<h2 class="hndle"><span><?php esc_html_e( 'Management Tools', 'stackboost-for-supportcandy' ); ?></span></h2>
 				<div class="inside">
+					<?php // This section explains the bulk data operations. ?>
 					<p><?php echo wp_kses_post( __( 'The <strong>Management</strong> tab provides tools for bulk data operations. Access to this tab is restricted by the roles you define in the Settings tab.', 'stackboost-for-supportcandy' ) ); ?></p>
 					<ul>
 						<li><?php echo wp_kses_post( __( '<strong>Import Staff from CSV:</strong> Bulk-upload new staff members from a CSV file. This tool only adds new entries and does not update existing ones.', 'stackboost-for-supportcandy' ) ); ?></li>
