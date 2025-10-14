@@ -405,3 +405,29 @@
     cursor: not-allowed;
     box-shadow: none;
 }
+
+/* Toast Notification Styles */
+.stackboost-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 5px;
+    z-index: 9999;
+    display: none; /* Hidden by default */
+    font-size: 16px;
+}
+
+/* Copied Icon Feedback */
+.stackboost-copy-phone-icon,
+.stackboost-copy-email-icon {
+    transition: color 0.2s ease-in-out;
+}
+
+.stackboost-copy-phone-icon.copied svg,
+.stackboost-copy-email-icon.copied svg {
+    fill: #4CAF50; /* Green color on copy */
+}
