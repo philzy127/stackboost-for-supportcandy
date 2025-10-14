@@ -66,9 +66,8 @@ class DirectoryShortcode {
 
 		$full_directory_entries = new \WP_Query( $full_table_args );
 
-		$current_user     = wp_get_current_user();
-		$user_roles       = (array) $current_user->roles;
-		$can_edit_entries = in_array( 'it_technician', $user_roles, true ) || in_array( 'administrator', $user_roles, true );
+		$directory_wordpress = \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance();
+		$can_edit_entries = $directory_wordpress->can_user_edit();
 
 		ob_start();
 		?>
@@ -124,31 +123,11 @@ class DirectoryShortcode {
 								$copy_icon_svg        = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; margin-left: 5px; cursor: pointer;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
 
 								if ( ! empty( $office_phone ) ) {
-									$office_phone_digits = preg_replace( '/\D/', '', $office_phone );
-									$office_display      = esc_html( $office_phone );
-									if ( ! empty( $extension ) ) {
-										$office_display .= ' ext. ' . esc_html( $extension );
-									}
-									$copy_span            = sprintf(
-										'<span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="%s" title="%s">%s</span>',
-										esc_attr( $office_phone_digits ),
-										esc_attr( $extension ),
-										esc_attr__( 'Click to copy phone number', 'stackboost-for-supportcandy' ),
-										$copy_icon_svg
-									);
-									$phone_output_parts[] = '<strong>' . esc_html__( 'Office', 'stackboost-for-supportcandy' ) . ':</strong> ' . $office_display . $copy_span;
+									$phone_output_parts[] = '<strong>' . esc_html__( 'Office', 'stackboost-for-supportcandy' ) . ':</strong> ' . $this->format_phone_number( $office_phone, $extension, $copy_icon_svg );
 								}
 
 								if ( ! empty( $mobile_phone ) ) {
-									$mobile_phone_digits = preg_replace( '/\D/', '', $mobile_phone );
-									$mobile_display      = esc_html( $mobile_phone );
-									$copy_span           = sprintf(
-										'<span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="" title="%s">%s</span>',
-										esc_attr( $mobile_phone_digits ),
-										esc_attr__( 'Click to copy phone number', 'stackboost-for-supportcandy' ),
-										$copy_icon_svg
-									);
-									$phone_output_parts[] = '<strong>' . esc_html__( 'Mobile', 'stackboost-for-supportcandy' ) . ':</strong> ' . $mobile_display . $copy_span;
+									$phone_output_parts[] = '<strong>' . esc_html__( 'Mobile', 'stackboost-for-supportcandy' ) . ':</strong> ' . $this->format_phone_number( $mobile_phone, '', $copy_icon_svg );
 								}
 
 								$formatted_phone_output = implode( '<br>', $phone_output_parts );
@@ -187,5 +166,42 @@ class DirectoryShortcode {
 		wp_reset_postdata();
 
 		return ob_get_clean();
+	}
+
+	/**
+	 * Format a phone number for display and click-to-dial.
+	 *
+	 * @param string $phone The phone number.
+	 * @param string $extension The extension, if any.
+	 * @param string $copy_icon_svg The SVG for the copy icon.
+	 * @return string The formatted HTML for the phone number.
+	 */
+	private function format_phone_number( string $phone, string $extension, string $copy_icon_svg ): string {
+		$phone_digits = preg_replace( '/\D/', '', $phone );
+		$display_phone = $phone;
+
+		if ( 10 === strlen( $phone_digits ) ) {
+			$display_phone = sprintf( '(%s) %s-%s',
+				substr( $phone_digits, 0, 3 ),
+				substr( $phone_digits, 3, 3 ),
+				substr( $phone_digits, 6 )
+			);
+		}
+
+		$tel_link = 'tel:' . $phone_digits;
+		if ( ! empty( $extension ) ) {
+			$tel_link .= ',' . $extension;
+			$display_phone .= ', ext. ' . esc_html( $extension );
+		}
+
+		$copy_span = sprintf(
+			'<span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="%s" title="%s">%s</span>',
+			esc_attr( $phone_digits ),
+			esc_attr( $extension ),
+			esc_attr__( 'Click to copy phone number', 'stackboost-for-supportcandy' ),
+			$copy_icon_svg
+		);
+
+		return sprintf( '<a href="%s">%s</a>%s', esc_url( $tel_link ), esc_html( $display_phone ), $copy_span );
 	}
 }
