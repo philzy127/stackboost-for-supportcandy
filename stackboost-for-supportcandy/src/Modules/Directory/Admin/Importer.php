@@ -53,6 +53,9 @@ class Importer {
 		self::$staff_post_type_static      = $cpts->post_type;
 		self::$location_post_type_static   = $cpts->location_post_type;
 		self::$department_post_type_static = $cpts->department_post_type;
+		error_log('[StackBoost] Importer instantiated with staff CPT: ' . self::$staff_post_type_static);
+		error_log('[StackBoost] Importer instantiated with location CPT: ' . self::$location_post_type_static);
+		error_log('[StackBoost] Importer instantiated with department CPT: ' . self::$department_post_type_static);
 		add_action( 'wp_ajax_stackboost_directory_import_csv', array( __CLASS__, 'handle_csv_upload' ) );
 	}
 
@@ -198,6 +201,7 @@ class Importer {
 				'post_type'   => self::$staff_post_type_static,
 			);
 
+			error_log('[StackBoost] Importer creating staff post with data: ' . print_r($post_data, true));
 			$inserted_staff_post_id = wp_insert_post( $post_data );
 
 			if ( is_wp_error( $inserted_staff_post_id ) ) {

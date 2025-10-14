@@ -40,6 +40,7 @@ class DepartmentsListTable extends \WP_List_Table {
 	 */
 	public function __construct( $post_type ) {
 		$this->post_type = $post_type;
+		error_log('[StackBoost] DepartmentsListTable instantiated with post type: ' . $post_type);
 
 		parent::__construct(
 			array(
@@ -223,6 +224,7 @@ class DepartmentsListTable extends \WP_List_Table {
 			$args['order']   = $order;
 		}
 
+		error_log('[StackBoost] DepartmentsListTable WP_Query args: ' . print_r($args, true));
 		$query      = new \WP_Query( $args );
 		$this->items = $query->posts;
 

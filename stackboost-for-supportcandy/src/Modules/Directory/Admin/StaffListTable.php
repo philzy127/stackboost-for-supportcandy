@@ -40,6 +40,7 @@ class StaffListTable extends \WP_List_Table {
 	 */
 	public function __construct( $post_type ) {
 		$this->post_type = $post_type;
+		error_log('[StackBoost] StaffListTable instantiated with post type: ' . $post_type);
 
 		parent::__construct(
 			array(
@@ -331,6 +332,7 @@ class StaffListTable extends \WP_List_Table {
 			);
 		}
 
+		error_log('[StackBoost] StaffListTable WP_Query args: ' . print_r($args, true));
 		$query      = new \WP_Query( $args );
 		$this->items = $query->posts;
 
