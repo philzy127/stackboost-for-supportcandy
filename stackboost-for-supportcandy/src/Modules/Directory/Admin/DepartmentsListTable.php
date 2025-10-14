@@ -224,6 +224,9 @@ class DepartmentsListTable extends \WP_List_Table {
 		}
 
 		$query      = new \WP_Query( $args );
+		if ($query->have_posts()) {
+		} else {
+		}
 		$this->items = $query->posts;
 
 		$total_items = $query->found_posts;

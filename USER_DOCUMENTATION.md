@@ -1,12 +1,12 @@
-# StackBoost Company Directory - User Manual
+# StackBoost - For SupportCandy: Directory Module - User Manual
 
 ## Introduction
 
-Welcome to the StackBoost Company Directory module! This guide provides a comprehensive overview of how to manage and display your organization's staff directory directly within the StackBoost for SupportCandy plugin.
+Welcome to the Directory module for StackBoost - For SupportCandy! This guide provides a comprehensive overview of how to manage and display your organization's staff directory.
 
 ## Accessing the Company Directory
 
-You can find the Company Directory management page by navigating to **StackBoost > Company Directory** in your WordPress admin sidebar.
+You can find the Company Directory management page by navigating to **StackBoost > Directory** in your WordPress admin sidebar.
 
 ![StackBoost Menu](https://i.imgur.com/your-screenshot.png) *<-- Placeholder for a screenshot of the menu*
 

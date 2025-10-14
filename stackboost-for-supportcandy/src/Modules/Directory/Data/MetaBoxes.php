@@ -69,7 +69,7 @@ class MetaBoxes {
 	 */
 	public function add_directory_meta_box() {
 		add_meta_box(
-			'stackboost_staff_directory_details',
+			'sb_staff_dir_details',
 			__( 'Staff Details', 'stackboost-for-supportcandy' ),
 			array( $this, 'render_directory_meta_box' ),
 			$this->post_type,
@@ -84,7 +84,7 @@ class MetaBoxes {
 	 * @param \WP_Post $post The current post object.
 	 */
 	public function render_directory_meta_box( $post ) {
-		wp_nonce_field( 'stackboost_staff_directory_meta_box', 'stackboost_staff_directory_meta_box_nonce' );
+		wp_nonce_field( 'sb_staff_dir_meta_box', 'sb_staff_dir_meta_box_nonce' );
 
 		$current_screen    = get_current_screen();
 		$is_add_new_screen = ( $current_screen && 'add' === $current_screen->action );
@@ -96,7 +96,7 @@ class MetaBoxes {
 			'location'            => 'Location',
 			'room_number'         => 'Room #',
 			'department_program'  => 'Department / Program',
-			'chp_staff_job_title' => 'Title',
+			'stackboost_staff_job_title' => 'Title',
 			'email_address'       => 'Email Address',
 			'active'              => 'Active',
 			'active_as_of_date'   => 'Active as of:',
@@ -136,7 +136,7 @@ class MetaBoxes {
 					echo '<option value="' . esc_attr( $location_post->ID ) . '" ' . selected( $current_location_id, $location_post->ID, false ) . '>' . esc_html( $location_post->post_title ) . '</option>';
 				}
 				echo '</select>';
-				echo '<input type="hidden" id="stackboost_staff_directory_location_name_hidden" name="stackboost_staff_directory_location_name_hidden" value="' . esc_attr( get_post_meta( $post->ID, '_location', true ) ) . '">';
+				echo '<input type="hidden" id="sb_staff_dir_location_name_hidden" name="sb_staff_dir_location_name_hidden" value="' . esc_attr( get_post_meta( $post->ID, '_location', true ) ) . '">';
 				echo '<p class="description">' . esc_html__( 'Select a physical location for this staff member.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'department_program' === $key ) {
 				$departments = get_posts(
@@ -191,7 +191,7 @@ class MetaBoxes {
 	 */
 	public function add_location_details_meta_box() {
 		add_meta_box(
-			'stackboost_location_details',
+			'sb_location_details',
 			__( 'Location Details', 'stackboost-for-supportcandy' ),
 			array( $this, 'render_location_details_meta_box' ),
 			$this->location_post_type,
@@ -206,7 +206,7 @@ class MetaBoxes {
 	 * @param \WP_Post $post The current post object.
 	 */
 	public function render_location_details_meta_box( $post ) {
-		wp_nonce_field( 'stackboost_location_details_meta_box', 'stackboost_location_details_meta_box_nonce' );
+		wp_nonce_field( 'sb_location_details_meta_box', 'sb_location_details_meta_box_nonce' );
 
 		$address_line1               = get_post_meta( $post->ID, '_address_line1', true );
 		$city                        = get_post_meta( $post->ID, '_city', true );
@@ -264,11 +264,11 @@ class MetaBoxes {
 	 * @param int $post_id The ID of the post being saved.
 	 */
 	public function save_directory_meta_box_data( $post_id ) {
-		if ( ! isset( $_POST['stackboost_staff_directory_meta_box_nonce'] ) ) {
+		if ( ! isset( $_POST['sb_staff_dir_meta_box_nonce'] ) ) {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( $_POST['stackboost_staff_directory_meta_box_nonce'], 'stackboost_staff_directory_meta_box' ) ) {
+		if ( ! wp_verify_nonce( $_POST['sb_staff_dir_meta_box_nonce'], 'sb_staff_dir_meta_box' ) ) {
 			return;
 		}
 
@@ -296,7 +296,7 @@ class MetaBoxes {
 			'mobile_phone',
 			'room_number',
 			'department_program',
-			'chp_staff_job_title',
+			'stackboost_staff_job_title',
 			'email_address',
 			'active_as_of_date',
 			'planned_exit_date',
@@ -313,8 +313,8 @@ class MetaBoxes {
 			$location_id = sanitize_text_field( $_POST['location'] );
 			update_post_meta( $post_id, '_location_id', $location_id );
 
-			if ( isset( $_POST['stackboost_staff_directory_location_name_hidden'] ) ) {
-				$location_name = sanitize_text_field( $_POST['stackboost_staff_directory_location_name_hidden'] );
+			if ( isset( $_POST['sb_staff_dir_location_name_hidden'] ) ) {
+				$location_name = sanitize_text_field( $_POST['sb_staff_dir_location_name_hidden'] );
 				update_post_meta( $post_id, '_location', $location_name );
 			}
 		}
@@ -363,11 +363,11 @@ class MetaBoxes {
 	 * @param int $post_id The ID of the post being saved.
 	 */
 	public function save_location_details_meta_box_data( $post_id ) {
-		if ( ! isset( $_POST['stackboost_location_details_meta_box_nonce'] ) ) {
+		if ( ! isset( $_POST['sb_location_details_meta_box_nonce'] ) ) {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( $_POST['stackboost_location_details_meta_box_nonce'], 'stackboost_location_details_meta_box' ) ) {
+		if ( ! wp_verify_nonce( $_POST['sb_location_details_meta_box_nonce'], 'sb_location_details_meta_box' ) ) {
 			return;
 		}
 

@@ -29,21 +29,21 @@ class CustomPostTypes {
 	 *
 	 * @var string
 	 */
-	public $post_type = 'chp_staff_directory';
+	public $post_type = 'sb_staff_dir';
 
 	/**
 	 * The custom post type slug for locations.
 	 *
 	 * @var string
 	 */
-	public $location_post_type = 'chp_location';
+	public $location_post_type = 'sb_location';
 
 	/**
 	 * The custom post type slug for departments.
 	 *
 	 * @var string
 	 */
-	public $department_post_type = 'chp_department';
+	public $department_post_type = 'sb_department';
 
 	/**
 	 * Constructor.
@@ -116,7 +116,10 @@ class CustomPostTypes {
 			'capability_type'     => 'post',
 			'rewrite'             => array( 'slug' => 'staff' ),
 		);
-		register_post_type( $this->post_type, $args );
+		$result = register_post_type( $this->post_type, $args );
+		if (is_wp_error($result)) {
+		} else {
+		}
 	}
 
 	/**
@@ -167,7 +170,10 @@ class CustomPostTypes {
 			'capability_type'     => 'post',
 			'rewrite'             => false,
 		);
-		register_post_type( $this->location_post_type, $args );
+		$result = register_post_type( $this->location_post_type, $args );
+		if (is_wp_error($result)) {
+		} else {
+		}
 	}
 
 	/**
@@ -218,6 +224,9 @@ class CustomPostTypes {
 			'capability_type'     => 'post',
 			'rewrite'             => false,
 		);
-		register_post_type( $this->department_post_type, $args );
+		$result = register_post_type( $this->department_post_type, $args );
+		if (is_wp_error($result)) {
+		} else {
+		}
 	}
 }
