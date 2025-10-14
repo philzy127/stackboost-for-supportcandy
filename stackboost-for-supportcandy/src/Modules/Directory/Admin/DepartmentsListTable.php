@@ -40,6 +40,7 @@ class DepartmentsListTable extends \WP_List_Table {
 	 */
 	public function __construct( $post_type ) {
 		$this->post_type = $post_type;
+		error_log('[StackBoost DEBUG] DepartmentsListTable instantiated with CPT: ' . $post_type);
 
 		parent::__construct(
 			array(
@@ -223,7 +224,13 @@ class DepartmentsListTable extends \WP_List_Table {
 			$args['order']   = $order;
 		}
 
+		error_log('[StackBoost DEBUG] DepartmentsListTable Query Args: ' . print_r($args, true));
 		$query      = new \WP_Query( $args );
+		if ($query->have_posts()) {
+			error_log('[StackBoost DEBUG] DepartmentsListTable Query FOUND ' . $query->found_posts . ' posts.');
+		} else {
+			error_log('[StackBoost DEBUG] DepartmentsListTable Query found NO posts.');
+		}
 		$this->items = $query->posts;
 
 		$total_items = $query->found_posts;

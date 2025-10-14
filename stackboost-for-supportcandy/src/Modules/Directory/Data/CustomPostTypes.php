@@ -58,6 +58,7 @@ class CustomPostTypes {
 	 * Register all custom post types.
 	 */
 	public function register_all_cpts() {
+		error_log('[StackBoost DEBUG] Firing register_all_cpts()');
 		$this->register_staff_directory_cpt();
 		$this->register_location_cpt();
 		$this->register_department_cpt();
@@ -116,6 +117,7 @@ class CustomPostTypes {
 			'capability_type'     => 'post',
 			'rewrite'             => array( 'slug' => 'staff' ),
 		);
+		error_log('[StackBoost DEBUG] Registering CPT: ' . $this->post_type);
 		register_post_type( $this->post_type, $args );
 	}
 
@@ -167,6 +169,7 @@ class CustomPostTypes {
 			'capability_type'     => 'post',
 			'rewrite'             => false,
 		);
+		error_log('[StackBoost DEBUG] Registering CPT: ' . $this->location_post_type);
 		register_post_type( $this->location_post_type, $args );
 	}
 
@@ -218,6 +221,7 @@ class CustomPostTypes {
 			'capability_type'     => 'post',
 			'rewrite'             => false,
 		);
+		error_log('[StackBoost DEBUG] Registering CPT: ' . $this->department_post_type);
 		register_post_type( $this->department_post_type, $args );
 	}
 }
