@@ -431,3 +431,63 @@
 .stackboost-copy-email-icon.copied svg {
     fill: #4CAF50; /* Green color on copy */
 }
+
+/* New styles for single staff member page */
+.stackboost-single-staff .entry-content {
+    margin-top: 20px;
+}
+
+.stackboost-staff-member-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+}
+
+.stackboost-staff-photo {
+    flex: 0 0 200px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stackboost-staff-photo img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.stackboost-staff-info {
+    flex: 1;
+    min-width: 300px;
+}
+
+.stackboost-staff-details-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stackboost-staff-details-table th,
+.stackboost-staff-details-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+.stackboost-staff-details-table th {
+    font-weight: bold;
+    color: #333;
+    width: 150px;
+}
+
+.stackboost-staff-details-table td {
+    color: #555;
+}
+
+.stackboost-staff-details-table a {
+    color: #0073aa;
+    text-decoration: none;
+}
+
+.stackboost-staff-details-table a:hover {
+    text-decoration: underline;
+}

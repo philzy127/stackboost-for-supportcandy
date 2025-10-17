@@ -26,40 +26,55 @@ get_header(); ?>
             }
             ?>
 
-            <article id="post-<?php echo esc_attr( $employee_id ); ?>" <?php post_class() ; ?>>
+            <article id="post-<?php echo esc_attr( $employee_id ); ?>" <?php post_class( 'stackboost-single-staff' ); ?>>
                 <header class="entry-header">
                     <?php the_title( '<h1 class="entry-title">', '</h1>' ); ?>
                 </header><!-- .entry-header -->
 
                 <div class="entry-content">
-                    <p>
-                        <strong><?php esc_html_e( 'Job Title:', 'stackboost-for-supportcandy' ); ?></strong>
-                        <?php echo esc_html( $employee->job_title ); ?>
-                    </p>
-                    <p>
-                        <strong><?php esc_html_e( 'Department/Program:', 'stackboost-for-supportcandy' ); ?></strong>
-                        <?php echo esc_html( $employee->department_program ); ?>
-                    </p>
-                    <p>
-                        <strong><?php esc_html_e( 'Email:', 'stackboost-for-supportcandy' ); ?></strong>
-                        <a href="mailto:<?php echo esc_attr( $employee->email ); ?>"><?php echo esc_html( $employee->email ); ?></a>
-                    </p>
-                    <p>
-                        <strong><?php esc_html_e( 'Office Phone:', 'stackboost-for-supportcandy' ); ?></strong>
-                        <?php echo esc_html( $employee->office_phone ); ?>
-                    </p>
-                    <?php if ( ! empty( $employee->extension ) ) : ?>
-                        <p>
-                            <strong><?php esc_html_e( 'Extension:', 'stackboost-for-supportcandy' ); ?></strong>
-                            <?php echo esc_html( $employee->extension ); ?>
-                        </p>
-                    <?php endif; ?>
-                    <?php if ( ! empty( $employee->mobile_phone ) ) : ?>
-                        <p>
-                            <strong><?php esc_html_e( 'Mobile Phone:', 'stackboost-for-supportcandy' ); ?></strong>
-                            <?php echo esc_html( $employee->mobile_phone ); ?>
-                        </p>
-                    <?php endif; ?>
+                    <div class="stackboost-staff-member-details">
+                        <div class="stackboost-staff-photo">
+                            <?php if ( has_post_thumbnail() ) : ?>
+                                <?php the_post_thumbnail( 'large' ); ?>
+                            <?php else : ?>
+                                <img src="<?php echo esc_url( \STACKBOOST_PLUGIN_URL . 'assets/images/default-avatar.png' ); ?>" alt="<?php echo esc_attr( $employee->name ); ?>" />
+                            <?php endif; ?>
+                        </div>
+                        <div class="stackboost-staff-info">
+                            <table class="stackboost-staff-details-table">
+                                <tbody>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Job Title:', 'stackboost-for-supportcandy' ); ?></th>
+                                        <td><?php echo esc_html( $employee->job_title ); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Department/Program:', 'stackboost-for-supportcandy' ); ?></th>
+                                        <td><?php echo esc_html( $employee->department_program ); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Email:', 'stackboost-for-supportcandy' ); ?></th>
+                                        <td><a href="mailto:<?php echo esc_attr( $employee->email ); ?>"><?php echo esc_html( $employee->email ); ?></a></td>
+                                    </tr>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Office Phone:', 'stackboost-for-supportcandy' ); ?></th>
+                                        <td><?php echo esc_html( $employee->office_phone ); ?></td>
+                                    </tr>
+                                    <?php if ( ! empty( $employee->extension ) ) : ?>
+                                        <tr>
+                                            <th><?php esc_html_e( 'Extension:', 'stackboost-for-supportcandy' ); ?></th>
+                                            <td><?php echo esc_html( $employee->extension ); ?></td>
+                                        </tr>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $employee->mobile_phone ) ) : ?>
+                                        <tr>
+                                            <th><?php esc_html_e( 'Mobile Phone:', 'stackboost-for-supportcandy' ); ?></th>
+                                            <td><?php echo esc_html( $employee->mobile_phone ); ?></td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div><!-- .entry-content -->
 
             </article><!-- #post-## -->
