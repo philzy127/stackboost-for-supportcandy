@@ -60,6 +60,7 @@ class WordPress {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_public_scripts' ) );
+		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
 		Management::register_ajax_actions();
 	}
 
@@ -401,5 +402,21 @@ class WordPress {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Load the single staff template from the plugin.
+	 *
+	 * @param string $template The path of the template to include.
+	 * @return string
+	 */
+	public function load_single_staff_template( $template ): string {
+		if ( is_singular( $this->core->cpts->post_type ) ) {
+			$plugin_template = \STACKBOOST_PLUGIN_PATH . 'single-sb_staff_dir.php';
+			if ( file_exists( $plugin_template ) ) {
+				return $plugin_template;
+			}
+		}
+		return $template;
 	}
 }
