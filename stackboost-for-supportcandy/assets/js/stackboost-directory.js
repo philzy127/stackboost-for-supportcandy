@@ -7,7 +7,20 @@ jQuery(document).ready(function($) {
         "language": {
             "search": "Filter results:",
             "lengthMenu": "Show _MENU_ entries"
-        }
+        },
+        "columnDefs": [
+            {
+                "targets": 1, // The 'Phone' column
+                "render": function ( data, type, row, meta ) {
+                    if ( type === 'filter' ) {
+                        var cellNode = meta.settings.aoData[meta.row].anCells[meta.col];
+                        var dataSearch = $(cellNode).data('search');
+                        return data + ' ' + dataSearch;
+                    }
+                    return data;
+                }
+            }
+        ]
     });
 
     // Function to show a toast notification
