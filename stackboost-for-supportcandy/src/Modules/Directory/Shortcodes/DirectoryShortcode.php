@@ -106,28 +106,34 @@ class DirectoryShortcode {
 								'path'   => array(
 									'd' => true,
 								),
+								'td'     => array(
+									'data-search' => true,
+								),
 							);
 
 							while ( $full_directory_entries->have_posts() ) :
 								$full_directory_entries->the_post();
-								$post_id              = get_the_ID();
-								$office_phone         = get_post_meta( $post_id, '_office_phone', true );
-								$extension            = get_post_meta( $post_id, '_extension', true );
-								$mobile_phone         = get_post_meta( $post_id, '_mobile_phone', true );
-								$department_program   = get_post_meta( $post_id, '_department_program', true );
-								$job_title            = get_post_meta( $post_id, '_stackboost_staff_job_title', true );
-								$email                = get_post_meta( $post_id, '_email_address', true );
-								$staff_permalink      = get_permalink( $post_id );
-								$edit_post_link       = get_edit_post_link( $post_id );
-								$phone_output_parts   = array();
-								$copy_icon_svg        = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; margin-left: 5px; cursor: pointer;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+								$post_id                 = get_the_ID();
+								$office_phone            = get_post_meta( $post_id, '_office_phone', true );
+								$extension               = get_post_meta( $post_id, '_extension', true );
+								$mobile_phone            = get_post_meta( $post_id, '_mobile_phone', true );
+								$department_program      = get_post_meta( $post_id, '_department_program', true );
+								$job_title               = get_post_meta( $post_id, '_stackboost_staff_job_title', true );
+								$email                   = get_post_meta( $post_id, '_email_address', true );
+								$staff_permalink         = get_permalink( $post_id );
+								$edit_post_link          = get_edit_post_link( $post_id );
+								$phone_output_parts      = array();
+								$searchable_phone_string = '';
+								$copy_icon_svg           = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; margin-left: 5px; cursor: pointer;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
 
 								if ( ! empty( $office_phone ) ) {
-									$phone_output_parts[] = '<strong>' . esc_html__( 'Office', 'stackboost-for-supportcandy' ) . ':</strong> ' . $this->format_phone_number( $office_phone, $extension, $copy_icon_svg );
+									$phone_output_parts[]     = '<strong>' . esc_html__( 'Office', 'stackboost-for-supportcandy' ) . ':</strong> ' . $this->format_phone_number( $office_phone, $extension, $copy_icon_svg );
+									$searchable_phone_string .= preg_replace( '/\D/', '', $office_phone ) . preg_replace( '/\D/', '', $extension );
 								}
 
 								if ( ! empty( $mobile_phone ) ) {
-									$phone_output_parts[] = '<strong>' . esc_html__( 'Mobile', 'stackboost-for-supportcandy' ) . ':</strong> ' . $this->format_phone_number( $mobile_phone, '', $copy_icon_svg );
+									$phone_output_parts[]     = '<strong>' . esc_html__( 'Mobile', 'stackboost-for-supportcandy' ) . ':</strong> ' . $this->format_phone_number( $mobile_phone, '', $copy_icon_svg );
+									$searchable_phone_string .= preg_replace( '/\D/', '', $mobile_phone );
 								}
 
 								$formatted_phone_output = implode( '<br>', $phone_output_parts );
@@ -150,7 +156,7 @@ class DirectoryShortcode {
 											</a>
 										<?php endif; ?>
 									</td>
-									<td><?php echo ! empty( $formatted_phone_output ) ? wp_kses( $formatted_phone_output, $allowed_html ) : '&mdash;'; ?></td>
+									<td data-search="<?php echo esc_attr( $searchable_phone_string ); ?>"><?php echo ! empty( $formatted_phone_output ) ? wp_kses( $formatted_phone_output, $allowed_html ) : '&mdash;'; ?></td>
 									<td><?php echo esc_html( $department_program ); ?></td>
 									<td><?php echo esc_html( $job_title ); ?></td>
 								</tr>
