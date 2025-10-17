@@ -43,3 +43,40 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
 
     return false;
 }
+
+/**
+ * Format a phone number for display and click-to-dial.
+ *
+ * @param string $phone The phone number.
+ * @param string $extension The extension, if any.
+ * @param string $copy_icon_svg The SVG for the copy icon.
+ * @return string The formatted HTML for the phone number.
+ */
+function stackboost_format_phone_number( string $phone, string $extension, string $copy_icon_svg ): string {
+    $phone_digits = preg_replace( '/\D/', '', $phone );
+    $display_phone = $phone;
+
+    if ( 10 === strlen( $phone_digits ) ) {
+        $display_phone = sprintf( '(%s) %s-%s',
+            substr( $phone_digits, 0, 3 ),
+            substr( $phone_digits, 3, 3 ),
+            substr( $phone_digits, 6 )
+        );
+    }
+
+    $tel_link = 'tel:' . $phone_digits;
+    if ( ! empty( $extension ) ) {
+        $tel_link .= ';ext=' . $extension;
+        $display_phone .= ', ext. ' . esc_html( $extension );
+    }
+
+    $copy_span = sprintf(
+        '<span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="%s" title="%s">%s</span>',
+        esc_attr( $phone_digits ),
+        esc_attr( $extension ),
+        esc_attr__( 'Click to copy phone number', 'stackboost-for-supportcandy' ),
+        $copy_icon_svg
+    );
+
+    return sprintf( '<a href="%s">%s</a>%s', esc_url( $tel_link ), esc_html( $display_phone ), $copy_span );
+}
