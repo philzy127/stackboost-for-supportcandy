@@ -432,62 +432,108 @@
     fill: #4CAF50; /* Green color on copy */
 }
 
-/* New styles for single staff member page */
-.stackboost-single-staff .entry-content {
-    margin-top: 20px;
-}
-
-.stackboost-staff-member-details {
+/* Styling for the single staff detail page */
+.staff-detail-container {
     display: flex;
-    flex-wrap: wrap;
-    gap: 30px;
-}
-
-.stackboost-staff-photo {
-    flex: 0 0 200px;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 30px; /* Space between photo and info */
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #eee;
     border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.stackboost-staff-photo img {
+.staff-photo {
+    flex: 0 0 auto; /* Don't grow, don't shrink, base on content */
+    width: 250px; /* Fixed width for photo container */
+    height: 250px; /* Fixed height for photo container */
+    border-radius: 8px;
+    overflow: hidden; /* Ensures image stays within bounds */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: flex-start; /* Aligns content (image) to the top */
+    justify-content: center;
+    background-color: #f0f0f0; /* Placeholder background */
+}
+
+.staff-photo img {
     width: 100%;
-    height: auto;
-    display: block;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 8px;
 }
 
-.stackboost-staff-info {
-    flex: 1;
-    min-width: 300px;
+.staff-info {
+    flex: 1; /* Take up remaining space */
+    min-width: 300px; /* Minimum width before wrapping */
 }
 
-.stackboost-staff-details-table {
-    width: 100%;
+/* Styling for the staff details table on the single page */
+.staff-details-table {
+    width: 100%; /* Ensure table takes full available width */
     border-collapse: collapse;
+    margin: 0; /* Remove default table margins */
 }
 
-.stackboost-staff-details-table th,
-.stackboost-staff-details-table td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
+.staff-details-table tr {
+    border-bottom: 1px solid #eee; /* Light separator between rows */
 }
 
-.stackboost-staff-details-table th {
+.staff-details-table tr:last-child {
+    border-bottom: none; /* No border on the last row */
+}
+
+.staff-details-table th,
+.staff-details-table td {
+    padding: 8px 0; /* Padding for cells */
+    vertical-align: top; /* Align content to the top */
+    border: none; /* Remove individual cell borders if present */
+}
+
+.staff-details-table th {
+    width: 175px; /* Fixed width for the header column */
     font-weight: bold;
-    color: #333;
-    width: 150px;
-}
-
-.stackboost-staff-details-table td {
     color: #555;
+    text-align: left;
+    padding-right: 15px; /* Space between header and data */
 }
 
-.stackboost-staff-details-table a {
-    color: #0073aa;
-    text-decoration: none;
+.staff-details-table td {
+    text-align: left;
+    color: #333;
 }
 
-.stackboost-staff-details-table a:hover {
-    text-decoration: underline;
+/* Responsive adjustments for single staff page */
+@media (max-width: 768px) {
+    .staff-detail-container {
+        flex-direction: column; /* Stack vertically */
+        align-items: center; /* Center items */
+        gap: 20px;
+    }
+
+    .staff-photo {
+        width: 200px; /* Smaller photo on mobile */
+        height: 200px;
+    }
+
+    .staff-info {
+        min-width: unset; /* Remove min-width for full flexibility */
+        width: 100%;
+    }
+
+    .staff-details-table th,
+    .staff-details-table td {
+        display: block; /* Stack header and data vertically on small screens */
+        width: 100%; /* Take full width */
+        padding: 5px 0;
+        text-align: left; /* Align text left */
+    }
+
+    .staff-details-table th {
+        padding-right: 0; /* Remove right padding */
+        margin-bottom: 3px; /* Space between label and value */
+    }
 }

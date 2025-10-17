@@ -120,11 +120,30 @@ class DirectoryService {
 		$employee_data->permalink           = get_permalink( $profile_id );
 		$employee_data->edit_post_link      = get_edit_post_link( $profile_id );
 		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
-		$employee_data->job_title           = get_post_meta( $profile_id, '_stackboost_staff_job_title', true );
+		$employee_data->job_title           = get_post_meta( $profile_id, '_chp_staff_job_title', true );
 		$employee_data->department_program  = get_post_meta( $profile_id, '_department_program', true );
 		$employee_data->office_phone        = get_post_meta( $profile_id, '_office_phone', true );
 		$employee_data->extension           = get_post_meta( $profile_id, '_extension', true );
 		$employee_data->mobile_phone        = get_post_meta( $profile_id, '_mobile_phone', true );
+		$employee_data->location_name       = get_post_meta( $profile_id, '_location', true );
+		$employee_data->location_id         = get_post_meta( $profile_id, '_location_id', true );
+		$employee_data->room_number         = get_post_meta( $profile_id, '_room_number', true );
+		$employee_data->active_status       = get_post_meta( $profile_id, '_active', true );
+		$employee_data->active_as_of_date   = get_post_meta( $profile_id, '_active_as_of_date', true );
+		$employee_data->planned_exit_date   = get_post_meta( $profile_id, '_planned_exit_date', true );
+		$employee_data->last_updated_on     = get_post_meta( $profile_id, '_last_updated_on', true );
+
+		$employee_data->location_details = array();
+		if ( ! empty( $employee_data->location_id ) ) {
+			$location_post = get_post( $employee_data->location_id );
+			if ( $location_post ) {
+				$employee_data->location_details['address_line1'] = get_post_meta( $employee_data->location_id, '_address_line1', true );
+				$employee_data->location_details['city'] = get_post_meta( $employee_data->location_id, '_city', true );
+				$employee_data->location_details['state'] = get_post_meta( $employee_data->location_id, '_state', true );
+				$employee_data->location_details['zip'] = get_post_meta( $employee_data->location_id, '_zip', true );
+				$employee_data->location_details['phone_number'] = get_post_meta( $employee_data->location_id, '_location_phone_number', true );
+			}
+		}
 
 		return $employee_data;
 	}
