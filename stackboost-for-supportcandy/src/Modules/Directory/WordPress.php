@@ -60,6 +60,7 @@ class WordPress {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_public_scripts' ) );
+		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
 		Management::register_ajax_actions();
 	}
 
@@ -232,6 +233,7 @@ class WordPress {
 
 		if ( $this->can_user_manage() ) {
 			$tabs['management'] = __( 'Management', 'stackboost-for-supportcandy' );
+			$tabs['testing']    = __( 'Testing', 'stackboost-for-supportcandy' );
 		}
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
@@ -319,10 +321,102 @@ class WordPress {
 					case 'how_to_use':
 						HowToUse::render_how_to_use_page();
 						break;
+					case 'testing':
+						if ( $this->can_user_manage() ) {
+							self::render_testing_page();
+						} else {
+							echo '<p>' . esc_html__( 'You do not have permission to access this page.', 'stackboost-for-supportcandy' ) . '</p>';
+						}
+						break;
 				}
 				?>
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Render the testing page for the Directory Service.
+	 */
+	public static function render_testing_page() {
+		$test_action = isset( $_POST['stackboost_test_action'] ) ? sanitize_key( $_POST['stackboost_test_action'] ) : '';
+		$result      = null;
+
+		if ( ! empty( $test_action ) && check_admin_referer( 'stackboost_directory_test_nonce', 'stackboost_directory_test_nonce' ) ) {
+			$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
+
+			if ( 'find_profile' === $test_action ) {
+				$user_id_or_email = isset( $_POST['user_id_or_email'] ) ? sanitize_text_field( wp_unslash( $_POST['user_id_or_email'] ) ) : '';
+				if ( ! empty( $user_id_or_email ) ) {
+					$result = $directory_service->find_employee_profile( $user_id_or_email );
+				}
+			} elseif ( 'retrieve_data' === $test_action ) {
+				$profile_id = isset( $_POST['profile_id'] ) ? absint( $_POST['profile_id'] ) : 0;
+				if ( ! empty( $profile_id ) ) {
+					$result = $directory_service->retrieve_employee_data( $profile_id );
+				}
+			}
+		}
+		?>
+		<div class="wrap">
+			<h2><?php esc_html_e( 'Directory Service Testing', 'stackboost-for-supportcandy' ); ?></h2>
+			<p><?php esc_html_e( 'This page allows you to test the Directory Service directly. The service is responsible for finding and retrieving employee data from the directory.', 'stackboost-for-supportcandy' ); ?></p>
+
+			<?php if ( ! is_null( $result ) ) : ?>
+				<div id="message" class="updated notice is-dismissible">
+					<h3><?php esc_html_e( 'Test Result', 'stackboost-for-supportcandy' ); ?></h3>
+					<pre><?php echo esc_html( print_r( $result, true ) ); ?></pre>
+				</div>
+			<?php endif; ?>
+
+			<hr>
+
+			<h3><?php esc_html_e( 'Test 1: Find Employee Profile', 'stackboost-for-supportcandy' ); ?></h3>
+			<p><?php esc_html_e( 'Enter a WordPress User ID or an email address to find the corresponding directory profile ID.', 'stackboost-for-supportcandy' ); ?></p>
+			<form method="post">
+				<input type="hidden" name="stackboost_test_action" value="find_profile">
+				<?php wp_nonce_field( 'stackboost_directory_test_nonce', 'stackboost_directory_test_nonce' ); ?>
+				<table class="form-table">
+					<tr valign="top">
+						<th scope="row"><label for="user_id_or_email"><?php esc_html_e( 'User ID or Email', 'stackboost-for-supportcandy' ); ?></label></th>
+						<td><input type="text" id="user_id_or_email" name="user_id_or_email" class="regular-text" value="<?php echo isset( $_POST['user_id_or_email'] ) ? esc_attr( $_POST['user_id_or_email'] ) : ''; ?>"/></td>
+					</tr>
+				</table>
+				<?php submit_button( __( 'Find Profile ID', 'stackboost-for-supportcandy' ) ); ?>
+			</form>
+
+			<hr>
+
+			<h3><?php esc_html_e( 'Test 2: Retrieve Employee Data', 'stackboost-for-supportcandy' ); ?></h3>
+			<p><?php esc_html_e( 'Enter a directory profile ID (which is a post ID) to retrieve the full, structured data object for that employee.', 'stackboost-for-supportcandy' ); ?></p>
+			<form method="post">
+				<input type="hidden" name="stackboost_test_action" value="retrieve_data">
+				<?php wp_nonce_field( 'stackboost_directory_test_nonce', 'stackboost_directory_test_nonce' ); ?>
+				<table class="form-table">
+					<tr valign="top">
+						<th scope="row"><label for="profile_id"><?php esc_html_e( 'Directory Profile ID', 'stackboost-for-supportcandy' ); ?></label></th>
+						<td><input type="number" id="profile_id" name="profile_id" class="regular-text" value="<?php echo isset( $_POST['profile_id'] ) ? esc_attr( $_POST['profile_id'] ) : ''; ?>" /></td>
+					</tr>
+				</table>
+				<?php submit_button( __( 'Retrieve Employee Data', 'stackboost-for-supportcandy' ) ); ?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Load the single staff template from the plugin.
+	 *
+	 * @param string $template The path of the template to include.
+	 * @return string
+	 */
+	public function load_single_staff_template( $template ): string {
+		if ( is_singular( $this->core->cpts->post_type ) ) {
+			$plugin_template = \STACKBOOST_PLUGIN_PATH . 'single-sb_staff_dir.php';
+			if ( file_exists( $plugin_template ) ) {
+				return $plugin_template;
+			}
+		}
+		return $template;
 	}
 }

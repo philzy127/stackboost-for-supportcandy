@@ -76,7 +76,21 @@ These are the foundational files and classes that enable the plugin and its modu
     *   `init_hooks()`: This method iterates through all loaded modules and calls the `init_hooks()` method on each one, effectively delegating hook registration to the individual modules.
     *   `get_supportcandy_columns()`, `get_custom_field_id_by_name()`: These are helper methods that provide other modules with useful data from the SupportCandy plugin itself, acting as a service locator for SupportCandy data.
 
-### 2.4. `src/Core/Module.php`
+### 2.4. `src/Services/DirectoryService.php`
+
+*   **Purpose:** This class acts as a centralized, internal API for all interactions with the Company Directory data. It abstracts the underlying data storage (Custom Post Types and post meta) and provides a stable, consistent interface for other modules to consume. This prevents direct database queries from being scattered throughout the codebase.
+*   **Key Methods:**
+    *   `get_instance()`: Implements the singleton pattern to ensure only one instance of the service exists.
+    *   `find_employee_profile( $user_id_or_email )`: Finds a directory profile ID from a WordPress User ID or email address.
+    *   `retrieve_employee_data( int $profile_id )`: Retrieves a structured `stdClass` object containing all key details for a single employee (name, contact info, location details, etc.).
+    *   `get_all_active_employees_for_shortcode()`: An optimized method that retrieves all data needed for the main directory view, avoiding N+1 query problems.
+*   **How to Use:** To use the service in any other part of the plugin, get an instance and call its methods:
+    ```php
+    $directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
+    $employee_data = $directory_service->retrieve_employee_data( 123 );
+    ```
+
+### 2.5. `src/Core/Module.php`
 
 *   **Purpose:** An abstract base class that all module `WordPress.php` adapters should extend. It provides a common structure and shared functionality for settings rendering.
 *   **Key Methods:**

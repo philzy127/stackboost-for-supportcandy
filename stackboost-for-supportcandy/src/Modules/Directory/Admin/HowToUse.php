@@ -78,6 +78,18 @@ class HowToUse {
 				</div>
 			</div>
 
+			<!-- Testing Tab -->
+			<div class="postbox">
+				<h2 class="hndle"><span><?php esc_html_e( 'Testing', 'stackboost-for-supportcandy' ); ?></span></h2>
+				<div class="inside">
+					<p><?php echo wp_kses_post( __( 'The <strong>Testing</strong> tab provides a simple interface to directly test the `DirectoryService`. This is useful for developers or for troubleshooting to confirm that the service is fetching data correctly.', 'stackboost-for-supportcandy' ) ); ?></p>
+					<ul>
+						<li><?php echo wp_kses_post( __( '<strong>Find Employee Profile:</strong> Enter a WordPress User ID or email address to see if the service can find the corresponding directory profile ID.', 'stackboost-for-supportcandy' ) ); ?></li>
+						<li><?php echo wp_kses_post( __( '<strong>Retrieve Employee Data:</strong> Enter a directory profile ID (the post ID of the staff member) to retrieve the full, structured data object for that employee.', 'stackboost-for-supportcandy' ) ); ?></li>
+					</ul>
+				</div>
+			</div>
+
 		</div>
 		<?php
 	}
