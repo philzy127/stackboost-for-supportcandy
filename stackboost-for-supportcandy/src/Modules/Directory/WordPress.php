@@ -448,6 +448,8 @@ class WordPress {
 		setup_postdata( $post );
 
 		ob_start();
+		// Manually include the functions file as it's not loaded in an AJAX context.
+		require_once \STACKBOOST_PLUGIN_PATH . 'includes/functions.php';
 		load_template( \STACKBOOST_PLUGIN_PATH . 'single-sb_staff_dir.php', false );
 		$content = ob_get_clean();
 		wp_reset_postdata();
