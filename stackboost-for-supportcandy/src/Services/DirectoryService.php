@@ -121,7 +121,7 @@ class DirectoryService {
 		$employee_data->edit_post_link      = get_edit_post_link( $profile_id );
 		$employee_data->thumbnail_url       = get_the_post_thumbnail_url( $profile_id, 'medium' );
 		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
-		$employee_data->job_title           = get_post_meta( $profile_id, '_chp_staff_job_title', true );
+		$employee_data->job_title           = get_post_meta( $profile_id, '_stackboost_staff_job_title', true );
 		$employee_data->department_program  = get_post_meta( $profile_id, '_department_program', true );
 		$employee_data->office_phone        = get_post_meta( $profile_id, '_office_phone', true );
 		$employee_data->extension           = get_post_meta( $profile_id, '_extension', true );
@@ -187,5 +187,24 @@ class DirectoryService {
 		wp_reset_postdata();
 
 		return $employees;
+	}
+
+	/**
+	 * Get a staff member's complete data by their email address.
+	 *
+	 * This is a convenience method that combines finding and retrieving.
+	 *
+	 * @param string $email The email address to search for.
+	 *
+	 * @return \stdClass|null A structured object with employee data or null if not found.
+	 */
+	public function get_staff_by_email( string $email ): ?\stdClass {
+		$profile_id = $this->find_employee_profile( $email );
+
+		if ( ! $profile_id ) {
+			return null;
+		}
+
+		return $this->retrieve_employee_data( $profile_id );
 	}
 }

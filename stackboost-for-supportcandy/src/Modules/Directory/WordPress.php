@@ -63,6 +63,7 @@ class WordPress {
 		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
 		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
+		add_action( 'wpsc_after_ticket_widget', array( $this, 'render_ticket_widget' ) );
 		Management::register_ajax_actions();
 	}
 
@@ -127,6 +128,28 @@ class WordPress {
 			return;
 		}
 
+		// Enqueue scripts for the ticket widget.
+		if ( 'supportcandy_page_wpsc-view-ticket' === $screen->id ) {
+			$widget_options = get_option( Settings::WIDGET_OPTION_NAME, [] );
+			if ( ! empty( $widget_options['enabled'] ) && '1' === $widget_options['enabled'] ) {
+				wp_enqueue_script(
+					'stackboost-ticket-widget',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/ticket-widget.js',
+					[ 'jquery' ],
+					\STACKBOOST_VERSION,
+					true
+				);
+				wp_localize_script(
+					'stackboost-ticket-widget',
+					'stackboostWidgetSettings',
+					[
+						'targetWidget' => $widget_options['target_widget'] ?? '',
+						'position'     => $widget_options['placement'] ?? 'before',
+					]
+				);
+			}
+		}
+
 		// Enqueue phone formatting script on the staff CPT add/edit screens.
 		if ( 'post' === $screen->base && isset( $this->core->cpts->post_type ) && $this->core->cpts->post_type === $screen->post_type ) {
 			wp_enqueue_script(
@@ -138,54 +161,83 @@ class WordPress {
 			);
 		}
 
-		// Enqueue scripts for the management tab on the main directory admin page.
-		if ( 'stackboost_page_stackboost-directory' === $screen->id && isset( $_GET['tab'] ) && 'management' === $_GET['tab'] ) {
-			// Enqueue scripts for import.
-			wp_enqueue_script(
-				'stackboost-import-ajax',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/import-ajax.js',
-				array( 'jquery' ),
-				\STACKBOOST_VERSION,
-				true
-			);
-			wp_localize_script(
-				'stackboost-import-ajax',
-				'stackboostImportAjax',
-				array(
-					'ajax_url'           => admin_url( 'admin-ajax.php' ),
-					'nonce'              => wp_create_nonce( 'stackboost_directory_csv_import' ),
-					'processing_message' => __( 'Processing import... please wait.', 'stackboost-for-supportcandy' ),
-					'uploading_message'  => __( 'Uploading...', 'stackboost-for-supportcandy' ),
-					'success_message'    => __( 'Import complete:', 'stackboost-for-supportcandy' ),
-					'error_message'      => __( 'Import failed:', 'stackboost-for-supportcandy' ),
-					'no_file_selected'   => __( 'Please select a CSV file to upload.', 'stackboost-for-supportcandy' ),
-				)
-			);
+		// Enqueue scripts for the main directory admin page.
+		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
+			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
-			// Enqueue scripts for clear actions.
-			wp_enqueue_script(
-				'stackboost-management-ajax',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/management-ajax.js',
-				array( 'jquery' ),
-				\STACKBOOST_VERSION,
-				true
-			);
-			wp_localize_script(
-				'stackboost-management-ajax',
-				'stackboostManagementAjax',
-				array(
-					'ajax_url'                  => admin_url( 'admin-ajax.php' ),
-					'clear_nonce'               => wp_create_nonce( 'stackboost_directory_clear_db_nonce' ),
-					'fresh_start_nonce'         => wp_create_nonce( 'stackboost_directory_fresh_start_nonce' ),
-					'clearingMessage'           => __( 'Clearing data... please wait.', 'stackboost-for-supportcandy' ),
-					'clearConfirm'              => __( 'Are you sure you want to clear all staff data?', 'stackboost-for-supportcandy' ),
-					'freshStartConfirm'         => __( 'Are you sure you want to proceed? This will permanently delete all staff, locations, and departments.', 'stackboost-for-supportcandy' ),
-					'freshStartConfirmDouble'   => __( 'This action cannot be undone. Are you absolutely sure?', 'stackboost-for-supportcandy' ),
-					'freshStartSuccess'         => __( 'Fresh start complete. All data has been deleted.', 'stackboost-for-supportcandy' ),
-					'errorMessage'              => __( 'An error occurred:', 'stackboost-for-supportcandy' ),
-					'cancelMessage'             => __( 'Action cancelled.', 'stackboost-for-supportcandy' ),
-				)
-			);
+			// Enqueue scripts for the Settings tab.
+			if ( 'settings' === $active_tab ) {
+				wp_enqueue_style(
+					'stackboost-directory-settings',
+					\STACKBOOST_PLUGIN_URL . 'assets/css/directory-settings.css',
+					[],
+					\STACKBOOST_VERSION
+				);
+				wp_enqueue_script(
+					'stackboost-directory-settings',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/directory-settings.js',
+					[ 'jquery', 'jquery-ui-sortable' ],
+					\STACKBOOST_VERSION,
+					true
+				);
+				wp_localize_script(
+					'stackboost-directory-settings',
+					'stackboostDirSettings',
+					[
+						'activeTab' => isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general',
+					]
+				);
+			}
+
+			// Enqueue scripts for the Management tab.
+			if ( 'management' === $active_tab ) {
+				// Enqueue scripts for import.
+				wp_enqueue_script(
+					'stackboost-import-ajax',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/import-ajax.js',
+					array( 'jquery' ),
+					\STACKBOOST_VERSION,
+					true
+				);
+				wp_localize_script(
+					'stackboost-import-ajax',
+					'stackboostImportAjax',
+					array(
+						'ajax_url'           => admin_url( 'admin-ajax.php' ),
+						'nonce'              => wp_create_nonce( 'stackboost_directory_csv_import' ),
+						'processing_message' => __( 'Processing import... please wait.', 'stackboost-for-supportcandy' ),
+						'uploading_message'  => __( 'Uploading...', 'stackboost-for-supportcandy' ),
+						'success_message'    => __( 'Import complete:', 'stackboost-for-supportcandy' ),
+						'error_message'      => __( 'Import failed:', 'stackboost-for-supportcandy' ),
+						'no_file_selected'   => __( 'Please select a CSV file to upload.', 'stackboost-for-supportcandy' ),
+					)
+				);
+
+				// Enqueue scripts for clear actions.
+				wp_enqueue_script(
+					'stackboost-management-ajax',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/management-ajax.js',
+					array( 'jquery' ),
+					\STACKBOOST_VERSION,
+					true
+				);
+				wp_localize_script(
+					'stackboost-management-ajax',
+					'stackboostManagementAjax',
+					array(
+						'ajax_url'                  => admin_url( 'admin-ajax.php' ),
+						'clear_nonce'               => wp_create_nonce( 'stackboost_directory_clear_db_nonce' ),
+						'fresh_start_nonce'         => wp_create_nonce( 'stackboost_directory_fresh_start_nonce' ),
+						'clearingMessage'           => __( 'Clearing data... please wait.', 'stackboost-for-supportcandy' ),
+						'clearConfirm'              => __( 'Are you sure you want to clear all staff data?', 'stackboost-for-supportcandy' ),
+						'freshStartConfirm'         => __( 'Are you sure you want to proceed? This will permanently delete all staff, locations, and departments.', 'stackboost-for-supportcandy' ),
+						'freshStartConfirmDouble'   => __( 'This action cannot be undone. Are you absolutely sure?', 'stackboost-for-supportcandy' ),
+						'freshStartSuccess'         => __( 'Fresh start complete. All data has been deleted.', 'stackboost-for-supportcandy' ),
+						'errorMessage'              => __( 'An error occurred:', 'stackboost-for-supportcandy' ),
+						'cancelMessage'             => __( 'Action cancelled.', 'stackboost-for-supportcandy' ),
+					)
+				);
+			}
 		}
 	}
 
@@ -493,5 +545,85 @@ class WordPress {
 			}
 		}
 		return $template;
+	}
+
+	/**
+	 * Render the pseudo-widget for the ticket screen.
+	 *
+	 * @param object $ticket The SupportCandy ticket object.
+	 */
+	public function render_ticket_widget( object $ticket ) {
+		$widget_options = get_option( Settings::WIDGET_OPTION_NAME, [] );
+
+		if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
+			return;
+		}
+
+		if ( empty( $widget_options['display_fields'] ) ) {
+			return;
+		}
+
+		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
+		$staff_member      = $directory_service->get_staff_by_email( $ticket->customer->user_email );
+
+		echo '<div id="stackboost-directory-pseudo-widget" style="display:none;">';
+
+		if ( $staff_member ) {
+			$all_fields = Settings::get_directory_fields(); // Note: This is private, needs to be public static.
+			echo '<div class="wpsc-itw-container">';
+			echo '<div class="wpsc-itw-title">' . esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ) . '</div>';
+			echo '<div class="wpsc-itw-body">';
+			echo '<ul>';
+
+			foreach ( $widget_options['display_fields'] as $field_key ) {
+				$label = $all_fields[ $field_key ] ?? '';
+				$value = '';
+
+				// Map field key to staff member object property
+				switch ( $field_key ) {
+					case 'stackboost_staff_job_title':
+						$value = $staff_member->job_title;
+						break;
+					case 'office_phone':
+						$value = $staff_member->office_phone;
+						break;
+					case 'extension':
+						$value = $staff_member->extension;
+						break;
+					case 'mobile_phone':
+						$value = $staff_member->mobile_phone;
+						break;
+					case 'email_address':
+						$value = $staff_member->email;
+						break;
+					case 'location':
+						$value = $staff_member->location_name;
+						break;
+					case 'room_number':
+						$value = $staff_member->room_number;
+						break;
+					case 'department_program':
+						$value = $staff_member->department_program;
+						break;
+				}
+
+				if ( ! empty( $value ) ) {
+					echo '<li><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $value ) . '</li>';
+				}
+			}
+
+			echo '</ul>';
+			echo '</div>';
+			echo '</div>';
+		} else {
+			echo '<div class="wpsc-itw-container">';
+			echo '<div class="wpsc-itw-title">' . esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ) . '</div>';
+			echo '<div class="wpsc-itw-body">';
+			echo '<p>' . esc_html__( 'No directory entry found for this user.', 'stackboost-for-supportcandy' ) . '</p>';
+			echo '</div>';
+			echo '</div>';
+		}
+
+		echo '</div>';
 	}
 }
