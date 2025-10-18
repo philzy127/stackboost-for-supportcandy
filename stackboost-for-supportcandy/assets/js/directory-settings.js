@@ -4,22 +4,22 @@ jQuery(document).ready(function($) {
     // Tab switching logic
     wrap.on('click', 'h2.nav-tab-wrapper a', function(e) {
         e.preventDefault();
-        var tab = $(this).attr('href').split('tab=')[1];
+        var url = new URL($(this).attr('href'));
+        var subTab = url.searchParams.get("sub-tab");
 
         $('h2.nav-tab-wrapper a').removeClass('nav-tab-active');
         $(this).addClass('nav-tab-active');
 
         $('.tab-content').hide();
-        $('#tab-' + tab).show();
+        $('#tab-' + subTab).show();
 
-        var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=stackboost-directory&tab=' + tab;
-        window.history.pushState({path: newUrl}, '', newUrl);
+        window.history.pushState({path: url.href}, '', url.href);
     });
 
     // On page load, show the correct tab if specified in URL
-    if (typeof stackboostDirSettings !== 'undefined' && stackboostDirSettings.activeTab) {
+    if (typeof stackboostDirSettings !== 'undefined' && stackboostDirSettings.activeSubTab) {
         $('.tab-content').hide();
-        $('#tab-' + stackboostDirSettings.activeTab).show();
+        $('#tab-' + stackboostDirSettings.activeSubTab).show();
     }
 
     // Dual-list sortable logic

@@ -184,7 +184,7 @@ class WordPress {
 					'stackboost-directory-settings',
 					'stackboostDirSettings',
 					[
-						'activeTab' => isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general',
+						'activeSubTab' => isset( $_GET['sub-tab'] ) ? sanitize_key( $_GET['sub-tab'] ) : 'general',
 					]
 				);
 			}
@@ -581,7 +581,7 @@ class WordPress {
 
 				// Map field key to staff member object property
 				switch ( $field_key ) {
-					case 'stackboost_staff_job_title':
+					case 'chp_staff_job_title':
 						$value = $staff_member->job_title;
 						break;
 					case 'office_phone':

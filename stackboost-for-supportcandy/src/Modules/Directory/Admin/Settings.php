@@ -125,7 +125,7 @@ class Settings {
 	 */
 	public static function get_directory_fields(): array {
 		return [
-			'stackboost_staff_job_title' => __( 'Title', 'stackboost-for-supportcandy' ),
+			'chp_staff_job_title' => __( 'Title', 'stackboost-for-supportcandy' ),
 			'office_phone'               => __( 'Office Phone', 'stackboost-for-supportcandy' ),
 			'extension'                  => __( 'Extension', 'stackboost-for-supportcandy' ),
 			'mobile_phone'               => __( 'Mobile Phone', 'stackboost-for-supportcandy' ),
@@ -180,17 +180,23 @@ class Settings {
 		$edit_roles           = $options['edit_roles'] ?? array( 'administrator', 'editor' );
 		$management_roles     = $options['management_roles'] ?? array( 'administrator' );
 		$listing_display_mode = $options['listing_display_mode'] ?? 'page';
-		$active_tab           = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general';
+		$active_sub_tab       = isset( $_GET['sub-tab'] ) ? sanitize_key( $_GET['sub-tab'] ) : 'general';
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Company Directory Settings', 'stackboost-for-supportcandy' ); ?></h1>
 			<h2 class="nav-tab-wrapper">
-				<a href="?page=stackboost-directory&tab=general" class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'General', 'stackboost-for-supportcandy' ); ?></a>
-				<a href="?page=stackboost-directory&tab=ticket_widget" class="nav-tab <?php echo 'ticket_widget' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Ticket Widget', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="?page=stackboost-directory&tab=settings&sub-tab=general" class="nav-tab <?php echo 'general' === $active_sub_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'General', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="?page=stackboost-directory&tab=settings&sub-tab=ticket_widget" class="nav-tab <?php echo 'ticket_widget' === $active_sub_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Ticket Widget', 'stackboost-for-supportcandy' ); ?></a>
 			</h2>
 			<form action="options.php" method="post">
-				<?php settings_fields( self::OPTION_GROUP ); ?>
-				<div id="tab-general" class="tab-content">
+				<?php
+				if ( 'ticket_widget' === $active_sub_tab ) {
+					settings_fields( self::WIDGET_OPTION_GROUP );
+				} else {
+					settings_fields( self::OPTION_GROUP );
+				}
+				?>
+				<div id="tab-general" class="tab-content" style="<?php echo 'general' === $active_sub_tab ? '' : 'display:none;'; ?>">
 					<h2><?php esc_html_e( 'Display Settings', 'stackboost-for-supportcandy' ); ?></h2>
 					<table class="form-table">
 						<tr valign="top">
@@ -225,9 +231,9 @@ class Settings {
 						</tr>
 					</table>
 				</div>
-				<div id="tab-ticket_widget" class="tab-content">
+
+				<div id="tab-ticket_widget" class="tab-content" style="<?php echo 'ticket_widget' === $active_sub_tab ? '' : 'display:none;'; ?>">
 					<?php
-					settings_fields( self::WIDGET_OPTION_GROUP );
 					$widget_options = get_option( self::WIDGET_OPTION_NAME, [] );
 					$is_enabled     = $widget_options['enabled'] ?? '0';
 					$placement      = $widget_options['placement'] ?? 'before';
