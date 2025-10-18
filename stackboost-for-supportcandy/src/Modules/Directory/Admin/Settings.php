@@ -59,6 +59,12 @@ class Settings {
 			$sanitized_input['management_roles'] = array();
 		}
 
+		if ( isset( $input['listing_display_mode'] ) && in_array( $input['listing_display_mode'], array( 'page', 'modal' ), true ) ) {
+			$sanitized_input['listing_display_mode'] = $input['listing_display_mode'];
+		} else {
+			$sanitized_input['listing_display_mode'] = 'page';
+		}
+
 		return $sanitized_input;
 	}
 
@@ -67,8 +73,9 @@ class Settings {
 	 */
 	public static function render_settings_page() {
 		$options = get_option( self::OPTION_NAME, array() );
-		$edit_roles       = $options['edit_roles'] ?? array( 'administrator', 'editor' );
-		$management_roles = $options['management_roles'] ?? array( 'administrator' );
+		$edit_roles           = $options['edit_roles'] ?? array( 'administrator', 'editor' );
+		$management_roles     = $options['management_roles'] ?? array( 'administrator' );
+		$listing_display_mode = $options['listing_display_mode'] ?? 'page';
 		?>
 		<div class="wrap">
 			<form action="options.php" method="post">
@@ -76,6 +83,23 @@ class Settings {
 				settings_fields( self::OPTION_GROUP );
 				do_settings_sections( self::OPTION_GROUP );
 				?>
+				<h2><?php esc_html_e( 'Display Settings', 'stackboost-for-supportcandy' ); ?></h2>
+				<table class="form-table">
+					<tr valign="top">
+						<th scope="row">
+							<label for="stackboost-listing-display-mode"><?php esc_html_e( 'Listing Display Mode', 'stackboost-for-supportcandy' ); ?></label>
+						</th>
+						<td>
+							<select id="stackboost-listing-display-mode" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[listing_display_mode]">
+								<option value="page" <?php selected( $listing_display_mode, 'page' ); ?>><?php esc_html_e( 'Page View', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="modal" <?php selected( $listing_display_mode, 'modal' ); ?>><?php esc_html_e( 'Modal View', 'stackboost-for-supportcandy' ); ?></option>
+							</select>
+							<p class="description"><?php esc_html_e( 'Choose how to display individual staff listings on the front-end directory.', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+				<hr>
+				<h2><?php esc_html_e( 'Permission Settings', 'stackboost-for-supportcandy' ); ?></h2>
 				<table class="form-table">
 					<tr valign="top">
 						<th scope="row"><?php esc_html_e( 'Editing Permissions', 'stackboost-for-supportcandy' ); ?></th>

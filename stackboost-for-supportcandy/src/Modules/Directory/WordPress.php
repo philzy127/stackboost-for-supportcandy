@@ -61,6 +61,8 @@ class WordPress {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_public_scripts' ) );
 		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
+		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
+		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		Management::register_ajax_actions();
 	}
 
@@ -181,6 +183,13 @@ class WordPress {
 	 * Enqueue public scripts and styles.
 	 */
 	public function enqueue_public_scripts() {
+		global $post;
+
+		// Only enqueue scripts on pages that contain the shortcode.
+		if ( ! is_a( $post, 'WP_Post' ) || ! has_shortcode( $post->post_content, 'stackboost_directory' ) ) {
+			return;
+		}
+
 		wp_enqueue_style(
 			'stackboost-directory-datatables-style',
 			'https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css',
@@ -217,6 +226,26 @@ class WordPress {
 				'no_entries_found' => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
 			)
 		);
+
+		// Only enqueue modal assets if the setting is active.
+		$settings             = get_option( Settings::OPTION_NAME, array() );
+		$listing_display_mode = $settings['listing_display_mode'] ?? 'page';
+
+		if ( 'modal' === $listing_display_mode ) {
+			wp_enqueue_style(
+				'stackboost-modal-style',
+				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-modal.css',
+				array(),
+				\STACKBOOST_VERSION
+			);
+			wp_enqueue_script(
+				'stackboost-modal-js',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-modal.js',
+				array( 'jquery' ),
+				\STACKBOOST_VERSION,
+				true
+			);
+		}
 	}
 
 	/**
@@ -402,6 +431,35 @@ class WordPress {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * AJAX handler to get staff details for modal view.
+	 */
+	public function ajax_get_staff_details() {
+		check_ajax_referer( 'stackboost_directory_public_nonce', 'nonce' );
+
+		if ( ! isset( $_POST['post_id'] ) ) {
+			wp_send_json_error( 'Missing post ID.' );
+		}
+
+		$post_id = absint( $_POST['post_id'] );
+		$post    = get_post( $post_id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+
+		if ( ! $post || 'sb_staff_dir' !== $post->post_type ) {
+			wp_send_json_error( 'Invalid post.' );
+		}
+
+		// Set up global post data.
+		global $post;
+		setup_postdata( $post );
+
+		ob_start();
+		load_template( \STACKBOOST_PLUGIN_PATH . 'single-sb_staff_dir.php', false );
+		$content = ob_get_clean();
+		wp_reset_postdata();
+
+		wp_send_json_success( array( 'html' => $content ) );
 	}
 
 	/**
