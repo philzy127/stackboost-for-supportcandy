@@ -443,14 +443,13 @@ class WordPress {
 			wp_send_json_error( 'Invalid post.' );
 		}
 
-		// Set up global post data.
+		// Set up global post data so it's available in the template part.
 		global $post;
 		setup_postdata( $post );
 
 		ob_start();
-		// Manually include the functions file as it's not loaded in an AJAX context.
-		require_once \STACKBOOST_PLUGIN_PATH . 'includes/functions.php';
-		load_template( \STACKBOOST_PLUGIN_PATH . 'single-sb_staff_dir.php', false );
+		// Load the dedicated, safe template part for the modal.
+		load_template( \STACKBOOST_PLUGIN_PATH . 'template-parts/directory-modal-content.php', false );
 		$content = ob_get_clean();
 		wp_reset_postdata();
 
