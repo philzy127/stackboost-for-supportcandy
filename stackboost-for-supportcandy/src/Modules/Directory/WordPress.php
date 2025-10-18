@@ -183,13 +183,6 @@ class WordPress {
 	 * Enqueue public scripts and styles.
 	 */
 	public function enqueue_public_scripts() {
-		global $post;
-
-		// Only enqueue scripts on pages that contain the shortcode.
-		if ( ! is_a( $post, 'WP_Post' ) || ! has_shortcode( $post->post_content, 'stackboost_directory' ) ) {
-			return;
-		}
-
 		wp_enqueue_style(
 			'stackboost-directory-datatables-style',
 			'https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css',
@@ -241,7 +234,7 @@ class WordPress {
 			wp_enqueue_script(
 				'stackboost-modal-js',
 				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-modal.js',
-				array( 'jquery' ),
+				array( 'jquery', 'stackboost-directory-js' ),
 				\STACKBOOST_VERSION,
 				true
 			);
