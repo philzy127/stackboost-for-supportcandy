@@ -136,22 +136,6 @@ get_header(); ?>
                                 </tr>
                                 <?php endif; ?>
 
-                                <tr>
-                                    <th><?php esc_html_e( 'Status:', 'stackboost-for-supportcandy' ); ?></th>
-                                    <td><?php echo esc_html( $employee->active_status ); ?></td>
-                                </tr>
-                                <?php if ( ! empty( $employee->active_as_of_date ) ) : ?>
-                                <tr>
-                                    <th><?php esc_html_e( 'Active as of:', 'stackboost-for-supportcandy' ); ?></th>
-                                    <td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $employee->active_as_of_date ) ) ); ?></td>
-                                </tr>
-                                <?php endif; ?>
-                                <?php if ( ! empty( $employee->planned_exit_date ) ) : ?>
-                                <tr>
-                                    <th><?php esc_html_e( 'Inactive as of:', 'stackboost-for-supportcandy' ); ?></th>
-                                    <td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $employee->planned_exit_date ) ) ); ?></td>
-                                </tr>
-                                <?php endif; ?>
 
                                 <?php if ( ! empty( $employee->last_updated_on ) ) : ?>
                                 <tr>
