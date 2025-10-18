@@ -149,36 +149,6 @@ class DirectoryService {
 	}
 
 	/**
-	 * Get a single post object directly from the database for use in an AJAX context.
-	 *
-	 * This method avoids using `get_post()` which can be unreliable during AJAX
-	 * requests if the main query has been modified.
-	 *
-	 * @param int $post_id The ID of the post to retrieve.
-	 * @return \WP_Post|null The post object, or null if not found.
-	 */
-	public function get_post_by_id_for_ajax( int $post_id ): ?\WP_Post {
-		global $wpdb;
-
-		// We expect a single post, so we use get_row.
-		$post = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->posts} WHERE ID = %d AND post_type = %s AND post_status = 'publish'",
-				$post_id,
-				$this->staff_post_type
-			)
-		);
-
-		if ( ! $post ) {
-			return null;
-		}
-
-		// The get_row method returns a generic object, so we need to cast it to WP_Post
-		// for compatibility with functions like setup_postdata.
-		return new \WP_Post( $post );
-	}
-
-	/**
 	 * Get all active employees with all necessary data for the directory shortcode.
 	 *
 	 * This method is optimized to retrieve all data required for the shortcode

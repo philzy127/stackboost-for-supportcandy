@@ -430,44 +430,43 @@ class WordPress {
 	 * AJAX handler to get staff details for modal view.
 	 */
 	public function ajax_get_staff_details() {
-		try {
-			check_ajax_referer( 'stackboost_directory_public_nonce', 'stackboost_directory_nonce' );
+		check_ajax_referer( 'stackboost_directory_public_nonce', 'stackboost_directory_nonce' );
 
-			if ( ! isset( $_POST['post_id'] ) ) {
-				wp_send_json_error( 'Missing post ID.' );
-			}
-
-			$post_id = absint( $_POST['post_id'] );
-
-			$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
-			$post              = $directory_service->get_post_by_id_for_ajax( $post_id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-
-			if ( ! $post ) {
-				wp_send_json_error( array( 'message' => 'Invalid post or post not found.' ) );
-			}
-
-			// Set up global post data so it's available in the template part.
-			global $post;
-			setup_postdata( $post );
-
-			ob_start();
-			// Load the dedicated, safe template part for the modal.
-			load_template( \STACKBOOST_PLUGIN_PATH . 'template-parts/directory-modal-content.php', false );
-			$content = ob_get_clean();
-			wp_reset_postdata();
-
-			wp_send_json_success( array( 'html' => $content ) );
-
-		} catch ( \Throwable $e ) {
-			wp_send_json_error(
-				array(
-					'message' => 'A fatal error occurred in the AJAX handler.',
-					'error'   => $e->getMessage(),
-					'file'    => $e->getFile(),
-					'line'    => $e->getLine(),
-				)
-			);
+		if ( ! isset( $_POST['post_id'] ) ) {
+			wp_send_json_error( 'Missing post ID.' );
 		}
+
+		$post_id = absint( $_POST['post_id'] );
+
+		// Fetch the raw post object. We still need this for some template functions.
+		$post = get_post( $post_id );
+		if ( ! $post || 'sb_staff_dir' !== $post->post_type ) {
+			wp_send_json_error( array( 'message' => 'Invalid post or post not found.' ) );
+		}
+
+		// Fetch the structured employee data. This is the safe way to get all data.
+		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
+		$employee_data     = $directory_service->retrieve_employee_data( $post_id );
+
+		if ( ! $employee_data ) {
+			wp_send_json_error( array( 'message' => 'Could not retrieve employee data.' ) );
+		}
+
+		// Set up global post data so functions like `post_class` work in the template.
+		global $post;
+		setup_postdata( $post );
+
+		ob_start();
+		// Load the template part, passing the fetched employee data directly to it.
+		load_template(
+			\STACKBOOST_PLUGIN_PATH . 'template-parts/directory-modal-content.php',
+			false,
+			array( 'employee' => $employee_data )
+		);
+		$content = ob_get_clean();
+		wp_reset_postdata();
+
+		wp_send_json_success( array( 'html' => $content ) );
 	}
 
 	/**
