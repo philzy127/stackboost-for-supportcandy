@@ -438,10 +438,12 @@ class WordPress {
 			}
 
 			$post_id = absint( $_POST['post_id'] );
-			$post    = get_post( $post_id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 
-			if ( ! $post || 'sb_staff_dir' !== $post->post_type ) {
-				wp_send_json_error( 'Invalid post.' );
+			$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
+			$post              = $directory_service->get_post_by_id_for_ajax( $post_id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+
+			if ( ! $post ) {
+				wp_send_json_error( array( 'message' => 'Invalid post or post not found.' ) );
 			}
 
 			// Set up global post data so it's available in the template part.
