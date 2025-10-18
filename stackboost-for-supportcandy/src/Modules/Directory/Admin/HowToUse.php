@@ -57,6 +57,7 @@ class HowToUse {
 				<div class="inside">
 					<p><?php echo wp_kses_post( __( 'The <strong>Settings</strong> tab allows you to control who can interact with the Company Directory module.', 'stackboost-for-supportcandy' ) ); ?></p>
 					<ul>
+						<li><?php echo wp_kses_post( __( '<strong>Listing Display Mode:</strong> Choose how individual staff listings are displayed on the front-end directory. "Page View" opens the details on a new page, while "Modal View" opens them in a pop-up window on the same page.', 'stackboost-for-supportcandy' ) ); ?></li>
 						<li><?php echo wp_kses_post( __( '<strong>Editing Permissions:</strong> Select the user roles that should be allowed to create, edit, and delete staff, locations, and departments.', 'stackboost-for-supportcandy' ) ); ?></li>
 						<li><?php echo wp_kses_post( __( '<strong>Management Tab Access:</strong> Select the user roles that should have access to the powerful tools in the Management tab.', 'stackboost-for-supportcandy' ) ); ?></li>
 					</ul>

@@ -55,6 +55,14 @@ Your CSV file **must** have the following columns in the header row:
 
 **Important:** The importer **only adds new entries**; it does not update existing ones.
 
+## Settings
+
+The **Settings** tab allows you to configure how the directory is displayed and who can manage it.
+
+*   **Listing Display Mode:** Choose how individual staff listings are displayed on the front-end directory. "Page View" opens the details on a new page, while "Modal View" opens them in a pop-up window on the same page.
+*   **Editing Permissions:** Select the user roles that should be allowed to create, edit, and delete staff, locations, and departments.
+*   **Management Tab Access:** Select the user roles that should have access to the powerful tools in the Management tab.
+
 ## Clearing Data
 
 The **Clear Data** tab provides a way to permanently delete **all** staff directory entries at once. This is a destructive action and cannot be undone. You will be asked to type "DELETE" to confirm.

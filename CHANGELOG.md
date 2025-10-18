@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-10-17
+
+### Added
+- **Modal View for Directory:** Added a new "Listing Display Mode" setting in the Directory settings tab. This allows administrators to choose whether clicking a staff member on the front-end directory opens their details on a new page ("Page View") or in a pop-up modal window ("Modal View").
+- This includes a new AJAX endpoint for fetching modal content, new CSS for styling the modal, and new JavaScript for handling the modal's behavior.
+
+### Fixed
+- **Modal Content Loading:** Resolved a series of bugs that prevented the modal from loading content, including a fatal PHP error in the AJAX handler and an issue with fetching the staff member's photo. The final solution uses a dedicated template part and passes all data directly to it from the AJAX handler for a more robust implementation.
+
 ## [1.1.0] - 2025-10-16
 
 ### Added
