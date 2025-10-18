@@ -321,23 +321,16 @@ class WordPress {
 
 		$tabs = array_merge( $base_tabs, $advanced_tabs );
 
-		// Reorder per user request.
-		$tabs = array_replace(
-			[
-				'staff'          => '',
-				'departments'    => '',
-				'locations'      => '',
-				'contact_widget' => '',
-				'settings'       => '',
-				'management'     => '',
-				'how_to_use'     => '',
-				'testing'        => '',
-			],
-			$tabs
-		);
-
-		$tabs = array_filter($tabs);
-
+		// Reorder per user request: Staff > Departments > Locations > Contact Widget > Settings > Management > How to Use > Testing
+		$ordered_tabs = [];
+		$order = ['staff', 'departments', 'locations', 'contact_widget', 'settings', 'management', 'how_to_use', 'testing'];
+		foreach($order as $key) {
+			if(isset($tabs[$key])) {
+				$ordered_tabs[$key] = $tabs[$key];
+			}
+		}
+		// Add any other tabs that might not be in the order array to the end
+		$tabs = array_merge($ordered_tabs, array_diff_key($tabs, $ordered_tabs));
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 		?>
@@ -575,7 +568,7 @@ class WordPress {
 	 * @param object $ticket The SupportCandy ticket object.
 	 */
 	public function render_ticket_widget( object $ticket ) {
-		$widget_options = get_option( Settings::WIDGET_OPTION_NAME, [] );
+		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
 		if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
 			return;
@@ -591,7 +584,7 @@ class WordPress {
 		echo '<div id="stackboost-directory-pseudo-widget" style="display:none;">';
 
 		if ( $staff_member ) {
-			$all_fields = Settings::get_directory_fields(); // Note: This is private, needs to be public static.
+			$all_fields = TicketWidgetSettings::get_directory_fields();
 			echo '<div class="wpsc-itw-container">';
 			echo '<div class="wpsc-itw-title">' . esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ) . '</div>';
 			echo '<div class="wpsc-itw-body">';
