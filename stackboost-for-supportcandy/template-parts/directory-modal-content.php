@@ -36,8 +36,8 @@ require_once \STACKBOOST_PLUGIN_PATH . 'includes/functions.php';
 			<div class="staff-detail-container">
 				<div class="staff-photo">
 					<?php
-					if ( has_post_thumbnail( $employee_id ) ) {
-						echo get_the_post_thumbnail( $employee_id, 'medium' );
+					if ( has_post_thumbnail() ) {
+						the_post_thumbnail( 'medium' );
 					} else {
 						echo '<img src="' . esc_url( 'https://placehold.co/300x300/e0e0e0/555555?text=No+Photo' ) . '" alt="No staff photo available" />';
 					}
