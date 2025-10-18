@@ -14,6 +14,7 @@ use StackBoost\ForSupportCandy\Modules\Directory\Admin\LocationsListTable;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\Management;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\StaffListTable;
+use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\Directory\Data\CustomPostTypes;
 
 
@@ -72,6 +73,7 @@ class WordPress {
 	 */
 	public function register_module_settings() {
 		Settings::register_settings();
+		TicketWidgetSettings::register_settings();
 	}
 
 	/**
@@ -165,8 +167,8 @@ class WordPress {
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
-			// Enqueue scripts for the Settings tab.
-			if ( 'settings' === $active_tab ) {
+			// Enqueue scripts for the Contact Widget settings tab.
+			if ( 'contact_widget' === $active_tab ) {
 				wp_enqueue_style(
 					'stackboost-directory-settings',
 					\STACKBOOST_PLUGIN_URL . 'assets/css/directory-settings.css',
@@ -179,13 +181,6 @@ class WordPress {
 					[ 'jquery', 'jquery-ui-sortable' ],
 					\STACKBOOST_VERSION,
 					true
-				);
-				wp_localize_script(
-					'stackboost-directory-settings',
-					'stackboostDirSettings',
-					[
-						'activeSubTab' => isset( $_GET['sub-tab'] ) ? sanitize_key( $_GET['sub-tab'] ) : 'general',
-					]
 				);
 			}
 
@@ -307,18 +302,42 @@ class WordPress {
 	 * Render the admin page.
 	 */
 	public function render_admin_page() {
-		$tabs = array(
-			'staff'       => __( 'Staff', 'stackboost-for-supportcandy' ),
-			'locations'   => __( 'Locations', 'stackboost-for-supportcandy' ),
-			'departments' => __( 'Departments', 'stackboost-for-supportcandy' ),
-			'how_to_use'  => __( 'How to Use', 'stackboost-for-supportcandy' ),
-			'settings'    => __( 'Settings', 'stackboost-for-supportcandy' ),
+		$base_tabs = array(
+			'staff'           => __( 'Staff', 'stackboost-for-supportcandy' ),
+			'departments'     => __( 'Departments', 'stackboost-for-supportcandy' ),
+			'locations'       => __( 'Locations', 'stackboost-for-supportcandy' ),
+			'contact_widget'  => __( 'Contact Widget', 'stackboost-for-supportcandy' ),
+			'settings'        => __( 'Settings', 'stackboost-for-supportcandy' ),
 		);
 
+		$advanced_tabs = array();
 		if ( $this->can_user_manage() ) {
-			$tabs['management'] = __( 'Management', 'stackboost-for-supportcandy' );
-			$tabs['testing']    = __( 'Testing', 'stackboost-for-supportcandy' );
+			$advanced_tabs['management'] = __( 'Management', 'stackboost-for-supportcandy' );
+			$advanced_tabs['how_to_use'] = __( 'How to Use', 'stackboost-for-supportcandy' );
+			$advanced_tabs['testing']    = __( 'Testing', 'stackboost-for-supportcandy' );
+		} else {
+			$advanced_tabs['how_to_use'] = __( 'How to Use', 'stackboost-for-supportcandy' );
 		}
+
+		$tabs = array_merge( $base_tabs, $advanced_tabs );
+
+		// Reorder per user request.
+		$tabs = array_replace(
+			[
+				'staff'          => '',
+				'departments'    => '',
+				'locations'      => '',
+				'contact_widget' => '',
+				'settings'       => '',
+				'management'     => '',
+				'how_to_use'     => '',
+				'testing'        => '',
+			],
+			$tabs
+		);
+
+		$tabs = array_filter($tabs);
+
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 		?>
@@ -398,6 +417,9 @@ class WordPress {
 						} else {
 							echo '<p>' . esc_html__( 'You do not have permission to access this page.', 'stackboost-for-supportcandy' ) . '</p>';
 						}
+						break;
+					case 'contact_widget':
+						TicketWidgetSettings::render_page();
 						break;
 					case 'settings':
 						Settings::render_settings_page();
