@@ -430,30 +430,42 @@ class WordPress {
 	 * AJAX handler to get staff details for modal view.
 	 */
 	public function ajax_get_staff_details() {
-		check_ajax_referer( 'stackboost_directory_public_nonce', 'nonce' );
+		try {
+			check_ajax_referer( 'stackboost_directory_public_nonce', 'nonce' );
 
-		if ( ! isset( $_POST['post_id'] ) ) {
-			wp_send_json_error( 'Missing post ID.' );
+			if ( ! isset( $_POST['post_id'] ) ) {
+				wp_send_json_error( 'Missing post ID.' );
+			}
+
+			$post_id = absint( $_POST['post_id'] );
+			$post    = get_post( $post_id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+
+			if ( ! $post || 'sb_staff_dir' !== $post->post_type ) {
+				wp_send_json_error( 'Invalid post.' );
+			}
+
+			// Set up global post data so it's available in the template part.
+			global $post;
+			setup_postdata( $post );
+
+			ob_start();
+			// Load the dedicated, safe template part for the modal.
+			load_template( \STACKBOOST_PLUGIN_PATH . 'template-parts/directory-modal-content.php', false );
+			$content = ob_get_clean();
+			wp_reset_postdata();
+
+			wp_send_json_success( array( 'html' => $content ) );
+
+		} catch ( \Throwable $e ) {
+			wp_send_json_error(
+				array(
+					'message' => 'A fatal error occurred in the AJAX handler.',
+					'error'   => $e->getMessage(),
+					'file'    => $e->getFile(),
+					'line'    => $e->getLine(),
+				)
+			);
 		}
-
-		$post_id = absint( $_POST['post_id'] );
-		$post    = get_post( $post_id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-
-		if ( ! $post || 'sb_staff_dir' !== $post->post_type ) {
-			wp_send_json_error( 'Invalid post.' );
-		}
-
-		// Set up global post data so it's available in the template part.
-		global $post;
-		setup_postdata( $post );
-
-		ob_start();
-		// Load the dedicated, safe template part for the modal.
-		load_template( \STACKBOOST_PLUGIN_PATH . 'template-parts/directory-modal-content.php', false );
-		$content = ob_get_clean();
-		wp_reset_postdata();
-
-		wp_send_json_success( array( 'html' => $content ) );
 	}
 
 	/**
