@@ -5,11 +5,10 @@
  * @package StackBoost
  */
 
-// This file is loaded via AJAX, so we need to ensure global context is set up.
-if ( ! defined( 'ABSPATH' ) || ! isset( $post ) ) {
-    // Direct access is not allowed, or post is not set.
-    // The AJAX handler in WordPress.php should have already set up the global $post.
-    return;
+// This file is loaded via AJAX. The `ABSPATH` check prevents direct access.
+// The AJAX handler in WordPress.php is responsible for setting up the global $post object.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
 }
 
 // Manually include the functions file as it's not always loaded in an AJAX context.
