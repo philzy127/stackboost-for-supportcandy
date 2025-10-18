@@ -95,6 +95,54 @@ require_once \STACKBOOST_PLUGIN_PATH . 'includes/functions.php';
 							<td><?php echo esc_html( $employee->location_name ); ?></td>
 						</tr>
 						<?php endif; ?>
+
+						<?php if ( ! empty( $employee->room_number ) ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Room #:', 'stackboost-for-supportcandy' ); ?></th>
+							<td><?php echo esc_html( $employee->room_number ); ?></td>
+						</tr>
+						<?php endif; ?>
+
+						<?php if ( ! empty( $employee->location_details['address_line1'] ) ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Location Address:', 'stackboost-for-supportcandy' ); ?></th>
+							<td>
+								<?php echo esc_html( $employee->location_details['address_line1'] ); ?><br>
+								<?php echo esc_html( $employee->location_details['city'] ); ?>, <?php echo esc_html( $employee->location_details['state'] ); ?> <?php echo esc_html( $employee->location_details['zip'] ); ?>
+							</td>
+						</tr>
+						<?php endif; ?>
+
+						<?php if ( ! empty( $employee->location_details['phone_number'] ) ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Location Phone:', 'stackboost-for-supportcandy' ); ?></th>
+							<td><?php echo esc_html( $employee->location_details['phone_number'] ); ?></td>
+						</tr>
+						<?php endif; ?>
+
+						<tr>
+							<th><?php esc_html_e( 'Status:', 'stackboost-for-supportcandy' ); ?></th>
+							<td><?php echo esc_html( $employee->active_status ); ?></td>
+						</tr>
+						<?php if ( ! empty( $employee->active_as_of_date ) ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Active as of:', 'stackboost-for-supportcandy' ); ?></th>
+							<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $employee->active_as_of_date ) ) ); ?></td>
+						</tr>
+						<?php endif; ?>
+						<?php if ( ! empty( $employee->planned_exit_date ) ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Inactive as of:', 'stackboost-for-supportcandy' ); ?></th>
+							<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $employee->planned_exit_date ) ) ); ?></td>
+						</tr>
+						<?php endif; ?>
+
+						<?php if ( ! empty( $employee->last_updated_on ) ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Last Updated On:', 'stackboost-for-supportcandy' ); ?></th>
+							<td><?php echo esc_html( $employee->last_updated_on ); ?></td>
+						</tr>
+						<?php endif; ?>
 					</table>
 				</div>
 			</div><!-- .staff-detail-container -->
