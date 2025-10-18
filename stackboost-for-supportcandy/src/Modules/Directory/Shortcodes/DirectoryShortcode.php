@@ -48,6 +48,9 @@ class DirectoryShortcode {
 		$directory_wordpress = \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance();
 		$can_edit_entries    = $directory_wordpress->can_user_edit();
 
+		$settings             = get_option( \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::OPTION_NAME, array() );
+		$listing_display_mode = $settings['listing_display_mode'] ?? 'page';
+
 		ob_start();
 		?>
 		<div class="stackboost-staff-directory-container">
@@ -67,12 +70,18 @@ class DirectoryShortcode {
 							$allowed_html = array(
 								'strong' => array(),
 								'br'     => array(),
-								'a'      => array( 'href' => array() ),
+								'a'      => array(
+									'href'            => true,
+									'class'           => true,
+									'data-post-id'    => true,
+									'data-wp-nonce'   => true,
+								),
 								'span'   => array(
 									'class'          => true,
 									'data-phone'     => true,
 									'data-extension' => true,
 									'title'          => true,
+									'data-email'     => true,
 								),
 								'svg'    => array(
 									'class'   => true,
@@ -110,7 +119,12 @@ class DirectoryShortcode {
 								?>
 								<tr>
 									<td>
-										<a href="<?php echo esc_url( $employee->permalink ); ?>"><?php echo esc_html( $employee->name ); ?></a>
+										<?php if ( 'modal' === $listing_display_mode ) : ?>
+											<a href="#" class="stackboost-modal-trigger" data-post-id="<?php echo esc_attr( $employee->id ); ?>"><?php echo esc_html( $employee->name ); ?></a>
+										<?php else : ?>
+											<a href="<?php echo esc_url( $employee->permalink ); ?>"><?php echo esc_html( $employee->name ); ?></a>
+										<?php endif; ?>
+
 										<?php if ( ! empty( $employee->email ) ) : ?>
 											<span class="stackboost-copy-email-icon"
 												  data-email="<?php echo esc_attr( $employee->email ); ?>"
@@ -137,6 +151,16 @@ class DirectoryShortcode {
 					<p><?php esc_html_e( 'No directory entries found.', 'stackboost-for-supportcandy' ); ?></p>
 				<?php endif; ?>
 			</div>
+			<?php if ( 'modal' === $listing_display_mode ) : ?>
+				<div id="stackboost-staff-modal" class="stackboost-modal" style="display: none;">
+					<div class="stackboost-modal-content">
+						<span class="stackboost-modal-close">&times;</span>
+						<div class="stackboost-modal-body">
+							<!-- Content will be loaded here via AJAX -->
+						</div>
+					</div>
+				</div>
+			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();

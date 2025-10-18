@@ -1,0 +1,129 @@
+/* Staff Directory Modal Styles */
+.stackboost-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+    -webkit-animation-name: fadeIn;
+    -webkit-animation-duration: 0.4s;
+    animation-name: fadeIn;
+    animation-duration: 0.4s
+}
+
+.stackboost-modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 700px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: slideIn;
+    -webkit-animation-duration: 0.4s;
+    animation-name: slideIn;
+    animation-duration: 0.4s
+}
+
+.stackboost-modal-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.stackboost-modal-close:hover,
+.stackboost-modal-close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.stackboost-modal-body {
+    padding: 20px 15px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stackboost-modal-loader {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 2s linear infinite;
+}
+
+@-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@-webkit-keyframes fadeIn {
+    from {opacity: 0}
+    to {opacity: 1}
+}
+
+@keyframes fadeIn {
+    from {opacity: 0}
+    to {opacity: 1}
+}
+
+@-webkit-keyframes slideIn {
+    from {top: -300px; opacity: 0}
+    to {top: 0; opacity: 1}
+}
+
+@keyframes slideIn {
+    from {margin-top: -100px; opacity: 0}
+    to {margin-top: 5%; opacity: 1}
+}
+
+/* Make the content inside the modal look like the single page */
+.stackboost-modal-body .stackboost-staff-entry {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* New styles for side-by-side layout */
+.stackboost-modal-body .staff-detail-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.stackboost-modal-body .staff-photo {
+    flex: 1 1 150px; /* Flex-grow, flex-shrink, basis */
+    max-width: 200px;
+}
+
+.stackboost-modal-body .staff-photo img {
+    max-width: 80%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.stackboost-modal-body .staff-info {
+    flex: 2 1 300px; /* Allow this to grow and take more space */
+}
+
+.stackboost-modal-body .staff-details-table th,
+.stackboost-modal-body .staff-details-table td {
+    font-size: smaller;
+    padding: 4px 0;
+}

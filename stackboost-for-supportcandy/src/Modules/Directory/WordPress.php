@@ -61,6 +61,8 @@ class WordPress {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_public_scripts' ) );
 		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
+		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
+		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		Management::register_ajax_actions();
 	}
 
@@ -212,11 +214,31 @@ class WordPress {
 			'stackboost-directory-js',
 			'stackboostPublicAjax',
 			array(
-				'ajax_url'         => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'stackboost_directory_public_nonce' ),
-				'no_entries_found' => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
+				'ajax_url'                   => admin_url( 'admin-ajax.php' ),
+				'stackboost_directory_nonce' => wp_create_nonce( 'stackboost_directory_public_nonce' ),
+				'no_entries_found'           => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
 			)
 		);
+
+		// Only enqueue modal assets if the setting is active.
+		$settings             = get_option( Settings::OPTION_NAME, array() );
+		$listing_display_mode = $settings['listing_display_mode'] ?? 'page';
+
+		if ( 'modal' === $listing_display_mode ) {
+			wp_enqueue_style(
+				'stackboost-modal-style',
+				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-modal.css',
+				array(),
+				\STACKBOOST_VERSION
+			);
+			wp_enqueue_script(
+				'stackboost-modal-js',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-modal.js',
+				array( 'jquery', 'stackboost-directory-js' ),
+				\STACKBOOST_VERSION,
+				true
+			);
+		}
 	}
 
 	/**
@@ -402,6 +424,49 @@ class WordPress {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * AJAX handler to get staff details for modal view.
+	 */
+	public function ajax_get_staff_details() {
+		check_ajax_referer( 'stackboost_directory_public_nonce', 'stackboost_directory_nonce' );
+
+		if ( ! isset( $_POST['post_id'] ) ) {
+			wp_send_json_error( 'Missing post ID.' );
+		}
+
+		$post_id = absint( $_POST['post_id'] );
+
+		// Fetch the raw post object. We still need this for some template functions.
+		$post = get_post( $post_id );
+		if ( ! $post || 'sb_staff_dir' !== $post->post_type ) {
+			wp_send_json_error( array( 'message' => 'Invalid post or post not found.' ) );
+		}
+
+		// Fetch the structured employee data. This is the safe way to get all data.
+		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
+		$employee_data     = $directory_service->retrieve_employee_data( $post_id );
+
+		if ( ! $employee_data ) {
+			wp_send_json_error( array( 'message' => 'Could not retrieve employee data.' ) );
+		}
+
+		// Set up global post data so functions like `post_class` work in the template.
+		global $post;
+		setup_postdata( $post );
+
+		ob_start();
+		// Load the template part, passing the fetched employee data directly to it.
+		load_template(
+			\STACKBOOST_PLUGIN_PATH . 'template-parts/directory-modal-content.php',
+			false,
+			array( 'employee' => $employee_data )
+		);
+		$content = ob_get_clean();
+		wp_reset_postdata();
+
+		wp_send_json_success( array( 'html' => $content ) );
 	}
 
 	/**

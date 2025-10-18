@@ -119,6 +119,7 @@ class DirectoryService {
 		$employee_data->name                = get_the_title( $profile_id );
 		$employee_data->permalink           = get_permalink( $profile_id );
 		$employee_data->edit_post_link      = get_edit_post_link( $profile_id );
+		$employee_data->thumbnail_url       = get_the_post_thumbnail_url( $profile_id, 'medium' );
 		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
 		$employee_data->job_title           = get_post_meta( $profile_id, '_chp_staff_job_title', true );
 		$employee_data->department_program  = get_post_meta( $profile_id, '_department_program', true );
