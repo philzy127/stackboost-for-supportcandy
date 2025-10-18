@@ -214,9 +214,9 @@ class WordPress {
 			'stackboost-directory-js',
 			'stackboostPublicAjax',
 			array(
-				'ajax_url'         => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'stackboost_directory_public_nonce' ),
-				'no_entries_found' => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
+				'ajax_url'                   => admin_url( 'admin-ajax.php' ),
+				'stackboost_directory_nonce' => wp_create_nonce( 'stackboost_directory_public_nonce' ),
+				'no_entries_found'           => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
 			)
 		);
 
@@ -431,7 +431,7 @@ class WordPress {
 	 */
 	public function ajax_get_staff_details() {
 		try {
-			check_ajax_referer( 'stackboost_directory_public_nonce', 'nonce' );
+			check_ajax_referer( 'stackboost_directory_public_nonce', 'stackboost_directory_nonce' );
 
 			if ( ! isset( $_POST['post_id'] ) ) {
 				wp_send_json_error( 'Missing post ID.' );

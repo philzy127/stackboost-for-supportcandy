@@ -20,7 +20,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'stackboost_get_staff_details',
                 post_id: postId,
-                nonce: stackboostPublicAjax.nonce
+                stackboost_directory_nonce: stackboostPublicAjax.stackboost_directory_nonce
             },
             success: function(response) {
                 if (response.success) {
