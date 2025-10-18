@@ -98,3 +98,31 @@
     padding: 0;
     margin: 0;
 }
+
+/* New styles for side-by-side layout */
+.stackboost-modal-body .staff-detail-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.stackboost-modal-body .staff-photo {
+    flex: 1 1 150px; /* Flex-grow, flex-shrink, basis */
+    max-width: 200px;
+}
+
+.stackboost-modal-body .staff-photo img {
+    max-width: 80%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.stackboost-modal-body .staff-info {
+    flex: 2 1 300px; /* Allow this to grow and take more space */
+}
+
+.stackboost-modal-body .staff-details-table th,
+.stackboost-modal-body .staff-details-table td {
+    font-size: smaller;
+}
