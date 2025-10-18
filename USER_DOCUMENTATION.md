@@ -21,7 +21,7 @@ The **Staff** tab is the primary view where you will see a list of all your staf
 1.  Click the **Add New** button at the top of the Staff tab.
 2.  Fill in the staff member's details:
     *   **Name:** The full name of the staff member (this is the only required field).
-    *   **Staff Details:** Fill in the contact information, location, department, and job title in the "Staff Details" section.
+    *   **Staff Details:** Fill in the contact information, location, department, and job title in the "Staff Details" section. The **Office Phone** and **Mobile Phone** fields will be automatically formatted for you as you type.
     *   **Staff Photo:** Use the "Featured Image" box on the right to upload a photo.
 3.  Click **Publish** to save the new entry.
 
@@ -41,17 +41,22 @@ The **Locations** and **Departments** tabs work just like the Staff tab. You can
 
 ## Importing Data via CSV
 
-The **Import** tab provides a powerful tool for bulk-adding new staff members from a CSV file.
+The **Management** tab contains a tool for bulk-adding new staff members from a CSV file.
 
 ### CSV File Format
 
-Your CSV file **must** have the following columns in the header row:
+Your CSV file **must** have a header row, and the columns must be in the following order:
 
-`Name,Office Phone,Extension,Mobile Phone,Location,Room #,Department / Program,Title,Email Address,Active`
+1.  `Name`
+2.  `Email`
+3.  `Office Phone`
+4.  `Extension`
+5.  `Mobile Phone`
+6.  `Job Title`
+7.  `Department/Program`
 
-*   **Name:** This is the only required field.
-*   **Location & Department:** If a location or department in your CSV does not already exist, the importer will create it for you.
-*   **Active:** Use `Yes` or `1` for active entries, and `No` or `0` for inactive entries.
+*   **Name:** This is the only required field. If a name is missing, that row will be skipped.
+*   **Phone Numbers:** Any special characters (like parentheses or dashes) will be automatically stripped out. Only the digits will be stored.
 
 **Important:** The importer **only adds new entries**; it does not update existing ones.
 

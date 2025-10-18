@@ -37,6 +37,7 @@ class HowToUse {
 				<h2 class="hndle"><span><?php esc_html_e( 'Adding & Managing Staff, Locations, and Departments', 'stackboost-for-supportcandy' ); ?></span></h2>
 				<div class="inside">
 					<p><?php echo wp_kses_post( __( 'The <strong>Staff</strong>, <strong>Locations</strong>, and <strong>Departments</strong> tabs allow you to manage the core data of your directory. To add a new item to any of these categories, simply click the "Add New" button at the top of the respective table.', 'stackboost-for-supportcandy' ) ); ?></p>
+					<p><?php echo wp_kses_post( __( 'When editing a staff member, the Office and Mobile phone number fields will be automatically formatted as <strong>(xxx) xxx-xxxx</strong> as you type. You only need to enter the digits.', 'stackboost-for-supportcandy' ) ); ?></p>
 					<p><?php echo wp_kses_post( __( '<strong>Note:</strong> The ability to add and edit these items is controlled by the roles defined in the <strong>Settings</strong> tab. By default, only Administrators can manage these listings.', 'stackboost-for-supportcandy' ) ); ?></p>
 				</div>
 			</div>
@@ -72,7 +73,7 @@ class HowToUse {
 					<?php // This section explains the bulk data operations. ?>
 					<p><?php echo wp_kses_post( __( 'The <strong>Management</strong> tab provides tools for bulk data operations. Access to this tab is restricted by the roles you define in the Settings tab.', 'stackboost-for-supportcandy' ) ); ?></p>
 					<ul>
-						<li><?php echo wp_kses_post( __( '<strong>Import Staff from CSV:</strong> Bulk-upload new staff members from a CSV file. This tool only adds new entries and does not update existing ones.', 'stackboost-for-supportcandy' ) ); ?></li>
+						<li><?php echo wp_kses_post( __( '<strong>Import Staff from CSV:</strong> Bulk-upload new staff members from a CSV file. This tool only adds new entries and does not update existing ones. The CSV file must have a header row and the columns must be in the following order: <code>Name, Email, Office Phone, Extension, Mobile Phone, Job Title, Department/Program</code>.', 'stackboost-for-supportcandy' ) ); ?></li>
 						<li><?php echo wp_kses_post( __( '<strong>Clear Directory Data:</strong> Deletes all <strong>staff members</strong> from the directory. This does not affect locations or departments.', 'stackboost-for-supportcandy' ) ); ?></li>
 						<li><?php echo wp_kses_post( __( '<strong>Fresh Start:</strong> A nuclear option that permanently deletes <strong>all</strong> staff, locations, and departments, and clears the trash. This action requires double confirmation and cannot be undone.', 'stackboost-for-supportcandy' ) ); ?></li>
 					</ul>

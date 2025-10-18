@@ -90,7 +90,16 @@ These are the foundational files and classes that enable the plugin and its modu
     $employee_data = $directory_service->retrieve_employee_data( 123 );
     ```
 
-### 2.5. `src/Core/Module.php`
+### 2.5. `src/Admin/Upgrade.php`
+
+*   **Purpose:** This class handles one-time plugin upgrade routines, particularly for data migrations. It is designed to be triggered manually by an administrator via an admin notice, which is a safer pattern than running potentially intensive operations automatically on `admin_init`.
+*   **Key Methods:**
+    *   `init()`: Hooks into `admin_notices` to display the migration notice if the migration has not been marked as complete. It also registers the AJAX action for running the migration.
+    *   `show_migration_notice()`: Renders the admin notice HTML and the accompanying JavaScript to handle the AJAX call when the "Run" button is clicked.
+    *   `run_migration()`: The AJAX callback that performs the actual data migration. It includes nonce and capability checks for security.
+*   **Initialization:** This class is initialized directly from `bootstrap.php` via the `plugins_loaded` action, ensuring it is loaded on every admin page load to check if the notice needs to be displayed.
+
+### 2.6. `src/Core/Module.php`
 
 *   **Purpose:** An abstract base class that all module `WordPress.php` adapters should extend. It provides a common structure and shared functionality for settings rendering.
 *   **Key Methods:**
@@ -104,7 +113,25 @@ These are the foundational files and classes that enable the plugin and its modu
 
 This section provides a technical breakdown of each individual module.
 
-### 3.1. After Hours Notice
+### 3.1. Directory
+
+*   **Namespace:** `StackBoost\ForSupportCandy\Modules\Directory`
+*   **Slug:** `directory`
+
+#### Core Logic (`Core.php`)
+
+This module's `Core.php` is minimal and primarily serves to instantiate the Custom Post Type and MetaBox handlers.
+
+#### WordPress Adapter (`WordPress.php`)
+
+*   **Hooks:**
+    *   `admin_enqueue_scripts`: Enqueues the `admin-phone-format.js` script on the staff CPT edit screen and the `import-ajax.js` on the management tab.
+    *   `save_post`: Hooks into `MetaBoxes::save_directory_meta_box_data()` to sanitize and save staff details.
+*   **Key Methods:**
+    *   `enqueue_admin_scripts()`: Handles loading of all admin-side scripts for the module.
+    *   `ajax_import_csv()`: Located in `Admin/Management.php`, this method handles the server-side logic for the CSV import. It sanitizes the data (including stripping non-numeric characters from phone numbers) and creates new staff posts.
+
+### 3.2. After Hours Notice
 
 *   **Namespace:** `StackBoost\ForSupportCandy\Modules\AfterHoursNotice`
 *   **Slug:** `after_hours_notice`

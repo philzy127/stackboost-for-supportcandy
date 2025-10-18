@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-10-17
+
+### Added
+- **Phone Number Formatting:** Implemented front-end, real-time formatting for `Office Phone` and `Mobile Phone` fields in the staff directory admin screen to `(xxx) xxx-xxxx`.
+- **Data Migration for Phone Numbers:** Added a new, user-triggered database migration to strip special characters from all existing phone numbers, ensuring they are stored in a raw digit format.
+
+### Changed
+- **Phone Number Storage:** The system now saves all phone numbers as raw digits in the database, stripping parentheses, spaces, and dashes on save and during import.
+
+### Fixed
+- **CSV Import Functionality:** Re-implemented the previously missing server-side logic for the CSV import feature.
+- **CSV Import Click Action:** Fixed a bug where the "Import" button was unresponsive due to a mismatched ID in the JavaScript file.
+
 ## [1.2.0] - 2025-10-17
 
 ### Added

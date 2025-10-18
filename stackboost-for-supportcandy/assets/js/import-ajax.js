@@ -1,10 +1,10 @@
 jQuery(document).ready(function($) {
-    $('#stackboost-import-form').on('submit', function(e) {
+    $('#stackboost-csv-import-form').on('submit', function(e) {
         e.preventDefault();
 
         var formData = new FormData(this);
         var fileInput = $('#csv_file')[0];
-        var messageDiv = $('#stackboost-import-message');
+        var messageDiv = $('#import-progress'); // Use the existing div for messages.
         var progressDiv = $('#stackboost-import-progress');
         var progressBar = $('#stackboost-progress-bar');
         var progressText = $('#stackboost-progress-text');
