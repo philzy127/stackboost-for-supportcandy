@@ -185,8 +185,8 @@ class Settings {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Company Directory Settings', 'stackboost-for-supportcandy' ); ?></h1>
 			<h2 class="nav-tab-wrapper">
-				<a href="?page=stackboost-directory&tab=settings&sub-tab=general" class="nav-tab <?php echo 'general' === $active_sub_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'General', 'stackboost-for-supportcandy' ); ?></a>
-				<a href="?page=stackboost-directory&tab=settings&sub-tab=ticket_widget" class="nav-tab <?php echo 'ticket_widget' === $active_sub_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Ticket Widget', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="?page=stackboost-directory&tab=settings&sub-tab=general" data-sub-tab="general" class="nav-tab <?php echo 'general' === $active_sub_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'General', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="?page=stackboost-directory&tab=settings&sub-tab=ticket_widget" data-sub-tab="ticket_widget" class="nav-tab <?php echo 'ticket_widget' === $active_sub_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Ticket Widget', 'stackboost-for-supportcandy' ); ?></a>
 			</h2>
 			<form action="options.php" method="post">
 				<?php

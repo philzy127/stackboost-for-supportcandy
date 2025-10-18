@@ -4,8 +4,8 @@ jQuery(document).ready(function($) {
     // Tab switching logic
     wrap.on('click', 'h2.nav-tab-wrapper a', function(e) {
         e.preventDefault();
-        var url = new URL($(this).attr('href'));
-        var subTab = url.searchParams.get("sub-tab");
+        var subTab = $(this).data('sub-tab');
+        var newUrl = $(this).attr('href');
 
         $('h2.nav-tab-wrapper a').removeClass('nav-tab-active');
         $(this).addClass('nav-tab-active');
@@ -13,7 +13,7 @@ jQuery(document).ready(function($) {
         $('.tab-content').hide();
         $('#tab-' + subTab).show();
 
-        window.history.pushState({path: url.href}, '', url.href);
+        window.history.pushState({path: newUrl}, '', newUrl);
     });
 
     // On page load, show the correct tab if specified in URL
