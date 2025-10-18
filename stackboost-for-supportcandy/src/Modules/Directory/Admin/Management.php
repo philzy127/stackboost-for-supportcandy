@@ -110,8 +110,95 @@ class Management {
 	 * Register AJAX actions.
 	 */
 	public static function register_ajax_actions() {
+		add_action( 'wp_ajax_stackboost_directory_import_csv', array( __CLASS__, 'ajax_import_csv' ) );
 		add_action( 'wp_ajax_stackboost_directory_fresh_start', array( __CLASS__, 'ajax_fresh_start' ) );
 		add_action( 'wp_ajax_stackboost_directory_clear_data', array( __CLASS__, 'ajax_clear_data' ) );
+	}
+
+	/**
+	 * AJAX handler for importing staff from a CSV file.
+	 */
+	public static function ajax_import_csv() {
+		check_ajax_referer( 'stackboost_directory_csv_import', 'nonce' );
+
+		if ( ! self::can_user_manage() ) {
+			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
+		}
+
+		if ( ! isset( $_FILES['csv_file'] ) || ! file_exists( $_FILES['csv_file']['tmp_name'] ) ) {
+			wp_send_json_error( array( 'message' => 'CSV file not found.' ), 400 );
+		}
+
+		$file_path = sanitize_text_field( $_FILES['csv_file']['tmp_name'] );
+		$handle = fopen( $file_path, 'r' );
+
+		if ( false === $handle ) {
+			wp_send_json_error( array( 'message' => 'Could not open CSV file.' ), 500 );
+		}
+
+		// Skip header row
+		fgetcsv( $handle );
+
+		$cpts = new CustomPostTypes();
+		$imported_count = 0;
+		$skipped_count = 0;
+		$skipped_details = array();
+
+		while ( ( $row = fgetcsv( $handle ) ) !== false ) {
+			$name = sanitize_text_field( $row[0] );
+			$email = sanitize_email( $row[1] );
+			$office_phone = preg_replace( '/\D/', '', $row[2] );
+			$extension = sanitize_text_field( $row[3] );
+			$mobile_phone = preg_replace( '/\D/', '', $row[4] );
+			$job_title = sanitize_text_field( $row[5] );
+			$department = sanitize_text_field( $row[6] );
+
+			if ( empty( $name ) ) {
+				$skipped_count++;
+				$skipped_details[] = array(
+					'reason' => 'Missing Name',
+					'data'   => implode( ', ', $row ),
+				);
+				continue;
+			}
+
+			$post_data = array(
+				'post_title'  => $name,
+				'post_type'   => $cpts->post_type,
+				'post_status' => 'publish',
+				'meta_input'  => array(
+					'_email_address'       => $email,
+					'_office_phone'        => $office_phone,
+					'_extension'           => $extension,
+					'_mobile_phone'        => $mobile_phone,
+					'_stackboost_staff_job_title' => $job_title,
+					'_department_program'  => $department,
+					'_active'              => 'Yes',
+					'_last_updated_by'     => 'CSV Import',
+					'_last_updated_on'     => date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ),
+				),
+			);
+
+			$post_id = wp_insert_post( $post_data );
+
+			if ( is_wp_error( $post_id ) ) {
+				$skipped_count++;
+				$skipped_details[] = array(
+					'reason' => 'Failed to create post',
+					'data'   => $name,
+				);
+			} else {
+				$imported_count++;
+			}
+		}
+
+		fclose( $handle );
+
+		wp_send_json_success( array(
+			'message'         => sprintf( '%d entries imported successfully.', $imported_count ),
+			'skipped_count'   => $skipped_count,
+			'skipped_details' => $skipped_details,
+		) );
 	}
 
 	/**

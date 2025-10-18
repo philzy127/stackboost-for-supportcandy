@@ -123,13 +123,23 @@ class WordPress {
 	 */
 	public function enqueue_admin_scripts() {
 		$screen = get_current_screen();
-		if ( ! $screen || 'stackboost_page_stackboost-directory' !== $screen->id ) {
+		if ( ! $screen ) {
 			return;
 		}
 
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
+		// Enqueue phone formatting script on the staff CPT add/edit screens.
+		if ( 'post' === $screen->base && isset( $this->core->cpts->post_type ) && $this->core->cpts->post_type === $screen->post_type ) {
+			wp_enqueue_script(
+				'stackboost-admin-phone-format',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/admin-phone-format.js',
+				array( 'jquery' ),
+				\STACKBOOST_VERSION,
+				true
+			);
+		}
 
-		if ( 'management' === $active_tab ) {
+		// Enqueue scripts for the management tab on the main directory admin page.
+		if ( 'stackboost_page_stackboost-directory' === $screen->id && isset( $_GET['tab'] ) && 'management' === $_GET['tab'] ) {
 			// Enqueue scripts for import.
 			wp_enqueue_script(
 				'stackboost-import-ajax',

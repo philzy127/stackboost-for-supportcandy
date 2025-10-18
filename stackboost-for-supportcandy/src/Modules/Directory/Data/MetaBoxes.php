@@ -304,7 +304,13 @@ class MetaBoxes {
 
 		foreach ( $fields_to_save as $field ) {
 			if ( isset( $_POST[ $field ] ) ) {
-				$value = sanitize_text_field( $_POST[ $field ] );
+				$value = wp_unslash( $_POST[ $field ] );
+				// Sanitize phone numbers to store only digits.
+				if ( 'office_phone' === $field || 'mobile_phone' === $field ) {
+					$value = preg_replace( '/\D/', '', $value );
+				} else {
+					$value = sanitize_text_field( $value );
+				}
 				update_post_meta( $post_id, '_' . $field, $value );
 			}
 		}
