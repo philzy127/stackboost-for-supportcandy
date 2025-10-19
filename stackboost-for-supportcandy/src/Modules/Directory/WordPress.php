@@ -219,8 +219,8 @@ class WordPress {
 		// Enqueue scripts for the SupportCandy ticket view screen.
 		if ( 'wpsc_ticket' === $screen->post_type ) {
 			wp_enqueue_script(
-				'stackboost-ticket-widget-console',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/ticket-widget-console.js',
+				'stackboost-debug-console',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/debug-console.js',
 				[],
 				\STACKBOOST_VERSION,
 				false
@@ -606,7 +606,9 @@ class WordPress {
 	 * @param object $ticket The SupportCandy ticket object.
 	 */
 	public function render_ticket_widget( object $ticket ) {
-		error_log('StackBoost: FIRING render_ticket_widget. THIS IS A LOG MESSAGE.');
+		error_log('**************************************************');
+		error_log('*** STACKBOOST PHP LOG: RENDER TICKET WIDGET IS FIRING ***');
+		error_log('**************************************************');
 
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 		error_log('StackBoost: Widget options: ' . print_r($widget_options, true));
