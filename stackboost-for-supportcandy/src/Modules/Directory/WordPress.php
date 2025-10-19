@@ -65,6 +65,9 @@ class WordPress {
 		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		Management::register_ajax_actions();
+
+		// Hook for rendering the ticket widget.
+		add_action( 'wpsc_itw_agent_fields', array( $this, 'render_ticket_widget' ) );
 	}
 
 	/**
@@ -617,8 +620,6 @@ class WordPress {
 		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
 		$staff_member      = $directory_service->get_staff_by_email( $ticket->customer->user_email );
 
-		echo '<div id="stackboost-directory-pseudo-widget" style="display:none;">';
-
 		if ( $staff_member ) {
 			$all_fields = TicketWidgetSettings::get_directory_fields();
 			echo '<div class="wpsc-itw-container">';
@@ -674,7 +675,5 @@ class WordPress {
 			echo '</div>';
 			echo '</div>';
 		}
-
-		echo '</div>';
 	}
 }
