@@ -41,5 +41,23 @@ function stackboost_upgrade_routine() {
 }
 add_action( 'admin_init', 'stackboost_upgrade_routine' );
 
+// --- BEGIN UNMISTAKABLE TICKET PAGE LOGGING ---
+function stackboost_ticket_page_diagnostic_logs() {
+    $screen = get_current_screen();
+    if ( $screen && 'wpsc_ticket' === $screen->post_type ) {
+        // PHP Log for Ticket Page
+        error_log('****************************************************************');
+        error_log('*** STACKBOOST PHP LOG: TICKET PAGE IS LOADING ***');
+        error_log('****************************************************************');
+
+        // JavaScript Console Log for Ticket Page
+        echo "<script>console.log('**************************************************');</script>";
+        echo "<script>console.log('*** STACKBOOST JS CONSOLE: TICKET PAGE SCRIPT IS RUNNING ***');</script>";
+        echo "<script>console.log('**************************************************');</script>";
+    }
+}
+add_action('admin_footer', 'stackboost_ticket_page_diagnostic_logs');
+// --- END UNMISTAKABLE TICKET PAGE LOGGING ---
+
 // Include the bootstrap file to run the plugin.
 require_once STACKBOOST_PLUGIN_PATH . 'bootstrap.php';
