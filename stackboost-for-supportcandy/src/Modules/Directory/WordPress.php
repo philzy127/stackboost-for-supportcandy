@@ -620,6 +620,21 @@ class WordPress {
 		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
 		$staff_member      = $directory_service->get_staff_by_email( $ticket->customer->user_email );
 
+		// START DEBUG CONSOLING
+		$email_to_search = $ticket->customer->user_email;
+		$search_result = wp_json_encode( $staff_member, JSON_PRETTY_PRINT );
+		?>
+		<script>
+			(function() {
+				console.groupCollapsed('StackBoost Directory Debug');
+				console.log('Searching for email:', '<?php echo esc_js( $email_to_search ); ?>');
+				console.log('Search result:', <?php echo $search_result; ?>);
+				console.groupEnd();
+			})();
+		</script>
+		<?php
+		// END DEBUG CONSOLING
+
 		if ( $staff_member ) {
 			$all_fields = TicketWidgetSettings::get_directory_fields();
 			echo '<div class="wpsc-itw-container">';
