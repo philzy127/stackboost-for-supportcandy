@@ -20,7 +20,7 @@ jQuery(document).ready(function($) {
                 return {
                     action: 'stackboost_search_users',
                     term: params.term,
-                    security: stackboostUserLinking.nonce
+                    _ajax_nonce: stackboostUserLinking.nonce
                 };
             },
             processResults: function(data) {

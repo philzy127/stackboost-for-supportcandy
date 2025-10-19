@@ -14,7 +14,6 @@ use StackBoost\ForSupportCandy\Modules\Directory\Admin\LocationsListTable;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\Management;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\StaffListTable;
-use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\Directory\Data\CustomPostTypes;
 
 
@@ -64,7 +63,6 @@ class WordPress {
 		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
 		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
-		add_action( 'wpsc_after_ticket_widget', array( $this, 'render_ticket_widget' ) );
 		add_action( 'wp_ajax_stackboost_search_users', array( $this, 'ajax_search_users' ) );
 		Management::register_ajax_actions();
 	}
@@ -74,7 +72,6 @@ class WordPress {
 	 */
 	public function register_module_settings() {
 		Settings::register_settings();
-		TicketWidgetSettings::register_settings();
 	}
 
 	/**
@@ -131,28 +128,6 @@ class WordPress {
 			return;
 		}
 
-		// Enqueue scripts for the ticket widget.
-		if ( 'supportcandy_page_wpsc-view-ticket' === $screen->id ) {
-			$widget_options = get_option( Settings::WIDGET_OPTION_NAME, [] );
-			if ( ! empty( $widget_options['enabled'] ) && '1' === $widget_options['enabled'] ) {
-				wp_enqueue_script(
-					'stackboost-ticket-widget',
-					\STACKBOOST_PLUGIN_URL . 'assets/js/ticket-widget.js',
-					[ 'jquery' ],
-					\STACKBOOST_VERSION,
-					true
-				);
-				wp_localize_script(
-					'stackboost-ticket-widget',
-					'stackboostWidgetSettings',
-					[
-						'targetWidget' => $widget_options['target_widget'] ?? '',
-						'position'     => $widget_options['placement'] ?? 'before',
-					]
-				);
-			}
-		}
-
 		// Enqueue scripts for the staff CPT add/edit screens.
 		if ( 'post' === $screen->base && isset( $this->core->cpts->post_type ) && $this->core->cpts->post_type === $screen->post_type ) {
 			// Enqueue phone formatting script.
@@ -193,23 +168,6 @@ class WordPress {
 		// Enqueue scripts for the main directory admin page.
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
-
-			// Enqueue scripts for the Contact Widget settings tab.
-			if ( 'contact_widget' === $active_tab ) {
-				wp_enqueue_style(
-					'stackboost-directory-settings',
-					\STACKBOOST_PLUGIN_URL . 'assets/css/directory-settings.css',
-					[],
-					\STACKBOOST_VERSION
-				);
-				wp_enqueue_script(
-					'stackboost-directory-settings',
-					\STACKBOOST_PLUGIN_URL . 'assets/js/directory-settings.js',
-					[ 'jquery', 'jquery-ui-sortable' ],
-					\STACKBOOST_VERSION,
-					true
-				);
-			}
 
 			// Enqueue scripts for the Management tab.
 			if ( 'management' === $active_tab ) {
@@ -329,35 +287,18 @@ class WordPress {
 	 * Render the admin page.
 	 */
 	public function render_admin_page() {
-		$base_tabs = array(
-			'staff'           => __( 'Staff', 'stackboost-for-supportcandy' ),
-			'departments'     => __( 'Departments', 'stackboost-for-supportcandy' ),
-			'locations'       => __( 'Locations', 'stackboost-for-supportcandy' ),
-			'contact_widget'  => __( 'Contact Widget', 'stackboost-for-supportcandy' ),
-			'settings'        => __( 'Settings', 'stackboost-for-supportcandy' ),
+		$tabs = array(
+			'staff'       => __( 'Staff', 'stackboost-for-supportcandy' ),
+			'locations'   => __( 'Locations', 'stackboost-for-supportcandy' ),
+			'departments' => __( 'Departments', 'stackboost-for-supportcandy' ),
+			'how_to_use'  => __( 'How to Use', 'stackboost-for-supportcandy' ),
+			'settings'    => __( 'Settings', 'stackboost-for-supportcandy' ),
 		);
 
-		$advanced_tabs = array();
 		if ( $this->can_user_manage() ) {
-			$advanced_tabs['management'] = __( 'Management', 'stackboost-for-supportcandy' );
-			$advanced_tabs['how_to_use'] = __( 'How to Use', 'stackboost-for-supportcandy' );
-			$advanced_tabs['testing']    = __( 'Testing', 'stackboost-for-supportcandy' );
-		} else {
-			$advanced_tabs['how_to_use'] = __( 'How to Use', 'stackboost-for-supportcandy' );
+			$tabs['management'] = __( 'Management', 'stackboost-for-supportcandy' );
+			$tabs['testing']    = __( 'Testing', 'stackboost-for-supportcandy' );
 		}
-
-		$tabs = array_merge( $base_tabs, $advanced_tabs );
-
-		// Reorder per user request: Staff > Departments > Locations > Contact Widget > Settings > Management > How to Use > Testing
-		$ordered_tabs = [];
-		$order = ['staff', 'departments', 'locations', 'contact_widget', 'settings', 'management', 'how_to_use', 'testing'];
-		foreach($order as $key) {
-			if(isset($tabs[$key])) {
-				$ordered_tabs[$key] = $tabs[$key];
-			}
-		}
-		// Add any other tabs that might not be in the order array to the end
-		$tabs = array_merge($ordered_tabs, array_diff_key($tabs, $ordered_tabs));
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 		?>
@@ -437,9 +378,6 @@ class WordPress {
 						} else {
 							echo '<p>' . esc_html__( 'You do not have permission to access this page.', 'stackboost-for-supportcandy' ) . '</p>';
 						}
-						break;
-					case 'contact_widget':
-						TicketWidgetSettings::render_page();
 						break;
 					case 'settings':
 						Settings::render_settings_page();
@@ -593,7 +531,11 @@ class WordPress {
 	 * AJAX handler for searching WordPress users.
 	 */
 	public function ajax_search_users() {
-		check_ajax_referer( 'stackboost_user_search_nonce' );
+		check_ajax_referer( 'stackboost_user_search_nonce', '_ajax_nonce' );
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Forbidden' );
+		}
 
 		$term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
 
@@ -629,85 +571,5 @@ class WordPress {
 		}
 
 		wp_send_json( [ 'results' => $results ] );
-	}
-
-	/**
-	 * Render the pseudo-widget for the ticket screen.
-	 *
-	 * @param object $ticket The SupportCandy ticket object.
-	 */
-	public function render_ticket_widget( object $ticket ) {
-		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
-
-		if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
-			return;
-		}
-
-		if ( empty( $widget_options['display_fields'] ) ) {
-			return;
-		}
-
-		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
-		$staff_member      = $directory_service->get_staff_by_email( $ticket->customer->user_email );
-
-		echo '<div id="stackboost-directory-pseudo-widget" style="display:none;">';
-
-		if ( $staff_member ) {
-			$all_fields = TicketWidgetSettings::get_directory_fields();
-			echo '<div class="wpsc-itw-container">';
-			echo '<div class="wpsc-itw-title">' . esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ) . '</div>';
-			echo '<div class="wpsc-itw-body">';
-			echo '<ul>';
-
-			foreach ( $widget_options['display_fields'] as $field_key ) {
-				$label = $all_fields[ $field_key ] ?? '';
-				$value = '';
-
-				// Map field key to staff member object property
-				switch ( $field_key ) {
-					case 'chp_staff_job_title':
-						$value = $staff_member->job_title;
-						break;
-					case 'office_phone':
-						$value = $staff_member->office_phone;
-						break;
-					case 'extension':
-						$value = $staff_member->extension;
-						break;
-					case 'mobile_phone':
-						$value = $staff_member->mobile_phone;
-						break;
-					case 'email_address':
-						$value = $staff_member->email;
-						break;
-					case 'location':
-						$value = $staff_member->location_name;
-						break;
-					case 'room_number':
-						$value = $staff_member->room_number;
-						break;
-					case 'department_program':
-						$value = $staff_member->department_program;
-						break;
-				}
-
-				if ( ! empty( $value ) ) {
-					echo '<li><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $value ) . '</li>';
-				}
-			}
-
-			echo '</ul>';
-			echo '</div>';
-			echo '</div>';
-		} else {
-			echo '<div class="wpsc-itw-container">';
-			echo '<div class="wpsc-itw-title">' . esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ) . '</div>';
-			echo '<div class="wpsc-itw-body">';
-			echo '<p>' . esc_html__( 'No directory entry found for this user.', 'stackboost-for-supportcandy' ) . '</p>';
-			echo '</div>';
-			echo '</div>';
-		}
-
-		echo '</div>';
 	}
 }
