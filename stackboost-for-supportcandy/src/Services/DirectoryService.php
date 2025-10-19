@@ -188,4 +188,23 @@ class DirectoryService {
 
 		return $employees;
 	}
+
+	/**
+	 * Get a staff member's complete data by their email address.
+	 *
+	 * This is a convenience method that combines finding and retrieving.
+	 *
+	 * @param string $email The email address to search for.
+	 *
+	 * @return \stdClass|null A structured object with employee data or null if not found.
+	 */
+	public function get_staff_by_email( string $email ): ?\stdClass {
+		$profile_id = $this->find_employee_profile( $email );
+
+		if ( ! $profile_id ) {
+			return null;
+		}
+
+		return $this->retrieve_employee_data( $profile_id );
+	}
 }
