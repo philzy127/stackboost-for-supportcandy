@@ -133,8 +133,10 @@ class WordPress {
 
 		// Enqueue scripts for the ticket widget.
 		if ( 'supportcandy_page_wpsc-view-ticket' === $screen->id ) {
+			error_log('[StackBoost Debug] Enqueueing scripts for ticket widget screen.');
 			$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 			if ( ! empty( $widget_options['enabled'] ) && '1' === $widget_options['enabled'] ) {
+				error_log('[StackBoost Debug] Widget is enabled, enqueueing now.');
 				wp_enqueue_script(
 					'stackboost-ticket-widget',
 					\STACKBOOST_PLUGIN_URL . 'assets/js/ticket-widget.js',
@@ -641,7 +643,9 @@ class WordPress {
 	 * @param object $ticket The SupportCandy ticket object.
 	 */
 	public function render_ticket_widget( object $ticket ) {
+		error_log('[StackBoost Debug] render_ticket_widget called.');
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
+		error_log('[StackBoost Debug] Widget Options: ' . print_r($widget_options, true));
 
 		if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
 			return;
@@ -651,8 +655,10 @@ class WordPress {
 			return;
 		}
 
+		error_log('[StackBoost Debug] Looking up email: ' . $ticket->customer->user_email);
 		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
 		$staff_member      = $directory_service->get_staff_by_email( $ticket->customer->user_email );
+		error_log('[StackBoost Debug] Staff member found: ' . ($staff_member ? 'Yes' : 'No'));
 
 		echo '<div id="stackboost-directory-pseudo-widget" style="display:none;">';
 
