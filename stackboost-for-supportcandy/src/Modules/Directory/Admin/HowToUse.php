@@ -38,6 +38,7 @@ class HowToUse {
 				<div class="inside">
 					<p><?php echo wp_kses_post( __( 'The <strong>Staff</strong>, <strong>Locations</strong>, and <strong>Departments</strong> tabs allow you to manage the core data of your directory. To add a new item to any of these categories, simply click the "Add New" button at the top of the respective table.', 'stackboost-for-supportcandy' ) ); ?></p>
 					<p><?php echo wp_kses_post( __( 'When editing a staff member, the Office and Mobile phone number fields will be automatically formatted as <strong>(xxx) xxx-xxxx</strong> as you type. You only need to enter the digits.', 'stackboost-for-supportcandy' ) ); ?></p>
+					<p><?php echo wp_kses_post( __( 'You can also link a directory entry to a WordPress user account. In the "Staff Details" section, use the "Linked WordPress User" search box to find and select a user. This creates a permanent link that is more reliable than matching by email address.', 'stackboost-for-supportcandy' ) ); ?></p>
 					<p><?php echo wp_kses_post( __( '<strong>Note:</strong> The ability to add and edit these items is controlled by the roles defined in the <strong>Settings</strong> tab. By default, only Administrators can manage these listings.', 'stackboost-for-supportcandy' ) ); ?></p>
 				</div>
 			</div>
@@ -77,6 +78,15 @@ class HowToUse {
 						<li><?php echo wp_kses_post( __( '<strong>Clear Directory Data:</strong> Deletes all <strong>staff members</strong> from the directory. This does not affect locations or departments.', 'stackboost-for-supportcandy' ) ); ?></li>
 						<li><?php echo wp_kses_post( __( '<strong>Fresh Start:</strong> A nuclear option that permanently deletes <strong>all</strong> staff, locations, and departments, and clears the trash. This action requires double confirmation and cannot be undone.', 'stackboost-for-supportcandy' ) ); ?></li>
 					</ul>
+				</div>
+			</div>
+
+			<!-- Contact Widget Tab -->
+			<div class="postbox">
+				<h2 class="hndle"><span><?php esc_html_e( 'Contact Widget (In Development)', 'stackboost-for-supportcandy' ); ?></span></h2>
+				<div class="inside">
+					<p><?php echo wp_kses_post( __( 'The <strong>Contact Widget</strong> tab contains settings for a future feature that will display directory information on the SupportCandy ticket screen.', 'stackboost-for-supportcandy' ) ); ?></p>
+					<p><strong><?php esc_html_e( 'Please note: This feature is currently in development and is not yet functional.', 'stackboost-for-supportcandy' ); ?></strong></p>
 				</div>
 			</div>
 

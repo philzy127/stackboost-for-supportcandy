@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-10-18
+
+### Added
+- **WordPress User Linking:** Added a "Linked WordPress User" field to the "Staff Details" editor. This allows an administrator to create a stable link between a directory entry and a WordPress user account.
+- The UI features a scalable, AJAX-powered search box (using Select2) to find users, and a display area to show the currently linked user with "Change" and "Remove" options.
+- A new "Contact Widget" tab has been added to the Directory admin screen. **Note: The feature for this tab is still in development and is not yet functional.**
+
+### Fixed
+- Resolved a series of critical JavaScript and PHP errors that were preventing the "Contact Widget" from appearing on the SupportCandy ticket screen.
+
 ## [1.2.1] - 2025-10-17
 
 ### Added
