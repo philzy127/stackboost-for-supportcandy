@@ -184,7 +184,7 @@ class MetaBoxes {
 					</p>
 				</div>
 				<div id="stackboost-user-search-container" style="<?php echo esc_attr( $user_search_style ); ?>">
-					<select id="stackboost-user-search" name="linked_user_id" style="width: 300px;"></select>
+					<select id="stackboost-user-search" style="width: 300px;"></select>
 				</div>
 				<input type="hidden" id="stackboost-user-id" name="_user_id" value="<?php echo esc_attr( $user_id ); ?>">
 				<input type="hidden" id="stackboost-unlink-user-flag" name="unlink_user" value="0">

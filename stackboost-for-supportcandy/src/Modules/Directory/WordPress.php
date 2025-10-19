@@ -593,7 +593,7 @@ class WordPress {
 	 * AJAX handler for searching WordPress users.
 	 */
 	public function ajax_search_users() {
-		check_ajax_referer( 'stackboost_user_search_nonce', 'security' );
+		check_ajax_referer( 'stackboost_user_search_nonce' );
 
 		$term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
 
