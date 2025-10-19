@@ -205,7 +205,7 @@ class DirectoryService {
 	 * @return \stdClass|null A structured object with employee data or null if not found.
 	 */
 	public function get_staff_by_email( string $email ): ?\stdClass {
-		error_log('StackBoost DirectoryService: get_staff_by_email called with email: ' . $email);
+		error_log('StackBoost DirectoryService: FIRING get_staff_by_email. THIS IS A LOG MESSAGE. Email: ' . $email);
 		$profile_id = $this->find_employee_profile( $email );
 
 		if ( ! $profile_id ) {
