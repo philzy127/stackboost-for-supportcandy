@@ -66,6 +66,7 @@ class DirectoryService {
 	 * @return int|null The staff profile post ID if found, otherwise null.
 	 */
 	public function find_employee_profile( $user_id_or_email ): ?int {
+		error_log('StackBoost DirectoryService: Searching for profile with input: ' . print_r($user_id_or_email, true));
 		$query_args = array(
 			'post_type'      => $this->staff_post_type,
 			'posts_per_page' => 1,
@@ -91,12 +92,17 @@ class DirectoryService {
 			return null; // Invalid input.
 		}
 
+		error_log('StackBoost DirectoryService: Constructed WP_Query args: ' . print_r($query_args, true));
+
 		$employee_query = new \WP_Query( $query_args );
 
 		if ( $employee_query->have_posts() ) {
-			return $employee_query->posts[0]->ID;
+			$found_post_id = $employee_query->posts[0]->ID;
+			error_log('StackBoost DirectoryService: Found profile with Post ID: ' . $found_post_id);
+			return $found_post_id;
 		}
 
+		error_log('StackBoost DirectoryService: No profile found for the given input.');
 		return null;
 	}
 
@@ -199,12 +205,15 @@ class DirectoryService {
 	 * @return \stdClass|null A structured object with employee data or null if not found.
 	 */
 	public function get_staff_by_email( string $email ): ?\stdClass {
+		error_log('StackBoost DirectoryService: get_staff_by_email called with email: ' . $email);
 		$profile_id = $this->find_employee_profile( $email );
 
 		if ( ! $profile_id ) {
+			error_log('StackBoost DirectoryService: get_staff_by_email - No profile ID found for email: ' . $email);
 			return null;
 		}
 
+		error_log('StackBoost DirectoryService: get_staff_by_email - Retrieving data for profile ID: ' . $profile_id);
 		return $this->retrieve_employee_data( $profile_id );
 	}
 }

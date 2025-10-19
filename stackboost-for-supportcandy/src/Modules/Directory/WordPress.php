@@ -218,7 +218,13 @@ class WordPress {
 
 		// Enqueue scripts for the SupportCandy ticket view screen.
 		if ( 'wpsc_ticket' === $screen->post_type ) {
-			// The ticket widget is now rendered directly via a PHP hook, so the JS is no longer needed.
+			wp_enqueue_script(
+				'stackboost-ticket-widget-verify',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/ticket-widget-verify.js',
+				[ 'jquery' ],
+				\STACKBOOST_VERSION,
+				true
+			);
 		}
 	}
 
