@@ -65,6 +65,7 @@ class WordPress {
 		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		add_action( 'wpsc_after_ticket_widget', array( $this, 'render_ticket_widget' ) );
+		add_action( 'wp_ajax_stackboost_search_users', array( $this, 'ajax_search_users' ) );
 		Management::register_ajax_actions();
 	}
 
@@ -152,15 +153,41 @@ class WordPress {
 			}
 		}
 
-		// Enqueue phone formatting script on the staff CPT add/edit screens.
+		// Enqueue scripts for the staff CPT add/edit screens.
 		if ( 'post' === $screen->base && isset( $this->core->cpts->post_type ) && $this->core->cpts->post_type === $screen->post_type ) {
+			// Enqueue phone formatting script.
 			wp_enqueue_script(
 				'stackboost-admin-phone-format',
 				\STACKBOOST_PLUGIN_URL . 'assets/js/admin-phone-format.js',
-				array( 'jquery' ),
+				[ 'jquery' ],
 				\STACKBOOST_VERSION,
 				true
 			);
+
+			// Enqueue user linking scripts.
+			wp_enqueue_script(
+				'stackboost-helpers',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-helpers.js',
+				[ 'jquery' ],
+				\STACKBOOST_VERSION,
+				true
+			);
+			wp_enqueue_script(
+				'stackboost-admin-user-linking',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/admin-user-linking.js',
+				[ 'jquery', 'select2', 'stackboost-helpers' ],
+				\STACKBOOST_VERSION,
+				true
+			);
+			wp_localize_script(
+				'stackboost-admin-user-linking',
+				'stackboostUserLinking',
+				[
+					'nonce' => wp_create_nonce( 'stackboost_user_search_nonce' ),
+				]
+			);
+			wp_enqueue_style( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css' );
+			wp_enqueue_script( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', [ 'jquery' ] );
 		}
 
 		// Enqueue scripts for the main directory admin page.
@@ -560,6 +587,48 @@ class WordPress {
 			}
 		}
 		return $template;
+	}
+
+	/**
+	 * AJAX handler for searching WordPress users.
+	 */
+	public function ajax_search_users() {
+		check_ajax_referer( 'stackboost_user_search_nonce', 'security' );
+
+		$term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
+
+		if ( empty( $term ) ) {
+			wp_send_json_error( 'Missing search term.' );
+		}
+
+		$results = [];
+		$args    = [
+			'number'      => 20,
+			'search'      => '*' . esc_attr( $term ) . '*',
+			'search_columns' => [
+				'user_login',
+				'user_email',
+				'user_nicename',
+				'display_name',
+			],
+		];
+
+		$user_query = new \WP_User_Query( $args );
+
+		if ( ! empty( $user_query->get_results() ) ) {
+			foreach ( $user_query->get_results() as $user ) {
+				$results[] = [
+					'id'   => $user->ID,
+					'text' => sprintf(
+						'%s (%s)',
+						$user->display_name,
+						$user->user_email
+					),
+				];
+			}
+		}
+
+		wp_send_json( [ 'results' => $results ] );
 	}
 
 	/**
