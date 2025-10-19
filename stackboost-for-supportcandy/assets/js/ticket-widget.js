@@ -1,24 +1,53 @@
 jQuery(document).ready(function($) {
+
     // Check if our localized settings object exists.
     if (typeof stackboostWidgetSettings === 'undefined') {
         return;
     }
 
-    const myWidget = $('#stackboost-directory-pseudo-widget');
-    const targetWidgetSelector = '.wpsc-itw-' + stackboostWidgetSettings.targetWidget;
-    const targetWidget = $(targetWidgetSelector);
+    const myAddonSettings = {
+        targetWidgetSlug: stackboostWidgetSettings.targetWidget,
+        position: stackboostWidgetSettings.position,
+        widgetId: '#stackboost-directory-pseudo-widget'
+    };
 
-    // Ensure both our widget and the target widget exist before trying to move anything.
-    if (myWidget.length && targetWidget.length) {
+    function positionMyWidget() {
+        const myWidget = $(myAddonSettings.widgetId);
+        if (!myWidget.length) return false;
 
-        // Move the widget into the correct position.
-        if (stackboostWidgetSettings.position === 'before') {
-            myWidget.insertBefore(targetWidget);
-        } else {
-            myWidget.insertAfter(targetWidget);
+        const targetSelector = '.wpsc-itw-' + myAddonSettings.targetWidgetSlug;
+        const targetWidgets = $(targetSelector);
+
+        if (targetWidgets.length > 0) {
+            // Move the widget into position relative to each target.
+            // SupportCandy duplicates the widget area for mobile, so we may have multiple targets.
+            targetWidgets.each(function() {
+                const myWidgetClone = myWidget.clone().show(); // Clone for each instance
+                if (myAddonSettings.position === 'before') {
+                    myWidgetClone.insertBefore($(this));
+                } else {
+                    myWidgetClone.insertAfter($(this));
+                }
+            });
+
+            myWidget.remove(); // Remove the original hidden widget
+            return true;
         }
-
-        // Make the widget visible.
-        myWidget.show();
+        return false;
     }
+
+    // Use a MutationObserver to wait for SupportCandy's AJAX content to load.
+    const mainContentArea = document.querySelector('#wpsc-container') || document.body;
+
+    const observer = new MutationObserver(function(mutations, obs) {
+        // When the DOM changes, try to position our widget.
+        if (positionMyWidget()) {
+            obs.disconnect(); // Stop observing once the widget is placed.
+        }
+    });
+
+    observer.observe(mainContentArea, {
+        childList: true,
+        subtree: true
+    });
 });
