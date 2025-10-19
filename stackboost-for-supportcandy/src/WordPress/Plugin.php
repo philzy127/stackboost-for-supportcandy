@@ -9,6 +9,7 @@ use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\QueueMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
+use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 
 /**
  * Main plugin class.
@@ -69,6 +70,7 @@ final class Plugin {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_and_localize_frontend_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_menu' ], 999 );
+		add_action( 'wpsc_after_ticket_widget', [ $this->modules['directory'], 'render_ticket_widget' ] );
 	}
 
 	/**
@@ -187,6 +189,28 @@ final class Plugin {
 		}
 
 		wp_enqueue_script( 'stackboost-frontend' );
+
+		// Enqueue scripts for the ticket widget on the frontend.
+		if ( function_exists('is_ticket_page') && is_ticket_page() ) {
+			$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
+			if ( ! empty( $widget_options['enabled'] ) && '1' === $widget_options['enabled'] ) {
+				wp_enqueue_script(
+					'stackboost-ticket-widget',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/ticket-widget.js',
+					[ 'jquery' ],
+					\STACKBOOST_VERSION,
+					true
+				);
+				wp_localize_script(
+					'stackboost-ticket-widget',
+					'stackboostWidgetSettings',
+					[
+						'targetWidget' => $widget_options['target_widget'] ?? '',
+						'position'     => $widget_options['placement'] ?? 'before',
+					]
+				);
+			}
+		}
 	}
 
 	/**
@@ -232,6 +256,28 @@ final class Plugin {
 			if ( $screen && 'sb_staff_dir' === $screen->post_type ) {
 				wp_enqueue_script( 'jquery-ui-datepicker' );
 				wp_enqueue_style( 'jquery-ui-style', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css', true);
+			}
+		}
+
+		// Enqueue scripts for the ticket widget on the admin ticket view screen.
+		if ( 'supportcandy_page_wpsc-view-ticket' === $hook_suffix ) {
+			$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
+			if ( ! empty( $widget_options['enabled'] ) && '1' === $widget_options['enabled'] ) {
+				wp_enqueue_script(
+					'stackboost-ticket-widget',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/ticket-widget.js',
+					[ 'jquery' ],
+					\STACKBOOST_VERSION,
+					true
+				);
+				wp_localize_script(
+					'stackboost-ticket-widget',
+					'stackboostWidgetSettings',
+					[
+						'targetWidget' => $widget_options['target_widget'] ?? '',
+						'position'     => $widget_options['placement'] ?? 'before',
+					]
+				);
 			}
 		}
 	}

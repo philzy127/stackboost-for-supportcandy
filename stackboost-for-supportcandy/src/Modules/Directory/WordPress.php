@@ -64,8 +64,6 @@ class WordPress {
 		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
 		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
-		add_action( 'wpsc_after_ticket_widget', array( $this, 'render_ticket_widget' ) );
-		add_action( 'wp_ajax_stackboost_search_users', array( $this, 'ajax_search_users' ) );
 		Management::register_ajax_actions();
 	}
 
@@ -131,30 +129,6 @@ class WordPress {
 			return;
 		}
 
-		// Enqueue scripts for the ticket widget.
-		if ( 'supportcandy_page_wpsc-view-ticket' === $screen->id ) {
-			error_log('[StackBoost Debug] Enqueueing scripts for ticket widget screen.');
-			$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
-			if ( ! empty( $widget_options['enabled'] ) && '1' === $widget_options['enabled'] ) {
-				error_log('[StackBoost Debug] Widget is enabled, enqueueing now.');
-				wp_enqueue_script(
-					'stackboost-ticket-widget',
-					\STACKBOOST_PLUGIN_URL . 'assets/js/ticket-widget.js',
-					[ 'jquery' ],
-					\STACKBOOST_VERSION,
-					true
-				);
-				wp_localize_script(
-					'stackboost-ticket-widget',
-					'stackboostWidgetSettings',
-					[
-						'targetWidget' => $widget_options['target_widget'] ?? '',
-						'position'     => $widget_options['placement'] ?? 'before',
-					]
-				);
-			}
-		}
-
 		// Enqueue scripts for the staff CPT add/edit screens.
 		if ( 'post' === $screen->base && isset( $this->core->cpts->post_type ) && $this->core->cpts->post_type === $screen->post_type ) {
 			// Enqueue phone formatting script.
@@ -165,31 +139,6 @@ class WordPress {
 				\STACKBOOST_VERSION,
 				true
 			);
-
-			// Enqueue user linking scripts.
-			wp_enqueue_script(
-				'stackboost-helpers',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-helpers.js',
-				[ 'jquery' ],
-				\STACKBOOST_VERSION,
-				true
-			);
-			wp_enqueue_script(
-				'stackboost-admin-user-linking',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/admin-user-linking.js',
-				[ 'jquery', 'select2', 'stackboost-helpers' ],
-				\STACKBOOST_VERSION,
-				true
-			);
-			wp_localize_script(
-				'stackboost-admin-user-linking',
-				'stackboostUserLinking',
-				[
-					'nonce' => wp_create_nonce( 'stackboost_user_search_nonce' ),
-				]
-			);
-			wp_enqueue_style( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css' );
-			wp_enqueue_script( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', [ 'jquery' ] );
 		}
 
 		// Enqueue scripts for the main directory admin page.
@@ -643,9 +592,7 @@ class WordPress {
 	 * @param object $ticket The SupportCandy ticket object.
 	 */
 	public function render_ticket_widget( object $ticket ) {
-		error_log('[StackBoost Debug] render_ticket_widget called.');
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
-		error_log('[StackBoost Debug] Widget Options: ' . print_r($widget_options, true));
 
 		if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
 			return;
@@ -655,10 +602,8 @@ class WordPress {
 			return;
 		}
 
-		error_log('[StackBoost Debug] Looking up email: ' . $ticket->customer->user_email);
 		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
 		$staff_member      = $directory_service->get_staff_by_email( $ticket->customer->user_email );
-		error_log('[StackBoost Debug] Staff member found: ' . ($staff_member ? 'Yes' : 'No'));
 
 		echo '<div id="stackboost-directory-pseudo-widget" style="display:none;">';
 

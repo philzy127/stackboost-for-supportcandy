@@ -101,7 +101,6 @@ class MetaBoxes {
 			'active'              => 'Active',
 			'active_as_of_date'   => 'Active as of:',
 			'planned_exit_date'   => 'Inactive as of:',
-			'linked_user'         => 'Linked WordPress User',
 		);
 
 		if ( ! $is_add_new_screen ) {
@@ -168,27 +167,6 @@ class MetaBoxes {
 				$date_value = $value ? esc_attr( $value ) : '';
 				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . $date_value . '" class="regular-text stackboost-datepicker" />';
 				echo '<p class="description">' . esc_html__( 'Optional: Date when this entry is planned to become inactive.', 'stackboost-for-supportcandy' ) . '</p>';
-			} elseif ( 'linked_user' === $key ) {
-				$user_id = get_post_meta( $post->ID, '_user_id', true );
-				$user_info_style = empty( $user_id ) ? 'display: none;' : '';
-				$user_search_style = ! empty( $user_id ) ? 'display: none;' : '';
-				$user_data = get_userdata( $user_id );
-				$user_display = $user_data ? sprintf( '%s (%s)', $user_data->display_name, $user_data->user_email ) : '';
-				?>
-				<div id="stackboost-user-info" style="<?php echo esc_attr( $user_info_style ); ?>">
-					<p>
-						<strong><?php echo esc_html( $user_display ); ?></strong>
-						<br>
-						<a href="#" id="stackboost-change-user" class="button button-secondary"><?php esc_html_e( 'Change', 'stackboost-for-supportcandy' ); ?></a>
-						<a href="#" id="stackboost-remove-user" class="button button-secondary"><?php esc_html_e( 'Remove', 'stackboost-for-supportcandy' ); ?></a>
-					</p>
-				</div>
-				<div id="stackboost-user-search-container" style="<?php echo esc_attr( $user_search_style ); ?>">
-					<select id="stackboost-user-search" style="width: 300px;"></select>
-				</div>
-				<input type="hidden" id="stackboost-user-id" name="_user_id" value="<?php echo esc_attr( $user_id ); ?>">
-				<input type="hidden" id="stackboost-unlink-user-flag" name="unlink_user" value="0">
-				<?php
 			} elseif ( in_array( $key, array( 'unique_id', 'last_updated_by', 'last_updated_on' ), true ) ) {
 				echo '<p id="' . esc_attr( $key ) . '">' . esc_html( $value ) . '</p>';
 			} else {
@@ -383,13 +361,6 @@ class MetaBoxes {
 			update_post_meta( $post_id, '_last_updated_by', __( 'System', 'stackboost-for-supportcandy' ) );
 		}
 		update_post_meta( $post_id, '_last_updated_on', date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) );
-
-		// Handle user linking.
-		if ( isset( $_POST['unlink_user'] ) && '1' === $_POST['unlink_user'] ) {
-			delete_post_meta( $post_id, '_user_id' );
-		} elseif ( isset( $_POST['_user_id'] ) && ! empty( $_POST['_user_id'] ) ) {
-			update_post_meta( $post_id, '_user_id', absint( $_POST['_user_id'] ) );
-		}
 	}
 
 	/**
