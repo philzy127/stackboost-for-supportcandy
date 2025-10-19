@@ -1,5 +1,4 @@
 <?php
-error_log('*** STACKBOOST - MAIN PLUGIN FILE LOADED ***');
 /**
  * Plugin Name: StackBoost - For SupportCandy
  * Description: A collection of enhancements for the SupportCandy plugin, rebranded and refactored.
@@ -41,11 +40,6 @@ function stackboost_upgrade_routine() {
 	}
 }
 add_action( 'admin_init', 'stackboost_upgrade_routine' );
-
-function stackboost_unmistakable_console_log() {
-    echo "<script>console.log('*** STACKBOOST - JAVASCRIPT CONSOLE LOG FIRED ***');</script>";
-}
-add_action('admin_notices', 'stackboost_unmistakable_console_log');
 
 // Include the bootstrap file to run the plugin.
 require_once STACKBOOST_PLUGIN_PATH . 'bootstrap.php';

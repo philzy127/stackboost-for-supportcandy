@@ -65,9 +65,6 @@ class WordPress {
 		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		Management::register_ajax_actions();
-
-		// Hook for rendering the ticket widget.
-		add_action( 'wpsc_itw_agent_fields', array( $this, 'render_ticket_widget' ) );
 	}
 
 	/**
@@ -219,8 +216,8 @@ class WordPress {
 		// Enqueue scripts for the SupportCandy ticket view screen.
 		if ( 'wpsc_ticket' === $screen->post_type ) {
 			wp_enqueue_script(
-				'stackboost-debug-console',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/debug-console.js',
+				'stackboost-unmistakable-console',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/unmistakable-console.js',
 				[],
 				\STACKBOOST_VERSION,
 				false
@@ -606,33 +603,21 @@ class WordPress {
 	 * @param object $ticket The SupportCandy ticket object.
 	 */
 	public function render_ticket_widget( object $ticket ) {
-		error_log('**************************************************');
-		error_log('*** STACKBOOST PHP LOG: RENDER TICKET WIDGET IS FIRING ***');
-		error_log('**************************************************');
-
+		error_log('--- UNMISTAKABLE PHP LOG: RENDER TICKET WIDGET IS EXECUTING ---');
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
-		error_log('StackBoost: Widget options: ' . print_r($widget_options, true));
-
 
 		if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
-			error_log('StackBoost: Widget is not enabled. Bailing.');
 			return;
 		}
 
 		if ( empty( $widget_options['display_fields'] ) ) {
-			error_log('StackBoost: No display fields configured. Bailing.');
 			return;
 		}
 
-		error_log('StackBoost: Attempting to find staff member by email: ' . $ticket->customer->user_email);
 		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
 		$staff_member      = $directory_service->get_staff_by_email( $ticket->customer->user_email );
 
-		if ($staff_member) {
-			error_log('StackBoost: Staff member found: ' . print_r($staff_member, true));
-		} else {
-			error_log('StackBoost: No staff member found for this email.');
-		}
+		echo '<div id="stackboost-directory-pseudo-widget" style="display:none;">';
 
 		if ( $staff_member ) {
 			$all_fields = TicketWidgetSettings::get_directory_fields();
@@ -689,5 +674,7 @@ class WordPress {
 			echo '</div>';
 			echo '</div>';
 		}
+
+		echo '</div>';
 	}
 }
