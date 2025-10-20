@@ -598,6 +598,13 @@ class WordPress {
 	 * @param mixed $ticket The SupportCandy ticket object. Can be null on some hook fires.
 	 */
 	public function render_ticket_widget( $ticket ) {
+		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
+
+		// Exit early if the widget is not enabled.
+		if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
+			return;
+		}
+
 		// Guard against the hook firing multiple times in a single request, which would
 		// lead to duplicate HTML and invalid element IDs.
 		static $has_rendered_once = false;
@@ -741,6 +748,13 @@ class WordPress {
 					console.log('Target Selector:', targetSelector);
 					console.log('Placement:', placement);
 					console.log('Attempting to position widget...');
+
+					// Aggressive Cleanup: Remove any lingering "ghost" widget from older versions.
+					const ghostWidget = document.getElementById('stackboost-contact-widget');
+					if (ghostWidget) {
+						console.log('StackBoost Widget: Removing ghost widget with static ID.');
+						ghostWidget.remove();
+					}
 
 					// Idempotency: Find and remove any stale widget instances from previous renders.
 					const allWidgetInstances = document.querySelectorAll('.stackboost-contact-widget-instance');
