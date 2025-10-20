@@ -9,6 +9,7 @@ use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\QueueMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
+use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 
 /**
  * Main plugin class.
@@ -234,6 +235,7 @@ final class Plugin {
 				wp_enqueue_style( 'jquery-ui-style', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css', true);
 			}
 		}
+
 	}
 
 	/**

@@ -126,8 +126,8 @@ class DirectoryService {
 		$employee_data->office_phone        = get_post_meta( $profile_id, '_office_phone', true );
 		$employee_data->extension           = get_post_meta( $profile_id, '_extension', true );
 		$employee_data->mobile_phone        = get_post_meta( $profile_id, '_mobile_phone', true );
-		$employee_data->location_name       = get_post_meta( $profile_id, '_location', true );
 		$employee_data->location_id         = get_post_meta( $profile_id, '_location_id', true );
+		$employee_data->location_name       = ! empty( $employee_data->location_id ) ? get_the_title( $employee_data->location_id ) : '';
 		$employee_data->room_number         = get_post_meta( $profile_id, '_room_number', true );
 		$employee_data->active_status       = get_post_meta( $profile_id, '_active', true );
 		$employee_data->active_as_of_date   = get_post_meta( $profile_id, '_active_as_of_date', true );
@@ -187,5 +187,66 @@ class DirectoryService {
 		wp_reset_postdata();
 
 		return $employees;
+	}
+
+	/**
+	 * Get a staff member's complete data by their email address.
+	 *
+	 * This is a convenience method that combines finding and retrieving.
+	 *
+	 * @param string $email The email address to search for.
+	 *
+	 * @return \stdClass|null A structured object with employee data or null if not found.
+	 */
+	public function get_staff_by_email( string $email ): ?\stdClass {
+		$profile_id = $this->find_employee_profile( $email );
+
+		if ( ! $profile_id ) {
+			return null;
+		}
+
+		return $this->retrieve_employee_data( $profile_id );
+	}
+
+	/**
+	 * Get a formatted HTML string of the employee's phone numbers.
+	 *
+	 * @param \stdClass $employee The employee data object from retrieve_employee_data.
+	 * @return string The formatted HTML string.
+	 */
+	public function get_formatted_phone_numbers_html( \stdClass $employee ): string {
+		$html_lines = [];
+
+		// Office Phone
+		if ( ! empty( $employee->office_phone ) ) {
+			$formatted_office_phone = $this->_format_phone_number_string( $employee->office_phone );
+			$office_line            = '<strong>Office:</strong> ' . $formatted_office_phone;
+			if ( ! empty( $employee->extension ) ) {
+				$office_line .= ' ext. ' . esc_html( $employee->extension );
+			}
+			$html_lines[] = $office_line;
+		}
+
+		// Mobile Phone
+		if ( ! empty( $employee->mobile_phone ) ) {
+			$formatted_mobile_phone = $this->_format_phone_number_string( $employee->mobile_phone );
+			$html_lines[]           = '<strong>Mobile:</strong> ' . $formatted_mobile_phone;
+		}
+
+		return implode( '<br>', $html_lines );
+	}
+
+	/**
+	 * Formats a raw phone number string into (xxx) xxx-xxxx.
+	 *
+	 * @param string $number Raw phone number.
+	 * @return string Formatted phone number.
+	 */
+	private function _format_phone_number_string( string $number ): string {
+		$number = preg_replace( '/[^0-9]/', '', $number );
+		if ( strlen( $number ) === 10 ) {
+			return '(' . substr( $number, 0, 3 ) . ') ' . substr( $number, 3, 3 ) . '-' . substr( $number, 6 );
+		}
+		return trim( $number );
 	}
 }

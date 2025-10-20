@@ -90,6 +90,13 @@ These are the foundational files and classes that enable the plugin and its modu
     $employee_data = $directory_service->retrieve_employee_data( 123 );
     ```
 
+### 2.4.1. User Linking
+
+*   **Purpose:** This feature allows an administrator to link a staff directory entry to a WordPress user account.
+*   **UI:** The UI is located in the "Staff Details" meta box on the staff editor screen. It consists of an AJAX-powered Select2 search box that allows searching for users by name, username, or email.
+*   **JavaScript:** The logic is handled by `assets/js/admin-user-linking.js`, which uses the centralized `StackBoost.helpers.initializeSelect2` helper function.
+*   **Backend:** The AJAX search is handled by the `ajax_search_users` method in `src/Modules/Directory/WordPress.php`. The saving and unlinking logic is in the `save_directory_meta_box_data` method in `src/Modules/Directory/Data/MetaBoxes.php`.
+
 ### 2.5. `src/Admin/Upgrade.php`
 
 *   **Purpose:** This class handles one-time plugin upgrade routines, particularly for data migrations. It is designed to be triggered manually by an administrator via an admin notice, which is a safer pattern than running potentially intensive operations automatically on `admin_init`.
@@ -125,8 +132,10 @@ This module's `Core.php` is minimal and primarily serves to instantiate the Cust
 #### WordPress Adapter (`WordPress.php`)
 
 *   **Hooks:**
+    *   `wpsc_after_ticket_widget`: Hooks into SupportCandy to render the pseudo-widget HTML.
     *   `admin_enqueue_scripts`: Enqueues the `admin-phone-format.js` script on the staff CPT edit screen and the `import-ajax.js` on the management tab.
     *   `save_post`: Hooks into `MetaBoxes::save_directory_meta_box_data()` to sanitize and save staff details.
+*   **Contact Widget (In Development):** This feature is intended to display directory information on the SupportCandy ticket screen. The settings are managed in `src/Modules/Directory/Admin/TicketWidgetSettings.php`, and the rendering logic is in the `render_ticket_widget` method in `WordPress.php`. The frontend positioning is handled by `assets/js/ticket-widget.js`. **Note: This feature is currently not functional.**
 *   **Key Methods:**
     *   `enqueue_admin_scripts()`: Handles loading of all admin-side scripts for the module.
     *   `ajax_import_csv()`: Located in `Admin/Management.php`, this method handles the server-side logic for the CSV import. It sanitizes the data (including stripping non-numeric characters from phone numbers) and creates new staff posts.
