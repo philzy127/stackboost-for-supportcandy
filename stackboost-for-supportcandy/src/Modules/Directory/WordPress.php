@@ -730,7 +730,7 @@ class WordPress {
 			// Using a closure to keep variables local and avoid polluting the global scope.
 			(function() {
 				// PHP-generated debug logs for development.
-				console.log(<?php echo json_encode( $debug_output, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES ); ?>);
+				// console.log(<?php echo json_encode( $debug_output, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES ); ?>);
 
 				// --- Self-Contained Widget Positioning Logic ---
 
@@ -743,30 +743,30 @@ class WordPress {
 				 * @param {string} placement - 'before' or 'after'.
 				 */
 				var positionTicketWidget = function(serverWidgetId, targetSelector, placement) {
-					console.log('--- WIDGET POSITIONING LOG ---');
-					console.log('Server Widget ID:', serverWidgetId);
-					console.log('Target Selector:', targetSelector);
-					console.log('Placement:', placement);
-					console.log('Attempting to position widget...');
+					// console.log('--- WIDGET POSITIONING LOG ---');
+					// console.log('Server Widget ID:', serverWidgetId);
+					// console.log('Target Selector:', targetSelector);
+					// console.log('Placement:', placement);
+					// console.log('Attempting to position widget...');
 
 					// Find the widget this script is associated with.
 					const customWidget = document.getElementById(serverWidgetId);
 					if (!customWidget) {
-						console.error('StackBoost Widget Error: Could not find the widget container with server ID: ' + serverWidgetId);
+						// console.error('StackBoost Widget Error: Could not find the widget container with server ID: ' + serverWidgetId);
 						return;
 					}
 
 					// Create a guaranteed unique ID in the browser to avoid issues with server-side caching.
 					const browserUniqueId = 'sb-widget-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 					customWidget.id = browserUniqueId;
-					console.log('Assigned new browser-unique ID:', browserUniqueId);
+					// console.log('Assigned new browser-unique ID:', browserUniqueId);
 
 					// Idempotency: Find and remove any stale widget instances from previous renders.
 					const allWidgetInstances = document.querySelectorAll('.stackboost-contact-widget-instance');
 					allWidgetInstances.forEach(function(instance) {
 						// Remove any instance that is NOT the one we just assigned our unique ID to.
 						if (instance.id !== browserUniqueId) {
-							console.log('StackBoost Widget: Removing stale widget instance (' + instance.id + ') from previous render.');
+							// console.log('StackBoost Widget: Removing stale widget instance (' + instance.id + ') from previous render.');
 							instance.remove();
 						}
 					});
@@ -785,17 +785,17 @@ class WordPress {
 					}
 
 					if (!visibleTargetWidget) {
-						console.error('StackBoost Widget: Could not find a VISIBLE target widget (' + targetSelector + ') in the DOM.');
-						console.log('--- END WIDGET POSITIONING LOG ---');
+						// console.error('StackBoost Widget: Could not find a VISIBLE target widget (' + targetSelector + ') in the DOM.');
+						// console.log('--- END WIDGET POSITIONING LOG ---');
 						return;
 					}
 
-					console.log('Custom widget found:', customWidget);
-					console.log('Visible target widget found:', visibleTargetWidget);
+					// console.log('Custom widget found:', customWidget);
+					// console.log('Visible target widget found:', visibleTargetWidget);
 
-					console.log('--- DOM STATE BEFORE MOVE ---');
-					console.log('Custom Widget Parent:', customWidget.parentNode);
-					console.log('Target Widget Parent:', visibleTargetWidget.parentNode);
+					// console.log('--- DOM STATE BEFORE MOVE ---');
+					// console.log('Custom Widget Parent:', customWidget.parentNode);
+					// console.log('Target Widget Parent:', visibleTargetWidget.parentNode);
 
 					if (placement === 'after') {
 						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget.nextSibling);
@@ -803,10 +803,10 @@ class WordPress {
 						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget);
 					}
 
-					console.log('--- DOM STATE AFTER MOVE ---');
-					console.log('Custom Widget Parent:', customWidget.parentNode);
-					console.log('StackBoost Widget: Repositioning complete.');
-					console.log('--- END WIDGET POSITIONING LOG ---');
+					// console.log('--- DOM STATE AFTER MOVE ---');
+					// console.log('Custom Widget Parent:', customWidget.parentNode);
+					// console.log('StackBoost Widget: Repositioning complete.');
+					// console.log('--- END WIDGET POSITIONING LOG ---');
 				};
 
 				// Immediately call the function with the values from PHP.
