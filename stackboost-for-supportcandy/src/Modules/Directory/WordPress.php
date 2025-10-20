@@ -742,36 +742,34 @@ class WordPress {
 				 * @param {string} targetSelector - The CSS selector of the widget to position against.
 				 * @param {string} placement - 'before' or 'after'.
 				 */
-				var positionTicketWidget = function(widgetId, targetSelector, placement) {
+				var positionTicketWidget = function(serverWidgetId, targetSelector, placement) {
 					console.log('--- WIDGET POSITIONING LOG ---');
-					console.log('Widget ID:', widgetId);
+					console.log('Server Widget ID:', serverWidgetId);
 					console.log('Target Selector:', targetSelector);
 					console.log('Placement:', placement);
 					console.log('Attempting to position widget...');
 
-					// Aggressive Cleanup: Remove any lingering "ghost" widget from older versions.
-					const ghostWidget = document.getElementById('stackboost-contact-widget');
-					if (ghostWidget) {
-						console.log('StackBoost Widget: Removing ghost widget with static ID.');
-						ghostWidget.remove();
+					// Find the widget this script is associated with.
+					const customWidget = document.getElementById(serverWidgetId);
+					if (!customWidget) {
+						console.error('StackBoost Widget Error: Could not find the widget container with server ID: ' + serverWidgetId);
+						return;
 					}
+
+					// Create a guaranteed unique ID in the browser to avoid issues with server-side caching.
+					const browserUniqueId = 'sb-widget-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+					customWidget.id = browserUniqueId;
+					console.log('Assigned new browser-unique ID:', browserUniqueId);
 
 					// Idempotency: Find and remove any stale widget instances from previous renders.
 					const allWidgetInstances = document.querySelectorAll('.stackboost-contact-widget-instance');
 					allWidgetInstances.forEach(function(instance) {
-						// Remove any instance that is NOT the one we are about to position.
-						if (instance.id !== widgetId) {
+						// Remove any instance that is NOT the one we just assigned our unique ID to.
+						if (instance.id !== browserUniqueId) {
 							console.log('StackBoost Widget: Removing stale widget instance (' + instance.id + ') from previous render.');
 							instance.remove();
 						}
 					});
-
-					// Use the unique ID for a direct, reliable lookup.
-					const customWidget = document.getElementById(widgetId);
-					if (!customWidget) {
-						console.error('StackBoost Widget Error: Could not find the widget container with ID: ' + widgetId);
-						return;
-					}
 
 					// Find all potential target widgets. This is crucial because SupportCandy renders
 					// a hidden container for mobile, and we must select the visible one.
