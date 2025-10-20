@@ -710,7 +710,7 @@ class WordPress {
 		} else {
 			$widget_content = '<p>' . esc_html__( 'No directory entry found for this user.', 'stackboost-for-supportcandy' ) . '</p>';
 		}
-		$widget_unique_id = 'stackboost-contact-widget-' . uniqid();
+		$widget_unique_id = 'stackboost-contact-widget-' . bin2hex(random_bytes(8));
 		?>
 		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance">
 			<div class="wpsc-widget-header">
