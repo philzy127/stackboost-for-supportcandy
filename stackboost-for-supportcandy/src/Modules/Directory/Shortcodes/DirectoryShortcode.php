@@ -101,21 +101,9 @@ class DirectoryShortcode {
 							);
 
 							foreach ( $employees as $employee ) :
-								$phone_output_parts      = array();
-								$searchable_phone_string = '';
+								$searchable_phone_string = preg_replace( '/\D/', '', $employee->office_phone . $employee->extension . $employee->mobile_phone );
+								$formatted_phone_output  = $directory_service->get_formatted_phone_numbers_html( $employee );
 								$copy_icon_svg           = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; margin-left: 5px; cursor: pointer;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
-
-								if ( ! empty( $employee->office_phone ) ) {
-									$phone_output_parts[]     = '<strong>' . esc_html__( 'Office', 'stackboost-for-supportcandy' ) . ':</strong> ' . \stackboost_format_phone_number( $employee->office_phone, $employee->extension, $copy_icon_svg );
-									$searchable_phone_string .= preg_replace( '/\D/', '', $employee->office_phone ) . preg_replace( '/\D/', '', $employee->extension );
-								}
-
-								if ( ! empty( $employee->mobile_phone ) ) {
-									$phone_output_parts[]     = '<strong>' . esc_html__( 'Mobile', 'stackboost-for-supportcandy' ) . ':</strong> ' . \stackboost_format_phone_number( $employee->mobile_phone, '', $copy_icon_svg );
-									$searchable_phone_string .= preg_replace( '/\D/', '', $employee->mobile_phone );
-								}
-
-								$formatted_phone_output = implode( '<br>', $phone_output_parts );
 								?>
 								<tr>
 									<td>
@@ -129,7 +117,7 @@ class DirectoryShortcode {
 											<span class="stackboost-copy-email-icon"
 												  data-email="<?php echo esc_attr( $employee->email ); ?>"
 												  title="<?php esc_attr_e( 'Click to copy email', 'stackboost-for-supportcandy' ); ?>">
-												<?php echo $copy_icon_svg; ?>
+												<?php echo wp_kses( $copy_icon_svg, $allowed_html ); ?>
 											</span>
 										<?php endif; ?>
 										<?php if ( $can_edit_entries && $employee->edit_post_link ) : ?>
@@ -140,7 +128,7 @@ class DirectoryShortcode {
 											</a>
 										<?php endif; ?>
 									</td>
-									<td data-search="<?php echo esc_attr( $searchable_phone_string ); ?>"><?php echo ! empty( $formatted_phone_output ) ? wp_kses( $formatted_phone_output, $allowed_html ) : '&mdash;'; ?></td>
+									<td data-search="<?php echo esc_attr( $searchable_phone_string ); ?>"><?php echo ! empty( $formatted_phone_output ) ? wp_kses_post( $formatted_phone_output ) : '&mdash;'; ?></td>
 									<td><?php echo esc_html( $employee->department_program ); ?></td>
 									<td><?php echo esc_html( $employee->job_title ); ?></td>
 								</tr>

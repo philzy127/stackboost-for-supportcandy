@@ -67,7 +67,7 @@ class WordPress {
 		Management::register_ajax_actions();
 
 		// Hook for rendering the ticket widget.
-		add_action( 'wpsc_itw_agent_fields', array( $this, 'render_ticket_widget' ) );
+		add_action( 'wpsc_after_ticket_widget', array( $this, 'render_ticket_widget' ) );
 	}
 
 	/**
@@ -125,8 +125,10 @@ class WordPress {
 
 	/**
 	 * Enqueue admin scripts and styles.
+	 *
+	 * @param string $hook_suffix The current admin page hook.
 	 */
-	public function enqueue_admin_scripts() {
+	public function enqueue_admin_scripts( $hook_suffix ) {
 		$screen = get_current_screen();
 		if ( ! $screen ) {
 			return;
@@ -216,16 +218,6 @@ class WordPress {
 			}
 		}
 
-		// Enqueue scripts for the SupportCandy ticket view screen.
-		if ( 'wpsc_ticket' === $screen->post_type ) {
-			wp_enqueue_script(
-				'stackboost-unmistakable-console',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/unmistakable-console.js',
-				[],
-				\STACKBOOST_VERSION,
-				false
-			);
-		}
 	}
 
 	/**
@@ -603,62 +595,81 @@ class WordPress {
 	/**
 	 * Render the pseudo-widget for the ticket screen.
 	 *
-	 * @param object $ticket The SupportCandy ticket object.
+	 * @param mixed $ticket The SupportCandy ticket object. Can be null on some hook fires.
 	 */
-	public function render_ticket_widget( object $ticket ) {
-		error_log('--- UNMISTAKABLE PHP LOG: RENDER TICKET WIDGET IS EXECUTING ---');
+	public function render_ticket_widget( $ticket ) {
+		// Guard against the hook firing multiple times in a single request, which would
+		// lead to duplicate HTML and invalid element IDs.
+		static $has_rendered_once = false;
+		if ( $has_rendered_once ) {
+			// Output a console log to make it clear why the second render is being skipped.
+			echo '<script>console.log("StackBoost Widget: Skipping duplicate render call in the same request.");</script>';
+			return;
+		}
+		$has_rendered_once = true;
+
+		$debug_output = "--- JULES DEBUG LOG ---\n";
+		// Add backtrace to debug the double call.
+		// ob_start();
+		// debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
+		// $debug_output .= "\n--- BACKTRACE ---\n" . ob_get_clean() . "\n";
+
+		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
+			$debug_output .= "ERROR: Hook did not pass a valid WPSC_Ticket object. Exiting.\n";
+			echo '<pre>' . esc_html( $debug_output ) . '</pre>';
+			return;
+		}
+		$debug_output .= "OK: render_ticket_widget() EXECUTED with a valid WPSC_Ticket object.\n";
+
+		$customer = $ticket->customer;
+		if ( ! is_a( $customer, 'WPSC_Customer' ) || ! $customer->id ) {
+			$debug_output .= "ERROR: Could not retrieve a valid WPSC_Customer object from the ticket. Exiting.\n";
+			echo '<pre>' . esc_html( $debug_output ) . '</pre>';
+			return;
+		}
+		$debug_output .= "OK: Retrieved a valid WPSC_Customer object.\n";
+
+		$customer_email = $customer->email;
+		$debug_output .= 'OK: Customer email retrieved: ' . $customer_email . "\n";
+
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
-		if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
-			return;
-		}
-
-		if ( empty( $widget_options['display_fields'] ) ) {
-			return;
-		}
-
 		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
-		$staff_member      = $directory_service->get_staff_by_email( $ticket->customer->user_email );
+		$staff_member      = $directory_service->get_staff_by_email( $customer_email );
+		$debug_output .= 'OK: DirectoryService search complete. Staff member found: ' . ($staff_member ? 'Yes' : 'No') . "\n";
+		// $debug_output .= "\n--- WIDGET OPTIONS ---\n" . print_r( $widget_options, true );
+		// $debug_output .= "\n--- STAFF MEMBER OBJECT ---\n" . print_r( $staff_member, true );
 
-		// START DEBUG CONSOLING
-		$email_to_search = $ticket->customer->user_email;
-		$search_result = wp_json_encode( $staff_member, JSON_PRETTY_PRINT );
-		?>
-		<script>
-			(function() {
-				console.groupCollapsed('StackBoost Directory Debug');
-				console.log('Searching for email:', '<?php echo esc_js( $email_to_search ); ?>');
-				console.log('Search result:', <?php echo $search_result; ?>);
-				console.groupEnd();
-			})();
-		</script>
-		<?php
-		// END DEBUG CONSOLING
+		$target_widget_slug = $widget_options['target_widget'] ?? '';
+		$target_selector    = TicketWidgetSettings::get_widget_selector_by_slug( $target_widget_slug );
+		$placement          = $widget_options['placement'] ?? 'before';
 
-		if ( $staff_member ) {
+		$debug_output .= "\n--- PLACEMENT INFO ---\n";
+		$debug_output .= "Target Widget Slug: " . $target_widget_slug . "\n";
+		$debug_output .= "Target Selector: " . $target_selector . "\n";
+		$debug_output .= "Placement: " . $placement . "\n";
+
+
+		$widget_content = '';
+		if ( $staff_member && ! empty( $widget_options['display_fields'] ) ) {
 			$all_fields = TicketWidgetSettings::get_directory_fields();
-			echo '<div class="wpsc-itw-container">';
-			echo '<div class="wpsc-itw-title">' . esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ) . '</div>';
-			echo '<div class="wpsc-itw-body">';
-			echo '<ul>';
+			$list_items = '';
 
 			foreach ( $widget_options['display_fields'] as $field_key ) {
-				$label = $all_fields[ $field_key ] ?? '';
-				$value = '';
+				$label   = $all_fields[ $field_key ] ?? '';
+				$value   = '';
+				$is_html = false;
 
-				// Map field key to staff member object property
 				switch ( $field_key ) {
+					case 'name':
+						$value = $staff_member->name;
+						break;
 					case 'chp_staff_job_title':
 						$value = $staff_member->job_title;
 						break;
-					case 'office_phone':
-						$value = $staff_member->office_phone;
-						break;
-					case 'extension':
-						$value = $staff_member->extension;
-						break;
-					case 'mobile_phone':
-						$value = $staff_member->mobile_phone;
+					case 'phone':
+						$value   = $directory_service->get_formatted_phone_numbers_html( $staff_member );
+						$is_html = true;
 						break;
 					case 'email_address':
 						$value = $staff_member->email;
@@ -675,20 +686,126 @@ class WordPress {
 				}
 
 				if ( ! empty( $value ) ) {
-					echo '<li><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $value ) . '</li>';
+					if ( $is_html ) {
+						// This value is pre-formatted, trusted HTML from the DirectoryService.
+						$list_items .= '<div>' . $value . '</div>';
+					} else {
+						$list_items .= '<div><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $value ) . '</div>';
+					}
 				}
 			}
 
-			echo '</ul>';
-			echo '</div>';
-			echo '</div>';
+			if ( ! empty( $list_items ) ) {
+				$widget_content = $list_items;
+			} else {
+				$widget_content = '<p>' . esc_html__( 'No directory information available for this user.', 'stackboost-for-supportcandy' ) . '</p>';
+			}
 		} else {
-			echo '<div class="wpsc-itw-container">';
-			echo '<div class="wpsc-itw-title">' . esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ) . '</div>';
-			echo '<div class="wpsc-itw-body">';
-			echo '<p>' . esc_html__( 'No directory entry found for this user.', 'stackboost-for-supportcandy' ) . '</p>';
-			echo '</div>';
-			echo '</div>';
+			$widget_content = '<p>' . esc_html__( 'No directory entry found for this user.', 'stackboost-for-supportcandy' ) . '</p>';
 		}
+		$widget_unique_id = 'stackboost-contact-widget-' . uniqid();
+		?>
+		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance">
+			<div class="wpsc-widget-header">
+				<h2><?php echo esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ); ?></h2>
+				<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget">
+				</span>
+			</div>
+			<div class="wpsc-widget-body">
+				<?php
+				// The content is already escaped.
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo $widget_content;
+				?>
+			</div>
+		</div>
+		<script>
+			// Using a closure to keep variables local and avoid polluting the global scope.
+			(function() {
+				// PHP-generated debug logs for development.
+				console.log(<?php echo json_encode( $debug_output, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES ); ?>);
+
+				// --- Self-Contained Widget Positioning Logic ---
+
+				/**
+				 * Main function to find and reposition the widget. This script is designed
+				 * to be idempotent. If a previous version of the widget exists (e.g., from
+				 * a previous AJAX load), it will be removed before the new one is placed.
+				 * @param {string} widgetId - The unique ID of the widget div to move.
+				 * @param {string} targetSelector - The CSS selector of the widget to position against.
+				 * @param {string} placement - 'before' or 'after'.
+				 */
+				var positionTicketWidget = function(widgetId, targetSelector, placement) {
+					console.log('--- WIDGET POSITIONING LOG ---');
+					console.log('Widget ID:', widgetId);
+					console.log('Target Selector:', targetSelector);
+					console.log('Placement:', placement);
+					console.log('Attempting to position widget...');
+
+					// Idempotency: Find and remove any stale widget instances from previous renders.
+					const allWidgetInstances = document.querySelectorAll('.stackboost-contact-widget-instance');
+					allWidgetInstances.forEach(function(instance) {
+						// Remove any instance that is NOT the one we are about to position.
+						if (instance.id !== widgetId) {
+							console.log('StackBoost Widget: Removing stale widget instance (' + instance.id + ') from previous render.');
+							instance.remove();
+						}
+					});
+
+					// Use the unique ID for a direct, reliable lookup.
+					const customWidget = document.getElementById(widgetId);
+					if (!customWidget) {
+						console.error('StackBoost Widget Error: Could not find the widget container with ID: ' + widgetId);
+						return;
+					}
+
+					// Find all potential target widgets. This is crucial because SupportCandy renders
+					// a hidden container for mobile, and we must select the visible one.
+					const allTargets = document.querySelectorAll(targetSelector);
+					let visibleTargetWidget = null;
+
+					for (let i = 0; i < allTargets.length; i++) {
+						// An element is visible if its offsetParent is not null.
+						if (allTargets[i].offsetParent !== null) {
+							visibleTargetWidget = allTargets[i];
+							break;
+						}
+					}
+
+					if (!visibleTargetWidget) {
+						console.error('StackBoost Widget: Could not find a VISIBLE target widget (' + targetSelector + ') in the DOM.');
+						console.log('--- END WIDGET POSITIONING LOG ---');
+						return;
+					}
+
+					console.log('Custom widget found:', customWidget);
+					console.log('Visible target widget found:', visibleTargetWidget);
+
+					console.log('--- DOM STATE BEFORE MOVE ---');
+					console.log('Custom Widget Parent:', customWidget.parentNode);
+					console.log('Target Widget Parent:', visibleTargetWidget.parentNode);
+
+					if (placement === 'after') {
+						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget.nextSibling);
+					} else {
+						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget);
+					}
+
+					console.log('--- DOM STATE AFTER MOVE ---');
+					console.log('Custom Widget Parent:', customWidget.parentNode);
+					console.log('StackBoost Widget: Repositioning complete.');
+					console.log('--- END WIDGET POSITIONING LOG ---');
+				};
+
+				// Immediately call the function with the values from PHP.
+				positionTicketWidget(
+					<?php echo json_encode( $widget_unique_id ); ?>,
+					<?php echo json_encode( $target_selector ); ?>,
+					<?php echo json_encode( $placement ); ?>
+				);
+
+			})();
+		</script>
+		<?php
 	}
 }

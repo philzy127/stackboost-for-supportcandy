@@ -78,15 +78,36 @@ class TicketWidgetSettings {
 	 */
 	public static function get_directory_fields(): array {
 		return [
+			'name'                => __( 'Name', 'stackboost-for-supportcandy' ),
 			'chp_staff_job_title' => __( 'Title', 'stackboost-for-supportcandy' ),
-			'office_phone'        => __( 'Office Phone', 'stackboost-for-supportcandy' ),
-			'extension'           => __( 'Extension', 'stackboost-for-supportcandy' ),
-			'mobile_phone'        => __( 'Mobile Phone', 'stackboost-for-supportcandy' ),
+			'phone'               => __( 'Phone', 'stackboost-for-supportcandy' ),
 			'email_address'       => __( 'Email Address', 'stackboost-for-supportcandy' ),
 			'location'            => __( 'Location', 'stackboost-for-supportcandy' ),
 			'room_number'         => __( 'Room #', 'stackboost-for-supportcandy' ),
 			'department_program'  => __( 'Department / Program', 'stackboost-for-supportcandy' ),
 		];
+	}
+
+	/**
+	 * Get the CSS selector for a given widget slug.
+	 *
+	 * @param string $slug The widget slug.
+	 * @return string The CSS selector.
+	 */
+	public static function get_widget_selector_by_slug( string $slug ): string {
+		$map = [
+			'add-rec'             => '.wpsc-itw-add-rec',
+			'agentonly-fields'    => '.wpsc-itw-agentonly-fields',
+			'assignee'            => '.wpsc-itw-assignee',
+			'bio-info'            => '.wpsc-itw-bio-info',
+			'change-status'       => '.wpsc-itw-ticket-status',
+			'raised-by'           => '.wpsc-itw-raised-by',
+			'ticket-fields'       => '.wpsc-itw-ticket-fields',
+			'ticket-info'         => '.wpsc-itw-ticket-info',
+			'ticket-tags'         => '.wpsc-itw-ticket-tags',
+		];
+
+		return $map[ $slug ] ?? '';
 	}
 
 	/**
