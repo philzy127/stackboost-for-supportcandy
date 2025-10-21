@@ -56,7 +56,8 @@ class Settings {
 			[ $this, 'render_settings_page' ]
 		);
 
-		// NEW Ticket View Submenu
+		// Placeholder for the Ticket View Submenu, which will be registered by its own module.
+		// This ensures it appears in the menu even if the module fails.
 		add_submenu_page(
 			'stackboost-for-supportcandy',
 			__( 'Ticket View', 'stackboost-for-supportcandy' ),
@@ -101,8 +102,6 @@ class Settings {
 				[ $this, 'render_settings_page' ]
 			);
 		}
-
-        // After Ticket Survey is handled by its own Admin class due to its complexity.
 
 		// How To Use Submenu (add last)
 		add_submenu_page(
@@ -166,13 +165,9 @@ class Settings {
 	 * Render the generic wrapper for a settings page.
 	 */
 	public function render_settings_page() {
-		// The `get_current_screen()` function is available at this point.
 		$screen = get_current_screen();
-		// The page slug is the part of the hook after 'stackboost_page_' or similar.
 		$page_slug = $screen->base === 'toplevel_page_stackboost-for-supportcandy' ? 'stackboost-for-supportcandy' : $screen->id;
-        // Strip the prefix for submenu pages
         $page_slug = str_replace(['stackboost_page_', 'toplevel_page_'], '', $page_slug);
-
 
 		?>
 		<div class="wrap">
@@ -209,7 +204,6 @@ class Settings {
 	 * Render the "How To Use" page content.
 	 */
 	public function render_how_to_use_page() {
-        // This could load a template file.
         echo '<div class="wrap"><h1>' . esc_html__( 'How To Use StackBoost', 'stackboost-for-supportcandy' ) . '</h1>';
         echo '<p>' . esc_html__( 'Thank you for using StackBoost! Please refer to the individual settings pages for instructions on how to use each feature.', 'stackboost-for-supportcandy' ) . '</p>';
         echo '</div>';
@@ -224,12 +218,6 @@ class Settings {
 
 	/**
 	 * Sanitize all settings.
-	 *
-	 * This function intelligently merges settings from the submitted page
-	 * with the existing settings from other pages, so nothing is lost.
-	 *
-	 * @param array $input The submitted settings.
-	 * @return array The sanitized and merged settings.
 	 */
 	public function sanitize_settings( array $input ): array {
 		$saved_settings = get_option( 'stackboost_settings', [] );
@@ -237,11 +225,8 @@ class Settings {
 			$saved_settings = [];
 		}
 
-		// Get the submitted page slug.
 		$page_slug = $input['page_slug'] ?? '';
 
-		// Define which options belong to which page.
-		// This is the key to only updating the submitted page's settings.
 		$page_options = apply_filters('stackboost_settings_page_options', [
 			'stackboost-for-supportcandy' => [], // All settings moved to Ticket View
 			'stackboost-ticket-view' => [ 'enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide' ],
@@ -253,14 +238,10 @@ class Settings {
 
 		$current_page_options = $page_options[ $page_slug ] ?? [];
 
-		// Loop through the options for the CURRENT page and update them.
 		foreach ( $current_page_options as $key ) {
-            // Use array_key_exists for checkboxes which might be present with value 0
 			if ( array_key_exists( $key, $input ) ) {
 				$saved_settings[ $key ] = $input[ $key ];
 			} else {
-                // If a field isn't in the input, it was likely an unchecked checkbox or a removed rule.
-                // We set it to a safe default.
 				if ( str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
 					$saved_settings[ $key ] = [];
 				} else {
@@ -268,11 +249,6 @@ class Settings {
                 }
 			}
 		}
-
-        // This is where a full sanitization loop would go, iterating over the $saved_settings array.
-        // For brevity in this refactor, we are assuming the input is mostly safe
-        // and relying on the individual field rendering functions to do the primary escaping.
-        // A production-ready version would have a large switch statement here to sanitize every known key.
 
 		return $saved_settings;
 	}

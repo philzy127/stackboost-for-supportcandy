@@ -9,6 +9,7 @@ use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\QueueMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
+use StackBoost\ForSupportCandy\Modules\TicketView;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 
 /**
@@ -54,6 +55,7 @@ final class Plugin {
 		Settings::get_instance();
 
 		// Load all module adapters.
+		$this->modules['ticket_view']         = TicketView\WordPress::get_instance();
 		$this->modules['qol_enhancements']    = QolEnhancements\WordPress::get_instance();
 		$this->modules['after_hours_notice']  = AfterHoursNotice\WordPress::get_instance();
 		$this->modules['conditional_views']   = ConditionalViews\WordPress::get_instance();
