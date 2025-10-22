@@ -27,7 +27,7 @@ class Settings {
 	 */
 	private function __construct() {
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
-		add_action( 'admin_menu', [ $this, 'reorder_admin_menu' ], 99 );
+		add_action( 'admin_menu', [ $this, 'reorder_admin_menu' ], 100 );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 	}
 
@@ -128,17 +128,6 @@ class Settings {
 
 		$menu_items = $submenu[ $parent_slug ];
 		$ordered_menu = [];
-		$how_to_use_item = null;
-
-		// Find and remove the "How to Use" item
-		foreach ($menu_items as $key => $item) {
-			if ($item[2] === 'stackboost-how-to-use') {
-				$how_to_use_item = $item;
-				unset($menu_items[$key]);
-				break;
-			}
-		}
-
 		$order = [
 			'stackboost-for-supportcandy',  // General Settings
 			'stackboost-ticket-view',       // Ticket View
@@ -166,11 +155,6 @@ class Settings {
 		// Add any remaining items that were not in our specific order to the end
 		if ( ! empty( $menu_map ) ) {
 			$ordered_menu = array_merge( $ordered_menu, array_values( $menu_map ) );
-		}
-
-		// Add the "How to Use" item to the very end
-		if ($how_to_use_item) {
-			$ordered_menu[] = $how_to_use_item;
 		}
 
 		$submenu[ $parent_slug ] = $ordered_menu;
