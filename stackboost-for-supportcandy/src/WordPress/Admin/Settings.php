@@ -27,6 +27,7 @@ class Settings {
 	 */
 	private function __construct() {
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
+		add_action( 'admin_menu', [ $this, 'reorder_admin_menu' ], 99 );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 	}
 
@@ -52,6 +53,17 @@ class Settings {
 			__( 'General Settings', 'stackboost-for-supportcandy' ),
 			'manage_options',
 			'stackboost-for-supportcandy', // Slug for the general settings page
+			[ $this, 'render_settings_page' ]
+		);
+
+		// Placeholder for the Ticket View Submenu, which will be registered by its own module.
+		// This ensures it appears in the menu even if the module fails.
+		add_submenu_page(
+			'stackboost-for-supportcandy',
+			__( 'Ticket View', 'stackboost-for-supportcandy' ),
+			__( 'Ticket View', 'stackboost-for-supportcandy' ),
+			'manage_options',
+			'stackboost-ticket-view', // New slug
 			[ $this, 'render_settings_page' ]
 		);
 
@@ -91,8 +103,6 @@ class Settings {
 			);
 		}
 
-        // After Ticket Survey is handled by its own Admin class due to its complexity.
-
 		// How To Use Submenu (add last)
 		add_submenu_page(
 			'stackboost-for-supportcandy',
@@ -105,16 +115,59 @@ class Settings {
 	}
 
 	/**
+	 * Reorder the admin submenu pages for StackBoost.
+	 * This runs late to ensure all modules have added their submenus.
+	 */
+	public function reorder_admin_menu() {
+		global $submenu;
+		$parent_slug = 'stackboost-for-supportcandy';
+
+		if ( ! isset( $submenu[ $parent_slug ] ) ) {
+			return;
+		}
+
+		$menu_items = $submenu[ $parent_slug ];
+		$ordered_menu = [];
+		$order = [
+			'stackboost-for-supportcandy',  // General Settings
+			'stackboost-ticket-view',       // Ticket View
+			'stackboost-conditional-views', // Conditional Views
+			'stackboost-queue-macro',       // Queue Macro
+			'stackboost-after-hours',       // After Hours Notice
+			'stackboost-directory',         // Company Directory
+			'stackboost-ats',               // After Ticket Survey
+			'stackboost-how-to-use',        // How to Use
+		];
+
+		// Create a map of slug => menu_item array for easy lookup
+		$menu_map = [];
+		foreach ( $menu_items as $item ) {
+			$menu_map[ $item[2] ] = $item;
+		}
+
+		// Add items to the ordered menu according to the specified order
+		foreach ( $order as $slug ) {
+			if ( isset( $menu_map[ $slug ] ) ) {
+				$ordered_menu[] = $menu_map[ $slug ];
+				unset( $menu_map[ $slug ] ); // Remove it from the map
+			}
+		}
+
+		// Add any remaining items that were not in our specific order to the end
+		if ( ! empty( $menu_map ) ) {
+			$ordered_menu = array_merge( $ordered_menu, array_values( $menu_map ) );
+		}
+
+		$submenu[ $parent_slug ] = $ordered_menu;
+	}
+
+	/**
 	 * Render the generic wrapper for a settings page.
 	 */
 	public function render_settings_page() {
-		// The `get_current_screen()` function is available at this point.
 		$screen = get_current_screen();
-		// The page slug is the part of the hook after 'stackboost_page_' or similar.
 		$page_slug = $screen->base === 'toplevel_page_stackboost-for-supportcandy' ? 'stackboost-for-supportcandy' : $screen->id;
-        // Strip the prefix for submenu pages
         $page_slug = str_replace(['stackboost_page_', 'toplevel_page_'], '', $page_slug);
-
 
 		?>
 		<div class="wrap">
@@ -130,14 +183,19 @@ class Settings {
 					?>
 				</p>
 			</div>
-			<form action="options.php" method="post">
-				<?php
-				settings_fields( 'stackboost_settings' );
-				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="' . esc_attr( $page_slug ) . '">';
-				do_settings_sections( $page_slug );
-				submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) );
-				?>
-			</form>
+
+			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
+				<p><?php esc_html_e( 'More settings coming soon.', 'stackboost-for-supportcandy' ); ?></p>
+			<?php else : ?>
+				<form action="options.php" method="post">
+					<?php
+					settings_fields( 'stackboost_settings' );
+					echo '<input type="hidden" name="stackboost_settings[page_slug]" value="' . esc_attr( $page_slug ) . '">';
+					do_settings_sections( $page_slug );
+					submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) );
+					?>
+				</form>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -146,7 +204,6 @@ class Settings {
 	 * Render the "How To Use" page content.
 	 */
 	public function render_how_to_use_page() {
-        // This could load a template file.
         echo '<div class="wrap"><h1>' . esc_html__( 'How To Use StackBoost', 'stackboost-for-supportcandy' ) . '</h1>';
         echo '<p>' . esc_html__( 'Thank you for using StackBoost! Please refer to the individual settings pages for instructions on how to use each feature.', 'stackboost-for-supportcandy' ) . '</p>';
         echo '</div>';
@@ -161,12 +218,6 @@ class Settings {
 
 	/**
 	 * Sanitize all settings.
-	 *
-	 * This function intelligently merges settings from the submitted page
-	 * with the existing settings from other pages, so nothing is lost.
-	 *
-	 * @param array $input The submitted settings.
-	 * @return array The sanitized and merged settings.
 	 */
 	public function sanitize_settings( array $input ): array {
 		$saved_settings = get_option( 'stackboost_settings', [] );
@@ -174,13 +225,11 @@ class Settings {
 			$saved_settings = [];
 		}
 
-		// Get the submitted page slug.
 		$page_slug = $input['page_slug'] ?? '';
 
-		// Define which options belong to which page.
-		// This is the key to only updating the submitted page's settings.
 		$page_options = apply_filters('stackboost_settings_page_options', [
-			'stackboost-for-supportcandy' => [ 'enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide' ],
+			'stackboost-for-supportcandy' => [], // All settings moved to Ticket View
+			'stackboost-ticket-view' => [ 'enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide' ],
 			'stackboost-conditional-views' => [ 'enable_conditional_hiding', 'conditional_hiding_rules' ],
 			'stackboost-after-hours'        => [ 'enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message' ],
 			'stackboost-queue-macro'        => [ 'enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses' ],
@@ -189,14 +238,10 @@ class Settings {
 
 		$current_page_options = $page_options[ $page_slug ] ?? [];
 
-		// Loop through the options for the CURRENT page and update them.
 		foreach ( $current_page_options as $key ) {
-            // Use array_key_exists for checkboxes which might be present with value 0
 			if ( array_key_exists( $key, $input ) ) {
 				$saved_settings[ $key ] = $input[ $key ];
 			} else {
-                // If a field isn't in the input, it was likely an unchecked checkbox or a removed rule.
-                // We set it to a safe default.
 				if ( str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
 					$saved_settings[ $key ] = [];
 				} else {
@@ -204,11 +249,6 @@ class Settings {
                 }
 			}
 		}
-
-        // This is where a full sanitization loop would go, iterating over the $saved_settings array.
-        // For brevity in this refactor, we are assuming the input is mostly safe
-        // and relying on the individual field rendering functions to do the primary escaping.
-        // A production-ready version would have a large switch statement here to sanitize every known key.
 
 		return $saved_settings;
 	}

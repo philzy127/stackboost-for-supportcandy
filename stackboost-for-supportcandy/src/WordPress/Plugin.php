@@ -9,6 +9,7 @@ use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\QueueMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
+use StackBoost\ForSupportCandy\Modules\TicketView;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 
 /**
@@ -54,6 +55,7 @@ final class Plugin {
 		Settings::get_instance();
 
 		// Load all module adapters.
+		$this->modules['ticket_view']         = TicketView\WordPress::get_instance();
 		$this->modules['qol_enhancements']    = QolEnhancements\WordPress::get_instance();
 		$this->modules['after_hours_notice']  = AfterHoursNotice\WordPress::get_instance();
 		$this->modules['conditional_views']   = ConditionalViews\WordPress::get_instance();
@@ -245,7 +247,7 @@ final class Plugin {
 	public function get_supportcandy_columns(): array {
 		global $wpdb;
 		$columns             = [];
-		$custom_fields_table = 'wpya_psmsc_custom_fields';
+		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $custom_fields_table ) ) ) {
 			$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$custom_fields_table}`", ARRAY_A );
 			if ( $custom_fields ) {
@@ -268,7 +270,7 @@ final class Plugin {
 		if ( empty( $field_name ) ) {
 			return 0;
 		}
-		$table_name = 'wpya_psmsc_custom_fields';
+		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) !== $table_name ) {
 			return 0;
 		}
