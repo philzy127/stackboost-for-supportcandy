@@ -108,7 +108,7 @@ final class Plugin {
 				'slug'  => 'stackboost-queue-macro',
 			],
 			'after-hours'     => [
-				'title' => __( 'After Hours Notice', 'stackboost-for-supportcandy' ),
+				'title' => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'slug'  => 'stackboost-after-hours',
 			],
 			'ats'             => [

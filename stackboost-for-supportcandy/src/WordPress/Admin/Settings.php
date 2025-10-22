@@ -95,8 +95,8 @@ class Settings {
 		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
 			add_submenu_page(
 				'stackboost-for-supportcandy',
-				__( 'After Hours Notice', 'stackboost-for-supportcandy' ),
-				__( 'After Hours Notice', 'stackboost-for-supportcandy' ),
+				__( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+				__( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'manage_options',
 				'stackboost-after-hours',
 				[ $this, 'render_settings_page' ]
@@ -136,7 +136,6 @@ class Settings {
 			'stackboost-after-hours',       // After Hours Notice
 			'stackboost-directory',         // Company Directory
 			'stackboost-ats',               // After Ticket Survey
-			'stackboost-how-to-use',        // How to Use
 		];
 
 		// Create a map of slug => menu_item array for easy lookup
