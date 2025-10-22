@@ -247,7 +247,7 @@ final class Plugin {
 	public function get_supportcandy_columns(): array {
 		global $wpdb;
 		$columns             = [];
-		$custom_fields_table = 'wpya_psmsc_custom_fields';
+		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $custom_fields_table ) ) ) {
 			$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$custom_fields_table}`", ARRAY_A );
 			if ( $custom_fields ) {
@@ -270,7 +270,7 @@ final class Plugin {
 		if ( empty( $field_name ) ) {
 			return 0;
 		}
-		$table_name = 'wpya_psmsc_custom_fields';
+		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) !== $table_name ) {
 			return 0;
 		}

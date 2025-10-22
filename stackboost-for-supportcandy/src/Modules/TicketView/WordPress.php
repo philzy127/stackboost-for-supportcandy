@@ -75,22 +75,18 @@ class WordPress extends Module {
 			$custom_fields_choices[ $name ] = $name;
 		}
 
-		$select_field_args = [
-			'id'          => 'ticket_type_custom_field_name',
-			'placeholder' => __( '-- Select a Custom Field --', 'stackboost-for-supportcandy' ),
-			'choices'     => $custom_fields_choices,
-			'desc'        => __( 'The custom field that represents the ticket type (e.g., "Ticket Category").', 'stackboost-for-supportcandy' ),
-		];
-
-		error_log('Args being sent to render_select_field: ' . print_r($select_field_args, true));
-
 		add_settings_field(
 			'stackboost_ticket_type_custom_field_name',
 			__( 'Custom Field Name', 'stackboost-for-supportcandy' ),
 			[ $this, 'render_select_field' ],
 			$page_slug,
 			'stackboost_ticket_type_hiding_section',
-			$select_field_args
+			[
+				'id'          => 'ticket_type_custom_field_name',
+				'placeholder' => __( '-- Select a Custom Field --', 'stackboost-for-supportcandy' ),
+				'choices'     => $custom_fields_choices,
+				'desc'        => __( 'The custom field that represents the ticket type (e.g., "Ticket Category").', 'stackboost-for-supportcandy' ),
+			]
 		);
 
 		add_settings_field( 'stackboost_ticket_types_to_hide', __( 'Ticket Types to Hide', 'stackboost-for-supportcandy' ), [ $this, 'render_textarea_field' ], $page_slug, 'stackboost_ticket_type_hiding_section', [ 'id' => 'ticket_types_to_hide', 'class' => 'regular-text', 'desc' => 'One ticket type per line. e.g., Network Access Request' ] );
@@ -112,7 +108,7 @@ class WordPress extends Module {
 	/**
 	 * Renders a select field for a settings page.
 	 */
-	public function render_select_field( array $args ) {
+	public function render_select_field( $args ) {
 		$options = get_option( 'stackboost_settings' );
 		$id = $args['id'];
 		$selected = $options[ $id ] ?? '';
