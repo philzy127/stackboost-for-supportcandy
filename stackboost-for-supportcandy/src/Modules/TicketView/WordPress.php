@@ -75,6 +75,8 @@ class WordPress extends Module {
 			$custom_fields_choices[ $name ] = $name;
 		}
 
+		error_log('Custom Fields Choices: ' . print_r($custom_fields_choices, true));
+
 		add_settings_field(
 			'stackboost_ticket_type_custom_field_name',
 			__( 'Custom Field Name', 'stackboost-for-supportcandy' ),
