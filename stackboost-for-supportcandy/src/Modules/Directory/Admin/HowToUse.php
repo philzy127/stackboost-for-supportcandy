@@ -83,10 +83,15 @@ class HowToUse {
 
 			<!-- Contact Widget Tab -->
 			<div class="postbox">
-				<h2 class="hndle"><span><?php esc_html_e( 'Contact Widget (In Development)', 'stackboost-for-supportcandy' ); ?></span></h2>
+				<h2 class="hndle"><span><?php esc_html_e( 'Contact Widget for SupportCandy Tickets', 'stackboost-for-supportcandy' ); ?></span></h2>
 				<div class="inside">
-					<p><?php echo wp_kses_post( __( 'The <strong>Contact Widget</strong> tab contains settings for a future feature that will display directory information on the SupportCandy ticket screen.', 'stackboost-for-supportcandy' ) ); ?></p>
-					<p><strong><?php esc_html_e( 'Please note: This feature is currently in development and is not yet functional.', 'stackboost-for-supportcandy' ); ?></strong></p>
+					<p><?php echo wp_kses_post( __( 'The <strong>Contact Widget</strong> tab allows you to configure and display a widget with relevant staff directory information directly on the SupportCandy ticket screen. When a ticket is created by a user whose email address matches an entry in the directory, this widget will appear.', 'stackboost-for-supportcandy' ) ); ?></p>
+					<p><?php echo wp_kses_post( __( 'The widget now includes standard header buttons for better integration:', 'stackboost-for-supportcandy' ) ); ?></p>
+					<ul>
+						<li><?php echo wp_kses_post( __( '<strong>Collapse/Expand:</strong> Click the chevron icon in the top-right corner to collapse or expand the widget body, just like other native SupportCandy widgets.', 'stackboost-for-supportcandy' ) ); ?></li>
+						<li><?php echo wp_kses_post( __( '<strong>Edit:</strong> For users with the appropriate permissions (defined in the Settings tab), an edit icon will also appear. Clicking this icon will take you directly to the edit screen for that staff member\'s directory profile, allowing for quick corrections.', 'stackboost-for-supportcandy' ) ); ?></li>
+					</ul>
+					<p><?php echo wp_kses_post( __( 'You can customize which information fields are displayed, where the widget appears, and enable or disable it entirely from the settings on this tab.', 'stackboost-for-supportcandy' ) ); ?></p>
 				</div>
 			</div>
 

@@ -615,35 +615,35 @@ class WordPress {
 		}
 		$has_rendered_once = true;
 
-		$debug_output = "--- JULES DEBUG LOG ---\n";
+		// $debug_output = "--- JULES DEBUG LOG ---\n";
 		// Add backtrace to debug the double call.
 		// ob_start();
 		// debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
 		// $debug_output .= "\n--- BACKTRACE ---\n" . ob_get_clean() . "\n";
 
 		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
-			$debug_output .= "ERROR: Hook did not pass a valid WPSC_Ticket object. Exiting.\n";
-			echo '<pre>' . esc_html( $debug_output ) . '</pre>';
+			// $debug_output .= "ERROR: Hook did not pass a valid WPSC_Ticket object. Exiting.\n";
+			// echo '<pre>' . esc_html( $debug_output ) . '</pre>';
 			return;
 		}
-		$debug_output .= "OK: render_ticket_widget() EXECUTED with a valid WPSC_Ticket object.\n";
+		// $debug_output .= "OK: render_ticket_widget() EXECUTED with a valid WPSC_Ticket object.\n";
 
 		$customer = $ticket->customer;
 		if ( ! is_a( $customer, 'WPSC_Customer' ) || ! $customer->id ) {
-			$debug_output .= "ERROR: Could not retrieve a valid WPSC_Customer object from the ticket. Exiting.\n";
-			echo '<pre>' . esc_html( $debug_output ) . '</pre>';
+			// $debug_output .= "ERROR: Could not retrieve a valid WPSC_Customer object from the ticket. Exiting.\n";
+			// echo '<pre>' . esc_html( $debug_output ) . '</pre>';
 			return;
 		}
-		$debug_output .= "OK: Retrieved a valid WPSC_Customer object.\n";
+		// $debug_output .= "OK: Retrieved a valid WPSC_Customer object.\n";
 
 		$customer_email = $customer->email;
-		$debug_output .= 'OK: Customer email retrieved: ' . $customer_email . "\n";
+		// $debug_output .= 'OK: Customer email retrieved: ' . $customer_email . "\n";
 
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
 		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
 		$staff_member      = $directory_service->get_staff_by_email( $customer_email );
-		$debug_output .= 'OK: DirectoryService search complete. Staff member found: ' . ($staff_member ? 'Yes' : 'No') . "\n";
+		// $debug_output .= 'OK: DirectoryService search complete. Staff member found: ' . ($staff_member ? 'Yes' : 'No') . "\n";
 		// $debug_output .= "\n--- WIDGET OPTIONS ---\n" . print_r( $widget_options, true );
 		// $debug_output .= "\n--- STAFF MEMBER OBJECT ---\n" . print_r( $staff_member, true );
 
@@ -651,10 +651,10 @@ class WordPress {
 		$target_selector    = TicketWidgetSettings::get_widget_selector_by_slug( $target_widget_slug );
 		$placement          = $widget_options['placement'] ?? 'before';
 
-		$debug_output .= "\n--- PLACEMENT INFO ---\n";
-		$debug_output .= "Target Widget Slug: " . $target_widget_slug . "\n";
-		$debug_output .= "Target Selector: " . $target_selector . "\n";
-		$debug_output .= "Placement: " . $placement . "\n";
+		// $debug_output .= "\n--- PLACEMENT INFO ---\n";
+		// $debug_output .= "Target Widget Slug: " . $target_widget_slug . "\n";
+		// $debug_output .= "Target Selector: " . $target_selector . "\n";
+		// $debug_output .= "Placement: " . $placement . "\n";
 
 
 		$widget_content = '';
@@ -712,10 +712,18 @@ class WordPress {
 		}
 		$widget_unique_id = 'stackboost-contact-widget-' . bin2hex(random_bytes(8));
 		?>
-		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance">
+		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance stackboost-contact-widget">
 			<div class="wpsc-widget-header">
-				<h2><?php echo esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ); ?></h2>
+				<h2><?php echo esc_html__( 'Contact Information', 'stackboost-for-supportcandy' ); ?></h2>
+
+				<?php if ( $staff_member && $this->can_user_edit() ) : ?>
+					<span onclick="window.location.href = '<?php echo esc_js( esc_url( get_edit_post_link( $staff_member->id ) ) ); ?>';">
+						<?php \WPSC_Icons::get( 'edit' ); ?>
+					</span>
+				<?php endif; ?>
+
 				<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget">
+					<?php \WPSC_Icons::get( 'chevron-up' ); ?>
 				</span>
 			</div>
 			<div class="wpsc-widget-body">
