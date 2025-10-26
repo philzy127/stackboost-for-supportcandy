@@ -74,6 +74,9 @@ class WordPress {
 
 		// Filters for post update messages.
 		add_filter( 'post_updated_messages', array( $this, 'post_updated_messages' ) );
+
+		// Filter for redirecting after post update.
+		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
 	}
 
 	/**
@@ -932,5 +935,31 @@ class WordPress {
 		);
 
 		return $messages;
+	}
+
+	/**
+	 * Redirect user back to the ticket after updating a staff member.
+	 *
+	 * @param string $location The destination URL.
+	 * @param int    $post_id  The ID of the post being updated.
+	 * @return string The modified destination URL.
+	 */
+	public function redirect_after_staff_update( $location, $post_id ) {
+		// Only apply this logic to our staff CPT.
+		if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
+			return $location;
+		}
+
+		// Check if the save was triggered from the ticket context.
+		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
+		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
+
+		if ( 'ticket' === $from && $ticket_id > 0 ) {
+			// Construct the URL to the SupportCandy ticket.
+			$ticket_url = admin_url( 'admin.php?page=wpsc-view-ticket&id=' . $ticket_id );
+			return $ticket_url;
+		}
+
+		return $location;
 	}
 }
