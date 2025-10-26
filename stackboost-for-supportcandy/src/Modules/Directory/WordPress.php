@@ -722,39 +722,6 @@ class WordPress {
 		}
 		$widget_unique_id = 'stackboost-contact-widget-' . bin2hex(random_bytes(8));
 		?>
-		<style>
-			#<?php echo esc_attr( $widget_unique_id ); ?> .wpsc-itw-actions {
-				float: right !important;
-				display: flex !important;
-				gap: 10px !important;
-				align-items: center !important;
-				border: 1px solid red !important; /* VISUAL DEBUG */
-			}
-			#<?php echo esc_attr( $widget_unique_id ); ?> .wpsc-itw-edit-ico,
-			#<?php echo esc_attr( $widget_unique_id ); ?> .wpsc-itw-toggle {
-				width: 20px !important;
-				height: 20px !important;
-				font-size: 20px !important;
-				cursor: pointer !important;
-			}
-			#<?php echo esc_attr( $widget_unique_id ); ?> .wpsc-itw-edit-ico::before,
-			#<?php echo esc_attr( $widget_unique_id ); ?> .wpsc-itw-toggle::before {
-				font-family: dashicons !important;
-				display: inline-block !important;
-				line-height: 1 !important;
-				font-weight: 400 !important;
-				font-style: normal !important;
-				text-align: center !important;
-				-webkit-font-smoothing: antialiased !important;
-				-moz-osx-font-smoothing: grayscale !important;
-			}
-			#<?php echo esc_attr( $widget_unique_id ); ?> .wpsc-itw-edit-ico::before {
-				content: "\f464" !important;
-			}
-			#<?php echo esc_attr( $widget_unique_id ); ?> .wpsc-itw-toggle::before {
-				content: "\f140" !important;
-			}
-		</style>
 		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance">
 			<div class="wpsc-widget-header">
 				<h2><?php echo esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ); ?></h2>

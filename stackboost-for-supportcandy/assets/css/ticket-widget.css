@@ -15,6 +15,7 @@
 
 .wpsc-itw-edit-ico::before,
 .wpsc-itw-toggle::before {
+    color: #555; /* Default icon color */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     display: inline-block;
