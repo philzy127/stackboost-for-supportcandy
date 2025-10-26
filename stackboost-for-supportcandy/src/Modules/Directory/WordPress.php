@@ -911,15 +911,17 @@ class WordPress {
 		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
 
 		$return_link = '';
-		if ( 'ticket' === $from && $ticket_id > 0 ) {
-			// Construct the URL to the SupportCandy ticket.
-			// The base URL for a ticket is admin.php?page=wpsc-view-ticket&id=TICKET_ID
-			$ticket_url  = admin_url( 'admin.php?page=wpsc-view-ticket&id=' . $ticket_id );
-			$return_link = sprintf(
-				' <a href="%s">%s</a>',
-				esc_url( $ticket_url ),
-				__( 'Return to Ticket', 'stackboost-for-supportcandy' )
-			);
+		if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
+			// Use the official, supported method to get the correct front-end URL.
+			$ticket_obj = new \WPSC_Ticket( $ticket_id );
+			if ( $ticket_obj && $ticket_obj->id ) {
+				$ticket_url = $ticket_obj->get_url();
+				$return_link = sprintf(
+					' <a href="%s">%s</a>',
+					esc_url( $ticket_url ),
+					__( 'Return to Ticket', 'stackboost-for-supportcandy' )
+				);
+			}
 		} else {
 			// Default to the staff directory list.
 			$directory_url = admin_url( 'admin.php?page=stackboost-directory&tab=staff' );
@@ -1011,10 +1013,12 @@ class WordPress {
 		$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
 		$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
 
-		if ( 'ticket' === $from && $ticket_id > 0 ) {
-			// Construct the URL to the SupportCandy ticket and redirect.
-			$ticket_url = admin_url( 'admin.php?page=wpsc-view-ticket&id=' . $ticket_id );
-			return $ticket_url;
+		if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
+			// Use the official, supported method to get the correct front-end URL.
+			$ticket_obj = new \WPSC_Ticket( $ticket_id );
+			if ( $ticket_obj && $ticket_obj->id ) {
+				return $ticket_obj->get_url();
+			}
 		}
 
 		// If we are not redirecting to the ticket, we still need to pass the context
