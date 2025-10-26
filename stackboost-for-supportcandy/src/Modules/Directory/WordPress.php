@@ -713,6 +713,36 @@ class WordPress {
 		}
 		$widget_unique_id = 'stackboost-contact-widget-' . bin2hex(random_bytes(8));
 		?>
+		<!-- STACKBOOST WIDGET STYLES -->
+		<style>
+			.stackboost-contact-widget-instance .wpsc-itw-actions {
+				float: right !important;
+				display: flex !important;
+				gap: 10px !important;
+				align-items: center !important;
+			}
+			.stackboost-contact-widget-instance .wpsc-itw-edit-ico,
+			.stackboost-contact-widget-instance .wpsc-itw-toggle {
+				width: 20px !important;
+				height: 20px !important;
+				font-size: 20px !important;
+				line-height: 1 !important;
+				cursor: pointer !important;
+				color: #555 !important;
+			}
+			.stackboost-contact-widget-instance .wpsc-itw-edit-ico::before,
+			.stackboost-contact-widget-instance .wpsc-itw-toggle::before {
+				font-family: 'dashicons' !important;
+				-webkit-font-smoothing: antialiased !important;
+				-moz-osx-font-smoothing: grayscale !important;
+			}
+			.stackboost-contact-widget-instance .wpsc-itw-edit-ico::before {
+				content: "\f464" !important;
+			}
+			.stackboost-contact-widget-instance .wpsc-itw-toggle::before {
+				content: "\f140" !important;
+			}
+		</style>
 		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance">
 			<div class="wpsc-widget-header">
 				<h2><?php echo esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ); ?></h2>
