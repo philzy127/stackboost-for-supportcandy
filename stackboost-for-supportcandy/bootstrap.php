@@ -53,17 +53,7 @@ require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/src/WordPress/supportcandy-pro-check.php';
 
 // Get the plugin running.
-try {
-	stackboost_run();
-	// Initialize upgrade routines.
-	add_action( 'plugins_loaded', array( 'StackBoost\ForSupportCandy\Admin\Upgrade', 'init' ) );
-} catch ( \Throwable $e ) {
-	$error_message = sprintf(
-		"[%s] FATAL ERROR on activation: %s in %s on line %d\n",
-		gmdate( 'Y-m-d H:i:s' ),
-		$e->getMessage(),
-		$e->getFile(),
-		$e->getLine()
-	);
-	file_put_contents( __DIR__ . '/stackboost-error.log', $error_message, FILE_APPEND );
-}
+stackboost_run();
+
+// Initialize upgrade routines.
+add_action( 'plugins_loaded', array( 'StackBoost\ForSupportCandy\Admin\Upgrade', 'init' ) );
