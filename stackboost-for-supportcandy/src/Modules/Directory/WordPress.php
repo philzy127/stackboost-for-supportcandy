@@ -146,15 +146,6 @@ class WordPress {
 			);
 		}
 
-		// Enqueue styles for the ticket widget.
-		if ( 'supportcandy_page_wpsc-view-ticket' === $screen->id ) {
-			wp_enqueue_style(
-				'stackboost-ticket-widget',
-				\STACKBOOST_PLUGIN_URL . 'assets/css/ticket-widget.css',
-				[],
-				\STACKBOOST_VERSION
-			);
-		}
 
 		// Enqueue scripts for the main directory admin page.
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
@@ -608,10 +599,6 @@ class WordPress {
 	 * @param mixed $ticket The SupportCandy ticket object. Can be null on some hook fires.
 	 */
 	public function render_ticket_widget( $ticket ) {
-		// Scorched earth diagnostic to confirm output.
-		echo '<h1 style="font-size: 24px; color: red; border: 2px solid blue; padding: 10px;">!!! STACKBOOST WIDGET RENDERED !!!</h1>';
-
-		/*
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
 		// Exit early if the widget is not enabled.
@@ -835,6 +822,5 @@ class WordPress {
 			})();
 		</script>
 		<?php
-		*/
 	}
 }
