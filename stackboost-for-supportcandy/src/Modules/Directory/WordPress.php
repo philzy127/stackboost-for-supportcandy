@@ -69,17 +69,17 @@ class WordPress {
 		// Hook for rendering the ticket widget.
 		add_action( 'wpsc_after_ticket_widget', array( $this, 'render_ticket_widget' ) );
 
+		// Action to add hidden fields to the edit form.
+		add_action( 'edit_form_top', array( $this, 'add_hidden_fields_to_edit_form' ) );
+
+		// Filter for redirecting after post update.
+		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
+
 		// Hide the redundant "Add New" button on the CPT edit screen.
 		add_action( 'admin_head', array( $this, 'hide_add_new_button_on_cpt' ) );
 
 		// Filters for post update messages.
 		add_filter( 'post_updated_messages', array( $this, 'post_updated_messages' ) );
-
-		// Filter for redirecting after post update.
-		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
-
-		// Action to add hidden fields to the edit form.
-		add_action( 'edit_form_top', array( $this, 'add_hidden_fields_to_edit_form' ) );
 	}
 
 	/**
@@ -627,25 +627,46 @@ class WordPress {
 		}
 		$has_rendered_once = true;
 
+		// $debug_output = "--- JULES DEBUG LOG ---\n";
+		// Add backtrace to debug the double call.
+		// ob_start();
+		// debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
+		// $debug_output .= "\n--- BACKTRACE ---\n" . ob_get_clean() . "\n";
+
 		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
+			// $debug_output .= "ERROR: Hook did not pass a valid WPSC_Ticket object. Exiting.\n";
+			// echo '<pre>' . esc_html( $debug_output ) . '</pre>';
 			return;
 		}
+		// $debug_output .= "OK: render_ticket_widget() EXECUTED with a valid WPSC_Ticket object.\n";
 
 		$customer = $ticket->customer;
 		if ( ! is_a( $customer, 'WPSC_Customer' ) || ! $customer->id ) {
+			// $debug_output .= "ERROR: Could not retrieve a valid WPSC_Customer object from the ticket. Exiting.\n";
+			// echo '<pre>' . esc_html( $debug_output ) . '</pre>';
 			return;
 		}
+		// $debug_output .= "OK: Retrieved a valid WPSC_Customer object.\n";
 
 		$customer_email = $customer->email;
+		// $debug_output .= 'OK: Customer email retrieved: ' . $customer_email . "\n";
 
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
 		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
 		$staff_member      = $directory_service->get_staff_by_email( $customer_email );
+		// $debug_output .= 'OK: DirectoryService search complete. Staff member found: ' . ($staff_member ? 'Yes' : 'No') . "\n";
+		// $debug_output .= "\n--- WIDGET OPTIONS ---\n" . print_r( $widget_options, true );
+		// $debug_output .= "\n--- STAFF MEMBER OBJECT ---\n" . print_r( $staff_member, true );
 
 		$target_widget_slug = $widget_options['target_widget'] ?? '';
 		$target_selector    = TicketWidgetSettings::get_widget_selector_by_slug( $target_widget_slug );
 		$placement          = $widget_options['placement'] ?? 'before';
+
+		// $debug_output .= "\n--- PLACEMENT INFO ---\n";
+		// $debug_output .= "Target Widget Slug: " . $target_widget_slug . "\n";
+		// $debug_output .= "Target Selector: " . $target_selector . "\n";
+		// $debug_output .= "Placement: " . $placement . "\n";
 
 
 		$widget_content = '';
@@ -711,13 +732,13 @@ class WordPress {
 				if ( $staff_member && $this->can_user_edit() ) {
 					$edit_link = get_edit_post_link( $staff_member->id );
 
-					// Try to get the ticket ID from the ticket object first.
+					// Use the officially supported method from the SupportCandy technical guide.
 					$current_ticket_id = 0;
-					if ( $ticket && isset( $ticket->id ) ) {
+					if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
+						$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
+					} elseif ( isset( $ticket->id ) ) {
+						// Fallback to the passed object, just in case.
 						$current_ticket_id = $ticket->id;
-					} elseif ( isset( $_GET['ticket-id'] ) ) {
-						// As a fallback for front-end views, get it from the URL.
-						$current_ticket_id = absint( $_GET['ticket-id'] );
 					}
 
 					if ( $current_ticket_id > 0 ) {
@@ -752,6 +773,9 @@ class WordPress {
 		<script>
 			// Using a closure to keep variables local and avoid polluting the global scope.
 			(function() {
+				// PHP-generated debug logs for development.
+				// console.log(<?php echo json_encode( $debug_output, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES ); ?>);
+
 				// --- Self-Contained Widget Positioning Logic ---
 
 				/**
@@ -763,22 +787,30 @@ class WordPress {
 				 * @param {string} placement - 'before' or 'after'.
 				 */
 				var positionTicketWidget = function(serverWidgetId, targetSelector, placement) {
+					// console.log('--- WIDGET POSITIONING LOG ---');
+					// console.log('Server Widget ID:', serverWidgetId);
+					// console.log('Target Selector:', targetSelector);
+					// console.log('Placement:', placement);
+					// console.log('Attempting to position widget...');
 
 					// Find the widget this script is associated with.
 					const customWidget = document.getElementById(serverWidgetId);
 					if (!customWidget) {
+						// console.error('StackBoost Widget Error: Could not find the widget container with server ID: ' + serverWidgetId);
 						return;
 					}
 
 					// Create a guaranteed unique ID in the browser to avoid issues with server-side caching.
 					const browserUniqueId = 'sb-widget-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 					customWidget.id = browserUniqueId;
+					// console.log('Assigned new browser-unique ID:', browserUniqueId);
 
 					// Idempotency: Find and remove any stale widget instances from previous renders.
 					const allWidgetInstances = document.querySelectorAll('.stackboost-contact-widget-instance');
 					allWidgetInstances.forEach(function(instance) {
 						// Remove any instance that is NOT the one we just assigned our unique ID to.
 						if (instance.id !== browserUniqueId) {
+							// console.log('StackBoost Widget: Removing stale widget instance (' + instance.id + ') from previous render.');
 							instance.remove();
 						}
 					});
@@ -797,14 +829,28 @@ class WordPress {
 					}
 
 					if (!visibleTargetWidget) {
+						// console.error('StackBoost Widget: Could not find a VISIBLE target widget (' + targetSelector + ') in the DOM.');
+						// console.log('--- END WIDGET POSITIONING LOG ---');
 						return;
 					}
+
+					// console.log('Custom widget found:', customWidget);
+					// console.log('Visible target widget found:', visibleTargetWidget);
+
+					// console.log('--- DOM STATE BEFORE MOVE ---');
+					// console.log('Custom Widget Parent:', customWidget.parentNode);
+					// console.log('Target Widget Parent:', visibleTargetWidget.parentNode);
 
 					if (placement === 'after') {
 						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget.nextSibling);
 					} else {
 						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget);
 					}
+
+					// console.log('--- DOM STATE AFTER MOVE ---');
+					// console.log('Custom Widget Parent:', customWidget.parentNode);
+					// console.log('StackBoost Widget: Repositioning complete.');
+					// console.log('--- END WIDGET POSITIONING LOG ---');
 				};
 
 				// Immediately call the function with the values from PHP.
@@ -817,6 +863,66 @@ class WordPress {
 			})();
 		</script>
 		<?php
+	}
+
+	/**
+	 * Add hidden fields to the staff edit form to preserve context.
+	 *
+	 * @param \WP_Post $post The post object being edited.
+	 */
+	public function add_hidden_fields_to_edit_form( $post ) {
+		// Only apply this logic to our staff CPT.
+		if ( get_post_type( $post ) !== $this->core->cpts->post_type ) {
+			return;
+		}
+
+		// Check for our custom query arg to determine the return link.
+		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
+		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
+
+		if ( 'ticket' === $from && $ticket_id > 0 ) {
+			echo '<input type="hidden" name="from" value="' . esc_attr( $from ) . '" />';
+			echo '<input type="hidden" name="ticket_id" value="' . esc_attr( $ticket_id ) . '" />';
+		}
+	}
+
+	/**
+	 * Redirect user back to the ticket after updating a staff member.
+	 *
+	 * @param string $location The destination URL.
+	 * @param int    $post_id  The ID of the post being updated.
+	 * @return string The modified destination URL.
+	 */
+	public function redirect_after_staff_update( $location, $post_id ) {
+		// Only apply this logic to our staff CPT.
+		if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
+			return $location;
+		}
+
+		// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
+		$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
+		$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
+
+		if ( 'ticket' === $from && $ticket_id > 0 ) {
+			// Construct the URL to the SupportCandy ticket and redirect.
+			$ticket_url = admin_url( 'admin.php?page=wpsc-view-ticket&id=' . $ticket_id );
+			return $ticket_url;
+		}
+
+		// If we are not redirecting to the ticket, we still need to pass the context
+		// to the post-update message function. We do this by adding the context from POST
+		// as query arguments to the redirect URL, where they will become GET parameters.
+		if ( ! empty( $from ) && ! empty( $ticket_id ) ) {
+			$location = add_query_arg(
+				array(
+					'from'      => $from,
+					'ticket_id' => $ticket_id,
+				),
+				$location
+			);
+		}
+
+		return $location;
 	}
 
 	/**
@@ -902,65 +1008,5 @@ class WordPress {
 		);
 
 		return $messages;
-	}
-
-	/**
-	 * Redirect user back to the ticket after updating a staff member.
-	 *
-	 * @param string $location The destination URL.
-	 * @param int    $post_id  The ID of the post being updated.
-	 * @return string The modified destination URL.
-	 */
-	public function redirect_after_staff_update( $location, $post_id ) {
-		// Only apply this logic to our staff CPT.
-		if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
-			return $location;
-		}
-
-		// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
-		$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
-		$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
-
-		if ( 'ticket' === $from && $ticket_id > 0 ) {
-			// Construct the URL to the SupportCandy ticket and redirect.
-			$ticket_url = admin_url( 'admin.php?page=wpsc-view-ticket&id=' . $ticket_id );
-			return $ticket_url;
-		}
-
-		// If we are not redirecting to the ticket, we still need to pass the context
-		// to the post-update message function. We do this by adding the context from POST
-		// as query arguments to the redirect URL, where they will become GET parameters.
-		if ( ! empty( $from ) && ! empty( $ticket_id ) ) {
-			$location = add_query_arg(
-				array(
-					'from'      => $from,
-					'ticket_id' => $ticket_id,
-				),
-				$location
-			);
-		}
-
-		return $location;
-	}
-
-	/**
-	 * Add hidden fields to the staff edit form to preserve context.
-	 *
-	 * @param \WP_Post $post The post object being edited.
-	 */
-	public function add_hidden_fields_to_edit_form( $post ) {
-		// Only apply this logic to our staff CPT.
-		if ( get_post_type( $post ) !== $this->core->cpts->post_type ) {
-			return;
-		}
-
-		// Check for our custom query arg to determine the return link.
-		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
-		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
-
-		if ( 'ticket' === $from && $ticket_id > 0 ) {
-			echo '<input type="hidden" name="from" value="' . esc_attr( $from ) . '" />';
-			echo '<input type="hidden" name="ticket_id" value="' . esc_attr( $ticket_id ) . '" />';
-		}
 	}
 }
