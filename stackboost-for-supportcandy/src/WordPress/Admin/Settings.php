@@ -241,7 +241,7 @@ class Settings {
 			if ( array_key_exists( $key, $input ) ) {
 				$saved_settings[ $key ] = $input[ $key ];
 			} else {
-				if ( '_rules' === substr( $key, -6 ) || '_statuses' === substr( $key, -9 ) ) {
+				if ( str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
 					$saved_settings[ $key ] = [];
 				} else {
                     $saved_settings[ $key ] = 0; // Handles all checkboxes.
