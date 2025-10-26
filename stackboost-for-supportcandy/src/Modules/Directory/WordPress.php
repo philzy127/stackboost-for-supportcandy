@@ -77,6 +77,9 @@ class WordPress {
 
 		// Filter for redirecting after post update.
 		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
+
+		// Action to add hidden fields to the edit form.
+		add_action( 'edit_form_top', array( $this, 'add_hidden_fields_to_edit_form' ) );
 	}
 
 	/**
@@ -704,16 +707,35 @@ class WordPress {
 			<div class="wpsc-widget-header">
 				<h2><?php echo esc_html__( 'Contact Information', 'stackboost-for-supportcandy' ); ?></h2>
 
-				<span style="font-size: 10px; font-weight: bold; color: #d63638; margin-left: auto; margin-right: 10px;">
-					DIAGNOSTIC:
-					<?php
-					if ( $ticket && isset( $ticket->id ) && $ticket->id > 0 ) {
-						echo 'TICKET ID FOUND: ' . esc_html( $ticket->id );
-					} else {
-						echo 'TICKET ID NOT FOUND';
+				<?php
+				if ( $staff_member && $this->can_user_edit() ) {
+					$edit_link = get_edit_post_link( $staff_member->id );
+
+					// Try to get the ticket ID from the ticket object first.
+					$current_ticket_id = 0;
+					if ( $ticket && isset( $ticket->id ) ) {
+						$current_ticket_id = $ticket->id;
+					} elseif ( isset( $_GET['ticket-id'] ) ) {
+						// As a fallback for front-end views, get it from the URL.
+						$current_ticket_id = absint( $_GET['ticket-id'] );
+					}
+
+					if ( $current_ticket_id > 0 ) {
+						$edit_link = add_query_arg(
+							array(
+								'from'      => 'ticket',
+								'ticket_id' => $current_ticket_id,
+							),
+							$edit_link
+						);
 					}
 					?>
-				</span>
+					<span onclick="window.location.href = '<?php echo esc_js( esc_url( $edit_link ) ); ?>';">
+						<?php \WPSC_Icons::get( 'edit' ); ?>
+					</span>
+					<?php
+				}
+				?>
 
 				<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget">
 					<?php \WPSC_Icons::get( 'chevron-up' ); ?>
@@ -895,16 +917,50 @@ class WordPress {
 			return $location;
 		}
 
-		// Check if the save was triggered from the ticket context.
-		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
-		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
+		// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
+		$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
+		$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
 
 		if ( 'ticket' === $from && $ticket_id > 0 ) {
-			// Construct the URL to the SupportCandy ticket.
+			// Construct the URL to the SupportCandy ticket and redirect.
 			$ticket_url = admin_url( 'admin.php?page=wpsc-view-ticket&id=' . $ticket_id );
 			return $ticket_url;
 		}
 
+		// If we are not redirecting to the ticket, we still need to pass the context
+		// to the post-update message function. We do this by adding the context from POST
+		// as query arguments to the redirect URL, where they will become GET parameters.
+		if ( ! empty( $from ) && ! empty( $ticket_id ) ) {
+			$location = add_query_arg(
+				array(
+					'from'      => $from,
+					'ticket_id' => $ticket_id,
+				),
+				$location
+			);
+		}
+
 		return $location;
+	}
+
+	/**
+	 * Add hidden fields to the staff edit form to preserve context.
+	 *
+	 * @param \WP_Post $post The post object being edited.
+	 */
+	public function add_hidden_fields_to_edit_form( $post ) {
+		// Only apply this logic to our staff CPT.
+		if ( get_post_type( $post ) !== $this->core->cpts->post_type ) {
+			return;
+		}
+
+		// Check for our custom query arg to determine the return link.
+		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
+		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
+
+		if ( 'ticket' === $from && $ticket_id > 0 ) {
+			echo '<input type="hidden" name="from" value="' . esc_attr( $from ) . '" />';
+			echo '<input type="hidden" name="ticket_id" value="' . esc_attr( $ticket_id ) . '" />';
+		}
 	}
 }
