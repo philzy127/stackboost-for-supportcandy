@@ -68,18 +68,6 @@ class WordPress {
 
 		// Hook for rendering the ticket widget.
 		add_action( 'wpsc_after_ticket_widget', array( $this, 'render_ticket_widget' ) );
-
-		// Action to add hidden fields to the edit form.
-		add_action( 'edit_form_top', array( $this, 'add_hidden_fields_to_edit_form' ) );
-
-		// Filter for redirecting after post update.
-		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
-
-		// Hide the redundant "Add New" button on the CPT edit screen.
-		add_action( 'admin_head', array( $this, 'hide_add_new_button_on_cpt' ) );
-
-		// Filters for post update messages.
-		add_filter( 'post_updated_messages', array( $this, 'post_updated_messages' ) );
 	}
 
 	/**
@@ -627,46 +615,25 @@ class WordPress {
 		}
 		$has_rendered_once = true;
 
-		// $debug_output = "--- JULES DEBUG LOG ---\n";
-		// Add backtrace to debug the double call.
-		// ob_start();
-		// debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
-		// $debug_output .= "\n--- BACKTRACE ---\n" . ob_get_clean() . "\n";
-
 		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
-			// $debug_output .= "ERROR: Hook did not pass a valid WPSC_Ticket object. Exiting.\n";
-			// echo '<pre>' . esc_html( $debug_output ) . '</pre>';
 			return;
 		}
-		// $debug_output .= "OK: render_ticket_widget() EXECUTED with a valid WPSC_Ticket object.\n";
 
 		$customer = $ticket->customer;
 		if ( ! is_a( $customer, 'WPSC_Customer' ) || ! $customer->id ) {
-			// $debug_output .= "ERROR: Could not retrieve a valid WPSC_Customer object from the ticket. Exiting.\n";
-			// echo '<pre>' . esc_html( $debug_output ) . '</pre>';
 			return;
 		}
-		// $debug_output .= "OK: Retrieved a valid WPSC_Customer object.\n";
 
 		$customer_email = $customer->email;
-		// $debug_output .= 'OK: Customer email retrieved: ' . $customer_email . "\n";
 
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
 		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
 		$staff_member      = $directory_service->get_staff_by_email( $customer_email );
-		// $debug_output .= 'OK: DirectoryService search complete. Staff member found: ' . ($staff_member ? 'Yes' : 'No') . "\n";
-		// $debug_output .= "\n--- WIDGET OPTIONS ---\n" . print_r( $widget_options, true );
-		// $debug_output .= "\n--- STAFF MEMBER OBJECT ---\n" . print_r( $staff_member, true );
 
 		$target_widget_slug = $widget_options['target_widget'] ?? '';
 		$target_selector    = TicketWidgetSettings::get_widget_selector_by_slug( $target_widget_slug );
 		$placement          = $widget_options['placement'] ?? 'before';
-
-		// $debug_output .= "\n--- PLACEMENT INFO ---\n";
-		// $debug_output .= "Target Widget Slug: " . $target_widget_slug . "\n";
-		// $debug_output .= "Target Selector: " . $target_selector . "\n";
-		// $debug_output .= "Placement: " . $placement . "\n";
 
 
 		$widget_content = '';
@@ -728,35 +695,33 @@ class WordPress {
 			<div class="wpsc-widget-header">
 				<h2><?php echo esc_html__( 'Contact Information', 'stackboost-for-supportcandy' ); ?></h2>
 
-				<?php
-				if ( $staff_member && $this->can_user_edit() ) {
-					$edit_link = get_edit_post_link( $staff_member->id );
+				<div style="background: #ffc; border: 2px solid #e6db55; padding: 10px; margin: 10px; font-size: 12px; text-align: left; color: black; width: 100%;">
+					<strong style="color: #d63638;">JULES DEBUGGING OUTPUT:</strong>
+					<pre style="white-space: pre-wrap; word-break: break-all;"><?php
+						echo "<strong>Class Exists (WPSC_Individual_Ticket):</strong>\n";
+						var_dump( class_exists( 'WPSC_Individual_Ticket' ) );
 
-					// Use the officially supported method from the SupportCandy technical guide.
-					$current_ticket_id = 0;
-					if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
-						$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
-					} elseif ( isset( $ticket->id ) ) {
-						// Fallback to the passed object, just in case.
-						$current_ticket_id = $ticket->id;
-					}
+						echo "\n<hr>\n";
+						echo "<strong>Static Property (WPSC_Individual_Ticket::\$ticket):</strong>\n";
+						if ( class_exists( 'WPSC_Individual_Ticket' ) ) {
+							var_dump( \WPSC_Individual_Ticket::$ticket );
+						} else {
+							echo "CLASS NOT FOUND\n";
+						}
 
-					if ( $current_ticket_id > 0 ) {
-						$edit_link = add_query_arg(
-							array(
-								'from'      => 'ticket',
-								'ticket_id' => $current_ticket_id,
-							),
-							$edit_link
-						);
-					}
-					?>
-					<span onclick="window.location.href = '<?php echo esc_js( esc_url( $edit_link ) ); ?>';">
-						<?php \WPSC_Icons::get( 'edit' ); ?>
-					</span>
-					<?php
-				}
-				?>
+						echo "\n<hr>\n";
+						echo "<strong>Hook Parameter (\$ticket object):</strong>\n";
+						var_dump( $ticket );
+
+						echo "\n<hr>\n";
+						echo "<strong>\$_GET Superglobal:</strong>\n";
+						print_r( $_GET );
+
+						echo "\n<hr>\n";
+						echo "<strong>\$_REQUEST Superglobal:</strong>\n";
+						print_r( $_REQUEST );
+					?></pre>
+				</div>
 
 				<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget">
 					<?php \WPSC_Icons::get( 'chevron-up' ); ?>
@@ -773,240 +738,44 @@ class WordPress {
 		<script>
 			// Using a closure to keep variables local and avoid polluting the global scope.
 			(function() {
-				// PHP-generated debug logs for development.
-				// console.log(<?php echo json_encode( $debug_output, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES ); ?>);
-
 				// --- Self-Contained Widget Positioning Logic ---
-
-				/**
-				 * Main function to find and reposition the widget. This script is designed
-				 * to be idempotent. If a previous version of the widget exists (e.g., from
-				 * a previous AJAX load), it will be removed before the new one is placed.
-				 * @param {string} widgetId - The unique ID of the widget div to move.
-				 * @param {string} targetSelector - The CSS selector of the widget to position against.
-				 * @param {string} placement - 'before' or 'after'.
-				 */
 				var positionTicketWidget = function(serverWidgetId, targetSelector, placement) {
-					// console.log('--- WIDGET POSITIONING LOG ---');
-					// console.log('Server Widget ID:', serverWidgetId);
-					// console.log('Target Selector:', targetSelector);
-					// console.log('Placement:', placement);
-					// console.log('Attempting to position widget...');
-
-					// Find the widget this script is associated with.
 					const customWidget = document.getElementById(serverWidgetId);
 					if (!customWidget) {
-						// console.error('StackBoost Widget Error: Could not find the widget container with server ID: ' + serverWidgetId);
 						return;
 					}
-
-					// Create a guaranteed unique ID in the browser to avoid issues with server-side caching.
 					const browserUniqueId = 'sb-widget-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 					customWidget.id = browserUniqueId;
-					// console.log('Assigned new browser-unique ID:', browserUniqueId);
-
-					// Idempotency: Find and remove any stale widget instances from previous renders.
 					const allWidgetInstances = document.querySelectorAll('.stackboost-contact-widget-instance');
 					allWidgetInstances.forEach(function(instance) {
-						// Remove any instance that is NOT the one we just assigned our unique ID to.
 						if (instance.id !== browserUniqueId) {
-							// console.log('StackBoost Widget: Removing stale widget instance (' + instance.id + ') from previous render.');
 							instance.remove();
 						}
 					});
-
-					// Find all potential target widgets. This is crucial because SupportCandy renders
-					// a hidden container for mobile, and we must select the visible one.
 					const allTargets = document.querySelectorAll(targetSelector);
 					let visibleTargetWidget = null;
-
 					for (let i = 0; i < allTargets.length; i++) {
-						// An element is visible if its offsetParent is not null.
 						if (allTargets[i].offsetParent !== null) {
 							visibleTargetWidget = allTargets[i];
 							break;
 						}
 					}
-
 					if (!visibleTargetWidget) {
-						// console.error('StackBoost Widget: Could not find a VISIBLE target widget (' + targetSelector + ') in the DOM.');
-						// console.log('--- END WIDGET POSITIONING LOG ---');
 						return;
 					}
-
-					// console.log('Custom widget found:', customWidget);
-					// console.log('Visible target widget found:', visibleTargetWidget);
-
-					// console.log('--- DOM STATE BEFORE MOVE ---');
-					// console.log('Custom Widget Parent:', customWidget.parentNode);
-					// console.log('Target Widget Parent:', visibleTargetWidget.parentNode);
-
 					if (placement === 'after') {
 						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget.nextSibling);
 					} else {
 						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget);
 					}
-
-					// console.log('--- DOM STATE AFTER MOVE ---');
-					// console.log('Custom Widget Parent:', customWidget.parentNode);
-					// console.log('StackBoost Widget: Repositioning complete.');
-					// console.log('--- END WIDGET POSITIONING LOG ---');
 				};
-
-				// Immediately call the function with the values from PHP.
 				positionTicketWidget(
 					<?php echo json_encode( $widget_unique_id ); ?>,
 					<?php echo json_encode( $target_selector ); ?>,
 					<?php echo json_encode( $placement ); ?>
 				);
-
 			})();
 		</script>
 		<?php
-	}
-
-	/**
-	 * Add hidden fields to the staff edit form to preserve context.
-	 *
-	 * @param \WP_Post $post The post object being edited.
-	 */
-	public function add_hidden_fields_to_edit_form( $post ) {
-		// Only apply this logic to our staff CPT.
-		if ( get_post_type( $post ) !== $this->core->cpts->post_type ) {
-			return;
-		}
-
-		// Check for our custom query arg to determine the return link.
-		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
-		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
-
-		if ( 'ticket' === $from && $ticket_id > 0 ) {
-			echo '<input type="hidden" name="from" value="' . esc_attr( $from ) . '" />';
-			echo '<input type="hidden" name="ticket_id" value="' . esc_attr( $ticket_id ) . '" />';
-		}
-	}
-
-	/**
-	 * Redirect user back to the ticket after updating a staff member.
-	 *
-	 * @param string $location The destination URL.
-	 * @param int    $post_id  The ID of the post being updated.
-	 * @return string The modified destination URL.
-	 */
-	public function redirect_after_staff_update( $location, $post_id ) {
-		// Only apply this logic to our staff CPT.
-		if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
-			return $location;
-		}
-
-		// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
-		$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
-		$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
-
-		if ( 'ticket' === $from && $ticket_id > 0 ) {
-			// Construct the URL to the SupportCandy ticket and redirect.
-			$ticket_url = admin_url( 'admin.php?page=wpsc-view-ticket&id=' . $ticket_id );
-			return $ticket_url;
-		}
-
-		// If we are not redirecting to the ticket, we still need to pass the context
-		// to the post-update message function. We do this by adding the context from POST
-		// as query arguments to the redirect URL, where they will become GET parameters.
-		if ( ! empty( $from ) && ! empty( $ticket_id ) ) {
-			$location = add_query_arg(
-				array(
-					'from'      => $from,
-					'ticket_id' => $ticket_id,
-				),
-				$location
-			);
-		}
-
-		return $location;
-	}
-
-	/**
-	 * Hides the "Add New" button on the "Add New Staff" page.
-	 */
-	public function hide_add_new_button_on_cpt() {
-		$screen = get_current_screen();
-
-		// Check if we are on the 'Add New' screen for any of our CPTs.
-		$post_types = [
-			$this->core->cpts->post_type,
-			$this->core->cpts->location_post_type,
-			$this->core->cpts->department_post_type,
-		];
-
-		if ( $screen && 'add' === $screen->action && in_array( $screen->post_type, $post_types, true ) ) {
-			echo '<style>.page-title-action { display: none; }</style>';
-		}
-	}
-
-	/**
-	 * Customize the post updated messages for the staff CPT.
-	 *
-	 * @param array $messages The existing post update messages.
-	 * @return array The modified messages.
-	 */
-	public function post_updated_messages( $messages ) {
-		// We only want to modify the messages for our CPT.
-		if ( ! isset( $this->core->cpts->post_type ) || get_post_type() !== $this->core->cpts->post_type ) {
-			return $messages;
-		}
-
-		$post = get_post();
-		if ( ! $post ) {
-			return $messages;
-		}
-
-		$post_type_object = get_post_type_object( $post->post_type );
-		if ( ! $post_type_object ) {
-			return $messages;
-		}
-
-		// Check for our custom query arg to determine the return link.
-		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
-		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
-
-		$return_link = '';
-		if ( 'ticket' === $from && $ticket_id > 0 ) {
-			// Construct the URL to the SupportCandy ticket.
-			// The base URL for a ticket is admin.php?page=wpsc-view-ticket&id=TICKET_ID
-			$ticket_url  = admin_url( 'admin.php?page=wpsc-view-ticket&id=' . $ticket_id );
-			$return_link = sprintf(
-				' <a href="%s">%s</a>',
-				esc_url( $ticket_url ),
-				__( 'Return to Ticket', 'stackboost-for-supportcandy' )
-			);
-		} else {
-			// Default to the staff directory list.
-			$directory_url = admin_url( 'admin.php?page=stackboost-directory&tab=staff' );
-			$return_link   = sprintf(
-				' <a href="%s">%s</a>',
-				esc_url( $directory_url ),
-				__( 'Return to Directory', 'stackboost-for-supportcandy' )
-			);
-		}
-
-		$messages[ $this->core->cpts->post_type ] = array(
-			0  => '', // Unused. Messages start at index 1.
-			1  => __( 'Staff updated.', 'stackboost-for-supportcandy' ) . $return_link,
-			2  => __( 'Custom field updated.', 'stackboost-for-supportcandy' ),
-			3  => __( 'Custom field deleted.', 'stackboost-for-supportcandy' ),
-			4  => __( 'Staff updated.', 'stackboost-for-supportcandy' ),
-			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
-			6  => __( 'Staff published.', 'stackboost-for-supportcandy' ) . $return_link,
-			7  => __( 'Staff saved.', 'stackboost-for-supportcandy' ),
-			8  => __( 'Staff submitted.', 'stackboost-for-supportcandy' ),
-			9  => sprintf(
-				// translators: %1$s: date and time of the scheduled post.
-				__( 'Staff scheduled for: %1$s.', 'stackboost-for-supportcandy' ),
-				'<strong>' . date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ) . '</strong>'
-			),
-			10 => __( 'Staff draft updated.', 'stackboost-for-supportcandy' ),
-		);
-
-		return $messages;
 	}
 }
