@@ -7,7 +7,7 @@ namespace StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
  *
  * @package StackBoost\ForSupportCandy\Modules\AfterTicketSurvey
  */
-class Admin {
+class AdminController {
 
     /** @var string The name of the questions table. */
     private string $questions_table_name;

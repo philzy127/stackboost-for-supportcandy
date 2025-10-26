@@ -610,192 +610,203 @@ class WordPress {
 	 * @param mixed $ticket The SupportCandy ticket object. Can be null on some hook fires.
 	 */
 	public function render_ticket_widget( $ticket ) {
-		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
+		try {
+			$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
-		// Exit early if the widget is not enabled.
-		if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
-			return;
-		}
+			// Exit early if the widget is not enabled.
+			if ( empty( $widget_options['enabled'] ) || '1' !== $widget_options['enabled'] ) {
+				return;
+			}
 
-		// Guard against the hook firing multiple times in a single request...
-		static $has_rendered_once = false;
-		if ( $has_rendered_once ) {
-			echo '<script>console.log("StackBoost Widget: Skipping duplicate render call in the same request.");</script>';
-			return;
-		}
-		$has_rendered_once = true;
+			// Guard against the hook firing multiple times in a single request...
+			static $has_rendered_once = false;
+			if ( $has_rendered_once ) {
+				return;
+			}
+			$has_rendered_once = true;
 
-		// Definitive method to get the ticket ID, based on diagnostics.
-		$current_ticket_id = 0;
-		if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
-			// Primary method for backend.
-			$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
-		} elseif ( isset( $_REQUEST['ticket_id'] ) ) {
-			// Fallback for frontend AJAX view, where the ID is in the REQUEST.
-			$current_ticket_id = absint( $_REQUEST['ticket_id'] );
-		}
+			// Definitive method to get the ticket ID, based on diagnostics.
+			$current_ticket_id = 0;
+			if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
+				// Primary method for backend.
+				$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
+			} elseif ( isset( $_REQUEST['ticket_id'] ) ) {
+				// Fallback for frontend AJAX view, where the ID is in the REQUEST.
+				$current_ticket_id = absint( $_REQUEST['ticket_id'] );
+			}
 
-		// If the passed $ticket is unreliable (frontend), create a new one.
-		if ( ( ! is_a( $ticket, 'WPSC_Ticket' ) || ! $ticket->id ) && $current_ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
-			$ticket = new \WPSC_Ticket( $current_ticket_id );
-		}
+			// If the passed $ticket is unreliable (frontend), create a new one.
+			if ( ( ! is_a( $ticket, 'WPSC_Ticket' ) || ! $ticket->id ) && $current_ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
+				$ticket = new \WPSC_Ticket( $current_ticket_id );
+			}
 
-		// Now proceed with the original checks, which should now pass with the reliable $ticket object.
-		if ( ! is_a( $ticket, 'WPSC_Ticket' ) || ! $ticket->id ) {
-			return;
-		}
+			// Now proceed with the original checks, which should now pass with the reliable $ticket object.
+			if ( ! is_a( $ticket, 'WPSC_Ticket' ) || ! $ticket->id ) {
+				return;
+			}
 
-		$customer = $ticket->customer;
-		if ( ! is_a( $customer, 'WPSC_Customer' ) || ! $customer->id ) {
-			return;
-		}
+			$customer = $ticket->customer;
+			if ( ! is_a( $customer, 'WPSC_Customer' ) || ! $customer->id ) {
+				return;
+			}
 
-		$customer_email = $customer->email;
+			$customer_email = $customer->email;
 
-		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
+			$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
-		$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
-		$staff_member      = $directory_service->get_staff_by_email( $customer_email );
+			$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
+			$staff_member      = $directory_service->get_staff_by_email( $customer_email );
 
-		$target_widget_slug = $widget_options['target_widget'] ?? '';
-		$target_selector    = TicketWidgetSettings::get_widget_selector_by_slug( $target_widget_slug );
-		$placement          = $widget_options['placement'] ?? 'before';
+			$target_widget_slug = $widget_options['target_widget'] ?? '';
+			$target_selector    = TicketWidgetSettings::get_widget_selector_by_slug( $target_widget_slug );
+			$placement          = $widget_options['placement'] ?? 'before';
 
 
-		$widget_content = '';
-		if ( $staff_member && ! empty( $widget_options['display_fields'] ) ) {
-			$all_fields = TicketWidgetSettings::get_directory_fields();
-			$list_items = '';
+			$widget_content = '';
+			if ( $staff_member && ! empty( $widget_options['display_fields'] ) ) {
+				$all_fields = TicketWidgetSettings::get_directory_fields();
+				$list_items = '';
 
-			foreach ( $widget_options['display_fields'] as $field_key ) {
-				$label   = $all_fields[ $field_key ] ?? '';
-				$value   = '';
-				$is_html = false;
+				foreach ( $widget_options['display_fields'] as $field_key ) {
+					$label   = $all_fields[ $field_key ] ?? '';
+					$value   = '';
+					$is_html = false;
 
-				switch ( $field_key ) {
-					case 'name':
-						$value = $staff_member->name;
-						break;
-					case 'chp_staff_job_title':
-						$value = $staff_member->job_title;
-						break;
-					case 'phone':
-						$value   = $directory_service->get_formatted_phone_numbers_html( $staff_member );
-						$is_html = true;
-						break;
-					case 'email_address':
-						$value = $staff_member->email;
-						break;
-					case 'location':
-						$value = $staff_member->location_name;
-						break;
-					case 'room_number':
-						$value = $staff_member->room_number;
-						break;
-					case 'department_program':
-						$value = $staff_member->department_program;
-						break;
-				}
+					switch ( $field_key ) {
+						case 'name':
+							$value = $staff_member->name;
+							break;
+						case 'chp_staff_job_title':
+							$value = $staff_member->job_title;
+							break;
+						case 'phone':
+							$value   = $directory_service->get_formatted_phone_numbers_html( $staff_member );
+							$is_html = true;
+							break;
+						case 'email_address':
+							$value = $staff_member->email;
+							break;
+						case 'location':
+							$value = $staff_member->location_name;
+							break;
+						case 'room_number':
+							$value = $staff_member->room_number;
+							break;
+						case 'department_program':
+							$value = $staff_member->department_program;
+							break;
+					}
 
-				if ( ! empty( $value ) ) {
-					if ( $is_html ) {
-						// This value is pre-formatted, trusted HTML from the DirectoryService.
-						$list_items .= '<div>' . $value . '</div>';
-					} else {
-						$list_items .= '<div><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $value ) . '</div>';
+					if ( ! empty( $value ) ) {
+						if ( $is_html ) {
+							// This value is pre-formatted, trusted HTML from the DirectoryService.
+							$list_items .= '<div>' . $value . '</div>';
+						} else {
+							$list_items .= '<div><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $value ) . '</div>';
+						}
 					}
 				}
-			}
 
-			if ( ! empty( $list_items ) ) {
-				$widget_content = $list_items;
+				if ( ! empty( $list_items ) ) {
+					$widget_content = $list_items;
+				} else {
+					$widget_content = '<p>' . esc_html__( 'No directory information available for this user.', 'stackboost-for-supportcandy' ) . '</p>';
+				}
 			} else {
-				$widget_content = '<p>' . esc_html__( 'No directory information available for this user.', 'stackboost-for-supportcandy' ) . '</p>';
+				$widget_content = '<p>' . esc_html__( 'No directory entry found for this user.', 'stackboost-for-supportcandy' ) . '</p>';
 			}
-		} else {
-			$widget_content = '<p>' . esc_html__( 'No directory entry found for this user.', 'stackboost-for-supportcandy' ) . '</p>';
-		}
-		$widget_unique_id = 'stackboost-contact-widget-' . bin2hex(random_bytes(8));
-		?>
-		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance stackboost-contact-widget">
-			<div class="wpsc-widget-header">
-				<h2><?php echo esc_html__( 'Contact Information', 'stackboost-for-supportcandy' ); ?></h2>
+			$widget_unique_id = 'stackboost-contact-widget-' . bin2hex(random_bytes(8));
+			?>
+			<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance stackboost-contact-widget">
+				<div class="wpsc-widget-header">
+					<h2><?php echo esc_html__( 'Contact Information', 'stackboost-for-supportcandy' ); ?></h2>
 
-				<?php
-				if ( $staff_member && $this->can_user_edit() ) {
-					$edit_link = get_edit_post_link( $staff_member->id );
+					<?php
+					if ( $staff_member && $this->can_user_edit() ) {
+						$edit_link = get_edit_post_link( $staff_member->id );
 
-					if ( $current_ticket_id > 0 ) {
-						$edit_link = add_query_arg(
-							array(
-								'from'      => 'ticket',
-								'ticket_id' => $current_ticket_id,
-							),
-							$edit_link
-						);
+						if ( $current_ticket_id > 0 ) {
+							$edit_link = add_query_arg(
+								array(
+									'from'      => 'ticket',
+									'ticket_id' => $current_ticket_id,
+								),
+								$edit_link
+							);
+						}
+						?>
+						<span onclick="window.location.href = '<?php echo esc_js( esc_url( $edit_link ) ); ?>';">
+							<?php \WPSC_Icons::get( 'edit' ); ?>
+						</span>
+						<?php
 					}
 					?>
-					<span onclick="window.location.href = '<?php echo esc_js( esc_url( $edit_link ) ); ?>';">
-						<?php \WPSC_Icons::get( 'edit' ); ?>
-					</span>
-					<?php
-				}
-				?>
 
-				<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget">
-					<?php \WPSC_Icons::get( 'chevron-up' ); ?>
-				</span>
+					<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget">
+						<?php \WPSC_Icons::get( 'chevron-up' ); ?>
+					</span>
+				</div>
+				<div class="wpsc-widget-body">
+					<?php
+					// The content is already escaped.
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					echo $widget_content;
+					?>
+				</div>
 			</div>
-			<div class="wpsc-widget-body">
-				<?php
-				// The content is already escaped.
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				echo $widget_content;
-				?>
-			</div>
-		</div>
-		<script>
-			// Using a closure to keep variables local and avoid polluting the global scope.
-			(function() {
-				// --- Self-Contained Widget Positioning Logic ---
-				var positionTicketWidget = function(serverWidgetId, targetSelector, placement) {
-					const customWidget = document.getElementById(serverWidgetId);
-					if (!customWidget) {
-						return;
-					}
-					const browserUniqueId = 'sb-widget-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-					customWidget.id = browserUniqueId;
-					const allWidgetInstances = document.querySelectorAll('.stackboost-contact-widget-instance');
-					allWidgetInstances.forEach(function(instance) {
-						if (instance.id !== browserUniqueId) {
-							instance.remove();
+			<script>
+				// Using a closure to keep variables local and avoid polluting the global scope.
+				(function() {
+					// --- Self-Contained Widget Positioning Logic ---
+					var positionTicketWidget = function(serverWidgetId, targetSelector, placement) {
+						const customWidget = document.getElementById(serverWidgetId);
+						if (!customWidget) {
+							return;
 						}
-					});
-					const allTargets = document.querySelectorAll(targetSelector);
-					let visibleTargetWidget = null;
-					for (let i = 0; i < allTargets.length; i++) {
-						if (allTargets[i].offsetParent !== null) {
-							visibleTargetWidget = allTargets[i];
-							break;
+						const browserUniqueId = 'sb-widget-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+						customWidget.id = browserUniqueId;
+						const allWidgetInstances = document.querySelectorAll('.stackboost-contact-widget-instance');
+						allWidgetInstances.forEach(function(instance) {
+							if (instance.id !== browserUniqueId) {
+								instance.remove();
+							}
+						});
+						const allTargets = document.querySelectorAll(targetSelector);
+						let visibleTargetWidget = null;
+						for (let i = 0; i < allTargets.length; i++) {
+							if (allTargets[i].offsetParent !== null) {
+								visibleTargetWidget = allTargets[i];
+								break;
+							}
 						}
-					}
-					if (!visibleTargetWidget) {
-						return;
-					}
-					if (placement === 'after') {
-						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget.nextSibling);
-					} else {
-						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget);
-					}
-				};
-				positionTicketWidget(
-					<?php echo json_encode( $widget_unique_id ); ?>,
-					<?php echo json_encode( $target_selector ); ?>,
-					<?php echo json_encode( $placement ); ?>
-				);
-			})();
-		</script>
-		<?php
+						if (!visibleTargetWidget) {
+							return;
+						}
+						if (placement === 'after') {
+							visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget.nextSibling);
+						} else {
+							visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget);
+						}
+					};
+					positionTicketWidget(
+						<?php echo json_encode( $widget_unique_id ); ?>,
+						<?php echo json_encode( $target_selector ); ?>,
+						<?php echo json_encode( $placement ); ?>
+					);
+				})();
+			</script>
+			<?php
+		} catch ( \Throwable $e ) {
+			// Prevent site crash by catching any error.
+			$log_file = WP_CONTENT_DIR . '/jules_recovery.log';
+			$log_message = "--- RECOVERY LOG AT " . date( 'Y-m-d H:i:s' ) . " ---\n";
+			$log_message .= "A critical error was caught in render_ticket_widget:\n";
+			$log_message .= "Error: " . $e->getMessage() . "\n";
+			$log_message .= "File: " . $e->getFile() . "\n";
+			$log_message .= "Line: " . $e->getLine() . "\n";
+			file_put_contents( $log_file, $log_message, FILE_APPEND );
+			return;
+		}
 	}
 
 	/**
@@ -936,36 +947,48 @@ class WordPress {
 	 * @return string The modified destination URL.
 	 */
 	public function redirect_after_staff_update( $location, $post_id ) {
-		// Only apply this logic to our staff CPT.
-		if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
-			return $location;
-		}
-
-		// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
-		$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
-		$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
-
-		if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
-			// Use the official, supported method to get the correct front-end URL.
-			$ticket_obj = new \WPSC_Ticket( $ticket_id );
-			if ( $ticket_obj && $ticket_obj->id ) {
-				return $ticket_obj->get_url();
+		try {
+			// Only apply this logic to our staff CPT.
+			if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
+				return $location;
 			}
-		}
 
-		// If we are not redirecting to the ticket, we still need to pass the context
-		// to the post-update message function. We do this by adding the context from POST
-		// as query arguments to the redirect URL, where they will become GET parameters.
-		if ( ! empty( $from ) && ! empty( $ticket_id ) ) {
-			$location = add_query_arg(
-				array(
-					'from'      => $from,
-					'ticket_id' => $ticket_id,
-				),
-				$location
-			);
-		}
+			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
+			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
+			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
 
-		return $location;
+			if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
+				// Use the official, supported method to get the correct front-end URL.
+				$ticket_obj = new \WPSC_Ticket( $ticket_id );
+				if ( $ticket_obj && $ticket_obj->id ) {
+					return $ticket_obj->get_url();
+				}
+			}
+
+			// If we are not redirecting to the ticket, we still need to pass the context
+			// to the post-update message function. We do this by adding the context from POST
+			// as query arguments to the redirect URL, where they will become GET parameters.
+			if ( ! empty( $from ) && ! empty( $ticket_id ) ) {
+				$location = add_query_arg(
+					array(
+						'from'      => $from,
+						'ticket_id' => $ticket_id,
+					),
+					$location
+				);
+			}
+
+			return $location;
+		} catch ( \Throwable $e ) {
+			// Prevent site crash by catching any error.
+			$log_file = WP_CONTENT_DIR . '/jules_recovery.log';
+			$log_message = "--- RECOVERY LOG AT " . date( 'Y-m-d H:i:s' ) . " ---\n";
+			$log_message .= "A critical error was caught in redirect_after_staff_update:\n";
+			$log_message .= "Error: " . $e->getMessage() . "\n";
+			$log_message .= "File: " . $e->getFile() . "\n";
+			$log_message .= "Line: " . $e->getLine() . "\n";
+			file_put_contents( $log_file, $log_message, FILE_APPEND );
+			return $location; // Return the original location to prevent a redirect loop.
+		}
 	}
 }

@@ -22,8 +22,8 @@ class WordPress extends Module {
 	/** @var Shortcode */
 	private Shortcode $shortcode;
 
-	/** @var Admin */
-	private Admin $admin;
+	/** @var AdminController */
+	private AdminController $admin;
 
 	/** @var Ajax */
 	private Ajax $ajax;
@@ -48,7 +48,7 @@ class WordPress extends Module {
 
 		$this->install   = new Install();
 		$this->shortcode = new Shortcode();
-		$this->admin     = new Admin();
+		$this->admin     = new AdminController();
 		$this->ajax      = new Ajax();
 
 		parent::__construct();
