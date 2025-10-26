@@ -712,10 +712,18 @@ class WordPress {
 		}
 		$widget_unique_id = 'stackboost-contact-widget-' . bin2hex(random_bytes(8));
 		?>
-		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance">
+		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance stackboost-contact-widget">
 			<div class="wpsc-widget-header">
-				<h2><?php echo esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ); ?></h2>
+				<h2><?php echo esc_html__( 'Contact Information', 'stackboost-for-supportcandy' ); ?></h2>
+
+				<?php if ( $staff_member && $this->can_user_edit() ) : ?>
+					<a href="<?php echo esc_url( get_edit_post_link( $staff_member->id ) ); ?>">
+						<?php \WPSC_Icons::get( 'edit' ); ?>
+					</a>
+				<?php endif; ?>
+
 				<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget">
+					<?php \WPSC_Icons::get( 'chevron-up' ); ?>
 				</span>
 			</div>
 			<div class="wpsc-widget-body">
