@@ -610,6 +610,60 @@ class WordPress {
 	 * @param mixed $ticket The SupportCandy ticket object. Can be null on some hook fires.
 	 */
 	public function render_ticket_widget( $ticket ) {
+		// ===== JULES DEBUGGING: START =====
+		$log_file = WP_CONTENT_DIR . '/jules_debug.log';
+		// Clear log file for new request
+		if ( file_exists( $log_file ) ) {
+			unlink( $log_file );
+		}
+
+		$log_message = "--- NEW WIDGET RENDER AT " . date( 'Y-m-d H:i:s' ) . " ---\n\n";
+
+		ob_start();
+
+		echo "<strong>1. Is Admin Check:</strong>\n";
+		var_dump( is_admin() );
+		echo "\n\n";
+
+		echo "<strong>2. Class Exists Check (WPSC_Individual_Ticket):</strong>\n";
+		var_dump( class_exists( 'WPSC_Individual_Ticket' ) );
+		echo "\n\n";
+
+		echo "<strong>3. Static Property Check (WPSC_Individual_Ticket::\$ticket):</strong>\n";
+		if ( class_exists( 'WPSC_Individual_Ticket' ) ) {
+			var_dump( \WPSC_Individual_Ticket::$ticket );
+		} else {
+			echo "CLASS NOT FOUND\n";
+		}
+		echo "\n\n";
+
+		echo "<strong>4. Hook Parameter Check (\$ticket object):</strong>\n";
+		var_dump( $ticket );
+		echo "\n\n";
+
+		echo "<strong>5. \$_GET Superglobal:</strong>\n";
+		print_r( $_GET );
+		echo "\n\n";
+
+		echo "<strong>6. \$_REQUEST Superglobal:</strong>\n";
+		print_r( $_REQUEST );
+		echo "\n\n";
+
+		// Logic to determine Ticket ID
+		$current_ticket_id = 0;
+		if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
+			$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
+		} elseif ( isset( $_REQUEST['ticket_id'] ) ) {
+			$current_ticket_id = absint( $_REQUEST['ticket_id'] );
+		}
+
+		echo "<strong>7. Determined Ticket ID:</strong>\n";
+		var_dump($current_ticket_id);
+		echo "\n\n";
+
+		$log_message .= ob_get_clean();
+		file_put_contents( $log_file, $log_message, FILE_APPEND );
+		// ===== JULES DEBUGGING: END =====
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
 		// Exit early if the widget is not enabled.
@@ -862,6 +916,65 @@ class WordPress {
 				);
 
 			})();
+		<script>
+			// Using a closure to keep variables local and avoid polluting the global scope.
+			(function() {
+				// Console logging
+				console.group("Jules Debugging Output");
+				console.log("Is Admin:", <?php echo json_encode( is_admin() ); ?>);
+				console.log("Static Ticket Object:", <?php echo json_encode( class_exists('WPSC_Individual_Ticket') ? \WPSC_Individual_Ticket::$ticket : 'CLASS NOT FOUND' ); ?>);
+				console.log("Hooked Ticket Object:", <?php echo json_encode( $ticket ); ?>);
+				console.log("Determined Ticket ID:", <?php echo json_encode( $current_ticket_id ); ?>);
+				console.log("Final Edit Link:", <?php echo json_encode( $edit_link ); ?>);
+				console.groupEnd();
+
+				// --- Self-Contained Widget Positioning Logic ---
+				var positionTicketWidget = function(serverWidgetId, targetSelector, placement) {
+					const customWidget = document.getElementById(serverWidgetId);
+					if (!customWidget) {
+						return;
+					}
+					const browserUniqueId = 'sb-widget-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+					customWidget.id = browserUniqueId;
+					const allWidgetInstances = document.querySelectorAll('.stackboost-contact-widget-instance');
+					allWidgetInstances.forEach(function(instance) {
+						if (instance.id !== browserUniqueId) {
+							instance.remove();
+						}
+					});
+					const allTargets = document.querySelectorAll(targetSelector);
+					let visibleTargetWidget = null;
+					for (let i = 0; i < allTargets.length; i++) {
+						if (allTargets[i].offsetParent !== null) {
+							visibleTargetWidget = allTargets[i];
+							break;
+						}
+					}
+					if (!visibleTargetWidget) {
+						return;
+					}
+					if (placement === 'after') {
+						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget.nextSibling);
+					} else {
+						visibleTargetWidget.parentNode.insertBefore(customWidget, visibleTargetWidget);
+					}
+				};
+				positionTicketWidget(
+					<?php echo json_encode( $widget_unique_id ); ?>,
+					<?php echo json_encode( $target_selector ); ?>,
+					<?php echo json_encode( $placement ); ?>
+				);
+			})();
+		</script>
+		<script>
+			// Console logging
+			console.group("Jules Debugging Output");
+			console.log("Is Admin:", <?php echo json_encode( is_admin() ); ?>);
+			console.log("Static Ticket Object:", <?php echo json_encode( class_exists('WPSC_Individual_Ticket') ? \WPSC_Individual_Ticket::$ticket : 'CLASS NOT FOUND' ); ?>);
+			console.log("Hooked Ticket Object:", <?php echo json_encode( $ticket ); ?>);
+			console.log("Determined Ticket ID:", <?php echo json_encode( $current_ticket_id ); ?>);
+			console.log("Final Edit Link:", <?php echo json_encode( $edit_link ); ?>);
+			console.groupEnd();
 		</script>
 		<?php
 	}
@@ -1004,22 +1117,46 @@ class WordPress {
 	 * @return string The modified destination URL.
 	 */
 	public function redirect_after_staff_update( $location, $post_id ) {
-		// Only apply this logic to our staff CPT.
-		if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
-			return $location;
-		}
+		// ===== JULES DEBUGGING: START =====
+		$log_file = WP_CONTENT_DIR . '/jules_debug.log';
+		$log_message = "\n--- REDIRECT LOG AT " . date( 'Y-m-d H:i:s' ) . " ---\n\n";
+		ob_start();
+
+		echo "<strong>1. Post ID and Type:</strong>\n";
+		var_dump($post_id, get_post_type( $post_id ));
+		echo "\n\n";
+
+		echo "<strong>2. \$_POST Superglobal:</strong>\n";
+		print_r($_POST);
+		echo "\n\n";
 
 		// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
 		$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
 		$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
 
+		echo "<strong>3. Determined Context:</strong>\n";
+		var_dump($from, $ticket_id);
+		echo "\n\n";
+
 		if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
 			// Use the official, supported method to get the correct front-end URL.
 			$ticket_obj = new \WPSC_Ticket( $ticket_id );
 			if ( $ticket_obj && $ticket_obj->id ) {
-				return $ticket_obj->get_url();
+				$final_url = $ticket_obj->get_url();
+				echo "<strong>4. Generated URL:</strong>\n";
+				var_dump($final_url);
+				echo "\n\n";
+				$log_message .= ob_get_clean();
+				file_put_contents( $log_file, $log_message, FILE_APPEND );
+				return $final_url;
 			}
 		}
+
+		echo "<strong>4. No Redirect Condition Met. Final Location:</strong>\n";
+		var_dump($location);
+		echo "\n\n";
+		$log_message .= ob_get_clean();
+		file_put_contents( $log_file, $log_message, FILE_APPEND );
 
 		// If we are not redirecting to the ticket, we still need to pass the context
 		// to the post-update message function. We do this by adding the context from POST
