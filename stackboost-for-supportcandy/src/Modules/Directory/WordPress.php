@@ -725,16 +725,14 @@ class WordPress {
 		<div id="<?php echo esc_attr( $widget_unique_id ); ?>" class="wpsc-it-widget stackboost-contact-widget-instance">
 			<div class="wpsc-widget-header">
 				<h2><?php echo esc_html__( 'Company Directory', 'stackboost-for-supportcandy' ); ?></h2>
-                <div class="wpsc-itw-actions">
-                    <?php if ( $staff_member && ! empty( $staff_member->edit_post_link ) ) : ?>
-                        <?php if ( $this->can_user_edit() ) : ?>
-                            <a href="<?php echo esc_url( $staff_member->edit_post_link ); ?>" class="wpsc-itw-edit-ico" target="_blank"></a>
-                        <?php else : ?>
-                            <span class="wpsc-itw-edit-ico wpsc-itw-ico-disabled"></span>
-                        <?php endif; ?>
-                    <?php endif; ?>
-				    <span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget"></span>
-                </div>
+				<?php if ( $staff_member && ! empty( $staff_member->edit_post_link ) ) : ?>
+					<?php if ( $this->can_user_edit() ) : ?>
+						<a href="<?php echo esc_url( $staff_member->edit_post_link ); ?>" class="wpsc-itw-edit-ico" target="_blank"></a>
+					<?php else : ?>
+						<span class="wpsc-itw-edit-ico wpsc-itw-ico-disabled"></span>
+					<?php endif; ?>
+				<?php endif; ?>
+				<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget"></span>
 			</div>
 			<div class="wpsc-widget-body">
 				<?php
