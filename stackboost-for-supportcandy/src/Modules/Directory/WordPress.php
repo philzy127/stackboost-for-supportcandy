@@ -936,9 +936,6 @@ class WordPress {
 	 * @return string The modified destination URL.
 	 */
 	public function redirect_after_staff_update( $location, $post_id ) {
-		$log_file = WP_CONTENT_DIR . '/jules_debug.log';
-		$log_message = "\n--- REDIRECT LOG AT " . date( 'Y-m-d H:i:s' ) . " ---\n\n";
-
 		// Only apply this logic to our staff CPT.
 		if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
 			return $location;
@@ -947,21 +944,14 @@ class WordPress {
 		// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
 		$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
 		$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
-		$log_message .= "CONTEXT: from = " . $from . ", ticket_id = " . $ticket_id . "\n";
 
 		if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
 			// Use the official, supported method to get the correct front-end URL.
 			$ticket_obj = new \WPSC_Ticket( $ticket_id );
 			if ( $ticket_obj && $ticket_obj->id ) {
-				$final_url = $ticket_obj->get_url();
-				$log_message .= "GENERATED URL: " . $final_url . "\n";
-				file_put_contents( $log_file, $log_message, FILE_APPEND );
-				return $final_url;
+				return $ticket_obj->get_url();
 			}
 		}
-
-		$log_message .= "NO REDIRECT. FINAL LOCATION: " . $location . "\n";
-		file_put_contents( $log_file, $log_message, FILE_APPEND );
 
 		// If we are not redirecting to the ticket, we still need to pass the context
 		// to the post-update message function. We do this by adding the context from POST
