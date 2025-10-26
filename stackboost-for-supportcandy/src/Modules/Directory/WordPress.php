@@ -717,9 +717,9 @@ class WordPress {
 				<h2><?php echo esc_html__( 'Contact Information', 'stackboost-for-supportcandy' ); ?></h2>
 
 				<?php if ( $staff_member && $this->can_user_edit() ) : ?>
-					<a href="<?php echo esc_url( get_edit_post_link( $staff_member->id ) ); ?>">
+					<span onclick="window.location.href = '<?php echo esc_js( esc_url( get_edit_post_link( $staff_member->id ) ) ); ?>';">
 						<?php \WPSC_Icons::get( 'edit' ); ?>
-					</a>
+					</span>
 				<?php endif; ?>
 
 				<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget">
