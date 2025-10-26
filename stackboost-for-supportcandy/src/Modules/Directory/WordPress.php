@@ -608,7 +608,10 @@ class WordPress {
 	 * @param mixed $ticket The SupportCandy ticket object. Can be null on some hook fires.
 	 */
 	public function render_ticket_widget( $ticket ) {
-		wp_die('EXECUTION CONFIRMED');
+		// Scorched earth diagnostic to confirm output.
+		echo '<h1 style="font-size: 24px; color: red; border: 2px solid blue; padding: 10px;">!!! STACKBOOST WIDGET RENDERED !!!</h1>';
+
+		/*
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
 		// Exit early if the widget is not enabled.
@@ -832,5 +835,6 @@ class WordPress {
 			})();
 		</script>
 		<?php
+		*/
 	}
 }
