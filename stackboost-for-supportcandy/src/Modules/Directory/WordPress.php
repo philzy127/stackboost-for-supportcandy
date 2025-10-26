@@ -608,6 +608,7 @@ class WordPress {
 	 * @param mixed $ticket The SupportCandy ticket object. Can be null on some hook fires.
 	 */
 	public function render_ticket_widget( $ticket ) {
+		wp_die('EXECUTION CONFIRMED');
 		$widget_options = get_option( TicketWidgetSettings::WIDGET_OPTION_NAME, [] );
 
 		// Exit early if the widget is not enabled.
