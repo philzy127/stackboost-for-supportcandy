@@ -617,16 +617,15 @@ class WordPress {
 			return;
 		}
 
-		// Guard against the hook firing multiple times in a single request, which would
-		// lead to duplicate HTML and invalid element IDs.
+		// Guard against the hook firing multiple times in a single request...
 		static $has_rendered_once = false;
 		if ( $has_rendered_once ) {
+			echo '<script>console.log("StackBoost Widget: Skipping duplicate render call in the same request.");</script>';
 			return;
 		}
 		$has_rendered_once = true;
 
-		// The passed $ticket object is unreliable on the frontend.
-		// The customer object needs to be derived from the reliable ticket ID source.
+		// Definitive method to get the ticket ID, based on diagnostics.
 		$current_ticket_id = 0;
 		if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
 			// Primary method for backend.
@@ -636,17 +635,17 @@ class WordPress {
 			$current_ticket_id = absint( $_REQUEST['ticket_id'] );
 		}
 
-		if ( ! $current_ticket_id ) {
+		// If the passed $ticket is unreliable (frontend), create a new one.
+		if ( ( ! is_a( $ticket, 'WPSC_Ticket' ) || ! $ticket->id ) && $current_ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
+			$ticket = new \WPSC_Ticket( $current_ticket_id );
+		}
+
+		// Now proceed with the original checks, which should now pass with the reliable $ticket object.
+		if ( ! is_a( $ticket, 'WPSC_Ticket' ) || ! $ticket->id ) {
 			return;
 		}
 
-		// We must instantiate our own reliable ticket object.
-		$reliable_ticket = new \WPSC_Ticket( $current_ticket_id );
-		if ( ! $reliable_ticket || ! $reliable_ticket->id ) {
-			return;
-		}
-
-		$customer = $reliable_ticket->customer;
+		$customer = $ticket->customer;
 		if ( ! is_a( $customer, 'WPSC_Customer' ) || ! $customer->id ) {
 			return;
 		}
@@ -937,6 +936,9 @@ class WordPress {
 	 * @return string The modified destination URL.
 	 */
 	public function redirect_after_staff_update( $location, $post_id ) {
+		$log_file = WP_CONTENT_DIR . '/jules_debug.log';
+		$log_message = "\n--- REDIRECT LOG AT " . date( 'Y-m-d H:i:s' ) . " ---\n\n";
+
 		// Only apply this logic to our staff CPT.
 		if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
 			return $location;
@@ -945,14 +947,21 @@ class WordPress {
 		// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
 		$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
 		$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
+		$log_message .= "CONTEXT: from = " . $from . ", ticket_id = " . $ticket_id . "\n";
 
 		if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
 			// Use the official, supported method to get the correct front-end URL.
 			$ticket_obj = new \WPSC_Ticket( $ticket_id );
 			if ( $ticket_obj && $ticket_obj->id ) {
-				return $ticket_obj->get_url();
+				$final_url = $ticket_obj->get_url();
+				$log_message .= "GENERATED URL: " . $final_url . "\n";
+				file_put_contents( $log_file, $log_message, FILE_APPEND );
+				return $final_url;
 			}
 		}
+
+		$log_message .= "NO REDIRECT. FINAL LOCATION: " . $location . "\n";
+		file_put_contents( $log_file, $log_message, FILE_APPEND );
 
 		// If we are not redirecting to the ticket, we still need to pass the context
 		// to the post-update message function. We do this by adding the context from POST
