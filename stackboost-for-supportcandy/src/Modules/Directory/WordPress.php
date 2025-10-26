@@ -68,6 +68,12 @@ class WordPress {
 
 		// Hook for rendering the ticket widget.
 		add_action( 'wpsc_after_ticket_widget', array( $this, 'render_ticket_widget' ) );
+
+		// Hide the redundant "Add New" button on the CPT edit screen.
+		add_action( 'admin_head', array( $this, 'hide_add_new_button_on_cpt' ) );
+
+		// Filters for post update messages.
+		add_filter( 'post_updated_messages', array( $this, 'post_updated_messages' ) );
 	}
 
 	/**
@@ -716,11 +722,25 @@ class WordPress {
 			<div class="wpsc-widget-header">
 				<h2><?php echo esc_html__( 'Contact Information', 'stackboost-for-supportcandy' ); ?></h2>
 
-				<?php if ( $staff_member && $this->can_user_edit() ) : ?>
-					<span onclick="window.location.href = '<?php echo esc_js( esc_url( get_edit_post_link( $staff_member->id ) ) ); ?>';">
+				<?php
+				if ( $staff_member && $this->can_user_edit() ) {
+					$edit_link = get_edit_post_link( $staff_member->id );
+					if ( $ticket && isset( $ticket->id ) ) {
+						$edit_link = add_query_arg(
+							array(
+								'from'      => 'ticket',
+								'ticket_id' => $ticket->id,
+							),
+							$edit_link
+						);
+					}
+					?>
+					<span onclick="window.location.href = '<?php echo esc_js( esc_url( $edit_link ) ); ?>';">
 						<?php \WPSC_Icons::get( 'edit' ); ?>
 					</span>
-				<?php endif; ?>
+					<?php
+				}
+				?>
 
 				<span class="wpsc-itw-toggle" data-widget="stackboost-contact-widget">
 					<?php \WPSC_Icons::get( 'chevron-up' ); ?>
@@ -827,5 +847,90 @@ class WordPress {
 			})();
 		</script>
 		<?php
+	}
+
+	/**
+	 * Hides the "Add New" button on the "Add New Staff" page.
+	 */
+	public function hide_add_new_button_on_cpt() {
+		$screen = get_current_screen();
+
+		// Check if we are on the 'Add New' screen for any of our CPTs.
+		$post_types = [
+			$this->core->cpts->post_type,
+			$this->core->cpts->location_post_type,
+			$this->core->cpts->department_post_type,
+		];
+
+		if ( $screen && 'add' === $screen->action && in_array( $screen->post_type, $post_types, true ) ) {
+			echo '<style>.page-title-action { display: none; }</style>';
+		}
+	}
+
+	/**
+	 * Customize the post updated messages for the staff CPT.
+	 *
+	 * @param array $messages The existing post update messages.
+	 * @return array The modified messages.
+	 */
+	public function post_updated_messages( $messages ) {
+		// We only want to modify the messages for our CPT.
+		if ( ! isset( $this->core->cpts->post_type ) || get_post_type() !== $this->core->cpts->post_type ) {
+			return $messages;
+		}
+
+		$post = get_post();
+		if ( ! $post ) {
+			return $messages;
+		}
+
+		$post_type_object = get_post_type_object( $post->post_type );
+		if ( ! $post_type_object ) {
+			return $messages;
+		}
+
+		// Check for our custom query arg to determine the return link.
+		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
+		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
+
+		$return_link = '';
+		if ( 'ticket' === $from && $ticket_id > 0 ) {
+			// Construct the URL to the SupportCandy ticket.
+			// The base URL for a ticket is admin.php?page=wpsc-view-ticket&id=TICKET_ID
+			$ticket_url  = admin_url( 'admin.php?page=wpsc-view-ticket&id=' . $ticket_id );
+			$return_link = sprintf(
+				' <a href="%s">%s</a>',
+				esc_url( $ticket_url ),
+				__( 'Return to Ticket', 'stackboost-for-supportcandy' )
+			);
+		} else {
+			// Default to the staff directory list.
+			$directory_url = admin_url( 'admin.php?page=stackboost-directory&tab=staff' );
+			$return_link   = sprintf(
+				' <a href="%s">%s</a>',
+				esc_url( $directory_url ),
+				__( 'Return to Directory', 'stackboost-for-supportcandy' )
+			);
+		}
+
+		$messages[ $this->core->cpts->post_type ] = array(
+			0  => '', // Unused. Messages start at index 1.
+			1  => __( 'Staff updated.', 'stackboost-for-supportcandy' ) . $return_link,
+			2  => __( 'Custom field updated.', 'stackboost-for-supportcandy' ),
+			3  => __( 'Custom field deleted.', 'stackboost-for-supportcandy' ),
+			4  => __( 'Staff updated.', 'stackboost-for-supportcandy' ),
+			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
+			6  => __( 'Staff published.', 'stackboost-for-supportcandy' ) . $return_link,
+			7  => __( 'Staff saved.', 'stackboost-for-supportcandy' ),
+			8  => __( 'Staff submitted.', 'stackboost-for-supportcandy' ),
+			9  => sprintf(
+				// translators: %1$s: date and time of the scheduled post.
+				__( 'Staff scheduled for: %1$s.', 'stackboost-for-supportcandy' ),
+				'<strong>' . date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ) . '</strong>'
+			),
+			10 => __( 'Staff draft updated.', 'stackboost-for-supportcandy' ),
+		);
+
+		return $messages;
 	}
 }
