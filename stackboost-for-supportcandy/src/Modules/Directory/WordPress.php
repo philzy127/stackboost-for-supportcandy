@@ -854,9 +854,23 @@ class WordPress {
 		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
 
 		$return_link = '';
-		if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Functions' ) ) {
-			// Use the official static helper to force a frontend URL.
-			$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
+		if ( 'ticket' === $from && $ticket_id > 0 ) {
+			$ticket_url = '';
+
+			// 1. Primary Method: Use the official static helper.
+			if ( class_exists( 'WPSC_Functions' ) ) {
+				$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
+			}
+
+			// 2. Fallback Method: If the official function fails, use the referer URL from the POST data if available.
+			if ( empty( $ticket_url ) && isset( $_POST['_wp_original_http_referer'] ) ) {
+				$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
+				// Security check: ensure the referer is for the correct ticket.
+				if ( strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false ) {
+					$ticket_url = $referer_url;
+				}
+			}
+
 			if ( ! empty( $ticket_url ) ) {
 				$return_link = sprintf(
 					' <a href="%s">%s</a>',
@@ -971,18 +985,37 @@ class WordPress {
 			$log_entry .= 'PARSED from: ' . $from . "\n";
 			$log_entry .= 'PARSED ticket_id: ' . $ticket_id . "\n";
 
-			if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Functions' ) ) {
+			if ( 'ticket' === $from && $ticket_id > 0 ) {
 				$log_entry .= "CONTEXT: 'ticket' context detected. Attempting to get frontend URL.\n";
-				// Use the official static helper to force a frontend URL.
-				$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
-				$log_entry .= 'RETURN VALUE of WPSC_Functions::get_ticket_url(): ' . print_r( $ticket_url, true ) . "\n";
+				$ticket_url = '';
+
+				// 1. Primary Method: Use the official static helper.
+				if ( class_exists( 'WPSC_Functions' ) ) {
+					$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
+					$log_entry .= 'RETURN VALUE of WPSC_Functions::get_ticket_url(): ' . print_r( $ticket_url, true ) . "\n";
+				}
+
+				// 2. Fallback Method: If the official function fails, use the referer URL.
+				if ( empty( $ticket_url ) && isset( $_POST['_wp_original_http_referer'] ) ) {
+					$log_entry .= "FALLBACK: Official function failed. Trying referer URL.\n";
+					$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
+					$log_entry .= 'FALLBACK Referer URL: ' . $referer_url . "\n";
+
+					// Security check: ensure the referer is for the correct ticket.
+					if ( strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false ) {
+						$ticket_url = $referer_url;
+						$log_entry .= "FALLBACK SUCCESS: Referer URL is valid and matches ticket ID.\n";
+					} else {
+						$log_entry .= "FALLBACK FAILED: Referer URL does not contain the correct ticket ID.\n";
+					}
+				}
 
 				if ( ! empty( $ticket_url ) ) {
-					$log_entry .= "RESULT: URL is not empty. Redirecting to: " . $ticket_url . "\n\n";
+					$log_entry .= "RESULT: URL found. Redirecting to: " . $ticket_url . "\n\n";
 					file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 					return $ticket_url;
 				} else {
-					$log_entry .= "RESULT: get_ticket_url() returned an empty or null value. No redirect will happen.\n\n";
+					$log_entry .= "RESULT: All methods failed to get a URL. No redirect will happen.\n\n";
 				}
 			} else {
 				$log_entry .= "CONTEXT: No 'ticket' context detected.\n";
