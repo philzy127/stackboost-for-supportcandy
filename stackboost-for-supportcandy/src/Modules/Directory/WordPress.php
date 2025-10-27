@@ -862,11 +862,12 @@ class WordPress {
 				$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
 			}
 
-			// 2. Fallback Method: If the official function fails, use the referer URL from the POST data if available.
-			if ( empty( $ticket_url ) && isset( $_POST['_wp_original_http_referer'] ) ) {
+			// 2. Fallback/Primary Method: Use the referer URL from the POST data if available.
+			if ( isset( $_POST['_wp_original_http_referer'] ) ) {
 				$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
 				// Security check: ensure the referer is for the correct ticket.
 				if ( strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false ) {
+					// This URL is now the definitive target, whether it's frontend or backend.
 					$ticket_url = $referer_url;
 				}
 			}
@@ -995,18 +996,19 @@ class WordPress {
 					$log_entry .= 'RETURN VALUE of WPSC_Functions::get_ticket_url(): ' . print_r( $ticket_url, true ) . "\n";
 				}
 
-				// 2. Fallback Method: If the official function fails, use the referer URL.
-				if ( empty( $ticket_url ) && isset( $_POST['_wp_original_http_referer'] ) ) {
-					$log_entry .= "FALLBACK: Official function failed. Trying referer URL.\n";
+				// 2. Fallback/Primary Method for All Contexts: Use the referer URL.
+				if ( isset( $_POST['_wp_original_http_referer'] ) ) {
+					$log_entry .= "LOGIC: Using referer URL as the source of truth.\n";
 					$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
-					$log_entry .= 'FALLBACK Referer URL: ' . $referer_url . "\n";
+					$log_entry .= 'Referer URL: ' . $referer_url . "\n";
 
 					// Security check: ensure the referer is for the correct ticket.
 					if ( strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false ) {
+						// This URL is now the definitive redirect target, whether it's frontend or backend.
 						$ticket_url = $referer_url;
-						$log_entry .= "FALLBACK SUCCESS: Referer URL is valid and matches ticket ID.\n";
+						$log_entry .= "SUCCESS: Referer URL is valid and matches ticket ID.\n";
 					} else {
-						$log_entry .= "FALLBACK FAILED: Referer URL does not contain the correct ticket ID.\n";
+						$log_entry .= "FAILED: Referer URL does not contain the correct ticket ID.\n";
 					}
 				}
 
