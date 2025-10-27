@@ -139,6 +139,7 @@ This module's `Core.php` is minimal and primarily serves to instantiate the Cust
 *   **Key Methods:**
     *   `enqueue_admin_scripts()`: Handles loading of all admin-side scripts for the module.
     *   `ajax_import_csv()`: Located in `Admin/Management.php`, this method handles the server-side logic for the CSV import. It sanitizes the data (including stripping non-numeric characters from phone numbers) and creates new staff posts.
+    *   `redirect_after_staff_update()`: Implements a context-aware redirect after a staff member is saved. If the edit was initiated from a SupportCandy ticket (identified by a `from=ticket` parameter), it redirects the user back to the ticket. It uses a robust fallback system: it first attempts to use the official SupportCandy URL generation function, and if that fails, it safely falls back to using the `_wp_original_http_referer` URL. This ensures the redirect works for both frontend and backend ticket views, even if the SupportCandy page settings are not configured.
 
 ### 3.2. After Hours Notice
 
