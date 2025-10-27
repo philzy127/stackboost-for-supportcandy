@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.4] - 2025-10-26
+
+### Added
+- **Context-Aware Redirects:** When editing a staff member from a SupportCandy ticket, the user is now automatically redirected back to the ticket they came from. This works for both frontend and backend ticket views.
+
+### Changed
+- The success banner after updating a staff member is now context-aware. It will display a "Return to Ticket" link if the edit originated from a ticket, or a "Return to Directory" link otherwise.
+
+### Fixed
+- **Redundant "Add New" Button:** Removed the unnecessary "Add New" button that appeared at the top of the "Add New Staff" page.
+- **Autoloader Conflict:** Resolved a critical PSR-4 autoloader conflict that was causing fatal errors by renaming `Admin.php` to `AdminController.php` in the AfterTicketSurvey module.
+- **Obsolete Code:** Removed references to non-existent `Importer` and `Clearer` classes to prevent fatal errors.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 

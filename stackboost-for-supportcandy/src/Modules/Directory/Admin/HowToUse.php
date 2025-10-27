@@ -91,6 +91,7 @@ class HowToUse {
 						<li><?php echo wp_kses_post( __( '<strong>Collapse/Expand:</strong> Click the chevron icon in the top-right corner to collapse or expand the widget body, just like other native SupportCandy widgets.', 'stackboost-for-supportcandy' ) ); ?></li>
 						<li><?php echo wp_kses_post( __( '<strong>Edit:</strong> For users with the appropriate permissions (defined in the Settings tab), an edit icon will also appear. Clicking this icon will take you directly to the edit screen for that staff member\'s directory profile, allowing for quick corrections.', 'stackboost-for-supportcandy' ) ); ?></li>
 					</ul>
+					<p><?php echo wp_kses_post( __( 'After editing a staff member via the ticket widget, you will be automatically redirected back to the ticket you came from, ensuring a seamless workflow. This works for both frontend and backend ticket views.', 'stackboost-for-supportcandy' ) ); ?></p>
 					<p><?php echo wp_kses_post( __( 'You can customize which information fields are displayed, where the widget appears, and enable or disable it entirely from the settings on this tab.', 'stackboost-for-supportcandy' ) ); ?></p>
 				</div>
 			</div>
