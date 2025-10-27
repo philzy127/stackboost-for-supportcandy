@@ -947,26 +947,47 @@ class WordPress {
 	 */
 	public function redirect_after_staff_update( $location, $post_id ) {
 		try {
+			// --- Start Diagnostic Logging ---
+			$debug_log_file = WP_CONTENT_DIR . '/jules_redirect_debug.log';
+			if ( file_exists( $debug_log_file ) && filesize( $debug_log_file ) > 2000000 ) { unlink( $debug_log_file ); } // Clear log if it gets too big
+			$log_entry      = '--- REDIRECT DEBUG AT ' . date( 'Y-m-d H:i:s' ) . " ---\n";
+			$log_entry     .= 'ACTION: redirect_post_location' . "\n";
+			$log_entry     .= 'POST ID: ' . print_r( $post_id, true ) . "\n";
+			$log_entry     .= 'ORIGINAL LOCATION: ' . print_r( $location, true ) . "\n";
+			$log_entry     .= 'POST SUPERGLOBAL: ' . print_r( $_POST, true ) . "\n";
+
 			// Only apply this logic to our staff CPT.
 			if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
+				$log_entry .= "RESULT: Post type is not staff CPT. No action taken.\n\n";
+				file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 				return $location;
 			}
 
 			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
 			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
 			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
+			$log_entry .= 'PARSED from: ' . $from . "\n";
+			$log_entry .= 'PARSED ticket_id: ' . $ticket_id . "\n";
 
 			if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Functions' ) ) {
+				$log_entry .= "CONTEXT: 'ticket' context detected. Attempting to get frontend URL.\n";
 				// Use the official static helper to force a frontend URL.
 				$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
+				$log_entry .= 'RETURN VALUE of WPSC_Functions::get_ticket_url(): ' . print_r( $ticket_url, true ) . "\n";
+
 				if ( ! empty( $ticket_url ) ) {
+					$log_entry .= "RESULT: URL is not empty. Redirecting to: " . $ticket_url . "\n\n";
+					file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 					return $ticket_url;
+				} else {
+					$log_entry .= "RESULT: get_ticket_url() returned an empty or null value. No redirect will happen.\n\n";
 				}
+			} else {
+				$log_entry .= "CONTEXT: No 'ticket' context detected.\n";
 			}
 
 			// If we are not redirecting to the ticket, we still need to pass the context
-			// to the post-update message function. We do this by adding the context from POST
-			// as query arguments to the redirect URL, where they will become GET parameters.
+			// to the post-update message function.
 			if ( ! empty( $from ) && ! empty( $ticket_id ) ) {
 				$location = add_query_arg(
 					array(
@@ -975,8 +996,12 @@ class WordPress {
 					),
 					$location
 				);
+				$log_entry .= 'RESULT: Not redirecting, but adding query args. Final location: ' . $location . "\n\n";
+			} else {
+				$log_entry .= "RESULT: No context. Returning original location: " . $location . "\n\n";
 			}
 
+			file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 			return $location;
 		} catch ( \Throwable $e ) {
 			// Prevent site crash by catching any error.
