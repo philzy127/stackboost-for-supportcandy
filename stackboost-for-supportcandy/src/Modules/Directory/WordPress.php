@@ -865,8 +865,11 @@ class WordPress {
 			// 2. Fallback/Primary Method: Use the referer URL from the POST data if available.
 			if ( isset( $_POST['_wp_original_http_referer'] ) ) {
 				$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
-				// Security check: ensure the referer is for the correct ticket.
-				if ( strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false ) {
+				// Security check: ensure the referer is for the correct ticket (frontend or backend).
+				$is_frontend_url = strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false;
+				$is_backend_url  = ( strpos( $referer_url, '/wp-admin/' ) !== false && strpos( $referer_url, '&id=' . $ticket_id ) !== false );
+
+				if ( $is_frontend_url || $is_backend_url ) {
 					// This URL is now the definitive target, whether it's frontend or backend.
 					$ticket_url = $referer_url;
 				}
@@ -1002,13 +1005,15 @@ class WordPress {
 					$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
 					$log_entry .= 'Referer URL: ' . $referer_url . "\n";
 
-					// Security check: ensure the referer is for the correct ticket.
-					if ( strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false ) {
-						// This URL is now the definitive redirect target, whether it's frontend or backend.
+					// Security check: ensure the referer is for the correct ticket (frontend or backend).
+					$is_frontend_url = strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false;
+					$is_backend_url  = ( strpos( $referer_url, '/wp-admin/' ) !== false && strpos( $referer_url, '&id=' . $ticket_id ) !== false );
+
+					if ( $is_frontend_url || $is_backend_url ) {
 						$ticket_url = $referer_url;
-						$log_entry .= "SUCCESS: Referer URL is valid and matches ticket ID.\n";
+						$log_entry .= "SUCCESS: Referer URL is a valid frontend or backend URL and matches the ticket ID.\n";
 					} else {
-						$log_entry .= "FAILED: Referer URL does not contain the correct ticket ID.\n";
+						$log_entry .= "FAILED: Referer URL does not contain a valid ticket ID for frontend or backend.\n";
 					}
 				}
 
