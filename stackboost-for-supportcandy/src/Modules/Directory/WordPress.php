@@ -854,11 +854,10 @@ class WordPress {
 		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
 
 		$return_link = '';
-		if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
-			// Use the official, supported method to get the correct front-end URL.
-			$ticket_obj = new \WPSC_Ticket( $ticket_id );
-			if ( $ticket_obj && $ticket_obj->id ) {
-				$ticket_url = $ticket_obj->get_url();
+		if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Functions' ) ) {
+			// Use the official static helper to force a frontend URL.
+			$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
+			if ( ! empty( $ticket_url ) ) {
 				$return_link = sprintf(
 					' <a href="%s">%s</a>',
 					esc_url( $ticket_url ),
@@ -948,18 +947,8 @@ class WordPress {
 	 */
 	public function redirect_after_staff_update( $location, $post_id ) {
 		try {
-			// New logging start
-			$debug_log_file = WP_CONTENT_DIR . '/jules_redirect_debug.log';
-			$log_entry      = '--- Redirect Debug Log: ' . date( 'Y-m-d H:i:s' ) . " ---\n";
-			$log_entry     .= 'Post ID: ' . $post_id . "\n";
-			$log_entry     .= 'Initial Location: ' . $location . "\n";
-			$log_entry     .= 'POST data: ' . print_r( $_POST, true ) . "\n";
-			// New logging end
-
 			// Only apply this logic to our staff CPT.
 			if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
-				$log_entry .= "Exiting: Post type is not staff CPT.\n\n";
-				file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 				return $location;
 			}
 
@@ -967,21 +956,11 @@ class WordPress {
 			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
 			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
 
-			$log_entry .= 'From value: ' . $from . "\n";
-			$log_entry .= 'Ticket ID value: ' . $ticket_id . "\n";
-
-			if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
-				// Use the official, supported method to get the correct front-end URL.
-				$ticket_obj = new \WPSC_Ticket( $ticket_id );
-				if ( $ticket_obj && $ticket_obj->id ) {
-					$ticket_url = $ticket_obj->get_url();
-					$log_entry .= 'Generated Ticket URL: ' . $ticket_url . "\n";
-					$log_entry .= "Redirecting now.\n\n";
-					file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
+			if ( 'ticket' === $from && $ticket_id > 0 && class_exists( 'WPSC_Functions' ) ) {
+				// Use the official static helper to force a frontend URL.
+				$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
+				if ( ! empty( $ticket_url ) ) {
 					return $ticket_url;
-				} else {
-					$log_entry .= "Failed to create WPSC_Ticket object or object has no ID.\n\n";
-					file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 				}
 			}
 
@@ -996,12 +975,8 @@ class WordPress {
 					),
 					$location
 				);
-				$log_entry .= 'Not redirecting to ticket, but adding query args. New location: ' . $location . "\n\n";
-			} else {
-				$log_entry .= "No 'from' context found. Returning original location.\n\n";
 			}
 
-			file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 			return $location;
 		} catch ( \Throwable $e ) {
 			// Prevent site crash by catching any error.
