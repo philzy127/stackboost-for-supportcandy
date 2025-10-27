@@ -52,6 +52,11 @@ class CustomPostTypes {
 	 */
 	public function __construct() {
 		add_action( 'init', array( $this, 'register_all_cpts' ) );
+
+		// Hooks for enabling meta field revisioning.
+		add_action( 'save_post', array( $this, 'save_revision_meta_data' ), 10, 2 );
+		add_action( 'wp_restore_post_revision', array( $this, 'restore_revision_meta_data' ), 10, 2 );
+		add_filter( '_wp_post_revision_fields', array( $this, 'add_revision_meta_fields' ), 10, 2 );
 	}
 
 	/**
@@ -228,5 +233,92 @@ class CustomPostTypes {
 		if (is_wp_error($result)) {
 		} else {
 		}
+	}
+
+	/**
+	 * Get the list of meta fields to be revisioned.
+	 * @return array
+	 */
+	private function get_revisioned_meta_fields(): array {
+		return array(
+			'_office_phone',
+			'_extension',
+			'_mobile_phone',
+			'_location_id',
+			'_room_number',
+			'_department_program',
+			'_stackboost_staff_job_title',
+			'_email_address',
+			'_active',
+			'_active_as_of_date',
+			'_planned_exit_date',
+			'_user_id',
+		);
+	}
+
+	/**
+	 * Save revision meta data.
+	 * @param int $post_id
+	 * @param \WP_Post $post
+	 */
+	public function save_revision_meta_data( int $post_id, \WP_Post $post ) {
+		if ( ! in_array( $post->post_type, [ $this->post_type, $this->location_post_type, $this->department_post_type ], true ) ) {
+			return;
+		}
+		if ( ! wp_revisions_enabled( $post ) ) {
+			return;
+		}
+
+		$parent_id = wp_is_post_revision( $post_id );
+		if ( $parent_id ) {
+			$parent = get_post( $parent_id );
+			$meta_fields = $this->get_revisioned_meta_fields();
+
+			foreach ( $meta_fields as $meta_key ) {
+				$meta_value = get_post_meta( $parent->ID, $meta_key, true );
+				if ( false !== $meta_value ) {
+					add_metadata( 'post', $post_id, $meta_key, $meta_value );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Restore revision meta data.
+	 * @param int $post_id
+	 * @param int $revision_id
+	 */
+	public function restore_revision_meta_data( int $post_id, int $revision_id ) {
+		$post        = get_post( $post_id );
+		$revision    = get_post( $revision_id );
+		$meta_fields = $this->get_revisioned_meta_fields();
+
+		foreach ( $meta_fields as $meta_key ) {
+			$meta_value = get_metadata( 'post', $revision->ID, $meta_key, true );
+			if ( false !== $meta_value ) {
+				update_post_meta( $post_id, $meta_key, $meta_value );
+			} else {
+				delete_post_meta( $post_id, $meta_key );
+			}
+		}
+	}
+
+	/**
+	 * Add meta fields to revision screen.
+	 * @param array $fields
+	 * @param array $post
+	 * @return array
+	 */
+	public function add_revision_meta_fields( array $fields, array $post ): array {
+		if ( ! in_array( $post['post_type'], [ $this->post_type, $this->location_post_type, $this->department_post_type ], true ) ) {
+			return $fields;
+		}
+		$meta_fields = $this->get_revisioned_meta_fields();
+
+		foreach ( $meta_fields as $meta_key ) {
+			$fields[ $meta_key ] = ucwords( str_replace( '_', ' ', $meta_key ) );
+		}
+
+		return $fields;
 	}
 }
