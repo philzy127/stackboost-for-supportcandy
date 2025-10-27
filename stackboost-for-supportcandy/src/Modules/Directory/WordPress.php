@@ -955,6 +955,8 @@ class WordPress {
 			$log_entry     .= 'POST ID: ' . print_r( $post_id, true ) . "\n";
 			$log_entry     .= 'ORIGINAL LOCATION: ' . print_r( $location, true ) . "\n";
 			$log_entry     .= 'POST SUPERGLOBAL: ' . print_r( $_POST, true ) . "\n";
+			$sc_page_settings = get_option( 'wpsc-gs-page-settings' );
+			$log_entry     .= 'SUPPORTCANDY PAGE SETTINGS (wpsc-gs-page-settings): ' . print_r( $sc_page_settings, true ) . "\n";
 
 			// Only apply this logic to our staff CPT.
 			if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
