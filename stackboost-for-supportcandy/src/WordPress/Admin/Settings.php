@@ -219,12 +219,15 @@ class Settings {
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
+		error_log('[SB DEBUG] sanitize_settings triggered. Raw input: ' . print_r($input, true));
+
 		$saved_settings = get_option( 'stackboost_settings', [] );
 		if ( ! is_array( $saved_settings ) ) {
 			$saved_settings = [];
 		}
 
 		$page_slug = $input['page_slug'] ?? '';
+		error_log('[SB DEBUG] Page Slug: ' . $page_slug);
 
 		$page_options = apply_filters('stackboost_settings_page_options', [
 			'stackboost-for-supportcandy' => [], // All settings moved to Ticket View
@@ -236,11 +239,14 @@ class Settings {
 		]);
 
 		$current_page_options = $page_options[ $page_slug ] ?? [];
+		error_log('[SB DEBUG] Options for this page: ' . print_r($current_page_options, true));
 
 		foreach ( $current_page_options as $key ) {
 			if ( array_key_exists( $key, $input ) ) {
+				error_log("[SB DEBUG] Processing key: {$key}. Found in input. Value: " . print_r($input[$key], true));
 				$saved_settings[ $key ] = $input[ $key ];
 			} else {
+				error_log("[SB DEBUG] Processing key: {$key}. NOT found in input.");
 				if ( str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
 					$saved_settings[ $key ] = [];
 				} else {
@@ -248,7 +254,7 @@ class Settings {
                 }
 			}
 		}
-
+		error_log('[SB DEBUG] Final settings to be saved: ' . print_r($saved_settings, true));
 		return $saved_settings;
 	}
 }
