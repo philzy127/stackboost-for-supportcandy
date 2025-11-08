@@ -201,8 +201,8 @@ final class Plugin {
 		// Specific modules enqueue their own assets as needed (e.g., After Ticket Survey).
 		$pages_with_common_script = [
 			'toplevel_page_stackboost-for-supportcandy',
-			'stackboost_page_stackboost-conditional-views',
-			'stackboost_page_stackboost-queue-macro',
+			'stackboost-for-supportcandy_page_stackboost-conditional-views',
+			'stackboost-for-supportcandy_page_stackboost-queue-macro',
 		];
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
