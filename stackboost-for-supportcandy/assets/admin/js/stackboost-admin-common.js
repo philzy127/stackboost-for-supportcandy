@@ -33,14 +33,14 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    // Before submitting a settings form that has a dual-list, select all items in the 'selected' list.
-    // This is scoped to only run if the specific dual-list exists on the current page.
-    const selectedStatusesList = $('#stackboost_selected_statuses');
-    if (selectedStatusesList.length > 0) {
-        selectedStatusesList.closest('form[action="options.php"]').on('submit', function () {
+    // Before submitting a settings form, select all items in any 'selected' dual-list.
+    // The logic is conditional to only run if the dual-list exists on the page.
+    $('form[action="options.php"]').on('submit', function () {
+        const selectedStatusesList = $('#stackboost_selected_statuses');
+        if (selectedStatusesList.length > 0) {
             selectedStatusesList.find('option').prop('selected', true);
-        });
-    }
+        }
+    });
 
     // Test button for Queue Macro
     $('#stackboost_test_queue_macro_button').on('click', function () {
