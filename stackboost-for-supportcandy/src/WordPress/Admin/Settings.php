@@ -213,7 +213,6 @@ class Settings {
 	 * This centralizes settings registration to prevent conflicts.
 	 */
 	public function register_settings() {
-		die('REGISTER SETTINGS HOOK FIRED');
 		// Main plugin settings, used by most modules.
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
 
