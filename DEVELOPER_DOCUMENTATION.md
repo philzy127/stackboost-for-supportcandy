@@ -116,6 +116,24 @@ These are the foundational files and classes that enable the plugin and its modu
 
 ---
 
+## 2.7. Centralized Settings Architecture
+
+The plugin uses a centralized architecture for managing all WordPress settings to prevent conflicts and ensure stability. All settings are registered and sanitized through a single, central class, `src/WordPress/Admin/Settings.php`.
+
+*   **Registration:** All `register_setting()` calls for all option groups (`stackboost_settings`, `stackboost_directory_settings`, etc.) are made *only* within the `register_settings()` method of the main `Settings.php` class. Individual modules **must not** call `register_setting()` themselves.
+
+*   **Sanitization:** The main `Settings.php` class contains a master sanitization function for each option group (e.g., `sanitize_settings()`).
+    *   For the main `stackboost_settings` group, which is shared by many modules, the `sanitize_settings()` function contains a comprehensive `switch` statement that applies the correct sanitization for every single setting based on its key.
+    *   For settings that belong to a single module (like `stackboost_directory_settings`), the central function acts as a simple passthrough, calling the original sanitization method in the respective module (e.g., `\StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::sanitize_settings()`). This maintains separation of concerns while centralizing control.
+
+*   **Adding New Settings:** To add a new setting to a page that uses the shared `stackboost_settings` option:
+    1.  Add the new setting's key to the appropriate array within the `$page_options` filter in `Settings.php`.
+    2.  Add a new `case` to the `switch` statement in the `sanitize_settings()` function to handle its specific sanitization requirements.
+
+This architecture ensures that there is a single point of entry for all settings data, preventing the silent save failures that can occur when multiple callbacks are registered for the same option group.
+
+---
+
 ## 3. Module Documentation
 
 This section provides a technical breakdown of each individual module.

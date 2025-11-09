@@ -219,36 +219,115 @@ class Settings {
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
-		$saved_settings = get_option( 'stackboost_settings', [] );
-		if ( ! is_array( $saved_settings ) ) {
+		// error_log('[SB] sanitize_settings() START. Input: ' . print_r($input, true));
+
+		$saved_settings = get_option('stackboost_settings', []);
+		if (!is_array($saved_settings)) {
 			$saved_settings = [];
 		}
 
-		$page_slug = $input['page_slug'] ?? '';
+		$page_slug = sanitize_key($input['page_slug'] ?? '');
+		if (empty($page_slug)) {
+			// error_log('[SB] sanitize_settings() WARNING: No page_slug provided in input.');
+			return $saved_settings;
+		}
+		// error_log("[SB] sanitize_settings() Processing for page_slug: {$page_slug}");
 
 		$page_options = apply_filters('stackboost_settings_page_options', [
-			'stackboost-for-supportcandy' => [], // All settings moved to Ticket View
-			'stackboost-ticket-view' => [ 'enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide' ],
-			'stackboost-conditional-views' => [ 'enable_conditional_hiding', 'conditional_hiding_rules' ],
-			'stackboost-after-hours'        => [ 'enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message' ],
-			'stackboost-queue-macro'        => [ 'enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses' ],
-            'stackboost-ats-settings'       => [ 'ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base' ],
+			'stackboost-for-supportcandy' => [],
+			'stackboost-ticket-view' => ['enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide'],
+			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
+			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
+			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
+			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 		]);
 
-		$current_page_options = $page_options[ $page_slug ] ?? [];
+		$current_page_options = $page_options[$page_slug] ?? [];
+		if (empty($current_page_options)) {
+			// error_log("[SB] sanitize_settings() WARNING: No options defined for page_slug: {$page_slug}. Aborting save.");
+			return $saved_settings;
+		}
 
-		foreach ( $current_page_options as $key ) {
-			if ( array_key_exists( $key, $input ) ) {
-				$saved_settings[ $key ] = $input[ $key ];
+		foreach ($current_page_options as $key) {
+			// Determine if the key exists in the input or if it's a checkbox that was unchecked.
+			if (array_key_exists($key, $input)) {
+				$value = $input[$key];
+
+				// Sanitize based on the key. This is the crucial step.
+				switch ($key) {
+					case 'enable_ticket_details_card':
+					case 'enable_hide_empty_columns':
+					case 'enable_hide_priority_column':
+					case 'enable_ticket_type_hiding':
+					case 'enable_conditional_hiding':
+					case 'enable_queue_macro':
+					case 'enable_after_hours_notice':
+					case 'include_all_weekends':
+						$saved_settings[$key] = intval($value);
+						break;
+
+					case 'after_hours_start':
+					case 'before_hours_end':
+					case 'ats_ticket_question_id':
+					case 'ats_technician_question_id':
+						$saved_settings[$key] = intval($value);
+						break;
+
+					case 'queue_macro_statuses':
+						$saved_settings[$key] = is_array($value) ? array_map('intval', $value) : [];
+						break;
+
+					case 'conditional_hiding_rules':
+						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value) : [];
+						break;
+
+					case 'after_hours_message':
+						$saved_settings[$key] = wp_kses_post($value);
+						break;
+
+					case 'ats_background_color':
+						$saved_settings[$key] = sanitize_hex_color($value);
+						break;
+
+					case 'ats_ticket_url_base':
+						$saved_settings[$key] = esc_url_raw($value);
+						break;
+
+					default:
+						$saved_settings[$key] = sanitize_text_field($value);
+						break;
+				}
 			} else {
-				if ( str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
-					$saved_settings[ $key ] = [];
-				} else {
-                    $saved_settings[ $key ] = 0; // Handles all checkboxes.
-                }
+				// Handle unchecked checkboxes.
+				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_')) {
+					$saved_settings[$key] = 0;
+				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
+					$saved_settings[$key] = [];
+				}
 			}
 		}
 
+		// error_log('[SB] sanitize_settings() END. Final sanitized settings: ' . print_r($saved_settings, true));
 		return $saved_settings;
+	}
+	/**
+	 * Helper function to sanitize the conditional hiding rules array.
+	 * @param array $rules
+	 * @return array
+	 */
+	private function sanitize_rules_array(array $rules): array
+	{
+		$sanitized_rules = [];
+		foreach ($rules as $index => $rule) {
+			if (is_array($rule)) {
+				$sanitized_rules[sanitize_key($index)] = [
+					'action'    => sanitize_key($rule['action'] ?? 'hide'),
+					'columns'   => sanitize_key($rule['columns'] ?? ''),
+					'condition' => sanitize_key($rule['condition'] ?? 'in_view'),
+					'view'      => sanitize_key($rule['view'] ?? ''),
+				];
+			}
+		}
+		return $sanitized_rules;
 	}
 }

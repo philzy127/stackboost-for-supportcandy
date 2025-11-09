@@ -29,13 +29,13 @@ class Settings {
 
 	/**
 	 * Register settings.
+	 *
+	 * @deprecated No longer used. Settings are now registered centrally.
 	 */
 	public static function register_settings() {
-		register_setting(
-			self::OPTION_GROUP,
-			self::OPTION_NAME,
-			array( __CLASS__, 'sanitize_settings' )
-		);
+		// This function is deprecated. The settings are now registered
+		// in the main \StackBoost\ForSupportCandy\WordPress\Admin\Settings class
+		// to avoid conflicts and centralize settings management.
 	}
 
 	/**

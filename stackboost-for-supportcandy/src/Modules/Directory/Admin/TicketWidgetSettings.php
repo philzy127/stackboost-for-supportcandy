@@ -29,13 +29,13 @@ class TicketWidgetSettings {
 
 	/**
 	 * Register settings.
+	 *
+	 * @deprecated No longer used. Settings are now registered centrally.
 	 */
 	public static function register_settings() {
-		register_setting(
-			self::WIDGET_OPTION_GROUP,
-			self::WIDGET_OPTION_NAME,
-			array( __CLASS__, 'sanitize_widget_settings' )
-		);
+		// This function is deprecated. The settings are now registered
+		// in the main \StackBoost\ForSupportCandy\WordPress\Admin\Settings class
+		// to avoid conflicts and centralize settings management.
 	}
 
 	/**

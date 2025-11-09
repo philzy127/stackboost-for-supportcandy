@@ -33,9 +33,13 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    // Before submitting a settings form, select all items in any 'selected' dual-list
+    // Before submitting a settings form, select all items in any 'selected' dual-list.
+    // The logic is conditional to only run if the dual-list exists on the page.
     $('form[action="options.php"]').on('submit', function () {
-        $('#stackboost_selected_statuses option').prop('selected', true);
+        const selectedStatusesList = $('#stackboost_selected_statuses');
+        if (selectedStatusesList.length > 0) {
+            selectedStatusesList.find('option').prop('selected', true);
+        }
     });
 
     // Test button for Queue Macro
