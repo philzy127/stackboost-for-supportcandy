@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.5] - 2025-11-08
+
+### Fixed
+- **Settings Save Failure:** Resolved a critical, widespread bug that prevented settings from being saved on multiple admin pages, including "Queue Macro" and "After Hours Notice". The root cause was a silent conflict in the WordPress Settings API caused by different modules attempting to register the same settings group.
+- **Architectural Refactor:** The entire settings registration and sanitization process has been centralized into the main `src/WordPress/Admin/Settings.php` class. This architectural change eliminates the conflict and makes the settings system more robust and stable.
+- **Improved Sanitization:** The central sanitization function has been completely rewritten to use explicit, type-specific sanitization for every setting, ensuring data integrity and preventing silent save failures.
+- **Admin Page JavaScript Conflict:** Fixed a bug where a shared JavaScript file was causing visual and functional issues on admin pages it was not intended for. The script is now correctly scoped to only run on the relevant page.
+
 ## [1.2.4] - 2025-10-26
 
 ### Added
