@@ -1,6 +1,6 @@
 /* StackBoost Staff Directory Public Styles */
 
-.stackboost-staff-directory-container {
+.stackboost-directory-container {
     margin: 20px 0;
     padding: 20px;
     border: 1px solid #eee;
@@ -9,12 +9,12 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.stackboost-staff-directory-search-wrapper {
+.stackboost-directory-search-wrapper {
     margin-bottom: 20px;
     text-align: center;
 }
 
-.stackboost-staff-directory-search-input {
+.stackboost-directory-search-input {
     padding: 10px 15px;
     border: 1px solid #ccc;
     border-radius: 5px;

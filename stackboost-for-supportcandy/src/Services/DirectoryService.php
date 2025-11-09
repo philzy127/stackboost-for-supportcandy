@@ -34,7 +34,7 @@ class DirectoryService {
 	 *
 	 * @var string
 	 */
-	private $staff_post_type = 'sb_staff_dir';
+	private $staff_post_type = 'stkb_staff_dir';
 
 	/**
 	 * Get the single instance of the class.

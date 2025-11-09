@@ -232,7 +232,7 @@ final class Plugin {
 		// Enqueue datepicker for Staff CPT add/edit screens.
 		if ( 'post-new.php' === $hook_suffix || 'post.php' === $hook_suffix ) {
 			$screen = get_current_screen();
-			if ( $screen && 'sb_staff_dir' === $screen->post_type ) {
+			if ( $screen && 'stkb_staff_dir' === $screen->post_type ) {
 				wp_enqueue_script( 'jquery-ui-datepicker' );
 				wp_enqueue_style( 'jquery-ui-style', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css', true);
 			}

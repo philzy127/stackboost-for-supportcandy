@@ -47,25 +47,25 @@ class TicketWidgetSettings {
 	public static function sanitize_widget_settings( $input ): array {
 		$sanitized_input = [];
 
-		$sanitized_input['enabled'] = isset( $input['enabled'] ) ? '1' : '0';
+		$sanitized_input['stackboost_enabled'] = isset( $input['stackboost_enabled'] ) ? '1' : '0';
 
-		if ( isset( $input['placement'] ) && in_array( $input['placement'], [ 'before', 'after' ], true ) ) {
-			$sanitized_input['placement'] = $input['placement'];
+		if ( isset( $input['stackboost_placement'] ) && in_array( $input['stackboost_placement'], [ 'before', 'after' ], true ) ) {
+			$sanitized_input['stackboost_placement'] = $input['stackboost_placement'];
 		} else {
-			$sanitized_input['placement'] = 'before';
+			$sanitized_input['stackboost_placement'] = 'before';
 		}
 
-		if ( isset( $input['target_widget'] ) ) {
-			$sanitized_input['target_widget'] = sanitize_key( $input['target_widget'] );
+		if ( isset( $input['stackboost_target_widget'] ) ) {
+			$sanitized_input['stackboost_target_widget'] = sanitize_key( $input['stackboost_target_widget'] );
 		} else {
-			$sanitized_input['target_widget'] = '';
+			$sanitized_input['stackboost_target_widget'] = '';
 		}
 
-		if ( isset( $input['display_fields'] ) && is_string( $input['display_fields'] ) ) {
-			$fields = array_filter( explode( ',', $input['display_fields'] ) );
-			$sanitized_input['display_fields'] = array_map( 'sanitize_key', $fields );
+		if ( isset( $input['stackboost_display_fields'] ) && is_string( $input['stackboost_display_fields'] ) ) {
+			$fields = array_filter( explode( ',', $input['stackboost_display_fields'] ) );
+			$sanitized_input['stackboost_display_fields'] = array_map( 'sanitize_key', $fields );
 		} else {
-			$sanitized_input['display_fields'] = [];
+			$sanitized_input['stackboost_display_fields'] = [];
 		}
 
 		return $sanitized_input;
@@ -78,13 +78,13 @@ class TicketWidgetSettings {
 	 */
 	public static function get_directory_fields(): array {
 		return [
-			'name'                => __( 'Name', 'stackboost-for-supportcandy' ),
-			'chp_staff_job_title' => __( 'Title', 'stackboost-for-supportcandy' ),
-			'phone'               => __( 'Phone', 'stackboost-for-supportcandy' ),
-			'email_address'       => __( 'Email Address', 'stackboost-for-supportcandy' ),
-			'location'            => __( 'Location', 'stackboost-for-supportcandy' ),
-			'room_number'         => __( 'Room #', 'stackboost-for-supportcandy' ),
-			'department_program'  => __( 'Department / Program', 'stackboost-for-supportcandy' ),
+			'name'                       => __( 'Name', 'stackboost-for-supportcandy' ),
+			'stackboost_job_title'       => __( 'Title', 'stackboost-for-supportcandy' ),
+			'stackboost_phone_number'    => __( 'Phone', 'stackboost-for-supportcandy' ),
+			'stackboost_email_address'   => __( 'Email Address', 'stackboost-for-supportcandy' ),
+			'stackboost_location_id'     => __( 'Location', 'stackboost-for-supportcandy' ),
+			'stackboost_room_number'     => __( 'Room #', 'stackboost-for-supportcandy' ),
+			'stackboost_department_ids'  => __( 'Department / Program', 'stackboost-for-supportcandy' ),
 		];
 	}
 
@@ -117,13 +117,13 @@ class TicketWidgetSettings {
 	 */
 	private static function render_dual_list_field_selector( array $widget_options ) {
 		$all_fields       = self::get_directory_fields();
-		$displayed_fields = $widget_options['display_fields'] ?? [];
+		$displayed_fields = $widget_options['stackboost_display_fields'] ?? [];
 		$available_fields = array_diff_key( $all_fields, array_flip( $displayed_fields ) );
 		?>
-		<div class="dual-list-selector">
+		<div class="stackboost-dual-list-selector">
 			<div class="list-container">
 				<h3><?php esc_html_e( 'Available Fields', 'stackboost-for-supportcandy' ); ?></h3>
-				<ul id="available-fields" class="sortable-list">
+				<ul id="stackboost-available-fields" class="sortable-list">
 					<?php foreach ( $available_fields as $key => $label ) : ?>
 						<li data-key="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></li>
 					<?php endforeach; ?>
@@ -131,7 +131,7 @@ class TicketWidgetSettings {
 			</div>
 			<div class="list-container">
 				<h3><?php esc_html_e( 'Displayed Fields', 'stackboost-for-supportcandy' ); ?></h3>
-				<ul id="displayed-fields" class="sortable-list">
+				<ul id="stackboost-displayed-fields" class="sortable-list">
 					<?php
 					if ( ! empty( $displayed_fields ) ) {
 						foreach ( $displayed_fields as $key ) {
@@ -144,7 +144,7 @@ class TicketWidgetSettings {
 				</ul>
 			</div>
 		</div>
-		<input type="hidden" id="stackboost-display-fields" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[display_fields]" value="<?php echo esc_attr( implode( ',', $displayed_fields ) ); ?>">
+		<input type="hidden" id="stackboost-display-fields" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[stackboost_display_fields]" value="<?php echo esc_attr( implode( ',', $displayed_fields ) ); ?>">
 		<?php
 	}
 
@@ -157,16 +157,16 @@ class TicketWidgetSettings {
 			<?php
 			settings_fields( self::WIDGET_OPTION_GROUP );
 			$widget_options = get_option( self::WIDGET_OPTION_NAME, [] );
-			$is_enabled     = $widget_options['enabled'] ?? '0';
-			$placement      = $widget_options['placement'] ?? 'before';
-			$target_widget  = $widget_options['target_widget'] ?? '';
+			$is_enabled     = $widget_options['stackboost_enabled'] ?? '0';
+			$placement      = $widget_options['stackboost_placement'] ?? 'before';
+			$target_widget  = $widget_options['stackboost_target_widget'] ?? '';
 			?>
 			<table class="form-table">
 				<tr valign="top">
 					<th scope="row"><?php esc_html_e( 'Enable Widget', 'stackboost-for-supportcandy' ); ?></th>
 					<td>
 						<label>
-							<input type="checkbox" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[enabled]" value="1" <?php checked( $is_enabled, '1' ); ?>>
+							<input type="checkbox" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[stackboost_enabled]" value="1" <?php checked( $is_enabled, '1' ); ?>>
 							<?php esc_html_e( 'Enable the Company Directory widget on the ticket screen.', 'stackboost-for-supportcandy' ); ?>
 						</label>
 					</td>
@@ -174,7 +174,7 @@ class TicketWidgetSettings {
 				<tr valign="top">
 					<th scope="row"><label for="stackboost-widget-placement"><?php esc_html_e( 'Placement', 'stackboost-for-supportcandy' ); ?></label></th>
 					<td>
-						<select id="stackboost-widget-placement" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[placement]">
+						<select id="stackboost-widget-placement" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[stackboost_placement]">
 							<option value="before" <?php selected( $placement, 'before' ); ?>><?php esc_html_e( 'Before', 'stackboost-for-supportcandy' ); ?></option>
 							<option value="after" <?php selected( $placement, 'after' ); ?>><?php esc_html_e( 'After', 'stackboost-for-supportcandy' ); ?></option>
 						</select>
@@ -184,7 +184,7 @@ class TicketWidgetSettings {
 				<tr valign="top">
 					<th scope="row"><label for="stackboost-target-widget"><?php esc_html_e( 'Target Widget', 'stackboost-for-supportcandy' ); ?></label></th>
 					<td>
-						<select id="stackboost-target-widget" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[target_widget]">
+						<select id="stackboost-target-widget" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[stackboost_target_widget]">
 							<?php
 							$sc_widgets = get_option( 'wpsc-ticket-widget', [] );
 							foreach ( $sc_widgets as $slug => $widget_config ) {

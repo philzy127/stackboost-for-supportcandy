@@ -29,21 +29,21 @@ class CustomPostTypes {
 	 *
 	 * @var string
 	 */
-	public $post_type = 'sb_staff_dir';
+	public $post_type = 'stkb_staff_dir';
 
 	/**
 	 * The custom post type slug for locations.
 	 *
 	 * @var string
 	 */
-	public $location_post_type = 'sb_location';
+	public $location_post_type = 'stkb_location';
 
 	/**
 	 * The custom post type slug for departments.
 	 *
 	 * @var string
 	 */
-	public $department_post_type = 'sb_department';
+	public $department_post_type = 'stkb_department';
 
 	/**
 	 * Constructor.
@@ -241,18 +241,16 @@ class CustomPostTypes {
 	 */
 	private function get_revisioned_meta_fields(): array {
 		return array(
-			'_office_phone',
-			'_extension',
-			'_mobile_phone',
-			'_location_id',
-			'_room_number',
-			'_department_program',
-			'_stackboost_staff_job_title',
-			'_email_address',
+			'_stackboost_phone_number',
+			'_stackboost_location_id',
+			'_stackboost_room_number',
+			'_stackboost_department_ids',
+			'_stackboost_job_title',
+			'_stackboost_email_address',
 			'_active',
 			'_active_as_of_date',
 			'_planned_exit_date',
-			'_user_id',
+			'_stackboost_user_id',
 		);
 	}
 

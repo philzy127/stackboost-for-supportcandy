@@ -1,7 +1,7 @@
 jQuery(document).ready(function($) {
     // Dual-list sortable logic
     function updateHiddenField() {
-        var fieldKeys = $('#displayed-fields').sortable('toArray', { attribute: 'data-key' });
+        var fieldKeys = $('#stackboost-displayed-fields').sortable('toArray', { attribute: 'data-key' });
         $('#stackboost-display-fields').val(fieldKeys.join(','));
     }
 

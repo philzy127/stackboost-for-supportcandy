@@ -110,7 +110,7 @@ class Management {
 	 * Register AJAX actions.
 	 */
 	public static function register_ajax_actions() {
-		add_action( 'wp_ajax_stackboost_directory_import_csv', array( __CLASS__, 'ajax_import_csv' ) );
+		add_action( 'wp_ajax_stackboost_import_csv', array( __CLASS__, 'ajax_import_csv' ) );
 		add_action( 'wp_ajax_stackboost_directory_fresh_start', array( __CLASS__, 'ajax_fresh_start' ) );
 		add_action( 'wp_ajax_stackboost_directory_clear_data', array( __CLASS__, 'ajax_clear_data' ) );
 	}
@@ -167,14 +167,12 @@ class Management {
 				'post_type'   => $cpts->post_type,
 				'post_status' => 'publish',
 				'meta_input'  => array(
-					'_email_address'       => $email,
-					'_office_phone'        => $office_phone,
-					'_extension'           => $extension,
-					'_mobile_phone'        => $mobile_phone,
-					'_stackboost_staff_job_title' => $job_title,
-					'_department_program'  => $department,
-					'_active'              => 'Yes',
-					'_last_updated_by'     => 'CSV Import',
+					'_stackboost_email_address' => $email,
+					'_stackboost_phone_number'  => $office_phone,
+					'_stackboost_job_title'     => $job_title,
+					'_stackboost_department_ids' => $department,
+					'_active'                   => 'Yes',
+					'_last_updated_by'          => 'CSV Import',
 					'_last_updated_on'     => date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ),
 				),
 			);

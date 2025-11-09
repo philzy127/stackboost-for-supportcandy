@@ -63,7 +63,7 @@ class StaffListTable extends \WP_List_Table {
 			'title'                => __( 'Staff Name', 'stackboost-for-supportcandy' ),
 			'stackboost_contact_phone'    => __( 'Phone', 'stackboost-for-supportcandy' ),
 			'stackboost_email_address'    => __( 'Email', 'stackboost-for-supportcandy' ),
-			'sb_department_program' => __( 'Department / Program', 'stackboost-for-supportcandy' ),
+			'stkb_department_program' => __( 'Department / Program', 'stackboost-for-supportcandy' ),
 			'stackboost_job_title'        => __( 'Job Title', 'stackboost-for-supportcandy' ),
 		);
 
@@ -82,7 +82,7 @@ class StaffListTable extends \WP_List_Table {
 	public function get_sortable_columns() {
 		return array(
 			'title'                => array( 'title', false ),
-			'sb_department_program' => array( 'sb_department_program', false ),
+			'stkb_department_program' => array( 'stkb_department_program', false ),
 			'stackboost_job_title'        => array( 'stackboost_job_title', false ),
 		);
 	}
@@ -97,37 +97,24 @@ class StaffListTable extends \WP_List_Table {
 	public function column_default( $item, $column_name ) {
 		switch ( $column_name ) {
 			case 'stackboost_contact_phone':
-				$output       = '';
-				$office_phone = get_post_meta( $item->ID, '_office_phone', true );
-				$extension    = get_post_meta( $item->ID, '_extension', true );
-				$mobile_phone = get_post_meta( $item->ID, '_mobile_phone', true );
-
-				if ( ! empty( $office_phone ) ) {
-					$output .= '<strong>' . esc_html__( 'Office', 'stackboost-for-supportcandy' ) . ':</strong> ' . esc_html( $office_phone );
-					if ( ! empty( $extension ) ) {
-						$output .= ' ext. ' . esc_html( $extension );
-					}
-				}
-
-				if ( ! empty( $mobile_phone ) ) {
-					if ( ! empty( $output ) ) {
-						$output .= '<br>';
-					}
-					$output .= '<strong>' . esc_html__( 'Mobile', 'stackboost-for-supportcandy' ) . ':</strong> ' . esc_html( $mobile_phone );
-				}
-
-				return ! empty( $output ) ? $output : '&mdash;';
+				$phone_number = get_post_meta( $item->ID, '_stackboost_phone_number', true );
+				return ! empty( $phone_number ) ? esc_html( $phone_number ) : '&mdash;';
 			case 'stackboost_email_address':
-				$email = get_post_meta( $item->ID, '_email_address', true );
+				$email = get_post_meta( $item->ID, '_stackboost_email_address', true );
 				if ( ! empty( $email ) ) {
 					return '<a href="mailto:' . esc_attr( $email ) . '">' . esc_html( $email ) . '</a>';
 				} else {
 					return '&mdash;';
 				}
-			case 'sb_department_program':
-				return esc_html( get_post_meta( $item->ID, '_department_program', true ) );
+			case 'stkb_department_program':
+				$department_ids = get_post_meta( $item->ID, '_stackboost_department_ids', true );
+				if ( ! empty( $department_ids ) && is_array( $department_ids ) ) {
+					$department_names = array_map( 'get_the_title', $department_ids );
+					return esc_html( implode( ', ', $department_names ) );
+				}
+				return '&mdash;';
 			case 'stackboost_job_title':
-				return esc_html( get_post_meta( $item->ID, '_stackboost_staff_job_title', true ) );
+				return esc_html( get_post_meta( $item->ID, '_stackboost_job_title', true ) );
 			case 'stackboost_active_status':
 				$active_status = get_post_meta( $item->ID, '_active', true );
 				if ( 'Yes' === $active_status ) {
@@ -309,11 +296,11 @@ class StaffListTable extends \WP_List_Table {
 		}
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
-			if ( 'sb_department_program' === $orderby ) {
-				$args['meta_key'] = '_department_program';
+			if ( 'stkb_department_program' === $orderby ) {
+				$args['meta_key'] = '_stackboost_department_ids';
 				$args['orderby']  = 'meta_value';
 			} elseif ( 'stackboost_job_title' === $orderby ) {
-				$args['meta_key'] = '_stackboost_staff_job_title';
+				$args['meta_key'] = '_stackboost_job_title';
 				$args['orderby']  = 'meta_value';
 			} else {
 				$args['orderby'] = $orderby;

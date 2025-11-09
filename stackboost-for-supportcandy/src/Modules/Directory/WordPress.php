@@ -133,6 +133,30 @@ class WordPress {
 			'stackboost-directory',
 			array( $this, 'render_admin_page' )
 		);
+		add_submenu_page(
+			'stackboost-for-supportcandy',
+			__( 'Directory Management', 'stackboost-for-supportcandy' ),
+			__( 'Directory Management', 'stackboost-for-supportcandy' ),
+			'manage_options',
+			'stackboost-directory-management',
+			array( $this, 'render_admin_page' )
+		);
+		add_submenu_page(
+			'stackboost-for-supportcandy',
+			__( 'How to Use', 'stackboost-for-supportcandy' ),
+			__( 'How to Use', 'stackboost-for-supportcandy' ),
+			'manage_options',
+			'stackboost-directory-how-to-use',
+			array( $this, 'render_admin_page' )
+		);
+		add_submenu_page(
+			'stackboost-for-supportcandy',
+			__( 'Contact Widget', 'stackboost-for-supportcandy' ),
+			__( 'Contact Widget', 'stackboost-for-supportcandy' ),
+			'manage_options',
+			'stackboost-directory-contact-widget',
+			array( $this, 'render_admin_page' )
+		);
 	}
 
 	/**
@@ -161,6 +185,17 @@ class WordPress {
 		// Enqueue scripts for the main directory admin page.
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
+
+			if ('settings' === $active_tab) {
+				wp_enqueue_media();
+				wp_enqueue_script(
+					'stackboost-admin-settings',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/admin-settings.js',
+					[ 'jquery' ],
+					\STACKBOOST_VERSION,
+					true
+				);
+			}
 
 			// Enqueue scripts for the Contact Widget settings tab.
 			if ( 'contact_widget' === $active_tab ) {
@@ -346,9 +381,13 @@ class WordPress {
 			<h2 class="nav-tab-wrapper">
 				<?php
 				foreach ( $tabs as $tab_id => $tab_name ) {
+					$page_slug = 'stackboost-directory';
+					if ( in_array( $tab_id, [ 'management', 'how_to_use', 'contact_widget' ] ) ) {
+						$page_slug = 'stackboost-directory-' . str_replace('_', '-', $tab_id);
+					}
 					$tab_url = add_query_arg(
 						array(
-							'page' => 'stackboost-directory',
+							'page' => $page_slug,
 							'tab'  => $tab_id,
 						)
 					);
@@ -513,7 +552,7 @@ class WordPress {
 
 		// Fetch the raw post object. We still need this for some template functions.
 		$post = get_post( $post_id );
-		if ( ! $post || 'sb_staff_dir' !== $post->post_type ) {
+		if ( ! $post || 'stkb_staff_dir' !== $post->post_type ) {
 			wp_send_json_error( array( 'message' => 'Invalid post or post not found.' ) );
 		}
 
@@ -550,7 +589,7 @@ class WordPress {
 	 */
 	public function load_single_staff_template( $template ): string {
 		if ( is_singular( $this->core->cpts->post_type ) ) {
-			$plugin_template = \STACKBOOST_PLUGIN_PATH . 'single-sb_staff_dir.php';
+			$plugin_template = \STACKBOOST_PLUGIN_PATH . 'single-stkb_staff_dir.php';
 			if ( file_exists( $plugin_template ) ) {
 				return $plugin_template;
 			}

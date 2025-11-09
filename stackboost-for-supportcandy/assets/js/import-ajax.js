@@ -14,7 +14,7 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        formData.append('action', 'stackboost_directory_import_csv');
+        formData.append('action', 'stackboost_import_csv');
         formData.append('nonce', stackboostImportAjax.nonce);
 
         $.ajax({

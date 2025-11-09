@@ -53,7 +53,7 @@ class DirectoryShortcode {
 
 		ob_start();
 		?>
-		<div class="stackboost-staff-directory-container">
+		<div class="stackboost-directory-container">
 			<div id="stackboost-full-directory-table-wrapper">
 				<?php if ( ! empty( $employees ) ) : ?>
 					<table id="stackboostStaffDirectoryTable" class="display stackboost-staff-directory-table">
