@@ -227,52 +227,8 @@ class Settings {
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
-		error_log('[SB] sanitize_settings() START. Input: ' . print_r($input, true));
-
-		$saved_settings = get_option( 'stackboost_settings', [] );
-		if ( ! is_array( $saved_settings ) ) {
-			$saved_settings = [];
-		}
-
-		$page_slug = $input['page_slug'] ?? '';
-		if (empty($page_slug)) {
-			error_log('[SB] sanitize_settings() WARNING: No page_slug provided in input.');
-			// Do not proceed if we can't identify the page, to prevent data loss.
-			return $saved_settings;
-		}
-		error_log("[SB] sanitize_settings() Processing for page_slug: {$page_slug}");
-
-		$page_options = apply_filters('stackboost_settings_page_options', [
-			'stackboost-for-supportcandy' => [], // All settings moved to Ticket View
-			'stackboost-ticket-view' => [ 'enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide' ],
-			'stackboost-conditional-views' => [ 'enable_conditional_hiding', 'conditional_hiding_rules' ],
-			'stackboost-after-hours'        => [ 'enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message' ],
-			'stackboost-queue-macro'        => [ 'enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses' ],
-            'stackboost-ats-settings'       => [ 'ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base' ],
-		]);
-
-		$current_page_options = $page_options[ $page_slug ] ?? [];
-		if (empty($current_page_options)) {
-			error_log("[SB] sanitize_settings() WARNING: No options defined for page_slug: {$page_slug}. Aborting save.");
-			return $saved_settings;
-		}
-
-		foreach ( $current_page_options as $key ) {
-			if ( array_key_exists( $key, $input ) ) {
-				$saved_settings[ $key ] = $input[ $key ];
-			} else {
-				// This handles unchecking a checkbox, which means the key won't be in the input.
-				if ( str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') ) {
-					$saved_settings[ $key ] = 0;
-				} elseif ( str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
-					// This handles cases where a repeatable field (like rules) is completely removed.
-					$saved_settings[ $key ] = [];
-				}
-			}
-		}
-
-		error_log('[SB] sanitize_settings() END. Final saved settings: ' . print_r($saved_settings, true));
-		return $saved_settings;
+		// DIAGNOSTIC TEST: Return a simple, hardcoded array to test the save mechanism.
+		return ['test_key' => 'test_value_12345'];
 	}
 
 	/**
