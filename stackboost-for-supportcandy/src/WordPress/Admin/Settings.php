@@ -209,30 +209,38 @@ class Settings {
 	}
 
 	/**
-	 * Register the main settings group and its sanitization callback.
+	 * Register all settings groups used by the plugin.
+	 * This centralizes settings registration to prevent conflicts.
 	 */
 	public function register_settings() {
+		// Main plugin settings, used by most modules.
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
+
+		// Settings for the Directory module.
+		register_setting( 'stackboost_directory_settings', 'stackboost_directory_settings', [ $this, 'sanitize_directory_settings' ] );
+
+		// Settings for the Directory Contact Widget.
+		register_setting( 'stackboost_directory_widget_settings', 'stackboost_directory_widget_settings', [ $this, 'sanitize_directory_widget_settings' ] );
 	}
 
 	/**
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
-		echo '<pre>';
-		echo '<strong>[SB DEBUG] sanitize_settings triggered. Raw input:</strong><br>';
-		print_r($input);
+		error_log('[SB] sanitize_settings() START. Input: ' . print_r($input, true));
 
 		$saved_settings = get_option( 'stackboost_settings', [] );
 		if ( ! is_array( $saved_settings ) ) {
 			$saved_settings = [];
 		}
-		echo '<br><br><strong>[SB DEBUG] Saved settings BEFORE processing:</strong><br>';
-		print_r($saved_settings);
 
 		$page_slug = $input['page_slug'] ?? '';
-		echo '<br><br><strong>[SB DEBUG] Page Slug:</strong><br>';
-		print_r($page_slug);
+		if (empty($page_slug)) {
+			error_log('[SB] sanitize_settings() WARNING: No page_slug provided in input.');
+			// Do not proceed if we can't identify the page, to prevent data loss.
+			return $saved_settings;
+		}
+		error_log("[SB] sanitize_settings() Processing for page_slug: {$page_slug}");
 
 		$page_options = apply_filters('stackboost_settings_page_options', [
 			'stackboost-for-supportcandy' => [], // All settings moved to Ticket View
@@ -244,27 +252,48 @@ class Settings {
 		]);
 
 		$current_page_options = $page_options[ $page_slug ] ?? [];
-		echo '<br><br><strong>[SB DEBUG] Options for this page:</strong><br>';
-		print_r($current_page_options);
+		if (empty($current_page_options)) {
+			error_log("[SB] sanitize_settings() WARNING: No options defined for page_slug: {$page_slug}. Aborting save.");
+			return $saved_settings;
+		}
 
 		foreach ( $current_page_options as $key ) {
 			if ( array_key_exists( $key, $input ) ) {
 				$saved_settings[ $key ] = $input[ $key ];
 			} else {
-				if ( str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
+				// This handles unchecking a checkbox, which means the key won't be in the input.
+				if ( str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') ) {
+					$saved_settings[ $key ] = 0;
+				} elseif ( str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
+					// This handles cases where a repeatable field (like rules) is completely removed.
 					$saved_settings[ $key ] = [];
-				} else {
-                    $saved_settings[ $key ] = 0; // Handles all checkboxes.
-                }
+				}
 			}
 		}
 
-		echo '<br><br><strong>[SB DEBUG] Final settings to be saved:</strong><br>';
-		print_r($saved_settings);
-		echo '</pre>';
-		die('[SB DEBUG] End of processing.');
-
-
+		error_log('[SB] sanitize_settings() END. Final saved settings: ' . print_r($saved_settings, true));
 		return $saved_settings;
+	}
+
+	/**
+	 * Sanitize Directory settings.
+	 * This is a new callback for the centralized settings registration.
+	 * @param array $input The input data.
+	 * @return array The sanitized data.
+	 */
+	public function sanitize_directory_settings(array $input): array
+	{
+		return \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::sanitize_settings($input);
+	}
+
+	/**
+	 * Sanitize Directory Widget settings.
+	 * This is a new callback for the centralized settings registration.
+	 * @param array $input The input data.
+	 * @return array The sanitized data.
+	 */
+	public function sanitize_directory_widget_settings(array $input): array
+	{
+		return \StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings::sanitize_widget_settings($input);
 	}
 }
