@@ -77,11 +77,21 @@ class DirectoryService {
 
 		if ( is_numeric( $user_id_or_email ) ) {
 			$query_args['meta_query'][] = array(
+				'key'     => '_stackboost_user_id',
+				'value'   => (int) $user_id_or_email,
+				'compare' => '=',
+			);
+			$query_args['meta_query'][] = array(
 				'key'     => '_user_id',
 				'value'   => (int) $user_id_or_email,
 				'compare' => '=',
 			);
 		} elseif ( is_email( $user_id_or_email ) ) {
+			$query_args['meta_query'][] = array(
+				'key'     => '_stackboost_email_address',
+				'value'   => sanitize_email( $user_id_or_email ),
+				'compare' => '=',
+			);
 			$query_args['meta_query'][] = array(
 				'key'     => '_email_address',
 				'value'   => sanitize_email( $user_id_or_email ),
@@ -120,15 +130,13 @@ class DirectoryService {
 		$employee_data->permalink           = get_permalink( $profile_id );
 		$employee_data->edit_post_link      = get_edit_post_link( $profile_id );
 		$employee_data->thumbnail_url       = get_the_post_thumbnail_url( $profile_id, 'medium' );
-		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
-		$employee_data->job_title           = get_post_meta( $profile_id, '_chp_staff_job_title', true );
-		$employee_data->department_program  = get_post_meta( $profile_id, '_department_program', true );
-		$employee_data->office_phone        = get_post_meta( $profile_id, '_office_phone', true );
-		$employee_data->extension           = get_post_meta( $profile_id, '_extension', true );
-		$employee_data->mobile_phone        = get_post_meta( $profile_id, '_mobile_phone', true );
-		$employee_data->location_id         = get_post_meta( $profile_id, '_location_id', true );
+		$employee_data->email               = get_post_meta( $profile_id, '_stackboost_email_address', true ) ?: get_post_meta( $profile_id, '_email_address', true );
+		$employee_data->job_title           = get_post_meta( $profile_id, '_stackboost_job_title', true ) ?: get_post_meta( $profile_id, '_chp_staff_job_title', true );
+		$employee_data->department_ids      = get_post_meta( $profile_id, '_stackboost_department_ids', true ) ?: get_post_meta( $profile_id, '_department_program', true );
+		$employee_data->phone_number        = get_post_meta( $profile_id, '_stackboost_phone_number', true ) ?: get_post_meta( $profile_id, '_office_phone', true );
+		$employee_data->location_id         = get_post_meta( $profile_id, '_stackboost_location_id', true ) ?: get_post_meta( $profile_id, '_location_id', true );
 		$employee_data->location_name       = ! empty( $employee_data->location_id ) ? get_the_title( $employee_data->location_id ) : '';
-		$employee_data->room_number         = get_post_meta( $profile_id, '_room_number', true );
+		$employee_data->room_number         = get_post_meta( $profile_id, '_stackboost_room_number', true ) ?: get_post_meta( $profile_id, '_room_number', true );
 		$employee_data->active_status       = get_post_meta( $profile_id, '_active', true );
 		$employee_data->active_as_of_date   = get_post_meta( $profile_id, '_active_as_of_date', true );
 		$employee_data->planned_exit_date   = get_post_meta( $profile_id, '_planned_exit_date', true );
@@ -217,20 +225,10 @@ class DirectoryService {
 	public function get_formatted_phone_numbers_html( \stdClass $employee ): string {
 		$html_lines = [];
 
-		// Office Phone
-		if ( ! empty( $employee->office_phone ) ) {
-			$formatted_office_phone = $this->_format_phone_number_string( $employee->office_phone );
-			$office_line            = '<strong>Office:</strong> ' . $formatted_office_phone;
-			if ( ! empty( $employee->extension ) ) {
-				$office_line .= ' ext. ' . esc_html( $employee->extension );
-			}
-			$html_lines[] = $office_line;
-		}
-
-		// Mobile Phone
-		if ( ! empty( $employee->mobile_phone ) ) {
-			$formatted_mobile_phone = $this->_format_phone_number_string( $employee->mobile_phone );
-			$html_lines[]           = '<strong>Mobile:</strong> ' . $formatted_mobile_phone;
+		// Phone
+		if ( ! empty( $employee->phone_number ) ) {
+			$formatted_phone = $this->_format_phone_number_string( $employee->phone_number );
+			$html_lines[] = '<strong>Phone:</strong> ' . $formatted_phone;
 		}
 
 		return implode( '<br>', $html_lines );

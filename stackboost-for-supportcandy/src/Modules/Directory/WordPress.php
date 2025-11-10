@@ -133,30 +133,6 @@ class WordPress {
 			'stackboost-directory',
 			array( $this, 'render_admin_page' )
 		);
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'Directory Management', 'stackboost-for-supportcandy' ),
-			__( 'Directory Management', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-directory-management',
-			array( $this, 'render_admin_page' )
-		);
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'How to Use', 'stackboost-for-supportcandy' ),
-			__( 'How to Use', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-directory-how-to-use',
-			array( $this, 'render_admin_page' )
-		);
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'Contact Widget', 'stackboost-for-supportcandy' ),
-			__( 'Contact Widget', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-directory-contact-widget',
-			array( $this, 'render_admin_page' )
-		);
 	}
 
 	/**
@@ -183,7 +159,7 @@ class WordPress {
 		}
 
 		// Enqueue scripts for the main directory admin page.
-		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
+		if ( strpos( $screen->id, 'stackboost-directory' ) !== false ) {
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
 			if ('settings' === $active_tab) {
@@ -381,13 +357,9 @@ class WordPress {
 			<h2 class="nav-tab-wrapper">
 				<?php
 				foreach ( $tabs as $tab_id => $tab_name ) {
-					$page_slug = 'stackboost-directory';
-					if ( in_array( $tab_id, [ 'management', 'how_to_use', 'contact_widget' ] ) ) {
-						$page_slug = 'stackboost-directory-' . str_replace('_', '-', $tab_id);
-					}
 					$tab_url = add_query_arg(
 						array(
-							'page' => $page_slug,
+							'page' => 'stackboost-directory',
 							'tab'  => $tab_id,
 						)
 					);
