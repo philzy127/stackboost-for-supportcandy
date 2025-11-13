@@ -71,9 +71,19 @@ final class Plugin {
 	 * Initialize WordPress hooks that are central to the plugin.
 	 */
 	private function init_hooks() {
+		add_action( 'plugins_loaded', [ $this, 'init_modules' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_and_localize_frontend_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_menu' ], 999 );
+	}
+
+	/**
+	 * Initialize all loaded modules.
+	 */
+	public function init_modules() {
+		foreach ( $this->modules as $module ) {
+			$module->init_hooks();
+		}
 	}
 
 	/**
