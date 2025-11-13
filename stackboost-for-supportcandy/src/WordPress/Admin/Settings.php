@@ -376,7 +376,20 @@ class Settings {
 						break;
 				}
 			} else {
-				// Handle unchecked checkboxes.
+				// This block handles fields that were not present in the input,
+				// which is typically how unchecked checkboxes or cleared multi-selects are submitted.
+				switch ($key) {
+					case 'utm_enabled':
+					case 'utm_use_sc_order':
+						$saved_settings[$key] = 0;
+						break;
+					case 'utm_selected_fields':
+					case 'utm_rename_rules':
+						$saved_settings[$key] = [];
+						break;
+				}
+
+				// Handle other, non-UTM checkboxes.
 				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_')) {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
