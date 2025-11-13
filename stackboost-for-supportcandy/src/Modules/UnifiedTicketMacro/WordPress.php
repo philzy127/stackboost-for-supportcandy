@@ -40,6 +40,7 @@ class WordPress extends Module {
 	}
 
 	public function init_hooks() {
+		error_log('[SB UTM] >>>>>>>>>> UnifiedTicketMacro WordPress::init_hooks() - Module loading.');
 		// Admin page setup is always active
 		$this->admin->init_hooks();
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
@@ -51,8 +52,10 @@ class WordPress extends Module {
 		// Only activate the core functionality if the feature is enabled
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['utm_enabled'] ) ) {
+			error_log('[SB UTM] >>>>>>>>>> init_hooks() - Feature is DISABLED. Aborting hook registration.');
 			return;
 		}
+		error_log('[SB UTM] >>>>>>>>>> init_hooks() - Feature is ENABLED. Registering core hooks.');
 
 		// Caching hooks
 		add_action( 'wpsc_create_new_ticket', [ $this, 'prime_cache_on_creation' ], 5, 1 );
