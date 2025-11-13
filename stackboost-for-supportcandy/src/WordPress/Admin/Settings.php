@@ -280,7 +280,7 @@ class Settings {
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
-		// error_log('[SB] sanitize_settings() START. Input: ' . print_r($input, true));
+		error_log('[SB] sanitize_settings() START. Raw Input: ' . print_r($input, true));
 
 		$saved_settings = get_option('stackboost_settings', []);
 		if (!is_array($saved_settings)) {
@@ -289,10 +289,10 @@ class Settings {
 
 		$page_slug = sanitize_key($input['page_slug'] ?? '');
 		if (empty($page_slug)) {
-			// error_log('[SB] sanitize_settings() WARNING: No page_slug provided in input.');
+			error_log('[SB] sanitize_settings() ERROR: No page_slug provided in input. Aborting.');
 			return $saved_settings;
 		}
-		// error_log("[SB] sanitize_settings() Processing for page_slug: {$page_slug}");
+		error_log("[SB] sanitize_settings() Processing for page_slug: {$page_slug}");
 
 		$page_options = apply_filters('stackboost_settings_page_options', [
 			'stackboost-for-supportcandy' => [],
@@ -398,7 +398,7 @@ class Settings {
 			}
 		}
 
-		// error_log('[SB] sanitize_settings() END. Final sanitized settings: ' . print_r($saved_settings, true));
+		error_log('[SB] sanitize_settings() END. Final sanitized settings for this page: ' . print_r($saved_settings, true));
 		return $saved_settings;
 	}
 	/**
