@@ -90,6 +90,12 @@ class WordPress extends Module {
 		if ( 'stackboost_page_' . Admin::PAGE_SLUG !== $hook ) {
 			return;
 		}
+		wp_enqueue_style(
+			'stackboost-admin-utm',
+			\STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-admin-utm.css',
+			[],
+			\STACKBOOST_VERSION
+		);
 		wp_enqueue_script(
 			'stackboost-admin-utm',
 			\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-admin-utm.js',

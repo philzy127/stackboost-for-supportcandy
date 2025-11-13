@@ -46,50 +46,64 @@ class Admin {
 	 * Register settings sections and fields.
 	 */
 	public function register_settings() {
+		// Section: Enable
 		add_settings_section(
 			'stackboost_utm_enable_section',
-			__( 'General Settings', 'stackboost-for-supportcandy' ),
-			'__return_false',
+			__( 'Enable Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_description_enable' ],
 			self::PAGE_SLUG
 		);
-
 		add_settings_field(
 			'stackboost_utm_enabled',
-			__( 'Enable Feature', 'stackboost-for-supportcandy' ),
+			'', // No label needed
 			[ $this, 'render_enabled_checkbox' ],
 			self::PAGE_SLUG,
 			'stackboost_utm_enable_section'
 		);
 
+		// Section: Fields to Display
 		add_settings_section(
 			'stackboost_utm_fields_section',
-			__( 'Unified Ticket Macro Fields', 'stackboost-for-supportcandy' ),
-			'__return_false',
+			__( 'Fields to Display', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_description_fields' ],
 			self::PAGE_SLUG
 		);
-
 		add_settings_field(
 			'stackboost_utm_selected_fields',
-			__( 'Fields to Display', 'stackboost-for-supportcandy' ),
+			'', // No label needed
 			[ $this, 'render_fields_selector' ],
 			self::PAGE_SLUG,
 			'stackboost_utm_fields_section'
 		);
 
-		add_settings_field(
-			'stackboost_utm_rename_rules',
-			__( 'Rename Field Titles', 'stackboost-for-supportcandy' ),
-			[ $this, 'render_rules_builder' ],
-			self::PAGE_SLUG,
-			'stackboost_utm_fields_section'
+		// Section: Field Order
+		add_settings_section(
+			'stackboost_utm_order_section',
+			__( 'Field Order', 'stackboost-for-supportcandy' ),
+			'__return_false',
+			self::PAGE_SLUG
 		);
-
 		add_settings_field(
 			'stackboost_utm_use_sc_order',
-			__( 'Field Order', 'stackboost-for-supportcandy' ),
+			'', // No label needed
 			[ $this, 'render_use_sc_order_checkbox' ],
 			self::PAGE_SLUG,
-			'stackboost_utm_fields_section'
+			'stackboost_utm_order_section'
+		);
+
+		// Section: Rename Rules
+		add_settings_section(
+			'stackboost_utm_rename_section',
+			__( 'Rename Field Titles', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_description_rename' ],
+			self::PAGE_SLUG
+		);
+		add_settings_field(
+			'stackboost_utm_rename_rules',
+			__( 'Renaming Rules', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_rules_builder' ],
+			self::PAGE_SLUG,
+			'stackboost_utm_rename_section'
 		);
 	}
 
@@ -122,10 +136,10 @@ class Admin {
 				</select>
 			</div>
 			<div class="stackboost-utm-buttons">
-				<button type="button" class="button" id="stackboost_utm_add_all">&gt;&gt;</button>
-				<button type="button" class="button" id="stackboost_utm_add">&gt;</button>
-				<button type="button" class="button" id="stackboost_utm_remove">&lt;</button>
-				<button type="button" class="button" id="stackboost_utm_remove_all">&lt;&lt;</button>
+				<button type="button" class="button" id="stackboost_utm_add_all"><span class="dashicons dashicons-controls-forward"></span></button>
+				<button type="button" class="button" id="stackboost_utm_add"><span class="dashicons dashicons-arrow-right-alt2"></span></button>
+				<button type="button" class="button" id="stackboost_utm_remove"><span class="dashicons dashicons-arrow-left-alt2"></span></button>
+				<button type="button" class="button" id="stackboost_utm_remove_all"><span class="dashicons dashicons-controls-back"></span></button>
 			</div>
 			<div class="stackboost-utm-box">
 				<h3><?php esc_html_e( 'Selected Fields', 'stackboost-for-supportcandy' ); ?></h3>
@@ -135,11 +149,11 @@ class Admin {
 							<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $name ); ?></option>
 						<?php endforeach; ?>
 					</select>
-					<div class="stackboost-utm-buttons">
-						<button type="button" class="button" id="stackboost_utm_move_top">Top</button>
-						<button type="button" class="button" id="stackboost_utm_move_up">Up</button>
-						<button type="button" class="button" id="stackboost_utm_move_down">Down</button>
-						<button type="button" class="button" id="stackboost_utm_move_bottom">Bottom</button>
+					<div class="stackboost-utm-buttons vertical">
+						<button type="button" class="button" id="stackboost_utm_move_top"><span class="dashicons dashicons-arrow-up-alt"></span></button>
+						<button type="button" class="button" id="stackboost_utm_move_up"><span class="dashicons dashicons-arrow-up-alt2"></span></button>
+						<button type="button" class="button" id="stackboost_utm_move_down"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
+						<button type="button" class="button" id="stackboost_utm_move_bottom"><span class="dashicons dashicons-arrow-down-alt"></span></button>
 					</div>
 				</div>
 			</div>
@@ -159,13 +173,15 @@ class Admin {
 			<?php if ( ! empty( $rename_rules ) ) : ?>
 				<?php foreach ( $rename_rules as $rule ) : ?>
 					<div class="stackboost-utm-rule-row">
+						<span><?php esc_html_e( 'Display', 'stackboost-for-supportcandy' ); ?></span>
 						<select class="stackboost-utm-rule-field">
 							<?php foreach ( $all_columns as $slug => $name ) : ?>
 								<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $slug, $rule['field'] ); ?>><?php echo esc_html( $name ); ?></option>
 							<?php endforeach; ?>
 						</select>
+						<span><?php esc_html_e( 'as', 'stackboost-for-supportcandy' ); ?></span>
 						<input type="text" class="stackboost-utm-rule-name" value="<?php echo esc_attr( $rule['name'] ); ?>" />
-						<button type="button" class="button stackboost-utm-remove-rule">X</button>
+						<button type="button" class="button stackboost-utm-remove-rule"><span class="dashicons dashicons-trash"></span></button>
 					</div>
 				<?php endforeach; ?>
 			<?php endif; ?>
@@ -173,13 +189,15 @@ class Admin {
 		<button type="button" id="stackboost-utm-add-rule" class="button"><?php esc_html_e( 'Add Rule', 'stackboost-for-supportcandy' ); ?></button>
 		<script type="text/template" id="stackboost-utm-rule-template">
 			<div class="stackboost-utm-rule-row">
+				<span><?php esc_html_e( 'Display', 'stackboost-for-supportcandy' ); ?></span>
 				<select class="stackboost-utm-rule-field">
 					<?php foreach ( $all_columns as $slug => $name ) : ?>
 						<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $name ); ?></option>
 					<?php endforeach; ?>
 				</select>
+				<span><?php esc_html_e( 'as', 'stackboost-for-supportcandy' ); ?></span>
 				<input type="text" class="stackboost-utm-rule-name" value="" />
-				<button type="button" class="button stackboost-utm-remove-rule">X</button>
+				<button type="button" class="button stackboost-utm-remove-rule"><span class="dashicons dashicons-trash"></span></button>
 			</div>
 		</script>
 		<?php
@@ -211,8 +229,23 @@ class Admin {
 		?>
 		<label>
 			<input type="checkbox" name="stackboost_settings[utm_enabled]" id="stackboost_utm_enabled" value="1" <?php checked( $enabled ); ?> />
-			<?php esc_html_e( 'Enable the Unified Ticket Macro feature.', 'stackboost-for-supportcandy' ); ?>
+			<?php esc_html_e( 'Enable this feature', 'stackboost-for-supportcandy' ); ?>
 		</label>
 		<?php
+	}
+
+	/**
+	 * Render descriptions for the settings sections.
+	 */
+	public function render_description_enable() {
+		echo '<p>' . esc_html__( 'When enabled, the {{scp_unified_ticket}} macro will be available in email notifications.', 'stackboost-for-supportcandy' ) . '</p>';
+	}
+
+	public function render_description_fields() {
+		echo '<p>' . esc_html__( 'Select the fields you want to include in the macro. The order of fields in the "Selected Fields" box will be the order they appear in the email.', 'stackboost-for-supportcandy' ) . '</p>';
+	}
+
+	public function render_description_rename() {
+		echo '<p>' . esc_html__( 'Here you can rename the titles of fields for the email output. For example, you could change "ID" to "Ticket Number".', 'stackboost-for-supportcandy' ) . '</p>';
 	}
 }

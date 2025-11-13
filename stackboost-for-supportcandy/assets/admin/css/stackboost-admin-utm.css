@@ -1,0 +1,36 @@
+.stackboost-utm-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.stackboost-utm-box select {
+    width: 250px;
+    height: 250px;
+}
+
+.stackboost-utm-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.stackboost-utm-buttons.vertical {
+    margin-left: 5px;
+}
+
+.stackboost-utm-selected-wrapper {
+    display: flex;
+    align-items: flex-start;
+}
+
+.stackboost-utm-rule-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.stackboost-utm-rule-name {
+    width: 200px;
+}
