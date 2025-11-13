@@ -35,6 +35,7 @@ class Admin {
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'stackboost_settings' );
+				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="' . esc_attr( self::PAGE_SLUG ) . '">';
 				// This function will render all settings sections and fields that have been
 				// registered for this page. The registration now happens in the main
 				// Settings.php file to ensure our custom sanitization is applied.
