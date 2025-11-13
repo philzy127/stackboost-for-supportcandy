@@ -240,6 +240,7 @@ class Settings {
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
+			'stackboost-utm'                => ['utm_selected_fields', 'utm_rename_rules'],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
@@ -277,8 +278,22 @@ class Settings {
 						$saved_settings[$key] = is_array($value) ? array_map('intval', $value) : [];
 						break;
 
+					case 'utm_selected_fields':
+						$saved_settings[$key] = is_array($value) ? array_map('sanitize_text_field', $value) : [];
+						break;
+
 					case 'conditional_hiding_rules':
-						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value) : [];
+						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['action', 'columns', 'condition', 'view']) : [];
+						break;
+
+					case 'utm_rename_rules':
+						// This data comes from a hidden field, JSON-encoded.
+						$decoded_value = json_decode(stripslashes($value), true);
+						if (json_last_error() === JSON_ERROR_NONE && is_array($decoded_value)) {
+							$saved_settings[$key] = $this->sanitize_rules_array($decoded_value, ['field', 'name']);
+						} else {
+							$saved_settings[$key] = [];
+						}
 						break;
 
 					case 'after_hours_message':
@@ -311,21 +326,21 @@ class Settings {
 		return $saved_settings;
 	}
 	/**
-	 * Helper function to sanitize the conditional hiding rules array.
+	 * Helper function to sanitize an array of associative arrays (rules).
 	 * @param array $rules
+	 * @param array $allowed_keys
 	 * @return array
 	 */
-	private function sanitize_rules_array(array $rules): array
+	private function sanitize_rules_array(array $rules, array $allowed_keys): array
 	{
 		$sanitized_rules = [];
-		foreach ($rules as $index => $rule) {
+		foreach ($rules as $rule) {
 			if (is_array($rule)) {
-				$sanitized_rules[sanitize_key($index)] = [
-					'action'    => sanitize_key($rule['action'] ?? 'hide'),
-					'columns'   => sanitize_key($rule['columns'] ?? ''),
-					'condition' => sanitize_key($rule['condition'] ?? 'in_view'),
-					'view'      => sanitize_key($rule['view'] ?? ''),
-				];
+				$sanitized_rule = [];
+				foreach ($allowed_keys as $key) {
+					$sanitized_rule[$key] = sanitize_text_field($rule[$key] ?? '');
+				}
+				$sanitized_rules[] = $sanitized_rule;
 			}
 		}
 		return $sanitized_rules;

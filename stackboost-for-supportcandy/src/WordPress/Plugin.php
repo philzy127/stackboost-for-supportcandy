@@ -10,6 +10,7 @@ use StackBoost\ForSupportCandy\Modules\QueueMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\TicketView;
+use StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 
 /**
@@ -62,6 +63,7 @@ final class Plugin {
 		$this->modules['queue_macro']         = QueueMacro\WordPress::get_instance();
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
 		$this->modules['directory']           = Directory\WordPress::get_instance();
+		$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
 
 	}
 
@@ -118,6 +120,10 @@ final class Plugin {
 			'directory'       => [
 				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
 				'slug'  => 'stackboost-directory',
+			],
+			'utm'             => [
+				'title' => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-utm',
 			],
 			'how-to'          => [
 				'title' => __( 'How To Use', 'stackboost-for-supportcandy' ),
