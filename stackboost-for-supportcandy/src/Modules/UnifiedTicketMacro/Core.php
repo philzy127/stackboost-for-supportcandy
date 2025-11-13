@@ -32,9 +32,22 @@ class Core {
 	 * @return string The generated HTML table.
 	 */
 	public function build_utm_html( WPSC_Ticket $ticket, array $config ): string {
+		error_log('[SB UTM Core] Starting HTML build for ticket ID: ' . $ticket->id);
 		$selected_fields = $config['selected_fields'] ?? [];
-		$rename_rules    = $config['rename_rules'] ?? [];
+		$rename_rules_raw = $config['rename_rules'] ?? [];
 		$all_columns     = $config['all_columns'] ?? [];
+
+		error_log('[SB UTM Core] Raw rename rules received: ' . print_r($rename_rules_raw, true));
+
+		// Convert the rename rules from an array of objects to a simple map for easier lookup.
+		$rename_map = [];
+		foreach ($rename_rules_raw as $rule) {
+			if (!empty($rule['field']) && !empty($rule['name'])) {
+				$rename_map[$rule['field']] = $rule['name'];
+			}
+		}
+
+		error_log('[SB UTM Core] Generated rename map: ' . print_r($rename_map, true));
 
 		if ( empty( $selected_fields ) ) {
 			return '<table></table>';
@@ -66,7 +79,8 @@ class Core {
 				continue;
 			}
 
-			$field_name    = $rename_rules[ $field_slug ] ?? ( $all_columns[ $field_slug ] ?? $field_slug );
+			$field_name    = $rename_map[ $field_slug ] ?? ( $all_columns[ $field_slug ] ?? $field_slug );
+			error_log("[SB UTM Core] Processing field: {$field_slug}. Final name: {$field_name}");
 			$display_value = '';
 			$field_type    = $field_types_map[ $field_slug ] ?? 'unknown';
 
