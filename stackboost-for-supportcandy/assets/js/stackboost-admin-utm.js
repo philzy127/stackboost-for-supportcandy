@@ -76,16 +76,19 @@ jQuery(document).ready(function($) {
         $('#stackboost-utm-rules-container .stackboost-utm-rule-row').each(function() {
             var field = $(this).find('.stackboost-utm-rule-field').val();
             var name = $(this).find('.stackboost-utm-rule-name').val();
-            renameRules.push({ field: field, name: name });
+            if (field && name) {
+                renameRules.push({ field: field, name: name });
+            }
         });
 
         // To pass this complex data, we'll serialize it as JSON and put it in a hidden field.
-        // The PHP side will need to json_decode this.
+        // First, remove any existing field to prevent duplication.
+        $(this).find('input[name="stackboost_settings[utm_rename_rules]"]').remove();
         var renameRulesInput = '<input type="hidden" name="stackboost_settings[utm_rename_rules]" value="' + esc_attr(JSON.stringify(renameRules)) + '" />';
         $(this).append(renameRulesInput);
     });
 
-    // Helper function to escape attributes
+    // Helper function to escape attributes for HTML value attribute.
     function esc_attr(str) {
         return str.replace(/"/g, '&quot;');
     }

@@ -213,6 +213,67 @@ class Settings {
 	 */
 	public function register_settings() {
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
+
+		// Unified Ticket Macro Module Settings
+		// We register them here so they are part of the central sanitization flow.
+		$utm_admin = new \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\Admin();
+		$utm_page_slug = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\Admin::PAGE_SLUG;
+
+		add_settings_section(
+			'stackboost_utm_enable_section',
+			__( 'Enable Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+			[ $utm_admin, 'render_description_enable' ],
+			$utm_page_slug
+		);
+		add_settings_field(
+			'stackboost_utm_enabled',
+			'',
+			[ $utm_admin, 'render_enabled_checkbox' ],
+			$utm_page_slug,
+			'stackboost_utm_enable_section'
+		);
+
+		add_settings_section(
+			'stackboost_utm_fields_section',
+			__( 'Fields to Display', 'stackboost-for-supportcandy' ),
+			[ $utm_admin, 'render_description_fields' ],
+			$utm_page_slug
+		);
+		add_settings_field(
+			'stackboost_utm_selected_fields',
+			'',
+			[ $utm_admin, 'render_fields_selector' ],
+			$utm_page_slug,
+			'stackboost_utm_fields_section'
+		);
+
+		add_settings_section(
+			'stackboost_utm_order_section',
+			__( 'Field Order', 'stackboost-for-supportcandy' ),
+			'__return_false',
+			$utm_page_slug
+		);
+		add_settings_field(
+			'stackboost_utm_use_sc_order',
+			'',
+			[ $utm_admin, 'render_use_sc_order_checkbox' ],
+			$utm_page_slug,
+			'stackboost_utm_order_section'
+		);
+
+		add_settings_section(
+			'stackboost_utm_rename_section',
+			__( 'Rename Field Titles', 'stackboost-for-supportcandy' ),
+			[ $utm_admin, 'render_description_rename' ],
+			$utm_page_slug
+		);
+		add_settings_field(
+			'stackboost_utm_rename_rules',
+			__( 'Renaming Rules', 'stackboost-for-supportcandy' ),
+			[ $utm_admin, 'render_rules_builder' ],
+			$utm_page_slug,
+			'stackboost_utm_rename_section'
+		);
 	}
 
 	/**
