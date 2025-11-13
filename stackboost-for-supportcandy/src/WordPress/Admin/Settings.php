@@ -398,6 +398,11 @@ class Settings {
 			}
 		}
 
+		// If we just saved the UTM page, update the cache version to force regeneration.
+		if ( 'stackboost-utm' === $page_slug ) {
+			update_option( 'stackboost_utm_cache_version', time() );
+		}
+
 		// error_log('[SB] sanitize_settings() END. Final sanitized settings: ' . print_r($saved_settings, true));
 		return $saved_settings;
 	}

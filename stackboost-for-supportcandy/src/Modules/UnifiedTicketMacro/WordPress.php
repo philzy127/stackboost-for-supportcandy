@@ -127,9 +127,10 @@ class WordPress extends Module {
 			$html_to_cache = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
 
 			if ( false !== $html_to_cache ) {
-				$misc_data                           = $ticket->misc;
-				$misc_data['stackboost_utm_html'] = $html_to_cache;
-				$ticket->misc                        = $misc_data;
+				$misc_data                                  = $ticket->misc;
+				$misc_data['stackboost_utm_html']        = $html_to_cache;
+				$misc_data['stackboost_utm_cache_version'] = get_option( 'stackboost_utm_cache_version', time() );
+				$ticket->misc                               = $misc_data;
 				$ticket->save();
 				delete_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
 			}
@@ -149,10 +150,11 @@ class WordPress extends Module {
 		}
 
 		if ( $ticket instanceof WPSC_Ticket && $ticket->id ) {
-			$html_to_cache                    = $this->build_html_for_ticket( $ticket );
-			$misc_data                        = $ticket->misc;
-			$misc_data['stackboost_utm_html'] = $html_to_cache;
-			$ticket->misc                     = $misc_data;
+			$html_to_cache                              = $this->build_html_for_ticket( $ticket );
+			$misc_data                                  = $ticket->misc;
+			$misc_data['stackboost_utm_html']        = $html_to_cache;
+			$misc_data['stackboost_utm_cache_version'] = get_option( 'stackboost_utm_cache_version', time() );
+			$ticket->misc                               = $misc_data;
 			$ticket->save();
 		}
 	}
@@ -169,11 +171,24 @@ class WordPress extends Module {
 			return $data;
 		}
 
+		// First, check for the transient that is set on new ticket creation.
 		$cached_html = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
+
 		if ( false === $cached_html ) {
-			$misc_data   = $ticket->misc;
+			$misc_data              = $ticket->misc;
+			$global_cache_version   = get_option( 'stackboost_utm_cache_version', 0 );
+			$ticket_cache_version   = $misc_data['stackboost_utm_cache_version'] ?? 1; // Default to 1 to force initial generation.
+
+			// If the ticket's cache is outdated, regenerate it.
+			if ( $global_cache_version !== $ticket_cache_version || empty( $misc_data['stackboost_utm_html'] ) ) {
+				$this->update_utm_cache( $ticket );
+				// Re-fetch misc data after updating.
+				$updated_ticket = new WPSC_Ticket( $ticket->id );
+				$misc_data   = $updated_ticket->misc;
+			}
 			$cached_html = $misc_data['stackboost_utm_html'] ?? '';
 		}
+
 		$data['body'] = str_replace( '{{stackboost_unified_ticket}}', $cached_html, $data['body'] );
 		return $data;
 	}
