@@ -47,7 +47,22 @@ class Admin {
 	 */
 	public function register_settings() {
 		add_settings_section(
-			'stackboost_utm_section',
+			'stackboost_utm_enable_section',
+			__( 'General Settings', 'stackboost-for-supportcandy' ),
+			'__return_false',
+			self::PAGE_SLUG
+		);
+
+		add_settings_field(
+			'stackboost_utm_enabled',
+			__( 'Enable Feature', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_enabled_checkbox' ],
+			self::PAGE_SLUG,
+			'stackboost_utm_enable_section'
+		);
+
+		add_settings_section(
+			'stackboost_utm_fields_section',
 			__( 'Unified Ticket Macro Fields', 'stackboost-for-supportcandy' ),
 			'__return_false',
 			self::PAGE_SLUG
@@ -58,7 +73,7 @@ class Admin {
 			__( 'Fields to Display', 'stackboost-for-supportcandy' ),
 			[ $this, 'render_fields_selector' ],
 			self::PAGE_SLUG,
-			'stackboost_utm_section'
+			'stackboost_utm_fields_section'
 		);
 
 		add_settings_field(
@@ -66,7 +81,15 @@ class Admin {
 			__( 'Rename Field Titles', 'stackboost-for-supportcandy' ),
 			[ $this, 'render_rules_builder' ],
 			self::PAGE_SLUG,
-			'stackboost_utm_section'
+			'stackboost_utm_fields_section'
+		);
+
+		add_settings_field(
+			'stackboost_utm_use_sc_order',
+			__( 'Field Order', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_use_sc_order_checkbox' ],
+			self::PAGE_SLUG,
+			'stackboost_utm_fields_section'
 		);
 	}
 
@@ -106,11 +129,19 @@ class Admin {
 			</div>
 			<div class="stackboost-utm-box">
 				<h3><?php esc_html_e( 'Selected Fields', 'stackboost-for-supportcandy' ); ?></h3>
-				<select multiple name="stackboost_settings[utm_selected_fields][]" id="stackboost_utm_selected_fields" size="10">
-					<?php foreach ( $ordered_selected as $slug => $name ) : ?>
-						<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $name ); ?></option>
-					<?php endforeach; ?>
-				</select>
+				<div class="stackboost-utm-selected-wrapper">
+					<select multiple name="stackboost_settings[utm_selected_fields][]" id="stackboost_utm_selected_fields" size="10">
+						<?php foreach ( $ordered_selected as $slug => $name ) : ?>
+							<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $name ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<div class="stackboost-utm-buttons">
+						<button type="button" class="button" id="stackboost_utm_move_top">Top</button>
+						<button type="button" class="button" id="stackboost_utm_move_up">Up</button>
+						<button type="button" class="button" id="stackboost_utm_move_down">Down</button>
+						<button type="button" class="button" id="stackboost_utm_move_bottom">Bottom</button>
+					</div>
+				</div>
 			</div>
 		</div>
 		<?php
@@ -151,6 +182,37 @@ class Admin {
 				<button type="button" class="button stackboost-utm-remove-rule">X</button>
 			</div>
 		</script>
+		<?php
+	}
+
+	/**
+	 * Render the checkbox for using SupportCandy field order.
+	 */
+	public function render_use_sc_order_checkbox() {
+		$options      = get_option( 'stackboost_settings', [] );
+		$use_sc_order = isset( $options['utm_use_sc_order'] ) ? (bool) $options['utm_use_sc_order'] : false;
+		?>
+		<label>
+			<input type="checkbox" name="stackboost_settings[utm_use_sc_order]" id="stackboost_utm_use_sc_order" value="1" <?php checked( $use_sc_order ); ?> />
+			<?php esc_html_e( 'Use SupportCandy Field Order', 'stackboost-for-supportcandy' ); ?>
+		</label>
+		<p class="description">
+			<?php esc_html_e( 'If checked, the fields will be ordered according to the global settings in SupportCandy -> Ticket Form Fields. The manual sorting controls will be disabled.', 'stackboost-for-supportcandy' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render the checkbox for enabling the feature.
+	 */
+	public function render_enabled_checkbox() {
+		$options = get_option( 'stackboost_settings', [] );
+		$enabled = isset( $options['utm_enabled'] ) ? (bool) $options['utm_enabled'] : false;
+		?>
+		<label>
+			<input type="checkbox" name="stackboost_settings[utm_enabled]" id="stackboost_utm_enabled" value="1" <?php checked( $enabled ); ?> />
+			<?php esc_html_e( 'Enable the Unified Ticket Macro feature.', 'stackboost-for-supportcandy' ); ?>
+		</label>
 		<?php
 	}
 }

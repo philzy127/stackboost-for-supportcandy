@@ -40,23 +40,33 @@ class WordPress extends Module {
 	}
 
 	public function init_hooks() {
-		// Admin page setup
+		// Admin page setup is always active
 		$this->admin->init_hooks();
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
+
+		// Register the macro tag itself so it appears in the list
+		add_filter( 'wpsc_macros', [ $this, 'register_macro_tag' ] );
+
+		// Only activate the core functionality if the feature is enabled
+		$options = get_option( 'stackboost_settings', [] );
+		if ( empty( $options['utm_enabled'] ) ) {
+			return;
+		}
 
 		// Caching hooks
 		add_action( 'wpsc_create_new_ticket', [ $this, 'prime_cache_on_creation' ], 5, 1 );
 		add_action( 'wpsc_after_reply_ticket', [ $this, 'update_utm_cache' ], 10, 1 );
 		add_action( 'wpsc_after_change_ticket_status', [ $this, 'update_utm_cache' ], 10, 1 );
+		add_action( 'wpsc_after_change_ticket_priority', [ $this, 'update_utm_cache' ], 10, 1 );
+		add_action( 'wpsc_after_assign_agent', [ $this, 'update_utm_cache' ], 10, 1 );
 
 		// Macro replacement hooks
 		add_filter( 'wpsc_create_ticket_email_data', [ $this, 'replace_utm_macro' ], 10, 2 );
 		add_filter( 'wpsc_agent_reply_email_data', [ $this, 'replace_utm_macro' ], 10, 2 );
+		add_filter( 'wpsc_customer_reply_email_data', [ $this, 'replace_utm_macro' ], 10, 2 );
 		add_filter( 'wpsc_close_ticket_email_data', [ $this, 'replace_utm_macro' ], 10, 2 );
-
-		// Register the macro tag itself
-		add_filter( 'wpsc_macros', [ $this, 'register_macro_tag' ] );
+		add_filter( 'wpsc_assign_agent_email_data', [ $this, 'replace_utm_macro' ], 10, 2 );
 	}
 
 	/**
@@ -77,7 +87,7 @@ class WordPress extends Module {
 	 * Enqueue admin scripts for the settings page.
 	 */
 	public function enqueue_admin_scripts( $hook ) {
-		if ( 'stackboost-for-supportcandy_page_' . Admin::PAGE_SLUG !== $hook ) {
+		if ( 'stackboost_page_' . Admin::PAGE_SLUG !== $hook ) {
 			return;
 		}
 		wp_enqueue_script(
@@ -180,8 +190,18 @@ class WordPress extends Module {
 		$options = get_option( 'stackboost_settings', [] );
 		$plugin  = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
 
+		$selected_fields = $options['utm_selected_fields'] ?? [];
+
+		if ( ! empty( $options['utm_use_sc_order'] ) ) {
+			$supportcandy_tff_fields = get_option( 'wpsc-tff', [] );
+			$sc_ordered_slugs        = array_keys( $supportcandy_tff_fields );
+			$ordered_part            = array_intersect( $sc_ordered_slugs, $selected_fields );
+			$unmatched_part          = array_diff( $selected_fields, $sc_ordered_slugs );
+			$selected_fields         = array_merge( $ordered_part, $unmatched_part );
+		}
+
 		$config = [
-			'selected_fields' => $options['utm_selected_fields'] ?? [],
+			'selected_fields' => $selected_fields,
 			'rename_rules'    => $options['utm_rename_rules'] ?? [],
 			'all_columns'     => $plugin->get_supportcandy_columns(),
 		];

@@ -1,4 +1,21 @@
 jQuery(document).ready(function($) {
+    var $useSCOrderCheckbox = $('#stackboost_utm_use_sc_order');
+    var $sortingButtons = $('#stackboost_utm_move_top, #stackboost_utm_move_up, #stackboost_utm_move_down, #stackboost_utm_move_bottom');
+
+    // Function to toggle the sorting buttons
+    function toggleSortingButtons() {
+        var isChecked = $useSCOrderCheckbox.is(':checked');
+        $sortingButtons.prop('disabled', isChecked);
+    }
+
+    // Initial state on page load
+    toggleSortingButtons();
+
+    // Toggle on checkbox change
+    $useSCOrderCheckbox.on('change', function() {
+        toggleSortingButtons();
+    });
+
     // Logic for the dual-list selector
     $('#stackboost_utm_add').click(function() {
         $('#stackboost_utm_available_fields option:selected').appendTo('#stackboost_utm_selected_fields');
@@ -14,6 +31,29 @@ jQuery(document).ready(function($) {
 
     $('#stackboost_utm_remove_all').click(function() {
         $('#stackboost_utm_selected_fields option').appendTo('#stackboost_utm_available_fields');
+    });
+
+    // Manual Sorting Logic
+    $('#stackboost_utm_move_up').on('click', function() {
+        $('#stackboost_utm_selected_fields option:selected').each(function() {
+            var $this = $(this);
+            $this.prev().before($this);
+        });
+    });
+
+    $('#stackboost_utm_move_down').on('click', function() {
+        $($('#stackboost_utm_selected_fields option:selected').get().reverse()).each(function() {
+            var $this = $(this);
+            $this.next().after($this);
+        });
+    });
+
+    $('#stackboost_utm_move_top').on('click', function() {
+        $('#stackboost_utm_selected_fields').prepend($('#stackboost_utm_selected_fields option:selected'));
+    });
+
+    $('#stackboost_utm_move_bottom').on('click', function() {
+        $('#stackboost_utm_selected_fields').append($('#stackboost_utm_selected_fields option:selected'));
     });
 
     // Logic for the renaming rules builder
