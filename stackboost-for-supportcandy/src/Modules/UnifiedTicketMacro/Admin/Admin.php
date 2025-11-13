@@ -238,7 +238,7 @@ class Admin {
 	 * Render descriptions for the settings sections.
 	 */
 	public function render_description_enable() {
-		echo '<p>' . esc_html__( 'When enabled, the {{scp_unified_ticket}} macro will be available in email notifications.', 'stackboost-for-supportcandy' ) . '</p>';
+		echo '<p>' . esc_html__( 'When enabled, the {{stackboost_unified_ticket}} macro will be available in email notifications.', 'stackboost-for-supportcandy' ) . '</p>';
 	}
 
 	public function render_description_fields() {

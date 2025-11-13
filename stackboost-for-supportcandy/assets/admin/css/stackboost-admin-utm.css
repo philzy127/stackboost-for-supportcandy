@@ -1,27 +1,65 @@
 .stackboost-utm-container {
     display: flex;
-    gap: 10px;
-    align-items: center;
+    gap: 15px;
+    align-items: flex-start;
+    max-width: 700px;
+}
+
+.stackboost-utm-box {
+    flex: 1;
+}
+
+.stackboost-utm-box h3 {
+    margin-top: 0;
+    margin-bottom: 5px;
 }
 
 .stackboost-utm-box select {
-    width: 250px;
-    height: 250px;
+    width: 100%;
+    height: 250px !important;
 }
 
 .stackboost-utm-buttons {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
+    justify-content: center;
+    align-self: center;
 }
 
-.stackboost-utm-buttons.vertical {
-    margin-left: 5px;
+.stackboost-utm-buttons .button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+}
+
+.stackboost-utm-buttons .button .dashicons {
+    font-size: 20px;
+}
+
+#stackboost_utm_add .dashicons,
+#stackboost_utm_remove .dashicons {
+    transform: scale(1.5);
 }
 
 .stackboost-utm-selected-wrapper {
     display: flex;
     align-items: flex-start;
+}
+
+.stackboost-utm-buttons.vertical {
+    margin-left: 10px;
+}
+
+#stackboost_utm_move_up .dashicons {
+    transform: rotate(-90deg);
+}
+
+#stackboost_utm_move_down .dashicons {
+    transform: rotate(90deg);
 }
 
 .stackboost-utm-rule-row {
