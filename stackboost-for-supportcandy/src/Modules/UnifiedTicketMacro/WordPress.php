@@ -3,7 +3,7 @@
 namespace StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro;
 
 use StackBoost\ForSupportCandy\Core\Module;
-use StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\Admin;
+use StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\AdminPage;
 use WPSC_Ticket;
 use WPSC_Thread;
 
@@ -19,7 +19,7 @@ class WordPress extends Module {
 
 	private static ?WordPress $instance = null;
 	private Core $core;
-	private Admin $admin;
+	private AdminPage $admin;
 	private ?WPSC_Ticket $deferred_ticket_to_save = null;
 
 	public static function get_instance(): WordPress {
@@ -31,7 +31,7 @@ class WordPress extends Module {
 
 	public function __construct() {
 		$this->core  = new Core();
-		$this->admin = new Admin();
+		$this->admin = new AdminPage();
 		parent::__construct();
 	}
 

@@ -17,12 +17,12 @@ jQuery(document).ready(function($) {
     });
 
     // Logic for the dual-list selector
-    $('#stackboost_utm_add').click(function() {
-        $('#stackboost_utm_available_fields option:selected').appendTo('#stackboost_utm_selected_fields');
+    $('#utm-add-field').click(function() {
+        $('#utm-available-fields option:selected').appendTo('#utm-selected-fields-list');
     });
 
-    $('#stackboost_utm_remove').click(function() {
-        $('#stackboost_utm_selected_fields option:selected').appendTo('#stackboost_utm_available_fields');
+    $('#utm-remove-field').click(function() {
+        $('#utm-selected-fields-list option:selected').appendTo('#utm-available-fields');
     });
 
     $('#stackboost_utm_add_all').click(function() {

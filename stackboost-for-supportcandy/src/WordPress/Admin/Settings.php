@@ -216,64 +216,33 @@ class Settings {
 
 		// Unified Ticket Macro Module Settings
 		// We register them here so they are part of the central sanitization flow.
-		$utm_admin = new \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\Admin();
-		$utm_page_slug = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\Admin::PAGE_SLUG;
+		$utm_admin = new \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\AdminPage();
+		$utm_page_slug = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\AdminPage::PAGE_SLUG;
 
 		add_settings_section(
-			'stackboost_utm_enable_section',
-			__( 'Enable Unified Ticket Macro', 'stackboost-for-supportcandy' ),
-			[ $utm_admin, 'render_description_enable' ],
-			$utm_page_slug
-		);
-		add_settings_field(
-			'stackboost_utm_enabled',
-			'',
-			[ $utm_admin, 'render_enabled_checkbox' ],
-			$utm_page_slug,
-			'stackboost_utm_enable_section'
-		);
-
-		add_settings_section(
-			'stackboost_utm_fields_section',
-			__( 'Fields to Display', 'stackboost-for-supportcandy' ),
-			[ $utm_admin, 'render_description_fields' ],
-			$utm_page_slug
-		);
-		add_settings_field(
-			'stackboost_utm_selected_fields',
-			'',
-			[ $utm_admin, 'render_fields_selector' ],
-			$utm_page_slug,
-			'stackboost_utm_fields_section'
-		);
-
-		add_settings_section(
-			'stackboost_utm_order_section',
-			__( 'Field Order', 'stackboost-for-supportcandy' ),
+			'stackboost_utm_settings_section',
+			__( 'Unified Ticket Macro Settings', 'stackboost-for-supportcandy' ),
 			'__return_false',
 			$utm_page_slug
 		);
-		add_settings_field(
-			'stackboost_utm_use_sc_order',
-			'',
-			[ $utm_admin, 'render_use_sc_order_checkbox' ],
-			$utm_page_slug,
-			'stackboost_utm_order_section'
-		);
 
-		add_settings_section(
-			'stackboost_utm_rename_section',
-			__( 'Rename Field Titles', 'stackboost-for-supportcandy' ),
-			[ $utm_admin, 'render_description_rename' ],
-			$utm_page_slug
-		);
-		add_settings_field(
-			'stackboost_utm_rename_rules',
-			__( 'Renaming Rules', 'stackboost-for-supportcandy' ),
-			[ $utm_admin, 'render_rules_builder' ],
-			$utm_page_slug,
-			'stackboost_utm_rename_section'
-		);
+		$fields = [
+			'utm_enabled'        => __( 'Enable Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+			'utm_use_sc_order'   => __( 'Use SupportCandy Field Order', 'stackboost-for-supportcandy' ),
+			'utm_selected_fields' => __( 'Select Fields to Include', 'stackboost-for-supportcandy' ),
+			'utm_rename_rules'   => __( 'Rename Fields', 'stackboost-for-supportcandy' ),
+		];
+
+		foreach ( $fields as $id => $title ) {
+			add_settings_field(
+				'stackboost_settings[' . $id . ']',
+				$title,
+				[ $utm_admin, 'render_field_' . $id ],
+				$utm_page_slug,
+				'stackboost_utm_settings_section',
+				[ 'label_for' => $id ]
+			);
+		}
 	}
 
 	/**
