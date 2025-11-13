@@ -17,6 +17,7 @@ abstract class Module {
 	 * Registers the init_hooks method to be called.
 	 */
 	public function __construct() {
+		$this->init_hooks();
 	}
 
 	/**
