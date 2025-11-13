@@ -89,10 +89,10 @@ class Admin {
 						<?php endforeach; ?>
 					</select>
 					<div class="stackboost-utm-buttons vertical">
-						<button type="button" class="button" id="stackboost_utm_move_top" title="<?php esc_attr_e( 'Move to Top', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-up-alt"></span></button>
-						<button type="button" class="button" id="stackboost_utm_move_up" title="<?php esc_attr_e( 'Move Up', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-up-alt2"></span></button>
-						<button type="button" class="button" id="stackboost_utm_move_down" title="<?php esc_attr_e( 'Move Down', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
-						<button type="button" class="button" id="stackboost_utm_move_bottom" title="<?php esc_attr_e( 'Move to Bottom', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-down-alt"></span></button>
+						<button type="button" class="button" id="stackboost_utm_move_top" title="<?php esc_attr_e( 'Move to Top', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-forward"></span></button>
+						<button type="button" class="button" id="stackboost_utm_move_up" title="<?php esc_attr_e( 'Move Up', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-right-alt2"></span></button>
+						<button type="button" class="button" id="stackboost_utm_move_down" title="<?php esc_attr_e( 'Move Down', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-left-alt2"></span></button>
+						<button type="button" class="button" id="stackboost_utm_move_bottom" title="<?php esc_attr_e( 'Move to Bottom', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-back"></span></button>
 					</div>
 				</div>
 			</div>

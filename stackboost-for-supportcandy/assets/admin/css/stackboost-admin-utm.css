@@ -54,6 +54,10 @@
     margin-left: 10px;
 }
 
+.stackboost-utm-buttons.vertical .dashicons {
+    transform: rotate(-90deg);
+}
+
 .stackboost-utm-rule-row {
     display: flex;
     align-items: center;
