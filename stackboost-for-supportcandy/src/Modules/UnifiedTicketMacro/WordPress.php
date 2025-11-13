@@ -40,7 +40,7 @@ class WordPress extends Module {
 	}
 
 	public function init_hooks() {
-		error_log('[SB UTM] >>>>>>>>>> UnifiedTicketMacro WordPress::init_hooks() - Module loading.');
+		error_log('[SB UTM] >>>>>>>>>> UnifiedTicketMacro WordPress::init_hooks() - Module loading. BACKTRACE: ' . print_r(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 7), true));
 		// Admin page setup is always active
 		$this->admin->init_hooks();
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
