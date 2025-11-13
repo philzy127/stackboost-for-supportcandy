@@ -122,26 +122,29 @@ class WordPress extends Module {
 	 * Defer the permanent save to the end of the request to avoid recursion.
 	 */
 	public function deferred_save() {
-		if ( $this->deferred_ticket_to_save instanceof WPSC_Ticket ) {
-			$ticket        = $this->deferred_ticket_to_save;
+		error_log('[SB UTM] deferred_save() - Enter');
+		if ( isset( $this->deferred_ticket_to_save ) && $this->deferred_ticket_to_save instanceof WPSC_Ticket ) {
+			$ticket = $this->deferred_ticket_to_save;
 			$html_to_cache = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
 
 			if ( false !== $html_to_cache ) {
-				$misc_data                                  = $ticket->misc;
-				$misc_data['stackboost_utm_html']        = $html_to_cache;
-				$misc_data['stackboost_utm_cache_version'] = get_option( 'stackboost_utm_cache_version', time() );
-				$ticket->misc                               = $misc_data;
+				$misc_data = $ticket->misc;
+				$misc_data['stackboost_utm_html'] = $html_to_cache;
+				$ticket->misc = $misc_data;
 				$ticket->save();
+				error_log('[SB UTM] deferred_save() - Permanent cache saved for ticket ' . $ticket->id);
 				delete_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
 			}
-			$this->deferred_ticket_to_save = null;
+			unset( $this->deferred_ticket_to_save );
 		}
+		error_log('[SB UTM] deferred_save() - Exit');
 	}
 
 	/**
 	 * Update the permanent cache when a ticket is updated.
 	 */
 	public function update_utm_cache( $ticket_or_thread ) {
+		error_log('[SB UTM] update_utm_cache() - Enter');
 		$ticket = null;
 		if ( $ticket_or_thread instanceof WPSC_Ticket ) {
 			$ticket = $ticket_or_thread;
@@ -150,19 +153,22 @@ class WordPress extends Module {
 		}
 
 		if ( $ticket instanceof WPSC_Ticket && $ticket->id ) {
-			$html_to_cache                              = $this->build_html_for_ticket( $ticket );
-			$misc_data                                  = $ticket->misc;
-			$misc_data['stackboost_utm_html']        = $html_to_cache;
-			$misc_data['stackboost_utm_cache_version'] = get_option( 'stackboost_utm_cache_version', time() );
-			$ticket->misc                               = $misc_data;
+			$html_to_cache = $this->build_html_for_ticket( $ticket );
+			$misc_data = $ticket->misc;
+			$misc_data['stackboost_utm_html'] = $html_to_cache;
+			$ticket->misc = $misc_data;
 			$ticket->save();
+			error_log('[SB UTM] update_utm_cache() - Cache updated for ticket ' . $ticket->id);
 		}
+		error_log('[SB UTM] update_utm_cache() - Exit');
 	}
 
 	/**
 	 * Replace the macro tag in outgoing emails.
 	 */
 	public function replace_utm_macro( array $data, WPSC_Thread $thread ): array {
+		error_log('[SB UTM] replace_utm_macro() - Enter for ticket ' . $thread->ticket->id);
+
 		if ( ! isset( $data['body'] ) || strpos( $data['body'], '{{stackboost_unified_ticket}}' ) === false ) {
 			return $data;
 		}
@@ -171,25 +177,19 @@ class WordPress extends Module {
 			return $data;
 		}
 
-		// First, check for the transient that is set on new ticket creation.
+		// Prioritize the transient for the initial "new ticket" email.
 		$cached_html = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
-
-		if ( false === $cached_html ) {
-			$misc_data              = $ticket->misc;
-			$global_cache_version   = get_option( 'stackboost_utm_cache_version', 0 );
-			$ticket_cache_version   = $misc_data['stackboost_utm_cache_version'] ?? 1; // Default to 1 to force initial generation.
-
-			// If the ticket's cache is outdated, regenerate it.
-			if ( $global_cache_version !== $ticket_cache_version || empty( $misc_data['stackboost_utm_html'] ) ) {
-				$this->update_utm_cache( $ticket );
-				// Re-fetch misc data after updating.
-				$updated_ticket = new WPSC_Ticket( $ticket->id );
-				$misc_data   = $updated_ticket->misc;
-			}
+		if ( false !== $cached_html ) {
+			error_log('[SB UTM] replace_utm_macro() - Using transient cache.');
+		} else {
+			// For all other cases, fall back to the permanently stored HTML.
+			$misc_data   = $ticket->misc;
 			$cached_html = $misc_data['stackboost_utm_html'] ?? '';
+			error_log('[SB UTM] replace_utm_macro() - Using permanent cache.');
 		}
 
 		$data['body'] = str_replace( '{{stackboost_unified_ticket}}', $cached_html, $data['body'] );
+		error_log('[SB UTM] replace_utm_macro() - Exit');
 		return $data;
 	}
 
