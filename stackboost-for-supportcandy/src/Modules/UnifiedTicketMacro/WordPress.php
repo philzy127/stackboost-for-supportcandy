@@ -240,7 +240,7 @@ class WordPress {
 
 		wp_enqueue_script(
 			'stackboost-admin-utm',
-			$plugin_url . 'src/Modules/UnifiedTicketMacro/assets/utm-admin.js',
+			$plugin_url . 'assets/admin/js/utm-admin.js',
 			array( 'jquery' ),
 			\StackBoost\ForSupportCandy\WordPress\Plugin::VERSION,
 			true
@@ -256,7 +256,7 @@ class WordPress {
 
 		wp_enqueue_style(
 			'stackboost-admin-utm',
-			$plugin_url . 'src/Modules/UnifiedTicketMacro/assets/utm-admin.css',
+			$plugin_url . 'assets/admin/css/utm-admin.css',
 			[],
 			\StackBoost\ForSupportCandy\WordPress\Plugin::VERSION
 		);
