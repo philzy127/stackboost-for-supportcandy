@@ -55,3 +55,31 @@
     gap: 10px;
     margin-bottom: 10px;
 }
+
+#utm-add-field .dashicons,
+#utm-remove-field .dashicons {
+	transform: scale(1.3);
+}
+
+#utm-move-up .dashicons,
+#utm-move-down .dashicons {
+	transform: rotate(-90deg) scale(1.3);
+}
+
+#utm-move-top .dashicons,
+#utm-move-bottom .dashicons {
+	transform: rotate(-90deg);
+}
+
+.rule-group .button.remove-rule {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+}
+
+.rule-group .button.remove-rule .dashicons {
+    margin: 0;
+}

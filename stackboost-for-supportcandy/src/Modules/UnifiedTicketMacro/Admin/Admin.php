@@ -16,9 +16,6 @@ class Admin {
 			<form id="stackboost-utm-form" action="options.php" method="post">
 				<?php
 				settings_fields( 'stackboost_settings' );
-				?>
-				<input type="hidden" name="stackboost_settings[page_slug]" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>" />
-				<?php
 				do_settings_sections( self::PAGE_SLUG );
 				submit_button();
 				?>
