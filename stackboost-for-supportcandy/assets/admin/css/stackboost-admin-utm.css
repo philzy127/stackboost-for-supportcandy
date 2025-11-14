@@ -26,6 +26,7 @@
 	flex-direction: column;
 	gap: 8px;
 	justify-content: center;
+	align-self: center;
 }
 
 .scp-utm-buttons .button {
@@ -44,10 +45,8 @@
 
 .scp-utm-selected-wrapper .scp-utm-buttons {
 	margin-left: 5px;
-}
-
-.scp-utm-selected-wrapper .scp-utm-buttons .dashicons {
-	transform: rotate(-90deg);
+	display: flex;
+	flex-direction: column;
 }
 
 .rule-group {
