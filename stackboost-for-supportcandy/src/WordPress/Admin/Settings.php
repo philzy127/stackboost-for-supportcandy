@@ -309,8 +309,8 @@ class Settings {
 						break;
 				}
 			} else {
-				// Handle unchecked checkboxes.
-				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_')) {
+				// Handle unchecked checkboxes, which are not present in the form submission.
+				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order') {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
 					$saved_settings[$key] = [];
