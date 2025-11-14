@@ -1,23 +1,14 @@
 <?php
-
 namespace StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin;
 
-/**
- * Admin handler for the Unified Ticket Macro feature.
- *
- * @package StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin
- */
 class Admin {
 
 	const PAGE_SLUG = 'stackboost-utm';
 
 	public function init_hooks() {
 		// All settings are now registered centrally in Settings.php
-		// All hooks are now registered in the module's WordPress.php
 	}
-	/**
-	 * Render the main settings page.
-	 */
+
 	public function render_settings_page() {
 		?>
 		<div class="wrap">
@@ -63,7 +54,6 @@ class Admin {
 		$available_columns = array_diff_key( $all_columns, array_flip( $selected_slugs ) );
 		$selected_columns  = array_intersect_key( $all_columns, array_flip( $selected_slugs ) );
 
-		// Ensure the order of selected columns is preserved.
 		$ordered_selected = [];
 		foreach ($selected_slugs as $slug) {
 			if (isset($selected_columns[$slug])) {
