@@ -7,10 +7,10 @@ use StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
 use StackBoost\ForSupportCandy\Modules\ConditionalViews;
 use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\QueueMacro;
+use StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\TicketView;
-use StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 
 /**
@@ -120,10 +120,6 @@ final class Plugin {
 			'directory'       => [
 				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
 				'slug'  => 'stackboost-directory',
-			],
-			'utm'             => [
-				'title' => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-utm',
 			],
 			'how-to'          => [
 				'title' => __( 'How To Use', 'stackboost-for-supportcandy' ),

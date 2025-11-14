@@ -213,58 +213,6 @@ class Settings {
 	 */
 	public function register_settings() {
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
-
-		// Unified Ticket Macro Module Settings
-		// We register them here so they are part of the central sanitization flow.
-		$utm_admin = new \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\Admin();
-		$utm_page_slug = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\Admin::PAGE_SLUG;
-
-		add_settings_section(
-			'stackboost_utm_settings_section',
-			__( 'Unified Ticket Macro Settings', 'stackboost-for-supportcandy' ),
-			'__return_false',
-			$utm_page_slug
-		);
-
-		$fields = [
-			'utm_enabled'         => __( 'Enable Unified Ticket Macro', 'stackboost-for-supportcandy' ),
-			'utm_selected_fields' => __( 'Fields to Display', 'stackboost-for-supportcandy' ),
-			'utm_use_sc_order'    => __( 'Field Order', 'stackboost-for-supportcandy' ),
-			'utm_rename_rules'    => __( 'Rename Rules', 'stackboost-for-supportcandy' ),
-		];
-
-		// This explicit registration ensures each field is correctly added.
-		add_settings_field(
-			'stackboost_settings[utm_enabled]',
-			$fields['utm_enabled'],
-			[ $utm_admin, 'render_field_utm_enabled' ],
-			$utm_page_slug,
-			'stackboost_utm_settings_section'
-		);
-
-		add_settings_field(
-			'stackboost_settings[utm_selected_fields]',
-			$fields['utm_selected_fields'],
-			[ $utm_admin, 'render_field_utm_selected_fields' ],
-			$utm_page_slug,
-			'stackboost_utm_settings_section'
-		);
-
-		add_settings_field(
-			'stackboost_settings[utm_use_sc_order]',
-			$fields['utm_use_sc_order'],
-			[ $utm_admin, 'render_field_utm_use_sc_order' ],
-			$utm_page_slug,
-			'stackboost_utm_settings_section'
-		);
-
-		add_settings_field(
-			'stackboost_settings[utm_rename_rules]',
-			$fields['utm_rename_rules'],
-			[ $utm_admin, 'render_field_utm_rename_rules' ],
-			$utm_page_slug,
-			'stackboost_utm_settings_section'
-		);
 	}
 
 	/**
@@ -292,7 +240,6 @@ class Settings {
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
-			'stackboost-utm'                => ['utm_enabled', 'utm_selected_fields', 'utm_rename_rules', 'utm_use_sc_order'],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
@@ -316,8 +263,6 @@ class Settings {
 					case 'enable_queue_macro':
 					case 'enable_after_hours_notice':
 					case 'include_all_weekends':
-					case 'utm_use_sc_order':
-					case 'utm_enabled':
 						$saved_settings[$key] = intval($value);
 						break;
 
@@ -332,16 +277,8 @@ class Settings {
 						$saved_settings[$key] = is_array($value) ? array_map('intval', $value) : [];
 						break;
 
-					case 'utm_selected_fields':
-						$saved_settings[$key] = is_array($value) ? array_map('sanitize_text_field', $value) : [];
-						break;
-
 					case 'conditional_hiding_rules':
-						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['action', 'columns', 'condition', 'view']) : [];
-						break;
-
-					case 'utm_rename_rules':
-						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['field', 'name']) : [];
+						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value) : [];
 						break;
 
 					case 'after_hours_message':
@@ -361,20 +298,7 @@ class Settings {
 						break;
 				}
 			} else {
-				// This block handles fields that were not present in the input,
-				// which is typically how unchecked checkboxes or cleared multi-selects are submitted.
-				switch ($key) {
-					case 'utm_enabled':
-					case 'utm_use_sc_order':
-						$saved_settings[$key] = 0;
-						break;
-					case 'utm_selected_fields':
-					case 'utm_rename_rules':
-						$saved_settings[$key] = [];
-						break;
-				}
-
-				// Handle other, non-UTM checkboxes.
+				// Handle unchecked checkboxes.
 				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_')) {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
@@ -383,30 +307,25 @@ class Settings {
 			}
 		}
 
-		// If we just saved the UTM page, update the cache version to force regeneration.
-		if ( 'stackboost-utm' === $page_slug ) {
-			update_option( 'stackboost_utm_cache_version', time() );
-		}
-
 		// error_log('[SB] sanitize_settings() END. Final sanitized settings: ' . print_r($saved_settings, true));
 		return $saved_settings;
 	}
 	/**
-	 * Helper function to sanitize an array of associative arrays (rules).
+	 * Helper function to sanitize the conditional hiding rules array.
 	 * @param array $rules
-	 * @param array $allowed_keys
 	 * @return array
 	 */
-	private function sanitize_rules_array(array $rules, array $allowed_keys): array
+	private function sanitize_rules_array(array $rules): array
 	{
 		$sanitized_rules = [];
-		foreach ($rules as $rule) {
+		foreach ($rules as $index => $rule) {
 			if (is_array($rule)) {
-				$sanitized_rule = [];
-				foreach ($allowed_keys as $key) {
-					$sanitized_rule[$key] = sanitize_text_field($rule[$key] ?? '');
-				}
-				$sanitized_rules[] = $sanitized_rule;
+				$sanitized_rules[sanitize_key($index)] = [
+					'action'    => sanitize_key($rule['action'] ?? 'hide'),
+					'columns'   => sanitize_key($rule['columns'] ?? ''),
+					'condition' => sanitize_key($rule['condition'] ?? 'in_view'),
+					'view'      => sanitize_key($rule['view'] ?? ''),
+				];
 			}
 		}
 		return $sanitized_rules;
