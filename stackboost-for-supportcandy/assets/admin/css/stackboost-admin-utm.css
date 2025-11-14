@@ -45,8 +45,10 @@
 
 .scp-utm-selected-wrapper .scp-utm-buttons {
 	margin-left: 5px;
-	display: flex;
-	flex-direction: column;
+}
+
+.scp-utm-selected-wrapper .scp-utm-buttons .dashicons {
+	transform: rotate(-90deg);
 }
 
 .rule-group {

@@ -16,6 +16,9 @@ class Admin {
 			<form id="stackboost-utm-form" action="options.php" method="post">
 				<?php
 				settings_fields( 'stackboost_settings' );
+				?>
+				<input type="hidden" name="stackboost_settings[page_slug]" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>" />
+				<?php
 				do_settings_sections( self::PAGE_SLUG );
 				submit_button();
 				?>
@@ -71,10 +74,10 @@ class Admin {
 				</select>
 			</div>
 			<div class="scp-utm-buttons">
-				<button type="button" class="button" id="utm-add-all" title="<?php esc_attr_e( 'Add All', 'stackboost-for-supportcandy' ); ?>">&gt;&gt;</button>
-				<button type="button" class="button" id="utm-add-field" title="<?php esc_attr_e( 'Add', 'stackboost-for-supportcandy' ); ?>">&gt;</button>
-				<button type="button" class="button" id="utm-remove-field" title="<?php esc_attr_e( 'Remove', 'stackboost-for-supportcandy' ); ?>">&lt;</button>
-				<button type="button" class="button" id="utm-remove-all" title="<?php esc_attr_e( 'Remove All', 'stackboost-for-supportcandy' ); ?>">&lt;&lt;</button>
+				<button type="button" class="button" id="utm-add-all" title="<?php esc_attr_e( 'Add All', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-forward"></span></button>
+				<button type="button" class="button" id="utm-add-field" title="<?php esc_attr_e( 'Add', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-right"></span></button>
+				<button type="button" class="button" id="utm-remove-field" title="<?php esc_attr_e( 'Remove', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-left"></span></button>
+				<button type="button" class="button" id="utm-remove-all" title="<?php esc_attr_e( 'Remove All', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-back"></span></button>
 			</div>
 			<div class="scp-utm-box">
 				<h3><?php esc_html_e( 'Selected Fields', 'stackboost-for-supportcandy' ); ?></h3>
@@ -85,10 +88,10 @@ class Admin {
 						<?php endforeach; ?>
 					</select>
 					<div class="scp-utm-buttons">
-						<button type="button" class="button" id="utm-move-top" title="<?php esc_attr_e( 'Move to Top', 'stackboost-for-supportcandy' ); ?>">Top</button>
-						<button type="button" class="button" id="utm-move-up" title="<?php esc_attr_e( 'Move Up', 'stackboost-for-supportcandy' ); ?>">Up</button>
-						<button type="button" class="button" id="utm-move-down" title="<?php esc_attr_e( 'Move Down', 'stackboost-for-supportcandy' ); ?>">Down</button>
-						<button type="button" class="button" id="utm-move-bottom" title="<?php esc_attr_e( 'Move to Bottom', 'stackboost-for-supportcandy' ); ?>">Bottom</button>
+						<button type="button" class="button" id="utm-move-top" title="<?php esc_attr_e( 'Move to Top', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-forward"></span></button>
+						<button type="button" class="button" id="utm-move-up" title="<?php esc_attr_e( 'Move Up', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-right"></span></button>
+						<button type="button" class="button" id="utm-move-down" title="<?php esc_attr_e( 'Move Down', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-left"></span></button>
+						<button type="button" class="button" id="utm-move-bottom" title="<?php esc_attr_e( 'Move to Bottom', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-back"></span></button>
 					</div>
 				</div>
 			</div>
