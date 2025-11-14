@@ -7,7 +7,7 @@ namespace StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin;
  *
  * @package StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin
  */
-class AdminPage {
+class Admin {
 
 	const PAGE_SLUG = 'stackboost-utm';
 

@@ -216,8 +216,8 @@ class Settings {
 
 		// Unified Ticket Macro Module Settings
 		// We register them here so they are part of the central sanitization flow.
-		$utm_admin = new \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\AdminPage();
-		$utm_page_slug = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\AdminPage::PAGE_SLUG;
+		$utm_admin = new \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\Admin();
+		$utm_page_slug = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Admin\Admin::PAGE_SLUG;
 
 		add_settings_section(
 			'stackboost_utm_settings_section',
