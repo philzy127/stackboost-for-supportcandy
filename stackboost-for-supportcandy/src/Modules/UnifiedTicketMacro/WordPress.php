@@ -49,6 +49,41 @@ class WordPress {
 	}
 
 	/**
+	 * Enqueue admin scripts and styles.
+	 */
+	public function enqueue_admin_scripts( $hook ) {
+		// This is the final, correct hook, identified from working modules in the plugin.
+		if ( 'stackboost_page_stackboost-utm' !== $hook ) {
+			return;
+		}
+
+		$plugin_url = plugin_dir_url( \STACKBOOST_PLUGIN_FILE );
+
+		wp_enqueue_script(
+			'stackboost-admin-utm',
+			$plugin_url . 'assets/admin/js/utm-admin.js',
+			array( 'jquery' ),
+			\STACKBOOST_VERSION, // Corrected: Use the global constant to prevent a fatal error.
+			true
+		);
+
+		wp_localize_script(
+			'stackboost-admin-utm',
+			'stackboost_utm_admin_params',
+			array(
+				'nonce' => wp_create_nonce( 'stackboost_utm_save_settings_nonce' ),
+			)
+		);
+
+		wp_enqueue_style(
+			'stackboost-admin-utm',
+			$plugin_url . 'assets/admin/css/utm-admin.css',
+			[],
+			\STACKBOOST_VERSION // Corrected: Use the global constant to prevent a fatal error.
+		);
+	}
+
+	/**
 	 * Render the main settings page.
 	 */
 	public function render_settings_page() {
@@ -225,41 +260,6 @@ class WordPress {
 			</div>
 		</script>
 		<?php
-	}
-
-	/**
-	 * Enqueue admin scripts and styles.
-	 */
-	public function enqueue_admin_scripts( $hook ) {
-		// Only load on our settings page
-		if ( 'stackboost-for-supportcandy_page_stackboost-utm' !== $hook ) {
-			return;
-		}
-
-		$plugin_url = plugin_dir_url( \STACKBOOST_PLUGIN_FILE );
-
-		wp_enqueue_script(
-			'stackboost-admin-utm',
-			$plugin_url . 'assets/admin/js/utm-admin.js',
-			array( 'jquery' ),
-			\StackBoost\ForSupportCandy\WordPress\Plugin::VERSION,
-			true
-		);
-
-		wp_localize_script(
-			'stackboost-admin-utm',
-			'stackboost_utm_admin_params',
-			array(
-				'nonce' => wp_create_nonce( 'stackboost_utm_save_settings_nonce' ),
-			)
-		);
-
-		wp_enqueue_style(
-			'stackboost-admin-utm',
-			$plugin_url . 'assets/admin/css/utm-admin.css',
-			[],
-			\StackBoost\ForSupportCandy\WordPress\Plugin::VERSION
-		);
 	}
 
 	/**
