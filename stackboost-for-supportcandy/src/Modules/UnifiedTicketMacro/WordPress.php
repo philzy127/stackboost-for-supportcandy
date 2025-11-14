@@ -60,6 +60,10 @@ class WordPress {
 			<table class="form-table" role="presentation">
 				<tbody>
 					<tr>
+						<th scope="row"><?php _e( 'Enable Feature', 'stackboost-for-supportcandy' ); ?></th>
+						<td><?php $this->render_enable_checkbox(); ?></td>
+					</tr>
+					<tr>
 						<th scope="row"><?php _e( 'Fields to Display', 'stackboost-for-supportcandy' ); ?></th>
 						<td><?php $this->render_fields_selector(); ?></td>
 					</tr>
@@ -145,6 +149,20 @@ class WordPress {
 	}
 
 	/**
+	 * Render the checkbox for enabling the feature.
+	 */
+	public function render_enable_checkbox() {
+		$options      = get_option( 'stackboost_settings', [] );
+		$is_enabled = isset( $options['utm_enabled'] ) ? (bool) $options['utm_enabled'] : false;
+		?>
+		<label>
+			<input type="checkbox" name="stackboost_settings[utm_enabled]" id="stackboost_utm_enabled" value="1" <?php checked( $is_enabled ); ?> />
+			<?php esc_html_e( 'Enable the Unified Ticket Macro feature.', 'stackboost-for-supportcandy' ); ?>
+		</label>
+		<?php
+	}
+
+	/**
 	 * Render the checkbox for using SupportCandy field order.
 	 */
 	public function render_use_sc_order_checkbox() {
@@ -214,7 +232,7 @@ class WordPress {
 	 */
 	public function enqueue_admin_scripts( $hook ) {
 		// Only load on our settings page
-		if ( 'supportcandy_page_stackboost-utm' !== $hook ) {
+		if ( 'stackboost-for-supportcandy_page_stackboost-utm' !== $hook ) {
 			return;
 		}
 
@@ -274,8 +292,12 @@ class WordPress {
 		// Sanitize and get the order setting
 		$use_sc_order = isset( $_POST['use_sc_order'] ) && 'true' === $_POST['use_sc_order'];
 
+		// Sanitize and get the enabled setting
+		$is_enabled = isset( $_POST['is_enabled'] ) && 'true' === $_POST['is_enabled'];
+
 		// Get all settings, update the UTM fields, and save
 		$settings = get_option( 'stackboost_settings', array() );
+		$settings['utm_enabled'] = $is_enabled;
 		$settings['utm_columns'] = $selected_fields;
 		$settings['utm_rename_rules'] = $rename_rules;
 		$settings['utm_use_sc_order'] = $use_sc_order;

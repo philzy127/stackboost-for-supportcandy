@@ -105,6 +105,7 @@ jQuery(document).ready(function($) {
 
     // Save settings via AJAX
     $('#stackboost-utm-save-settings').on('click', function() {
+        var $enableCheckbox = $('#stackboost_utm_enabled');
         var selectedFields = [];
         $('#stackboost_utm_selected_fields option').each(function() {
             selectedFields.push($(this).val());
@@ -137,6 +138,7 @@ jQuery(document).ready(function($) {
         var data = {
             'action': 'stackboost_utm_save_settings',
             'nonce': stackboost_utm_admin_params.nonce,
+            'is_enabled': $enableCheckbox.is(':checked'),
             'selected_fields': selectedFields,
             'rename_rules': renameRules,
             'use_sc_order': $useSCOrderCheckbox.is(':checked')
