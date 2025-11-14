@@ -319,13 +319,7 @@ class Settings {
 						break;
 
 					case 'utm_rename_rules':
-						// This data comes from a hidden field, JSON-encoded.
-						$decoded_value = json_decode(stripslashes($value), true);
-						if (json_last_error() === JSON_ERROR_NONE && is_array($decoded_value)) {
-							$saved_settings[$key] = $this->sanitize_rules_array($decoded_value, ['field', 'name']);
-						} else {
-							$saved_settings[$key] = [];
-						}
+						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['field', 'name']) : [];
 						break;
 
 					case 'after_hours_message':

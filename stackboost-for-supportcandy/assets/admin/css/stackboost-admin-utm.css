@@ -1,70 +1,58 @@
-.stackboost-utm-container {
-    display: flex;
-    gap: 15px;
-    align-items: flex-start;
-    max-width: 700px;
+/* Unified Ticket Macro Admin Styles */
+.scp-utm-container {
+	display: flex;
+	gap: 15px;
+	align-items: flex-start;
+	max-width: 800px;
 }
 
-.stackboost-utm-box {
-    flex: 1;
+.scp-utm-box {
+	flex: 1;
 }
 
-.stackboost-utm-box h3 {
-    margin-top: 0;
-    margin-bottom: 5px;
+.scp-utm-box h3 {
+	margin-top: 0;
+	margin-bottom: 5px;
+	font-size: 14px;
+	font-weight: 600;
 }
 
-.stackboost-utm-box select {
-    width: 100%;
-    height: 250px !important;
+.scp-utm-box select {
+	width: 100%;
+	height: 250px !important;
 }
 
-.stackboost-utm-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    justify-content: center;
-    align-self: center;
+.scp-utm-buttons {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	justify-content: center;
+	align-self: center;
 }
 
-.stackboost-utm-buttons .button {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
+.scp-utm-buttons .button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 40px;
+	height: 30px;
+	padding: 0;
 }
 
-.stackboost-utm-buttons .button .dashicons {
-    font-size: 20px;
+.scp-utm-selected-wrapper {
+	display: flex;
+	align-items: flex-start;
 }
 
-#stackboost_utm_add .dashicons,
-#stackboost_utm_remove .dashicons {
-    transform: scale(1.3);
+.scp-utm-selected-wrapper .scp-utm-buttons {
+	margin-left: 5px;
+	display: flex;
+	flex-direction: column;
 }
 
-.stackboost-utm-selected-wrapper {
-    display: flex;
-    align-items: flex-start;
-}
-
-.stackboost-utm-buttons.vertical {
-    margin-left: 10px;
-}
-
-.stackboost-utm-buttons.vertical .dashicons {
-    transform: rotate(-90deg);
-}
-
-.stackboost-utm-rule-row {
+.rule-group {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
-}
-
-.stackboost-utm-rule-name {
-    width: 200px;
 }
