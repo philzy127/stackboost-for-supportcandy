@@ -30,8 +30,8 @@ class WordPress {
 	 */
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
-		add_action( 'wp_ajax_stackboost_utm_save_settings', array( $this, 'ajax_save_settings' ) );
 	}
 
 	/**
@@ -45,6 +45,66 @@ class WordPress {
 			'manage_options',
 			'stackboost-utm',
 			array( $this, 'render_settings_page' )
+		);
+	}
+
+	/**
+	 * Register settings sections and fields with the WordPress Settings API.
+	 */
+	public function register_settings() {
+		$page = 'stackboost-utm';
+
+		add_settings_section(
+			'stackboost_utm_main_section',
+			__( 'General Settings', 'stackboost-for-supportcandy' ),
+			null,
+			$page
+		);
+
+		add_settings_field(
+			'stackboost_utm_enabled',
+			__( 'Enable Feature', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_enable_checkbox' ],
+			$page,
+			'stackboost_utm_main_section'
+		);
+
+		add_settings_section(
+			'stackboost_utm_fields_section',
+			__( 'Fields to Display', 'stackboost-for-supportcandy' ),
+			null,
+			$page
+		);
+
+		add_settings_field(
+			'stackboost_utm_columns',
+			__( 'Fields', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_fields_selector' ],
+			$page,
+			'stackboost_utm_fields_section'
+		);
+
+		add_settings_field(
+			'stackboost_utm_use_sc_order',
+			__( 'Field Order', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_use_sc_order_checkbox' ],
+			$page,
+			'stackboost_utm_fields_section'
+		);
+
+		add_settings_section(
+			'stackboost_utm_rename_section',
+			__( 'Rename Field Titles', 'stackboost-for-supportcandy' ),
+			null,
+			$page
+		);
+
+		add_settings_field(
+			'stackboost_utm_rename_rules',
+			__( 'Renaming Rules', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_rules_builder' ],
+			$page,
+			'stackboost_utm_rename_section'
 		);
 	}
 
@@ -63,23 +123,15 @@ class WordPress {
 			'stackboost-admin-utm',
 			$plugin_url . 'assets/admin/js/utm-admin.js',
 			array( 'jquery' ),
-			\STACKBOOST_VERSION, // Corrected: Use the global constant to prevent a fatal error.
+			\STACKBOOST_VERSION, // Corrected: Use the global constant.
 			true
-		);
-
-		wp_localize_script(
-			'stackboost-admin-utm',
-			'stackboost_utm_admin_params',
-			array(
-				'nonce' => wp_create_nonce( 'stackboost_utm_save_settings_nonce' ),
-			)
 		);
 
 		wp_enqueue_style(
 			'stackboost-admin-utm',
 			$plugin_url . 'assets/admin/css/utm-admin.css',
 			[],
-			\STACKBOOST_VERSION // Corrected: Use the global constant to prevent a fatal error.
+			\STACKBOOST_VERSION // Corrected: Use the global constant.
 		);
 	}
 
@@ -89,40 +141,21 @@ class WordPress {
 	public function render_settings_page() {
 		?>
 		<div class="wrap">
-			<div id="stackboost-utm-toast-container"></div>
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+			<form method="post" action="options.php">
+				<?php
+				// This will output the nonces and other fields for the 'stackboost_settings' group.
+				settings_fields( 'stackboost_settings' );
 
-			<table class="form-table" role="presentation">
-				<tbody>
-					<tr>
-						<th scope="row"><?php _e( 'Enable Feature', 'stackboost-for-supportcandy' ); ?></th>
-						<td><?php $this->render_enable_checkbox(); ?></td>
-					</tr>
-					<tr>
-						<th scope="row"><?php _e( 'Fields to Display', 'stackboost-for-supportcandy' ); ?></th>
-						<td><?php $this->render_fields_selector(); ?></td>
-					</tr>
-					<tr>
-						<th scope="row"><?php _e( 'Field Order', 'stackboost-for-supportcandy' ); ?></th>
-						<td><?php $this->render_use_sc_order_checkbox(); ?></td>
-					</tr>
-				</tbody>
-			</table>
+				// This will render the sections and fields that were registered for this page.
+				do_settings_sections( 'stackboost-utm' );
 
-			<h2><?php _e( 'Rename Field Titles', 'stackboost-for-supportcandy' ); ?></h2>
-			<table class="form-table" role="presentation">
-				<tbody>
-					<tr>
-						<th scope="row"><?php _e( 'Renaming Rules', 'stackboost-for-supportcandy' ); ?></th>
-						<td><?php $this->render_rules_builder(); ?></td>
-					</tr>
-				</tbody>
-			</table>
+				// Add the hidden page slug field, which is critical for the central sanitizer.
+				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-utm">';
 
-			<p class="submit">
-				<button type="button" id="stackboost-utm-save-settings" class="button button-primary"><?php esc_html_e( 'Save Settings', 'stackboost-for-supportcandy' ); ?></button>
-				<span class="spinner"></span>
-			</p>
+				submit_button();
+				?>
+			</form>
 		</div>
 		<?php
 	}
@@ -150,7 +183,7 @@ class WordPress {
 		<div class="stackboost-utm-container">
 			<div class="stackboost-utm-box">
 				<h3><?php esc_html_e( 'Available Fields', 'stackboost-for-supportcandy' ); ?></h3>
-				<select multiple id="stackboost_utm_available_fields" size="10">
+				<select multiple id="stackboost_utm_available_fields" size="10" class="stackboost-utm-multiselect">
 					<?php foreach ( $available_columns as $slug => $name ) : ?>
 						<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $name ); ?></option>
 					<?php endforeach; ?>
@@ -165,7 +198,7 @@ class WordPress {
 			<div class="stackboost-utm-box">
 				<h3><?php esc_html_e( 'Selected Fields', 'stackboost-for-supportcandy' ); ?></h3>
 				<div class="stackboost-utm-selected-wrapper">
-					<select multiple name="stackboost_settings[utm_selected_fields][]" id="stackboost_utm_selected_fields" size="10">
+					<select multiple name="stackboost_settings[utm_columns][]" id="stackboost_utm_selected_fields" size="10" class="stackboost-utm-multiselect">
 						<?php foreach ( $ordered_selected as $slug => $name ) : ?>
 							<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $name ); ?></option>
 						<?php endforeach; ?>
@@ -225,17 +258,17 @@ class WordPress {
 		<div id="stackboost-utm-rules-container">
 			<?php
 			if ( ! empty( $rename_rules ) ) :
-				foreach ( $rename_rules as $rule ) :
+				foreach ( $rename_rules as $index => $rule ) :
 					?>
 					<div class="stackboost-utm-rule-row">
 						<span><?php esc_html_e( 'Display', 'stackboost-for-supportcandy' ); ?></span>
-						<select class="stackboost-utm-rule-field">
+						<select name="stackboost_settings[utm_rename_rules][<?php echo (int) $index; ?>][field]" class="stackboost-utm-rule-field">
 							<?php foreach ( $all_columns as $slug => $name ) : ?>
 								<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $slug, $rule['field'] ); ?>><?php echo esc_html( $name ); ?></option>
 							<?php endforeach; ?>
 						</select>
 						<span><?php esc_html_e( 'as', 'stackboost-for-supportcandy' ); ?></span>
-						<input type="text" class="stackboost-utm-rule-name" value="<?php echo esc_attr( $rule['name'] ); ?>" />
+						<input type="text" name="stackboost_settings[utm_rename_rules][<?php echo (int) $index; ?>][name]" class="stackboost-utm-rule-name" value="<?php echo esc_attr( $rule['name'] ); ?>" />
 						<button type="button" class="button stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
 					</div>
 					<?php
@@ -249,64 +282,16 @@ class WordPress {
 		<script type="text/template" id="stackboost-utm-rule-template">
 			<div class="stackboost-utm-rule-row">
 				<span><?php esc_html_e( 'Display', 'stackboost-for-supportcandy' ); ?></span>
-				<select class="stackboost-utm-rule-field">
+				<select name="stackboost_settings[utm_rename_rules][__INDEX__][field]" class="stackboost-utm-rule-field">
 					<?php foreach ( $all_columns as $slug => $name ) : ?>
 						<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $name ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<span><?php esc_html_e( 'as', 'stackboost-for-supportcandy' ); ?></span>
-				<input type="text" class="stackboost-utm-rule-name" value="" />
+				<input type="text" name="stackboost_settings[utm_rename_rules][__INDEX__][name]" class="stackboost-utm-rule-name" value="" />
 				<button type="button" class="button stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
 			</div>
 		</script>
 		<?php
-	}
-
-	/**
-	 * AJAX handler for saving settings.
-	 */
-	public function ajax_save_settings() {
-		// Verify nonce
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['nonce'] ), 'stackboost_utm_save_settings_nonce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'stackboost-for-supportcandy' ) ) );
-		}
-
-		// Sanitize and get the selected fields
-		$selected_fields = isset( $_POST['selected_fields'] ) && is_array( $_POST['selected_fields'] )
-			? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_fields'] ) )
-			: array();
-
-		// Sanitize and get the rename rules
-		$rename_rules = array();
-		if ( isset( $_POST['rename_rules'] ) && is_array( $_POST['rename_rules'] ) ) {
-			foreach ( wp_unslash( $_POST['rename_rules'] ) as $rule ) {
-				if ( ! empty( $rule['field'] ) && ! empty( $rule['name'] ) ) {
-					$rename_rules[] = array(
-						'field' => sanitize_text_field( $rule['field'] ),
-						'name'  => sanitize_text_field( $rule['name'] ),
-					);
-				}
-			}
-		}
-
-		// Sanitize and get the order setting
-		$use_sc_order = isset( $_POST['use_sc_order'] ) && 'true' === $_POST['use_sc_order'];
-
-		// Sanitize and get the enabled setting
-		$is_enabled = isset( $_POST['is_enabled'] ) && 'true' === $_POST['is_enabled'];
-
-		// Get all settings, update the UTM fields, and save
-		$settings = get_option( 'stackboost_settings', array() );
-		$settings['utm_enabled'] = $is_enabled;
-		$settings['utm_columns'] = $selected_fields;
-		$settings['utm_rename_rules'] = $rename_rules;
-		$settings['utm_use_sc_order'] = $use_sc_order;
-		update_option( 'stackboost_settings', $settings );
-
-		wp_send_json_success(
-			array(
-				'message' => __( 'Settings saved successfully!', 'stackboost-for-supportcandy' ),
-			)
-		);
 	}
 }

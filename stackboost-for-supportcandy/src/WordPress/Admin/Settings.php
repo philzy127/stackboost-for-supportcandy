@@ -240,6 +240,7 @@ class Settings {
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
+			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
@@ -263,7 +264,17 @@ class Settings {
 					case 'enable_queue_macro':
 					case 'enable_after_hours_notice':
 					case 'include_all_weekends':
+					case 'utm_enabled':
+					case 'utm_use_sc_order':
 						$saved_settings[$key] = intval($value);
+						break;
+
+					case 'utm_columns':
+						$saved_settings[$key] = is_array($value) ? array_map('sanitize_key', $value) : [];
+						break;
+
+					case 'utm_rename_rules':
+						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['field', 'name']) : [];
 						break;
 
 					case 'after_hours_start':
@@ -278,7 +289,7 @@ class Settings {
 						break;
 
 					case 'conditional_hiding_rules':
-						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value) : [];
+						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['action', 'columns', 'condition', 'view']) : [];
 						break;
 
 					case 'after_hours_message':
@@ -311,21 +322,26 @@ class Settings {
 		return $saved_settings;
 	}
 	/**
-	 * Helper function to sanitize the conditional hiding rules array.
-	 * @param array $rules
-	 * @return array
+	 * Helper function to sanitize an array of rules, where each rule is an associative array.
+	 * @param array $rules        The array of rule arrays to sanitize.
+	 * @param array $allowed_keys The keys that are allowed in each rule array.
+	 * @return array The sanitized array of rules.
 	 */
-	private function sanitize_rules_array(array $rules): array
+	private function sanitize_rules_array(array $rules, array $allowed_keys): array
 	{
 		$sanitized_rules = [];
-		foreach ($rules as $index => $rule) {
+		foreach ($rules as $rule) {
 			if (is_array($rule)) {
-				$sanitized_rules[sanitize_key($index)] = [
-					'action'    => sanitize_key($rule['action'] ?? 'hide'),
-					'columns'   => sanitize_key($rule['columns'] ?? ''),
-					'condition' => sanitize_key($rule['condition'] ?? 'in_view'),
-					'view'      => sanitize_key($rule['view'] ?? ''),
-				];
+				$sanitized_rule = [];
+				foreach ($allowed_keys as $key) {
+					if (isset($rule[$key])) {
+						// A basic sanitization; can be improved if more specific types are needed.
+						$sanitized_rule[$key] = sanitize_text_field($rule[$key]);
+					}
+				}
+				if (!empty($sanitized_rule)) {
+					$sanitized_rules[] = $sanitized_rule;
+				}
 			}
 		}
 		return $sanitized_rules;
