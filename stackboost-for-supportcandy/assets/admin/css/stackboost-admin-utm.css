@@ -26,7 +26,6 @@
 	flex-direction: column;
 	gap: 8px;
 	justify-content: center;
-	align-self: center;
 }
 
 .scp-utm-buttons .button {

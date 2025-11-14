@@ -270,7 +270,7 @@ class Settings {
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
-			'stackboost-utm'                => ['utm_enabled', 'utm_selected_fields', 'utm_rename_rules', 'utm_use_sc_order'],
+			'stackboost-utm'                => ['utm_enabled', 'utm_use_sc_order', 'utm_selected_fields', 'utm_rename_rules'],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
