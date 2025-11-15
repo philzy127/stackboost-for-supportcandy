@@ -70,6 +70,9 @@ class Core {
 	 * @param mixed $ticket_or_thread_or_id Can be a WPSC_Ticket, WPSC_Thread, or ticket ID.
 	 */
 	public function update_utm_cache( $ticket_or_thread_or_id ) {
+		error_log( '[UTM UPDATE] update_utm_cache() - HOOK FIRED.' );
+		error_log( '[UTM UPDATE] Received parameter type: ' . gettype( $ticket_or_thread_or_id ) );
+		error_log( '[UTM UPDATE] Received parameter value: ' . print_r( $ticket_or_thread_or_id, true ) );
 		$ticket = null;
 		if ( is_a( $ticket_or_thread_or_id, 'WPSC_Ticket' ) ) {
 			$ticket = $ticket_or_thread_or_id;
