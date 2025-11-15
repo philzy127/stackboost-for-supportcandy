@@ -36,7 +36,6 @@ class WordPress {
 	 * Initialize the admin settings.
 	 */
 	private function __construct() {
-		\stackboost_log( '[UTM TRACE] UnifiedTicketMacro/WordPress.php -> __construct() - Module Initializing.' );
 		$this->core = Core::get_instance();
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
@@ -45,33 +44,16 @@ class WordPress {
 		// Core logic hooks.
 		add_action( 'wpsc_create_new_ticket', array( $this->core, 'prime_cache_on_creation' ), 5, 1 );
 
-		// Actions - These hooks are safe for a direct call as they don't expect a return value.
-		add_action( 'wpsc_after_reply_ticket', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_after_change_ticket_status', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_after_change_ticket_priority', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_after_assign_agent', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_reply_ticket', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_status', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_assign_agent', array( $this->core, 'update_utm_cache' ), 10, 1 );
 
-		// Filters - These must use the pass-through wrapper to avoid breaking the email content.
 		add_filter( 'wpsc_create_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_agent_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_customer_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_close_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_assign_agent_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-
-		// Comprehensive ticket modification email filters.
-		add_filter( 'wpsc_add_private_note_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_status_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_agentonly_fields_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_category_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_fields_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_priority_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_subject_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_delete_ticket_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-
-		// Non-ticket and background process email filters.
-		add_filter( 'wpsc_guest_login_otp_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 3 );
-		add_filter( 'wpsc_user_reg_otp_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 3 );
-		add_filter( 'wpsc_en_send_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
 
 		add_filter( 'wpsc_macros', array( $this->core, 'register_macro' ) );
 	}
