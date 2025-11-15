@@ -49,24 +49,65 @@ class Core {
 	 */
 	public function maybe_update_utm_cache() {
 		\stackboost_log( '[UTM TRACE] Core.php -> maybe_update_utm_cache() - Universal handler fired.' );
-		$ticket = null;
-		$args   = func_get_args();
+		$ticket    = null;
+		$ticket_id = 0;
+		$args      = func_get_args();
 
-		\stackboost_log( '[UTM TRACE] Received arguments: ' . print_r( $args, true ) );
-
+		// First, try to find a direct WPSC_Ticket object.
 		foreach ( $args as $arg ) {
 			if ( is_a( $arg, 'WPSC_Ticket' ) ) {
 				$ticket = $arg;
-				\stackboost_log( '[UTM TRACE] Found WPSC_Ticket object with ID: ' . $ticket->id );
+				$ticket_id = $ticket->id;
+				\stackboost_log( '[UTM TRACE] Found direct WPSC_Ticket object with ID: ' . $ticket_id );
 				break;
 			}
 		}
 
-		if ( $ticket ) {
+		// If no direct ticket object, try to find the ID from the email subject.
+		if ( ! $ticket ) {
+			\stackboost_log( '[UTM TRACE] No direct ticket object found. Searching for ticket ID in other arguments...' );
+			$subject = '';
+			foreach ( $args as $arg ) {
+				if ( is_a( $arg, 'WPSC_Email_Notifications' ) && ! empty( $arg->subject ) ) {
+					$subject = $arg->subject;
+					break;
+				}
+				if ( is_a( $arg, 'WPSC_Background_Email' ) ) {
+					// The subject is in a private property, so we need to reflect to get it.
+					try {
+						$reflection = new \ReflectionProperty( 'WPSC_Background_Email', 'data' );
+						$reflection->setAccessible( true );
+						$data    = $reflection->getValue( $arg );
+						$subject = $data['subject'] ?? '';
+						if ( ! empty( $subject ) ) {
+							break;
+						}
+					} catch ( \ReflectionException $e ) {
+						// Could not reflect.
+					}
+				}
+			}
+
+			if ( ! empty( $subject ) ) {
+				\stackboost_log( '[UTM TRACE] Found email subject: "' . $subject . '"' );
+				preg_match( '/\[Ticket #(\d+)\]/', $subject, $matches );
+				if ( isset( $matches[1] ) ) {
+					$ticket_id = (int) $matches[1];
+					\stackboost_log( '[UTM TRACE] Extracted ticket ID ' . $ticket_id . ' from subject.' );
+				}
+			}
+		}
+
+		// If we have a ticket ID, but not a ticket object, create one.
+		if ( ! $ticket && $ticket_id > 0 && class_exists( 'WPSC_Ticket' ) ) {
+			$ticket = new \WPSC_Ticket( $ticket_id );
+		}
+
+		if ( $ticket && $ticket->id ) {
 			\stackboost_log( '[UTM TRACE] Proceeding to update cache for ticket ID: ' . $ticket->id );
 			$this->update_utm_cache( $ticket );
 		} else {
-			\stackboost_log( '[UTM TRACE] No WPSC_Ticket object found in arguments. Aborting cache update.' );
+			\stackboost_log( '[UTM TRACE] No WPSC_Ticket object or valid ticket ID could be found. Aborting cache update.' );
 		}
 	}
 
