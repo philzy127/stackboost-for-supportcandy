@@ -192,11 +192,11 @@ class Core {
 			$field_type    = $field_types_map[ $field_slug ] ?? 'unknown';
 
 			// Special handling for customer fields to prevent warnings.
-			if ( 'df_customer_name' === $field_slug ) {
+			if ( 'name' === $field_slug ) {
 				if ( is_a( $ticket->customer, 'WPSC_Customer' ) ) {
 					$display_value = $ticket->customer->name;
 				}
-			} elseif ( 'df_customer_email' === $field_slug ) {
+			} elseif ( 'email' === $field_slug ) {
 				if ( is_a( $ticket->customer, 'WPSC_Customer' ) ) {
 					$display_value = $ticket->customer->email;
 				}
