@@ -261,6 +261,7 @@ class Core {
 				default:
 					$display_value = ''; // Skip unknown field types.
 					break;
+				}
 			}
 
 			if ( ! empty( $display_value ) ) {
