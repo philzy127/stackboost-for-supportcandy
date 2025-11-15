@@ -41,6 +41,52 @@ class Core {
 	}
 
 	/**
+	 * Universal cache update handler.
+	 *
+	 * This function can be called by any action or filter. It safely searches its
+	 * arguments for a WPSC_Ticket object and, if found, triggers the cache update.
+	 * This prevents fatal errors when hooked into functions with varying signatures.
+	 */
+	public function maybe_update_utm_cache() {
+		\stackboost_log( '[UTM TRACE] Core.php -> maybe_update_utm_cache() - Universal handler fired.' );
+		$ticket = null;
+		$args   = func_get_args();
+
+		\stackboost_log( '[UTM TRACE] Received arguments: ' . print_r( $args, true ) );
+
+		foreach ( $args as $arg ) {
+			if ( is_a( $arg, 'WPSC_Ticket' ) ) {
+				$ticket = $arg;
+				\stackboost_log( '[UTM TRACE] Found WPSC_Ticket object with ID: ' . $ticket->id );
+				break;
+			}
+		}
+
+		if ( $ticket ) {
+			\stackboost_log( '[UTM TRACE] Proceeding to update cache for ticket ID: ' . $ticket->id );
+			$this->update_utm_cache( $ticket );
+		} else {
+			\stackboost_log( '[UTM TRACE] No WPSC_Ticket object found in arguments. Aborting cache update.' );
+		}
+	}
+
+	/**
+	 * A wrapper for WordPress filters.
+	 *
+	 * This calls the universal cache updater and then returns the first argument,
+	 * ensuring the filter chain is not broken.
+	 *
+	 * @return mixed The first argument passed to the function.
+	 */
+	public function maybe_update_utm_cache_and_pass_through() {
+		$args = func_get_args();
+		call_user_func_array( array( $this, 'maybe_update_utm_cache' ), $args );
+
+		// Filters must return the first argument passed to them.
+		return $args[0];
+	}
+
+	/**
 	 * Primes the UTM cache on new ticket creation using a transient.
 	 *
 	 * @param \WPSC_Ticket $ticket The ticket object.

@@ -42,30 +42,32 @@ class WordPress {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
 		// Core logic hooks.
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_create_new_ticket' );
 		add_action( 'wpsc_create_new_ticket', array( $this->core, 'prime_cache_on_creation' ), 5, 1 );
-
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_after_reply_ticket' );
-		add_action( 'wpsc_after_reply_ticket', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_after_change_ticket_status' );
-		add_action( 'wpsc_after_change_ticket_status', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_after_change_ticket_priority' );
-		add_action( 'wpsc_after_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_after_assign_agent' );
-		add_action( 'wpsc_after_assign_agent', array( $this->core, 'update_utm_cache' ), 10, 1 );
-
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_create_ticket_email_data' );
+		// Actions - These hooks are safe for a direct call as they don't expect a return value.
+		add_action( 'wpsc_after_reply_ticket', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_status', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_priority', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_assign_agent', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		// Filters for macro replacement.
 		add_filter( 'wpsc_create_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_agent_reply_email_data' );
 		add_filter( 'wpsc_agent_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_customer_reply_email_data' );
 		add_filter( 'wpsc_customer_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_close_ticket_email_data' );
 		add_filter( 'wpsc_close_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_assign_agent_email_data' );
 		add_filter( 'wpsc_assign_agent_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-
-		\stackboost_log( '[UTM HOOK REG] Registering: wpsc_macros' );
+		// Comprehensive ticket modification email filters for cache updates.
+		add_filter( 'wpsc_add_private_note_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		add_filter( 'wpsc_change_ticket_status_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		add_filter( 'wpsc_change_agentonly_fields_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		add_filter( 'wpsc_change_ticket_category_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		add_filter( 'wpsc_change_ticket_fields_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		add_filter( 'wpsc_change_ticket_priority_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		add_filter( 'wpsc_change_ticket_subject_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		add_filter( 'wpsc_delete_ticket_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		// Non-ticket and background process email filters.
+		add_filter( 'wpsc_guest_login_otp_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 3 );
+		add_filter( 'wpsc_user_reg_otp_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 3 );
+		add_filter( 'wpsc_en_send_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		// Macro registration.
 		add_filter( 'wpsc_macros', array( $this->core, 'register_macro' ) );
 	}
 
