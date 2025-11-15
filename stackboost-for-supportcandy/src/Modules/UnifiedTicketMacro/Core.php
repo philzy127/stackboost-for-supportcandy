@@ -23,6 +23,12 @@ class Core {
 	 */
 	private static ?Core $instance = null;
 
+	/**
+	 * The ticket object to be saved during the shutdown hook.
+	 *
+	 * @var \WPSC_Ticket|null
+	 */
+	private ?\WPSC_Ticket $deferred_ticket_to_save = null;
 
 	/**
 	 * Get the single instance of the class.
@@ -32,6 +38,45 @@ class Core {
 			self::$instance = new self();
 		}
 		return self::$instance;
+	}
+
+	/**
+	 * Universal cache update handler.
+	 *
+	 * This function can be called by any action or filter. It safely searches its
+	 * arguments for a WPSC_Ticket object and, if found, triggers the cache update.
+	 * This prevents fatal errors when hooked into functions with varying signatures.
+	 */
+	public function maybe_update_utm_cache() {
+		$ticket = null;
+		$args   = func_get_args();
+
+		foreach ( $args as $arg ) {
+			if ( is_a( $arg, 'WPSC_Ticket' ) ) {
+				$ticket = $arg;
+				break;
+			}
+		}
+
+		if ( $ticket ) {
+			$this->update_utm_cache( $ticket );
+		}
+	}
+
+	/**
+	 * A wrapper for WordPress filters.
+	 *
+	 * This calls the universal cache updater and then returns the first argument,
+	 * ensuring the filter chain is not broken.
+	 *
+	 * @return mixed The first argument passed to the function.
+	 */
+	public function maybe_update_utm_cache_and_pass_through() {
+		$args = func_get_args();
+		call_user_func_array( array( $this, 'maybe_update_utm_cache' ), $args );
+
+		// Filters must return the first argument passed to them.
+		return $args[0];
 	}
 
 	/**
@@ -60,9 +105,48 @@ class Core {
 		set_transient( 'stackboost_utm_temp_cache_' . $ticket->id, $html_to_cache, 60 );
 		error_log( '[UTM] prime_cache_on_creation() - Transient set for key: stackboost_utm_temp_cache_' . $ticket->id );
 
+		// Defer the permanent save to avoid recursion.
+		add_action( 'shutdown', array( $this, 'deferred_save' ) );
+		error_log( '[UTM] prime_cache_on_creation() - Shutdown action registered.' );
+
+		// Pass the ticket object to the shutdown action.
+		$this->deferred_ticket_to_save = $ticket;
 		error_log( '[UTM] prime_cache_on_creation() - EXIT' );
 	}
 
+	/**
+	 * Saves the UTM HTML from the transient to permanent ticket meta.
+	 * This runs on the 'shutdown' hook to avoid recursion.
+	 */
+	public function deferred_save() {
+		error_log( '[UTM] deferred_save() - ENTER' );
+		if ( isset( $this->deferred_ticket_to_save ) && is_a( $this->deferred_ticket_to_save, 'WPSC_Ticket' ) ) {
+			$ticket        = $this->deferred_ticket_to_save;
+			error_log( '[UTM] deferred_save() - Processing ticket ID: ' . $ticket->id );
+			$html_to_cache = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
+
+			if ( false !== $html_to_cache ) {
+				error_log( '[UTM] deferred_save() - Transient found. Saving to ticket meta.' );
+				$misc_data                    = $ticket->misc;
+				$misc_data['stackboost_utm_html'] = $html_to_cache;
+				$ticket->misc                 = $misc_data;
+
+				// This is now safe to call.
+				$ticket->save();
+				error_log( '[UTM] deferred_save() - Permanent cache saved.' );
+
+				// Clean up the transient.
+				delete_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
+				error_log( '[UTM] deferred_save() - Transient deleted.' );
+			} else {
+				error_log( '[UTM] deferred_save() - WARNING: Transient was not found for ticket ID: ' . $ticket->id );
+			}
+			unset( $this->deferred_ticket_to_save );
+		} else {
+			error_log( '[UTM] deferred_save() - EXIT - No deferred ticket to save.' );
+		}
+		error_log( '[UTM] deferred_save() - EXIT' );
+	}
 
 	/**
 	 * Updates the permanent UTM cache when a ticket is updated.
@@ -70,9 +154,6 @@ class Core {
 	 * @param mixed $ticket_or_thread_or_id Can be a WPSC_Ticket, WPSC_Thread, or ticket ID.
 	 */
 	public function update_utm_cache( $ticket_or_thread_or_id ) {
-		error_log( '[UTM UPDATE] update_utm_cache() - HOOK FIRED.' );
-		error_log( '[UTM UPDATE] Received parameter type: ' . gettype( $ticket_or_thread_or_id ) );
-		error_log( '[UTM UPDATE] Received parameter value: ' . print_r( $ticket_or_thread_or_id, true ) );
 		$ticket = null;
 		if ( is_a( $ticket_or_thread_or_id, 'WPSC_Ticket' ) ) {
 			$ticket = $ticket_or_thread_or_id;
@@ -88,7 +169,10 @@ class Core {
 
 		$html_to_cache = $this->build_live_utm_html( $ticket );
 
-		set_transient( 'stackboost_utm_temp_cache_' . $ticket->id, $html_to_cache, 60 );
+		$misc_data                    = $ticket->misc;
+		$misc_data['stackboost_utm_html'] = $html_to_cache;
+		$ticket->misc                 = $misc_data;
+		$ticket->save();
 	}
 
 	/**
@@ -111,15 +195,20 @@ class Core {
 		}
 		error_log( '[UTM] replace_utm_macro() - Processing for ticket ID: ' . $ticket->id );
 
-		// Attempt to get the HTML from the transient.
-		$cached_html = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
-
-		// If the transient is not found, build the HTML on-the-fly.
-		if ( false === $cached_html ) {
-			error_log( '[UTM] replace_utm_macro() - INFO: Transient cache not found. Building live HTML for ticket ID: ' . $ticket->id );
-			$cached_html = $this->build_live_utm_html( $ticket );
+		// Prioritize the transient for the initial "new ticket" email.
+		$transient_html = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
+		if ( false !== $transient_html ) {
+			$cached_html = $transient_html;
+			error_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using TRANSIENT cache.' );
 		} else {
-			error_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using TRANSIENT cache for ticket ID: ' . $ticket->id );
+			error_log( '[UTM] replace_utm_macro() - INFO: Transient cache not found. Checking permanent cache.' );
+			$misc_data   = $ticket->misc;
+			$cached_html = $misc_data['stackboost_utm_html'] ?? '';
+			if ( ! empty( $cached_html ) ) {
+				error_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using PERMANENT cache.' );
+			} else {
+				error_log( '[UTM] replace_utm_macro() - WARNING: No cache of any kind found for ticket ID: ' . $ticket->id );
+			}
 		}
 
 		$data['body'] = str_replace( '{{stackboost_unified_ticket}}', $cached_html, $data['body'] );
