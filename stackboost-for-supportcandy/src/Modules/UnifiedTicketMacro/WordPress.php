@@ -69,6 +69,101 @@ class WordPress {
 		add_filter( 'wpsc_en_send_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
 		// Macro registration.
 		add_filter( 'wpsc_macros', array( $this->core, 'register_macro' ) );
+
+		// Logging hooks for all major ticket events.
+		add_action( 'wpsc_create_new_ticket', array( $this, 'log_new_ticket_creation' ), 10, 1 );
+		add_action( 'wpsc_post_reply', array( $this, 'log_ticket_replies' ), 10, 1 );
+		add_action( 'wpsc_submit_note', array( $this, 'log_add_private_note' ), 10, 1 );
+		add_action( 'wpsc_change_assignee', array( $this, 'log_assign_agent' ), 10, 4 );
+		add_action( 'wpsc_change_ticket_status', array( $this, 'log_change_ticket_status' ), 10, 4 );
+		add_action( 'wpsc_change_ticket_priority', array( $this, 'log_change_ticket_priority' ), 10, 4 );
+		add_action( 'wpsc_delete_ticket', array( $this, 'log_delete_ticket' ), 10, 1 );
+	}
+
+	/**
+	 * Log deleting a ticket.
+	 *
+	 * @param object $ticket The ticket object.
+	 */
+	public function log_delete_ticket( $ticket ) {
+		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket deleted. Ticket ID: ' . $ticket->id );
+		}
+	}
+
+	/**
+	 * Log changing ticket priority.
+	 *
+	 * @param object $ticket The ticket object.
+	 * @param int    $prev   The previous priority ID.
+	 * @param int    $new    The new priority ID.
+	 * @param int    $customer_id The customer ID.
+	 */
+	public function log_change_ticket_priority( $ticket, $prev, $new, $customer_id ) {
+		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket priority changed. Ticket ID: ' . $ticket->id );
+		}
+	}
+
+	/**
+	 * Log changing ticket status.
+	 *
+	 * @param object $ticket The ticket object.
+	 * @param int    $prev   The previous status ID.
+	 * @param int    $new    The new status ID.
+	 * @param int    $customer_id The customer ID.
+	 */
+	public function log_change_ticket_status( $ticket, $prev, $new, $customer_id ) {
+		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket status changed. Ticket ID: ' . $ticket->id );
+		}
+	}
+
+	/**
+	 * Log assigning an agent.
+	 *
+	 * @param object $ticket The ticket object.
+	 * @param array  $prev   The previous assignees.
+	 * @param array  $new    The new assignees.
+	 * @param int    $customer_id The customer ID.
+	 */
+	public function log_assign_agent( $ticket, $prev, $new, $customer_id ) {
+		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
+			\stackboost_log( '[UTM HOOK] Agent assigned. Ticket ID: ' . $ticket->id );
+		}
+	}
+
+	/**
+	 * Log adding a private note.
+	 *
+	 * @param object $thread The thread object.
+	 */
+	public function log_add_private_note( $thread ) {
+		if ( is_object( $thread ) && isset( $thread->ticket_id ) ) {
+			\stackboost_log( '[UTM HOOK] Private note added. Ticket ID: ' . $thread->ticket_id );
+		}
+	}
+
+	/**
+	 * Log ticket replies.
+	 *
+	 * @param object $thread The thread object.
+	 */
+	public function log_ticket_replies( $thread ) {
+		if ( is_object( $thread ) && isset( $thread->ticket_id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket reply posted. Ticket ID: ' . $thread->ticket_id );
+		}
+	}
+
+	/**
+	 * Log new ticket creation.
+	 *
+	 * @param object $ticket The ticket object.
+	 */
+	public function log_new_ticket_creation( $ticket ) {
+		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
+			\stackboost_log( '[UTM HOOK] New ticket created. ID: ' . $ticket->id );
+		}
 	}
 
 	/**
