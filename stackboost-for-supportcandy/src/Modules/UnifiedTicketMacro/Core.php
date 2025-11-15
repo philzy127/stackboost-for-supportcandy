@@ -176,6 +176,7 @@ class Core {
 		$html_output = '<table>';
 
 		foreach ( $selected_fields as $field_slug ) {
+			\stackboost_log( '[UTM BUILDER] Processing field: ' . $field_slug );
 			$field_value = $ticket->{$field_slug};
 
 			if ( empty( $field_value ) ) {
@@ -190,25 +191,33 @@ class Core {
 			$display_value = '';
 			$field_type    = $field_types_map[ $field_slug ] ?? 'unknown';
 
-			switch ( $field_type ) {
-				case 'cf_textfield':
-				case 'cf_textarea':
-				case 'cf_email':
-				case 'cf_url':
-				case 'cf_number':
-				case 'cf_time':
-				case 'df_id':
-				case 'df_subject':
-				case 'df_ip_address':
-				case 'df_browser':
-				case 'df_os':
-				case 'df_source':
-				case 'df_last_reply_source':
-				case 'df_user_type':
-				case 'df_customer_name':
-				case 'df_customer_email':
-					$display_value = (string) $field_value;
-					break;
+			// Special handling for customer fields to prevent warnings.
+			if ( 'df_customer_name' === $field_slug ) {
+				if ( is_a( $ticket->customer, 'WPSC_Customer' ) ) {
+					$display_value = $ticket->customer->name;
+				}
+			} elseif ( 'df_customer_email' === $field_slug ) {
+				if ( is_a( $ticket->customer, 'WPSC_Customer' ) ) {
+					$display_value = $ticket->customer->email;
+				}
+			} else {
+				switch ( $field_type ) {
+					case 'cf_textfield':
+					case 'cf_textarea':
+					case 'cf_email':
+					case 'cf_url':
+					case 'cf_number':
+					case 'cf_time':
+					case 'df_id':
+					case 'df_subject':
+					case 'df_ip_address':
+					case 'df_browser':
+					case 'df_os':
+					case 'df_source':
+					case 'df_last_reply_source':
+					case 'df_user_type':
+						$display_value = (string) $field_value;
+						break;
 				case 'cf_html':
 				case 'df_description':
 					$display_value = $field_value; // Do not escape HTML content.
