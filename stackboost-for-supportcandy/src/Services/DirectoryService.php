@@ -219,7 +219,7 @@ class DirectoryService {
 
 		// Office Phone
 		if ( ! empty( $employee->office_phone ) ) {
-			$formatted_office_phone = $this->_format_phone_number_string( $employee->office_phone );
+			$formatted_office_phone = $this->format_phone_number_string( $employee->office_phone );
 			$office_line            = '<strong>Office:</strong> ' . $formatted_office_phone;
 			if ( ! empty( $employee->extension ) ) {
 				$office_line .= ' ext. ' . esc_html( $employee->extension );
@@ -229,7 +229,7 @@ class DirectoryService {
 
 		// Mobile Phone
 		if ( ! empty( $employee->mobile_phone ) ) {
-			$formatted_mobile_phone = $this->_format_phone_number_string( $employee->mobile_phone );
+			$formatted_mobile_phone = $this->format_phone_number_string( $employee->mobile_phone );
 			$html_lines[]           = '<strong>Mobile:</strong> ' . $formatted_mobile_phone;
 		}
 
@@ -242,7 +242,7 @@ class DirectoryService {
 	 * @param string $number Raw phone number.
 	 * @return string Formatted phone number.
 	 */
-	private function _format_phone_number_string( string $number ): string {
+	private function format_phone_number_string( string $number ): string {
 		$number = preg_replace( '/[^0-9]/', '', $number );
 		if ( strlen( $number ) === 10 ) {
 			return '(' . substr( $number, 0, 3 ) . ') ' . substr( $number, 3, 3 ) . '-' . substr( $number, 6 );

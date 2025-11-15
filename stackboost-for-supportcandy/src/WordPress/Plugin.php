@@ -52,47 +52,19 @@ final class Plugin {
 	 * Their constructors will register their own hooks.
 	 */
 	private function load_dependencies() {
-		error_log( '[PLUGIN LOAD TRACE] --- Loading Dependencies ---' );
-
 		// Load admin settings handler first, so menus are created.
-		error_log( '[PLUGIN LOAD TRACE] Loading Settings...' );
 		Settings::get_instance();
-		error_log( '[PLUGIN LOAD TRACE] Settings loaded.' );
 
 		// Load all module adapters.
-		error_log( '[PLUGIN LOAD TRACE] Loading TicketView...' );
-		$this->modules['ticket_view'] = TicketView\WordPress::get_instance();
-		error_log( '[PLUGIN LOAD TRACE] TicketView loaded.' );
-
-		error_log( '[PLUGIN LOAD TRACE] Loading QolEnhancements...' );
-		$this->modules['qol_enhancements'] = QolEnhancements\WordPress::get_instance();
-		error_log( '[PLUGIN LOAD TRACE] QolEnhancements loaded.' );
-
-		error_log( '[PLUGIN LOAD TRACE] Loading AfterHoursNotice...' );
-		$this->modules['after_hours_notice'] = AfterHoursNotice\WordPress::get_instance();
-		error_log( '[PLUGIN LOAD TRACE] AfterHoursNotice loaded.' );
-
-		error_log( '[PLUGIN LOAD TRACE] Loading ConditionalViews...' );
-		$this->modules['conditional_views'] = ConditionalViews\WordPress::get_instance();
-		error_log( '[PLUGIN LOAD TRACE] ConditionalViews loaded.' );
-
-		error_log( '[PLUGIN LOAD TRACE] Loading QueueMacro...' );
-		$this->modules['queue_macro'] = QueueMacro\WordPress::get_instance();
-		error_log( '[PLUGIN LOAD TRACE] QueueMacro loaded.' );
-
-		error_log( '[PLUGIN LOAD TRACE] Loading AfterTicketSurvey...' );
+		$this->modules['ticket_view']         = TicketView\WordPress::get_instance();
+		$this->modules['qol_enhancements']    = QolEnhancements\WordPress::get_instance();
+		$this->modules['after_hours_notice']  = AfterHoursNotice\WordPress::get_instance();
+		$this->modules['conditional_views']   = ConditionalViews\WordPress::get_instance();
+		$this->modules['queue_macro']         = QueueMacro\WordPress::get_instance();
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
-		error_log( '[PLUGIN LOAD TRACE] AfterTicketSurvey loaded.' );
-
-		error_log( '[PLUGIN LOAD TRACE] Loading Directory...' );
-		$this->modules['directory'] = Directory\WordPress::get_instance();
-		error_log( '[PLUGIN LOAD TRACE] Directory loaded.' );
-
-		error_log( '[PLUGIN LOAD TRACE] Loading UnifiedTicketMacro...' );
+		$this->modules['directory']           = Directory\WordPress::get_instance();
 		$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
-		error_log( '[PLUGIN LOAD TRACE] UnifiedTicketMacro loaded.' );
 
-		error_log( '[PLUGIN LOAD TRACE] --- All Dependencies Loaded ---' );
 	}
 
 	/**
