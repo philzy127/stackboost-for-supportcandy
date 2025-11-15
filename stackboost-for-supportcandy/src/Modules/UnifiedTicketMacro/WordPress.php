@@ -18,6 +18,13 @@ class WordPress {
 
 	private static $instance = null;
 
+	/**
+	 * Core instance.
+	 *
+	 * @var Core
+	 */
+	private $core;
+
 	public static function get_instance() {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
@@ -29,9 +36,26 @@ class WordPress {
 	 * Initialize the admin settings.
 	 */
 	private function __construct() {
+		$this->core = Core::get_instance();
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+
+		// Core logic hooks.
+		add_action( 'wpsc_create_new_ticket', array( $this->core, 'prime_cache_on_creation' ), 5, 1 );
+
+		add_action( 'wpsc_after_reply_ticket', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_status', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_assign_agent', array( $this->core, 'update_utm_cache' ), 10, 1 );
+
+		add_filter( 'wpsc_create_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
+		add_filter( 'wpsc_agent_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
+		add_filter( 'wpsc_customer_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
+		add_filter( 'wpsc_close_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
+		add_filter( 'wpsc_assign_agent_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
+
+		add_filter( 'wpsc_macros', array( $this->core, 'register_macro' ) );
 	}
 
 	/**
