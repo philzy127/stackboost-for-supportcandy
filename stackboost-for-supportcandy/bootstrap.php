@@ -55,5 +55,38 @@ require_once __DIR__ . '/src/WordPress/supportcandy-pro-check.php';
 // Get the plugin running.
 stackboost_run();
 
+if ( ! function_exists( 'stackboost_log' ) ) {
+	/**
+	 * Custom logger for StackBoost.
+	 *
+	 * @param mixed $message The message to log.
+	 */
+	function stackboost_log( $message ) {
+		$log_dir  = __DIR__ . '/logs';
+		$log_file = $log_dir . '/debug.log';
+
+		// Ensure the directory exists.
+		if ( ! is_dir( $log_dir ) ) {
+			// This will create the directory recursively.
+			wp_mkdir_p( $log_dir );
+		}
+
+		$timestamp = date_i18n( 'Y-m-d H:i:s T' );
+		$log_entry = '[' . $timestamp . '] ';
+
+		if ( is_array( $message ) || is_object( $message ) ) {
+			$log_entry .= print_r( $message, true );
+		} else {
+			$log_entry .= $message;
+		}
+
+		// Add a newline character.
+		$log_entry .= "\n";
+
+		// Write to the log file.
+		file_put_contents( $log_file, $log_entry, FILE_APPEND );
+	}
+}
+
 // Initialize upgrade routines.
 add_action( 'plugins_loaded', array( 'StackBoost\ForSupportCandy\Admin\Upgrade', 'init' ) );
