@@ -83,17 +83,6 @@ class Core {
 	}
 
 	/**
-	 * Log ticket deletion.
-	 *
-	 * @param \WPSC_Ticket $ticket The ticket object.
-	 */
-	public function log_ticket_deletion( \WPSC_Ticket $ticket ) {
-		\stackboost_log( '[UTM HOOK] wpsc_delete_ticket fired. Ticket object:' );
-		\stackboost_log( $ticket );
-	}
-
-
-	/**
 	 * Updates the UTM cache when a ticket is updated.
 	 *
 	 * @param \WPSC_Ticket $ticket The ticket object.
