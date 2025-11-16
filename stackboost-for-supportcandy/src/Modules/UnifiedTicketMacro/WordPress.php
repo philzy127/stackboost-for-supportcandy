@@ -36,112 +36,31 @@ class WordPress {
 	 * Initialize the admin settings.
 	 */
 	private function __construct() {
-		\stackboost_log( '[UTM DIAGNOSTIC] UnifiedTicketMacro\WordPress class constructor fired.' );
 		$this->core = Core::get_instance();
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
 		// Core logic hooks.
-		add_action( 'wpsc_create_new_ticket', array( $this->core, 'prime_cache_on_creation' ), 5, 1 );
-		// Actions - These hooks are safe for a direct call as they don't expect a return value.
-		add_action( 'wpsc_after_reply_ticket', array( $this, 'log_and_update_cache_on_reply' ), 10, 1 );
-		add_action( 'wpsc_after_change_ticket_status', array( $this, 'log_and_update_cache_on_status_change' ), 10, 1 );
-		add_action( 'wpsc_after_change_ticket_priority', array( $this, 'log_and_update_cache_on_priority_change' ), 10, 1 );
-		add_action( 'wpsc_after_assign_agent', array( $this, 'log_and_update_cache_on_agent_assign' ), 10, 1 );
+		add_action( 'wpsc_create_ticket', array( $this->core, 'prime_cache_on_creation' ), 10, 1 );
+		add_action( 'wpsc_after_reply_ticket', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_add_private_note', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_assign_agent', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_status', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_priority', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_delete_ticket', array( $this->core, 'log_ticket_deletion' ), 10, 1 );
+
+
 		// Filters for macro replacement.
 		add_filter( 'wpsc_create_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_agent_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_customer_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_close_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_assign_agent_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-		// Comprehensive ticket modification email filters for cache updates.
-		add_filter( 'wpsc_add_private_note_email_data', array( $this, 'log_and_update_cache_on_private_note' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_status_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_agentonly_fields_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_category_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_fields_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_priority_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_change_ticket_subject_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		add_filter( 'wpsc_delete_ticket_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
-		// Non-ticket and background process email filters.
-		add_filter( 'wpsc_guest_login_otp_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 3 );
-		add_filter( 'wpsc_user_reg_otp_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 3 );
-		add_filter( 'wpsc_en_send_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+
 		// Macro registration.
 		add_filter( 'wpsc_macros', array( $this->core, 'register_macro' ) );
-
-		// Standalone logging for ticket deletion.
-		add_action( 'wpsc_delete_ticket', array( $this, 'log_ticket_deletion' ), 10, 1 );
 	}
-
-	/**
-	 * Log ticket deletion.
-	 */
-	public function log_ticket_deletion() {
-		$args = func_get_args();
-		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket deleted. Ticket ID: ' . $args[0]->id );
-		}
-	}
-
-	/**
-	 * Log ticket replies and update cache.
-	 */
-	public function log_and_update_cache_on_reply() {
-		$args = func_get_args();
-		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->ticket_id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket reply posted. Ticket ID: ' . $args[0]->ticket_id );
-		}
-		call_user_func_array( array( $this->core, 'maybe_update_utm_cache' ), $args );
-	}
-
-	/**
-	 * Log private notes and update cache.
-	 *
-	 * @return mixed
-	 */
-	public function log_and_update_cache_on_private_note() {
-		$args = func_get_args();
-		if ( isset( $args[1] ) && is_object( $args[1] ) && isset( $args[1]->ticket_id ) ) {
-			\stackboost_log( '[UTM HOOK] Private note added. Ticket ID: ' . $args[1]->ticket_id );
-		}
-		return call_user_func_array( array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), $args );
-	}
-
-	/**
-	 * Log agent assignment and update cache.
-	 */
-	public function log_and_update_cache_on_agent_assign() {
-		$args = func_get_args();
-		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->id ) ) {
-			\stackboost_log( '[UTM HOOK] Agent assigned. Ticket ID: ' . $args[0]->id );
-		}
-		call_user_func_array( array( $this->core, 'maybe_update_utm_cache' ), $args );
-	}
-
-	/**
-	 * Log ticket status change and update cache.
-	 */
-	public function log_and_update_cache_on_status_change() {
-		$args = func_get_args();
-		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket status changed. Ticket ID: ' . $args[0]->id );
-		}
-		call_user_func_array( array( $this->core, 'maybe_update_utm_cache' ), $args );
-	}
-
-	/**
-	 * Log ticket priority change and update cache.
-	 */
-	public function log_and_update_cache_on_priority_change() {
-		$args = func_get_args();
-		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket priority changed. Ticket ID: ' . $args[0]->id );
-		}
-		call_user_func_array( array( $this->core, 'maybe_update_utm_cache' ), $args );
-	}
-
 
 	/**
 	 * Add the admin menu page.
@@ -221,8 +140,7 @@ class WordPress {
 	 * Enqueue admin scripts and styles.
 	 */
 	public function enqueue_admin_scripts( $hook ) {
-		// This is the final, correct hook, identified from working modules in the plugin.
-		if ( 'stackboost_page_stackboost-utm' !== $hook ) {
+		if ( 'stackboost-for-supportcandy_page_stackboost-utm' !== $hook ) {
 			return;
 		}
 
@@ -232,7 +150,7 @@ class WordPress {
 			'stackboost-admin-utm',
 			$plugin_url . 'assets/admin/js/utm-admin.js',
 			array( 'jquery' ),
-			\STACKBOOST_VERSION, // Corrected: Use the global constant.
+			\STACKBOOST_VERSION,
 			true
 		);
 
@@ -240,7 +158,7 @@ class WordPress {
 			'stackboost-admin-utm',
 			$plugin_url . 'assets/admin/css/utm-admin.css',
 			[],
-			\STACKBOOST_VERSION // Corrected: Use the global constant.
+			\STACKBOOST_VERSION
 		);
 	}
 
@@ -253,15 +171,9 @@ class WordPress {
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<form method="post" action="options.php">
 				<?php
-				// This will output the nonces and other fields for the 'stackboost_settings' group.
 				settings_fields( 'stackboost_settings' );
-
-				// This will render the sections and fields that were registered for this page.
 				do_settings_sections( 'stackboost-utm' );
-
-				// Add the hidden page slug field, which is critical for the central sanitizer.
 				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-utm">';
-
 				submit_button();
 				?>
 			</form>
@@ -280,7 +192,6 @@ class WordPress {
 		$available_columns = array_diff_key( $all_columns, array_flip( $selected_slugs ) );
 		$selected_columns  = array_intersect_key( $all_columns, array_flip( $selected_slugs ) );
 
-		// Ensure the order of selected columns is preserved.
 		$ordered_selected = [];
 		foreach ($selected_slugs as $slug) {
 			if (isset($selected_columns[$slug])) {
