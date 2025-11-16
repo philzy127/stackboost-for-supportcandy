@@ -326,30 +326,74 @@ class WordPress {
 	 * Wrapper functions to call the central logger.
 	 */
 	public function log_wpsc_create_new_ticket( $ticket ) {
-		\stackboost_log( '[UTM HOOK FIRED] wpsc_create_new_ticket', $ticket );
+		\stackboost_log(
+			array(
+				'message' => '[UTM HOOK FIRED] wpsc_create_new_ticket',
+				'ticket'  => $ticket,
+			)
+		);
 	}
 
 	public function log_wpsc_post_reply( $thread ) {
-		\stackboost_log( '[UTM HOOK FIRED] wpsc_post_reply', $thread );
+		\stackboost_log(
+			array(
+				'message' => '[UTM HOOK FIRED] wpsc_post_reply',
+				'thread'  => $thread,
+			)
+		);
 	}
 
 	public function log_wpsc_submit_note( $thread ) {
-		\stackboost_log( '[UTM HOOK FIRED] wpsc_submit_note', $thread );
+		\stackboost_log(
+			array(
+				'message' => '[UTM HOOK FIRED] wpsc_submit_note',
+				'thread'  => $thread,
+			)
+		);
 	}
 
 	public function log_wpsc_change_assignee( $ticket, $prev, $new, $customer_id ) {
-		\stackboost_log( '[UTM HOOK FIRED] wpsc_change_assignee', $ticket, $prev, $new, $customer_id );
+		\stackboost_log(
+			array(
+				'message'     => '[UTM HOOK FIRED] wpsc_change_assignee',
+				'ticket'      => $ticket,
+				'prev'        => $prev,
+				'new'         => $new,
+				'customer_id' => $customer_id,
+			)
+		);
 	}
 
 	public function log_wpsc_change_ticket_status( $ticket, $prev, $new, $customer_id ) {
-		\stackboost_log( '[UTM HOOK FIRED] wpsc_change_ticket_status', $ticket, $prev, $new, $customer_id );
+		\stackboost_log(
+			array(
+				'message'     => '[UTM HOOK FIRED] wpsc_change_ticket_status',
+				'ticket'      => $ticket,
+				'prev'        => $prev,
+				'new'         => $new,
+				'customer_id' => $customer_id,
+			)
+		);
 	}
 
 	public function log_wpsc_change_ticket_priority( $ticket, $prev, $new, $customer_id ) {
-		\stackboost_log( '[UTM HOOK FIRED] wpsc_change_ticket_priority', $ticket, $prev, $new, $customer_id );
+		\stackboost_log(
+			array(
+				'message'     => '[UTM HOOK FIRED] wpsc_change_ticket_priority',
+				'ticket'      => $ticket,
+				'prev'        => $prev,
+				'new'         => $new,
+				'customer_id' => $customer_id,
+			)
+		);
 	}
 
 	public function log_wpsc_delete_ticket( $ticket ) {
-		\stackboost_log( '[UTM HOOK FIRED] wpsc_delete_ticket', $ticket );
+		\stackboost_log(
+			array(
+				'message' => '[UTM HOOK FIRED] wpsc_delete_ticket',
+				'ticket'  => $ticket,
+			)
+		);
 	}
 }
