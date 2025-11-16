@@ -281,11 +281,11 @@ class Core {
 
 			// Special handling for customer fields to prevent warnings.
 			if ( 'name' === $field_slug ) {
-				if ( is_a( $ticket->customer, 'WPSC_Customer' ) ) {
+				if ( isset( $ticket->customer ) && is_a( $ticket->customer, 'WPSC_Customer' ) && isset( $ticket->customer->name ) ) {
 					$display_value = $ticket->customer->name;
 				}
 			} elseif ( 'email' === $field_slug ) {
-				if ( is_a( $ticket->customer, 'WPSC_Customer' ) ) {
+				if ( isset( $ticket->customer ) && is_a( $ticket->customer, 'WPSC_Customer' ) && isset( $ticket->customer->email ) ) {
 					$display_value = $ticket->customer->email;
 				}
 			} else {
@@ -364,7 +364,7 @@ class Core {
 		return $html_output;
 	}
 
-    /**
+	/**
 	 * Register the macro with SupportCandy.
 	 *
 	 * @param array $macros The existing macros.
