@@ -326,21 +326,32 @@ class WordPress {
 	 * Wrapper functions to call the central logger.
 	 */
 	public function log_wpsc_create_new_ticket( $ticket ) {
-		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
+		try {
+			if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
+				\stackboost_log(
+					array(
+						'message' => '[UTM HOOK WARNING] wpsc_create_new_ticket: $ticket is not a WPSC_Ticket object.',
+						'ticket'  => $ticket,
+					)
+				);
+				return;
+			}
 			\stackboost_log(
 				array(
-					'message' => '[UTM HOOK WARNING] wpsc_create_new_ticket: $ticket is not a WPSC_Ticket object.',
+					'message' => '[UTM HOOK FIRED] wpsc_create_new_ticket',
 					'ticket'  => $ticket,
 				)
 			);
-			return;
+		} catch ( \Throwable $e ) {
+			\stackboost_log(
+				array(
+					'message'   => '[UTM HOOK FATAL ERROR] wpsc_create_new_ticket: An error occurred.',
+					'error'     => $e->getMessage(),
+					'file'      => $e->getFile(),
+					'line'      => $e->getLine(),
+				)
+			);
 		}
-		\stackboost_log(
-			array(
-				'message' => '[UTM HOOK FIRED] wpsc_create_new_ticket',
-				'ticket'  => $ticket,
-			)
-		);
 	}
 
 	public function log_wpsc_post_reply( $thread ) {
