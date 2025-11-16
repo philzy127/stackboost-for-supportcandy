@@ -44,10 +44,10 @@ class WordPress {
 		// Core logic hooks.
 		add_action( 'wpsc_create_new_ticket', array( $this->core, 'prime_cache_on_creation' ), 5, 1 );
 		// Actions - These hooks are safe for a direct call as they don't expect a return value.
-		add_action( 'wpsc_after_reply_ticket', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_after_change_ticket_status', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_after_change_ticket_priority', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_after_assign_agent', array( $this->core, 'maybe_update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_reply_ticket', array( $this, 'log_and_update_cache_on_reply' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_status', array( $this, 'log_and_update_cache_on_status_change' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_priority', array( $this, 'log_and_update_cache_on_priority_change' ), 10, 1 );
+		add_action( 'wpsc_after_assign_agent', array( $this, 'log_and_update_cache_on_agent_assign' ), 10, 1 );
 		// Filters for macro replacement.
 		add_filter( 'wpsc_create_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_agent_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
@@ -55,7 +55,7 @@ class WordPress {
 		add_filter( 'wpsc_close_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_assign_agent_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		// Comprehensive ticket modification email filters for cache updates.
-		add_filter( 'wpsc_add_private_note_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
+		add_filter( 'wpsc_add_private_note_email_data', array( $this, 'log_and_update_cache_on_private_note' ), 10, 2 );
 		add_filter( 'wpsc_change_ticket_status_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
 		add_filter( 'wpsc_change_agentonly_fields_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
 		add_filter( 'wpsc_change_ticket_category_email_data', array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), 10, 2 );
@@ -70,100 +70,81 @@ class WordPress {
 		// Macro registration.
 		add_filter( 'wpsc_macros', array( $this->core, 'register_macro' ) );
 
-		// Logging hooks for all major ticket events.
-		add_action( 'wpsc_create_new_ticket', array( $this, 'log_new_ticket_creation' ), 10, 1 );
-		add_action( 'wpsc_post_reply', array( $this, 'log_ticket_replies' ), 10, 1 );
-		add_action( 'wpsc_submit_note', array( $this, 'log_add_private_note' ), 10, 1 );
-		add_action( 'wpsc_change_assignee', array( $this, 'log_assign_agent' ), 10, 4 );
-		add_action( 'wpsc_change_ticket_status', array( $this, 'log_change_ticket_status' ), 10, 4 );
-		add_action( 'wpsc_change_ticket_priority', array( $this, 'log_change_ticket_priority' ), 10, 4 );
-		add_action( 'wpsc_delete_ticket', array( $this, 'log_delete_ticket' ), 10, 1 );
+		// Standalone logging for ticket deletion.
+		add_action( 'wpsc_delete_ticket', array( $this, 'log_ticket_deletion' ), 10, 1 );
 	}
 
 	/**
-	 * Log deleting a ticket.
+	 * Log ticket deletion.
 	 *
 	 * @param object $ticket The ticket object.
 	 */
-	public function log_delete_ticket( $ticket ) {
+	public function log_ticket_deletion( $ticket ) {
 		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
 			\stackboost_log( '[UTM HOOK] Ticket deleted. Ticket ID: ' . $ticket->id );
 		}
 	}
 
 	/**
-	 * Log changing ticket priority.
-	 *
-	 * @param object $ticket The ticket object.
-	 * @param int    $prev   The previous priority ID.
-	 * @param int    $new    The new priority ID.
-	 * @param int    $customer_id The customer ID.
-	 */
-	public function log_change_ticket_priority( $ticket, $prev, $new, $customer_id ) {
-		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket priority changed. Ticket ID: ' . $ticket->id );
-		}
-	}
-
-	/**
-	 * Log changing ticket status.
-	 *
-	 * @param object $ticket The ticket object.
-	 * @param int    $prev   The previous status ID.
-	 * @param int    $new    The new status ID.
-	 * @param int    $customer_id The customer ID.
-	 */
-	public function log_change_ticket_status( $ticket, $prev, $new, $customer_id ) {
-		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket status changed. Ticket ID: ' . $ticket->id );
-		}
-	}
-
-	/**
-	 * Log assigning an agent.
-	 *
-	 * @param object $ticket The ticket object.
-	 * @param array  $prev   The previous assignees.
-	 * @param array  $new    The new assignees.
-	 * @param int    $customer_id The customer ID.
-	 */
-	public function log_assign_agent( $ticket, $prev, $new, $customer_id ) {
-		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
-			\stackboost_log( '[UTM HOOK] Agent assigned. Ticket ID: ' . $ticket->id );
-		}
-	}
-
-	/**
-	 * Log adding a private note.
+	 * Log ticket replies and update cache.
 	 *
 	 * @param object $thread The thread object.
 	 */
-	public function log_add_private_note( $thread ) {
-		if ( is_object( $thread ) && isset( $thread->ticket_id ) ) {
-			\stackboost_log( '[UTM HOOK] Private note added. Ticket ID: ' . $thread->ticket_id );
-		}
-	}
-
-	/**
-	 * Log ticket replies.
-	 *
-	 * @param object $thread The thread object.
-	 */
-	public function log_ticket_replies( $thread ) {
+	public function log_and_update_cache_on_reply( $thread ) {
 		if ( is_object( $thread ) && isset( $thread->ticket_id ) ) {
 			\stackboost_log( '[UTM HOOK] Ticket reply posted. Ticket ID: ' . $thread->ticket_id );
 		}
+		$this->core->maybe_update_utm_cache( $thread );
 	}
 
 	/**
-	 * Log new ticket creation.
+	 * Log private notes and update cache.
+	 *
+	 * @param array  $data   The email data.
+	 * @param object $thread The thread object.
+	 * @return array
+	 */
+	public function log_and_update_cache_on_private_note( $data, $thread ) {
+		if ( is_object( $thread ) && isset( $thread->ticket_id ) ) {
+			\stackboost_log( '[UTM HOOK] Private note added. Ticket ID: ' . $thread->ticket_id );
+		}
+		return $this->core->maybe_update_utm_cache_and_pass_through( $data, $thread );
+	}
+
+	/**
+	 * Log agent assignment and update cache.
 	 *
 	 * @param object $ticket The ticket object.
 	 */
-	public function log_new_ticket_creation( $ticket ) {
+	public function log_and_update_cache_on_agent_assign( $ticket ) {
 		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
-			\stackboost_log( '[UTM HOOK] New ticket created. ID: ' . $ticket->id );
+			\stackboost_log( '[UTM HOOK] Agent assigned. Ticket ID: ' . $ticket->id );
 		}
+		$this->core->maybe_update_utm_cache( $ticket );
+	}
+
+	/**
+	 * Log ticket status change and update cache.
+	 *
+	 * @param object $ticket The ticket object.
+	 */
+	public function log_and_update_cache_on_status_change( $ticket ) {
+		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket status changed. Ticket ID: ' . $ticket->id );
+		}
+		$this->core->maybe_update_utm_cache( $ticket );
+	}
+
+	/**
+	 * Log ticket priority change and update cache.
+	 *
+	 * @param object $ticket The ticket object.
+	 */
+	public function log_and_update_cache_on_priority_change( $ticket ) {
+		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket priority changed. Ticket ID: ' . $ticket->id );
+		}
+		$this->core->maybe_update_utm_cache( $ticket );
 	}
 
 	/**

@@ -133,6 +133,7 @@ class Core {
 	 * @param \WPSC_Ticket $ticket The ticket object.
 	 */
 	public function prime_cache_on_creation( \WPSC_Ticket $ticket ) {
+		\stackboost_log( '[UTM HOOK] New ticket created. ID: ' . $ticket->id );
 		\stackboost_log( '[UTM] prime_cache_on_creation() - ENTER for ticket ID: ' . $ticket->id );
 		if ( ! $ticket->id ) {
 			\stackboost_log( '[UTM] prime_cache_on_creation() - EXIT - Invalid ticket object.' );
