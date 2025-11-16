@@ -326,6 +326,15 @@ class WordPress {
 	 * Wrapper functions to call the central logger.
 	 */
 	public function log_wpsc_create_new_ticket( $ticket ) {
+		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
+			\stackboost_log(
+				array(
+					'message' => '[UTM HOOK WARNING] wpsc_create_new_ticket: $ticket is not a WPSC_Ticket object.',
+					'ticket'  => $ticket,
+				)
+			);
+			return;
+		}
 		\stackboost_log(
 			array(
 				'message' => '[UTM HOOK FIRED] wpsc_create_new_ticket',
