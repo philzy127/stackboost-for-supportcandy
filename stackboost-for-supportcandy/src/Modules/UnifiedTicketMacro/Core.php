@@ -281,6 +281,11 @@ class Core {
 
 			// Special handling for customer fields to prevent warnings.
 			if ( 'name' === $field_slug ) {
+				\stackboost_log('[UTM DIAGNOSTIC] Type of $ticket->customer: ' . gettype($ticket->customer));
+				if (is_object($ticket->customer)) {
+					\stackboost_log('[UTM DIAGNOSTIC] Class of $ticket->customer: ' . get_class($ticket->customer));
+				}
+				\stackboost_log('[UTM DIAGNOSTIC] Content of $ticket->customer: ' . print_r($ticket->customer, true));
 				if ( isset( $ticket->customer ) && is_a( $ticket->customer, 'WPSC_Customer' ) && isset( $ticket->customer->name ) ) {
 					$display_value = $ticket->customer->name;
 				}
