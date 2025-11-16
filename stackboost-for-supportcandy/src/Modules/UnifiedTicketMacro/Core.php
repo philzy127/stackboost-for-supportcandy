@@ -41,12 +41,15 @@ class Core {
 	}
 
 	/**
-	 * Universal cache update handler.
-	 * It safely searches its arguments for a WPSC_Ticket object and, if found, triggers the cache update.
+	 * Universal cache update handler and logger.
+	 * It logs all arguments passed by the hook and then updates the cache.
 	 *
 	 * @param mixed ...$args The arguments passed by the hook.
 	 */
 	public function maybe_update_utm_cache( ...$args ) {
+		\stackboost_log( '[UTM HOOK] A ticket event fired. Full arguments:' );
+		\stackboost_log( $args );
+
 		$ticket = null;
 		foreach ( $args as $arg ) {
 			if ( is_a( $arg, 'WPSC_Ticket' ) ) {
@@ -60,21 +63,22 @@ class Core {
 		}
 
 		if ( $ticket && $ticket->id ) {
-			\stackboost_log( '[UTM HOOK] A ticket event fired. Updating cache for ticket ID: ' . $ticket->id );
 			$this->update_utm_cache( $ticket );
 		}
 	}
 
 	/**
-	 * Primes the UTM cache on new ticket creation.
+	 * Logs ticket creation and primes the UTM cache.
 	 *
 	 * @param \WPSC_Ticket $ticket The ticket object.
 	 */
 	public function prime_cache_on_creation( \WPSC_Ticket $ticket ) {
+		\stackboost_log( '[UTM HOOK] wpsc_create_ticket fired. Ticket object:' );
+		\stackboost_log( $ticket );
+
 		if ( ! $ticket->id ) {
 			return;
 		}
-		\stackboost_log( '[UTM HOOK] wpsc_create_ticket fired. Priming cache for ticket ID: ' . $ticket->id );
 		$this->update_utm_cache( $ticket );
 	}
 
@@ -84,9 +88,8 @@ class Core {
 	 * @param \WPSC_Ticket $ticket The ticket object.
 	 */
 	public function log_ticket_deletion( \WPSC_Ticket $ticket ) {
-		if ( $ticket && $ticket->id ) {
-			\stackboost_log( '[UTM HOOK] Ticket deleted. Ticket ID: ' . $ticket->id );
-		}
+		\stackboost_log( '[UTM HOOK] wpsc_delete_ticket fired. Ticket object:' );
+		\stackboost_log( $ticket );
 	}
 
 
