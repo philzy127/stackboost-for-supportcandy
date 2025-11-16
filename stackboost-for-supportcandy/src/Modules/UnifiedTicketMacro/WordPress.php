@@ -76,76 +76,71 @@ class WordPress {
 
 	/**
 	 * Log ticket deletion.
-	 *
-	 * @param object $ticket The ticket object.
 	 */
-	public function log_ticket_deletion( $ticket ) {
-		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket deleted. Ticket ID: ' . $ticket->id );
+	public function log_ticket_deletion() {
+		$args = func_get_args();
+		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket deleted. Ticket ID: ' . $args[0]->id );
 		}
 	}
 
 	/**
 	 * Log ticket replies and update cache.
-	 *
-	 * @param object $thread The thread object.
 	 */
-	public function log_and_update_cache_on_reply( $thread ) {
-		if ( is_object( $thread ) && isset( $thread->ticket_id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket reply posted. Ticket ID: ' . $thread->ticket_id );
+	public function log_and_update_cache_on_reply() {
+		$args = func_get_args();
+		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->ticket_id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket reply posted. Ticket ID: ' . $args[0]->ticket_id );
 		}
-		$this->core->maybe_update_utm_cache( $thread );
+		call_user_func_array( array( $this->core, 'maybe_update_utm_cache' ), $args );
 	}
 
 	/**
 	 * Log private notes and update cache.
 	 *
-	 * @param array  $data   The email data.
-	 * @param object $thread The thread object.
-	 * @return array
+	 * @return mixed
 	 */
-	public function log_and_update_cache_on_private_note( $data, $thread ) {
-		if ( is_object( $thread ) && isset( $thread->ticket_id ) ) {
-			\stackboost_log( '[UTM HOOK] Private note added. Ticket ID: ' . $thread->ticket_id );
+	public function log_and_update_cache_on_private_note() {
+		$args = func_get_args();
+		if ( isset( $args[1] ) && is_object( $args[1] ) && isset( $args[1]->ticket_id ) ) {
+			\stackboost_log( '[UTM HOOK] Private note added. Ticket ID: ' . $args[1]->ticket_id );
 		}
-		return $this->core->maybe_update_utm_cache_and_pass_through( $data, $thread );
+		return call_user_func_array( array( $this->core, 'maybe_update_utm_cache_and_pass_through' ), $args );
 	}
 
 	/**
 	 * Log agent assignment and update cache.
-	 *
-	 * @param object $ticket The ticket object.
 	 */
-	public function log_and_update_cache_on_agent_assign( $ticket ) {
-		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
-			\stackboost_log( '[UTM HOOK] Agent assigned. Ticket ID: ' . $ticket->id );
+	public function log_and_update_cache_on_agent_assign() {
+		$args = func_get_args();
+		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->id ) ) {
+			\stackboost_log( '[UTM HOOK] Agent assigned. Ticket ID: ' . $args[0]->id );
 		}
-		$this->core->maybe_update_utm_cache( $ticket );
+		call_user_func_array( array( $this->core, 'maybe_update_utm_cache' ), $args );
 	}
 
 	/**
 	 * Log ticket status change and update cache.
-	 *
-	 * @param object $ticket The ticket object.
 	 */
-	public function log_and_update_cache_on_status_change( $ticket ) {
-		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket status changed. Ticket ID: ' . $ticket->id );
+	public function log_and_update_cache_on_status_change() {
+		$args = func_get_args();
+		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket status changed. Ticket ID: ' . $args[0]->id );
 		}
-		$this->core->maybe_update_utm_cache( $ticket );
+		call_user_func_array( array( $this->core, 'maybe_update_utm_cache' ), $args );
 	}
 
 	/**
 	 * Log ticket priority change and update cache.
-	 *
-	 * @param object $ticket The ticket object.
 	 */
-	public function log_and_update_cache_on_priority_change( $ticket ) {
-		if ( is_object( $ticket ) && isset( $ticket->id ) ) {
-			\stackboost_log( '[UTM HOOK] Ticket priority changed. Ticket ID: ' . $ticket->id );
+	public function log_and_update_cache_on_priority_change() {
+		$args = func_get_args();
+		if ( isset( $args[0] ) && is_object( $args[0] ) && isset( $args[0]->id ) ) {
+			\stackboost_log( '[UTM HOOK] Ticket priority changed. Ticket ID: ' . $args[0]->id );
 		}
-		$this->core->maybe_update_utm_cache( $ticket );
+		call_user_func_array( array( $this->core, 'maybe_update_utm_cache' ), $args );
 	}
+
 
 	/**
 	 * Add the admin menu page.
