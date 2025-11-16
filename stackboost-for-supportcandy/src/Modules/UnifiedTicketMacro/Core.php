@@ -157,24 +157,25 @@ class Core {
 			return '<table></table>';
 		}
 
-		$all_fields      = \WPSC_Custom_Field::$custom_fields;
-		$field_types_map = [];
-		foreach ( $all_fields as $slug => $field_object ) {
-			$field_type_class         = $field_object->type;
-			$field_types_map[ $slug ] = $field_type_class::$slug;
-		}
+		$all_fields = \WPSC_Custom_Field::$custom_fields;
 
 		$html_output = '<table>';
 		foreach ( $selected_fields as $field_slug ) {
-			$field_value = $ticket->{$field_slug};
 
-			if ( empty( $field_value ) || ( is_string( $field_value ) && '0000-00-00 00:00:00' === $field_value ) ) {
+			// Skip if the field doesn't exist in SupportCandy's registry.
+			$custom_field = $all_fields[ $field_slug ] ?? null;
+			if ( ! $custom_field && ! in_array( $field_slug, [ 'name', 'email' ], true ) ) {
+				continue;
+			}
+
+			$raw_value = $ticket->{$field_slug} ?? null;
+
+			if ( empty( $raw_value ) || ( is_string( $raw_value ) && '0000-00-00 00:00:00' === $raw_value ) ) {
 				continue;
 			}
 
 			$field_name    = $rename_rules_map[ $field_slug ] ?? ( $all_columns[ $field_slug ] ?? $field_slug );
 			$display_value = '';
-			$field_type    = $field_types_map[ $field_slug ] ?? 'unknown';
 
 			if ( 'name' === $field_slug ) {
 				if ( isset( $ticket->customer ) && is_a( $ticket->customer, 'WPSC_Customer' ) && isset( $ticket->customer->name ) ) {
@@ -184,13 +185,16 @@ class Core {
 				if ( isset( $ticket->customer ) && is_a( $ticket->customer, 'WPSC_Customer' ) && isset( $ticket->customer->email ) ) {
 					$display_value = $ticket->customer->email;
 				}
-			} else {
-				$display_value = \WPSC_Custom_Field::get_field_value_display( $field_slug, $field_value, $ticket );
+			} elseif ( $custom_field ) {
+				// Dynamically call the static get_field_value method from the correct field type class.
+				$display_value = $custom_field->type::get_field_value( $custom_field, $raw_value );
 			}
 
 			if ( ! empty( $display_value ) ) {
-				if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
-					$html_output .= '<tr><td><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . $display_value . '</td></tr>';
+				$field_type_slug = $custom_field->type::$slug ?? '';
+				if ( 'cf_html' === $field_type_slug || 'df_description' === $field_type_slug ) {
+					// Use wp_kses_post for fields that are allowed to have HTML.
+					$html_output .= '<tr><td><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . wp_kses_post( $display_value ) . '</td></tr>';
 				} else {
 					$html_output .= '<tr><td><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . esc_html( $display_value ) . '</td></tr>';
 				}

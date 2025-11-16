@@ -71,21 +71,6 @@ function stackboost_run() {
 	return Plugin::get_instance();
 }
 
-// Enable aggressive error logging to diagnose 500 errors.
-ini_set( 'log_errors', 1 );
-ini_set( 'error_log', __DIR__ . '/logs/debug.log' );
-register_shutdown_function( function () {
-	$error = error_get_last();
-	if ( $error && in_array( $error['type'], [ E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR ], true ) ) {
-		stackboost_log(
-			array(
-				'message' => '[FATAL SHUTDOWN] A fatal error was caught.',
-				'error'   => $error,
-			)
-		);
-	}
-} );
-
 // Include helper functions.
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/src/WordPress/supportcandy-pro-check.php';
