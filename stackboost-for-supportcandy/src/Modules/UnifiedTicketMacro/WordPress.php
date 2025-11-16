@@ -339,6 +339,7 @@ class WordPress {
 			array(
 				'message' => '[UTM HOOK FIRED] wpsc_post_reply',
 				'thread'  => $thread,
+				'ticket'  => $thread->ticket,
 			)
 		);
 	}
@@ -348,6 +349,7 @@ class WordPress {
 			array(
 				'message' => '[UTM HOOK FIRED] wpsc_submit_note',
 				'thread'  => $thread,
+				'ticket'  => $thread->ticket,
 			)
 		);
 	}
