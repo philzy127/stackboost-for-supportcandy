@@ -36,6 +36,7 @@ class WordPress {
 	 * Initialize the admin settings.
 	 */
 	private function __construct() {
+		\stackboost_log( '[UTM DIAGNOSTIC] UnifiedTicketMacro\WordPress class constructor fired.' );
 		$this->core = Core::get_instance();
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
