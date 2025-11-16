@@ -205,6 +205,7 @@ final class Plugin {
 			'toplevel_page_stackboost-for-supportcandy',
 			'stackboost_page_stackboost-conditional-views',
 			'stackboost_page_stackboost-queue-macro',
+			'stackboost_page_stackboost-utm',
 		];
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
