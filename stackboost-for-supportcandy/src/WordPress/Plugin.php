@@ -90,7 +90,7 @@ final class Plugin {
 		\stackboost_log( '[DIAGNOSTIC] wpsc_create_new_ticket fired. Arguments: ' . print_r( func_get_args(), true ) );
 	}
 	public function log_wpsc_post_reply( $thread ) {
-		\stackboost_log( '[DIAGNOSTIC] wpsc_post_reply fired. Arguments: ' . print_r( func_get_args(), true ) );
+		\stackboost_log( '[DIAGNOSTIC] wpsc_post_reply fired. Ticket ID: ' . $thread->ticket );
 	}
 	public function log_wpsc_submit_note( $thread ) {
 		\stackboost_log( '[DIAGNOSTIC] wpsc_submit_note fired. Arguments: ' . print_r( func_get_args(), true ) );
