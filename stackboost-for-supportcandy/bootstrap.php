@@ -55,5 +55,48 @@ require_once __DIR__ . '/src/WordPress/supportcandy-pro-check.php';
 // Get the plugin running.
 stackboost_run();
 
+/**
+ * Central logging function for the plugin.
+ *
+ * @param mixed  $message The message or data to log.
+ * @param string $context A slug to identify the logging context (e.g., 'module-utm', 'core').
+ */
+function stackboost_log( $message, $context = 'general' ) {
+    $options = get_option( 'stackboost_settings', [] );
+    if ( empty( $options['diagnostic_log_enabled'] ) ) {
+        return;
+    }
+
+    $upload_dir = wp_upload_dir();
+    $log_dir    = $upload_dir['basedir'] . '/stackboost-logs';
+    $log_file   = $log_dir . '/debug.log';
+
+    // Create the directory if it doesn't exist.
+    if ( ! is_dir( $log_dir ) ) {
+        wp_mkdir_p( $log_dir );
+    }
+
+    // Check for log rotation.
+    if ( file_exists( $log_file ) && filesize( $log_file ) > 5 * MB_IN_BYTES ) {
+        // Simple rotation: just clear the file.
+        file_put_contents( $log_file, '' );
+    }
+
+    // Format the message.
+    $timestamp = date( 'Y-m-d H:i:s' );
+    $entry     = sprintf( "[%s] [%s] ", $timestamp, $context );
+
+    if ( is_array( $message ) || is_object( $message ) ) {
+        $entry .= print_r( $message, true );
+    } else {
+        $entry .= $message;
+    }
+
+    $entry .= PHP_EOL;
+
+    // Append to the log file.
+    file_put_contents( $log_file, $entry, FILE_APPEND );
+}
+
 // Initialize upgrade routines.
 add_action( 'plugins_loaded', array( 'StackBoost\ForSupportCandy\Admin\Upgrade', 'init' ) );
