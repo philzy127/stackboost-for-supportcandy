@@ -115,6 +115,7 @@ class Core {
 	 * @param mixed $ticket_or_thread_or_id Can be a WPSC_Ticket, WPSC_Thread, or ticket ID.
 	 */
 	public function update_utm_cache( $ticket_or_thread_or_id ) {
+		\stackboost_log( '[UTM] update_utm_cache() - ENTER', 'module-utm' );
 		$ticket = null;
 		if ( is_a( $ticket_or_thread_or_id, 'WPSC_Ticket' ) ) {
 			$ticket = $ticket_or_thread_or_id;
@@ -168,7 +169,24 @@ class Core {
 			if ( ! empty( $cached_html ) ) {
 				\stackboost_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using PERMANENT cache.', 'module-utm' );
 			} else {
-				\stackboost_log( '[UTM] replace_utm_macro() - WARNING: No cache of any kind found for ticket ID: ' . $ticket->id, 'module-utm' );
+				\stackboost_log( '[UTM] replace_utm_macro() - WARNING: No permanent cache found. Generating on-the-fly for ticket ID: ' . $ticket->id, 'module-utm' );
+
+				// 1. Generate the HTML on-the-fly for immediate use in the email.
+				$cached_html = $this->build_live_utm_html( $ticket );
+
+				// 2. Store the generated HTML in a short-lived transient. This makes it available for the deferred save.
+				set_transient( 'stackboost_utm_temp_cache_' . $ticket->id, $cached_html, 60 );
+				\stackboost_log( '[UTM] replace_utm_macro() - Just-in-time transient cache set for ticket ID: ' . $ticket->id, 'module-utm' );
+
+				// 3. Register the deferred save action to safely write to the database after the request is finished.
+				// This reuses the exact same safe mechanism that new tickets use.
+				if ( ! has_action( 'shutdown', array( $this, 'deferred_save' ) ) ) {
+					add_action( 'shutdown', array( $this, 'deferred_save' ) );
+					\stackboost_log( '[UTM] replace_utm_macro() - Shutdown action registered for just-in-time save.', 'module-utm' );
+				}
+
+				// 4. Assign the ticket object to the class property so the shutdown hook knows which ticket to save.
+				$this->deferred_ticket_to_save = $ticket;
 			}
 		}
 

@@ -44,10 +44,12 @@ class WordPress {
 		// Core logic hooks.
 		add_action( 'wpsc_create_new_ticket', array( $this->core, 'prime_cache_on_creation' ), 5, 1 );
 
-		add_action( 'wpsc_after_reply_ticket', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_after_change_ticket_status', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_after_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_after_assign_agent', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		// Modernized hooks for proactive cache updates.
+		add_action( 'wpsc_post_reply', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_submit_note', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_change_assignee', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_change_ticket_status', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
 
 		add_filter( 'wpsc_create_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 		add_filter( 'wpsc_agent_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
