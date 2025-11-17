@@ -168,7 +168,11 @@ class Core {
 			if ( ! empty( $cached_html ) ) {
 				\stackboost_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using PERMANENT cache.', 'module-utm' );
 			} else {
-				\stackboost_log( '[UTM] replace_utm_macro() - WARNING: No cache of any kind found for ticket ID: ' . $ticket->id, 'module-utm' );
+				\stackboost_log( '[UTM] replace_utm_macro() - WARNING: No cache found. Generating on-the-fly for ticket ID: ' . $ticket->id, 'module-utm' );
+				// Generate the HTML just-in-time for this email.
+				$cached_html = $this->build_live_utm_html( $ticket );
+				// Proactively save the newly generated cache for future requests.
+				$this->update_utm_cache( $ticket );
 			}
 		}
 
