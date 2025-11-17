@@ -51,11 +51,8 @@ class WordPress {
 		add_action( 'wpsc_change_ticket_status', array( $this->core, 'update_utm_cache' ), 10, 1 );
 		add_action( 'wpsc_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
 
-		add_filter( 'wpsc_create_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-		add_filter( 'wpsc_agent_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-		add_filter( 'wpsc_customer_reply_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-		add_filter( 'wpsc_close_ticket_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
-		add_filter( 'wpsc_assign_agent_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
+		// Modern filter for replacing the macro in all outgoing emails.
+		add_filter( 'wpsc_en_send_data', array( $this->core, 'replace_macro_in_email_body' ), 10, 1 );
 
 		add_filter( 'wpsc_macros', array( $this->core, 'register_macro' ) );
 
