@@ -53,26 +53,26 @@ class Core {
 	 * @param \WPSC_Ticket $ticket The ticket object.
 	 */
 	public function prime_cache_on_creation( \WPSC_Ticket $ticket ) {
-		error_log( '[UTM] prime_cache_on_creation() - ENTER for ticket ID: ' . $ticket->id );
+		\stackboost_log( '[UTM] prime_cache_on_creation() - ENTER for ticket ID: ' . $ticket->id, 'module-utm' );
 		if ( ! $ticket->id ) {
-			error_log( '[UTM] prime_cache_on_creation() - EXIT - Invalid ticket object.' );
+			\stackboost_log( '[UTM] prime_cache_on_creation() - EXIT - Invalid ticket object.', 'module-utm' );
 			return;
 		}
 
 		$html_to_cache = $this->build_live_utm_html( $ticket );
-		error_log( '[UTM] prime_cache_on_creation() - HTML built. Length: ' . strlen( $html_to_cache ) );
+		\stackboost_log( '[UTM] prime_cache_on_creation() - HTML built. Length: ' . strlen( $html_to_cache ), 'module-utm' );
 
 		// Use a transient for instant availability. Expires in 1 minute.
 		set_transient( 'stackboost_utm_temp_cache_' . $ticket->id, $html_to_cache, 60 );
-		error_log( '[UTM] prime_cache_on_creation() - Transient set for key: stackboost_utm_temp_cache_' . $ticket->id );
+		\stackboost_log( '[UTM] prime_cache_on_creation() - Transient set for key: stackboost_utm_temp_cache_' . $ticket->id, 'module-utm' );
 
 		// Defer the permanent save to avoid recursion.
 		add_action( 'shutdown', array( $this, 'deferred_save' ) );
-		error_log( '[UTM] prime_cache_on_creation() - Shutdown action registered.' );
+		\stackboost_log( '[UTM] prime_cache_on_creation() - Shutdown action registered.', 'module-utm' );
 
 		// Pass the ticket object to the shutdown action.
 		$this->deferred_ticket_to_save = $ticket;
-		error_log( '[UTM] prime_cache_on_creation() - EXIT' );
+		\stackboost_log( '[UTM] prime_cache_on_creation() - EXIT', 'module-utm' );
 	}
 
 	/**
@@ -80,33 +80,33 @@ class Core {
 	 * This runs on the 'shutdown' hook to avoid recursion.
 	 */
 	public function deferred_save() {
-		error_log( '[UTM] deferred_save() - ENTER' );
+		\stackboost_log( '[UTM] deferred_save() - ENTER', 'module-utm' );
 		if ( isset( $this->deferred_ticket_to_save ) && is_a( $this->deferred_ticket_to_save, 'WPSC_Ticket' ) ) {
 			$ticket        = $this->deferred_ticket_to_save;
-			error_log( '[UTM] deferred_save() - Processing ticket ID: ' . $ticket->id );
+			\stackboost_log( '[UTM] deferred_save() - Processing ticket ID: ' . $ticket->id, 'module-utm' );
 			$html_to_cache = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
 
 			if ( false !== $html_to_cache ) {
-				error_log( '[UTM] deferred_save() - Transient found. Saving to ticket meta.' );
+				\stackboost_log( '[UTM] deferred_save() - Transient found. Saving to ticket meta.', 'module-utm' );
 				$misc_data                    = $ticket->misc;
 				$misc_data['stackboost_utm_html'] = $html_to_cache;
 				$ticket->misc                 = $misc_data;
 
 				// This is now safe to call.
 				$ticket->save();
-				error_log( '[UTM] deferred_save() - Permanent cache saved.' );
+				\stackboost_log( '[UTM] deferred_save() - Permanent cache saved.', 'module-utm' );
 
 				// Clean up the transient.
 				delete_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
-				error_log( '[UTM] deferred_save() - Transient deleted.' );
+				\stackboost_log( '[UTM] deferred_save() - Transient deleted.', 'module-utm' );
 			} else {
-				error_log( '[UTM] deferred_save() - WARNING: Transient was not found for ticket ID: ' . $ticket->id );
+				\stackboost_log( '[UTM] deferred_save() - WARNING: Transient was not found for ticket ID: ' . $ticket->id, 'module-utm' );
 			}
 			unset( $this->deferred_ticket_to_save );
 		} else {
-			error_log( '[UTM] deferred_save() - EXIT - No deferred ticket to save.' );
+			\stackboost_log( '[UTM] deferred_save() - EXIT - No deferred ticket to save.', 'module-utm' );
 		}
-		error_log( '[UTM] deferred_save() - EXIT' );
+		\stackboost_log( '[UTM] deferred_save() - EXIT', 'module-utm' );
 	}
 
 	/**
@@ -144,36 +144,36 @@ class Core {
 	 * @return array The modified email data.
 	 */
 	public function replace_utm_macro( array $data, \WPSC_Thread $thread ): array {
-		error_log( '[UTM] replace_utm_macro() - ENTER' );
+		\stackboost_log( '[UTM] replace_utm_macro() - ENTER', 'module-utm' );
 		if ( ! isset( $data['body'] ) || false === strpos( $data['body'], '{{stackboost_unified_ticket}}' ) ) {
-			error_log( '[UTM] replace_utm_macro() - EXIT - Macro not found in email body.' );
+			\stackboost_log( '[UTM] replace_utm_macro() - EXIT - Macro not found in email body.', 'module-utm' );
 			return $data;
 		}
 		$ticket = $thread->ticket;
 		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
-			error_log( '[UTM] replace_utm_macro() - EXIT - Invalid ticket object from thread.' );
+			\stackboost_log( '[UTM] replace_utm_macro() - EXIT - Invalid ticket object from thread.', 'module-utm' );
 			return $data;
 		}
-		error_log( '[UTM] replace_utm_macro() - Processing for ticket ID: ' . $ticket->id );
+		\stackboost_log( '[UTM] replace_utm_macro() - Processing for ticket ID: ' . $ticket->id, 'module-utm' );
 
 		// Prioritize the transient for the initial "new ticket" email.
 		$transient_html = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
 		if ( false !== $transient_html ) {
 			$cached_html = $transient_html;
-			error_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using TRANSIENT cache.' );
+			\stackboost_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using TRANSIENT cache.', 'module-utm' );
 		} else {
-			error_log( '[UTM] replace_utm_macro() - INFO: Transient cache not found. Checking permanent cache.' );
+			\stackboost_log( '[UTM] replace_utm_macro() - INFO: Transient cache not found. Checking permanent cache.', 'module-utm' );
 			$misc_data   = $ticket->misc;
 			$cached_html = $misc_data['stackboost_utm_html'] ?? '';
 			if ( ! empty( $cached_html ) ) {
-				error_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using PERMANENT cache.' );
+				\stackboost_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using PERMANENT cache.', 'module-utm' );
 			} else {
-				error_log( '[UTM] replace_utm_macro() - WARNING: No cache of any kind found for ticket ID: ' . $ticket->id );
+				\stackboost_log( '[UTM] replace_utm_macro() - WARNING: No cache of any kind found for ticket ID: ' . $ticket->id, 'module-utm' );
 			}
 		}
 
 		$data['body'] = str_replace( '{{stackboost_unified_ticket}}', $cached_html, $data['body'] );
-		error_log( '[UTM] replace_utm_macro() - EXIT - Macro replacement complete.' );
+		\stackboost_log( '[UTM] replace_utm_macro() - EXIT - Macro replacement complete.', 'module-utm' );
 		return $data;
 	}
 
@@ -184,18 +184,18 @@ class Core {
 	 * @return string The generated HTML.
 	 */
 	private function build_live_utm_html( \WPSC_Ticket $ticket ): string {
-		error_log( '[UTM] build_live_utm_html() - ENTER for ticket ID: ' . $ticket->id );
+		\stackboost_log( '[UTM] build_live_utm_html() - ENTER for ticket ID: ' . $ticket->id, 'module-utm' );
 		$options          = get_option( 'stackboost_settings', [] );
 		$is_enabled       = $options['utm_enabled'] ?? false;
 
 		if ( ! $is_enabled ) {
-			error_log( '[UTM] build_live_utm_html() - EXIT - Feature is disabled in settings.' );
+			\stackboost_log( '[UTM] build_live_utm_html() - EXIT - Feature is disabled in settings.', 'module-utm' );
 			return ''; // Return empty string if the feature is disabled.
 		}
 
 		$selected_fields  = $options['utm_columns'] ?? [];
 		$rename_rules_raw = $options['utm_rename_rules'] ?? [];
-		error_log( '[UTM] build_live_utm_html() - Found ' . count( $selected_fields ) . ' selected fields.' );
+		\stackboost_log( '[UTM] build_live_utm_html() - Found ' . count( $selected_fields ) . ' selected fields.', 'module-utm' );
 
 		// Create a simple map for the rename rules for easy lookup.
 		$rename_rules_map = [];
