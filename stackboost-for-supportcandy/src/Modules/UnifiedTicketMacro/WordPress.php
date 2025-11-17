@@ -54,7 +54,7 @@ class WordPress {
 		// Modern filter for replacing the macro in all outgoing emails.
 		add_filter( 'wpsc_en_send_data', array( $this->core, 'replace_macro_in_email_body' ), 10, 1 );
 
-		add_filter( 'wpsc_macros', array( $this->core, 'register_macro' ) );
+		add_filter( 'wpsc_macros', array( $this, 'register_macro' ) );
 
 		// Comprehensive logging hooks.
 		add_action( 'wpsc_create_new_ticket', array( $this, 'log_wpsc_create_new_ticket' ), 10, 1 );
@@ -64,6 +64,20 @@ class WordPress {
 		add_action( 'wpsc_change_ticket_status', array( $this, 'log_wpsc_change_ticket_status' ), 10, 4 );
 		add_action( 'wpsc_change_ticket_priority', array( $this, 'log_wpsc_change_ticket_priority' ), 10, 4 );
 		add_action( 'wpsc_delete_ticket', array( $this, 'log_wpsc_delete_ticket' ), 10, 1 );
+	}
+
+	/**
+	 * Register the macro with SupportCandy.
+	 *
+	 * @param array $macros The existing macros.
+	 * @return array The modified macros.
+	 */
+	public function register_macro( array $macros ): array {
+		$macros[] = array(
+			'tag'   => '{{stackboost_unified_ticket}}',
+			'title' => esc_attr__( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+		);
+		return $macros;
 	}
 
 	/**

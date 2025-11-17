@@ -332,17 +332,4 @@ class Core {
 		return $html_output;
 	}
 
-    /**
-	 * Register the macro with SupportCandy.
-	 *
-	 * @param array $macros The existing macros.
-	 * @return array The modified macros.
-	 */
-	public function register_macro( array $macros ): array {
-		$macros[] = array(
-			'tag'   => '{{stackboost_unified_ticket}}',
-			'title' => esc_attr__( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
-		);
-		return $macros;
-	}
 }
