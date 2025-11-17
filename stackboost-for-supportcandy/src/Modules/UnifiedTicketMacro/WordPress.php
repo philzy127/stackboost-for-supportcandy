@@ -56,15 +56,6 @@ class WordPress {
 		add_filter( 'wpsc_assign_agent_email_data', array( $this->core, 'replace_utm_macro' ), 10, 2 );
 
 		add_filter( 'wpsc_macros', array( $this->core, 'register_macro' ) );
-
-		// Comprehensive logging hooks.
-		add_action( 'wpsc_create_new_ticket', array( $this, 'log_wpsc_create_new_ticket' ), 10, 1 );
-		add_action( 'wpsc_post_reply', array( $this, 'log_wpsc_post_reply' ), 10, 1 );
-		add_action( 'wpsc_submit_note', array( $this, 'log_wpsc_submit_note' ), 10, 1 );
-		add_action( 'wpsc_change_assignee', array( $this, 'log_wpsc_change_assignee' ), 10, 4 );
-		add_action( 'wpsc_change_ticket_status', array( $this, 'log_wpsc_change_ticket_status' ), 10, 4 );
-		add_action( 'wpsc_change_ticket_priority', array( $this, 'log_wpsc_change_ticket_priority' ), 10, 4 );
-		add_action( 'wpsc_delete_ticket', array( $this, 'log_wpsc_delete_ticket' ), 10, 1 );
 	}
 
 	/**
@@ -326,111 +317,5 @@ class WordPress {
 			</div>
 		</script>
 		<?php
-	}
-
-	/**
-	 * Wrapper functions to call the central logger.
-	 */
-	public function log_wpsc_create_new_ticket( $ticket ) {
-		try {
-			if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
-				\stackboost_log(
-					array(
-						'message' => '[UTM HOOK WARNING] wpsc_create_new_ticket: $ticket is not a WPSC_Ticket object.',
-						'ticket'  => $ticket,
-					),
-					'utm-hook-create-ticket'
-				);
-				return;
-			}
-			\stackboost_log(
-				array(
-					'message' => '[UTM HOOK FIRED] wpsc_create_new_ticket',
-					'ticket'  => $ticket,
-				),
-				'utm-hook-create-ticket'
-			);
-		} catch ( \Throwable $e ) {
-			\stackboost_log(
-				array(
-					'message'   => '[UTM HOOK FATAL ERROR] wpsc_create_new_ticket: An error occurred.',
-					'error'     => $e->getMessage(),
-					'file'      => $e->getFile(),
-					'line'      => $e->getLine(),
-				),
-				'utm-hook-create-ticket'
-			);
-		}
-	}
-
-	public function log_wpsc_post_reply( $thread ) {
-		\stackboost_log(
-			array(
-				'message' => '[UTM HOOK FIRED] wpsc_post_reply',
-				'thread'  => $thread,
-				'ticket'  => $thread->ticket,
-			),
-			'utm-hook-post-reply'
-		);
-	}
-
-	public function log_wpsc_submit_note( $thread ) {
-		\stackboost_log(
-			array(
-				'message' => '[UTM HOOK FIRED] wpsc_submit_note',
-				'thread'  => $thread,
-				'ticket'  => $thread->ticket,
-			),
-			'utm-hook-submit-note'
-		);
-	}
-
-	public function log_wpsc_change_assignee( $ticket, $prev, $new, $customer_id ) {
-		\stackboost_log(
-			array(
-				'message'     => '[UTM HOOK FIRED] wpsc_change_assignee',
-				'ticket'      => $ticket,
-				'prev'        => $prev,
-				'new'         => $new,
-				'customer_id' => $customer_id,
-			),
-			'utm-hook-change-assignee'
-		);
-	}
-
-	public function log_wpsc_change_ticket_status( $ticket, $prev, $new, $customer_id ) {
-		\stackboost_log(
-			array(
-				'message'     => '[UTM HOOK FIRED] wpsc_change_ticket_status',
-				'ticket'      => $ticket,
-				'prev'        => $prev,
-				'new'         => $new,
-				'customer_id' => $customer_id,
-			),
-			'utm-hook-change-status'
-		);
-	}
-
-	public function log_wpsc_change_ticket_priority( $ticket, $prev, $new, $customer_id ) {
-		\stackboost_log(
-			array(
-				'message'     => '[UTM HOOK FIRED] wpsc_change_ticket_priority',
-				'ticket'      => $ticket,
-				'prev'        => $prev,
-				'new'         => $new,
-				'customer_id' => $customer_id,
-			),
-			'utm-hook-change-priority'
-		);
-	}
-
-	public function log_wpsc_delete_ticket( $ticket ) {
-		\stackboost_log(
-			array(
-				'message' => '[UTM HOOK FIRED] wpsc_delete_ticket',
-				'ticket'  => $ticket,
-			),
-			'utm-hook-delete-ticket'
-		);
 	}
 }

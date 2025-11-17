@@ -16,10 +16,11 @@ Our research has identified the critical flaw in the current "just-in-time" logi
 
 ## 3. Step-by-Step Implementation Plan
 
-All changes for this task will be made in the following file:
-*   `stackboost-for-supportcandy/src/Modules/UnifiedTicketMacro/Core.php`
+This refactor involves changes in two files: `Core.php` (for the just-in-time logic) and `WordPress.php` (for the cache triggers).
 
-### 3.1. Modify the `replace_utm_macro` Function
+### 3.1. Modify `Core.php` to Fix Just-in-Time Generation
+
+**File to Modify:** `stackboost-for-supportcandy/src/Modules/UnifiedTicketMacro/Core.php`
 
 The logic must be updated to handle the "empty cache" scenario for existing tickets by mirroring the new-ticket process.
 
@@ -59,6 +60,30 @@ The logic must be updated to handle the "empty cache" scenario for existing tick
 ```
 
 **Important:** The `if ( ! has_action( ... ) )` check is a defensive measure to prevent the shutdown hook from being registered more than once per request.
+
+### 3.2. Modernize Proactive Cache Update Triggers in `WordPress.php`
+
+**File to Modify:** `stackboost-for-supportcandy/src/Modules/UnifiedTicketMacro/WordPress.php`
+
+To ensure the UTM cache is kept up-to-date proactively for all active tickets, the old, unreliable `wpsc_after_*` hooks must be replaced with the modern hooks.
+
+**Locate and REMOVE the following block of code:**
+```php
+		add_action( 'wpsc_after_reply_ticket', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_status', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_after_assign_agent', array( $this->core, 'update_utm_cache' ), 10, 1 );
+```
+
+**ADD the following new block in its place:**
+```php
+		// Modernized hooks for proactive cache updates.
+		add_action( 'wpsc_post_reply', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_submit_note', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_change_assignee', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_change_ticket_status', array( $this->core, 'update_utm_cache' ), 10, 1 );
+		add_action( 'wpsc_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
+```
 
 ## 4. Logging Guidance
 
