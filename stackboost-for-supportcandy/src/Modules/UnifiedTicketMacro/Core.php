@@ -56,22 +56,18 @@ class Core {
 		}
 
 		// The ticket object may not be fully formed, so we build it from the ID.
-		\stackboost_log(
-			array(
-				'message' => '[UTM] replace_macro_in_email_body() - DEBUG: Raw email object.',
-				'email'   => $email,
-			),
-			'module-utm'
-		);
-		if ( isset( $email->ticket_id ) ) {
-			$ticket = new \WPSC_Ticket( $email->ticket_id );
-			if ( ! $ticket || ! $ticket->id ) {
-				\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - Failed to create a valid ticket object from ID: ' . $email->ticket_id, 'module-utm' );
+		$ticket = $en->ticket;
+		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
+			if ( isset( $ticket->id ) ) {
+				$ticket = new \WPSC_Ticket( $ticket->id );
+				if ( ! $ticket || ! $ticket->id ) {
+					\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - Failed to create a valid ticket object from ID: ' . $ticket->id, 'module-utm' );
+					return $en;
+				}
+			} else {
+				\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - Invalid ticket object from email notification.', 'module-utm' );
 				return $en;
 			}
-		} else {
-			\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - No ticket ID found in email object.', 'module-utm' );
-			return $en;
 		}
 		\stackboost_log( '[UTM] replace_macro_in_email_body() - Processing for ticket ID: ' . $ticket->id, 'module-utm' );
 
