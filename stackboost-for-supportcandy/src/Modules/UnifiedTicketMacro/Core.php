@@ -44,9 +44,10 @@ class Core {
 	 * Replaces the UTM macro in the email body using the modern hook.
 	 *
 	 * @param \WPSC_Email_Notifications $en The email notification object.
+	 * @param object                    $email The email object from the background processor.
 	 * @return \WPSC_Email_Notifications The modified email notification object.
 	 */
-	public function replace_macro_in_email_body( \WPSC_Email_Notifications $en ): \WPSC_Email_Notifications {
+	public function replace_macro_in_email_body( \WPSC_Email_Notifications $en, object $email ): \WPSC_Email_Notifications {
 		\stackboost_log( '[UTM] replace_macro_in_email_body() - ENTER', 'module-utm' );
 
 		if ( ! isset( $en->body ) || false === strpos( $en->body, '{{stackboost_unified_ticket}}' ) ) {
@@ -54,9 +55,15 @@ class Core {
 			return $en;
 		}
 
-		$ticket = $en->ticket;
-		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
-			\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - Invalid ticket object from email notification.', 'module-utm' );
+		// The ticket object may not be fully formed, so we build it from the ID.
+		if ( isset( $email->ticket_id ) ) {
+			$ticket = new \WPSC_Ticket( $email->ticket_id );
+			if ( ! $ticket || ! $ticket->id ) {
+				\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - Failed to create a valid ticket object from ID: ' . $email->ticket_id, 'module-utm' );
+				return $en;
+			}
+		} else {
+			\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - No ticket ID found in email object.', 'module-utm' );
 			return $en;
 		}
 		\stackboost_log( '[UTM] replace_macro_in_email_body() - Processing for ticket ID: ' . $ticket->id, 'module-utm' );
