@@ -41,49 +41,37 @@ class Core {
 	}
 
 	/**
-	 * Replaces the UTM macro in the email body using the modern hook.
+	 * Replaces the UTM macro in the email body.
 	 *
-	 * @param \WPSC_Email_Notifications $en The email notification object.
-	 * @param object                    $email The email object from the background processor.
-	 * @return \WPSC_Email_Notifications The modified email notification object.
+	 * @param string       $str    The full email body string being processed.
+	 * @param \WPSC_Ticket $ticket The fully formed WPSC_Ticket object.
+	 * @param string       $macro  The specific tag name currently being checked.
+	 * @return string The modified email body string.
 	 */
-	public function replace_macro_in_email_body( \WPSC_Email_Notifications $en, object $email ): \WPSC_Email_Notifications {
-		\stackboost_log( '[UTM] replace_macro_in_email_body() - ENTER', 'module-utm' );
+	public function replace_utm_macro( string $str, \WPSC_Ticket $ticket, string $macro ): string {
+		\stackboost_log( '[UTM] replace_utm_macro() - ENTER', 'module-utm' );
 
-		if ( ! isset( $en->body ) || false === strpos( $en->body, '{{stackboost_unified_ticket}}' ) ) {
-			\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - Macro not found in email body.', 'module-utm' );
-			return $en;
+		// Check if the current macro is ours and if the placeholder exists.
+		if ( 'stackboost_unified_ticket' !== $macro || false === strpos( $str, '{{stackboost_unified_ticket}}' ) ) {
+			\stackboost_log( '[UTM] replace_utm_macro() - EXIT - Not our macro or placeholder not found.', 'module-utm' );
+			return $str;
 		}
 
-		// The ticket object may not be fully formed, so we build it from the ID.
-		$ticket = $en->ticket;
-		if ( ! is_a( $ticket, 'WPSC_Ticket' ) ) {
-			if ( isset( $ticket->id ) ) {
-				$ticket = new \WPSC_Ticket( $ticket->id );
-				if ( ! $ticket || ! $ticket->id ) {
-					\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - Failed to create a valid ticket object from ID: ' . $ticket->id, 'module-utm' );
-					return $en;
-				}
-			} else {
-				\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - Invalid ticket object from email notification.', 'module-utm' );
-				return $en;
-			}
-		}
-		\stackboost_log( '[UTM] replace_macro_in_email_body() - Processing for ticket ID: ' . $ticket->id, 'module-utm' );
+		\stackboost_log( '[UTM] replace_utm_macro() - Processing for ticket ID: ' . $ticket->id, 'module-utm' );
 
 		// The transient is the highest priority for new tickets.
 		$transient_html = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
 		if ( false !== $transient_html ) {
 			$cached_html = $transient_html;
-			\stackboost_log( '[UTM] replace_macro_in_email_body() - SUCCESS: Found and using TRANSIENT cache.', 'module-utm' );
+			\stackboost_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using TRANSIENT cache.', 'module-utm' );
 		} else {
-			\stackboost_log( '[UTM] replace_macro_in_email_body() - INFO: Transient not found. Checking permanent cache.', 'module-utm' );
+			\stackboost_log( '[UTM] replace_utm_macro() - INFO: Transient not found. Checking permanent cache.', 'module-utm' );
 			$misc_data   = $ticket->misc;
 			$cached_html = $misc_data['stackboost_utm_html'] ?? '';
 			if ( ! empty( $cached_html ) ) {
-				\stackboost_log( '[UTM] replace_macro_in_email_body() - SUCCESS: Found and using PERMANENT cache.', 'module-utm' );
+				\stackboost_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using PERMANENT cache.', 'module-utm' );
 			} else {
-				\stackboost_log( '[UTM] replace_macro_in_email_body() - WARNING: No permanent cache found. Generating on-the-fly for ticket ID: ' . $ticket->id, 'module-utm' );
+				\stackboost_log( '[UTM] replace_utm_macro() - WARNING: No permanent cache found. Generating on-the-fly for ticket ID: ' . $ticket->id, 'module-utm' );
 				$cached_html = $this->build_live_utm_html( $ticket );
 				set_transient( 'stackboost_utm_temp_cache_' . $ticket->id, $cached_html, 60 );
 				if ( ! has_action( 'shutdown', array( $this, 'deferred_save' ) ) ) {
@@ -93,10 +81,10 @@ class Core {
 			}
 		}
 
-		$en->body = str_replace( '{{stackboost_unified_ticket}}', $cached_html, $en->body );
-		\stackboost_log( '[UTM] replace_macro_in_email_body() - EXIT - Macro replacement complete.', 'module-utm' );
+		$str = str_replace( '{{stackboost_unified_ticket}}', $cached_html, $str );
+		\stackboost_log( '[UTM] replace_utm_macro() - EXIT - Macro replacement complete.', 'module-utm' );
 
-		return $en;
+		return $str;
 	}
 
 	/**

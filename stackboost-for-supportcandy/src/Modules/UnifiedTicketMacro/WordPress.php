@@ -52,7 +52,7 @@ class WordPress {
 		add_action( 'wpsc_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
 
 		// Modern filter for replacing the macro in all outgoing emails.
-		add_filter( 'wpsc_en_send_data', array( $this->core, 'replace_macro_in_email_body' ), 10, 2 );
+		add_filter( 'wpsc_replace_macros', array( $this->core, 'replace_utm_macro' ), 10, 3 );
 
 		add_filter( 'wpsc_macros', array( $this, 'register_macro' ) );
 
