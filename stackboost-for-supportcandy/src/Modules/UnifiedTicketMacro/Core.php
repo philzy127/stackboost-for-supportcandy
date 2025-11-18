@@ -56,6 +56,13 @@ class Core {
 		}
 
 		// The ticket object may not be fully formed, so we build it from the ID.
+		\stackboost_log(
+			array(
+				'message' => '[UTM] replace_macro_in_email_body() - DEBUG: Raw email object.',
+				'email'   => $email,
+			),
+			'module-utm'
+		);
 		if ( isset( $email->ticket_id ) ) {
 			$ticket = new \WPSC_Ticket( $email->ticket_id );
 			if ( ! $ticket || ! $ticket->id ) {
