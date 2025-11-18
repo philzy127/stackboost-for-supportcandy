@@ -41,16 +41,6 @@ class WordPress {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
-		// Core logic hooks.
-		add_action( 'wpsc_create_new_ticket', array( $this->core, 'prime_cache_on_creation' ), 5, 1 );
-
-		// Modernized hooks for proactive cache updates.
-		add_action( 'wpsc_post_reply', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_submit_note', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_change_assignee', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_change_ticket_status', array( $this->core, 'update_utm_cache' ), 10, 1 );
-		add_action( 'wpsc_change_ticket_priority', array( $this->core, 'update_utm_cache' ), 10, 1 );
-
 		// Modern filter for replacing the macro in all outgoing emails.
 		add_filter( 'wpsc_replace_macros', array( $this->core, 'replace_utm_macro' ), 10, 3 );
 

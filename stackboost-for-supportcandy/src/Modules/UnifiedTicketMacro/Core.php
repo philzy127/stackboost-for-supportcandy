@@ -24,13 +24,6 @@ class Core {
 	private static ?Core $instance = null;
 
 	/**
-	 * The ticket object to be saved during the shutdown hook.
-	 *
-	 * @var \WPSC_Ticket|null
-	 */
-	private ?\WPSC_Ticket $deferred_ticket_to_save = null;
-
-	/**
 	 * Get the single instance of the class.
 	 */
 	public static function get_instance(): Core {
@@ -59,29 +52,11 @@ class Core {
 
 		\stackboost_log( '[UTM] replace_utm_macro() - Processing for ticket ID: ' . $ticket->id, 'module-utm' );
 
-		// The transient is the highest priority for new tickets.
-		$transient_html = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
-		if ( false !== $transient_html ) {
-			$cached_html = $transient_html;
-			\stackboost_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using TRANSIENT cache.', 'module-utm' );
-		} else {
-			\stackboost_log( '[UTM] replace_utm_macro() - INFO: Transient not found. Checking permanent cache.', 'module-utm' );
-			$misc_data   = $ticket->misc;
-			$cached_html = $misc_data['stackboost_utm_html'] ?? '';
-			if ( ! empty( $cached_html ) ) {
-				\stackboost_log( '[UTM] replace_utm_macro() - SUCCESS: Found and using PERMANENT cache.', 'module-utm' );
-			} else {
-				\stackboost_log( '[UTM] replace_utm_macro() - WARNING: No permanent cache found. Generating on-the-fly for ticket ID: ' . $ticket->id, 'module-utm' );
-				$cached_html = $this->build_live_utm_html( $ticket );
-				set_transient( 'stackboost_utm_temp_cache_' . $ticket->id, $cached_html, 60 );
-				if ( ! has_action( 'shutdown', array( $this, 'deferred_save' ) ) ) {
-					add_action( 'shutdown', array( $this, 'deferred_save' ) );
-				}
-				$this->deferred_ticket_to_save = $ticket;
-			}
-		}
+		// Generate the HTML on-the-fly every time for maximum accuracy.
+		$html_to_insert = $this->build_live_utm_html( $ticket );
+		\stackboost_log( '[UTM] replace_utm_macro() - HTML generated on-the-fly.', 'module-utm' );
 
-		$str = str_replace( '{{stackboost_unified_ticket}}', $cached_html, $str );
+		$str = str_replace( '{{stackboost_unified_ticket}}', $html_to_insert, $str );
 		\stackboost_log( '[UTM] replace_utm_macro() - EXIT - Macro replacement complete.', 'module-utm' );
 
 		return $str;
@@ -93,97 +68,6 @@ class Core {
 	private function __construct() {
 		// Actions and filters will be added in the WordPress.php file.
 	}
-
-	/**
-	 * Primes the UTM cache on new ticket creation using a transient.
-	 *
-	 * @param \WPSC_Ticket $ticket The ticket object.
-	 */
-	public function prime_cache_on_creation( \WPSC_Ticket $ticket ) {
-		\stackboost_log( '[UTM] prime_cache_on_creation() - ENTER for ticket ID: ' . $ticket->id, 'module-utm' );
-		if ( ! $ticket->id ) {
-			\stackboost_log( '[UTM] prime_cache_on_creation() - EXIT - Invalid ticket object.', 'module-utm' );
-			return;
-		}
-
-		$html_to_cache = $this->build_live_utm_html( $ticket );
-		\stackboost_log( '[UTM] prime_cache_on_creation() - HTML built. Length: ' . strlen( $html_to_cache ), 'module-utm' );
-
-		// Use a transient for instant availability. Expires in 1 minute.
-		set_transient( 'stackboost_utm_temp_cache_' . $ticket->id, $html_to_cache, 60 );
-		\stackboost_log( '[UTM] prime_cache_on_creation() - Transient set for key: stackboost_utm_temp_cache_' . $ticket->id, 'module-utm' );
-
-		// Defer the permanent save to avoid recursion.
-		add_action( 'shutdown', array( $this, 'deferred_save' ) );
-		\stackboost_log( '[UTM] prime_cache_on_creation() - Shutdown action registered.', 'module-utm' );
-
-		// Pass the ticket object to the shutdown action.
-		$this->deferred_ticket_to_save = $ticket;
-		\stackboost_log( '[UTM] prime_cache_on_creation() - EXIT', 'module-utm' );
-	}
-
-	/**
-	 * Saves the UTM HTML from the transient to permanent ticket meta.
-	 * This runs on the 'shutdown' hook to avoid recursion.
-	 */
-	public function deferred_save() {
-		\stackboost_log( '[UTM] deferred_save() - ENTER', 'module-utm' );
-		if ( isset( $this->deferred_ticket_to_save ) && is_a( $this->deferred_ticket_to_save, 'WPSC_Ticket' ) ) {
-			$ticket        = $this->deferred_ticket_to_save;
-			\stackboost_log( '[UTM] deferred_save() - Processing ticket ID: ' . $ticket->id, 'module-utm' );
-			$html_to_cache = get_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
-
-			if ( false !== $html_to_cache ) {
-				\stackboost_log( '[UTM] deferred_save() - Transient found. Saving to ticket meta.', 'module-utm' );
-				$misc_data                    = $ticket->misc;
-				$misc_data['stackboost_utm_html'] = $html_to_cache;
-				$ticket->misc                 = $misc_data;
-
-				// This is now safe to call.
-				$ticket->save();
-				\stackboost_log( '[UTM] deferred_save() - Permanent cache saved.', 'module-utm' );
-
-				// Clean up the transient.
-				delete_transient( 'stackboost_utm_temp_cache_' . $ticket->id );
-				\stackboost_log( '[UTM] deferred_save() - Transient deleted.', 'module-utm' );
-			} else {
-				\stackboost_log( '[UTM] deferred_save() - WARNING: Transient was not found for ticket ID: ' . $ticket->id, 'module-utm' );
-			}
-			unset( $this->deferred_ticket_to_save );
-		} else {
-			\stackboost_log( '[UTM] deferred_save() - EXIT - No deferred ticket to save.', 'module-utm' );
-		}
-		\stackboost_log( '[UTM] deferred_save() - EXIT', 'module-utm' );
-	}
-
-	/**
-	 * Updates the permanent UTM cache when a ticket is updated.
-	 *
-	 * @param mixed $ticket_or_thread_or_id Can be a WPSC_Ticket, WPSC_Thread, or ticket ID.
-	 */
-	public function update_utm_cache( $ticket_or_thread_or_id ) {
-		\stackboost_log( '[UTM] update_utm_cache() - ENTER', 'module-utm' );
-		$ticket = null;
-		if ( is_a( $ticket_or_thread_or_id, 'WPSC_Ticket' ) ) {
-			$ticket = $ticket_or_thread_or_id;
-		} elseif ( is_a( $ticket_or_thread_or_id, 'WPSC_Thread' ) ) {
-			$ticket = $ticket_or_thread_or_id->ticket;
-		} elseif ( is_numeric( $ticket_or_thread_or_id ) ) {
-			$ticket = new \WPSC_Ticket( intval( $ticket_or_thread_or_id ) );
-		}
-
-		if ( ! is_a( $ticket, 'WPSC_Ticket' ) || ! $ticket->id ) {
-			return;
-		}
-
-		$html_to_cache = $this->build_live_utm_html( $ticket );
-
-		$misc_data                    = $ticket->misc;
-		$misc_data['stackboost_utm_html'] = $html_to_cache;
-		$ticket->misc                 = $misc_data;
-		$ticket->save();
-	}
-
 
 	/**
 	 * Builds the HTML table for the UTM based on current settings and ticket data.
