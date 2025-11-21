@@ -162,14 +162,18 @@ class Core {
 					$display_value = $field_value; // Do not escape HTML content.
 					break;
 				case 'cf_date':
-					$display_value = $field_value->format( get_option( 'date_format' ) );
+					$date_obj = clone $field_value;
+					$date_obj->setTimezone( wp_timezone() );
+					$display_value = $date_obj->format( get_option( 'date_format' ) );
 					break;
 				case 'cf_datetime':
 				case 'df_date_created':
 				case 'df_date_updated':
 				case 'df_date_closed':
 				case 'df_last_reply_on':
-					$display_value = $field_value->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
+					$date_obj = clone $field_value;
+					$date_obj->setTimezone( wp_timezone() );
+					$display_value = $date_obj->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
 					break;
 				case 'cf_single_select':
 				case 'cf_radio_button':
