@@ -1,0 +1,129 @@
+/* Styles for Unified Ticket Macro Admin Page */
+.stackboost-utm-container {
+	display: flex;
+	gap: 15px;
+	align-items: flex-start;
+	max-width: 800px;
+}
+
+.stackboost-utm-box {
+	flex: 1;
+}
+
+.stackboost-utm-box h3 {
+	margin-top: 0;
+	margin-bottom: 5px;
+}
+
+.stackboost-utm-box select {
+	width: 100%;
+	height: 250px !important;
+}
+
+.stackboost-utm-buttons {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	justify-content: center;
+	align-self: center;
+}
+
+.stackboost-utm-buttons .button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 1px solid #ccc;
+	background: #f7f7f7;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.stackboost-utm-buttons .button:hover {
+	background-color: #f0f0f0;
+	border-color: #999;
+}
+
+.stackboost-utm-buttons .button:active {
+	background-color: #e0e0e0;
+	border-color: #777;
+	box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stackboost-utm-buttons .button .dashicons {
+	font-size: 20px;
+}
+
+.stackboost-utm-selected-wrapper {
+    display: flex;
+    align-items: flex-start;
+}
+.stackboost-utm-selected-wrapper .stackboost-utm-buttons {
+    margin-left: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+#stackboost_utm_add .dashicons,
+#stackboost_utm_remove .dashicons {
+	transform: scale(1.3);
+}
+
+#stackboost_utm_move_up .dashicons,
+#stackboost_utm_move_down .dashicons {
+	transform: scale(1.3) rotate(-90deg);
+}
+
+#stackboost_utm_move_top .dashicons,
+#stackboost_utm_move_bottom .dashicons {
+	transform: rotate(-90deg);
+}
+
+.stackboost-utm-rule-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.stackboost-utm-remove-rule.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+		padding: 0;
+		width: 30px;
+		height: 30px;
+}
+.stackboost-utm-remove-rule .dashicons {
+    font-size: 18px;
+    margin: 0;
+    vertical-align: middle;
+}
+
+#stackboost-utm-toast-container {
+    position: fixed;
+    top: 40px;
+    right: 20px;
+    z-index: 9999;
+    width: 300px;
+}
+
+.stackboost-utm-toast {
+    background-color: #333;
+    color: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.stackboost-utm-toast.show {
+    opacity: 1;
+}
+
+.stackboost-utm-toast.error {
+    background-color: #d9534f;
+}

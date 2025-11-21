@@ -29,6 +29,7 @@ class Settings {
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
 		add_action( 'admin_menu', [ $this, 'reorder_admin_menu' ], 100 );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
+		add_action( 'admin_init', [ $this, 'handle_log_actions' ] );
 	}
 
 	/**
@@ -111,6 +112,16 @@ class Settings {
 			'manage_options',
 			'stackboost-how-to-use',
 			[ $this, 'render_how_to_use_page' ]
+		);
+
+		// Tools Submenu
+		add_submenu_page(
+			'stackboost-for-supportcandy',
+			__( 'Tools', 'stackboost-for-supportcandy' ),
+			__( 'Tools', 'stackboost-for-supportcandy' ),
+			'manage_options',
+			'stackboost-tools',
+			[ $this, 'render_settings_page' ]
 		);
 	}
 
@@ -213,6 +224,30 @@ class Settings {
 	 */
 	public function register_settings() {
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
+
+		// Diagnostic Log Settings Section
+		add_settings_section(
+			'stackboost_tools_section',
+			__( 'Diagnostic Log', 'stackboost-for-supportcandy' ),
+			'__return_null',
+			'stackboost-tools'
+		);
+
+		add_settings_field(
+			'stackboost_diagnostic_log_enabled',
+			__( 'Enable Diagnostic Log', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_diagnostic_log_enable_checkbox' ],
+			'stackboost-tools',
+			'stackboost_tools_section'
+		);
+
+		add_settings_field(
+			'stackboost_diagnostic_log_actions',
+			__( 'Log Actions', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_diagnostic_log_actions' ],
+			'stackboost-tools',
+			'stackboost_tools_section'
+		);
 	}
 
 	/**
@@ -240,6 +275,8 @@ class Settings {
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
+			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
+			'stackboost-tools'              => ['diagnostic_log_enabled'],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
@@ -263,7 +300,17 @@ class Settings {
 					case 'enable_queue_macro':
 					case 'enable_after_hours_notice':
 					case 'include_all_weekends':
+					case 'utm_enabled':
+					case 'utm_use_sc_order':
 						$saved_settings[$key] = intval($value);
+						break;
+
+					case 'utm_columns':
+						$saved_settings[$key] = is_array($value) ? array_map('sanitize_key', $value) : [];
+						break;
+
+					case 'utm_rename_rules':
+						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['field', 'name']) : [];
 						break;
 
 					case 'after_hours_start':
@@ -278,7 +325,7 @@ class Settings {
 						break;
 
 					case 'conditional_hiding_rules':
-						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value) : [];
+						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['action', 'columns', 'condition', 'view']) : [];
 						break;
 
 					case 'after_hours_message':
@@ -298,8 +345,8 @@ class Settings {
 						break;
 				}
 			} else {
-				// Handle unchecked checkboxes.
-				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_')) {
+				// Handle unchecked checkboxes, which are not present in the form submission.
+				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled') {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
 					$saved_settings[$key] = [];
@@ -310,24 +357,105 @@ class Settings {
 		// error_log('[SB] sanitize_settings() END. Final sanitized settings: ' . print_r($saved_settings, true));
 		return $saved_settings;
 	}
+
 	/**
-	 * Helper function to sanitize the conditional hiding rules array.
-	 * @param array $rules
-	 * @return array
+	 * Render the checkbox for enabling the diagnostic log.
 	 */
-	private function sanitize_rules_array(array $rules): array
+	public function render_diagnostic_log_enable_checkbox() {
+		$options    = get_option( 'stackboost_settings', [] );
+		$is_enabled = isset( $options['diagnostic_log_enabled'] ) ? (bool) $options['diagnostic_log_enabled'] : false;
+		?>
+		<label>
+			<input type="checkbox" name="stackboost_settings[diagnostic_log_enabled]" value="1" <?php checked( $is_enabled ); ?> />
+			<?php esc_html_e( 'Enable the diagnostic logging system.', 'stackboost-for-supportcandy' ); ?>
+		</label>
+		<p class="description">
+			<?php esc_html_e( 'When enabled, the plugin will write detailed diagnostic information to a log file. This should only be enabled when requested by support.', 'stackboost-for-supportcandy' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render the action buttons for the diagnostic log.
+	 */
+	public function render_diagnostic_log_actions() {
+		$clear_url    = wp_nonce_url( add_query_arg( 'stackboost_action', 'clear_log' ), 'stackboost_clear_log_nonce', '_wpnonce' );
+		$download_url = wp_nonce_url( add_query_arg( 'stackboost_action', 'download_log' ), 'stackboost_download_log_nonce', '_wpnonce' );
+		?>
+		<a href="<?php echo esc_url( $download_url ); ?>" class="button"><?php esc_html_e( 'Download Log', 'stackboost-for-supportcandy' ); ?></a>
+		<a href="<?php echo esc_url( $clear_url ); ?>" class="button button-primary"><?php esc_html_e( 'Clear Log', 'stackboost-for-supportcandy' ); ?></a>
+		<p class="description">
+			<?php esc_html_e( 'Download the log file for support or clear it to start fresh.', 'stackboost-for-supportcandy' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Helper function to sanitize an array of rules, where each rule is an associative array.
+	 * @param array $rules        The array of rule arrays to sanitize.
+	 * @param array $allowed_keys The keys that are allowed in each rule array.
+	 * @return array The sanitized array of rules.
+	 */
+	private function sanitize_rules_array(array $rules, array $allowed_keys): array
 	{
 		$sanitized_rules = [];
-		foreach ($rules as $index => $rule) {
+		foreach ($rules as $rule) {
 			if (is_array($rule)) {
-				$sanitized_rules[sanitize_key($index)] = [
-					'action'    => sanitize_key($rule['action'] ?? 'hide'),
-					'columns'   => sanitize_key($rule['columns'] ?? ''),
-					'condition' => sanitize_key($rule['condition'] ?? 'in_view'),
-					'view'      => sanitize_key($rule['view'] ?? ''),
-				];
+				$sanitized_rule = [];
+				foreach ($allowed_keys as $key) {
+					if (isset($rule[$key])) {
+						// A basic sanitization; can be improved if more specific types are needed.
+						$sanitized_rule[$key] = sanitize_text_field($rule[$key]);
+					}
+				}
+				if (!empty($sanitized_rule)) {
+					$sanitized_rules[] = $sanitized_rule;
+				}
 			}
 		}
 		return $sanitized_rules;
+	}
+
+	/**
+	 * Handle the download and clear log actions.
+	 */
+	public function handle_log_actions() {
+		if ( ! isset( $_GET['stackboost_action'] ) ) {
+			return;
+		}
+
+		$upload_dir = wp_upload_dir();
+		$log_file   = $upload_dir['basedir'] . '/stackboost-logs/debug.log';
+
+		switch ( $_GET['stackboost_action'] ) {
+			case 'download_log':
+				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'stackboost_download_log_nonce' ) ) {
+					if ( file_exists( $log_file ) ) {
+						header( 'Content-Description: File Transfer' );
+						header( 'Content-Type: application/octet-stream' );
+						header( 'Content-Disposition: attachment; filename="stackboost-debug.log"' );
+						header( 'Expires: 0' );
+						header( 'Cache-Control: must-revalidate' );
+						header( 'Pragma: public' );
+						header( 'Content-Length: ' . filesize( $log_file ) );
+						readfile( $log_file );
+						exit;
+					} else {
+						wp_die( 'Log file not found.' );
+					}
+				}
+				break;
+
+			case 'clear_log':
+				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'stackboost_clear_log_nonce' ) ) {
+					if ( file_exists( $log_file ) ) {
+						file_put_contents( $log_file, '' );
+					}
+					// Redirect back to the tools page.
+					wp_safe_redirect( admin_url( 'admin.php?page=stackboost-tools&log_cleared=true' ) );
+					exit;
+				}
+				break;
+		}
 	}
 }

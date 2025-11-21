@@ -7,6 +7,7 @@ use StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
 use StackBoost\ForSupportCandy\Modules\ConditionalViews;
 use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\QueueMacro;
+use StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro;
 use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\TicketView;
@@ -62,6 +63,7 @@ final class Plugin {
 		$this->modules['queue_macro']         = QueueMacro\WordPress::get_instance();
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
 		$this->modules['directory']           = Directory\WordPress::get_instance();
+		$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
 
 	}
 
