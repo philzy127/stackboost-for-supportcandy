@@ -22,7 +22,7 @@ class PdfService {
 	 */
 	private function __construct() {
 		// Load the Dompdf autoloader if it hasn't been loaded yet.
-		$autoloader = \STACKBOOST_PLUGIN_PATH . 'includes/vendor/dompdf/autoload.inc.php';
+		$autoloader = \STACKBOOST_PLUGIN_PATH . 'includes/libraries/dompdf/autoload.inc.php';
 		if ( file_exists( $autoloader ) ) {
 			require_once $autoloader;
 		}

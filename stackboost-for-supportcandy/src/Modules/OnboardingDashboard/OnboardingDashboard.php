@@ -2,9 +2,7 @@
 
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard;
 
-use StackBoost\ForSupportCandy\Modules\ModuleInterface;
-
-class OnboardingDashboard implements ModuleInterface {
+class OnboardingDashboard {
 
 	/**
 	 * The singleton instance.
