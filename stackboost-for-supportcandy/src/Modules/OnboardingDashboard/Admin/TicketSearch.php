@@ -8,31 +8,22 @@ class TicketSearch {
 	 * Initialize the page.
 	 */
 	public static function init() {
-		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_scripts' ] );
-	}
-
-	/**
-	 * Add menu page.
-	 */
-	public static function add_menu_page() {
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'API Ticket Search', 'stackboost-for-supportcandy' ),
-			__( 'Onboarding Ticket Search', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-onboarding-ticket-search',
-			[ __CLASS__, 'render_page' ]
-		);
 	}
 
 	/**
 	 * Enqueue scripts.
 	 */
 	public static function enqueue_scripts( $hook ) {
-		if ( 'stackboost-for-supportcandy_page_stackboost-onboarding-ticket-search' !== $hook ) {
+		if ( 'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard' !== $hook ) {
 			return;
 		}
+
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : '';
+		if ( 'search' !== $tab ) {
+			return;
+		}
+
 		// We can reuse the admin-ticket-search.js from the original plugin, but I'll inline it for simplicity
 		// as it's a small utility.
 	}
@@ -42,8 +33,8 @@ class TicketSearch {
 	 */
 	public static function render_page() {
 		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'API Ticket Search', 'stackboost-for-supportcandy' ); ?></h1>
+		<div>
+			<h2><?php esc_html_e( 'API Ticket Search', 'stackboost-for-supportcandy' ); ?></h2>
 			<p><?php esc_html_e( 'Search for raw ticket data via the configured API credentials.', 'stackboost-for-supportcandy' ); ?></p>
 
 			<div class="card" style="max-width: 600px; padding: 20px;">

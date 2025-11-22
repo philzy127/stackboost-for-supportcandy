@@ -18,24 +18,9 @@ class Settings {
 	 * Initialize the Settings page.
 	 */
 	public static function init() {
-		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
 		add_action( 'wp_ajax_stackboost_onboarding_save_credentials', [ __CLASS__, 'ajax_save_credentials' ] );
 		add_action( 'wp_ajax_stackboost_onboarding_test_credentials', [ __CLASS__, 'ajax_test_credentials' ] );
 		add_action( 'wp_ajax_stackboost_onboarding_migrate_data', [ __CLASS__, 'ajax_migrate_legacy_data' ] );
-	}
-
-	/**
-	 * Add the Settings submenu page.
-	 */
-	public static function add_menu_page() {
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'API Settings & Migration', 'stackboost-for-supportcandy' ),
-			__( 'Onboarding Settings', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-onboarding-settings',
-			[ __CLASS__, 'render_page' ]
-		);
 	}
 
 	/**
@@ -49,8 +34,8 @@ class Settings {
 		// Check for legacy data count
 		$legacy_count = wp_count_posts( 'onboarding_step' )->publish ?? 0;
 		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Onboarding Dashboard Settings', 'stackboost-for-supportcandy' ); ?></h1>
+		<div>
+			<h2><?php esc_html_e( 'Onboarding Dashboard Settings', 'stackboost-for-supportcandy' ); ?></h2>
 
 			<!-- API Settings Section -->
 			<div class="card" style="max-width: 800px; margin-top: 20px; padding: 20px;">

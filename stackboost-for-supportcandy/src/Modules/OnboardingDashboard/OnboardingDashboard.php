@@ -39,6 +39,7 @@ class OnboardingDashboard {
 
 		// Load Admin Pages
 		if ( is_admin() ) {
+			Admin\Page::init();
 			Admin\Sequence::init();
 			Admin\Staff::init();
 			Admin\Settings::init();

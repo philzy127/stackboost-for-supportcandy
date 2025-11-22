@@ -13,33 +13,23 @@ class Sequence {
 	 * Initialize the Sequence page.
 	 */
 	public static function init() {
-		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
 		add_action( 'admin_init', [ __CLASS__, 'handle_save' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_scripts' ] );
-	}
-
-	/**
-	 * Add the submenu page.
-	 */
-	public static function add_menu_page() {
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'Onboarding Sequence', 'stackboost-for-supportcandy' ),
-			__( 'Onboarding Sequence', 'stackboost-for-supportcandy' ),
-			'manage_options', // Using standard cap for now, can be granular
-			'stackboost-onboarding-sequence',
-			[ __CLASS__, 'render_page' ]
-		);
 	}
 
 	/**
 	 * Enqueue scripts for sortable UI.
 	 */
 	public static function enqueue_scripts( $hook ) {
-		// Hook suffix will be stackboost-for-supportcandy_page_stackboost-onboarding-sequence
-		if ( 'stackboost-for-supportcandy_page_stackboost-onboarding-sequence' !== $hook ) {
+		if ( 'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard' !== $hook ) {
 			return;
 		}
+
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : '';
+		if ( 'sequence' !== $tab ) {
+			return;
+		}
+
 		wp_enqueue_script( 'jquery-ui-sortable' );
 	}
 
@@ -100,8 +90,8 @@ class Sequence {
 
 		ksort( $sequence_posts );
 		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Onboarding Sequence', 'stackboost-for-supportcandy' ); ?></h1>
+		<div>
+			<h2><?php esc_html_e( 'Onboarding Sequence', 'stackboost-for-supportcandy' ); ?></h2>
 			<p><?php esc_html_e( 'Drag and drop the steps below to set the onboarding sequence.', 'stackboost-for-supportcandy' ); ?></p>
 
 			<form method="post" action="">

@@ -14,22 +14,7 @@ class Staff {
 	 * Initialize Staff page.
 	 */
 	public static function init() {
-		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
 		add_action( 'wp_ajax_stackboost_onboarding_refresh_cache', [ __CLASS__, 'ajax_force_refresh_cache' ] );
-	}
-
-	/**
-	 * Add menu page.
-	 */
-	public static function add_menu_page() {
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'Staff', 'stackboost-for-supportcandy' ),
-			__( 'Onboarding Staff', 'stackboost-for-supportcandy' ),
-			'manage_options', // Cap
-			'stackboost-onboarding-staff',
-			[ __CLASS__, 'render_page' ]
-		);
 	}
 
 	/**
@@ -43,8 +28,8 @@ class Staff {
 
 		?>
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h1>
+		<div>
+			<h2><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
 
 			<button id="stkb-force-refresh" class="button" style="margin-bottom: 15px;"><?php esc_html_e( 'Update Now', 'stackboost-for-supportcandy' ); ?></button>
 			<span id="stkb-refresh-status" style="margin-left: 10px; display: none; vertical-align: middle;"></span>
