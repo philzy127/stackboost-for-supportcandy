@@ -1,0 +1,372 @@
+/*
+ * File: css/onboarding-dashboard.css
+ * Styles for the frontend onboarding dashboard display.
+ */
+
+.onboarding-dashboard-container {
+	background-color: #f9f9f9;
+	border: 1px solid #e0e0e0;
+	border-radius: 8px;
+	padding: 30px;
+	max-width: 800px;
+	margin: 40px auto;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+	font-family: 'Inter', sans-serif;
+	color: #333;
+}
+
+.onboarding-title {
+	font-size: 2.2em;
+	color: #2c3e50;
+	margin-bottom: 25px;
+	text-align: center;
+	border-bottom: 2px solid #3498db;
+	padding-bottom: 15px;
+}
+
+.onboarding-main-content {
+	line-height: 1.8;
+	font-size: 1.1em;
+	margin-bottom: 30px;
+}
+
+/* Checklist Section Styling */
+.onboarding-checklist-section {
+	background-color: #eaf6fa; /* Light blue background */
+	border: 1px solid #cce7f0;
+	border-radius: 8px;
+	padding: 20px;
+	margin-bottom: 30px;
+}
+
+.onboarding-checklist-section h3 {
+	font-size: 1.6em;
+	color: #2980b9;
+	margin-top: 0;
+	margin-bottom: 15px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.onboarding-checklist-section h3 .dashicons {
+	font-size: 1.2em;
+	color: #2980b9;
+	margin-bottom: 15px;
+	margin-right: 10px;
+}
+
+.onboarding-checklist {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.onboarding-checklist li {
+	display: flex;
+	align-items: center;
+	margin-bottom: 10px;
+	font-size: 1.05em;
+	color: #444;
+}
+
+.onboarding-checklist input[type="checkbox"] {
+	margin-right: 10px;
+	min-width: 20px; /* Ensure checkbox is visible */
+	min-height: 20px;
+	cursor: pointer;
+	accent-color: #27ae60; /* Green accent color for checked state */
+}
+
+/* --- UPDATED: Apply strikethrough only to the first span (the text) within the label --- */
+.onboarding-checklist li.completed label {
+    /* Remove text-decoration from the label itself to prevent inheritance by the icon */
+    text-decoration: none;
+    color: #777; /* Keep the text color change */
+}
+
+.onboarding-checklist li.completed label > span:first-of-type {
+    text-decoration: line-through; /* Apply strikethrough specifically to the text span */
+}
+
+
+/* Info Icon Styling for checklist items - UPDATED FOR DASHICONS */
+.onboarding-info-icon {
+	/* Dashicons handle their own sizing and rendering as an icon font. */
+	margin-left: 5px; /* Space from the text */
+	cursor: help; /* Indicate it's for information */
+    vertical-align: middle; /* Align vertically with text */
+    font-size: 1.2em; /* Adjust size as needed, Dashicons scale with font-size */
+    color: #3498db; /* Default color for the Dashicon */
+    line-height: 1; /* Ensure proper vertical alignment for the icon */
+}
+
+.onboarding-info-icon:hover {
+	color: #2980b9; /* Darker color on hover */
+}
+
+
+/* Notes Section Styling */
+.onboarding-notes-section {
+	background-color: #fcf8e3; /* Light yellow background */
+	border: 1px solid #faebcc;
+	border-radius: 8px;
+	padding: 20px;
+	margin-bottom: 30px;
+}
+
+.onboarding-notes-section h3 {
+	font-size: 1.6em;
+	color: #d35400;
+	margin-top: 0;
+	margin-bottom: 15px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.onboarding-notes-section h3 .dashicons {
+	font-size: 1.2em;
+	color: #d35400;
+	margin-bottom: 15px;
+	margin-right: 10px;
+}
+
+.onboarding-notes-content {
+	line-height: 1.7;
+	font-size: 1em;
+	color: #555;
+}
+
+/* Navigation Button Styling */
+.onboarding-navigation {
+	text-align: center;
+	margin-top: 30px;
+    display: flex; /* Use flexbox for horizontal alignment */
+    justify-content: space-between; /* Distribute items with space between */
+    align-items: center;
+    gap: 20px; /* Space between buttons */
+}
+
+/* Base button style - apply to all navigation buttons */
+.onboarding-navigation button {
+    background-color: #3498db;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px; /* Reduced padding for smaller size */
+    font-size: 1em; /* Reduced font size for smaller text */
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* Slightly reduced gap between icon and text */
+    flex-grow: 0; /* Prevent buttons from growing unnecessarily */
+    max-width: 180px; /* Set a more appropriate max width */
+    justify-content: center; /* Center content within buttons */
+}
+
+.onboarding-navigation button:hover:not(:disabled) {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+}
+
+.onboarding-navigation button:active:not(:disabled) {
+    background-color: #21618c;
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.onboarding-navigation button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Specific style for the back button */
+.onboarding-back-button {
+    background-color: #6c757d; /* A neutral color */
+}
+
+.onboarding-back-button:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+/* Specific style for the complete button */
+.onboarding-complete-button {
+    background-color: #28a745; /* A success green color */
+}
+
+.onboarding-complete-button:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+
+/* End Message Styling */
+.onboarding-end-message {
+	text-align: center;
+	font-size: 1.3em;
+	color: #27ae60;
+	font-weight: bold;
+	padding: 20px;
+	border: 2px dashed #2ecc71;
+	border-radius: 10px;
+	background-color: #e8f8f5;
+	margin-top: 30px;
+}
+
+/* Initially hide the completion message */
+.onboarding-end-message--hidden {
+    display: none;
+}
+
+
+/* Error Message Styling */
+.onboarding-error {
+	color: #e74c3c;
+	background-color: #fdedec;
+	border: 1px solid #e74c3c;
+	padding: 15px;
+	border-radius: 5px;
+	text-align: center;
+	margin: 20px auto;
+	max-width: 600px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+	.onboarding-dashboard-container {
+		margin: 20px;
+		padding: 20px;
+	}
+
+	.onboarding-title {
+		font-size: 1.8em;
+	}
+
+	.onboarding-main-content,
+	.onboarding-checklist-section,
+	.onboarding-notes-section {
+		font-size: 1em;
+	}
+
+	.onboarding-checklist-section h3,
+	.onboarding-notes-section h3 {
+		font-size: 1.4em;
+	}
+
+	.onboarding-next-button {
+		padding: 12px 25px;
+		font-size: 1.1em;
+	}
+
+    .onboarding-navigation {
+        flex-direction: column; /* Stack buttons vertically on small screens */
+        gap: 15px;
+    }
+
+    .onboarding-navigation button {
+        max-width: 100%; /* Allow buttons to take full width */
+    }
+}
+
+/* Additional CSS for checklist layout */
+.onboarding-checklist li label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 10px;
+}
+
+.onboarding-checklist li label span {
+    display: inline-block;
+    line-height: 1.2;
+}
+
+.onboarding-checklist li input[type="checkbox"] {
+    min-width: 20px;
+}
+
+.onboarding-checklist li {
+    display: flex;
+    align-items: center;
+}
+
+/* Pre-Session View Styles */
+.onboarding-pre-session-view .onboarding-attendees-preview {
+    background-color: #f0f8ff;
+    border: 1px solid #b0d4ff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.onboarding-pre-session-view .onboarding-attendees-preview h3 {
+    color: #2980b9;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.4em;
+}
+
+.onboarding-pre-session-view .onboarding-attendees-preview h3 .dashicons {
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.onboarding-pre-session-view #attendees-list-preview ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.onboarding-pre-session-view #attendees-list-preview ul li {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 5px;
+    font-size: 1.1em;
+}
+
+.onboarding-pre-session-view #attendees-list-preview ul li:last-child {
+    border-bottom: none;
+}
+
+.onboarding-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.onboarding-reset-button, .onboarding-begin-button {
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none!important;
+}
+
+.onboarding-reset-button {
+    background-color: #3498db;
+}
+
+.onboarding-begin-button {
+    background-color: #3498db;
+    font-weight: normal;
+}
+
+.onboarding-reset-button:hover, .onboarding-begin-button:hover {
+    background-color: #2980b9;
+    color: white;
+    transform: translateY(-2px);
+}

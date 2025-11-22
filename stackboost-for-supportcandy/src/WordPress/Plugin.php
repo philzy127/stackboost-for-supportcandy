@@ -12,6 +12,7 @@ use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\TicketView;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
+use StackBoost\ForSupportCandy\Modules\OnboardingDashboard;
 
 /**
  * Main plugin class.
@@ -64,6 +65,7 @@ final class Plugin {
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
 		$this->modules['directory']           = Directory\WordPress::get_instance();
 		$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
+		$this->modules['onboarding_dashboard'] = OnboardingDashboard\OnboardingDashboard::get_instance();
 
 	}
 
