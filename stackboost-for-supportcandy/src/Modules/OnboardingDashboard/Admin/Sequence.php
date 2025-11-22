@@ -144,12 +144,13 @@ class Sequence {
 			#stkb-sequence-list li, #stkb-available-list li {
 				margin: 5px;
 				padding: 10px;
-				cursor: grab;
+				cursor: move;
 				background-color: #f6f7f7;
 				border: 1px solid #dcdcde;
 				border-radius: 3px;
 			}
 			#stkb-sequence-list li:hover, #stkb-available-list li:hover { border-color: #2271b1; }
+			.ui-state-highlight { height: 40px; line-height: 40px; border: 1px dashed #ccc; background: #f0f0f0; margin: 5px; }
 		</style>
 		<?php
 	}
