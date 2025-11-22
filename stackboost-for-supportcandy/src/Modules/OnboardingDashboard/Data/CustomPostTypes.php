@@ -51,7 +51,7 @@ class CustomPostTypes {
 			'label'                 => __( 'Onboarding Step', 'stackboost-for-supportcandy' ),
 			'description'           => __( 'Onboarding steps for the dashboard', 'stackboost-for-supportcandy' ),
 			'labels'                => $labels,
-			'supports'              => array( 'title', 'editor' ),
+			'supports'              => array( 'title' ),
 			'hierarchical'          => false,
 			'public'                => true,
 			'show_ui'               => true,
