@@ -98,21 +98,20 @@ class DashboardShortcode {
 				$checklist_items = array_filter( array_map( 'trim', explode( "\n", $raw ) ) );
 			}
 
-			// Fetch This Week Attendees (Reuse logic, but calling via AJAX would be cleaner.
-			// However, we need it inline for immediate display in completion step.
-			// For now, we can mimic the logic or make an internal API call if creds exist.)
-			// Due to performance, let's check if we have cached data.
+			// Fetch This Week Attendees
 			$this_week_attendees = [];
+
+			// Rely on the cache populated by Staff::render_page().
+			// If cache is missing, we can try to fetch fresh if WPSC classes are available,
+			// but for frontend performance we prefer cache.
 			$cached = get_transient( 'stackboost_onboarding_tickets_cache' );
-			if ( $cached && ! is_wp_error( $cached ) ) {
-				// Parse cached data for this week
-				// $cached is { 'data' => ..., 'timestamp' => ... }
-				$data = $cached['data'] ?? [];
-				$this_week = $data['this_week_onboarding'] ?? [];
-				foreach ( $this_week as $t ) {
+
+			// If cache exists, use it.
+			if ( $cached && ! is_wp_error( $cached ) && isset( $cached['data']['this_week_onboarding'] ) ) {
+				foreach ( $cached['data']['this_week_onboarding'] as $t ) {
 					if ( ! empty( $t['id'] ) ) {
 						$this_week_attendees[] = [
-							'id' => $t['id'],
+							'id'   => $t['id'],
 							'name' => esc_html( $t['cust_43'] ?? 'Unknown' ),
 						];
 					}

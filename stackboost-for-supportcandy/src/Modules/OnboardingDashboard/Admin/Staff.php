@@ -21,9 +21,6 @@ class Staff {
 	 * Render page.
 	 */
 	public static function render_page() {
-		$base_url = get_site_url();
-		$username = get_option( self::OPTION_USERNAME, '' );
-		$secret_key = get_option( self::OPTION_SECRET_KEY, '' );
 		$transient_key = 'stackboost_onboarding_tickets_cache';
 
 		?>
@@ -35,19 +32,10 @@ class Staff {
 			<span id="stkb-refresh-status" style="margin-left: 10px; display: none; vertical-align: middle;"></span>
 
 			<?php
-			if ( empty( $username ) || empty( $secret_key ) ) {
-				?>
-				<div class="notice notice-error">
-					<p><?php esc_html_e( 'Error: API credentials are not set. Please configure them in Settings.', 'stackboost-for-supportcandy' ); ?></p>
-				</div>
-				<?php
-				return;
-			}
-
 			$cached_data = get_transient( $transient_key );
 
 			if ( false === $cached_data ) {
-				$onboarding_tickets = self::get_sorted_tickets( $base_url, $username, $secret_key );
+				$onboarding_tickets = self::get_sorted_tickets_internal();
 				if ( ! is_wp_error( $onboarding_tickets ) ) {
 					$data_to_cache = [
 						'data'      => $onboarding_tickets,
@@ -66,7 +54,7 @@ class Staff {
 				$onboarding_tickets = $cached_data;
 			} elseif ( ! isset( $onboarding_tickets ) ) {
 				// If neither (fresh fetch failed), try to fetch fresh one last time
-				$onboarding_tickets = self::get_sorted_tickets( $base_url, $username, $secret_key );
+				$onboarding_tickets = self::get_sorted_tickets_internal();
 			}
 
 
@@ -212,41 +200,44 @@ class Staff {
 	}
 
 	/**
-	 * Get and sort tickets (Ported logic).
+	 * Get and sort tickets (Internal Logic).
 	 */
-	private static function get_sorted_tickets( $base_url, $username, $secret_key ) {
-		$endpoint = $base_url . '/wp-json/supportcandy/v2/tickets';
-		$all_tickets = [];
-		$page = 1;
-		$headers = [ 'Authorization' => 'Basic ' . base64_encode( $username . ':' . $secret_key ) ];
-
-		while ( true ) {
-			$url = add_query_arg( 'page', $page, $endpoint );
-			$response = wp_remote_get( $url, [ 'headers' => $headers, 'timeout' => 60, 'sslverify' => false ] );
-
-			if ( is_wp_error( $response ) ) {
-				return $response;
-			}
-
-			if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-				return new \WP_Error( 'api_error', 'Status: ' . wp_remote_retrieve_response_code( $response ) );
-			}
-
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( empty( $body['results'] ) || ! is_array( $body['results'] ) ) {
-				break;
-			}
-
-			$all_tickets = array_merge( $all_tickets, $body['results'] );
-			$page++;
+	private static function get_sorted_tickets_internal() {
+		if ( ! class_exists( 'WPSC_Ticket' ) ) {
+			return new \WP_Error( 'missing_dependency', 'SupportCandy WPSC_Ticket class not found.' );
 		}
 
-		// Filter Logic
 		$request_type_key = 'cust_40';
 		$onboarding_type_id = 69;
 		$inactive_ids = [4, 14, 15, 17];
 		$onboarding_date_key = 'cust_127';
 		$cleared_key = 'cust_128';
+
+		// 1. Fetch All Active Onboarding Tickets
+		// Using WPSC_Ticket::find to filter at database level for performance
+		$args = [
+			'items_per_page' => 0, // All
+			'is_active'      => 1, // Only active tickets (not trashed/deleted, though internal is_active means something else usually. Status check is better.)
+			'meta_query'     => [
+				'relation' => 'AND',
+				[
+					'slug'    => $request_type_key,
+					'compare' => '=',
+					'val'     => $onboarding_type_id,
+				]
+			]
+		];
+
+		$tickets_result = \WPSC_Ticket::find( $args );
+		$all_tickets_objects = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+
+		// Convert objects to array structure expected by render_table to minimize refactoring there
+		$all_tickets = [];
+		foreach ( $all_tickets_objects as $ticket_obj ) {
+			// Convert WPSC_Ticket object to associative array of its properties/custom fields
+			$t_array = $ticket_obj->to_array();
+			$all_tickets[] = $t_array;
+		}
 
 		$sorted = [
 			'previous_onboarding' => [],
@@ -263,31 +254,34 @@ class Staff {
 
 		foreach ( $all_tickets as $ticket ) {
 			$status_id = $ticket['status'] ?? null;
-			$type_val = $ticket[$request_type_key] ?? null;
+			// status_id is int in DB but WPSC_Ticket object property might return object or ID depending on config.
+			// to_array() returns raw data, so it should be ID.
+
+			// Check against inactive statuses manually since `is_active` in find() might not cover specific closed statuses
+			if ( in_array( $status_id, $inactive_ids ) ) {
+				continue;
+			}
+
 			$cleared_val = $ticket[$cleared_key] ?? null;
 			$date_str = $ticket[$onboarding_date_key] ?? null;
 
-			$is_active = ( $status_id !== null && ! in_array( $status_id, $inactive_ids ) );
-			$is_onboarding = ( $type_val == $onboarding_type_id );
 			$is_cleared = ! empty( $cleared_val );
 
-			if ( $is_active && $is_onboarding ) {
-				if ( $is_cleared && ! empty( $date_str ) ) {
-					try {
-						$date = new \DateTime( $date_str );
-						if ( $date < $start_week ) {
-							$sorted['previous_onboarding'][] = $ticket;
-						} elseif ( $date >= $start_week && $date <= $end_week ) {
-							$sorted['this_week_onboarding'][] = $ticket;
-						} else {
-							$sorted['future_onboarding'][] = $ticket;
-						}
-					} catch ( \Exception $e ) {
-						// Ignore date error
+			if ( $is_cleared && ! empty( $date_str ) ) {
+				try {
+					$date = new \DateTime( $date_str );
+					if ( $date < $start_week ) {
+						$sorted['previous_onboarding'][] = $ticket;
+					} elseif ( $date >= $start_week && $date <= $end_week ) {
+						$sorted['this_week_onboarding'][] = $ticket;
+					} else {
+						$sorted['future_onboarding'][] = $ticket;
 					}
-				} else {
-					$sorted['uncleared_or_unscheduled'][] = $ticket;
+				} catch ( \Exception $e ) {
+					// Ignore date error
 				}
+			} else {
+				$sorted['uncleared_or_unscheduled'][] = $ticket;
 			}
 		}
 

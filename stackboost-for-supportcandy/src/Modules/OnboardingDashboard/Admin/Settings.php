@@ -18,104 +18,21 @@ class Settings {
 	 * Initialize the Settings page.
 	 */
 	public static function init() {
-		add_action( 'wp_ajax_stackboost_onboarding_save_credentials', [ __CLASS__, 'ajax_save_credentials' ] );
-		add_action( 'wp_ajax_stackboost_onboarding_test_credentials', [ __CLASS__, 'ajax_test_credentials' ] );
+		// No actions needed currently as API settings are removed.
 	}
 
 	/**
 	 * Render the Settings page.
 	 */
 	public static function render_page() {
-		$site_url   = get_site_url();
-		$username   = get_option( self::OPTION_USERNAME, '' );
-		$secret_key = get_option( self::OPTION_SECRET_KEY, '' );
 		?>
 		<div>
-			<h2><?php esc_html_e( 'API Settings', 'stackboost-for-supportcandy' ); ?></h2>
+			<h2><?php esc_html_e( 'Settings', 'stackboost-for-supportcandy' ); ?></h2>
 
-			<!-- API Settings Section -->
 			<div class="card" style="max-width: 800px; margin-top: 20px; padding: 20px;">
-				<h2><?php esc_html_e( 'API Credentials', 'stackboost-for-supportcandy' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'These credentials are used for the legacy API integration (SupportCandy attachments). Even though the module runs locally, the current implementation requires these keys to mimic an external API call.', 'stackboost-for-supportcandy' ); ?>
-				</p>
-				<table class="form-table">
-					<tr>
-						<th scope="row"><label for="baseUrl"><?php esc_html_e( 'Base URL', 'stackboost-for-supportcandy' ); ?></label></th>
-						<td>
-							<input type="text" id="baseUrl" class="regular-text" value="<?php echo esc_url( $site_url ); ?>" readonly>
-							<p class="description"><?php esc_html_e( 'Your WordPress Site URL.', 'stackboost-for-supportcandy' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="username"><?php esc_html_e( 'API Username', 'stackboost-for-supportcandy' ); ?></label></th>
-						<td>
-							<input type="text" id="username" class="regular-text" value="<?php echo esc_attr( $username ); ?>">
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="secretKey"><?php esc_html_e( 'API Application Password', 'stackboost-for-supportcandy' ); ?></label></th>
-						<td>
-							<input type="password" id="secretKey" class="regular-text" value="<?php echo esc_attr( $secret_key ); ?>">
-						</td>
-					</tr>
-				</table>
-				<p class="submit">
-					<button type="button" id="saveCredentialsBtn" class="button button-primary"><?php esc_html_e( 'Save Credentials', 'stackboost-for-supportcandy' ); ?></button>
-					<button type="button" id="testCredentialsBtn" class="button button-secondary"><?php esc_html_e( 'Test Connection', 'stackboost-for-supportcandy' ); ?></button>
-				</p>
-				<div id="apiMessage" style="margin-top: 10px; display: none;" class="notice inline"></div>
+				<p><?php esc_html_e( 'The API integration has been replaced with direct internal hooks for improved performance and security. No configuration is currently required.', 'stackboost-for-supportcandy' ); ?></p>
 			</div>
 		</div>
-
-		<script type="text/javascript">
-			jQuery(document).ready(function($) {
-				// Save Credentials
-				$('#saveCredentialsBtn').on('click', function() {
-					var btn = $(this);
-					var msg = $('#apiMessage');
-					btn.prop('disabled', true);
-
-					$.post(ajaxurl, {
-						action: 'stackboost_onboarding_save_credentials',
-						username: $('#username').val(),
-						secret_key: $('#secretKey').val(),
-						nonce: '<?php echo wp_create_nonce( 'stackboost_onboarding_settings_nonce' ); ?>'
-					}, function(response) {
-						btn.prop('disabled', false);
-						msg.removeClass('notice-error notice-success').hide();
-						if (response.success) {
-							msg.addClass('notice-success').html('<p>' + response.data.message + '</p>').show();
-						} else {
-							msg.addClass('notice-error').html('<p>' + response.data.message + '</p>').show();
-						}
-					});
-				});
-
-				// Test Credentials
-				$('#testCredentialsBtn').on('click', function() {
-					var btn = $(this);
-					var msg = $('#apiMessage');
-					btn.prop('disabled', true);
-
-					$.post(ajaxurl, {
-						action: 'stackboost_onboarding_test_credentials',
-						username: $('#username').val(),
-						secret_key: $('#secretKey').val(),
-						base_url: $('#baseUrl').val(),
-						nonce: '<?php echo wp_create_nonce( 'stackboost_onboarding_settings_nonce' ); ?>'
-					}, function(response) {
-						btn.prop('disabled', false);
-						msg.removeClass('notice-error notice-success').hide();
-						if (response.success) {
-							msg.addClass('notice-success').html('<p>' + response.data.message + '</p>').show();
-						} else {
-							msg.addClass('notice-error').html('<p>' + response.data.message + '</p>').show();
-						}
-					});
-				});
-			});
-		</script>
 		<?php
 	}
 

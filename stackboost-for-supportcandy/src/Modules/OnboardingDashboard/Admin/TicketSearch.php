@@ -102,26 +102,30 @@ add_action( 'wp_ajax_stackboost_onboarding_search_ticket', function() {
 	}
 
 	$ticket_id = absint( $_POST['ticket_id'] ?? 0 );
-	$username  = get_option( Settings::OPTION_USERNAME, '' );
-	$secret_key = get_option( Settings::OPTION_SECRET_KEY, '' );
-	$site_url   = get_site_url();
-
 	if ( ! $ticket_id ) {
 		wp_send_json_error( [ 'message' => 'Invalid Ticket ID.' ] );
 	}
 
-	$response = wp_remote_get( $site_url . '/wp-json/supportcandy/v2/tickets/' . $ticket_id, [
-		'headers' => [
-			'Authorization' => 'Basic ' . base64_encode( $username . ':' . $secret_key ),
-		],
-		'timeout' => 15,
-		'sslverify' => false,
-	] );
-
-	if ( is_wp_error( $response ) ) {
-		wp_send_json_error( [ 'message' => $response->get_error_message() ] );
+	if ( ! class_exists( 'WPSC_Ticket' ) ) {
+		wp_send_json_error( [ 'message' => 'SupportCandy not loaded.' ] );
 	}
 
-	$body = wp_remote_retrieve_body( $response );
-	wp_send_json_success( [ 'response' => $body ] );
+	try {
+		$ticket = new \WPSC_Ticket( $ticket_id );
+		if ( ! $ticket->id ) {
+			wp_send_json_error( [ 'message' => 'Ticket not found.' ] );
+		}
+
+		// Get raw data for display
+		$data = $ticket->to_array();
+
+		// We need to mimic the JSON output structure for consistency with the JS
+		// WPSC_Ticket->to_array() returns flat DB columns.
+		// We might want to enhance it with custom fields if needed, but raw data is what was asked.
+
+		wp_send_json_success( [ 'response' => json_encode( $data ) ] );
+
+	} catch ( \Exception $e ) {
+		wp_send_json_error( [ 'message' => $e->getMessage() ] );
+	}
 } );

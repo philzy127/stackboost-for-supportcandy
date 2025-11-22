@@ -112,8 +112,8 @@ class CertificateHandler {
 			$filepath = sys_get_temp_dir() . '/' . $filename;
 			file_put_contents( $filepath, $pdf_content );
 
-			// Upload to SupportCandy via API (TODO: Refactor to internal call)
-			$upload_result = self::upload_via_api( $base_url, $username, $secret_key, $ticket_id, $filepath, $filename, $attendee_name );
+			// Upload to SupportCandy via Internal Method
+			$upload_result = self::upload_via_internal_method( $ticket_id, $filepath, $filename, $attendee_name );
 
 			if ( is_wp_error( $upload_result ) ) {
 				$results[] = [
@@ -213,52 +213,69 @@ class CertificateHandler {
 	}
 
 	/**
-	 * Upload via API (Legacy Method).
-	 * TODO: Replace with internal SupportCandy method calls.
+	 * Upload via Internal Methods (WPSC_Attachment and WPSC_Thread).
 	 */
-	private static function upload_via_api( $base_url, $username, $secret_key, $ticket_id, $filepath, $filename, $attendee_name ) {
-		$auth = 'Basic ' . base64_encode( $username . ':' . $secret_key );
-
-		// 1. Upload
-		$boundary = '----------------------------' . microtime(true);
-		$body = "--$boundary\r\n";
-		$body .= 'Content-Disposition: form-data; name="file"; filename="' . $filename . '"' . "\r\n";
-		$body .= "Content-Type: application/pdf\r\n\r\n";
-		$body .= file_get_contents( $filepath ) . "\r\n";
-		$body .= "--$boundary--\r\n";
-
-		$upload_resp = wp_remote_post( $base_url . '/wp-json/supportcandy/v2/attachments', [
-			'headers' => [ 'Content-Type' => 'multipart/form-data; boundary=' . $boundary, 'Authorization' => $auth ],
-			'body' => $body,
-			'timeout' => 60,
-			'sslverify' => false
-		]);
-
-		if ( is_wp_error( $upload_resp ) ) return $upload_resp;
-		$upload_data = json_decode( wp_remote_retrieve_body( $upload_resp ), true );
-
-		if ( ! isset( $upload_data['id'] ) ) {
-			return new \WP_Error( 'upload_failed', 'Upload API failed.' );
+	private static function upload_via_internal_method( $ticket_id, $filepath, $filename, $attendee_name ) {
+		if ( ! class_exists( 'WPSC_Attachment' ) || ! class_exists( 'WPSC_Thread' ) ) {
+			return new \WP_Error( 'missing_dependency', 'SupportCandy classes not found.' );
 		}
-		$attach_id = $upload_data['id'];
 
-		// 2. Attach to Ticket
-		$msg_body = [
-			'type' => 'note',
-			'body' => "Onboarding Certificate for $attendee_name attached.",
-			'attachments' => (string)$attach_id // SupportCandy expects string "1,2"
+		// 1. Handle File Saving
+		$upload_dir = wp_upload_dir();
+		$today      = new \DateTime();
+		$rel_path   = '/wpsc/' . $today->format( 'Y' ) . '/' . $today->format( 'm' ) . '/';
+		$target_dir = $upload_dir['basedir'] . $rel_path;
+
+		if ( ! file_exists( $target_dir ) ) {
+			mkdir( $target_dir, 0755, true );
+		}
+
+		// Ensure unique filename
+		$base_filename = sanitize_file_name( pathinfo( $filename, PATHINFO_FILENAME ) );
+		$ext           = 'pdf';
+		$final_filename = time() . '_' . $base_filename . '.' . $ext;
+		$final_path     = $target_dir . $final_filename;
+		$final_rel_path = $rel_path . $final_filename;
+
+		if ( ! copy( $filepath, $final_path ) ) {
+			return new \WP_Error( 'file_copy_error', 'Failed to save certificate file.' );
+		}
+
+		// 2. Create Attachment Record
+		$attachment_data = [
+			'name'         => $base_filename . '.' . $ext,
+			'file_path'    => $final_rel_path,
+			'is_image'     => 0,
+			'is_active'    => 1, // Active immediately
+			'source'       => 'note', // Attached to a note
+			'ticket_id'    => $ticket_id,
+			'date_created' => $today->format( 'Y-m-d H:i:s' ),
 		];
 
-		$msg_resp = wp_remote_post( $base_url . "/wp-json/supportcandy/v2/tickets/$ticket_id/threads", [
-			'headers' => [ 'Content-Type' => 'application/json', 'Authorization' => $auth ],
-			'body' => json_encode( $msg_body ),
-			'timeout' => 60,
-			'sslverify' => false
-		]);
+		$attachment = \WPSC_Attachment::insert( $attachment_data );
+		if ( ! $attachment || ! $attachment->id ) {
+			return new \WP_Error( 'db_insert_error', 'Failed to create attachment record.' );
+		}
 
-		if ( is_wp_error( $msg_resp ) ) return $msg_resp;
-		if ( 200 !== wp_remote_retrieve_response_code( $msg_resp ) ) {
-			return new \WP_Error( 'msg_failed', 'Message API failed.' );
+		// 3. Create Thread (Note)
+		$current_user = wp_get_current_user();
+		$agent = \WPSC_Agent::get_by_user_id( $current_user->ID );
+		$customer = \WPSC_Customer::get_by_email( $current_user->user_email );
+
+		$thread_data = [
+			'ticket'      => $ticket_id,
+			'customer'    => ( $customer && $customer->id ) ? $customer->id : 0, // Should ideally be current user or system
+			'type'        => 'note',
+			'body'        => "Onboarding Certificate for $attendee_name attached.",
+			'attachments' => [ $attachment->id ],
+			'is_active'   => 1,
+			'date_created'=> $today->format( 'Y-m-d H:i:s' ),
+			'date_updated'=> $today->format( 'Y-m-d H:i:s' ),
+		];
+
+		$thread = \WPSC_Thread::insert( $thread_data );
+		if ( ! $thread || ! $thread->id ) {
+			return new \WP_Error( 'thread_insert_error', 'Failed to create note.' );
 		}
 
 		return true;
