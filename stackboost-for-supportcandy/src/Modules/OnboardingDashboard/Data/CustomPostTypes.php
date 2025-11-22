@@ -55,7 +55,7 @@ class CustomPostTypes {
 			'hierarchical'          => false,
 			'public'                => true,
 			'show_ui'               => true,
-			'show_in_menu'          => 'stackboost-for-supportcandy', // Add to main StackBoost menu
+			'show_in_menu'          => false,
 			'menu_position'         => 5,
 			'menu_icon'             => 'dashicons-welcome-learn-more',
 			'show_in_admin_bar'     => true,
