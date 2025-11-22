@@ -31,6 +31,13 @@ class Sequence {
 		}
 
 		wp_enqueue_script( 'jquery-ui-sortable' );
+		wp_enqueue_script(
+			'stackboost-onboarding-sequence',
+			\STACKBOOST_PLUGIN_URL . 'assets/js/onboarding-sequence.js',
+			[ 'jquery', 'jquery-ui-sortable' ],
+			\STACKBOOST_VERSION,
+			true
+		);
 	}
 
 	/**
@@ -144,22 +151,6 @@ class Sequence {
 			}
 			#stkb-sequence-list li:hover, #stkb-available-list li:hover { border-color: #2271b1; }
 		</style>
-		<script type="text/javascript">
-			jQuery(document).ready(function($) {
-				$("#stkb-sequence-list, #stkb-available-list").sortable({
-					connectWith: ".connectedSortable",
-					placeholder: "ui-state-highlight",
-					receive: function(event, ui) {
-						if (this.id === 'stkb-sequence-list') {
-							$(ui.item).find('input[type="hidden"]').remove();
-							$(ui.item).append('<input type="hidden" name="onboarding_sequence[]" value="' + $(ui.item).data('post-id') + '">');
-						} else {
-							$(ui.item).find('input[type="hidden"]').remove();
-						}
-					}
-				}).disableSelection();
-			});
-		</script>
 		<?php
 	}
 }
