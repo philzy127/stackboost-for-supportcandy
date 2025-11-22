@@ -31,13 +31,37 @@ class Sequence {
 		}
 
 		wp_enqueue_script( 'jquery-ui-sortable' );
-		wp_enqueue_script(
-			'stackboost-onboarding-sequence',
-			\STACKBOOST_PLUGIN_URL . 'assets/js/onboarding-sequence.js',
-			[ 'jquery', 'jquery-ui-sortable' ],
-			\STACKBOOST_VERSION,
-			true
-		);
+
+		// Register a dummy script to attach inline JS to, ensuring it loads after dependencies.
+		wp_register_script( 'stackboost-onboarding-sequence-init', '', [ 'jquery', 'jquery-ui-sortable' ], \STACKBOOST_VERSION, true );
+
+		$script = '
+		jQuery(document).ready(function($) {
+			if ($("#stkb-sequence-list").length === 0 && $("#stkb-available-list").length === 0) {
+				return;
+			}
+
+			$("#stkb-sequence-list, #stkb-available-list").sortable({
+				connectWith: ".connectedSortable",
+				placeholder: "ui-state-highlight",
+				cursor: "move",
+				helper: "clone",
+				forcePlaceholderSize: true,
+				tolerance: "pointer",
+				receive: function(event, ui) {
+					if (this.id === "stkb-sequence-list") {
+						$(ui.item).find("input[type=hidden]").remove();
+						$(ui.item).append(\'<input type="hidden" name="onboarding_sequence[]" value="\' + $(ui.item).data("post-id") + \'">\');
+					} else {
+						$(ui.item).find("input[type=hidden]").remove();
+					}
+				}
+			}).disableSelection();
+		});
+		';
+
+		wp_add_inline_script( 'stackboost-onboarding-sequence-init', $script );
+		wp_enqueue_script( 'stackboost-onboarding-sequence-init' );
 	}
 
 	/**
