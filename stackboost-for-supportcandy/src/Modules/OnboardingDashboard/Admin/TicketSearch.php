@@ -19,8 +19,8 @@ class TicketSearch {
 			return;
 		}
 
-		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : '';
-		if ( 'search' !== $tab ) {
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'steps';
+		if ( 'ticket_search' !== $tab ) {
 			return;
 		}
 

@@ -25,8 +25,8 @@ class Sequence {
 			return;
 		}
 
-		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : '';
-		if ( 'sequence' !== $tab ) {
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'steps';
+		if ( 'steps' !== $tab ) {
 			return;
 		}
 
@@ -91,7 +91,9 @@ class Sequence {
 		ksort( $sequence_posts );
 		?>
 		<div>
-			<h2><?php esc_html_e( 'Onboarding Sequence', 'stackboost-for-supportcandy' ); ?></h2>
+			<h2><?php esc_html_e( 'Onboarding Steps', 'stackboost-for-supportcandy' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=stkb_onboarding_step' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New Step', 'stackboost-for-supportcandy' ); ?></a>
+			</h2>
 			<p><?php esc_html_e( 'Drag and drop the steps below to set the onboarding sequence.', 'stackboost-for-supportcandy' ); ?></p>
 
 			<form method="post" action="">

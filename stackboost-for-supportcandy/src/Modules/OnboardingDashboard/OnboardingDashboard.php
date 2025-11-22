@@ -42,6 +42,7 @@ class OnboardingDashboard {
 			Admin\Page::init();
 			Admin\Sequence::init();
 			Admin\Staff::init();
+			Admin\ImportExport::init();
 			Admin\Settings::init();
 			Admin\TicketSearch::init();
 		}

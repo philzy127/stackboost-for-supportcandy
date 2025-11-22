@@ -42,13 +42,14 @@ class Page {
 	 */
 	public static function render_page() {
 		$tabs = [
-			'staff'    => __( 'Staff', 'stackboost-for-supportcandy' ),
-			'sequence' => __( 'Sequence', 'stackboost-for-supportcandy' ),
-			'settings' => __( 'Settings', 'stackboost-for-supportcandy' ),
-			'search'   => __( 'Ticket Search', 'stackboost-for-supportcandy' ),
+			'steps'         => __( 'Onboarding Steps', 'stackboost-for-supportcandy' ),
+			'staff'         => __( 'Staff', 'stackboost-for-supportcandy' ),
+			'import_export' => __( 'Import / Export', 'stackboost-for-supportcandy' ),
+			'api_settings'  => __( 'API Settings', 'stackboost-for-supportcandy' ),
+			'ticket_search' => __( 'API Ticket Search', 'stackboost-for-supportcandy' ),
 		];
 
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'steps';
 
 		?>
 		<div class="wrap">
@@ -72,20 +73,23 @@ class Page {
 			<div class="tab-content">
 				<?php
 				switch ( $active_tab ) {
+					case 'steps':
+						Sequence::render_page();
+						break;
 					case 'staff':
 						Staff::render_page();
 						break;
-					case 'sequence':
-						Sequence::render_page();
+					case 'import_export':
+						ImportExport::render_page();
 						break;
-					case 'settings':
+					case 'api_settings':
 						Settings::render_page();
 						break;
-					case 'search':
+					case 'ticket_search':
 						TicketSearch::render_page();
 						break;
 					default:
-						Staff::render_page();
+						Sequence::render_page();
 						break;
 				}
 				?>
