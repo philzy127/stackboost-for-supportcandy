@@ -112,25 +112,16 @@ class Settings {
 		}
 		settings_errors( 'stackboost_messages' );
 
-		$sc_fields = [];
-		if ( class_exists( '\WPSC_Custom_Field' ) && property_exists( '\WPSC_Custom_Field', 'custom_fields' ) ) {
-			foreach ( \WPSC_Custom_Field::$custom_fields as $field ) {
-				if ( is_object( $field ) && isset( $field->id ) ) {
-					$key = 'cust_' . $field->id;
-					$sc_fields[ $key ] = $field->name . ' (ID: ' . $field->id . ')';
-				}
-			}
-		}
+		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
 
-		$sc_statuses = [];
-		if ( class_exists( '\WPSC_Status' ) ) {
-			$statuses = \WPSC_Status::find( [ 'items_per_page' => 0 ] );
-			if ( isset( $statuses['results'] ) ) {
-				foreach ( $statuses['results'] as $status ) {
-					$sc_statuses[ $status->id ] = $status->name;
-				}
-			}
-		}
+		// Fetch fields using the centralized method
+		$sc_fields = $plugin_instance->get_supportcandy_columns();
+		// Add ID to label if possible, though get_supportcandy_columns returns just Name.
+		// We can stick to Name as returned.
+		// Note: get_supportcandy_columns returns [ 'slug' => 'Name' ].
+
+		// Fetch statuses using the centralized method
+		$sc_statuses = $plugin_instance->get_supportcandy_statuses();
 
 		$config = self::get_config();
 

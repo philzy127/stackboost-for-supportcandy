@@ -280,6 +280,26 @@ final class Plugin {
 	}
 
 	/**
+	 * A utility function to get SupportCandy statuses.
+	 * @return array Associative array of [ ID => Name ]
+	 */
+	public function get_supportcandy_statuses(): array {
+		global $wpdb;
+		$statuses      = [];
+		$status_table  = $wpdb->prefix . 'psmsc_statuses';
+
+		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $status_table ) ) ) {
+			$results = $wpdb->get_results( "SELECT id, name FROM `{$status_table}` ORDER BY name ASC" );
+			if ( $results ) {
+				foreach ( $results as $status ) {
+					$statuses[ $status->id ] = $status->name;
+				}
+			}
+		}
+		return $statuses;
+	}
+
+	/**
 	 * A utility function to get a custom field ID by its name.
 	 * @param string $field_name The name of the custom field.
 	 * @return int
