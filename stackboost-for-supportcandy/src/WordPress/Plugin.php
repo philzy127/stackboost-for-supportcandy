@@ -103,6 +103,14 @@ final class Plugin {
 				'title' => __( 'General Settings', 'stackboost-for-supportcandy' ),
 				'slug'  => $main_menu_slug,
 			],
+			'onboarding'      => [
+				'title' => __( 'Onboarding', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-onboarding-dashboard',
+			],
+			'ticket-view'     => [
+				'title' => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-ticket-view',
+			],
 			'conditional'     => [
 				'title' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 				'slug'  => 'stackboost-conditional-views',
@@ -115,13 +123,17 @@ final class Plugin {
 				'title' => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'slug'  => 'stackboost-after-hours',
 			],
+			'directory'       => [
+				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-directory',
+			],
 			'ats'             => [
 				'title' => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
 				'slug'  => 'stackboost-ats-settings',
 			],
-			'directory'       => [
-				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-directory',
+			'tools'           => [
+				'title' => __( 'Tools', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-tools',
 			],
 			'how-to'          => [
 				'title' => __( 'How To Use', 'stackboost-for-supportcandy' ),

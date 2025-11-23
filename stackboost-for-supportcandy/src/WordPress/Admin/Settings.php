@@ -140,13 +140,16 @@ class Settings {
 		$menu_items = $submenu[ $parent_slug ];
 		$ordered_menu = [];
 		$order = [
-			'stackboost-for-supportcandy',  // General Settings
-			'stackboost-ticket-view',       // Ticket View
-			'stackboost-conditional-views', // Conditional Views
-			'stackboost-queue-macro',       // Queue Macro
-			'stackboost-after-hours',       // After Hours Notice
-			'stackboost-directory',         // Company Directory
-			'stackboost-ats',               // After Ticket Survey
+			'stackboost-for-supportcandy',     // General Settings
+			'stackboost-onboarding-dashboard', // Onboarding Dashboard
+			'stackboost-ticket-view',          // Ticket View
+			'stackboost-conditional-views',    // Conditional Views
+			'stackboost-queue-macro',          // Queue Macro
+			'stackboost-after-hours',          // After Hours Notice
+			'stackboost-directory',            // Company Directory
+			'stackboost-ats',                  // After Ticket Survey
+			'stackboost-tools',                // Tools (Logging)
+			'stackboost-how-to-use',           // How To Use
 		];
 
 		// Create a map of slug => menu_item array for easy lookup

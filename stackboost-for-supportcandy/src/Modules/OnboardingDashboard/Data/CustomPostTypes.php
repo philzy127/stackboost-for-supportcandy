@@ -12,6 +12,32 @@ class CustomPostTypes {
 		add_action( 'init', [ __CLASS__, 'register_legacy_onboarding_cpt' ], 0 );
 		add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ __CLASS__, 'save_meta_box_data' ] );
+		add_filter( 'parent_file', [ __CLASS__, 'highlight_menu_parent' ] );
+		add_action( 'edit_form_top', [ __CLASS__, 'add_back_button' ] );
+	}
+
+	/**
+	 * Keep the StackBoost menu open when editing an Onboarding Step.
+	 */
+	public static function highlight_menu_parent( $parent_file ) {
+		global $current_screen;
+		if ( isset( $current_screen->post_type ) && 'stkb_onboarding_step' === $current_screen->post_type ) {
+			return 'stackboost-for-supportcandy';
+		}
+		return $parent_file;
+	}
+
+	/**
+	 * Add a "Back to Dashboard" button on the edit screen.
+	 */
+	public static function add_back_button() {
+		global $current_screen;
+		if ( 'stkb_onboarding_step' === $current_screen->post_type ) {
+			$url = admin_url( 'admin.php?page=stackboost-onboarding-dashboard' );
+			echo '<div style="margin-top: 10px; margin-bottom: 20px;">';
+			echo '<a href="' . esc_url( $url ) . '" class="button button-secondary"><span class="dashicons dashicons-arrow-left-alt" style="line-height: 28px;"></span> ' . esc_html__( 'Back to Onboarding Dashboard', 'stackboost-for-supportcandy' ) . '</a>';
+			echo '</div>';
+		}
 	}
 
 	/**
