@@ -85,6 +85,13 @@ class Settings {
 		);
 
 		add_settings_section(
+			'stkb_onboarding_mobile_section',
+			__( 'Mobile Configuration', 'stackboost-for-supportcandy' ),
+			null,
+			'stackboost-onboarding-general'
+		);
+
+		add_settings_section(
 			'stkb_onboarding_columns_section',
 			__( 'Staff Table Columns', 'stackboost-for-supportcandy' ),
 			function() {
@@ -96,13 +103,6 @@ class Settings {
 		add_settings_section(
 			'stkb_onboarding_rename_section',
 			__( 'Column Renaming', 'stackboost-for-supportcandy' ),
-			null,
-			'stackboost-onboarding-general'
-		);
-
-		add_settings_section(
-			'stkb_onboarding_mobile_section',
-			__( 'Mobile Configuration', 'stackboost-for-supportcandy' ),
 			null,
 			'stackboost-onboarding-general'
 		);
@@ -306,14 +306,6 @@ class Settings {
 					</tr>
 				</table>
 
-				<!-- Staff Table Columns (Dual List) -->
-				<h3><?php esc_html_e( 'Staff Table Columns', 'stackboost-for-supportcandy' ); ?></h3>
-				<?php self::render_columns_selector( $sc_fields, $config['table_columns'] ); ?>
-
-				<!-- Renaming Rules -->
-				<h3><?php esc_html_e( 'Column Renaming', 'stackboost-for-supportcandy' ); ?></h3>
-				<?php self::render_rename_rules( $sc_fields, $config['rename_rules'] ); ?>
-
 				<!-- Mobile Configuration -->
 				<h3><?php esc_html_e( 'Mobile Configuration', 'stackboost-for-supportcandy' ); ?></h3>
 				<table class="form-table">
@@ -349,6 +341,14 @@ class Settings {
 						</tr>
 					</table>
 				</div>
+
+				<!-- Staff Table Columns (Dual List) -->
+				<h3><?php esc_html_e( 'Staff Table Columns', 'stackboost-for-supportcandy' ); ?></h3>
+				<?php self::render_columns_selector( $sc_fields, $config['table_columns'] ); ?>
+
+				<!-- Renaming Rules -->
+				<h3><?php esc_html_e( 'Column Renaming', 'stackboost-for-supportcandy' ); ?></h3>
+				<?php self::render_rename_rules( $sc_fields, $config['rename_rules'] ); ?>
 
 				<!-- Mode: Indicator Field -->
 				<div id="stkb_mobile_indicator_field_container" class="stkb-mobile-logic-container" style="display:none;">
