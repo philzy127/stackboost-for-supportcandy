@@ -33,6 +33,9 @@ class CustomPostTypes {
 	public static function add_back_button() {
 		global $current_screen;
 		if ( 'stkb_onboarding_step' === $current_screen->post_type ) {
+			// Output nonce here to avoid duplication in meta boxes
+			wp_nonce_field( 'stkb_onboarding_save_meta', 'stkb_onboarding_meta_nonce' );
+
 			$url = admin_url( 'admin.php?page=stackboost-onboarding-dashboard' );
 			echo '<div style="margin-top: 10px; margin-bottom: 20px;">';
 			echo '<a href="' . esc_url( $url ) . '" class="button button-secondary"><span class="dashicons dashicons-arrow-left-alt" style="line-height: 28px;"></span> ' . esc_html__( 'Back to Onboarding Dashboard', 'stackboost-for-supportcandy' ) . '</a>';
@@ -139,7 +142,6 @@ class CustomPostTypes {
 	 * @param \WP_Post $post
 	 */
 	public static function render_checklist_meta_box( $post ) {
-		wp_nonce_field( 'stkb_onboarding_save_meta', 'stkb_onboarding_meta_nonce' );
 		$checklist_items = get_post_meta( $post->ID, '_stackboost_onboarding_checklist_items', true );
 
 		echo '<p>';
