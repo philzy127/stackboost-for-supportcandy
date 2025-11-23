@@ -242,8 +242,10 @@ final class Plugin {
 				'stackboost-admin-common',
 				'stackboost_admin_ajax',
 				[
-					'ajax_url' => admin_url( 'admin-ajax.php' ),
-					'nonce'    => wp_create_nonce( 'stackboost_admin_nonce' ),
+					'ajax_url'           => admin_url( 'admin-ajax.php' ),
+					'nonce'              => wp_create_nonce( 'stackboost_admin_nonce' ),
+					'i18n_select_option' => __( '-- Select Option --', 'stackboost-for-supportcandy' ),
+					'i18n_loading'       => __( 'Loading...', 'stackboost-for-supportcandy' ),
 				]
 			);
 		}

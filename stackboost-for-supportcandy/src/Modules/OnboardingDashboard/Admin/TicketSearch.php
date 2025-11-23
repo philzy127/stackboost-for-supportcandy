@@ -132,7 +132,9 @@ add_action( 'wp_ajax_stackboost_onboarding_search_ticket', function() {
 			[
 				$config['field_onboarding_date'],
 				$config['field_cleared'],
-				$config['field_is_mobile'], // Needed for icon logic
+				$config['field_phone_number'],
+				$config['field_mobile_number'],
+				$config['field_is_mobile'],
 				$config['request_type_field']
 			]
 		);

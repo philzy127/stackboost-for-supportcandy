@@ -152,9 +152,13 @@ class Staff {
 
 		// Logic Config
 		$onboarding_date_field_key    = $config['field_onboarding_date'];
-		$is_mobile_radio_field_key    = $config['field_is_mobile'];
 		$onboarding_cleared_field_key = $config['field_cleared'];
-		$mobile_option_id             = $config['mobile_option_id'];
+
+		// Mobile Logic
+		$mobile_mode                  = $config['mobile_logic_mode'];
+		$field_mobile_number          = $config['field_mobile_number'];
+		$field_is_mobile_indicator    = $config['field_is_mobile'];
+		$mobile_indicator_value       = $config['mobile_option_id'];
 
 		// Get all columns to resolve Names from Slugs
 		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
@@ -212,35 +216,38 @@ class Staff {
 									$display_value = ! empty( $raw_value ) ? __( 'Yes', 'stackboost-for-supportcandy' ) : __( 'No', 'stackboost-for-supportcandy' );
 								}
 
-								// -- Logic: Phone Field Formatting (Auto-detected if value looks like phone? No, relying on user to pick field isn't enough if we don't know WHICH is phone.
-								// Ideally we'd have a 'Phone Field' logic selector too if we want formatting.
-								// But per requirements, we kept Mobile Config.
-								// I will check if the current column VALUE looks like a phone number OR if we should add a 'Phone Field' logic config.
-								// Given the previous code had $personal_phone_field_key, I should probably have kept that in Logic Fields if strict formatting is needed.
-								// However, I'll try to be smart: Check if this row has the Mobile Icon logic applicable.
-								// The Mobile Icon was attached to the Phone Field.
-								// We don't know which of the dynamic columns is the phone field unless we ask.
-								// Let's just output raw for now, unless I add 'field_phone' back to Logic Config.
-								// Wait, the user approved "Our items from 1" which included "Personal Phone" in the OLD mapping.
-								// In my new plan I listed "Logic Fields: Date, Cleared, Mobile". I missed Phone.
-								// I will assume I can't format the phone number specifically unless I know which field it is.
-								// BUT, the Mobile Icon logic depends on `$is_mobile_radio_field_key` checking.
-								// I can check that logic independently of the column.
-								// IF this column *happens* to be the one where we want the icon...
-								// Let's append the icon to ANY column? No.
-								// I'll format strictly if it looks like a phone number (10 digits).
-
+								// -- Logic: Phone Formatting & Mobile Icon --
+								// 1. Format anything that looks like a raw 10-digit phone number
 								if ( is_string( $display_value ) && preg_match( '/^\d{10}$/', preg_replace( '/[^0-9]/', '', $display_value ) ) ) {
 									$display_value = self::format_phone( $display_value );
+								}
 
-									// Mobile Icon Logic
-									// We append the icon to the phone number if the Mobile Field logic is true for this ticket.
-									if ( isset( $ticket[ $is_mobile_radio_field_key ] ) && ! empty( $mobile_option_id ) ) {
-										$val = $ticket[ $is_mobile_radio_field_key ];
-										if ( ( is_array( $val ) && in_array( $mobile_option_id, $val ) ) || $val == $mobile_option_id ) {
-											$display_value .= ' <i class="material-icons" style="font-size: 1em; vertical-align: middle; margin-left: 5px;">smartphone</i>';
+								// 2. Mobile Icon Logic
+								$show_mobile_icon = false;
+
+								if ( 'separate_field' === $mobile_mode ) {
+									// In separate field mode, if THIS column is the mobile field and has a value, show icon
+									if ( $slug === $field_mobile_number && ! empty( $raw_value ) ) {
+										$show_mobile_icon = true;
+									}
+								} elseif ( 'indicator_field' === $mobile_mode ) {
+									// In indicator mode, check if this is the phone field AND if the indicator condition is met
+									$is_mobile_device = false;
+									if ( isset( $ticket[ $field_is_mobile_indicator ] ) && ! empty( $mobile_indicator_value ) ) {
+										$val = $ticket[ $field_is_mobile_indicator ];
+										if ( ( is_array( $val ) && in_array( $mobile_indicator_value, $val ) ) || $val == $mobile_indicator_value ) {
+											$is_mobile_device = true;
 										}
 									}
+
+									// If this is a mobile device, append icon to the 'field_phone_number' column
+									if ( $is_mobile_device && $slug === $config['field_phone_number'] ) {
+										$show_mobile_icon = true;
+									}
+								}
+
+								if ( $show_mobile_icon ) {
+									$display_value .= ' <i class="material-icons" style="font-size: 1em; vertical-align: middle; margin-left: 5px;">smartphone</i>';
 								}
 
 								// -- Generic: Arrays (e.g. Multi-selects) --
@@ -313,7 +320,9 @@ class Staff {
 			[
 				$config['field_onboarding_date'],
 				$config['field_cleared'],
-				$config['field_is_mobile'], // Needed for icon logic
+				$config['field_phone_number'], // Needed for icon placement in indicator mode
+				$config['field_mobile_number'], // Needed for separate field mode
+				$config['field_is_mobile'], // Needed for indicator logic
 				$config['request_type_field']
 			]
 		);
