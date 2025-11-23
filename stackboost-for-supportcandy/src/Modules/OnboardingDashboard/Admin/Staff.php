@@ -21,6 +21,7 @@ class Staff {
 	 * Render page.
 	 */
 	public static function render_page() {
+		stackboost_log( 'Rendering Staff Page...', 'onboarding' );
 		$transient_key = 'stackboost_onboarding_tickets_cache';
 
 		?>
@@ -203,7 +204,9 @@ class Staff {
 	 * Get and sort tickets (Internal Logic).
 	 */
 	private static function get_sorted_tickets_internal() {
+		stackboost_log( 'Fetching sorted tickets via internal logic...', 'onboarding' );
 		if ( ! class_exists( 'WPSC_Ticket' ) ) {
+			stackboost_log( 'SupportCandy WPSC_Ticket class not found.', 'error' );
 			return new \WP_Error( 'missing_dependency', 'SupportCandy WPSC_Ticket class not found.' );
 		}
 
@@ -230,6 +233,7 @@ class Staff {
 
 		$tickets_result = \WPSC_Ticket::find( $args );
 		$all_tickets_objects = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+		stackboost_log( 'Found ' . count( $all_tickets_objects ) . ' active onboarding tickets.', 'onboarding' );
 
 		// Convert objects to array structure expected by render_table to minimize refactoring there
 		$all_tickets = [];

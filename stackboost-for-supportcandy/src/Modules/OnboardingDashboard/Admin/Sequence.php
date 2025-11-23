@@ -32,36 +32,41 @@ class Sequence {
 
 		wp_enqueue_script( 'jquery-ui-sortable' );
 
-		// Register a dummy script to attach inline JS to, ensuring it loads after dependencies.
-		wp_register_script( 'stackboost-onboarding-sequence-init', '', [ 'jquery', 'jquery-ui-sortable' ], \STACKBOOST_VERSION, true );
-
 		$script = '
 		jQuery(document).ready(function($) {
+			console.log("StackBoost: Initializing Sortable for Onboarding Sequence");
 			if ($("#stkb-sequence-list").length === 0 && $("#stkb-available-list").length === 0) {
+				console.log("StackBoost: Sortable lists not found.");
 				return;
 			}
 
-			$("#stkb-sequence-list, #stkb-available-list").sortable({
-				connectWith: ".connectedSortable",
-				placeholder: "ui-state-highlight",
-				cursor: "move",
-				helper: "clone",
-				forcePlaceholderSize: true,
-				tolerance: "pointer",
-				receive: function(event, ui) {
-					if (this.id === "stkb-sequence-list") {
-						$(ui.item).find("input[type=hidden]").remove();
-						$(ui.item).append(\'<input type="hidden" name="onboarding_sequence[]" value="\' + $(ui.item).data("post-id") + \'">\');
-					} else {
-						$(ui.item).find("input[type=hidden]").remove();
+			try {
+				$("#stkb-sequence-list, #stkb-available-list").sortable({
+					connectWith: ".connectedSortable",
+					placeholder: "ui-state-highlight",
+					cursor: "move",
+					helper: "clone",
+					forcePlaceholderSize: true,
+					tolerance: "pointer",
+					receive: function(event, ui) {
+						if (this.id === "stkb-sequence-list") {
+							$(ui.item).find("input[type=hidden]").remove();
+							$(ui.item).append(\'<input type="hidden" name="onboarding_sequence[]" value="\' + $(ui.item).data("post-id") + \'">\');
+						} else {
+							$(ui.item).find("input[type=hidden]").remove();
+						}
 					}
-				}
-			}).disableSelection();
+				}).disableSelection();
+				console.log("StackBoost: Sortable initialized successfully.");
+			} catch (e) {
+				console.error("StackBoost: Sortable initialization failed:", e);
+			}
 		});
 		';
 
-		wp_add_inline_script( 'stackboost-onboarding-sequence-init', $script );
-		wp_enqueue_script( 'stackboost-onboarding-sequence-init' );
+		// Attach directly to jquery-ui-sortable to ensure it runs after the library loads.
+		// The dummy script approach fails because WP doesn't output scripts with empty sources.
+		wp_add_inline_script( 'jquery-ui-sortable', $script );
 	}
 
 	/**
@@ -74,8 +79,10 @@ class Sequence {
 
 		if ( isset( $_POST['stkb_sequence_nonce'] ) && wp_verify_nonce( $_POST['stkb_sequence_nonce'], 'stkb_save_sequence' ) ) {
 			if ( isset( $_POST['onboarding_sequence'] ) && is_array( $_POST['onboarding_sequence'] ) ) {
+				stackboost_log( 'Saving new onboarding sequence...', 'onboarding' );
 				$new_sequence = array_map( 'absint', $_POST['onboarding_sequence'] );
 				update_option( self::OPTION_SEQUENCE, $new_sequence );
+				stackboost_log( 'Onboarding sequence updated: ' . implode( ',', $new_sequence ), 'onboarding' );
 				add_action( 'admin_notices', [ __CLASS__, 'save_success_notice' ] );
 			}
 		}

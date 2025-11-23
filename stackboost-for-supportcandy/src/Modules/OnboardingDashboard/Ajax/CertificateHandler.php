@@ -18,16 +18,14 @@ class CertificateHandler {
 	 * Handle the certificate generation and sending request.
 	 */
 	public static function handle_request() {
+		stackboost_log( 'Certificate Generation Initiated.', 'onboarding' );
 		// Verify Nonce
 		check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce' );
 
 		// Verify Capability
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_onboarding_dashboard' ) ) {
-			// Note: 'manage_onboarding_dashboard' is a custom cap from original plugin.
-			// We can add it or just stick to manage_options for now.
-			// For this refactor, I'll stick to 'edit_posts' as a baseline or 'manage_options'.
-			// Actually, let's assume 'edit_posts' for technicians.
 			if ( ! current_user_can( 'edit_posts' ) ) {
+				stackboost_log( 'Permission denied for certificate generation.', 'error' );
 				wp_send_json_error( 'Permission denied.' );
 			}
 		}
@@ -35,9 +33,11 @@ class CertificateHandler {
 		$present_attendees = isset( $_POST['present_attendees'] ) ? json_decode( stripslashes( $_POST['present_attendees'] ), true ) : [];
 
 		if ( empty( $present_attendees ) ) {
+			stackboost_log( 'No attendees marked present.', 'onboarding' );
 			wp_send_json_success( [ 'message' => 'No attendees present.' ] );
 		}
 
+		stackboost_log( 'Processing certificates for ' . count( $present_attendees ) . ' attendees.', 'onboarding' );
 		$results = [];
 		$username = get_option( Settings::OPTION_USERNAME, '' );
 		$secret_key = get_option( Settings::OPTION_SECRET_KEY, '' );
@@ -99,6 +99,7 @@ class CertificateHandler {
 			$pdf_content = PdfService::get_instance()->generate_pdf( $html );
 
 			if ( ! $pdf_content ) {
+				stackboost_log( 'PDF Generation Failed for: ' . $attendee_name, 'error' );
 				$results[] = [
 					'attendee' => $attendee_name,
 					'status' => 'error',
@@ -116,12 +117,14 @@ class CertificateHandler {
 			$upload_result = self::upload_via_internal_method( $ticket_id, $filepath, $filename, $attendee_name );
 
 			if ( is_wp_error( $upload_result ) ) {
+				stackboost_log( 'Upload/Attach failed for: ' . $attendee_name . '. Error: ' . $upload_result->get_error_message(), 'error' );
 				$results[] = [
 					'attendee' => $attendee_name,
 					'status' => 'error',
 					'message' => $upload_result->get_error_message()
 				];
 			} else {
+				stackboost_log( 'Certificate sent successfully for: ' . $attendee_name, 'onboarding' );
 				$results[] = [
 					'attendee' => $attendee_name,
 					'status' => 'success',

@@ -138,6 +138,7 @@ class ImportExport {
 	 * AJAX: Migrate Legacy Data.
 	 */
 	public static function ajax_migrate_legacy_data() {
+		stackboost_log( 'Starting manual legacy data migration...', 'onboarding' );
 		check_ajax_referer( 'stackboost_onboarding_settings_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( [ 'message' => 'Permission denied.' ] );
@@ -150,9 +151,11 @@ class ImportExport {
 		] );
 
 		if ( empty( $legacy_posts ) ) {
+			stackboost_log( 'No legacy data found.', 'onboarding' );
 			wp_send_json_error( [ 'message' => 'No legacy data found.' ] );
 		}
 
+		stackboost_log( 'Found ' . count( $legacy_posts ) . ' legacy items. Migrating...', 'onboarding' );
 		$count = 0;
 		foreach ( $legacy_posts as $post ) {
 			// Update Post Type
@@ -190,6 +193,7 @@ class ImportExport {
 	 * AJAX: Export Steps to JSON.
 	 */
 	public static function ajax_export_steps() {
+		stackboost_log( 'Exporting Onboarding Steps...', 'onboarding' );
 		check_ajax_referer( 'stackboost_onboarding_export', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'Permission denied' );
@@ -224,6 +228,8 @@ class ImportExport {
 			$steps = $ordered_steps;
 		}
 
+		stackboost_log( 'Found ' . count( $steps ) . ' steps to export.', 'onboarding' );
+
 		foreach ( $steps as $step ) {
 			$checklist = get_post_meta( $step->ID, '_stackboost_onboarding_checklist_items', true );
 			$notes     = get_post_meta( $step->ID, '_stackboost_onboarding_notes_content', true );
@@ -255,6 +261,7 @@ class ImportExport {
 	 * AJAX: Import Steps from JSON.
 	 */
 	public static function ajax_import_steps() {
+		stackboost_log( 'Importing Onboarding Steps...', 'onboarding' );
 		check_ajax_referer( 'stackboost_onboarding_import', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( [ 'message' => 'Permission denied.' ] );
@@ -273,6 +280,7 @@ class ImportExport {
 		$import_data  = json_decode( $json_content, true );
 
 		if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $import_data ) ) {
+			stackboost_log( 'Import failed: Invalid JSON.', 'error' );
 			wp_send_json_error( [ 'message' => 'Invalid JSON file.' ] );
 		}
 
@@ -292,6 +300,7 @@ class ImportExport {
 
 		$count = 0;
 		$new_sequence = [];
+		stackboost_log( 'Processing ' . count( $import_data ) . ' items for import.', 'onboarding' );
 
 		foreach ( $import_data as $item ) {
 			// Handle legacy data structure (if keys differ)
@@ -311,6 +320,7 @@ class ImportExport {
 				$checklist = $item['_stackboost_onboarding_checklist_items'];
 			} elseif ( isset( $item['_odb_checklist_items'] ) ) { // Legacy Key Support
 				$checklist = $item['_odb_checklist_items'];
+				stackboost_log( 'Found legacy checklist key for item.', 'onboarding' );
 			}
 
 			$notes = '';
@@ -320,6 +330,7 @@ class ImportExport {
 				$notes = $item['_stackboost_onboarding_notes_content'];
 			} elseif ( isset( $item['_odb_notes_content'] ) ) { // Legacy Key Support
 				$notes = $item['_odb_notes_content'];
+				stackboost_log( 'Found legacy notes key for item.', 'onboarding' );
 			}
 
 			$post_id = wp_insert_post( [
