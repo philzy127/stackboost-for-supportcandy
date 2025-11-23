@@ -60,7 +60,7 @@ final class Plugin {
 		$this->modules['ticket_view']         = TicketView\WordPress::get_instance();
 		$this->modules['qol_enhancements']    = QolEnhancements\WordPress::get_instance();
 		$this->modules['after_hours_notice']  = AfterHoursNotice\WordPress::get_instance();
-		$this->modules['conditional_views']   = \StackBoost\ForSupportCandy\Modules\ConditionalViews\WordPress::get_instance();
+		$this->modules['conditional_views']   = ConditionalViews\WordPress::get_instance();
 		$this->modules['queue_macro']         = QueueMacro\WordPress::get_instance();
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
 		$this->modules['directory']           = Directory\WordPress::get_instance();
@@ -76,9 +76,6 @@ final class Plugin {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_and_localize_frontend_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_menu' ], 999 );
-        add_action( 'admin_notices', function() {
-            echo '<div class="notice notice-success"><p>StackBoost Core is Active</p></div>';
-        });
 	}
 
 	/**
@@ -204,12 +201,15 @@ final class Plugin {
 	 * @param string $hook_suffix The current admin page.
 	 */
 	public function enqueue_admin_scripts( string $hook_suffix ) {
+        stackboost_log( "Enqueueing admin scripts for hook: " . $hook_suffix, 'core' );
+
 		// This is a general admin script for common UI elements like rule builders.
 		// Specific modules enqueue their own assets as needed (e.g., After Ticket Survey).
 		$pages_with_common_script = [
 			'toplevel_page_stackboost-for-supportcandy',
 			'stackboost_page_stackboost-conditional-views',
 			'stackboost_page_stackboost-queue-macro',
+            'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard',
 		];
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {

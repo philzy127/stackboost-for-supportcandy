@@ -21,6 +21,7 @@ class Sequence {
 	 * Enqueue scripts for sortable UI.
 	 */
 	public static function enqueue_scripts( $hook ) {
+        stackboost_log( "Sequence Enqueue Scripts called for hook: " . $hook, 'onboarding' );
 		if ( 'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard' !== $hook ) {
 			return;
 		}
@@ -30,6 +31,8 @@ class Sequence {
 			return;
 		}
 
+        stackboost_log( "Sequence Enqueue Scripts: Correct hook found, enqueueing assets.", 'onboarding' );
+        wp_enqueue_script( 'jquery' ); // Explicit dependency
 		wp_enqueue_script( 'jquery-ui-sortable' );
 
 		$script = '

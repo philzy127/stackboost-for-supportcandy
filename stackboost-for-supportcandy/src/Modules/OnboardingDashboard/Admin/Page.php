@@ -31,6 +31,7 @@ class Page {
 	 * Specific tabs may enqueue their own via their own classes.
 	 */
 	public static function enqueue_scripts( $hook ) {
+        stackboost_log( "Onboarding Page Enqueue Scripts called for hook: " . $hook, 'onboarding' );
 		if ( 'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard' !== $hook ) {
 			return;
 		}
