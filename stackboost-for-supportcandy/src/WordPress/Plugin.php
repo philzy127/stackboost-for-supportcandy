@@ -76,6 +76,9 @@ final class Plugin {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_and_localize_frontend_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_menu' ], 999 );
+        add_action( 'admin_notices', function() {
+            echo '<div class="notice notice-success"><p>StackBoost Core is Active</p></div>';
+        });
 	}
 
 	/**

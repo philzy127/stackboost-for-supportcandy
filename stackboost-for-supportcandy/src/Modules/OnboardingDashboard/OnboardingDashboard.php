@@ -34,6 +34,12 @@ class OnboardingDashboard {
 	 * Initialize the module.
 	 */
 	public function init() {
+        if ( is_admin() ) {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-info"><p>StackBoost Onboarding Module Loaded</p></div>';
+            });
+        }
+
 		// Load Custom Post Types
 		Data\CustomPostTypes::init();
 
