@@ -240,6 +240,21 @@ class Staff {
 		foreach ( $all_tickets_objects as $ticket_obj ) {
 			// Convert WPSC_Ticket object to associative array of its properties/custom fields
 			$t_array = $ticket_obj->to_array();
+
+            // Manually hydrate custom fields if they are missing from to_array()
+            // This is crucial because SupportCandy objects use magic methods for custom fields
+            $custom_fields = [
+                'cust_127', 'cust_43', 'cust_99', 'cust_49', 'cust_47',
+                'cust_129', 'cust_130', 'cust_55', 'cust_133', 'cust_128', 'cust_40'
+            ];
+
+            foreach ( $custom_fields as $cf ) {
+                if ( ! isset( $t_array[ $cf ] ) ) {
+                    // Try retrieving via magic property
+                    $t_array[ $cf ] = $ticket_obj->$cf ?? null;
+                }
+            }
+
 			$all_tickets[] = $t_array;
 		}
 

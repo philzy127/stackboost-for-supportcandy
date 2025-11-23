@@ -119,9 +119,23 @@ add_action( 'wp_ajax_stackboost_onboarding_search_ticket', function() {
 		// Get raw data for display
 		$data = $ticket->to_array();
 
+        // Hydrate all custom fields (cust_1 to cust_200 approx) just in case
+        // or specific ones. For a search tool, let's try to grab any property starting with cust_
+        // Reflection or generic loop isn't easy on magic props.
+        // We'll stick to the known onboarding ones for now + generic range.
+
+        $custom_fields = [
+            'cust_127', 'cust_43', 'cust_99', 'cust_49', 'cust_47',
+            'cust_129', 'cust_130', 'cust_55', 'cust_133', 'cust_128', 'cust_40'
+        ];
+        foreach ( $custom_fields as $cf ) {
+             if ( ! isset( $data[ $cf ] ) ) {
+                 $data[ $cf ] = $ticket->$cf ?? null;
+             }
+        }
+
 		// We need to mimic the JSON output structure for consistency with the JS
 		// WPSC_Ticket->to_array() returns flat DB columns.
-		// We might want to enhance it with custom fields if needed, but raw data is what was asked.
 
 		wp_send_json_success( [ 'response' => json_encode( $data ) ] );
 

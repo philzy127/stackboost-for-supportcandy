@@ -266,7 +266,7 @@ class CertificateHandler {
 		$customer = \WPSC_Customer::get_by_email( $current_user->user_email );
 
 		$thread_data = [
-			'ticket'      => $ticket_id,
+			'ticket_id'   => $ticket_id,
 			'customer'    => ( $customer && $customer->id ) ? $customer->id : 0, // Should ideally be current user or system
 			'type'        => 'note',
 			'body'        => "Onboarding Certificate for $attendee_name attached.",
