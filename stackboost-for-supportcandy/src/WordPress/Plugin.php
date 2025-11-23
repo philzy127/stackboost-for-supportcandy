@@ -209,7 +209,7 @@ final class Plugin {
 			'toplevel_page_stackboost-for-supportcandy',
 			'stackboost_page_stackboost-conditional-views',
 			'stackboost_page_stackboost-queue-macro',
-            'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard',
+            'stackboost_page_stackboost-onboarding-dashboard',
 		];
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {

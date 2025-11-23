@@ -22,7 +22,7 @@ class Sequence {
 	 */
 	public static function enqueue_scripts( $hook ) {
         stackboost_log( "Sequence Enqueue Scripts called for hook: " . $hook, 'onboarding' );
-		if ( 'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard' !== $hook ) {
+		if ( 'stackboost_page_stackboost-onboarding-dashboard' !== $hook ) {
 			return;
 		}
 
