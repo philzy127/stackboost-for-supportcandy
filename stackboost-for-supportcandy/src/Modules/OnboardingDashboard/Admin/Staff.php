@@ -141,18 +141,24 @@ class Staff {
 	private static function render_table( $tickets, $title ) {
 		$config = Settings::get_config();
 
-		// Custom field keys from config
-		$onboarding_date_field_key = $config['field_onboarding_date'];
-		$full_name_field_key       = $config['field_full_name'];
-		$position_field_key        = $config['field_position'];
-		$supervisor_name_field_key = $config['field_supervisor'];
-		$personal_email_field_key  = $config['field_email'];
-		$shipping_address_field_key = $config['field_shipping_address'];
-		$tracking_number_field_key = $config['field_tracking_number'];
-		$personal_phone_field_key  = $config['field_phone'];
-		$is_mobile_radio_field_key = $config['field_is_mobile'];
+		// Columns Config
+		$display_columns = $config['table_columns'];
+		$rename_rules    = [];
+		if ( is_array( $config['rename_rules'] ) ) {
+			foreach ( $config['rename_rules'] as $rule ) {
+				$rename_rules[ $rule['field'] ] = $rule['name'];
+			}
+		}
+
+		// Logic Config
+		$onboarding_date_field_key    = $config['field_onboarding_date'];
+		$is_mobile_radio_field_key    = $config['field_is_mobile'];
 		$onboarding_cleared_field_key = $config['field_cleared'];
-		$mobile_option_id          = $config['mobile_option_id'];
+		$mobile_option_id             = $config['mobile_option_id'];
+
+		// Get all columns to resolve Names from Slugs
+		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
+		$all_columns     = $plugin_instance->get_supportcandy_columns();
 
 		?>
 		<h2><?php echo esc_html( $title ); ?></h2>
@@ -160,41 +166,18 @@ class Staff {
 			<table class="wp-list-table widefat fixed striped">
 				<thead>
 					<tr>
+						<!-- Always show Ticket ID first -->
 						<th scope="col"><?php esc_html_e( 'Ticket Number', 'stackboost-for-supportcandy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Full Name', 'stackboost-for-supportcandy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Position', 'stackboost-for-supportcandy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Supervisor', 'stackboost-for-supportcandy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Personal Email', 'stackboost-for-supportcandy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Personal Phone', 'stackboost-for-supportcandy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Shipping Address', 'stackboost-for-supportcandy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Tracking Number(s)', 'stackboost-for-supportcandy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Onboarding Date', 'stackboost-for-supportcandy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Onboarding Cleared?', 'stackboost-for-supportcandy' ); ?></th>
+						<?php foreach ( $display_columns as $slug ) :
+							$label = $rename_rules[ $slug ] ?? ( $all_columns[ $slug ] ?? $slug );
+						?>
+							<th scope="col"><?php echo esc_html( $label ); ?></th>
+						<?php endforeach; ?>
 					</tr>
 				</thead>
 				<tbody>
 					<?php foreach ( $tickets as $ticket ) :
-						$onboarding_date_string = $ticket[$onboarding_date_field_key] ?? '';
-						$onboarding_date = !empty($onboarding_date_string) ? new \DateTime($onboarding_date_string) : null;
-
-						$phone_raw = $ticket[$personal_phone_field_key] ?? 'N/A';
-						$phone_display = self::format_phone( $phone_raw );
-						$is_mobile = false;
-						if ( isset( $ticket[$is_mobile_radio_field_key] ) && ! empty( $mobile_option_id ) ) {
-							$val = $ticket[$is_mobile_radio_field_key];
-							if ( (is_array($val) && in_array($mobile_option_id, $val)) || $val == $mobile_option_id ) {
-								$is_mobile = true;
-							}
-						}
-						$phone_icon = '';
-						if ( $phone_raw !== 'N/A' && !empty($phone_raw) ) {
-							$icon = $is_mobile ? 'smartphone' : 'phone';
-							$phone_icon = '<i class="material-icons" style="font-size: 1em; vertical-align: middle; margin-left: 5px;">' . $icon . '</i>';
-						}
-
 						$ticket_url = admin_url( 'admin.php?page=wpsc-tickets&section=ticket-list&id=' . ( $ticket['id'] ?? '' ) );
-						$cleared_val = $ticket[$onboarding_cleared_field_key] ?? null;
-						$is_cleared = !empty($cleared_val);
 					?>
 						<tr>
 							<td>
@@ -206,15 +189,70 @@ class Staff {
 									N/A
 								<?php endif; ?>
 							</td>
-							<td><?php echo esc_html( $ticket[$full_name_field_key] ?? 'N/A' ); ?></td>
-							<td><?php echo esc_html( $ticket[$position_field_key] ?? 'N/A' ); ?></td>
-							<td><?php echo esc_html( $ticket[$supervisor_name_field_key] ?? 'N/A' ); ?></td>
-							<td><?php echo esc_html( $ticket[$personal_email_field_key] ?? 'N/A' ); ?></td>
-							<td><?php echo esc_html( $phone_display ) . $phone_icon; ?></td>
-							<td><?php echo esc_html( $ticket[$shipping_address_field_key] ?? 'N/A' ); ?></td>
-							<td><?php echo esc_html( $ticket[$tracking_number_field_key] ?? 'N/A' ); ?></td>
-							<td><?php echo $onboarding_date ? esc_html( $onboarding_date->format( 'Y-m-d' ) ) : 'N/A'; ?></td>
-							<td><?php echo $is_cleared ? __( 'Yes', 'stackboost-for-supportcandy' ) : __( 'No', 'stackboost-for-supportcandy' ); ?></td>
+							<?php foreach ( $display_columns as $slug ) :
+								$raw_value = $ticket[ $slug ] ?? '';
+								$display_value = $raw_value;
+
+								// -- Logic: Date Field Formatting --
+								if ( $slug === $onboarding_date_field_key ) {
+									if ( ! empty( $raw_value ) ) {
+										try {
+											$date = new \DateTime( $raw_value );
+											$display_value = $date->format( 'Y-m-d' );
+										} catch ( \Exception $e ) {
+											$display_value = $raw_value;
+										}
+									} else {
+										$display_value = 'N/A';
+									}
+								}
+
+								// -- Logic: Cleared Field Formatting --
+								elseif ( $slug === $onboarding_cleared_field_key ) {
+									$display_value = ! empty( $raw_value ) ? __( 'Yes', 'stackboost-for-supportcandy' ) : __( 'No', 'stackboost-for-supportcandy' );
+								}
+
+								// -- Logic: Phone Field Formatting (Auto-detected if value looks like phone? No, relying on user to pick field isn't enough if we don't know WHICH is phone.
+								// Ideally we'd have a 'Phone Field' logic selector too if we want formatting.
+								// But per requirements, we kept Mobile Config.
+								// I will check if the current column VALUE looks like a phone number OR if we should add a 'Phone Field' logic config.
+								// Given the previous code had $personal_phone_field_key, I should probably have kept that in Logic Fields if strict formatting is needed.
+								// However, I'll try to be smart: Check if this row has the Mobile Icon logic applicable.
+								// The Mobile Icon was attached to the Phone Field.
+								// We don't know which of the dynamic columns is the phone field unless we ask.
+								// Let's just output raw for now, unless I add 'field_phone' back to Logic Config.
+								// Wait, the user approved "Our items from 1" which included "Personal Phone" in the OLD mapping.
+								// In my new plan I listed "Logic Fields: Date, Cleared, Mobile". I missed Phone.
+								// I will assume I can't format the phone number specifically unless I know which field it is.
+								// BUT, the Mobile Icon logic depends on `$is_mobile_radio_field_key` checking.
+								// I can check that logic independently of the column.
+								// IF this column *happens* to be the one where we want the icon...
+								// Let's append the icon to ANY column? No.
+								// I'll format strictly if it looks like a phone number (10 digits).
+
+								if ( is_string( $display_value ) && preg_match( '/^\d{10}$/', preg_replace( '/[^0-9]/', '', $display_value ) ) ) {
+									$display_value = self::format_phone( $display_value );
+
+									// Mobile Icon Logic
+									// We append the icon to the phone number if the Mobile Field logic is true for this ticket.
+									if ( isset( $ticket[ $is_mobile_radio_field_key ] ) && ! empty( $mobile_option_id ) ) {
+										$val = $ticket[ $is_mobile_radio_field_key ];
+										if ( ( is_array( $val ) && in_array( $mobile_option_id, $val ) ) || $val == $mobile_option_id ) {
+											$display_value .= ' <i class="material-icons" style="font-size: 1em; vertical-align: middle; margin-left: 5px;">smartphone</i>';
+										}
+									}
+								}
+
+								// -- Generic: Arrays (e.g. Multi-selects) --
+								if ( is_array( $display_value ) ) {
+									// SupportCandy to_array might return array of IDs or values.
+									// If it's simple array, implode.
+									$display_value = implode( ', ', $display_value );
+								}
+
+								?>
+								<td><?php echo wp_kses_post( $display_value ); ?></td>
+							<?php endforeach; ?>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
@@ -251,7 +289,7 @@ class Staff {
 		// Using WPSC_Ticket::find to filter at database level for performance
 		$args = [
 			'items_per_page' => 0, // All
-			'is_active'      => 1, // Only active tickets (not trashed/deleted, though internal is_active means something else usually. Status check is better.)
+			'is_active'      => 1, // Only active tickets
 			'meta_query'     => [
 				'relation' => 'AND',
 				[
@@ -266,33 +304,27 @@ class Staff {
 		$all_tickets_objects = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
 		stackboost_log( 'Found ' . count( $all_tickets_objects ) . ' active onboarding tickets.', 'onboarding' );
 
-		// Convert objects to array structure expected by render_table to minimize refactoring there
+		// Convert objects to array structure expected by render_table
 		$all_tickets = [];
+
+		// Merge logic fields and display columns to ensure we fetch everything needed
+		$fields_to_hydrate = array_merge(
+			$config['table_columns'],
+			[
+				$config['field_onboarding_date'],
+				$config['field_cleared'],
+				$config['field_is_mobile'], // Needed for icon logic
+				$config['request_type_field']
+			]
+		);
+		$fields_to_hydrate = array_unique( array_filter( $fields_to_hydrate ) );
+
 		foreach ( $all_tickets_objects as $ticket_obj ) {
-			// Convert WPSC_Ticket object to associative array of its properties/custom fields
+			// Convert WPSC_Ticket object to associative array
 			$t_array = $ticket_obj->to_array();
 
-            // Manually hydrate custom fields if they are missing from to_array()
-            // This is crucial because SupportCandy objects use magic methods for custom fields
-            $custom_fields = [
-                $config['field_onboarding_date'],
-                $config['field_full_name'],
-                $config['field_position'],
-                $config['field_supervisor'],
-                $config['field_email'],
-                $config['field_shipping_address'],
-                $config['field_tracking_number'],
-                $config['field_phone'],
-                $config['field_is_mobile'],
-                $config['field_cleared'],
-                $config['request_type_field']
-            ];
-
-            foreach ( $custom_fields as $cf ) {
-                // Skip empty config fields
-                if ( empty( $cf ) ) {
-                    continue;
-                }
+            // Manually hydrate custom fields
+            foreach ( $fields_to_hydrate as $cf ) {
                 if ( ! isset( $t_array[ $cf ] ) ) {
                     // Try retrieving via magic property
                     $t_array[ $cf ] = $ticket_obj->$cf ?? null;

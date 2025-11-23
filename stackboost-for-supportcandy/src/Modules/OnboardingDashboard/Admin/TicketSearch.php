@@ -125,21 +125,19 @@ add_action( 'wp_ajax_stackboost_onboarding_search_ticket', function() {
         // We'll stick to the known onboarding ones for now + generic range.
 
         $config = Settings::get_config();
-        $custom_fields = [
-            $config['field_onboarding_date'],
-            $config['field_full_name'],
-            $config['field_position'],
-            $config['field_supervisor'],
-            $config['field_email'],
-            $config['field_shipping_address'],
-            $config['field_tracking_number'],
-            $config['field_phone'],
-            $config['field_is_mobile'],
-            $config['field_cleared'],
-            $config['request_type_field']
-        ];
-        // Filter out empty keys if configuration is missing
-        $custom_fields = array_filter( $custom_fields );
+
+        // Merge logic fields and display columns to ensure we fetch everything needed
+		$custom_fields = array_merge(
+			$config['table_columns'],
+			[
+				$config['field_onboarding_date'],
+				$config['field_cleared'],
+				$config['field_is_mobile'], // Needed for icon logic
+				$config['request_type_field']
+			]
+		);
+        // Filter out empty keys if configuration is missing and ensure uniqueness
+        $custom_fields = array_unique( array_filter( $custom_fields ) );
 
         foreach ( $custom_fields as $cf ) {
              if ( ! isset( $data[ $cf ] ) ) {
