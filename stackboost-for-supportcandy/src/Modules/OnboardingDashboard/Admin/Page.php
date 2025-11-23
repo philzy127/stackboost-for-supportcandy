@@ -45,6 +45,7 @@ class Page {
 		$tabs = [
 			'steps'         => __( 'Onboarding Steps', 'stackboost-for-supportcandy' ),
 			'staff'         => __( 'Staff', 'stackboost-for-supportcandy' ),
+			'settings'      => __( 'Settings', 'stackboost-for-supportcandy' ),
 			'import_export' => __( 'Import / Export', 'stackboost-for-supportcandy' ),
 			'api_settings'  => __( 'API Settings', 'stackboost-for-supportcandy' ),
 			'ticket_search' => __( 'API Ticket Search', 'stackboost-for-supportcandy' ),
@@ -80,11 +81,14 @@ class Page {
 					case 'staff':
 						Staff::render_page();
 						break;
+					case 'settings':
+						Settings::render_page();
+						break;
 					case 'import_export':
 						ImportExport::render_page();
 						break;
 					case 'api_settings':
-						Settings::render_page();
+						ApiSettings::render_page();
 						break;
 					case 'ticket_search':
 						TicketSearch::render_page();

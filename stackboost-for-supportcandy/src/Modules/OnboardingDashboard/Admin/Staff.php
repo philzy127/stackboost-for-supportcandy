@@ -7,8 +7,8 @@ class Staff {
 	/**
 	 * Option for credentials (reuse from Settings).
 	 */
-	const OPTION_USERNAME = Settings::OPTION_USERNAME;
-	const OPTION_SECRET_KEY = Settings::OPTION_SECRET_KEY;
+	const OPTION_USERNAME = ApiSettings::OPTION_USERNAME;
+	const OPTION_SECRET_KEY = ApiSettings::OPTION_SECRET_KEY;
 
 	/**
 	 * Initialize Staff page.
@@ -22,6 +22,28 @@ class Staff {
 	 */
 	public static function render_page() {
 		stackboost_log( 'Rendering Staff Page...', 'onboarding' );
+
+		// Check configuration first
+		$config = Settings::get_config();
+		if ( empty( $config['request_type_field'] ) || empty( $config['request_type_id'] ) ) {
+			?>
+			<div class="wrap">
+				<h2><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
+				<div class="notice notice-warning inline">
+					<p>
+						<?php
+						printf(
+							wp_kses_post( __( 'Please configure the Onboarding settings (Request Type, ID, and Column Mapping) in the <strong><a href="%s">Settings</a></strong> tab to view the staff list.', 'stackboost-for-supportcandy' ) ),
+							esc_url( admin_url( 'admin.php?page=stackboost-onboarding-dashboard&tab=settings' ) )
+						);
+						?>
+					</p>
+				</div>
+			</div>
+			<?php
+			return;
+		}
+
 		$transient_key = 'stackboost_onboarding_tickets_cache';
 
 		?>
@@ -117,17 +139,20 @@ class Staff {
 	 * Render a single table.
 	 */
 	private static function render_table( $tickets, $title ) {
-		// Custom field keys
-		$onboarding_date_field_key = 'cust_127';
-		$full_name_field_key = 'cust_43';
-		$position_field_key = 'cust_99';
-		$supervisor_name_field_key = 'cust_49';
-		$personal_email_field_key = 'cust_47';
-		$shipping_address_field_key = 'cust_129';
-		$tracking_number_field_key = 'cust_130';
-		$personal_phone_field_key = 'cust_55';
-		$is_mobile_radio_field_key = 'cust_133';
-		$onboarding_cleared_field_key = 'cust_128';
+		$config = Settings::get_config();
+
+		// Custom field keys from config
+		$onboarding_date_field_key = $config['field_onboarding_date'];
+		$full_name_field_key       = $config['field_full_name'];
+		$position_field_key        = $config['field_position'];
+		$supervisor_name_field_key = $config['field_supervisor'];
+		$personal_email_field_key  = $config['field_email'];
+		$shipping_address_field_key = $config['field_shipping_address'];
+		$tracking_number_field_key = $config['field_tracking_number'];
+		$personal_phone_field_key  = $config['field_phone'];
+		$is_mobile_radio_field_key = $config['field_is_mobile'];
+		$onboarding_cleared_field_key = $config['field_cleared'];
+		$mobile_option_id          = $config['mobile_option_id'];
 
 		?>
 		<h2><?php echo esc_html( $title ); ?></h2>
@@ -155,9 +180,9 @@ class Staff {
 						$phone_raw = $ticket[$personal_phone_field_key] ?? 'N/A';
 						$phone_display = self::format_phone( $phone_raw );
 						$is_mobile = false;
-						if ( isset( $ticket[$is_mobile_radio_field_key] ) ) {
+						if ( isset( $ticket[$is_mobile_radio_field_key] ) && ! empty( $mobile_option_id ) ) {
 							$val = $ticket[$is_mobile_radio_field_key];
-							if ( (is_array($val) && in_array(227, $val)) || $val == 227 ) {
+							if ( (is_array($val) && in_array($mobile_option_id, $val)) || $val == $mobile_option_id ) {
 								$is_mobile = true;
 							}
 						}
@@ -210,11 +235,17 @@ class Staff {
 			return new \WP_Error( 'missing_dependency', 'SupportCandy WPSC_Ticket class not found.' );
 		}
 
-		$request_type_key = 'cust_40';
-		$onboarding_type_id = 69;
-		$inactive_ids = [4, 14, 15, 17];
-		$onboarding_date_key = 'cust_127';
-		$cleared_key = 'cust_128';
+		$config = Settings::get_config();
+
+		$request_type_key   = $config['request_type_field'];
+		$onboarding_type_id = $config['request_type_id'];
+		$inactive_ids       = $config['inactive_statuses']; // Array
+		$onboarding_date_key = $config['field_onboarding_date'];
+		$cleared_key        = $config['field_cleared'];
+
+		if ( empty( $request_type_key ) || empty( $onboarding_type_id ) ) {
+			return new \WP_Error( 'missing_config', 'Onboarding Settings not configured.' );
+		}
 
 		// 1. Fetch All Active Onboarding Tickets
 		// Using WPSC_Ticket::find to filter at database level for performance
@@ -244,11 +275,24 @@ class Staff {
             // Manually hydrate custom fields if they are missing from to_array()
             // This is crucial because SupportCandy objects use magic methods for custom fields
             $custom_fields = [
-                'cust_127', 'cust_43', 'cust_99', 'cust_49', 'cust_47',
-                'cust_129', 'cust_130', 'cust_55', 'cust_133', 'cust_128', 'cust_40'
+                $config['field_onboarding_date'],
+                $config['field_full_name'],
+                $config['field_position'],
+                $config['field_supervisor'],
+                $config['field_email'],
+                $config['field_shipping_address'],
+                $config['field_tracking_number'],
+                $config['field_phone'],
+                $config['field_is_mobile'],
+                $config['field_cleared'],
+                $config['request_type_field']
             ];
 
             foreach ( $custom_fields as $cf ) {
+                // Skip empty config fields
+                if ( empty( $cf ) ) {
+                    continue;
+                }
                 if ( ! isset( $t_array[ $cf ] ) ) {
                     // Try retrieving via magic property
                     $t_array[ $cf ] = $ticket_obj->$cf ?? null;

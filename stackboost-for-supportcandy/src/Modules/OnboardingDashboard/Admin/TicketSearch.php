@@ -124,10 +124,23 @@ add_action( 'wp_ajax_stackboost_onboarding_search_ticket', function() {
         // Reflection or generic loop isn't easy on magic props.
         // We'll stick to the known onboarding ones for now + generic range.
 
+        $config = Settings::get_config();
         $custom_fields = [
-            'cust_127', 'cust_43', 'cust_99', 'cust_49', 'cust_47',
-            'cust_129', 'cust_130', 'cust_55', 'cust_133', 'cust_128', 'cust_40'
+            $config['field_onboarding_date'],
+            $config['field_full_name'],
+            $config['field_position'],
+            $config['field_supervisor'],
+            $config['field_email'],
+            $config['field_shipping_address'],
+            $config['field_tracking_number'],
+            $config['field_phone'],
+            $config['field_is_mobile'],
+            $config['field_cleared'],
+            $config['request_type_field']
         ];
+        // Filter out empty keys if configuration is missing
+        $custom_fields = array_filter( $custom_fields );
+
         foreach ( $custom_fields as $cf ) {
              if ( ! isset( $data[ $cf ] ) ) {
                  $data[ $cf ] = $ticket->$cf ?? null;
