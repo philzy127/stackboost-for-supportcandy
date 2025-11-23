@@ -60,7 +60,7 @@ final class Plugin {
 		$this->modules['ticket_view']         = TicketView\WordPress::get_instance();
 		$this->modules['qol_enhancements']    = QolEnhancements\WordPress::get_instance();
 		$this->modules['after_hours_notice']  = AfterHoursNotice\WordPress::get_instance();
-		$this->modules['conditional_views']   = ConditionalViews\WordPress::get_instance();
+		$this->modules['conditional_views']   = \StackBoost\ForSupportCandy\Modules\ConditionalViews\WordPress::get_instance();
 		$this->modules['queue_macro']         = QueueMacro\WordPress::get_instance();
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
 		$this->modules['directory']           = Directory\WordPress::get_instance();

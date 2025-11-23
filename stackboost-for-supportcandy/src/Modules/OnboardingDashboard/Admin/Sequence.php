@@ -21,8 +21,6 @@ class Sequence {
 	 * Enqueue scripts for sortable UI.
 	 */
 	public static function enqueue_scripts( $hook ) {
-		echo '<div class="notice notice-info" style="z-index: 99999; position: relative;"><h3>STACKBOOST DEBUG: Hook is ' . esc_html($hook) . '</h3></div>';
-
 		if ( 'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard' !== $hook ) {
 			return;
 		}
