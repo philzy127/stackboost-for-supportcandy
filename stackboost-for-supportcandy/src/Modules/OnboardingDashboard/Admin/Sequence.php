@@ -146,7 +146,11 @@ class Sequence {
 						<ul id="stkb-sequence-list" class="connectedSortable">
 							<?php foreach ( $sequence_posts as $post ) : ?>
 								<li class="ui-state-default" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
-									<?php echo esc_html( $post->post_title ); ?>
+									<span class="stkb-step-title"><?php echo esc_html( $post->post_title ); ?></span>
+									<div class="stkb-step-actions">
+										<a href="<?php echo get_edit_post_link( $post->ID ); ?>" class="dashicons dashicons-edit" title="<?php esc_attr_e( 'Edit', 'stackboost-for-supportcandy' ); ?>"></a>
+										<a href="<?php echo get_delete_post_link( $post->ID ); ?>" class="dashicons dashicons-trash" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this step?', 'stackboost-for-supportcandy' ); ?>');"></a>
+									</div>
 									<input type="hidden" name="onboarding_sequence[]" value="<?php echo esc_attr( $post->ID ); ?>">
 								</li>
 							<?php endforeach; ?>
@@ -158,7 +162,11 @@ class Sequence {
 						<ul id="stkb-available-list" class="connectedSortable">
 							<?php foreach ( $available_posts as $post ) : ?>
 								<li class="ui-state-default" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
-									<?php echo esc_html( $post->post_title ); ?>
+									<span class="stkb-step-title"><?php echo esc_html( $post->post_title ); ?></span>
+									<div class="stkb-step-actions">
+										<a href="<?php echo get_edit_post_link( $post->ID ); ?>" class="dashicons dashicons-edit" title="<?php esc_attr_e( 'Edit', 'stackboost-for-supportcandy' ); ?>"></a>
+										<a href="<?php echo get_delete_post_link( $post->ID ); ?>" class="dashicons dashicons-trash" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this step?', 'stackboost-for-supportcandy' ); ?>');"></a>
+									</div>
 								</li>
 							<?php endforeach; ?>
 						</ul>
@@ -182,9 +190,15 @@ class Sequence {
 				background-color: #f6f7f7;
 				border: 1px solid #dcdcde;
 				border-radius: 3px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
 			}
 			#stkb-sequence-list li:hover, #stkb-available-list li:hover { border-color: #2271b1; }
 			.ui-state-highlight { height: 40px; line-height: 40px; border: 1px dashed #ccc; background: #f0f0f0; margin: 5px; }
+			.stkb-step-actions a { text-decoration: none; color: #50575e; margin-left: 5px; }
+			.stkb-step-actions a:hover { color: #2271b1; }
+			.stkb-step-actions a.dashicons-trash:hover { color: #d63638; }
 		</style>
 		<?php
 	}
