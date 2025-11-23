@@ -154,11 +154,23 @@ class Staff {
 		$onboarding_date_field_key    = $config['field_onboarding_date'];
 		$onboarding_cleared_field_key = $config['field_cleared'];
 
-		// Mobile Logic
-		$mobile_mode                  = $config['mobile_logic_mode'];
-		$field_mobile_number          = $config['field_mobile_number'];
-		$field_is_mobile_indicator    = $config['field_is_mobile'];
-		$mobile_indicator_value       = $config['mobile_option_id'];
+		// Phone Logic
+		$phone_mode             = $config['phone_config_mode']; // 'single' or 'multiple'
+		$phone_single_field     = $config['phone_single_field'];
+		$phone_has_type         = $config['phone_has_type'];
+		$phone_type_field       = $config['phone_type_field'];
+		$phone_mobile_val       = $config['phone_type_value_mobile'];
+		$phone_multi_config     = $config['phone_multi_config']; // array of ['field', 'type']
+
+		// Pre-process Multi-Config for faster lookup: [ 'field_slug' => 'type_slug' ]
+		$phone_field_map = [];
+		if ( 'multiple' === $phone_mode && is_array( $phone_multi_config ) ) {
+			foreach ( $phone_multi_config as $item ) {
+				if ( ! empty( $item['field'] ) ) {
+					$phone_field_map[ $item['field'] ] = $item['type'] ?? 'generic';
+				}
+			}
+		}
 
 		// Get all columns to resolve Names from Slugs
 		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
@@ -216,38 +228,57 @@ class Staff {
 									$display_value = ! empty( $raw_value ) ? __( 'Yes', 'stackboost-for-supportcandy' ) : __( 'No', 'stackboost-for-supportcandy' );
 								}
 
-								// -- Logic: Phone Formatting & Mobile Icon --
-								// 1. Format anything that looks like a raw 10-digit phone number
-								if ( is_string( $display_value ) && preg_match( '/^\d{10}$/', preg_replace( '/[^0-9]/', '', $display_value ) ) ) {
-									$display_value = self::format_phone( $display_value );
-								}
+								// -- Logic: Phone Formatting & Icon Logic --
+								$is_phone_field = false;
+								$phone_type_to_display = '';
 
-								// 2. Mobile Icon Logic
-								$show_mobile_icon = false;
-
-								if ( 'separate_field' === $mobile_mode ) {
-									// In separate field mode, if THIS column is the mobile field and has a value, show icon
-									if ( $slug === $field_mobile_number && ! empty( $raw_value ) ) {
-										$show_mobile_icon = true;
-									}
-								} elseif ( 'indicator_field' === $mobile_mode ) {
-									// In indicator mode, check if this is the phone field AND if the indicator condition is met
-									$is_mobile_device = false;
-									if ( isset( $ticket[ $field_is_mobile_indicator ] ) && ! empty( $mobile_indicator_value ) ) {
-										$val = $ticket[ $field_is_mobile_indicator ];
-										if ( ( is_array( $val ) && in_array( $mobile_indicator_value, $val ) ) || $val == $mobile_indicator_value ) {
-											$is_mobile_device = true;
+								// Check if this column is a configured phone field
+								if ( 'single' === $phone_mode ) {
+									if ( $slug === $phone_single_field ) {
+										$is_phone_field = true;
+										// Determine Type
+										if ( 'yes' === $phone_has_type && ! empty( $phone_type_field ) ) {
+											// Check value of the Type Field for this ticket
+											$type_val = $ticket[ $phone_type_field ] ?? '';
+											// SupportCandy might return array for options
+											if ( is_array( $type_val ) ) {
+												if ( in_array( $phone_mobile_val, $type_val ) ) {
+													$phone_type_to_display = 'mobile';
+												} else {
+													// Try to map based on option label text if possible?
+													// For now, if not mobile, default to generic or check logic.
+													// Requirement: "If ... matches the Mobile Type (Scenario A), append the mobile icon."
+													// It doesn't strictly say to map others, but user asked for standard icons.
+													// We can default to 'generic' or try to guess. Let's stick to 'mobile' specific check first.
+													$phone_type_to_display = 'generic';
+												}
+											} elseif ( $type_val == $phone_mobile_val ) {
+												$phone_type_to_display = 'mobile';
+											} else {
+												$phone_type_to_display = 'generic';
+											}
+										} else {
+											// No type field -> Generic phone
+											$phone_type_to_display = 'generic';
 										}
 									}
-
-									// If this is a mobile device, append icon to the 'field_phone_number' column
-									if ( $is_mobile_device && $slug === $config['field_phone_number'] ) {
-										$show_mobile_icon = true;
+								} elseif ( 'multiple' === $phone_mode ) {
+									if ( isset( $phone_field_map[ $slug ] ) ) {
+										$is_phone_field = true;
+										$phone_type_to_display = $phone_field_map[ $slug ];
 									}
 								}
 
-								if ( $show_mobile_icon ) {
-									$display_value .= ' <i class="material-icons" style="font-size: 1em; vertical-align: middle; margin-left: 5px;">smartphone</i>';
+								// Format and Add Icon
+								if ( $is_phone_field && ! empty( $raw_value ) ) {
+									// Format
+									$display_value = self::format_phone( $display_value );
+
+									// Get Icon
+									$icon_name = self::get_phone_icon( $phone_type_to_display );
+									if ( $icon_name ) {
+										$display_value .= ' <i class="material-icons" style="font-size: 1em; vertical-align: middle; margin-left: 5px;">' . esc_html( $icon_name ) . '</i>';
+									}
 								}
 
 								// -- Generic: Arrays (e.g. Multi-selects) --
@@ -268,6 +299,20 @@ class Staff {
 			<p><?php esc_html_e( 'No tickets found.', 'stackboost-for-supportcandy' ); ?></p>
 		<?php endif; ?>
 		<?php
+	}
+
+	/**
+	 * Get Material Icon name for a phone type.
+	 */
+	private static function get_phone_icon( $type ) {
+		$map = [
+			'mobile'  => 'smartphone',
+			'work'    => 'building', // User requested 'building' for Office/Work
+			'home'    => 'home',
+			'fax'     => 'print',
+			'generic' => 'phone',    // User requested 'phone' for Generic
+		];
+		return $map[ $type ] ?? 'phone';
 	}
 
 	/**
@@ -314,18 +359,28 @@ class Staff {
 		// Convert objects to array structure expected by render_table
 		$all_tickets = [];
 
-		// Merge logic fields and display columns to ensure we fetch everything needed
-		$fields_to_hydrate = array_merge(
-			$config['table_columns'],
-			[
-				$config['field_onboarding_date'],
-				$config['field_cleared'],
-				$config['field_phone_number'], // Needed for icon placement in indicator mode
-				$config['field_mobile_number'], // Needed for separate field mode
-				$config['field_is_mobile'], // Needed for indicator logic
-				$config['request_type_field']
-			]
-		);
+		// Determine fields to hydrate based on new logic
+		$fields_to_hydrate = $config['table_columns'];
+		$fields_to_hydrate[] = $config['field_onboarding_date'];
+		$fields_to_hydrate[] = $config['field_cleared'];
+		$fields_to_hydrate[] = $config['request_type_field'];
+
+		// Phone fields
+		if ( 'single' === $config['phone_config_mode'] ) {
+			$fields_to_hydrate[] = $config['phone_single_field'];
+			if ( 'yes' === $config['phone_has_type'] ) {
+				$fields_to_hydrate[] = $config['phone_type_field'];
+			}
+		} elseif ( 'multiple' === $config['phone_config_mode'] ) {
+			if ( is_array( $config['phone_multi_config'] ) ) {
+				foreach ( $config['phone_multi_config'] as $p_conf ) {
+					if ( ! empty( $p_conf['field'] ) ) {
+						$fields_to_hydrate[] = $p_conf['field'];
+					}
+				}
+			}
+		}
+
 		$fields_to_hydrate = array_unique( array_filter( $fields_to_hydrate ) );
 
 		foreach ( $all_tickets_objects as $ticket_obj ) {
