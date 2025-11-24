@@ -64,6 +64,46 @@ class WordPress extends Module {
     public function init_hooks() {
         add_action( 'admin_init', [ $this, 'register_settings' ] );
         add_action( 'supportcandy_before_create_ticket_form', [ $this, 'display_notice' ] );
+
+        add_filter( 'wpsc_create_ticket_email_data', [ $this, 'add_after_hours_notice' ] );
+        add_filter( 'wpsc_agent_reply_email_data', [ $this, 'add_after_hours_notice' ] );
+        add_filter( 'wpsc_cust_reply_email_data', [ $this, 'add_after_hours_notice' ] );
+    }
+
+    /**
+     * Add the after hours notice to email body.
+     *
+     * @param array $email_data The email data array containing 'subject', 'body', etc.
+     * @return array The modified email data.
+     */
+    public function add_after_hours_notice( $email_data ) {
+        $options = get_option( 'stackboost_settings', [] );
+
+        // Check if both global and email-specific settings are enabled.
+        if ( empty( $options['enable_after_hours_notice'] ) || empty( $options['after_hours_in_email'] ) ) {
+            return $email_data;
+        }
+
+        $settings = [
+            'start_hour'       => $options['after_hours_start'] ?? 17,
+            'end_hour'         => $options['before_hours_end'] ?? 8,
+            'include_weekends' => ! empty( $options['include_all_weekends'] ),
+            'holidays'         => $this->core->parse_holidays( $options['holidays'] ?? '' ),
+        ];
+
+        // Use the WordPress timezone string.
+        $timezone_string = wp_timezone_string();
+
+        if ( $this->core->is_after_hours( $settings, null, $timezone_string ) ) {
+            $message = $options['after_hours_message'] ?? '';
+            if ( ! empty( $message ) ) {
+                // Prepend notice with inline CSS.
+                $notice_html = '<div style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; margin-bottom: 15px; border-radius: 4px;">' . wpautop( wp_kses_post( $message ) ) . '</div>';
+                $email_data['body'] = $notice_html . $email_data['body'];
+            }
+        }
+
+        return $email_data;
     }
 
     /**
@@ -112,6 +152,7 @@ class WordPress extends Module {
         add_settings_field( 'stackboost_after_hours_start', __( 'After Hours Start (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_start', 'default' => '17', 'desc' => 'The hour when after-hours starts (e.g., 17 for 5 PM).' ] );
         add_settings_field( 'stackboost_before_hours_end', __( 'Before Hours End (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'before_hours_end', 'default' => '8', 'desc' => 'The hour when business hours resume (e.g., 8 for 8 AM).' ] );
         add_settings_field( 'stackboost_include_all_weekends', __( 'Include All Weekends', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'include_all_weekends', 'desc' => 'Enable this to show the notice all day on Saturdays and Sundays.' ] );
+        add_settings_field( 'stackboost_after_hours_in_email', __( 'Show in Emails', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_in_email', 'desc' => 'Enable this to prepend the after-hours message to email notifications sent during after-hours.' ] );
         add_settings_field( 'stackboost_holidays', __( 'Holidays', 'stackboost-for-supportcandy' ), [ $this, 'render_textarea_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'holidays', 'class' => 'regular-text', 'desc' => 'List holidays, one per line, in MM-DD-YYYY format (e.g., 12-25-2024). The notice will show all day on these dates.' ] );
         add_settings_field( 'stackboost_after_hours_message', __( 'After Hours Message', 'stackboost-for-supportcandy' ), [ $this, 'render_wp_editor_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_message', 'desc' => 'The message to display to users. Basic HTML is allowed.' ] );
     }
