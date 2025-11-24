@@ -277,11 +277,22 @@ class ImportExport {
 		}
 
 		$json_content = file_get_contents( $file['tmp_name'] );
-		$import_data  = json_decode( $json_content, true );
+		$decoded_data = json_decode( $json_content, true );
 
-		if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $import_data ) ) {
+		if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $decoded_data ) ) {
 			stackboost_log( 'Import failed: Invalid JSON.', 'error' );
 			wp_send_json_error( [ 'message' => 'Invalid JSON file.' ] );
+		}
+
+		// Determine if this is a legacy export (wrapped in object with 'posts') or new format (array of objects)
+		$items_to_import = [];
+		if ( isset( $decoded_data['posts'] ) && is_array( $decoded_data['posts'] ) ) {
+			// Legacy format found
+			stackboost_log( 'Legacy export format detected.', 'onboarding' );
+			$items_to_import = $decoded_data['posts'];
+		} else {
+			// Assume standard format
+			$items_to_import = $decoded_data;
 		}
 
 		// Optional: Clear existing steps
@@ -300,9 +311,9 @@ class ImportExport {
 
 		$count = 0;
 		$new_sequence = [];
-		stackboost_log( 'Processing ' . count( $import_data ) . ' items for import.', 'onboarding' );
+		stackboost_log( 'Processing ' . count( $items_to_import ) . ' items for import.', 'onboarding' );
 
-		foreach ( $import_data as $item ) {
+		foreach ( $items_to_import as $item ) {
 			// Handle legacy data structure (if keys differ)
 			// Legacy: title, content, checklist, notes
 			// New export format matches this, so direct mapping works.
@@ -321,6 +332,9 @@ class ImportExport {
 			} elseif ( isset( $item['_odb_checklist_items'] ) ) { // Legacy Key Support
 				$checklist = $item['_odb_checklist_items'];
 				stackboost_log( 'Found legacy checklist key for item.', 'onboarding' );
+			} elseif ( isset( $item['meta']['_odb_checklist_items'] ) ) { // Legacy Nested Meta
+				$checklist = $item['meta']['_odb_checklist_items'];
+				stackboost_log( 'Found legacy nested meta checklist.', 'onboarding' );
 			}
 
 			$notes = '';
@@ -331,6 +345,9 @@ class ImportExport {
 			} elseif ( isset( $item['_odb_notes_content'] ) ) { // Legacy Key Support
 				$notes = $item['_odb_notes_content'];
 				stackboost_log( 'Found legacy notes key for item.', 'onboarding' );
+			} elseif ( isset( $item['meta']['_odb_notes_content'] ) ) { // Legacy Nested Meta
+				$notes = $item['meta']['_odb_notes_content'];
+				stackboost_log( 'Found legacy nested meta notes.', 'onboarding' );
 			}
 
 			$post_id = wp_insert_post( [
