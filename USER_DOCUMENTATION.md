@@ -1,81 +1,42 @@
-# StackBoost - For SupportCandy: Directory Module - User Manual
+# StackBoost - For SupportCandy Documentation
 
-## Introduction
+Welcome to the user documentation for **StackBoost - For SupportCandy**. This plugin extends SupportCandy with powerful modules for Directories, Onboarding, and Quality of Life improvements.
 
-Welcome to the Directory module for StackBoost - For SupportCandy! This guide provides a comprehensive overview of how to manage and display your organization's staff directory.
+## Core Modules
 
-## Accessing the Company Directory
+*   **[Company Directory](USER_GUIDE_DIRECTORY.md)**
+    *   Manage Staff, Locations, and Departments.
+    *   Display a searchable directory on your site.
+    *   Show contact info on tickets automatically.
 
-You can find the Company Directory management page by navigating to **StackBoost > Directory** in your WordPress admin sidebar.
+*   **[Onboarding Dashboard](USER_GUIDE_ONBOARDING.md)**
+    *   Manage new hire onboarding sessions.
+    *   Interactive checklist and presentation view.
+    *   Generate completion certificates.
 
-![StackBoost Menu](https://i.imgur.com/your-screenshot.png) *<-- Placeholder for a screenshot of the menu*
+*   **[Unified Ticket Macro (UTM)](USER_GUIDE_UTM.md)**
+    *   Create a standardized HTML table of ticket details for email notifications.
 
-This will take you to the main directory page, which features a tabbed interface for managing all aspects of your directory.
+*   **[Queue Macro](USER_GUIDE_QUEUE_MACRO.md)**
+    *   Inform customers of their queue position in auto-responder emails.
 
-## Managing Staff
+## Enhancements
 
-The **Staff** tab is the primary view where you will see a list of all your staff members.
+*   **[Ticket View Enhancements](USER_GUIDE_TICKET_VIEW.md)**
+    *   Right-click "Quick View" card.
+    *   Auto-hide empty columns.
+    *   Hide ticket types from non-agents.
 
-### Adding a New Staff Member
+*   **[Conditional Views](USER_GUIDE_CONDITIONAL_VIEWS.md)**
+    *   Dynamically show/hide columns based on the selected Ticket Filter.
 
-1.  Click the **Add New** button at the top of the Staff tab.
-2.  Fill in the staff member's details:
-    *   **Name:** The full name of the staff member (this is the only required field).
-    *   **Staff Details:** Fill in the contact information, location, department, and job title in the "Staff Details" section. The **Office Phone** and **Mobile Phone** fields will be automatically formatted for you as you type.
-    *   **Staff Photo:** Use the "Featured Image" box on the right to upload a photo.
-3.  Click **Publish** to save the new entry.
+*   **[After Hours Notice](USER_GUIDE_AFTER_HOURS.md)**
+    *   Display a warning message on the ticket form outside business hours.
 
-### Editing a Staff Member
+*   **[After Ticket Survey](USER_GUIDE_ATS.md)**
+    *   Collect feedback after ticket resolution.
 
-To edit an existing entry, simply hover over their name in the list and click the **Edit** link.
+## Tools
 
-### Trashing and Deleting Staff
-
-*   **To Trash an Entry:** Hover over a staff member's name and click the **Trash** link. You can also select multiple entries using the checkboxes and choose "Trash" from the "Bulk Actions" dropdown.
-*   **To View Trashed Entries:** Click the **Trash** link at the top of the list table.
-*   **To Restore or Permanently Delete:** When viewing the trash, you will see options under each entry to **Restore** it to the main list or **Delete Permanently**.
-
-## Managing Locations and Departments
-
-The **Locations** and **Departments** tabs work just like the Staff tab. You can add, edit, and trash items in the same way. This allows you to pre-populate the dropdown menus that are available when adding or editing a staff member.
-
-## Importing Data via CSV
-
-The **Management** tab contains a tool for bulk-adding new staff members from a CSV file.
-
-### CSV File Format
-
-Your CSV file **must** have a header row, and the columns must be in the following order:
-
-1.  `Name`
-2.  `Email`
-3.  `Office Phone`
-4.  `Extension`
-5.  `Mobile Phone`
-6.  `Job Title`
-7.  `Department/Program`
-
-*   **Name:** This is the only required field. If a name is missing, that row will be skipped.
-*   **Phone Numbers:** Any special characters (like parentheses or dashes) will be automatically stripped out. Only the digits will be stored.
-
-**Important:** The importer **only adds new entries**; it does not update existing ones.
-
-## Settings
-
-The **Settings** tab allows you to configure how the directory is displayed and who can manage it.
-
-*   **Listing Display Mode:** Choose how individual staff listings are displayed on the front-end directory. "Page View" opens the details on a new page, while "Modal View" opens them in a pop-up window on the same page.
-*   **Editing Permissions:** Select the user roles that should be allowed to create, edit, and delete staff, locations, and departments.
-*   **Management Tab Access:** Select the user roles that should have access to the powerful tools in the Management tab.
-
-## Clearing Data
-
-The **Clear Data** tab provides a way to permanently delete **all** staff directory entries at once. This is a destructive action and cannot be undone. You will be asked to type "DELETE" to confirm.
-
-## Displaying the Directory on Your Website
-
-To display the staff directory on a public-facing page, simply add the following shortcode to any page or post:
-
-`[stackboost_directory]`
-
-This will render a searchable and sortable table of all your **active** staff members.
+*   **[Directory Migration](USER_GUIDE_MIGRATION.md)**
+    *   Import data from legacy directory plugins.
