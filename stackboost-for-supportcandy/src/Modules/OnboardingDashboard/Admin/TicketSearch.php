@@ -132,12 +132,26 @@ add_action( 'wp_ajax_stackboost_onboarding_search_ticket', function() {
 			[
 				$config['field_onboarding_date'],
 				$config['field_cleared'],
-				$config['field_phone_number'],
-				$config['field_mobile_number'],
-				$config['field_is_mobile'],
 				$config['request_type_field']
 			]
 		);
+
+		// Add phone fields based on new config
+		if ( 'single' === $config['phone_config_mode'] ) {
+			$custom_fields[] = $config['phone_single_field'];
+			if ( 'yes' === $config['phone_has_type'] ) {
+				$custom_fields[] = $config['phone_type_field'];
+			}
+		} elseif ( 'multiple' === $config['phone_config_mode'] ) {
+			if ( is_array( $config['phone_multi_config'] ) ) {
+				foreach ( $config['phone_multi_config'] as $p_conf ) {
+					if ( ! empty( $p_conf['field'] ) ) {
+						$custom_fields[] = $p_conf['field'];
+					}
+				}
+			}
+		}
+
         // Filter out empty keys if configuration is missing and ensure uniqueness
         $custom_fields = array_unique( array_filter( $custom_fields ) );
 

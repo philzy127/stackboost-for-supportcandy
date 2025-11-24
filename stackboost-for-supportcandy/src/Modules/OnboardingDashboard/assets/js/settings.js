@@ -77,17 +77,67 @@ jQuery(document).ready(function($) {
     var $addRuleBtn = $('#stackboost-odb-add-rule');
     var ruleTemplate = $('#stackboost-odb-rule-template').html();
 
-    $addRuleBtn.on('click', function() {
-        // Use timestamp to avoid index collisions if rows are deleted
-        var newIndex = new Date().getTime();
-        var rowHtml = ruleTemplate.replace(/__INDEX__/g, newIndex);
-        $rulesContainer.append(rowHtml);
-    });
+    if ($addRuleBtn.length) {
+        $addRuleBtn.on('click', function() {
+            var newIndex = new Date().getTime();
+            var rowHtml = ruleTemplate.replace(/__INDEX__/g, newIndex);
+            $rulesContainer.append(rowHtml);
+        });
 
-    // Remove Rule (event delegation)
-    $rulesContainer.on('click', '.stackboost-odb-remove-rule', function() {
-        $(this).closest('.stackboost-odb-rule-row').remove();
-    });
+        $rulesContainer.on('click', '.stackboost-odb-remove-rule', function() {
+            $(this).closest('.stackboost-odb-rule-row').remove();
+        });
+    }
+
+    // --- Phone Configuration Logic ---
+
+    // 1. Single vs Multiple Mode
+    var $phoneModeSelect = $('#stkb_phone_mode');
+    function togglePhoneMode() {
+        var mode = $phoneModeSelect.val();
+        $('.stkb-phone-logic-container').hide();
+        if (mode === 'single') {
+            $('#stkb_phone_single_container').show();
+        } else if (mode === 'multiple') {
+            $('#stkb_phone_multi_container').show();
+        }
+    }
+    if ($phoneModeSelect.length) {
+        $phoneModeSelect.on('change', togglePhoneMode);
+        togglePhoneMode(); // Init
+    }
+
+    // 2. Single Mode: Type Field Toggle
+    var $phoneHasTypeSelect = $('#stkb_phone_has_type');
+    function togglePhoneTypeLogic() {
+        if ($phoneHasTypeSelect.val() === 'yes') {
+            $('.stkb-phone-type-logic').show();
+        } else {
+            $('.stkb-phone-type-logic').hide();
+        }
+    }
+    if ($phoneHasTypeSelect.length) {
+        $phoneHasTypeSelect.on('change', togglePhoneTypeLogic);
+        togglePhoneTypeLogic(); // Init
+    }
+
+    // 3. Multiple Mode: Dynamic List
+    var $multiPhoneList = $('#stkb-phone-multi-list');
+    var $addPhoneRowBtn = $('#stkb-add-phone-row');
+    var phoneRowTemplate = $('#stkb-phone-multi-template').html();
+
+    if ($addPhoneRowBtn.length && phoneRowTemplate) {
+        $addPhoneRowBtn.on('click', function() {
+            var newIndex = new Date().getTime();
+            var rowHtml = phoneRowTemplate.replace(/__INDEX__/g, newIndex);
+            $multiPhoneList.append(rowHtml);
+        });
+
+        $multiPhoneList.on('click', '.stkb-remove-phone-row', function() {
+            $(this).closest('.stkb-phone-multi-row').remove();
+        });
+    }
+
 
     // --- AJAX Field Logic ---
     function loadFieldOptions($fieldSelector, $optionSelector) {
@@ -138,20 +188,6 @@ jQuery(document).ready(function($) {
             loadFieldOptions($this, $target);
         }
     });
-
-    // --- Mobile Logic Mode Switcher ---
-    var $mobileModeSelector = $('#stkb_mobile_logic_mode');
-    function toggleMobileSections() {
-        var mode = $mobileModeSelector.val();
-        $('.stkb-mobile-logic-container').hide();
-        if (mode === 'separate_field') {
-            $('#stkb_mobile_separate_field_container').show();
-        } else if (mode === 'indicator_field') {
-            $('#stkb_mobile_indicator_field_container').show();
-        }
-    }
-    $mobileModeSelector.on('change', toggleMobileSections);
-    toggleMobileSections(); // Init on load
 
     // --- Form Submission ---
     $('form[action="options.php"]').on('submit', function() {

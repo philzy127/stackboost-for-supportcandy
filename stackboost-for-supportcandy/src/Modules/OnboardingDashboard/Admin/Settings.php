@@ -85,8 +85,8 @@ class Settings {
 		);
 
 		add_settings_section(
-			'stkb_onboarding_mobile_section',
-			__( 'Mobile Configuration', 'stackboost-for-supportcandy' ),
+			'stkb_onboarding_phone_section',
+			__( 'Phone Configuration', 'stackboost-for-supportcandy' ),
 			null,
 			'stackboost-onboarding-general'
 		);
@@ -132,6 +132,20 @@ class Settings {
 						}
 					}
 					$output[ $key ] = $clean_rules;
+				} elseif ( 'phone_multi_config' === $key ) {
+					// Sanitize phone multi config
+					$clean_phones = [];
+					if ( is_array( $value ) ) {
+						foreach ( $value as $phone ) {
+							if ( isset( $phone['field'] ) ) {
+								$clean_phones[] = [
+									'field' => sanitize_text_field( $phone['field'] ),
+									'type'  => sanitize_text_field( $phone['type'] ?? 'generic' ),
+								];
+							}
+						}
+					}
+					$output[ $key ] = $clean_phones;
 				} elseif ( 'table_columns' === $key ) {
 					// Sanitize columns array
 					if ( is_array( $value ) ) {
@@ -150,11 +164,12 @@ class Settings {
 	}
 
 	/**
-	 * Get configuration with defaults.
+	 * Get configuration with defaults and migration logic.
 	 */
 	public static function get_config() {
 		$options = get_option( self::OPTION_NAME, [] );
 
+		// Defaults for new structure
 		$defaults = [
 			// General Logic Fields
 			'request_type_field'    => '',
@@ -162,18 +177,49 @@ class Settings {
 			'inactive_statuses'     => [],
 			'field_onboarding_date' => '',
 			'field_cleared'         => '',
-			'field_phone_number'    => '',
+
+			// Phone Logic (New)
+			'phone_config_mode'     => '', // 'single' or 'multiple'
+			'phone_single_field'    => '',
+			'phone_has_type'        => 'no',
+			'phone_type_field'      => '',
+			'phone_type_value_mobile' => '',
+			'phone_multi_config'    => [], // Array of ['field' => slug, 'type' => string]
 
 			// Display Columns
 			'table_columns'         => [], // Array of slugs
 			'rename_rules'          => [], // Array of rules
-
-			// Mobile Logic
-			'mobile_logic_mode'     => 'none', // none, separate_field, indicator_field
-			'field_mobile_number'   => '', // For 'separate_field' mode
-			'field_is_mobile'       => '', // For 'indicator_field' mode (Indicator Field)
-			'mobile_option_id'      => '', // For 'indicator_field' mode (Indicator Value)
 		];
+
+		// Check for migration necessity
+		if ( empty( $options['phone_config_mode'] ) && isset( $options['mobile_logic_mode'] ) ) {
+			// Perform Just-In-Time Migration in memory
+			$old_mode = $options['mobile_logic_mode'];
+			$old_main_phone = $options['field_phone_number'] ?? '';
+
+			if ( 'separate_field' === $old_mode ) {
+				$old_mobile_field = $options['field_mobile_number'] ?? '';
+				$options['phone_config_mode'] = 'multiple';
+				$options['phone_multi_config'] = [];
+				if ( $old_main_phone ) {
+					$options['phone_multi_config'][] = [ 'field' => $old_main_phone, 'type' => 'generic' ];
+				}
+				if ( $old_mobile_field ) {
+					$options['phone_multi_config'][] = [ 'field' => $old_mobile_field, 'type' => 'mobile' ];
+				}
+			} elseif ( 'indicator_field' === $old_mode ) {
+				$options['phone_config_mode'] = 'single';
+				$options['phone_single_field'] = $old_main_phone;
+				$options['phone_has_type'] = 'yes';
+				$options['phone_type_field'] = $options['field_is_mobile'] ?? '';
+				$options['phone_type_value_mobile'] = $options['mobile_option_id'] ?? '';
+			} else {
+				// Default / None
+				$options['phone_config_mode'] = 'single';
+				$options['phone_single_field'] = $old_main_phone;
+				$options['phone_has_type'] = 'no';
+			}
+		}
 
 		return wp_parse_args( $options, $defaults );
 	}
@@ -226,6 +272,15 @@ class Settings {
 		$logic_fields = [
 			'field_onboarding_date' => __( 'Onboarding Date Field', 'stackboost-for-supportcandy' ),
 			'field_cleared'         => __( 'Onboarding Cleared Field', 'stackboost-for-supportcandy' ),
+		];
+
+		// Phone Types
+		$phone_types = [
+			'mobile'  => __( 'Mobile', 'stackboost-for-supportcandy' ),
+			'work'    => __( 'Office/Work', 'stackboost-for-supportcandy' ),
+			'home'    => __( 'Home', 'stackboost-for-supportcandy' ),
+			'fax'     => __( 'Fax', 'stackboost-for-supportcandy' ),
+			'generic' => __( 'Generic', 'stackboost-for-supportcandy' ),
 		];
 
 		?>
@@ -290,53 +345,112 @@ class Settings {
 						</td>
 					</tr>
 					<?php endforeach; ?>
-					<tr>
-						<th scope="row"><label for="stkb_field_phone_number"><?php esc_html_e( 'Phone Number Field', 'stackboost-for-supportcandy' ); ?></label></th>
-						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[field_phone_number]" id="stkb_field_phone_number">
-								<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
-								<?php foreach ( $sc_fields as $f_key => $f_label ) : ?>
-									<option value="<?php echo esc_attr( $f_key ); ?>" <?php selected( $config['field_phone_number'], $f_key ); ?>>
-										<?php echo esc_html( $f_label ); ?>
-									</option>
-								<?php endforeach; ?>
-							</select>
-							<p class="description"><?php esc_html_e( 'The main contact number field.', 'stackboost-for-supportcandy' ); ?></p>
-						</td>
-					</tr>
 				</table>
 
-				<!-- Mobile Configuration -->
-				<h3><?php esc_html_e( 'Mobile Configuration', 'stackboost-for-supportcandy' ); ?></h3>
+				<!-- Phone Configuration -->
+				<h3><?php esc_html_e( 'Phone Configuration', 'stackboost-for-supportcandy' ); ?></h3>
 				<table class="form-table">
 					<tr>
-						<th scope="row"><label for="stkb_mobile_logic_mode"><?php esc_html_e( 'Mobile Phone Logic', 'stackboost-for-supportcandy' ); ?></label></th>
+						<th scope="row"><label for="stkb_phone_mode"><?php esc_html_e( 'Do you have multiple phone fields?', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[mobile_logic_mode]" id="stkb_mobile_logic_mode">
-								<option value="none" <?php selected( $config['mobile_logic_mode'], 'none' ); ?>><?php esc_html_e( 'None / Disabled', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="separate_field" <?php selected( $config['mobile_logic_mode'], 'separate_field' ); ?>><?php esc_html_e( 'Separate Field', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="indicator_field" <?php selected( $config['mobile_logic_mode'], 'indicator_field' ); ?>><?php esc_html_e( 'Indicator Field', 'stackboost-for-supportcandy' ); ?></option>
+							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_config_mode]" id="stkb_phone_mode">
+								<option value="single" <?php selected( $config['phone_config_mode'], 'single' ); ?>><?php esc_html_e( 'No - Single Field', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="multiple" <?php selected( $config['phone_config_mode'], 'multiple' ); ?>><?php esc_html_e( 'Yes - Multiple Fields', 'stackboost-for-supportcandy' ); ?></option>
 							</select>
-							<p class="description"><?php esc_html_e( 'Define how the system identifies mobile numbers for the icon.', 'stackboost-for-supportcandy' ); ?></p>
 						</td>
 					</tr>
 				</table>
 
-				<!-- Mode: Separate Field -->
-				<div id="stkb_mobile_separate_field_container" class="stkb-mobile-logic-container" style="display:none;">
+				<!-- Scenario A: Single Field -->
+				<div id="stkb_phone_single_container" class="stkb-phone-logic-container" style="display:none;">
 					<table class="form-table">
 						<tr>
-							<th scope="row"><label for="stkb_field_mobile_number"><?php esc_html_e( 'Mobile Number Field', 'stackboost-for-supportcandy' ); ?></label></th>
+							<th scope="row"><label for="stkb_phone_single_field"><?php esc_html_e( 'Phone Number Field', 'stackboost-for-supportcandy' ); ?></label></th>
 							<td>
-								<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[field_mobile_number]" id="stkb_field_mobile_number">
+								<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_single_field]" id="stkb_phone_single_field">
 									<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
 									<?php foreach ( $sc_fields as $key => $label ) : ?>
-										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $config['field_mobile_number'], $key ); ?>>
+										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $config['phone_single_field'], $key ); ?>>
 											<?php echo esc_html( $label ); ?>
 										</option>
 									<?php endforeach; ?>
 								</select>
-								<p class="description"><?php esc_html_e( 'The dedicated field for mobile numbers.', 'stackboost-for-supportcandy' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="stkb_phone_has_type"><?php esc_html_e( 'Is there a Phone Type field?', 'stackboost-for-supportcandy' ); ?></label></th>
+							<td>
+								<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_has_type]" id="stkb_phone_has_type">
+									<option value="no" <?php selected( $config['phone_has_type'], 'no' ); ?>><?php esc_html_e( 'No', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="yes" <?php selected( $config['phone_has_type'], 'yes' ); ?>><?php esc_html_e( 'Yes', 'stackboost-for-supportcandy' ); ?></option>
+								</select>
+							</td>
+						</tr>
+						<tr class="stkb-phone-type-logic" style="display:none;">
+							<th scope="row"><label for="stkb_phone_type_field"><?php esc_html_e( 'Phone Type Field', 'stackboost-for-supportcandy' ); ?></label></th>
+							<td>
+								<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_type_field]" id="stkb_phone_type_field" class="stackboost-ajax-field-selector" data-target="#stkb_phone_type_val">
+									<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
+									<?php foreach ( $sc_fields as $key => $label ) : ?>
+										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $config['phone_type_field'], $key ); ?>>
+											<?php echo esc_html( $label ); ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+							</td>
+						</tr>
+						<tr class="stkb-phone-type-logic" style="display:none;">
+							<th scope="row"><label for="stkb_phone_type_val"><?php esc_html_e( 'Value for "Mobile"', 'stackboost-for-supportcandy' ); ?></label></th>
+							<td>
+								<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_type_value_mobile]" id="stkb_phone_type_val" data-selected="<?php echo esc_attr( $config['phone_type_value_mobile'] ); ?>" disabled>
+									<option value=""><?php esc_html_e( '-- Select Option --', 'stackboost-for-supportcandy' ); ?></option>
+								</select>
+								<p class="description"><?php esc_html_e( 'Select the value that indicates a mobile phone.', 'stackboost-for-supportcandy' ); ?></p>
+							</td>
+						</tr>
+					</table>
+				</div>
+
+				<!-- Scenario B: Multiple Fields -->
+				<div id="stkb_phone_multi_container" class="stkb-phone-logic-container" style="display:none;">
+					<table class="form-table">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Phone Fields', 'stackboost-for-supportcandy' ); ?></th>
+							<td>
+								<div id="stkb-phone-multi-list">
+									<?php
+									$multi_config = $config['phone_multi_config'];
+									if ( is_array( $multi_config ) ) :
+										foreach ( $multi_config as $index => $item ) :
+											if ( empty( $item['field'] ) ) continue;
+											$current_type = $item['type'] ?? 'generic';
+											?>
+											<div class="stkb-phone-multi-row" style="margin-bottom: 5px;">
+												<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_multi_config][<?php echo (int) $index; ?>][field]">
+													<?php foreach ( $sc_fields as $key => $label ) : ?>
+														<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $item['field'], $key ); ?>>
+															<?php echo esc_html( $label ); ?>
+														</option>
+													<?php endforeach; ?>
+												</select>
+
+												<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_multi_config][<?php echo (int) $index; ?>][type]" style="margin-left: 10px;">
+													<?php foreach ( $phone_types as $val => $label ) : ?>
+														<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $current_type, $val ); ?>>
+															<?php echo esc_html( $label ); ?>
+														</option>
+													<?php endforeach; ?>
+												</select>
+
+												<button type="button" class="button stkb-remove-phone-row" title="Remove"><span class="dashicons dashicons-trash"></span></button>
+											</div>
+											<?php
+										endforeach;
+									endif;
+									?>
+								</div>
+								<button type="button" id="stkb-add-phone-row" class="button"><?php esc_html_e( 'Add Phone Field', 'stackboost-for-supportcandy' ); ?></button>
+								<p class="description"><?php esc_html_e( 'Add all fields that contain phone numbers and map them to their type.', 'stackboost-for-supportcandy' ); ?></p>
 							</td>
 						</tr>
 					</table>
@@ -350,38 +464,29 @@ class Settings {
 				<h3><?php esc_html_e( 'Column Renaming', 'stackboost-for-supportcandy' ); ?></h3>
 				<?php self::render_rename_rules( $sc_fields, $config['rename_rules'] ); ?>
 
-				<!-- Mode: Indicator Field -->
-				<div id="stkb_mobile_indicator_field_container" class="stkb-mobile-logic-container" style="display:none;">
-					<table class="form-table">
-						<tr>
-							<th scope="row"><label for="stkb_mobile_field"><?php esc_html_e( 'Mobile Indicator Field', 'stackboost-for-supportcandy' ); ?></label></th>
-							<td>
-								<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[field_is_mobile]" id="stkb_mobile_field" class="stackboost-ajax-field-selector" data-target="#stkb_mobile_opt">
-									<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
-									<?php foreach ( $sc_fields as $key => $label ) : ?>
-										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $config['field_is_mobile'], $key ); ?>>
-											<?php echo esc_html( $label ); ?>
-										</option>
-									<?php endforeach; ?>
-								</select>
-								<p class="description"><?php esc_html_e( 'The field (Radio/Checkbox) that indicates a mobile device.', 'stackboost-for-supportcandy' ); ?></p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="stkb_mobile_opt"><?php esc_html_e( 'Mobile Indicator Value', 'stackboost-for-supportcandy' ); ?></label></th>
-							<td>
-								<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[mobile_option_id]" id="stkb_mobile_opt" data-selected="<?php echo esc_attr( $config['mobile_option_id'] ); ?>" disabled>
-									<option value=""><?php esc_html_e( '-- Select Option --', 'stackboost-for-supportcandy' ); ?></option>
-								</select>
-								<p class="description"><?php esc_html_e( 'The value that means "Yes" or "Mobile".', 'stackboost-for-supportcandy' ); ?></p>
-							</td>
-						</tr>
-					</table>
-				</div>
-
 				<?php submit_button(); ?>
 			</form>
 		</div>
+
+		<!-- Template for Multiple Phone Fields -->
+		<script type="text/template" id="stkb-phone-multi-template">
+			<div class="stkb-phone-multi-row" style="margin-bottom: 5px;">
+				<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_multi_config][__INDEX__][field]">
+					<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
+					<?php foreach ( $sc_fields as $key => $label ) : ?>
+						<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+
+				<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_multi_config][__INDEX__][type]" style="margin-left: 10px;">
+					<?php foreach ( $phone_types as $val => $label ) : ?>
+						<option value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+
+				<button type="button" class="button stkb-remove-phone-row" title="Remove"><span class="dashicons dashicons-trash"></span></button>
+			</div>
+		</script>
 		<?php
 	}
 
