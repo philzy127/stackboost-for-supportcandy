@@ -341,6 +341,10 @@ class Settings {
 						$saved_settings[$key] = esc_url_raw($value);
 						break;
 
+					case 'holidays':
+						$saved_settings[$key] = sanitize_textarea_field($value);
+						break;
+
 					default:
 						$saved_settings[$key] = sanitize_text_field($value);
 						break;
