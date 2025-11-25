@@ -12,6 +12,7 @@ use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 use StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\TicketView;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
+use StackBoost\ForSupportCandy\Modules\OnboardingDashboard;
 
 /**
  * Main plugin class.
@@ -64,6 +65,7 @@ final class Plugin {
 		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
 		$this->modules['directory']           = Directory\WordPress::get_instance();
 		$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
+		$this->modules['onboarding_dashboard'] = OnboardingDashboard\OnboardingDashboard::get_instance();
 
 	}
 
@@ -101,6 +103,14 @@ final class Plugin {
 				'title' => __( 'General Settings', 'stackboost-for-supportcandy' ),
 				'slug'  => $main_menu_slug,
 			],
+			'onboarding'      => [
+				'title' => __( 'Onboarding', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-onboarding-dashboard',
+			],
+			'ticket-view'     => [
+				'title' => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-ticket-view',
+			],
 			'conditional'     => [
 				'title' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 				'slug'  => 'stackboost-conditional-views',
@@ -113,13 +123,17 @@ final class Plugin {
 				'title' => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'slug'  => 'stackboost-after-hours',
 			],
+			'directory'       => [
+				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-directory',
+			],
 			'ats'             => [
 				'title' => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
 				'slug'  => 'stackboost-ats-settings',
 			],
-			'directory'       => [
-				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-directory',
+			'tools'           => [
+				'title' => __( 'Tools', 'stackboost-for-supportcandy' ),
+				'slug'  => 'stackboost-tools',
 			],
 			'how-to'          => [
 				'title' => __( 'How To Use', 'stackboost-for-supportcandy' ),
@@ -199,12 +213,15 @@ final class Plugin {
 	 * @param string $hook_suffix The current admin page.
 	 */
 	public function enqueue_admin_scripts( string $hook_suffix ) {
+        stackboost_log( "Enqueueing admin scripts for hook: " . $hook_suffix, 'core' );
+
 		// This is a general admin script for common UI elements like rule builders.
 		// Specific modules enqueue their own assets as needed (e.g., After Ticket Survey).
 		$pages_with_common_script = [
 			'toplevel_page_stackboost-for-supportcandy',
 			'stackboost_page_stackboost-conditional-views',
 			'stackboost_page_stackboost-queue-macro',
+            'stackboost_page_stackboost-onboarding-dashboard',
 		];
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
@@ -225,8 +242,10 @@ final class Plugin {
 				'stackboost-admin-common',
 				'stackboost_admin_ajax',
 				[
-					'ajax_url' => admin_url( 'admin-ajax.php' ),
-					'nonce'    => wp_create_nonce( 'stackboost_admin_nonce' ),
+					'ajax_url'           => admin_url( 'admin-ajax.php' ),
+					'nonce'              => wp_create_nonce( 'stackboost_admin_nonce' ),
+					'i18n_select_option' => __( '-- Select Option --', 'stackboost-for-supportcandy' ),
+					'i18n_loading'       => __( 'Loading...', 'stackboost-for-supportcandy' ),
 				]
 			);
 		}
@@ -260,6 +279,26 @@ final class Plugin {
 		}
 		asort( $columns );
 		return $columns;
+	}
+
+	/**
+	 * A utility function to get SupportCandy statuses.
+	 * @return array Associative array of [ ID => Name ]
+	 */
+	public function get_supportcandy_statuses(): array {
+		global $wpdb;
+		$statuses      = [];
+		$status_table  = $wpdb->prefix . 'psmsc_statuses';
+
+		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $status_table ) ) ) {
+			$results = $wpdb->get_results( "SELECT id, name FROM `{$status_table}` ORDER BY name ASC" );
+			if ( $results ) {
+				foreach ( $results as $status ) {
+					$statuses[ $status->id ] = $status->name;
+				}
+			}
+		}
+		return $statuses;
 	}
 
 	/**
