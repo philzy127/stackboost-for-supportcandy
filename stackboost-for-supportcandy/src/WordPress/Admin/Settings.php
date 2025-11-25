@@ -275,7 +275,7 @@ class Settings {
 			'stackboost-for-supportcandy' => [],
 			'stackboost-ticket-view' => ['enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide'],
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
-			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
+			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
@@ -302,10 +302,15 @@ class Settings {
 					case 'enable_conditional_hiding':
 					case 'enable_queue_macro':
 					case 'enable_after_hours_notice':
+					case 'after_hours_in_email':
 					case 'include_all_weekends':
 					case 'utm_enabled':
 					case 'utm_use_sc_order':
 						$saved_settings[$key] = intval($value);
+						break;
+
+					case 'holidays':
+						$saved_settings[$key] = sanitize_textarea_field($value);
 						break;
 
 					case 'utm_columns':
