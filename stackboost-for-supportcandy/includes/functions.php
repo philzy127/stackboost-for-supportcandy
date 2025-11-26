@@ -12,6 +12,7 @@ use StackBoost\ForSupportCandy\Core\License;
  */
 function stackboost_is_feature_active( string $feature_slug ): bool {
     $current_tier = License::get_tier();
+    $is_active = false; // Default to false
 
     $features_by_tier = [
         'free' => [
@@ -38,10 +39,12 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
 
     // Check if the tier exists and if the feature is in the list for that tier.
     if ( isset( $features_by_tier[ $current_tier ] ) ) {
-        return in_array( $feature_slug, $features_by_tier[ $current_tier ], true );
+        $is_active = in_array( $feature_slug, $features_by_tier[ $current_tier ], true );
     }
 
-    return false;
+    stackboost_log( "Feature Check: '{$feature_slug}' | Tier: '{$current_tier}' | Active: " . ( $is_active ? 'Yes' : 'No' ), 'licensing' );
+
+    return $is_active;
 }
 
 /**
