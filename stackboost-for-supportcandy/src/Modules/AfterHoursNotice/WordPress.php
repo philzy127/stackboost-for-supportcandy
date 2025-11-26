@@ -75,9 +75,7 @@ class WordPress extends Module {
     public function display_notice() {
 
         $options = get_option( 'stackboost_settings', [] );
-        stackboost_log( 'AfterHoursNotice: Display Notice Triggered. Raw options: ' . print_r( $options, true ), 'after-hours' );
         if ( empty( $options['enable_after_hours_notice'] ) ) {
-            stackboost_log( 'AfterHoursNotice: Feature is disabled. Exiting.', 'after-hours' );
             return;
         }
 
