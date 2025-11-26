@@ -1,4 +1,5 @@
-jQuery(document).ready(function($) {
+jQuery(window).on('load', function() {
+    var $ = jQuery;
     // Initialize DataTables
     $('#stackboostStaffDirectoryTable').DataTable({
         "pageLength": 25,
