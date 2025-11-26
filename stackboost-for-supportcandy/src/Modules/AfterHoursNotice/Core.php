@@ -42,12 +42,16 @@ class Core {
 		$timezone          = new DateTimeZone( $timezone_string );
 		$now               = new DateTime( 'now', $timezone );
 		$now->setTimestamp( $current_timestamp );
+		stackboost_log( "AfterHoursNotice Core: Checking timestamp {$current_timestamp} in timezone {$timezone_string}.", 'after-hours' );
 
 		// Check if today is a holiday.
 		$today_formatted = $now->format( 'Y-m-d' );
+		stackboost_log( "AfterHoursNotice Core: Comparing current date '{$today_formatted}' against holidays: " . print_r( $holidays, true ), 'after-hours' );
 		if ( in_array( $today_formatted, $holidays, true ) ) {
+			stackboost_log( 'AfterHoursNotice Core: Holiday match found. Returning true.', 'after-hours' );
 			return true;
 		}
+		stackboost_log( 'AfterHoursNotice Core: No holiday match.', 'after-hours' );
 
 		// Check if it's a weekend.
 		$day_of_week = (int) $now->format( 'N' ); // 1 (for Monday) through 7 (for Sunday)
@@ -79,6 +83,7 @@ class Core {
 	 * @return array An array of holiday dates in 'Y-m-d' format.
 	 */
 	public function parse_holidays( string $holidays_string ): array {
+		stackboost_log( "AfterHoursNotice Core: Parsing holidays string: '{$holidays_string}'", 'after-hours' );
 		if ( empty( $holidays_string ) ) {
 			return [];
 		}
