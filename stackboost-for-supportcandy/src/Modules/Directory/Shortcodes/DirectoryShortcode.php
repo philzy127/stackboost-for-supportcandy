@@ -64,6 +64,12 @@ class DirectoryShortcode {
 								<th><?php esc_html_e( 'Department / Program', 'stackboost-for-supportcandy' ); ?></th>
 								<th><?php esc_html_e( 'Title', 'stackboost-for-supportcandy' ); ?></th>
 							</tr>
+							<tr class="stackboost-directory-filters">
+								<th></th>
+								<th></th>
+								<th></th>
+								<th></th>
+							</tr>
 						</thead>
 						<tbody>
 							<?php

@@ -538,3 +538,12 @@
         margin-bottom: 3px; /* Space between label and value */
     }
 }
+
+/* Style for the search input fields in the table header */
+.stackboost-directory-filters input[type=text] {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
