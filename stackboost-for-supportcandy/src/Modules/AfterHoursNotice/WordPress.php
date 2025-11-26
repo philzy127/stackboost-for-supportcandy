@@ -63,7 +63,7 @@ class WordPress extends Module {
      */
     public function init_hooks() {
         add_action( 'admin_init', [ $this, 'register_settings' ] );
-        add_action( 'supportcandy_before_create_ticket_form', [ $this, 'display_notice' ] );
+        add_action( 'wpsc_before_create_ticket_form', [ $this, 'display_notice' ] );
         add_filter( 'wpsc_create_ticket_email_data', [ $this, 'add_after_hours_notice_to_email' ] );
         add_filter( 'wpsc_agent_reply_email_data', [ $this, 'add_after_hours_notice_to_email' ] );
         add_filter( 'wpsc_cust_reply_email_data', [ $this, 'add_after_hours_notice_to_email' ] );

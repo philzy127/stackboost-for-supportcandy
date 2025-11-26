@@ -71,7 +71,7 @@ class WordPress extends Module {
 		add_action( 'plugins_loaded', [ $this->install, 'check_db_version' ] );
 
 		// Admin UI
-		add_action( 'admin_menu', [ $this->admin, 'add_admin_menu' ], 99 );
+		add_action( 'admin_menu', [ $this->admin, 'add_admin_menu' ], 11 );
         add_action( 'admin_post_stackboost_ats_admin_actions', [ $this->admin, 'handle_admin_post' ] );
         add_action( 'admin_notices', [ $this->admin, 'display_admin_notices' ] );
 
