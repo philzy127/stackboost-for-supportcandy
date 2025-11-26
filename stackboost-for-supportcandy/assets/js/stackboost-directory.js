@@ -1,28 +1,45 @@
-jQuery(window).on('load', function() {
-    var $ = jQuery;
-    // Initialize DataTables
-    $('#stackboostStaffDirectoryTable').DataTable({
-        "pageLength": 25,
-        "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
-        "responsive": true,
-        "language": {
-            "search": "Filter results:",
-            "lengthMenu": "Show _MENU_ entries"
-        },
-        "columnDefs": [
-            {
-                "targets": 1, // The 'Phone' column
-                "render": function ( data, type, row, meta ) {
-                    if ( type === 'filter' ) {
-                        var cellNode = meta.settings.aoData[meta.row].anCells[meta.col];
-                        var dataSearch = $(cellNode).data('search');
-                        return data + ' ' + dataSearch;
+jQuery(document).ready(function($) {
+
+    function initializeDataTablesWhenVisible() {
+        var tableElement = $('#stackboostStaffDirectoryTable');
+
+        // Check if the table exists and is visible.
+        // The ':visible' selector checks that an element and its ancestors have a display property other than 'none'
+        // and a width and height greater than 0.
+        if (tableElement.length && tableElement.is(':visible')) {
+            // If visible, clear the interval and initialize DataTables.
+            clearInterval(visibilityCheckInterval);
+
+            tableElement.DataTable({
+                "pageLength": 25,
+                "lengthMenu": [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, "All"]
+                ],
+                "responsive": true,
+                "language": {
+                    "search": "Filter results:",
+                    "lengthMenu": "Show _MENU_ entries"
+                },
+                "columnDefs": [{
+                    "targets": 1, // The 'Phone' column
+                    "render": function(data, type, row, meta) {
+                        if (type === 'filter') {
+                            var cellNode = meta.settings.aoData[meta.row].anCells[meta.col];
+                            var dataSearch = $(cellNode).data('search');
+                            return data + ' ' + dataSearch;
+                        }
+                        return data;
                     }
-                    return data;
-                }
-            }
-        ]
-    });
+                }]
+            });
+        }
+    }
+
+    // Set an interval to check for the table's visibility every 100 milliseconds.
+    // This is robust against themes or other scripts that might hide/show the container after the initial page load.
+    var visibilityCheckInterval = setInterval(initializeDataTablesWhenVisible, 100);
+
 
     // Function to show a toast notification
     function showToast(message) {
