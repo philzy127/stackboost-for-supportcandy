@@ -96,7 +96,7 @@ function stackboost_log( $message, $context = 'general' ) {
 }
 
 // Get the plugin running.
-stackboost_run();
+add_action( 'plugins_loaded', 'stackboost_run' );
 
 // Initialize upgrade routines.
 add_action( 'plugins_loaded', array( 'StackBoost\ForSupportCandy\Admin\Upgrade', 'init' ) );
