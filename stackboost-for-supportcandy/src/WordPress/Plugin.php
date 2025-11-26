@@ -76,6 +76,35 @@ final class Plugin {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_and_localize_frontend_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_menu' ], 999 );
+		add_action( 'supportcandy_before_create_ticket_form', [ $this, 'direct_after_hours_test' ] );
+	}
+
+	/**
+	 * DIRECT DIAGNOSTIC TEST.
+	 * Bypasses the module system to see if the hook fires.
+	 */
+	public function direct_after_hours_test() {
+		$options = get_option( 'stackboost_settings', [] );
+		if ( empty( $options['enable_after_hours_notice'] ) ) {
+			return;
+		}
+
+		$core = new AfterHoursNotice\Core();
+		$settings = [
+			'start_hour'       => $options['after_hours_start'] ?? 17,
+			'end_hour'         => $options['before_hours_end'] ?? 8,
+			'include_weekends' => ! empty( $options['include_all_weekends'] ),
+			'holidays'         => $core->parse_holidays( $options['holidays'] ?? '' ),
+		];
+
+		$timezone_string = wp_timezone_string();
+
+		if ( $core->is_after_hours( $settings, null, $timezone_string ) ) {
+			$message = $options['after_hours_message'] ?? '';
+			if ( ! empty( $message ) ) {
+				echo '<div class="stackboost-after-hours-notice" style="border: 2px solid red; padding: 10px;"><strong>DIRECT TEST:</strong> ' . wpautop( $message ) . '</div>';
+			}
+		}
 	}
 
 	/**
