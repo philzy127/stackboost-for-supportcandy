@@ -39,7 +39,7 @@ abstract class Module {
 	 */
 	public function render_checkbox_field( array $args ) {
 		$options = get_option( 'stackboost_settings', [] );
-		$value   = isset( $options[ $args['id'] ] ) ? 1 : 0;
+		$value   = ! empty( $options[ $args['id'] ] ) ? 1 : 0;
 		echo '<input type="hidden" name="stackboost_settings[' . esc_attr( $args['id'] ) . ']" value="0">';
 		echo '<input type="checkbox" id="' . esc_attr( $args['id'] ) . '" name="stackboost_settings[' . esc_attr( $args['id'] ) . ']" value="1" ' . checked( 1, $value, false ) . '>';
 		if ( ! empty( $args['desc'] ) ) {

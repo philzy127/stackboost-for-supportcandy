@@ -93,7 +93,7 @@ class WordPress extends Module {
             $message = $options['after_hours_message'] ?? '';
             if ( ! empty( $message ) ) {
                 // The message is saved via wp_kses_post, so it's safe to display.
-                echo '<div class="stackboost-after-hours-notice">' . wpautop( $message ) . '</div>';
+                echo '<div class="stackboost-after-hours-notice" style="margin-left: 15px; margin-bottom: 15px;">' . wpautop( $message ) . '</div>';
             }
         }
     }
