@@ -18,6 +18,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Settings {
 
 	/**
+	 * The option name for storing module settings.
+	 */
+	const OPTION_NAME = 'stackboost_settings';
+
+	/**
+	 * Register settings.
+	 *
+	 * @deprecated No longer used. Settings are now registered centrally.
+	 */
+	public static function register_settings() {
+		// This function is deprecated. The settings are now registered
+		// in the main \StackBoost\ForSupportCandy\WordPress\Admin\Settings class
+		// to avoid conflicts and centralize settings management.
+	}
+
+	/**
 	 * Render the settings page.
 	 */
 	public static function render_settings_page() {
