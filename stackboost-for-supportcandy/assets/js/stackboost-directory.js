@@ -25,9 +25,16 @@ jQuery(document).ready(function($) {
                     "targets": 1, // The 'Phone' column
                     "render": function(data, type, row, meta) {
                         if (type === 'filter') {
-                            var cellNode = meta.settings.aoData[meta.row].anCells[meta.col];
-                            var dataSearch = $(cellNode).data('search');
-                            return data + ' ' + dataSearch;
+                            // Defensive check: Ensure the row data exists before accessing it.
+                            if (
+                                meta.settings.aoData[meta.row] &&
+                                meta.settings.aoData[meta.row].anCells &&
+                                meta.settings.aoData[meta.row].anCells[meta.col]
+                            ) {
+                                var cellNode = meta.settings.aoData[meta.row].anCells[meta.col];
+                                var dataSearch = $(cellNode).data('search');
+                                return data + ' ' + (dataSearch || '');
+                            }
                         }
                         return data;
                     }

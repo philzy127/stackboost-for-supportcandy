@@ -56,7 +56,7 @@ class DirectoryShortcode {
 		<div class="stackboost-staff-directory-container">
 			<div id="stackboost-full-directory-table-wrapper">
 				<?php if ( ! empty( $employees ) ) : ?>
-					<table id="stackboostStaffDirectoryTable" class="display stackboost-staff-directory-table">
+					<table id="stackboostStaffDirectoryTable" class="display stackboost-staff-directory-table" style="width:100%">
 						<thead>
 							<tr>
 								<th><?php esc_html_e( 'Name', 'stackboost-for-supportcandy' ); ?></th>

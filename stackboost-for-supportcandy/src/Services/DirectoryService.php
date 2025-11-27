@@ -121,7 +121,7 @@ class DirectoryService {
 		$employee_data->edit_post_link      = get_edit_post_link( $profile_id );
 		$employee_data->thumbnail_url       = get_the_post_thumbnail_url( $profile_id, 'medium' );
 		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
-		$employee_data->job_title           = get_post_meta( $profile_id, '_stackboost_job_title', true );
+		$employee_data->job_title           = get_post_meta( $profile_id, '_stackboost_staff_job_title', true );
 		$employee_data->department_program  = get_post_meta( $profile_id, '_department_program', true );
 		$employee_data->office_phone        = get_post_meta( $profile_id, '_office_phone', true );
 		$employee_data->extension           = get_post_meta( $profile_id, '_extension', true );
@@ -144,6 +144,12 @@ class DirectoryService {
 				$employee_data->location_details['zip'] = get_post_meta( $employee_data->location_id, '_zip', true );
 				$employee_data->location_details['phone_number'] = get_post_meta( $employee_data->location_id, '_location_phone_number', true );
 			}
+		}
+
+		// Log the retrieved data for diagnostics.
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "DirectoryService: Retrieved data for Profile ID $profile_id", 'directory' );
+			stackboost_log( $employee_data, 'directory' );
 		}
 
 		return $employee_data;
