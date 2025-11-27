@@ -243,6 +243,12 @@ class WordPress {
 			'1.11.5'
 		);
 		wp_enqueue_style(
+			'stackboost-directory-datatables-responsive-style',
+			'https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css',
+			array(),
+			'2.2.9'
+		);
+		wp_enqueue_style(
 			'stackboost-directory-style',
 			\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
 			array(),
@@ -257,9 +263,16 @@ class WordPress {
 			true
 		);
 		wp_enqueue_script(
+			'stackboost-directory-datatables-responsive',
+			'https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js',
+			array( 'jquery', 'stackboost-directory-datatables' ),
+			'2.2.9',
+			true
+		);
+		wp_enqueue_script(
 			'stackboost-directory-js',
 			\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-directory.js',
-			array( 'jquery', 'stackboost-directory-datatables' ),
+			array( 'jquery', 'stackboost-directory-datatables', 'stackboost-directory-datatables-responsive' ),
 			\STACKBOOST_VERSION,
 			true
 		);
