@@ -18,61 +18,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Settings {
 
 	/**
-	 * The option group for the settings page.
-	 */
-	const OPTION_GROUP = 'stackboost_directory_settings';
-
-	/**
-	 * The option name for storing settings.
-	 */
-	const OPTION_NAME = 'stackboost_directory_settings';
-
-	/**
-	 * Register settings.
-	 *
-	 * @deprecated No longer used. Settings are now registered centrally.
-	 */
-	public static function register_settings() {
-		// This function is deprecated. The settings are now registered
-		// in the main \StackBoost\ForSupportCandy\WordPress\Admin\Settings class
-		// to avoid conflicts and centralize settings management.
-	}
-
-	/**
-	 * Sanitize settings.
-	 *
-	 * @param array $input The input data.
-	 * @return array The sanitized data.
-	 */
-	public static function sanitize_settings( $input ): array {
-		$sanitized_input = array();
-
-		if ( isset( $input['edit_roles'] ) && is_array( $input['edit_roles'] ) ) {
-			$sanitized_input['edit_roles'] = array_map( 'sanitize_text_field', $input['edit_roles'] );
-		} else {
-			$sanitized_input['edit_roles'] = array();
-		}
-
-		if ( isset( $input['management_roles'] ) && is_array( $input['management_roles'] ) ) {
-			$sanitized_input['management_roles'] = array_map( 'sanitize_text_field', $input['management_roles'] );
-		} else {
-			$sanitized_input['management_roles'] = array();
-		}
-
-		if ( isset( $input['listing_display_mode'] ) && in_array( $input['listing_display_mode'], array( 'page', 'modal' ), true ) ) {
-			$sanitized_input['listing_display_mode'] = $input['listing_display_mode'];
-		} else {
-			$sanitized_input['listing_display_mode'] = 'page';
-		}
-
-		return $sanitized_input;
-	}
-
-	/**
 	 * Render the settings page.
 	 */
 	public static function render_settings_page() {
-		$options = get_option( self::OPTION_NAME, array() );
+		// All settings are now stored in the central 'stackboost_settings' option.
+		$options = get_option( 'stackboost_settings', array() );
+
+		// Provide defaults for the settings we manage.
 		$edit_roles           = $options['edit_roles'] ?? array( 'administrator', 'editor' );
 		$management_roles     = $options['management_roles'] ?? array( 'administrator' );
 		$listing_display_mode = $options['listing_display_mode'] ?? 'page';
@@ -80,8 +32,10 @@ class Settings {
 		<div class="wrap">
 			<form action="options.php" method="post">
 				<?php
-				settings_fields( self::OPTION_GROUP );
-				do_settings_sections( self::OPTION_GROUP );
+				// Point to the central settings group.
+				settings_fields( 'stackboost_settings' );
+				// Add the hidden input required by the central sanitizer.
+				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-directory-settings">';
 				?>
 				<h2><?php esc_html_e( 'Display Settings', 'stackboost-for-supportcandy' ); ?></h2>
 				<table class="form-table">
@@ -90,7 +44,7 @@ class Settings {
 							<label for="stackboost-listing-display-mode"><?php esc_html_e( 'Listing Display Mode', 'stackboost-for-supportcandy' ); ?></label>
 						</th>
 						<td>
-							<select id="stackboost-listing-display-mode" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[listing_display_mode]">
+							<select id="stackboost-listing-display-mode" name="stackboost_settings[listing_display_mode]">
 								<option value="page" <?php selected( $listing_display_mode, 'page' ); ?>><?php esc_html_e( 'Page View', 'stackboost-for-supportcandy' ); ?></option>
 								<option value="modal" <?php selected( $listing_display_mode, 'modal' ); ?>><?php esc_html_e( 'Modal View', 'stackboost-for-supportcandy' ); ?></option>
 							</select>
@@ -133,7 +87,7 @@ class Settings {
 		foreach ( $roles as $role_name => $role_info ) {
 			?>
 			<label>
-				<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[<?php echo esc_attr( $setting_name ); ?>][]" value="<?php echo esc_attr( $role_name ); ?>" <?php checked( in_array( $role_name, $selected_roles, true ) ); ?>>
+				<input type="checkbox" name="stackboost_settings[<?php echo esc_attr( $setting_name ); ?>][]" value="<?php echo esc_attr( $role_name ); ?>" <?php checked( in_array( $role_name, $selected_roles, true ) ); ?>>
 				<?php echo esc_html( $role_info['name'] ); ?>
 			</label><br>
 			<?php

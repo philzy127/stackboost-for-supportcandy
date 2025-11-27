@@ -280,7 +280,7 @@ class Settings {
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
 			'stackboost-tools'              => ['diagnostic_log_enabled'],
-			'stackboost-directory-settings' => ['enable_single_pages', 'default_staff_photo', 'enable_frontend_filters'],
+			'stackboost-directory-settings' => ['listing_display_mode', 'edit_roles', 'management_roles'],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
