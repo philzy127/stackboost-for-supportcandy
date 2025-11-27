@@ -86,7 +86,6 @@ class WordPress {
 	 * Register module settings.
 	 */
 	public function register_module_settings() {
-		Settings::register_settings();
 		TicketWidgetSettings::register_settings();
 	}
 
@@ -100,7 +99,7 @@ class WordPress {
 		if ( in_array( 'administrator', $user->roles, true ) ) {
 			return true;
 		}
-		$options    = get_option( Settings::OPTION_NAME, array() );
+		$options    = get_option( 'stackboost_settings', array() );
 		$edit_roles = $options['edit_roles'] ?? array( 'administrator', 'editor' );
 		return ! empty( array_intersect( $user->roles, $edit_roles ) );
 	}
@@ -115,7 +114,7 @@ class WordPress {
 		if ( in_array( 'administrator', $user->roles, true ) ) {
 			return true;
 		}
-		$options          = get_option( Settings::OPTION_NAME, array() );
+		$options          = get_option( 'stackboost_settings', array() );
 		$management_roles = $options['management_roles'] ?? array( 'administrator' );
 		return ! empty( array_intersect( $user->roles, $management_roles ) );
 	}
@@ -274,7 +273,7 @@ class WordPress {
 		);
 
 		// Only enqueue modal assets if the setting is active.
-		$settings             = get_option( Settings::OPTION_NAME, array() );
+		$settings             = get_option( 'stackboost_settings', array() );
 		$listing_display_mode = $settings['listing_display_mode'] ?? 'page';
 
 		if ( 'modal' === $listing_display_mode ) {
