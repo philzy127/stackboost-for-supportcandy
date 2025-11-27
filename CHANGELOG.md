@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.6] - 2025-11-09
+
+### Fixed
+- **Directory Table "Title" Column:** Resolved an issue where the "Title" column in the directory list was empty. The fix involved updating the internal data service to use the correct meta key (`_stackboost_staff_job_title`) when retrieving employee data for the frontend.
+- **Directory Table Stability:** Resolved JavaScript console errors (`cloneNode` / `TypeError`) affecting the Company Directory table. The fix included upgrading the DataTables library to version 2.3.5 and the Responsive extension to version 3.0.7 to ensure compatibility and stability.
+- **DataTables Layout:** Added specific CSS styling to the directory table to ensure correct width calculations, preventing layout issues in responsive modes.
+
 ## [1.2.5] - 2025-11-08
 
 ### Fixed

@@ -276,6 +276,9 @@ class WordPress {
 			\STACKBOOST_VERSION,
 			true
 		);
+		$stackboost_settings = get_option( 'stackboost_settings', array() );
+		$debug_enabled       = ! empty( $stackboost_settings['diagnostic_log_enabled'] );
+
 		wp_localize_script(
 			'stackboost-directory-js',
 			'stackboostPublicAjax',
@@ -283,6 +286,7 @@ class WordPress {
 				'ajax_url'                   => admin_url( 'admin-ajax.php' ),
 				'stackboost_directory_nonce' => wp_create_nonce( 'stackboost_directory_public_nonce' ),
 				'no_entries_found'           => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
+				'debug_enabled'              => $debug_enabled,
 			)
 		);
 

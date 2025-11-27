@@ -159,6 +159,13 @@ This module's `Core.php` is minimal and primarily serves to instantiate the Cust
     *   `ajax_import_csv()`: Located in `Admin/Management.php`, this method handles the server-side logic for the CSV import. It sanitizes the data (including stripping non-numeric characters from phone numbers) and creates new staff posts.
     *   `redirect_after_staff_update()`: Implements a context-aware redirect after a staff member is saved. If the edit was initiated from a SupportCandy ticket (identified by a `from=ticket` parameter), it redirects the user back to the ticket. It uses a robust fallback system: it first attempts to use the official SupportCandy URL generation function, and if that fails, it safely falls back to using the `_wp_original_http_referer` URL. This ensures the redirect works for both frontend and backend ticket views, even if the SupportCandy page settings are not configured.
 
+#### Frontend & Assets
+
+*   **DataTables:** The directory frontend (shortcode) relies on the DataTables library.
+    *   The module enqueues **DataTables v2.3.5** and the **Responsive Extension v3.0.7** from the CDN.
+    *   It deliberately loads these specific versions to ensure stability and modern features, avoiding conflicts with legacy versions that may be loaded by the parent SupportCandy plugin.
+    *   The table initialization logic in `stackboost-directory.js` includes defensive coding to handle potential initialization race conditions.
+
 ### 3.2. After Hours Notice
 
 *   **Namespace:** `StackBoost\ForSupportCandy\Modules\AfterHoursNotice`

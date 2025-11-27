@@ -11,7 +11,7 @@ jQuery(document).ready(function($) {
             clearInterval(visibilityCheckInterval);
 
             // --- StackBoost Diagnostic Logging ---
-            if (console && console.log) {
+            if (stackboostPublicAjax && stackboostPublicAjax.debug_enabled && console && console.log) {
                 console.log('--- StackBoost Directory Diagnostics ---');
                 console.log('DataTables Version:', $.fn.dataTable ? $.fn.dataTable.version : 'Not Defined');
                 console.log('Table Visibility:', tableElement.is(':visible'));
