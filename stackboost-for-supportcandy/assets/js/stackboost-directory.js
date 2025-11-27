@@ -10,6 +10,15 @@ jQuery(document).ready(function($) {
             // If visible, clear the interval and initialize DataTables.
             clearInterval(visibilityCheckInterval);
 
+            // --- StackBoost Diagnostic Logging ---
+            if (console && console.log) {
+                console.log('--- StackBoost Directory Diagnostics ---');
+                console.log('DataTables Version:', $.fn.dataTable ? $.fn.dataTable.version : 'Not Defined');
+                console.log('Table Visibility:', tableElement.is(':visible'));
+                console.log('Table Width:', tableElement.width());
+                console.log('Table Dimensions:', tableElement[0].getBoundingClientRect());
+            }
+
             tableElement.DataTable({
                 "pageLength": 25,
                 "lengthMenu": [
@@ -17,7 +26,6 @@ jQuery(document).ready(function($) {
                     [10, 25, 50, "All"]
                 ],
                 "responsive": true,
-                "autoWidth": false,
                 "language": {
                     "search": "Filter results:",
                     "lengthMenu": "Show _MENU_ entries"
