@@ -17,6 +17,7 @@ jQuery(document).ready(function($) {
                     [10, 25, 50, "All"]
                 ],
                 "responsive": true,
+                "autoWidth": false,
                 "language": {
                     "search": "Filter results:",
                     "lengthMenu": "Show _MENU_ entries"
