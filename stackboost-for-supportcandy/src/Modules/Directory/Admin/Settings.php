@@ -18,6 +18,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Settings {
 
 	/**
+	 * The option name for storing module settings.
+	 */
+	const OPTION_NAME = 'stackboost_settings';
+
+	/**
+	 * Register settings.
+	 *
+	 * @deprecated No longer used. Settings are now registered centrally.
+	 */
+	public static function register_settings() {
+		// This function is deprecated. The settings are now registered
+		// in the main \StackBoost\ForSupportCandy\WordPress\Admin\Settings class
+		// to avoid conflicts and centralize settings management.
+	}
+
+	/**
 	 * Render the settings page.
 	 */
 	public static function render_settings_page() {
@@ -28,6 +44,14 @@ class Settings {
 		$edit_roles           = $options['edit_roles'] ?? array( 'administrator', 'editor' );
 		$management_roles     = $options['management_roles'] ?? array( 'administrator' );
 		$listing_display_mode = $options['listing_display_mode'] ?? 'page';
+
+		// Ensure array type to prevent TypeError if data is corrupted (e.g. string from bad save).
+		if ( ! is_array( $edit_roles ) ) {
+			$edit_roles = (array) $edit_roles;
+		}
+		if ( ! is_array( $management_roles ) ) {
+			$management_roles = (array) $management_roles;
+		}
 		?>
 		<div class="wrap">
 			<form action="options.php" method="post">

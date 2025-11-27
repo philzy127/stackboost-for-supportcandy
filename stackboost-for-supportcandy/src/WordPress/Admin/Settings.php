@@ -349,6 +349,11 @@ class Settings {
 						$saved_settings[$key] = esc_url_raw($value);
 						break;
 
+					case 'edit_roles':
+					case 'management_roles':
+						$saved_settings[$key] = is_array($value) ? array_map('sanitize_text_field', $value) : [];
+						break;
+
 					default:
 						$saved_settings[$key] = sanitize_text_field($value);
 						break;
