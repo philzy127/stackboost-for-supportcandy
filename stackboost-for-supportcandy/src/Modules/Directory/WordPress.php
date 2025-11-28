@@ -176,6 +176,14 @@ class WordPress {
 
 			// Dequeue conflicting block editor scripts.
 			$this->dequeue_conflicting_scripts();
+
+			// Diagnostic logging for scripts.
+			if ( function_exists( 'stackboost_log' ) ) {
+				global $wp_scripts;
+				if ( isset( $wp_scripts ) && isset( $wp_scripts->queue ) ) {
+					stackboost_log( 'Directory CPT Scripts Queue: ' . print_r( $wp_scripts->queue, true ), 'directory' );
+				}
+			}
 		}
 
 		// Enqueue scripts for the main directory admin page.
