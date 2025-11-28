@@ -97,6 +97,9 @@ class WordPress {
 
 		// Check for missing Support Page setting.
 		add_action( 'admin_notices', array( $this, 'display_support_page_warning' ) );
+
+		// Hook to dequeue conflicting scripts late.
+		add_action( 'admin_enqueue_scripts', array( $this, 'dequeue_conflicting_scripts' ), 9999 );
 	}
 
 	/**
@@ -174,8 +177,6 @@ class WordPress {
 				true
 			);
 
-			// Dequeue conflicting block editor scripts.
-			$this->dequeue_conflicting_scripts();
 		}
 
 		// Enqueue scripts for the main directory admin page.
@@ -950,21 +951,29 @@ class WordPress {
 	 * Dequeue conflicting block editor scripts.
 	 */
 	public function dequeue_conflicting_scripts() {
-		$handles = [
-			'kadence-blocks-style-handler',
-			'kadence-blocks-js',
-			'wp-block-library',
-			'wp-block-library-theme',
-			'wc-block-style', // WooCommerce blocks
-			'betterdocs-categorygrid',
-			'betterdocs-search-modal',
-			'betterdocs-blocks-actions',
-			'betterdocs-code-snippet',
-		];
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
 
-		foreach ( $handles as $handle ) {
-			wp_dequeue_script( $handle );
-			wp_dequeue_style( $handle );
+		// Only dequeue on the staff CPT add/edit screens.
+		if ( 'post' === $screen->base && isset( $this->core->cpts->post_type ) && $this->core->cpts->post_type === $screen->post_type ) {
+			$handles = [
+				'kadence-blocks-style-handler',
+				'kadence-blocks-js',
+				'wp-block-library',
+				'wp-block-library-theme',
+				'wc-block-style', // WooCommerce blocks
+				'betterdocs-categorygrid',
+				'betterdocs-search-modal',
+				'betterdocs-blocks-actions',
+				'betterdocs-code-snippet',
+			];
+
+			foreach ( $handles as $handle ) {
+				wp_dequeue_script( $handle );
+				wp_dequeue_style( $handle );
+			}
 		}
 	}
 
