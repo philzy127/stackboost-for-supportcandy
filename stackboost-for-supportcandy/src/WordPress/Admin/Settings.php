@@ -227,6 +227,7 @@ class Settings {
 	 */
 	public function register_settings() {
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
+		register_setting( 'stackboost_directory_widget_settings', 'stackboost_directory_widget_settings', [ $this, 'sanitize_directory_widget_settings' ] );
 
 		// Diagnostic Log Settings Section
 		add_settings_section(
@@ -251,6 +252,19 @@ class Settings {
 			'stackboost-tools',
 			'stackboost_tools_section'
 		);
+	}
+
+	/**
+	 * Sanitize directory widget settings.
+	 *
+	 * @param array $input The input data.
+	 * @return array The sanitized data.
+	 */
+	public function sanitize_directory_widget_settings( array $input ): array {
+		if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings' ) ) {
+			return \StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings::sanitize_widget_settings( $input );
+		}
+		return [];
 	}
 
 	/**
