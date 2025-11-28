@@ -241,6 +241,7 @@ class CustomPostTypes {
 	 */
 	private function get_revisioned_meta_fields(): array {
 		return array(
+			// Staff Fields
 			'_office_phone',
 			'_extension',
 			'_mobile_phone',
@@ -253,6 +254,13 @@ class CustomPostTypes {
 			'_active_as_of_date',
 			'_planned_exit_date',
 			'_user_id',
+
+			// Location Fields
+			'_address_line1',
+			'_city',
+			'_state',
+			'_zip',
+			'_location_phone_number',
 		);
 	}
 
