@@ -89,9 +89,6 @@ class WordPress {
 		// Use edit_form_after_title to ensure it renders inside the form but before meta boxes.
 		add_action( 'edit_form_after_title', array( $this, 'add_back_button' ) );
 
-		// Output nonces for the staff edit form.
-		add_action( 'edit_form_after_title', array( $this, 'output_staff_edit_nonces' ) );
-
 		// Handle directory actions early.
 		add_action( 'admin_init', array( $this, 'handle_directory_actions' ) );
 
@@ -974,22 +971,6 @@ class WordPress {
 				wp_dequeue_script( $handle );
 				wp_dequeue_style( $handle );
 			}
-		}
-	}
-
-	/**
-	 * Output nonces for the staff edit form.
-	 */
-	public function output_staff_edit_nonces() {
-		$screen = get_current_screen();
-		if ( ! $screen || 'post' !== $screen->base ) {
-			return;
-		}
-
-		if ( $this->core->cpts->post_type === $screen->post_type ) {
-			wp_nonce_field( 'sb_staff_dir_meta_box', 'sb_staff_dir_meta_box_nonce' );
-		} elseif ( $this->core->cpts->location_post_type === $screen->post_type ) {
-			wp_nonce_field( 'sb_location_details_meta_box', 'sb_location_details_meta_box_nonce' );
 		}
 	}
 
