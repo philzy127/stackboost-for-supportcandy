@@ -825,8 +825,8 @@ class WordPress {
 						if ( $current_ticket_id > 0 ) {
 							$edit_link = add_query_arg(
 								array(
-									'from'      => 'ticket',
-									'ticket_id' => $current_ticket_id,
+									'sb_context'   => 'ticket',
+									'sb_ticket_id' => $current_ticket_id,
 								),
 								$edit_link
 							);
@@ -994,9 +994,9 @@ class WordPress {
 			$link = admin_url( 'admin.php?page=stackboost-directory&tab=' . $tab );
 			$text = __( 'Back to Directory', 'stackboost-for-supportcandy' );
 
-			// Check for 'from=ticket' context.
-			if ( isset( $_GET['from'] ) && 'ticket' === $_GET['from'] && isset( $_GET['ticket_id'] ) ) {
-				$ticket_id = absint( $_GET['ticket_id'] );
+			// Check for 'sb_context=ticket' context.
+			if ( isset( $_GET['sb_context'] ) && 'ticket' === $_GET['sb_context'] && isset( $_GET['sb_ticket_id'] ) ) {
+				$ticket_id = absint( $_GET['sb_ticket_id'] );
 
 				// Attempt to get URL from SupportCandy function first.
 				$ticket_url = '';
@@ -1070,8 +1070,8 @@ class WordPress {
 		}
 
 		// Check for our custom query arg to determine the return link.
-		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
-		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
+		$from      = isset( $_GET['sb_context'] ) ? sanitize_key( $_GET['sb_context'] ) : '';
+		$ticket_id = isset( $_GET['sb_ticket_id'] ) ? absint( $_GET['sb_ticket_id'] ) : 0;
 
 		$return_link = '';
 		if ( 'ticket' === $from && $ticket_id > 0 ) {
@@ -1154,20 +1154,20 @@ class WordPress {
 
 				// Get URL parameters.
 				const urlParams = new URLSearchParams(window.location.search);
-				const from = urlParams.get('from');
-				const ticketId = urlParams.get('ticket_id');
+				const from = urlParams.get('sb_context');
+				const ticketId = urlParams.get('sb_ticket_id');
 
 				// If the parameters exist, create and append the hidden fields.
 				if (from === 'ticket' && ticketId) {
 					const fromInput = document.createElement('input');
 					fromInput.type = 'hidden';
-					fromInput.name = 'from';
+					fromInput.name = 'sb_context';
 					fromInput.value = from;
 					postForm.appendChild(fromInput);
 
 					const ticketIdInput = document.createElement('input');
 					ticketIdInput.type = 'hidden';
-					ticketIdInput.name = 'ticket_id';
+					ticketIdInput.name = 'sb_ticket_id';
 					ticketIdInput.value = ticketId;
 					postForm.appendChild(ticketIdInput);
 				}
@@ -1204,8 +1204,8 @@ class WordPress {
 			}
 
 			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
-			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
-			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
+			$from      = isset( $_POST['sb_context'] ) ? sanitize_key( $_POST['sb_context'] ) : '';
+			$ticket_id = isset( $_POST['sb_ticket_id'] ) ? absint( $_POST['sb_ticket_id'] ) : 0;
 			// $log_entry .= 'PARSED from: ' . $from . "\n";
 			// $log_entry .= 'PARSED ticket_id: ' . $ticket_id . "\n";
 
@@ -1253,8 +1253,8 @@ class WordPress {
 			if ( ! empty( $from ) && ! empty( $ticket_id ) ) {
 				$location = add_query_arg(
 					array(
-						'from'      => $from,
-						'ticket_id' => $ticket_id,
+						'sb_context'   => $from,
+						'sb_ticket_id' => $ticket_id,
 					),
 					$location
 				);
