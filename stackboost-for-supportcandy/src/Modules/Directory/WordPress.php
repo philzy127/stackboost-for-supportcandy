@@ -90,6 +90,9 @@ class WordPress {
 
 		// Handle directory actions early.
 		add_action( 'admin_init', array( $this, 'handle_directory_actions' ) );
+
+		// Check for missing Support Page setting.
+		add_action( 'admin_notices', array( $this, 'display_support_page_warning' ) );
 	}
 
 	/**
@@ -318,6 +321,35 @@ class WordPress {
 				\STACKBOOST_VERSION,
 				true
 			);
+		}
+	}
+
+	/**
+	 * Display a warning if the SupportCandy "Support Page" setting is not configured.
+	 */
+	public function display_support_page_warning() {
+		$screen = get_current_screen();
+		if ( ! $screen || strpos( $screen->id, 'stackboost' ) === false ) {
+			return;
+		}
+
+		$sc_page_settings = get_option( 'wpsc-gs-page-settings', [] );
+		$page_id          = isset( $sc_page_settings['page_id'] ) ? absint( $sc_page_settings['page_id'] ) : 0;
+
+		if ( empty( $page_id ) ) {
+			?>
+			<div class="notice notice-warning is-dismissible">
+				<p>
+					<?php
+					printf(
+						/* translators: %s: Link to SupportCandy settings. */
+						esc_html__( 'StackBoost Warning: The "Support Page" setting in SupportCandy is not configured. This may cause issues with frontend redirects and links. Please go to %s and select your support page.', 'stackboost-for-supportcandy' ),
+						'<a href="' . esc_url( admin_url( 'admin.php?page=wpsc-general-settings' ) ) . '">' . esc_html__( 'SupportCandy General Settings', 'stackboost-for-supportcandy' ) . '</a>'
+					);
+					?>
+				</p>
+			</div>
+			<?php
 		}
 	}
 
@@ -930,20 +962,25 @@ class WordPress {
 			// Check for 'from=ticket' context.
 			if ( isset( $_GET['from'] ) && 'ticket' === $_GET['from'] && isset( $_GET['ticket_id'] ) ) {
 				$ticket_id = absint( $_GET['ticket_id'] );
+
+				// Attempt to get URL from SupportCandy function first.
+				$ticket_url = '';
 				if ( $ticket_id > 0 && class_exists( 'WPSC_Functions' ) ) {
-					// Use the SupportCandy helper to get the correct URL (backend or frontend).
 					$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
+				}
 
-					if ( function_exists( 'stackboost_log' ) ) {
-						stackboost_log( "add_back_button: GET params: " . print_r( $_GET, true ), 'directory' );
-						stackboost_log( "add_back_button: Generated Ticket URL: $ticket_url", 'directory' );
-						stackboost_log( "add_back_button: Referer: " . wp_get_referer(), 'directory' );
+				// Fallback: Check Referer if SC function failed or returned backend URL when we might want frontend.
+				// Note: We use Referer as a strong hint because the user clicked a link to get here.
+				if ( empty( $ticket_url ) || strpos( $ticket_url, 'wp-admin' ) !== false ) {
+					$referer = wp_get_referer();
+					if ( $referer && ( strpos( $referer, 'ticket-id=' . $ticket_id ) !== false || strpos( $referer, '&id=' . $ticket_id ) !== false ) ) {
+						$ticket_url = $referer;
 					}
+				}
 
-					if ( ! empty( $ticket_url ) ) {
-						$link = $ticket_url;
-						$text = __( 'Back to Ticket', 'stackboost-for-supportcandy' );
-					}
+				if ( ! empty( $ticket_url ) ) {
+					$link = $ticket_url;
+					$text = __( 'Back to Ticket', 'stackboost-for-supportcandy' );
 				}
 			}
 
