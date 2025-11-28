@@ -156,9 +156,9 @@ class DepartmentsListTable extends \WP_List_Table {
 	}
 
 	/**
-	 * Process bulk actions.
+	 * Process single row actions.
 	 */
-	public function process_bulk_action() {
+	public function process_actions() {
 		$action = $this->current_action();
 		if ( ! $action ) {
 			return;
@@ -200,6 +200,16 @@ class DepartmentsListTable extends \WP_List_Table {
 			// Redirect to remove the arguments from the URL.
 			wp_safe_redirect( admin_url( 'admin.php?page=stackboost-directory&tab=departments' . ( 'trash' === ( $_REQUEST['post_status'] ?? '' ) ? '&post_status=trash' : '' ) ) );
 			exit;
+		}
+	}
+
+	/**
+	 * Process bulk actions.
+	 */
+	public function process_bulk_action() {
+		$action = $this->current_action();
+		if ( ! $action ) {
+			return;
 		}
 
 		// Handle bulk actions (POST requests).

@@ -86,6 +86,9 @@ class WordPress {
 
 		// Add "Back to Directory" button on CPT edit screens.
 		add_action( 'edit_form_top', array( $this, 'add_back_button' ) );
+
+		// Handle directory actions early.
+		add_action( 'admin_init', array( $this, 'handle_directory_actions' ) );
 	}
 
 	/**
@@ -314,6 +317,39 @@ class WordPress {
 				\STACKBOOST_VERSION,
 				true
 			);
+		}
+	}
+
+	/**
+	 * Handle directory list table actions (trash, delete, restore).
+	 *
+	 * This method is hooked to admin_init to ensure actions are processed
+	 * and redirects occur before any headers are sent.
+	 */
+	public function handle_directory_actions() {
+		if ( ! isset( $_GET['page'] ) || 'stackboost-directory' !== $_GET['page'] ) {
+			return;
+		}
+
+		if ( ! isset( $_GET['action'] ) || ! in_array( $_GET['action'], array( 'trash', 'untrash', 'delete' ), true ) ) {
+			return;
+		}
+
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
+
+		switch ( $active_tab ) {
+			case 'staff':
+				$table = new StaffListTable( $this->core->cpts->post_type );
+				$table->process_actions();
+				break;
+			case 'locations':
+				$table = new LocationsListTable( $this->core->cpts->location_post_type );
+				$table->process_actions();
+				break;
+			case 'departments':
+				$table = new DepartmentsListTable( $this->core->cpts->department_post_type );
+				$table->process_actions();
+				break;
 		}
 	}
 
