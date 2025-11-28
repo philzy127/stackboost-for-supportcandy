@@ -176,14 +176,6 @@ class WordPress {
 
 			// Dequeue conflicting block editor scripts.
 			$this->dequeue_conflicting_scripts();
-
-			// Diagnostic logging for scripts.
-			if ( function_exists( 'stackboost_log' ) ) {
-				global $wp_scripts;
-				if ( isset( $wp_scripts ) && isset( $wp_scripts->queue ) ) {
-					stackboost_log( 'Directory CPT Scripts Queue: ' . print_r( $wp_scripts->queue, true ), 'directory' );
-				}
-			}
 		}
 
 		// Enqueue scripts for the main directory admin page.
@@ -964,6 +956,10 @@ class WordPress {
 			'wp-block-library',
 			'wp-block-library-theme',
 			'wc-block-style', // WooCommerce blocks
+			'betterdocs-categorygrid',
+			'betterdocs-search-modal',
+			'betterdocs-blocks-actions',
+			'betterdocs-code-snippet',
 		];
 
 		foreach ( $handles as $handle ) {
