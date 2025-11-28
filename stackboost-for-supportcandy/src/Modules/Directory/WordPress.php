@@ -933,6 +933,13 @@ class WordPress {
 				if ( $ticket_id > 0 && class_exists( 'WPSC_Functions' ) ) {
 					// Use the SupportCandy helper to get the correct URL (backend or frontend).
 					$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
+
+					if ( function_exists( 'stackboost_log' ) ) {
+						stackboost_log( "add_back_button: GET params: " . print_r( $_GET, true ), 'directory' );
+						stackboost_log( "add_back_button: Generated Ticket URL: $ticket_url", 'directory' );
+						stackboost_log( "add_back_button: Referer: " . wp_get_referer(), 'directory' );
+					}
+
 					if ( ! empty( $ticket_url ) ) {
 						$link = $ticket_url;
 						$text = __( 'Back to Ticket', 'stackboost-for-supportcandy' );
