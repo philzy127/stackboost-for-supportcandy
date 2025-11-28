@@ -80,6 +80,12 @@ class WordPress {
 
 		// Filter for redirecting after post update.
 		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
+
+		// Fix menu highlighting for CPTs.
+		add_filter( 'parent_file', array( $this, 'highlight_admin_menu' ) );
+
+		// Add "Back to Directory" button on CPT edit screens.
+		add_action( 'edit_form_top', array( $this, 'add_back_button' ) );
 	}
 
 	/**
@@ -823,6 +829,53 @@ class WordPress {
 			$log_message .= "Line: " . $e->getLine() . "\n";
 			file_put_contents( $log_file, $log_message, FILE_APPEND );
 			return;
+		}
+	}
+
+	/**
+	 * Highlight the correct admin menu item for CPTs.
+	 *
+	 * @param string $parent_file The parent file name.
+	 * @return string
+	 */
+	public function highlight_admin_menu( $parent_file ) {
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return $parent_file;
+		}
+
+		if ( in_array( $screen->post_type, [ $this->core->cpts->post_type, $this->core->cpts->location_post_type, $this->core->cpts->department_post_type ], true ) ) {
+			return 'stackboost-directory';
+		}
+
+		return $parent_file;
+	}
+
+	/**
+	 * Add a "Back to Directory" button to the top of the edit form.
+	 */
+	public function add_back_button() {
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
+
+		$tab_map = [
+			$this->core->cpts->post_type            => 'staff',
+			$this->core->cpts->location_post_type   => 'locations',
+			$this->core->cpts->department_post_type => 'departments',
+		];
+
+		if ( isset( $tab_map[ $screen->post_type ] ) ) {
+			$tab  = $tab_map[ $screen->post_type ];
+			$link = admin_url( 'admin.php?page=stackboost-directory&tab=' . $tab );
+			?>
+			<div style="margin-bottom: 20px;">
+				<a href="<?php echo esc_url( $link ); ?>" class="button">
+					&larr; <?php esc_html_e( 'Back to Directory', 'stackboost-for-supportcandy' ); ?>
+				</a>
+			</div>
+			<?php
 		}
 	}
 

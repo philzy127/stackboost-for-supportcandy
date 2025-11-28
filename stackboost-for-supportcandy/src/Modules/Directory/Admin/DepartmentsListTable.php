@@ -163,29 +163,71 @@ class DepartmentsListTable extends \WP_List_Table {
 		if ( ! $action ) {
 			return;
 		}
-		$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( (array) $_REQUEST['post'] ) : array();
-		if ( empty( $post_ids ) ) {
-			return;
+
+		// Handle single row actions (GET requests).
+		if ( isset( $_GET['post'] ) && ! is_array( $_GET['post'] ) ) {
+			$post_id = absint( $_GET['post'] );
+			if ( ! $post_id ) {
+				return;
+			}
+
+			// Verify the nonce for single actions.
+			$nonce_action = '';
+			if ( 'trash' === $action ) {
+				$nonce_action = 'trash-post_' . $post_id;
+			} elseif ( 'untrash' === $action ) {
+				$nonce_action = 'untrash-post_' . $post_id;
+			} elseif ( 'delete' === $action ) {
+				$nonce_action = 'delete-post_' . $post_id;
+			}
+
+			if ( $nonce_action && ! check_admin_referer( $nonce_action ) ) {
+				wp_die( esc_html__( 'Security check failed.', 'stackboost-for-supportcandy' ) );
+			}
+
+			switch ( $action ) {
+				case 'trash':
+					wp_trash_post( $post_id );
+					break;
+				case 'untrash':
+					wp_untrash_post( $post_id );
+					break;
+				case 'delete':
+					wp_delete_post( $post_id, true );
+					break;
+			}
+
+			// Redirect to remove the arguments from the URL.
+			wp_safe_redirect( admin_url( 'admin.php?page=stackboost-directory&tab=departments' . ( 'trash' === ( $_REQUEST['post_status'] ?? '' ) ? '&post_status=trash' : '' ) ) );
+			exit;
 		}
 
-		check_admin_referer( 'bulk-' . $this->_args['plural'] );
+		// Handle bulk actions (POST requests).
+		if ( isset( $_REQUEST['post'] ) && is_array( $_REQUEST['post'] ) ) {
+			$post_ids = wp_parse_id_list( (array) $_REQUEST['post'] );
+			if ( empty( $post_ids ) ) {
+				return;
+			}
 
-		switch ( $action ) {
-			case 'trash':
-				foreach ( $post_ids as $post_id ) {
-					wp_trash_post( $post_id );
-				}
-				break;
-			case 'untrash':
-				foreach ( $post_ids as $post_id ) {
-					wp_untrash_post( $post_id );
-				}
-				break;
-			case 'delete':
-				foreach ( $post_ids as $post_id ) {
-					wp_delete_post( $post_id, true );
-				}
-				break;
+			check_admin_referer( 'bulk-' . $this->_args['plural'] );
+
+			switch ( $action ) {
+				case 'trash':
+					foreach ( $post_ids as $post_id ) {
+						wp_trash_post( $post_id );
+					}
+					break;
+				case 'untrash':
+					foreach ( $post_ids as $post_id ) {
+						wp_untrash_post( $post_id );
+					}
+					break;
+				case 'delete':
+					foreach ( $post_ids as $post_id ) {
+						wp_delete_post( $post_id, true );
+					}
+					break;
+			}
 		}
 	}
 
