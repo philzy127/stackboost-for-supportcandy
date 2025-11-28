@@ -84,8 +84,6 @@ class MetaBoxes {
 	 * @param \WP_Post $post The current post object.
 	 */
 	public function render_directory_meta_box( $post ) {
-		wp_nonce_field( 'sb_staff_dir_meta_box', 'sb_staff_dir_meta_box_nonce' );
-
 		$current_screen    = get_current_screen();
 		$is_add_new_screen = ( $current_screen && 'add' === $current_screen->action );
 
@@ -206,8 +204,6 @@ class MetaBoxes {
 	 * @param \WP_Post $post The current post object.
 	 */
 	public function render_location_details_meta_box( $post ) {
-		wp_nonce_field( 'sb_location_details_meta_box', 'sb_location_details_meta_box_nonce' );
-
 		$address_line1               = get_post_meta( $post->ID, '_address_line1', true );
 		$city                        = get_post_meta( $post->ID, '_city', true );
 		$state                       = get_post_meta( $post->ID, '_state', true );

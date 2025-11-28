@@ -86,7 +86,11 @@ class WordPress {
 		add_filter( 'submenu_file', array( $this, 'fix_cpt_submenu_menu' ) );
 
 		// Add "Back to Directory" button on CPT edit screens.
-		add_action( 'edit_form_top', array( $this, 'add_back_button' ) );
+		// Use edit_form_after_title to ensure it renders inside the form but before meta boxes.
+		add_action( 'edit_form_after_title', array( $this, 'add_back_button' ) );
+
+		// Output nonces for the staff edit form.
+		add_action( 'edit_form_after_title', array( $this, 'output_staff_edit_nonces' ) );
 
 		// Handle directory actions early.
 		add_action( 'admin_init', array( $this, 'handle_directory_actions' ) );
@@ -169,6 +173,9 @@ class WordPress {
 				\STACKBOOST_VERSION,
 				true
 			);
+
+			// Dequeue conflicting block editor scripts.
+			$this->dequeue_conflicting_scripts();
 		}
 
 		// Enqueue scripts for the main directory admin page.
@@ -937,6 +944,40 @@ class WordPress {
 		}
 
 		return $submenu_file;
+	}
+
+	/**
+	 * Dequeue conflicting block editor scripts.
+	 */
+	public function dequeue_conflicting_scripts() {
+		$handles = [
+			'kadence-blocks-style-handler',
+			'kadence-blocks-js',
+			'wp-block-library',
+			'wp-block-library-theme',
+			'wc-block-style', // WooCommerce blocks
+		];
+
+		foreach ( $handles as $handle ) {
+			wp_dequeue_script( $handle );
+			wp_dequeue_style( $handle );
+		}
+	}
+
+	/**
+	 * Output nonces for the staff edit form.
+	 */
+	public function output_staff_edit_nonces() {
+		$screen = get_current_screen();
+		if ( ! $screen || 'post' !== $screen->base ) {
+			return;
+		}
+
+		if ( $this->core->cpts->post_type === $screen->post_type ) {
+			wp_nonce_field( 'sb_staff_dir_meta_box', 'sb_staff_dir_meta_box_nonce' );
+		} elseif ( $this->core->cpts->location_post_type === $screen->post_type ) {
+			wp_nonce_field( 'sb_location_details_meta_box', 'sb_location_details_meta_box_nonce' );
+		}
 	}
 
 	/**
