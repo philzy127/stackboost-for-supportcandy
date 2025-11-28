@@ -82,7 +82,8 @@ class WordPress {
 		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
 
 		// Fix menu highlighting for CPTs.
-		add_filter( 'parent_file', array( $this, 'highlight_admin_menu' ) );
+		add_filter( 'parent_file', array( $this, 'fix_cpt_parent_menu' ) );
+		add_filter( 'submenu_file', array( $this, 'fix_cpt_submenu_menu' ) );
 
 		// Add "Back to Directory" button on CPT edit screens.
 		add_action( 'edit_form_top', array( $this, 'add_back_button' ) );
@@ -869,22 +870,41 @@ class WordPress {
 	}
 
 	/**
-	 * Highlight the correct admin menu item for CPTs.
+	 * Fix the parent menu highlighting for CPTs.
 	 *
 	 * @param string $parent_file The parent file name.
 	 * @return string
 	 */
-	public function highlight_admin_menu( $parent_file ) {
+	public function fix_cpt_parent_menu( $parent_file ) {
 		$screen = get_current_screen();
 		if ( ! $screen ) {
 			return $parent_file;
 		}
 
 		if ( in_array( $screen->post_type, [ $this->core->cpts->post_type, $this->core->cpts->location_post_type, $this->core->cpts->department_post_type ], true ) ) {
-			return 'stackboost-directory';
+			return 'stackboost-for-supportcandy';
 		}
 
 		return $parent_file;
+	}
+
+	/**
+	 * Fix the submenu highlighting for CPTs.
+	 *
+	 * @param string $submenu_file The submenu file name.
+	 * @return string
+	 */
+	public function fix_cpt_submenu_menu( $submenu_file ) {
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return $submenu_file;
+		}
+
+		if ( in_array( $screen->post_type, [ $this->core->cpts->post_type, $this->core->cpts->location_post_type, $this->core->cpts->department_post_type ], true ) ) {
+			return 'stackboost-directory';
+		}
+
+		return $submenu_file;
 	}
 
 	/**
