@@ -925,10 +925,25 @@ class WordPress {
 		if ( isset( $tab_map[ $screen->post_type ] ) ) {
 			$tab  = $tab_map[ $screen->post_type ];
 			$link = admin_url( 'admin.php?page=stackboost-directory&tab=' . $tab );
+			$text = __( 'Back to Directory', 'stackboost-for-supportcandy' );
+
+			// Check for 'from=ticket' context.
+			if ( isset( $_GET['from'] ) && 'ticket' === $_GET['from'] && isset( $_GET['ticket_id'] ) ) {
+				$ticket_id = absint( $_GET['ticket_id'] );
+				if ( $ticket_id > 0 && class_exists( 'WPSC_Functions' ) ) {
+					// Use the SupportCandy helper to get the correct URL (backend or frontend).
+					$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
+					if ( ! empty( $ticket_url ) ) {
+						$link = $ticket_url;
+						$text = __( 'Back to Ticket', 'stackboost-for-supportcandy' );
+					}
+				}
+			}
+
 			?>
 			<div style="margin-bottom: 20px;">
 				<a href="<?php echo esc_url( $link ); ?>" class="button">
-					&larr; <?php esc_html_e( 'Back to Directory', 'stackboost-for-supportcandy' ); ?>
+					&larr; <?php echo esc_html( $text ); ?>
 				</a>
 			</div>
 			<?php
