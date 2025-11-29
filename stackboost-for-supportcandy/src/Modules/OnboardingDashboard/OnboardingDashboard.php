@@ -46,7 +46,6 @@ class OnboardingDashboard {
 			Admin\Staff::init();
 			Admin\ImportExport::init();
 			Admin\Settings::init();
-			Admin\TicketSearch::init();
 		}
 
 		// Load Shortcodes

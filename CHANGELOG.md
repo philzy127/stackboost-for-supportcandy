@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Certificate Customization:** Added a new "Certificate" tab to the Onboarding Dashboard settings. Administrators can now customize the "Company Name", "Opening Statement", and "Footer Text" for the PDF certificate.
+- **Dynamic Certificate Placeholders:** Supported placeholders (`[Trainer Name]`, `[Staff Name]`, `[Date]`) in all certificate text fields for personalized output.
+- **Unified Logging System:** Implemented a new client-side logging utility (`stackboost_client_log`) that captures console events and sends them to the server-side log, allowing centralized debugging of frontend issues.
+
+### Fixed
+- **Empty PDF Checklist:** Resolved a critical bug where checklist items were rendering as invisible in the PDF certificate. The fix involved updating the HTML structure to use `<div>` blocks instead of `<ul>`/`<li>` and enforcing high-contrast text styles (`color: #000`, `font-size: 10pt`) to overcome Dompdf rendering limitations.
+- **Bracketed Text Handling:** Fixed a regex issue where checklist items wrapped entirely in brackets (e.g., `[Task Name]`) were being stripped completely. The parser now intelligently preserves the text inside.
+
+### Changed
+- **API Removal:** Completely removed all legacy API integration components (`ApiSettings.php`, `TicketSearch.php`) and their corresponding UI tabs from the Onboarding Dashboard, as the plugin no longer relies on external services.
+- **Default Certificate Text:** Updated the default Opening Statement to remove "IT", making it more generic: "New Staffmember has completed Onboarding Training...".
+- **Settings Architecture:** Enhanced the settings sanitization logic to merge partial updates, preventing data loss when saving settings from the isolated "Certificate" tab.
+
 ## [1.2.5] - 2025-11-08
 
 ### Fixed

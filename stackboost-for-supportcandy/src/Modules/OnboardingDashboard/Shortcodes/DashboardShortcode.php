@@ -40,6 +40,12 @@ class DashboardShortcode {
 			);
 
 			// Localize Data
+			$debug_enabled = false;
+			$general_settings = get_option( 'stackboost_settings', [] );
+			if ( isset( $general_settings['diagnostic_log_enabled'] ) && $general_settings['diagnostic_log_enabled'] ) {
+				$debug_enabled = true;
+			}
+
 			$sequence_ids = get_option( 'stackboost_onboarding_sequence', [] );
 			if ( empty( $sequence_ids ) ) {
 				$defaults = get_posts([
@@ -101,21 +107,34 @@ class DashboardShortcode {
 			// Fetch This Week Attendees
 			$this_week_attendees = [];
 
-			// Rely on the cache populated by Staff::render_page().
-			// If cache is missing, we can try to fetch fresh if WPSC classes are available,
-			// but for frontend performance we prefer cache.
-			$cached = get_transient( 'stackboost_onboarding_tickets_cache' );
+			// Fetch fresh data directly using TicketService (no cache)
+			$tickets_data = \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Data\TicketService::get_onboarding_tickets();
 
-			// If cache exists, use it.
-			if ( $cached && ! is_wp_error( $cached ) && isset( $cached['data']['this_week_onboarding'] ) ) {
-				foreach ( $cached['data']['this_week_onboarding'] as $t ) {
+			if ( ! is_wp_error( $tickets_data ) && isset( $tickets_data['this_week_onboarding'] ) ) {
+				$count = count( $tickets_data['this_week_onboarding'] );
+				stackboost_log( "Frontend Dashboard: Found {$count} attendees for this week.", 'onboarding' );
+
+				$config = \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Settings::get_config();
+				$name_field_key = $config['field_staff_name'] ?? '';
+
+				foreach ( $tickets_data['this_week_onboarding'] as $t ) {
 					if ( ! empty( $t['id'] ) ) {
+						// Use configured name field, fallback to subject, then ID.
+						$name_val = '';
+						if ( ! empty( $name_field_key ) && ! empty( $t[ $name_field_key ] ) ) {
+							$name_val = $t[ $name_field_key ];
+						} else {
+							$name_val = $t['subject'] ?? $t['id'];
+						}
+
 						$this_week_attendees[] = [
 							'id'   => $t['id'],
-							'name' => esc_html( $t['cust_43'] ?? 'Unknown' ),
+							'name' => esc_html( $name_val ),
 						];
 					}
 				}
+			} else {
+				stackboost_log( "Frontend Dashboard: Failed to fetch attendees or no data returned. Error: " . ( is_wp_error( $tickets_data ) ? $tickets_data->get_error_message() : 'None' ), 'error' );
 			}
 
 			wp_localize_script( 'stackboost-onboarding-dashboard', 'odbDashboardVars', [
@@ -128,6 +147,7 @@ class DashboardShortcode {
 				'completionStepId' => 'completion',
 				'ajaxurl' => admin_url( 'admin-ajax.php' ),
 				'sendCertificatesNonce' => wp_create_nonce( 'stkb_onboarding_certificate_nonce' ),
+				'debugEnabled' => $debug_enabled,
 			]);
 		}
 	}

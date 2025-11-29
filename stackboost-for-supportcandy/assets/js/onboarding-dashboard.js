@@ -60,7 +60,7 @@ jQuery(document).ready(function($) {
 
     // Basic check to ensure localization data is available.
     if (typeof odbDashboardVars === 'undefined' || !odbDashboardVars.fullSequence || odbDashboardVars.fullSequence.length === 0) {
-        console.warn('ODB: Localization data (odbDashboardVars) is missing or incomplete. Checklist and navigation may not function correctly.');
+        stackboost_client_log('Localization data (odbDashboardVars) is missing or incomplete.', 'warning');
         return;
     }
 
@@ -79,6 +79,19 @@ jQuery(document).ready(function($) {
     const $completionStatusMessage = $('.onboarding-completion-status-message'); // Select status message
     const $navigationContainer = $('.onboarding-navigation'); // Select navigation container
 
+    // --- Logging Helper ---
+    function stackboost_client_log(message, context = 'onboarding_js') {
+        if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
+            console.log(`[StackBoost ${context}]`, message);
+            // Send to server
+            $.post(odbDashboardVars.ajaxurl, {
+                action: 'stackboost_log_client_event',
+                message: message,
+                context: context,
+                nonce: odbDashboardVars.sendCertificatesNonce // reusing nonce for simplicity or create a generic one
+            });
+        }
+    }
 
     // --- Initial Display Logic based on current step ---
     if (isCurrentlyOnCompletionStage) {
@@ -115,12 +128,12 @@ jQuery(document).ready(function($) {
     function loadChecklistStatus() {
         // Only load checklist status if it's a regular step, not the completion stage
         if (isCurrentlyOnCompletionStage || !currentStepId || !$checklistContainer.length) {
-            console.log('ODB: Skipping loadChecklistStatus. On completion stage, no currentStepId, or no checklist container.');
+            stackboost_client_log('Skipping loadChecklistStatus. On completion stage, no currentStepId, or no checklist container.');
             return;
         }
         const localStorageKey = `odb_checklist_step_${currentStepId}`;
         const savedStatus = JSON.parse(localStorage.getItem(localStorageKey)) || {};
-        console.log(`ODB: Loading checklist status for step ID '${currentStepId}' from key '${localStorageKey}'. Status found:`, savedStatus);
+        stackboost_client_log(`Loading checklist status for step ID '${currentStepId}' from key '${localStorageKey}'. Status found: ` + JSON.stringify(savedStatus));
 
 
         $checklistContainer.find('li').each(function() {
@@ -142,7 +155,7 @@ jQuery(document).ready(function($) {
     function saveChecklistStatus() {
         // Only save checklist status if it's a regular step, not the completion stage
         if (isCurrentlyOnCompletionStage || !currentStepId || !$checklistContainer.length) {
-            console.log('ODB: Skipping saveChecklistStatus. On completion stage, no currentStepId, or no checklist container.');
+            stackboost_client_log('Skipping saveChecklistStatus. On completion stage, no currentStepId, or no checklist container.');
             return;
         }
         const savedStatus = {};
@@ -152,7 +165,7 @@ jQuery(document).ready(function($) {
         });
         const localStorageKey = `odb_checklist_step_${currentStepId}`;
         localStorage.setItem(localStorageKey, JSON.stringify(savedStatus));
-        console.log(`ODB: Saved checklist status for step ID '${currentStepId}' to key '${localStorageKey}'.`, savedStatus);
+        stackboost_client_log(`Saved checklist status for step ID '${currentStepId}' to key '${localStorageKey}'. Data: ` + JSON.stringify(savedStatus));
     }
 
     /**
@@ -165,7 +178,8 @@ jQuery(document).ready(function($) {
             return; // Buttons on completion stage have different logic
         }
 
-        const totalItems = odbDashboardVars.checklistItems.length;
+        // Count total items from the DOM to match the checked items count source
+        const totalItems = $checklistContainer.find('li').length;
         const checkedItems = $checklistContainer.find('li.completed').length;
 
         // Determine if this is the last *real* step before the virtual completion step
@@ -236,7 +250,7 @@ jQuery(document).ready(function($) {
         // Add a change listener to the checkboxes in the attendee list
         $attendeesSelection.on('change', 'input[type="checkbox"]', function() {
             // This handler is currently empty, but kept for potential future logic.
-            console.log(`ODB: Attendee checkbox changed for ID: ${$(this).val()}, Name: ${$(this).data('name')}, Checked: ${$(this).is(':checked')}`);
+            stackboost_client_log(`Attendee checkbox changed for ID: ${$(this).val()}, Name: ${$(this).data('name')}, Checked: ${$(this).is(':checked')}`);
         });
     }
 
@@ -274,10 +288,10 @@ jQuery(document).ready(function($) {
                     const correctedPermalink = nextStep.permalink.replace(/&#038;/g, '&');
                     window.location.href = correctedPermalink;
                 } else {
-                    console.error('ODB: Next step permalink not found or invalid for step index:', nextStepIndex);
+                    stackboost_client_log('Next step permalink not found or invalid for step index: ' + nextStepIndex, 'error');
                 }
             } else {
-                console.warn('ODB: Attempted to navigate past the last available step.');
+                stackboost_client_log('Attempted to navigate past the last available step.', 'warning');
             }
         }
     });
@@ -337,17 +351,20 @@ jQuery(document).ready(function($) {
         $sendCertificatesButton.prop('disabled', true).text('Sending...');
 
         // Make AJAX call to WordPress backend
+        stackboost_client_log(`Sending certificates for ${presentAttendees.length} attendees.`);
+
         $.ajax({
             url: odbDashboardVars.ajaxurl, // WordPress AJAX URL
             type: 'POST',
             data: {
-                action: 'odb_send_certificates', // Our custom AJAX action
+                action: 'stackboost_onboarding_send_certificates', // Our custom AJAX action
                 nonce: odbDashboardVars.sendCertificatesNonce, // Security nonce
                 present_attendees: JSON.stringify(presentAttendees),
                 not_present_attendees: JSON.stringify(notPresentAttendees) // Send not present for logging/future use
             },
             success: function(response) {
                 if (response.success) {
+                    stackboost_client_log('Certificate generation successful.');
                     let successCount = 0;
                     let errorCount = 0;
                     let messages = [];
@@ -382,17 +399,17 @@ jQuery(document).ready(function($) {
 
                     // Clear local storage for all steps after successful processing
                     let keysToRemove = [];
-                    console.log('ODB: Attempting to clear all onboarding checklist local storage keys.');
+                    stackboost_client_log('Attempting to clear all onboarding checklist local storage keys.');
                     for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
                         if (key && key.startsWith('odb_checklist_step_')) { // Added 'key' existence check
                             keysToRemove.push(key);
                         }
                     }
-                    console.log('ODB: Keys identified for removal:', keysToRemove);
+                    stackboost_client_log('Keys identified for removal: ' + JSON.stringify(keysToRemove));
                     keysToRemove.forEach(key => {
                         localStorage.removeItem(key);
-                        console.log(`ODB: Removed local storage key: ${key}`);
+                        stackboost_client_log(`Removed local storage key: ${key}`);
                     });
 
                     // --- IMPORTANT: To ensure checkboxes are visually cleared immediately if user navigates back,
@@ -406,12 +423,12 @@ jQuery(document).ready(function($) {
                     // This is commented out as it changes navigation flow, but is a common pattern for "completion".
 
                 } else {
-                    console.error('ODB: AJAX response success was false:', response.data);
+                    stackboost_client_log('Certificate generation failed: ' + JSON.stringify(response.data), 'error');
                     $completionStatusMessage.text('Error sending certificates: ' + (response.data || 'Unknown error.')).removeClass('notice-success').addClass('notice-error').fadeIn();
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                console.error('ODB: AJAX request failed:', textStatus, errorThrown, jqXHR);
+                stackboost_client_log('AJAX request failed: ' + textStatus + ' - ' + errorThrown, 'error');
                 $completionStatusMessage.text('AJAX request failed: ' + textStatus).removeClass('notice-success').addClass('notice-error').fadeIn();
             },
             complete: function() {

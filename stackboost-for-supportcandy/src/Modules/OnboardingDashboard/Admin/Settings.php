@@ -106,6 +106,13 @@ class Settings {
 			null,
 			'stackboost-onboarding-general'
 		);
+
+		add_settings_section(
+			'stkb_onboarding_certificate_section',
+			__( 'Certificate Configuration', 'stackboost-for-supportcandy' ),
+			null,
+			'stackboost-onboarding-certificate'
+		);
 	}
 
 	/**
@@ -115,7 +122,10 @@ class Settings {
 		// Flush the cache whenever settings are saved.
 		delete_transient( 'stackboost_onboarding_tickets_cache' );
 
-		$output = [];
+		// Merge with existing options to prevent overwriting missing keys (e.g., from different tabs)
+		$existing_options = get_option( self::OPTION_NAME, [] );
+		$output = is_array( $existing_options ) ? $existing_options : [];
+
 		if ( is_array( $input ) ) {
 			foreach ( $input as $key => $value ) {
 				if ( 'rename_rules' === $key ) {
@@ -153,6 +163,15 @@ class Settings {
 					} else {
 						$output[ $key ] = [];
 					}
+				} elseif ( in_array( $key, ['certificate_opening_text', 'certificate_footer_text'] ) ) {
+					// Allow minor HTML or specific formatting if needed, but text_field for now is safer.
+					// Opening text and footer text are single line or simple text usually.
+					// Textarea for opening text though.
+					if ( 'certificate_opening_text' === $key ) {
+						$output[ $key ] = sanitize_textarea_field( $value );
+					} else {
+						$output[ $key ] = sanitize_text_field( $value );
+					}
 				} elseif ( is_array( $value ) ) {
 					$output[ sanitize_key( $key ) ] = array_map( 'sanitize_text_field', $value );
 				} else {
@@ -175,6 +194,7 @@ class Settings {
 			'request_type_field'    => '',
 			'request_type_id'       => '',
 			'inactive_statuses'     => [],
+			'field_staff_name'      => '', // New Name Field
 			'field_onboarding_date' => '',
 			'field_cleared'         => '',
 
@@ -189,6 +209,11 @@ class Settings {
 			// Display Columns
 			'table_columns'         => [], // Array of slugs
 			'rename_rules'          => [], // Array of rules
+
+			// Certificate Customization
+			'certificate_company_name' => get_bloginfo( 'name' ),
+			'certificate_opening_text' => 'New Staffmember has completed Onboarding Training with [Trainer Name] and has been present for:',
+			'certificate_footer_text'  => 'Completed: [Date] - [Trainer Name]',
 		];
 
 		// Check for migration necessity
@@ -229,7 +254,7 @@ class Settings {
 	 */
 	public static function enqueue_assets() {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : '';
-		if ( 'settings' !== $tab ) {
+		if ( 'settings' !== $tab && 'certificate' !== $tab ) {
 			return;
 		}
 
@@ -270,6 +295,7 @@ class Settings {
 
 		// Logic Fields Group
 		$logic_fields = [
+			'field_staff_name'      => __( 'Staff Name Field', 'stackboost-for-supportcandy' ),
 			'field_onboarding_date' => __( 'Onboarding Date Field', 'stackboost-for-supportcandy' ),
 			'field_cleared'         => __( 'Onboarding Cleared Field', 'stackboost-for-supportcandy' ),
 		];
@@ -289,16 +315,16 @@ class Settings {
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( self::OPTION_GROUP );
-				do_settings_sections( 'stackboost-onboarding-general' );
 				?>
 
 				<!-- General Configuration -->
 				<h3><?php esc_html_e( 'General Configuration', 'stackboost-for-supportcandy' ); ?></h3>
+				<p><?php esc_html_e( 'Identify the critical fields required for the onboarding logic.', 'stackboost-for-supportcandy' ); ?></p>
 				<table class="form-table">
 					<tr>
 						<th scope="row"><label for="stkb_req_type"><?php esc_html_e( 'Request Type Field', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_field]" id="stkb_req_type">
+							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_field]" id="stkb_req_type" class="stackboost-ajax-field-selector" data-target="#stkb_req_id">
 								<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
 								<?php foreach ( $sc_fields as $key => $label ) : ?>
 									<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $config['request_type_field'], $key ); ?>>
@@ -487,6 +513,59 @@ class Settings {
 				<button type="button" class="button stkb-remove-phone-row" title="Remove"><span class="dashicons dashicons-trash"></span></button>
 			</div>
 		</script>
+		<?php
+	}
+
+	/**
+	 * Render the Certificate Settings page.
+	 */
+	public static function render_certificate_page() {
+		self::enqueue_assets();
+
+		if ( isset( $_GET['settings-updated'] ) ) {
+			add_settings_error( 'stackboost_messages', 'stackboost_message', __( 'Settings Saved', 'stackboost-for-supportcandy' ), 'updated' );
+		}
+		settings_errors( 'stackboost_messages' );
+
+		$config = self::get_config();
+
+		?>
+		<div class="wrap">
+			<h2><?php esc_html_e( 'Certificate Configuration', 'stackboost-for-supportcandy' ); ?></h2>
+			<form action="options.php" method="post">
+				<?php
+				settings_fields( self::OPTION_GROUP );
+				?>
+
+				<h3><?php esc_html_e( 'Certificate Details', 'stackboost-for-supportcandy' ); ?></h3>
+				<p><?php esc_html_e( 'Customize the text that appears on the onboarding certificate.', 'stackboost-for-supportcandy' ); ?></p>
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="stkb_cert_company"><?php esc_html_e( 'Company Name', 'stackboost-for-supportcandy' ); ?></label></th>
+						<td>
+							<input type="text" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[certificate_company_name]" id="stkb_cert_company" class="regular-text" value="<?php echo esc_attr( $config['certificate_company_name'] ); ?>">
+							<p class="description"><?php esc_html_e( 'The company name displayed in the header.', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="stkb_cert_opening"><?php esc_html_e( 'Opening Statement', 'stackboost-for-supportcandy' ); ?></label></th>
+						<td>
+							<textarea name="<?php echo esc_attr( self::OPTION_NAME ); ?>[certificate_opening_text]" id="stkb_cert_opening" rows="3" class="large-text"><?php echo esc_textarea( $config['certificate_opening_text'] ); ?></textarea>
+							<p class="description"><?php esc_html_e( 'Supported placeholders: [Trainer Name], [Staff Name], [Date]', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="stkb_cert_footer"><?php esc_html_e( 'Footer Text', 'stackboost-for-supportcandy' ); ?></label></th>
+						<td>
+							<input type="text" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[certificate_footer_text]" id="stkb_cert_footer" class="regular-text" style="width: 100%;" value="<?php echo esc_attr( $config['certificate_footer_text'] ); ?>">
+							<p class="description"><?php esc_html_e( 'Supported placeholders: [Trainer Name], [Staff Name], [Date]', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+
+				<?php submit_button(); ?>
+			</form>
+		</div>
 		<?php
 	}
 
