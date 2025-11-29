@@ -2,21 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.2.6] - 2025-11-10
 
 ### Added
-- **Certificate Customization:** Added a new "Certificate" tab to the Onboarding Dashboard settings. Administrators can now customize the "Company Name", "Opening Statement", and "Footer Text" for the PDF certificate.
-- **Dynamic Certificate Placeholders:** Supported placeholders (`[Trainer Name]`, `[Staff Name]`, `[Date]`) in all certificate text fields for personalized output.
-- **Unified Logging System:** Implemented a new client-side logging utility (`stackboost_client_log`) that captures console events and sends them to the server-side log, allowing centralized debugging of frontend issues.
-
-### Fixed
-- **Empty PDF Checklist:** Resolved a critical bug where checklist items were rendering as invisible in the PDF certificate. The fix involved updating the HTML structure to use `<div>` blocks instead of `<ul>`/`<li>` and enforcing high-contrast text styles (`color: #000`, `font-size: 10pt`) to overcome Dompdf rendering limitations.
-- **Bracketed Text Handling:** Fixed a regex issue where checklist items wrapped entirely in brackets (e.g., `[Task Name]`) were being stripped completely. The parser now intelligently preserves the text inside.
+- **Centralized Admin Menu:** The entire admin menu structure (both sidebar and top admin bar) is now managed by a single source of truth in `Settings::get_menu_config()`, ensuring consistent ordering and preventing module conflicts.
+- **AJAX Log Clearing:** The "Clear Log" button in the Tools section now uses AJAX to clear the debug log instantly without reloading the page, accompanied by a toast notification.
+- **Client-Side Logging:** Introduced a centralized `window.stackboost_log` utility for admin pages that respects the global "Enable Diagnostic Log" setting.
 
 ### Changed
-- **API Removal:** Completely removed all legacy API integration components (`ApiSettings.php`, `TicketSearch.php`) and their corresponding UI tabs from the Onboarding Dashboard, as the plugin no longer relies on external services.
-- **Default Certificate Text:** Updated the default Opening Statement to remove "IT", making it more generic: "New Staffmember has completed Onboarding Training...".
-- **Settings Architecture:** Enhanced the settings sanitization logic to merge partial updates, preventing data loss when saving settings from the isolated "Certificate" tab.
+- **Admin Menu Order:** Reordered the admin menu items to follow a logical workflow: General Settings, Ticket View, Conditional Views, After-Hours Notice, Queue Macro, Unified Ticket Macro, After Ticket Survey, Directory, Onboarding, Tools, and How To Use.
+- **Version Banner:** The SupportCandy version banner is now restricted to appear only on the main "General Settings" page, reducing visual clutter on other plugin screens.
+- **Menu Registration:** Removed decentralized menu registration code from individual modules (`Directory`, `Onboarding`, `UTM`, `ATS`) to support the new centralized architecture.
+
+### Fixed
+- **UTM Menu Visibility:** Fixed a bug where the "Unified Ticket Macro" menu item was hidden for "Pro" and "Business" users. It is now correctly enabled for the `plus` and `operations_suite` license tiers.
 
 ## [1.2.5] - 2025-11-08
 

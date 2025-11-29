@@ -97,59 +97,29 @@ final class Plugin {
 			'href'  => admin_url( 'admin.php?page=' . $main_menu_slug ),
 		] );
 
-		// Add submenu items.
-		$submenus = [
-			'settings'        => [
-				'title' => __( 'General Settings', 'stackboost-for-supportcandy' ),
-				'slug'  => $main_menu_slug,
-			],
-			'onboarding'      => [
-				'title' => __( 'Onboarding', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-onboarding-dashboard',
-			],
-			'ticket-view'     => [
-				'title' => __( 'Ticket View', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-ticket-view',
-			],
-			'conditional'     => [
-				'title' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-conditional-views',
-			],
-			'queue-macro'     => [
-				'title' => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-queue-macro',
-			],
-			'after-hours'     => [
-				'title' => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-after-hours',
-			],
-			'directory'       => [
-				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-directory',
-			],
-			'ats'             => [
-				'title' => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-ats-settings',
-			],
-			'tools'           => [
-				'title' => __( 'Tools', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-tools',
-			],
-			'how-to'          => [
-				'title' => __( 'How To Use', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-how-to-use',
-			],
-		];
+		// Fetch the centralized menu config.
+		$menu_config = Settings::get_instance()->get_menu_config();
 
-		foreach ( $submenus as $id => $menu ) {
-			// For CPTs, the URL structure is different.
-			$is_cpt = str_contains( $menu['slug'], '.php' );
-			$href   = $is_cpt ? admin_url( $menu['slug'] ) : admin_url( 'admin.php?page=' . $menu['slug'] );
+		foreach ( $menu_config as $index => $item ) {
+			// We skip the parent item since we added it manually above (or it could be duplicated if we are not careful).
+			// The config includes the general settings page which is also the parent page.
+			// The key difference is we want to use the 'menu_title' for the admin bar as it is shorter.
+
+			$slug = $item['slug'];
+			$title = $item['menu_title'];
+
+			// Unique ID for the admin bar node
+			$node_id = 'stackboost-' . sanitize_title( $title ) . '-' . $index;
+
+			// Determine the correct href
+			// For standard admin pages: admin.php?page=slug
+			// For CPT archives or others: slug might be full filename or URL
+			$href = str_contains( $slug, '.php' ) ? admin_url( $slug ) : admin_url( 'admin.php?page=' . $slug );
 
 			$wp_admin_bar->add_node( [
-				'id'     => 'stackboost-' . $id,
+				'id'     => $node_id,
 				'parent' => 'stackboost-menu',
-				'title'  => $menu['title'],
+				'title'  => $title,
 				'href'   => $href,
 			] );
 		}
@@ -238,6 +208,10 @@ final class Plugin {
 				STACKBOOST_VERSION,
 				true
 			);
+			// Check debug mode for centralized JS logging
+			$options = get_option( 'stackboost_settings', [] );
+			$debug_enabled = isset( $options['diagnostic_log_enabled'] ) ? (bool) $options['diagnostic_log_enabled'] : false;
+
 			wp_localize_script(
 				'stackboost-admin-common',
 				'stackboost_admin_ajax',
@@ -246,6 +220,7 @@ final class Plugin {
 					'nonce'              => wp_create_nonce( 'stackboost_admin_nonce' ),
 					'i18n_select_option' => __( '-- Select Option --', 'stackboost-for-supportcandy' ),
 					'i18n_loading'       => __( 'Loading...', 'stackboost-for-supportcandy' ),
+					'debug_enabled'      => $debug_enabled,
 				]
 			);
 		}

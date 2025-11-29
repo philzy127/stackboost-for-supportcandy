@@ -1,6 +1,20 @@
 jQuery(document).ready(function ($) {
     'use strict';
 
+    /**
+     * Central JS Logger.
+     * Checks if debug mode is enabled (passed via stackboost_admin_ajax) before logging.
+     */
+    window.stackboost_log = function(message, data) {
+        if (stackboost_admin_ajax && stackboost_admin_ajax.debug_enabled) {
+            if (data) {
+                console.log('[StackBoost]', message, data);
+            } else {
+                console.log('[StackBoost]', message);
+            }
+        }
+    };
+
     // Handle adding new rules for Conditional Views
     $('#stackboost-add-rule').on('click', function () {
         const rulesContainer = $('#stackboost-rules-container');
@@ -70,6 +84,42 @@ jQuery(document).ready(function ($) {
             }
         }).fail(function() {
             resultsContent.html('<p>An unexpected error occurred during the AJAX request.</p>');
+        });
+    });
+
+    // Handle clearing the diagnostic log via AJAX
+    $('#stackboost-clear-log-btn').on('click', function (e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const originalText = $btn.text();
+
+        if (!confirm('Are you sure you want to clear the diagnostic log?')) {
+            return;
+        }
+
+        $btn.text('Clearing...').prop('disabled', true);
+
+        $.post(stackboost_admin_ajax.ajax_url, {
+            action: 'stackboost_clear_log',
+            nonce: stackboost_admin_ajax.nonce
+        }, function (response) {
+            if (response.success) {
+                // Show a simple toast-like notice
+                const notice = $('<div class="notice notice-success is-dismissible"><p>' + response.data + '</p></div>');
+                $('.wrap > h1').after(notice);
+                // Auto-dismiss after 3 seconds
+                setTimeout(function () {
+                    notice.fadeOut(function () {
+                        $(this).remove();
+                    });
+                }, 3000);
+            } else {
+                alert('Error: ' + (response.data || 'Unknown error'));
+            }
+        }).fail(function () {
+            alert('An unexpected error occurred.');
+        }).always(function () {
+            $btn.text(originalText).prop('disabled', false);
         });
     });
 });
