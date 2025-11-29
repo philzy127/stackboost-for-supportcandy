@@ -14,7 +14,7 @@ The `OnboardingDashboard` module is a comprehensive solution for managing onboar
 src/Modules/OnboardingDashboard/
 ├── Admin/              # Admin pages (Settings, Staff, Sequence, ImportExport)
 ├── Ajax/               # AJAX Handlers (Certificate generation, data fetches)
-├── Data/               # Data models (CPT registration)
+├── Data/               # Data models (CPT registration, TicketService)
 ├── Shortcodes/         # Frontend shortcode logic
 └── assets/             # CSS/JS files
 ```
@@ -32,6 +32,7 @@ src/Modules/OnboardingDashboard/
 The module uses a centralized settings array.
 *   **Request Type / ID:** Maps the module to specific SupportCandy tickets.
 *   **Phone Configuration:** (See below).
+*   **Certificate Configuration:** Stores Company Name, Opening Statement, etc.
 
 ## Phone Logic Refactor (v2.0)
 
@@ -83,12 +84,16 @@ The frontend is rendered via `[stackboost_onboarding_dashboard]`.
 *   **Class:** `Shortcodes\DashboardShortcode`.
 *   **Logic:**
     1.  Fetches the sequence of step IDs.
-    2.  Fetches "This Week's Attendees" using the cached data from `Staff::render_page()` (transient: `stackboost_onboarding_tickets_cache`).
+    2.  Fetches "This Week's Attendees" using `TicketService::get_onboarding_tickets`.
     3.  Localizes all data to `stackboost-onboarding-dashboard.js`.
     4.  The JS handles the "virtual router" (query param `step_id`), checklist validation, and the final "Completion" screen.
 
+### Logging
+*   **Client-Side:** The JS uses `stackboost_client_log(message, context)` which sends logs to the server via AJAX if `diagnostic_log_enabled` is on.
+*   **Server-Side:** AJAX requests are logged to the central StackBoost log.
+
 ### Certificates
 The "Send Certificates" button triggers `stackboost_onboarding_send_certificates` AJAX action.
-*   It generates a PDF using `dompdf`.
+*   It generates a PDF using `dompdf` via `CertificateHandler.php`.
+*   **HTML Generation:** The handler uses explicit `<div>` blocks with inline styles (`font-size: 10pt`, `color: #000`) instead of `<ul>`/`<li>` to ensure robust rendering in Dompdf.
 *   It creates a new SupportCandy Thread (Attachment) on the user's ticket.
-*   It emails the PDF to the configured HR contact (if applicable).

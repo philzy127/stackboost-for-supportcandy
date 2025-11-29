@@ -424,13 +424,11 @@ jQuery(document).ready(function($) {
 
                 } else {
                     stackboost_client_log('Certificate generation failed: ' + JSON.stringify(response.data), 'error');
-                    console.error('ODB: AJAX response success was false:', response.data);
                     $completionStatusMessage.text('Error sending certificates: ' + (response.data || 'Unknown error.')).removeClass('notice-success').addClass('notice-error').fadeIn();
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                stackboost_client_log('AJAX request failed: ' + textStatus, 'error');
-                console.error('ODB: AJAX request failed:', textStatus, errorThrown, jqXHR);
+                stackboost_client_log('AJAX request failed: ' + textStatus + ' - ' + errorThrown, 'error');
                 $completionStatusMessage.text('AJAX request failed: ' + textStatus).removeClass('notice-success').addClass('notice-error').fadeIn();
             },
             complete: function() {
