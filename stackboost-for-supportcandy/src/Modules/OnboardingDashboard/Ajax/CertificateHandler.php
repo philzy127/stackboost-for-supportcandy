@@ -255,7 +255,8 @@ class CertificateHandler {
 					foreach ( $block['items'] as $item ) {
 						// Clean any stray newlines or invalid chars
 						$clean_item = trim( preg_replace( '/\s+/', ' ', $item ) );
-						$html .= '<li>' . esc_html( $clean_item ) . '</li>';
+						// Force color and display to ensure visibility
+						$html .= '<li style="color: #000000; list-style-type: disc;">' . esc_html( $clean_item ) . '</li>';
 					}
 					$html .= '</ul></div>';
 				}
@@ -272,7 +273,7 @@ class CertificateHandler {
 			.completion-statement { margin-bottom: 7mm; }
 			.column { width: 49%; display: inline-block; vertical-align: top; }
 			.shared-blue-box { background-color: #E0F2F7; padding: 5px; border-radius: 8px; margin-bottom: 3mm; margin-right: 1mm; }
-			.shared-blue-box ul { list-style: disc; padding-left: 15px; margin: 0; }
+			.shared-blue-box ul { list-style: disc; padding-left: 15px; margin: 0; color: #000; }
 			.checklist-heading { font-weight: bold; margin-bottom: 1mm; margin-top: 2mm; }
 			.footer-text { border-top: 1px solid #ccc; padding-top: 3mm; margin-top: 10px; }
 		';
