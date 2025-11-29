@@ -165,7 +165,8 @@ jQuery(document).ready(function($) {
             return; // Buttons on completion stage have different logic
         }
 
-        const totalItems = odbDashboardVars.checklistItems.length;
+        // Count total items from the DOM to match the checked items count source
+        const totalItems = $checklistContainer.find('li').length;
         const checkedItems = $checklistContainer.find('li.completed').length;
 
         // Determine if this is the last *real* step before the virtual completion step
