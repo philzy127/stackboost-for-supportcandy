@@ -27,151 +27,168 @@ class Settings {
 	 */
 	private function __construct() {
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
-		add_action( 'admin_menu', [ $this, 'reorder_admin_menu' ], 100 );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_init', [ $this, 'handle_log_actions' ] );
+		add_action( 'wp_ajax_stackboost_clear_log', [ $this, 'ajax_clear_log' ] );
 	}
 
 	/**
-	 * Add the admin menu and submenu pages.
+	 * Returns the central configuration for all admin menu items.
+	 * This is the Single Source of Truth for menu ordering and structure.
+	 *
+	 * @return array
+	 */
+	public function get_menu_config(): array {
+		$menu_config = [
+			// 1. General Settings (Main Menu & First Submenu)
+			[
+				'slug'        => 'stackboost-for-supportcandy',
+				'parent'      => 'stackboost-for-supportcandy', // Self-referencing for first submenu
+				'page_title'  => __( 'General Settings', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'General Settings', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ $this, 'render_settings_page' ],
+			],
+			// 2. Onboarding Dashboard
+			[
+				'slug'        => 'stackboost-onboarding-dashboard',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Onboarding', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
+			],
+			// 3. Ticket View
+			[
+				'slug'        => 'stackboost-ticket-view',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ $this, 'render_settings_page' ],
+			],
+		];
+
+		// 4. Conditional Views
+		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-conditional-views',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ $this, 'render_settings_page' ],
+			];
+		}
+
+		// 5. Queue Macro
+		if ( stackboost_is_feature_active( 'queue_macro' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-queue-macro',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ $this, 'render_settings_page' ],
+			];
+		}
+
+		// 6. After Hours Notice
+		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-after-hours',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ $this, 'render_settings_page' ],
+			];
+		}
+
+		// 7. Company Directory
+		$menu_config[] = [
+			'slug'        => 'stackboost-directory',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Company Directory', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Directory', 'stackboost-for-supportcandy' ), // Shortened for menu
+			'capability'  => 'manage_options',
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance(), 'render_admin_page' ],
+		];
+
+		// 8. Unified Ticket Macro
+		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-utm',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\WordPress::get_instance(), 'render_settings_page' ],
+			];
+		}
+
+		// 9. After Ticket Survey
+		if ( stackboost_is_feature_active( 'after_ticket_survey' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-ats',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\WordPress::get_instance(), 'render_admin_page' ],
+			];
+		}
+
+		// 10. Tools
+		$menu_config[] = [
+			'slug'        => 'stackboost-tools',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Tools', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Tools', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ $this, 'render_settings_page' ],
+		];
+
+		// 11. How To Use
+		$menu_config[] = [
+			'slug'        => 'stackboost-how-to-use',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'How To Use', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'How To Use', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ $this, 'render_how_to_use_page' ],
+		];
+
+		return $menu_config;
+	}
+
+	/**
+	 * Add the admin menu and submenu pages using the central configuration.
 	 */
 	public function add_admin_menu() {
-		// Main Menu Page (General Settings)
+		// Register the Main Parent Menu first
 		add_menu_page(
 			__( 'StackBoost', 'stackboost-for-supportcandy' ),
 			__( 'StackBoost', 'stackboost-for-supportcandy' ),
 			'manage_options',
 			'stackboost-for-supportcandy',
 			[ $this, 'render_settings_page' ],
-			'dashicons-superhero', // A more fitting icon
+			'dashicons-superhero',
 			30
 		);
 
-		// General Settings Submenu (duplicates the main menu link)
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'General Settings', 'stackboost-for-supportcandy' ),
-			__( 'General Settings', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-for-supportcandy', // Slug for the general settings page
-			[ $this, 'render_settings_page' ]
-		);
-
-		// Placeholder for the Ticket View Submenu, which will be registered by its own module.
-		// This ensures it appears in the menu even if the module fails.
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'Ticket View', 'stackboost-for-supportcandy' ),
-			__( 'Ticket View', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-ticket-view', // New slug
-			[ $this, 'render_settings_page' ]
-		);
-
-		// Conditional Views Submenu
-		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
+		// Iterate through config to add submenus
+		$config = $this->get_menu_config();
+		foreach ( $config as $item ) {
 			add_submenu_page(
-				'stackboost-for-supportcandy',
-				__( 'Conditional Views', 'stackboost-for-supportcandy' ),
-				__( 'Conditional Views', 'stackboost-for-supportcandy' ),
-				'manage_options',
-				'stackboost-conditional-views',
-				[ $this, 'render_settings_page' ]
+				$item['parent'],
+				$item['page_title'],
+				$item['menu_title'],
+				$item['capability'],
+				$item['slug'],
+				$item['callback']
 			);
 		}
-
-		// Queue Macro Submenu
-		if ( stackboost_is_feature_active( 'queue_macro' ) ) {
-			add_submenu_page(
-				'stackboost-for-supportcandy',
-				__( 'Queue Macro', 'stackboost-for-supportcandy' ),
-				__( 'Queue Macro', 'stackboost-for-supportcandy' ),
-				'manage_options',
-				'stackboost-queue-macro',
-				[ $this, 'render_settings_page' ]
-			);
-		}
-
-		// After Hours Notice Submenu
-		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
-			add_submenu_page(
-				'stackboost-for-supportcandy',
-				__( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
-				__( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
-				'manage_options',
-				'stackboost-after-hours',
-				[ $this, 'render_settings_page' ]
-			);
-		}
-
-		// How To Use Submenu (add last)
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'How To Use', 'stackboost-for-supportcandy' ),
-			__( 'How To Use', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-how-to-use',
-			[ $this, 'render_how_to_use_page' ]
-		);
-
-		// Tools Submenu
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'Tools', 'stackboost-for-supportcandy' ),
-			__( 'Tools', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-tools',
-			[ $this, 'render_settings_page' ]
-		);
-	}
-
-	/**
-	 * Reorder the admin submenu pages for StackBoost.
-	 * This runs late to ensure all modules have added their submenus.
-	 */
-	public function reorder_admin_menu() {
-		global $submenu;
-		$parent_slug = 'stackboost-for-supportcandy';
-
-		if ( ! isset( $submenu[ $parent_slug ] ) ) {
-			return;
-		}
-
-		$menu_items = $submenu[ $parent_slug ];
-		$ordered_menu = [];
-		$order = [
-			'stackboost-for-supportcandy',     // General Settings
-			'stackboost-onboarding-dashboard', // Onboarding Dashboard
-			'stackboost-ticket-view',          // Ticket View
-			'stackboost-conditional-views',    // Conditional Views
-			'stackboost-queue-macro',          // Queue Macro
-			'stackboost-after-hours',          // After Hours Notice
-			'stackboost-directory',            // Company Directory
-			'stackboost-ats',                  // After Ticket Survey
-			'stackboost-tools',                // Tools (Logging)
-			'stackboost-how-to-use',           // How To Use
-		];
-
-		// Create a map of slug => menu_item array for easy lookup
-		$menu_map = [];
-		foreach ( $menu_items as $item ) {
-			$menu_map[ $item[2] ] = $item;
-		}
-
-		// Add items to the ordered menu according to the specified order
-		foreach ( $order as $slug ) {
-			if ( isset( $menu_map[ $slug ] ) ) {
-				$ordered_menu[] = $menu_map[ $slug ];
-				unset( $menu_map[ $slug ] ); // Remove it from the map
-			}
-		}
-
-		// Add any remaining items that were not in our specific order to the end
-		if ( ! empty( $menu_map ) ) {
-			$ordered_menu = array_merge( $ordered_menu, array_values( $menu_map ) );
-		}
-
-		$submenu[ $parent_slug ] = $ordered_menu;
 	}
 
 	/**
@@ -185,19 +202,19 @@ class Settings {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<div class="notice notice-info inline">
-				<p>
-					<?php
-					if ( is_supportcandy_pro_active() ) {
-						echo '<strong>' . esc_html__( 'SupportCandy Pro detected.', 'stackboost-for-supportcandy' ) . '</strong>';
-					} else {
-						echo '<strong>' . esc_html__( 'SupportCandy (Free) detected.', 'stackboost-for-supportcandy' ) . '</strong>';
-					}
-					?>
-				</p>
-			</div>
 
 			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
+				<div class="notice notice-info inline">
+					<p>
+						<?php
+						if ( is_supportcandy_pro_active() ) {
+							echo '<strong>' . esc_html__( 'SupportCandy Pro detected.', 'stackboost-for-supportcandy' ) . '</strong>';
+						} else {
+							echo '<strong>' . esc_html__( 'SupportCandy (Free) detected.', 'stackboost-for-supportcandy' ) . '</strong>';
+						}
+						?>
+					</p>
+				</div>
 				<p><?php esc_html_e( 'More settings coming soon.', 'stackboost-for-supportcandy' ); ?></p>
 			<?php else : ?>
 				<form action="options.php" method="post">
@@ -387,11 +404,14 @@ class Settings {
 	 * Render the action buttons for the diagnostic log.
 	 */
 	public function render_diagnostic_log_actions() {
-		$clear_url    = wp_nonce_url( add_query_arg( 'stackboost_action', 'clear_log' ), 'stackboost_clear_log_nonce', '_wpnonce' );
 		$download_url = wp_nonce_url( add_query_arg( 'stackboost_action', 'download_log' ), 'stackboost_download_log_nonce', '_wpnonce' );
 		?>
 		<a href="<?php echo esc_url( $download_url ); ?>" class="button"><?php esc_html_e( 'Download Log', 'stackboost-for-supportcandy' ); ?></a>
-		<a href="<?php echo esc_url( $clear_url ); ?>" class="button button-primary"><?php esc_html_e( 'Clear Log', 'stackboost-for-supportcandy' ); ?></a>
+
+		<button type="button" class="button button-primary" id="stackboost-clear-log-btn">
+			<?php esc_html_e( 'Clear Log', 'stackboost-for-supportcandy' ); ?>
+		</button>
+
 		<p class="description">
 			<?php esc_html_e( 'Download the log file for support or clear it to start fresh.', 'stackboost-for-supportcandy' ); ?>
 		</p>
@@ -425,7 +445,8 @@ class Settings {
 	}
 
 	/**
-	 * Handle the download and clear log actions.
+	 * Handle the download log action.
+	 * Clear log is now handled via AJAX.
 	 */
 	public function handle_log_actions() {
 		if ( ! isset( $_GET['stackboost_action'] ) ) {
@@ -453,17 +474,27 @@ class Settings {
 					}
 				}
 				break;
+		}
+	}
 
-			case 'clear_log':
-				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'stackboost_clear_log_nonce' ) ) {
-					if ( file_exists( $log_file ) ) {
-						file_put_contents( $log_file, '' );
-					}
-					// Redirect back to the tools page.
-					wp_safe_redirect( admin_url( 'admin.php?page=stackboost-tools&log_cleared=true' ) );
-					exit;
-				}
-				break;
+	/**
+	 * AJAX handler to clear the debug log.
+	 */
+	public function ajax_clear_log() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$upload_dir = wp_upload_dir();
+		$log_file   = $upload_dir['basedir'] . '/stackboost-logs/debug.log';
+
+		if ( file_exists( $log_file ) ) {
+			file_put_contents( $log_file, '' );
+			wp_send_json_success( __( 'Log file cleared successfully.', 'stackboost-for-supportcandy' ) );
+		} else {
+			wp_send_json_error( __( 'Log file not found.', 'stackboost-for-supportcandy' ) );
 		}
 	}
 }

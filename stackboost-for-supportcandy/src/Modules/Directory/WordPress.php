@@ -58,7 +58,7 @@ class WordPress {
 	private function __construct() {
 		$this->core = new Core();
 		add_action( 'admin_init', array( $this, 'register_module_settings' ) );
-		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+		// Menu page is now registered centrally in Settings.php
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_public_scripts' ) );
 		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
@@ -120,20 +120,6 @@ class WordPress {
 		return ! empty( array_intersect( $user->roles, $management_roles ) );
 	}
 
-
-	/**
-	 * Add the admin menu page.
-	 */
-	public function add_admin_menu() {
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'Company Directory', 'stackboost-for-supportcandy' ),
-			__( 'Company Directory', 'stackboost-for-supportcandy' ),
-			'manage_options', // This is a base capability, we do finer checks in the render function.
-			'stackboost-directory',
-			array( $this, 'render_admin_page' )
-		);
-	}
 
 	/**
 	 * Enqueue admin scripts and styles.

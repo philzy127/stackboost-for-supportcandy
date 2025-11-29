@@ -8,22 +8,8 @@ class Page {
 	 * Initialize the main Onboarding Dashboard page.
 	 */
 	public static function init() {
-		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
+		// Menu page is now registered centrally in Settings.php
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_scripts' ] );
-	}
-
-	/**
-	 * Add the submenu page.
-	 */
-	public static function add_menu_page() {
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
-			__( 'Onboarding', 'stackboost-for-supportcandy' ),
-			'manage_options', // Base capability
-			'stackboost-onboarding-dashboard',
-			[ __CLASS__, 'render_page' ]
-		);
 	}
 
 	/**

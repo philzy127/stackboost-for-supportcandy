@@ -36,14 +36,7 @@ class AdminController {
      * Add the submenu page for the survey module.
      */
     public function add_admin_menu() {
-        add_submenu_page(
-            'stackboost-for-supportcandy',
-            __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
-            __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
-            'manage_options',
-            'stackboost-ats',
-            [ $this, 'render_page' ]
-        );
+        // Menu page is now registered centrally in Settings.php
     }
 
     /**

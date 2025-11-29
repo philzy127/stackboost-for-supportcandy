@@ -169,4 +169,11 @@ class WordPress extends Module {
         $options = get_option( 'stackboost_settings' );
         echo '<input type="text" name="stackboost_settings[ats_ticket_url_base]" value="' . esc_attr( $options['ats_ticket_url_base'] ?? '' ) . '" class="regular-text" placeholder="https://support.example.com/ticket/">';
     }
+
+	/**
+	 * Public wrapper to render the admin page, delegating to AdminController.
+	 */
+	public function render_admin_page() {
+		$this->admin->render_page();
+	}
 }

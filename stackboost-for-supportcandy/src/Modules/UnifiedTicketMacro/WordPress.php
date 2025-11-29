@@ -37,7 +37,7 @@ class WordPress {
 	 */
 	private function __construct() {
 		$this->core = Core::get_instance();
-		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+		// Menu page is now registered centrally in Settings.php
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
@@ -68,20 +68,6 @@ class WordPress {
 			'title' => esc_attr__( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
 		);
 		return $macros;
-	}
-
-	/**
-	 * Add the admin menu page.
-	 */
-	public function add_admin_menu() {
-		add_submenu_page(
-			'stackboost-for-supportcandy',
-			__( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
-			__( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
-			'manage_options',
-			'stackboost-utm',
-			array( $this, 'render_settings_page' )
-		);
 	}
 
 	/**
