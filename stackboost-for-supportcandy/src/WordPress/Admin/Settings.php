@@ -39,43 +39,47 @@ class Settings {
 	 * @return array
 	 */
 	public function get_menu_config(): array {
-		$menu_config = [
-			// 1. General Settings (Main Menu & First Submenu)
-			[
-				'slug'        => 'stackboost-for-supportcandy',
-				'parent'      => 'stackboost-for-supportcandy', // Self-referencing for first submenu
-				'page_title'  => __( 'General Settings', 'stackboost-for-supportcandy' ),
-				'menu_title'  => __( 'General Settings', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
-			],
-			// 2. Onboarding Dashboard
-			[
-				'slug'        => 'stackboost-onboarding-dashboard',
-				'parent'      => 'stackboost-for-supportcandy',
-				'page_title'  => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
-				'menu_title'  => __( 'Onboarding', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
-				'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
-			],
-			// 3. Ticket View
-			[
-				'slug'        => 'stackboost-ticket-view',
-				'parent'      => 'stackboost-for-supportcandy',
-				'page_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
-				'menu_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
-			],
+		$menu_config = [];
+
+		// 1. General Settings (Main Menu & First Submenu)
+		$menu_config[] = [
+			'slug'        => 'stackboost-for-supportcandy',
+			'parent'      => 'stackboost-for-supportcandy', // Self-referencing for first submenu
+			'page_title'  => __( 'General Settings', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'General Settings', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ $this, 'render_settings_page' ],
 		];
 
-		// 4. Conditional Views
+		// 2. Ticket View
+		$menu_config[] = [
+			'slug'        => 'stackboost-ticket-view',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ $this, 'render_settings_page' ],
+		];
+
+		// 3. Conditional Views
 		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-conditional-views',
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ $this, 'render_settings_page' ],
+			];
+		}
+
+		// 4. After Hours Notice
+		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-after-hours',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'capability'  => 'manage_options',
 				'callback'    => [ $this, 'render_settings_page' ],
 			];
@@ -93,29 +97,7 @@ class Settings {
 			];
 		}
 
-		// 6. After Hours Notice
-		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
-			$menu_config[] = [
-				'slug'        => 'stackboost-after-hours',
-				'parent'      => 'stackboost-for-supportcandy',
-				'page_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
-				'menu_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
-			];
-		}
-
-		// 7. Company Directory
-		$menu_config[] = [
-			'slug'        => 'stackboost-directory',
-			'parent'      => 'stackboost-for-supportcandy',
-			'page_title'  => __( 'Company Directory', 'stackboost-for-supportcandy' ),
-			'menu_title'  => __( 'Directory', 'stackboost-for-supportcandy' ), // Shortened for menu
-			'capability'  => 'manage_options',
-			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance(), 'render_admin_page' ],
-		];
-
-		// 8. Unified Ticket Macro
+		// 6. Unified Ticket Macro
 		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-utm',
@@ -127,7 +109,7 @@ class Settings {
 			];
 		}
 
-		// 9. After Ticket Survey
+		// 7. After Ticket Survey
 		if ( stackboost_is_feature_active( 'after_ticket_survey' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-ats',
@@ -138,6 +120,26 @@ class Settings {
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\WordPress::get_instance(), 'render_admin_page' ],
 			];
 		}
+
+		// 8. Company Directory
+		$menu_config[] = [
+			'slug'        => 'stackboost-directory',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Company Directory', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Directory', 'stackboost-for-supportcandy' ), // Shortened for menu
+			'capability'  => 'manage_options',
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance(), 'render_admin_page' ],
+		];
+
+		// 9. Onboarding Dashboard
+		$menu_config[] = [
+			'slug'        => 'stackboost-onboarding-dashboard',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Onboarding', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
+		];
 
 		// 10. Tools
 		$menu_config[] = [
