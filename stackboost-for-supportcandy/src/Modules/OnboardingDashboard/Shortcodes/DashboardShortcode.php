@@ -40,6 +40,12 @@ class DashboardShortcode {
 			);
 
 			// Localize Data
+			$debug_enabled = false;
+			$general_settings = get_option( 'stackboost_settings', [] );
+			if ( isset( $general_settings['diagnostic_log_enabled'] ) && $general_settings['diagnostic_log_enabled'] ) {
+				$debug_enabled = true;
+			}
+
 			$sequence_ids = get_option( 'stackboost_onboarding_sequence', [] );
 			if ( empty( $sequence_ids ) ) {
 				$defaults = get_posts([
@@ -141,6 +147,7 @@ class DashboardShortcode {
 				'completionStepId' => 'completion',
 				'ajaxurl' => admin_url( 'admin-ajax.php' ),
 				'sendCertificatesNonce' => wp_create_nonce( 'stkb_onboarding_certificate_nonce' ),
+				'debugEnabled' => $debug_enabled,
 			]);
 		}
 	}

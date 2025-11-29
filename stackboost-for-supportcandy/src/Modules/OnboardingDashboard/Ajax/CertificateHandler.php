@@ -12,6 +12,24 @@ class CertificateHandler {
 	 */
 	public static function init() {
 		add_action( 'wp_ajax_stackboost_onboarding_send_certificates', [ __CLASS__, 'handle_request' ] );
+		add_action( 'wp_ajax_stackboost_log_client_event', [ __CLASS__, 'handle_client_log' ] );
+	}
+
+	/**
+	 * Handle client-side log requests.
+	 */
+	public static function handle_client_log() {
+		// Verify Nonce (reusing certificate nonce as it's the context for dashboard actions)
+		check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce' );
+
+		$message = isset( $_POST['message'] ) ? sanitize_text_field( $_POST['message'] ) : '';
+		$context = isset( $_POST['context'] ) ? sanitize_text_field( $_POST['context'] ) : 'onboarding_js';
+
+		if ( ! empty( $message ) ) {
+			stackboost_log( "[Client] $message", $context );
+			wp_send_json_success();
+		}
+		wp_send_json_error();
 	}
 
 	/**
@@ -60,6 +78,8 @@ class CertificateHandler {
 		$content_blocks = [];
 		$estimated_units = 0;
 
+		stackboost_log( 'Starting checklist content generation. Sequence Count: ' . count( $sequence_ids ), 'onboarding' );
+
 		foreach ( $sequence_ids as $id ) {
 			$post = get_post( $id );
 			if ( $post && $post->post_status === 'publish' && $post->post_type === 'stkb_onboarding_step' ) {
@@ -71,11 +91,30 @@ class CertificateHandler {
 				$estimated_units += 2;
 
 				$raw_checklist = get_post_meta( $post->ID, '_stackboost_onboarding_checklist_items', true );
+				stackboost_log( "Step ID: {$post->ID} ('{$post->post_title}'). Raw Checklist Length: " . strlen( $raw_checklist ), 'onboarding' );
+
 				$items = array_filter( array_map( 'trim', explode( "\n", $raw_checklist ) ) );
 				$clean_items = [];
 				foreach ( $items as $item ) {
-					$clean_items[] = preg_replace( '/\s*\[([^\]]*)\]/', '', trim($item) );
+					$original = trim( $item );
+					$clean = preg_replace( '/\s*\[([^\]]*)\]/', '', $original );
+
+					// Debug log for regex behavior
+					// stackboost_log( "Item: '$original' -> Cleaned: '$clean'", 'onboarding' );
+
+					if ( empty( $clean ) && ! empty( $original ) ) {
+						// If cleaning resulted in empty string (entire item was in brackets),
+						// remove just the brackets and keep the text.
+						$clean = str_replace( [ '[', ']' ], '', $original );
+						stackboost_log( "Item '$original' was fully bracketed. Fallback cleanup result: '$clean'", 'onboarding' );
+					}
+
+					if ( ! empty( $clean ) ) {
+						$clean_items[] = $clean;
+					}
 				}
+
+				stackboost_log( "Step ID: {$post->ID}. Cleaned Items Count: " . count( $clean_items ), 'onboarding' );
 
 				if ( ! empty( $clean_items ) ) {
 					$content_blocks[] = [
@@ -85,8 +124,12 @@ class CertificateHandler {
 					];
 					$estimated_units += count( $clean_items );
 				}
+			} else {
+				stackboost_log( "Skipping ID $id (Not found or not published stkb_onboarding_step)", 'onboarding' );
 			}
 		}
+
+		stackboost_log( "Total Content Blocks Generated: " . count( $content_blocks ), 'onboarding' );
 
 		foreach ( $present_attendees as $attendee ) {
 			$attendee_name = $attendee['name'];
@@ -150,6 +193,34 @@ class CertificateHandler {
 	 * Generate HTML for the PDF.
 	 */
 	private static function generate_html( $attendee_name, $trainer_name, $date, $blocks, $total_units ) {
+		// Get Customization Settings
+		$config = Settings::get_config();
+
+		$company_name = $config['certificate_company_name'];
+		if ( empty( $company_name ) ) {
+			$company_name = get_bloginfo( 'name' );
+		}
+
+		$opening_text = $config['certificate_opening_text'];
+		if ( empty( $opening_text ) ) {
+			$opening_text = 'New Staffmember has completed Onboarding Training with [Trainer Name] and has been present for:';
+		}
+
+		$footer_text = $config['certificate_footer_text'];
+		if ( empty( $footer_text ) ) {
+			$footer_text = 'Completed: [Date] - [Trainer Name]';
+		}
+
+		// Replace Placeholders
+		$placeholders = [
+			'[Trainer Name]' => $trainer_name,
+			'[Staff Name]'   => $attendee_name,
+			'[Date]'         => $date,
+		];
+
+		$opening_text = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $opening_text );
+		$footer_text  = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $footer_text );
+
 		// Split into two columns logic
 		$half = $total_units / 2;
 		$current_sum = 0;
@@ -179,11 +250,15 @@ class CertificateHandler {
 				if ( $block['type'] === 'heading' ) {
 					$html .= '<div class="checklist-heading">' . esc_html( $block['text'] ) . '</div>';
 				} elseif ( $block['type'] === 'checklist_group' ) {
-					$html .= '<div class="shared-blue-box"><ul>';
+					// Use simple divs with bullets instead of <ul><li> to ensure Dompdf renders text
+					$html .= '<div class="shared-blue-box">';
 					foreach ( $block['items'] as $item ) {
-						$html .= '<li>' . esc_html( $item ) . '</li>';
+						// Clean any stray newlines or invalid chars
+						$clean_item = trim( preg_replace( '/\s+/', ' ', $item ) );
+						// Force color and font-size to ensure visibility inside font-size:0 container
+						$html .= '<div style="color: #000000; font-size: 10pt; margin-bottom: 2px;">&bull; ' . esc_html( $clean_item ) . '</div>';
 					}
-					$html .= '</ul></div>';
+					$html .= '</div>';
 				}
 			}
 			return $html;
@@ -198,23 +273,23 @@ class CertificateHandler {
 			.completion-statement { margin-bottom: 7mm; }
 			.column { width: 49%; display: inline-block; vertical-align: top; }
 			.shared-blue-box { background-color: #E0F2F7; padding: 5px; border-radius: 8px; margin-bottom: 3mm; margin-right: 1mm; }
-			.shared-blue-box ul { list-style: disc; padding-left: 15px; margin: 0; }
-			.checklist-heading { font-weight: bold; margin-bottom: 1mm; margin-top: 2mm; }
+			.shared-blue-box ul { list-style: disc; padding-left: 15px; margin: 0; color: #000; }
+			.checklist-heading { font-weight: bold; margin-bottom: 1mm; margin-top: 2mm; font-size: 10pt; }
 			.footer-text { border-top: 1px solid #ccc; padding-top: 3mm; margin-top: 10px; }
 		';
 
 		$html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' . $css . '</style></head><body>
 			<div class="certificate-container">
-				<div class="header-left">Children\'s Home of Poughkeepsie</div>
+				<div class="header-left">' . esc_html( $company_name ) . '</div>
 				<div class="attendee-name">' . esc_html( $attendee_name ) . '</div>
 				<div class="completion-statement">
-					' . esc_html( $attendee_name ) . ' has completed IT Onboarding Training with ' . esc_html( $trainer_name ) . ' and has been present for:
+					' . nl2br( esc_html( $opening_text ) ) . '
 				</div>
 				<div style="font-size: 0;">
 					<div class="column">' . $render_blocks( $left_col ) . '</div>
 					<div class="column" style="margin-left: 2%;">' . $render_blocks( $right_col ) . '</div>
 				</div>
-				<div class="footer-text">Completed: ' . esc_html( $date ) . ' - ' . esc_html( $trainer_name ) . '</div>
+				<div class="footer-text">' . esc_html( $footer_text ) . '</div>
 			</div>
 		</body></html>';
 

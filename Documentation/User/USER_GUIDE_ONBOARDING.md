@@ -49,6 +49,12 @@ Use the dual-list selector to choose which SupportCandy fields to display as col
 *   **Left Box:** Available Fields.
 *   **Right Box:** Selected Fields (Drag or use arrows to reorder).
 
+### Certificate Configuration
+This tab allows you to customize the PDF certificate generated at the end of an onboarding session.
+*   **Company Name:** The name displayed at the top of the certificate.
+*   **Opening Statement:** The introductory text. Supports placeholders like `[Trainer Name]`, `[Staff Name]`, and `[Date]`.
+*   **Footer Text:** The text at the bottom of the certificate. Supports the same placeholders.
+
 ---
 
 ## 3. Managing Onboarding Steps

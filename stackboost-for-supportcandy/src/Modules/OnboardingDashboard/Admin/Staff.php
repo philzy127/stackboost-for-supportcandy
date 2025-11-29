@@ -5,12 +5,6 @@ namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
 class Staff {
 
 	/**
-	 * Option for credentials (reuse from Settings).
-	 */
-	const OPTION_USERNAME = ApiSettings::OPTION_USERNAME;
-	const OPTION_SECRET_KEY = ApiSettings::OPTION_SECRET_KEY;
-
-	/**
 	 * Initialize Staff page.
 	 */
 	public static function init() {
