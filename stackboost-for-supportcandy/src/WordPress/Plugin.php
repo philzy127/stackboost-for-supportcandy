@@ -13,6 +13,7 @@ use StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\TicketView;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard;
+use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 
 /**
  * Main plugin class.
@@ -66,6 +67,7 @@ final class Plugin {
 		$this->modules['directory']           = Directory\WordPress::get_instance();
 		$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
 		$this->modules['onboarding_dashboard'] = OnboardingDashboard\OnboardingDashboard::get_instance();
+		$this->modules['date_time_formatting'] = DateTimeFormatting\WordPress::get_instance();
 
 	}
 

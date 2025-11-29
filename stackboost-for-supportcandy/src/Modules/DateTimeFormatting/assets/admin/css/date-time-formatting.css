@@ -1,0 +1,69 @@
+/* DateTimeFormatting Admin Styles */
+
+.stackboost-date-rule-wrapper {
+    display: flex;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background-color: #f6f7f7;
+    padding: 10px;
+    gap: 10px;
+    align-items: center; /* Vertically center items */
+}
+
+.stackboost-date-rule-wrapper > div {
+    flex-grow: 1;
+}
+
+.stackboost-date-rule-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stackboost-date-rule-row-top {
+    margin-bottom: 10px;
+}
+
+.stackboost-date-rule-wrapper .stackboost-remove-date-rule {
+    background: #f8f9fa;
+    border: 1px solid #d1d1d1;
+    color: #b02a2a;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    line-height: 26px;
+    text-align: center;
+    padding: 0;
+    margin-left: auto;
+    align-self: center;
+}
+
+.stackboost-remove-date-rule:hover {
+    background-color: #a00 !important;
+    color: #fff !important;
+    border-color: #a00;
+}
+
+.stackboost-date-options {
+    display: flex;
+    align-items: center;
+    margin-left: 5px;
+    padding-top: 5px;
+}
+
+.stackboost-checkbox-indent {
+    margin-left: 20px;
+}
+
+#stackboost-no-date-rules-message {
+    color: #666;
+    font-style: italic;
+}
+
+/* Add margin to the "Add New Rule" button */
+#stackboost-add-date-rule {
+    margin-top: 10px;
+}
