@@ -272,11 +272,11 @@ class CertificateHandler {
 		$customer = \WPSC_Customer::get_by_email( $current_user->user_email );
 
 		$thread_data = [
-			'ticket_id'   => $ticket_id,
-			'customer'    => ( $customer && $customer->id ) ? $customer->id : 0, // Should ideally be current user or system
+			'ticket'      => $ticket_id, // Schema key is 'ticket', not 'ticket_id'
+			'customer'    => ( $customer && $customer->id ) ? $customer->id : 0,
 			'type'        => 'note',
 			'body'        => "Onboarding Certificate for $attendee_name attached.",
-			'attachments' => [ $attachment->id ],
+			'attachments' => $attachment->id, // Pass single ID or pipe-separated string, not array
 			'is_active'   => 1,
 			'date_created'=> $today->format( 'Y-m-d H:i:s' ),
 			'date_updated'=> $today->format( 'Y-m-d H:i:s' ),
