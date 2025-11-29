@@ -101,21 +101,30 @@ class DashboardShortcode {
 			// Fetch This Week Attendees
 			$this_week_attendees = [];
 
-			// Rely on the cache populated by Staff::render_page().
-			// If cache is missing, we can try to fetch fresh if WPSC classes are available,
-			// but for frontend performance we prefer cache.
-			$cached = get_transient( 'stackboost_onboarding_tickets_cache' );
+			// Fetch fresh data directly using TicketService (no cache)
+			$tickets_data = \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Data\TicketService::get_onboarding_tickets();
 
-			// If cache exists, use it.
-			if ( $cached && ! is_wp_error( $cached ) && isset( $cached['data']['this_week_onboarding'] ) ) {
-				foreach ( $cached['data']['this_week_onboarding'] as $t ) {
+			if ( ! is_wp_error( $tickets_data ) && isset( $tickets_data['this_week_onboarding'] ) ) {
+				$count = count( $tickets_data['this_week_onboarding'] );
+				stackboost_log( "Frontend Dashboard: Found {$count} attendees for this week.", 'onboarding' );
+
+				foreach ( $tickets_data['this_week_onboarding'] as $t ) {
 					if ( ! empty( $t['id'] ) ) {
+						// Note: We need to determine the correct name field.
+						// Previously it was hardcoded to 'cust_43', but we should try to be dynamic or fallback safely.
+						// The 'cust_43' likely refers to the "Name" field in SupportCandy.
+						// Checking if 'cust_name' or similar exists in standard array, else fallback.
+						// For now, retaining 'cust_43' as per previous code, but adding fallback to 'subject' or 'id'.
+						$name_val = $t['cust_43'] ?? ( $t['subject'] ?? $t['id'] );
+
 						$this_week_attendees[] = [
 							'id'   => $t['id'],
-							'name' => esc_html( $t['cust_43'] ?? 'Unknown' ),
+							'name' => esc_html( $name_val ),
 						];
 					}
 				}
+			} else {
+				stackboost_log( "Frontend Dashboard: Failed to fetch attendees or no data returned. Error: " . ( is_wp_error( $tickets_data ) ? $tickets_data->get_error_message() : 'None' ), 'error' );
 			}
 
 			wp_localize_script( 'stackboost-onboarding-dashboard', 'odbDashboardVars', [
