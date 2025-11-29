@@ -265,8 +265,8 @@ class CertificateHandler {
 					foreach ( $block['items'] as $item ) {
 						// Clean any stray newlines or invalid chars
 						$clean_item = trim( preg_replace( '/\s+/', ' ', $item ) );
-						// Force color and simplified structure
-						$html .= '<div style="color: #000000; margin-bottom: 2px;">&bull; ' . esc_html( $clean_item ) . '</div>';
+						// Force color and font-size to ensure visibility inside font-size:0 container
+						$html .= '<div style="color: #000000; font-size: 10pt; margin-bottom: 2px;">&bull; ' . esc_html( $clean_item ) . '</div>';
 					}
 					$html .= '</div>';
 				}
@@ -284,7 +284,7 @@ class CertificateHandler {
 			.column { width: 49%; display: inline-block; vertical-align: top; }
 			.shared-blue-box { background-color: #E0F2F7; padding: 5px; border-radius: 8px; margin-bottom: 3mm; margin-right: 1mm; }
 			.shared-blue-box ul { list-style: disc; padding-left: 15px; margin: 0; color: #000; }
-			.checklist-heading { font-weight: bold; margin-bottom: 1mm; margin-top: 2mm; }
+			.checklist-heading { font-weight: bold; margin-bottom: 1mm; margin-top: 2mm; font-size: 10pt; }
 			.footer-text { border-top: 1px solid #ccc; padding-top: 3mm; margin-top: 10px; }
 		';
 
