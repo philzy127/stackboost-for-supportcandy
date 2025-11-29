@@ -39,9 +39,6 @@ class CertificateHandler {
 
 		stackboost_log( 'Processing certificates for ' . count( $present_attendees ) . ' attendees.', 'onboarding' );
 		$results = [];
-		$username = get_option( Settings::OPTION_USERNAME, '' );
-		$secret_key = get_option( Settings::OPTION_SECRET_KEY, '' );
-		$base_url = get_site_url();
 
 		$current_user = wp_get_current_user();
 		$trainer_name = $current_user ? $current_user->display_name : 'Unknown Trainer';
