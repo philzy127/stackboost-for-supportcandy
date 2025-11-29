@@ -12,6 +12,24 @@ class CertificateHandler {
 	 */
 	public static function init() {
 		add_action( 'wp_ajax_stackboost_onboarding_send_certificates', [ __CLASS__, 'handle_request' ] );
+		add_action( 'wp_ajax_stackboost_log_client_event', [ __CLASS__, 'handle_client_log' ] );
+	}
+
+	/**
+	 * Handle client-side log requests.
+	 */
+	public static function handle_client_log() {
+		// Verify Nonce (reusing certificate nonce as it's the context for dashboard actions)
+		check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce' );
+
+		$message = isset( $_POST['message'] ) ? sanitize_text_field( $_POST['message'] ) : '';
+		$context = isset( $_POST['context'] ) ? sanitize_text_field( $_POST['context'] ) : 'onboarding_js';
+
+		if ( ! empty( $message ) ) {
+			stackboost_log( "[Client] $message", $context );
+			wp_send_json_success();
+		}
+		wp_send_json_error();
 	}
 
 	/**
@@ -60,6 +78,8 @@ class CertificateHandler {
 		$content_blocks = [];
 		$estimated_units = 0;
 
+		stackboost_log( 'Starting checklist content generation. Sequence Count: ' . count( $sequence_ids ), 'onboarding' );
+
 		foreach ( $sequence_ids as $id ) {
 			$post = get_post( $id );
 			if ( $post && $post->post_status === 'publish' && $post->post_type === 'stkb_onboarding_step' ) {
@@ -71,19 +91,30 @@ class CertificateHandler {
 				$estimated_units += 2;
 
 				$raw_checklist = get_post_meta( $post->ID, '_stackboost_onboarding_checklist_items', true );
+				stackboost_log( "Step ID: {$post->ID} ('{$post->post_title}'). Raw Checklist Length: " . strlen( $raw_checklist ), 'onboarding' );
+
 				$items = array_filter( array_map( 'trim', explode( "\n", $raw_checklist ) ) );
 				$clean_items = [];
 				foreach ( $items as $item ) {
-					$clean = preg_replace( '/\s*\[([^\]]*)\]/', '', trim($item) );
-					if ( empty( $clean ) ) {
+					$original = trim( $item );
+					$clean = preg_replace( '/\s*\[([^\]]*)\]/', '', $original );
+
+					// Debug log for regex behavior
+					// stackboost_log( "Item: '$original' -> Cleaned: '$clean'", 'onboarding' );
+
+					if ( empty( $clean ) && ! empty( $original ) ) {
 						// If cleaning resulted in empty string (entire item was in brackets),
 						// remove just the brackets and keep the text.
-						$clean = str_replace( [ '[', ']' ], '', trim($item) );
+						$clean = str_replace( [ '[', ']' ], '', $original );
+						stackboost_log( "Item '$original' was fully bracketed. Fallback cleanup result: '$clean'", 'onboarding' );
 					}
+
 					if ( ! empty( $clean ) ) {
 						$clean_items[] = $clean;
 					}
 				}
+
+				stackboost_log( "Step ID: {$post->ID}. Cleaned Items Count: " . count( $clean_items ), 'onboarding' );
 
 				if ( ! empty( $clean_items ) ) {
 					$content_blocks[] = [
@@ -93,8 +124,12 @@ class CertificateHandler {
 					];
 					$estimated_units += count( $clean_items );
 				}
+			} else {
+				stackboost_log( "Skipping ID $id (Not found or not published stkb_onboarding_step)", 'onboarding' );
 			}
 		}
+
+		stackboost_log( "Total Content Blocks Generated: " . count( $content_blocks ), 'onboarding' );
 
 		foreach ( $present_attendees as $attendee ) {
 			$attendee_name = $attendee['name'];
@@ -168,7 +203,7 @@ class CertificateHandler {
 
 		$opening_text = $config['certificate_opening_text'];
 		if ( empty( $opening_text ) ) {
-			$opening_text = 'New Staffmember has completed IT Onboarding Training with [Trainer Name] and has been present for:';
+			$opening_text = 'New Staffmember has completed Onboarding Training with [Trainer Name] and has been present for:';
 		}
 
 		$footer_text = $config['certificate_footer_text'];
@@ -215,9 +250,12 @@ class CertificateHandler {
 				if ( $block['type'] === 'heading' ) {
 					$html .= '<div class="checklist-heading">' . esc_html( $block['text'] ) . '</div>';
 				} elseif ( $block['type'] === 'checklist_group' ) {
+					// Ensure valid HTML structure for Dompdf
 					$html .= '<div class="shared-blue-box"><ul>';
 					foreach ( $block['items'] as $item ) {
-						$html .= '<li>' . esc_html( $item ) . '</li>';
+						// Clean any stray newlines or invalid chars
+						$clean_item = trim( preg_replace( '/\s+/', ' ', $item ) );
+						$html .= '<li>' . esc_html( $clean_item ) . '</li>';
 					}
 					$html .= '</ul></div>';
 				}

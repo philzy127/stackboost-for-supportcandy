@@ -79,6 +79,19 @@ jQuery(document).ready(function($) {
     const $completionStatusMessage = $('.onboarding-completion-status-message'); // Select status message
     const $navigationContainer = $('.onboarding-navigation'); // Select navigation container
 
+    // --- Logging Helper ---
+    function stackboost_client_log(message, context = 'onboarding_js') {
+        if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
+            console.log(`[StackBoost ${context}]`, message);
+            // Send to server
+            $.post(odbDashboardVars.ajaxurl, {
+                action: 'stackboost_log_client_event',
+                message: message,
+                context: context,
+                nonce: odbDashboardVars.sendCertificatesNonce // reusing nonce for simplicity or create a generic one
+            });
+        }
+    }
 
     // --- Initial Display Logic based on current step ---
     if (isCurrentlyOnCompletionStage) {
@@ -338,6 +351,8 @@ jQuery(document).ready(function($) {
         $sendCertificatesButton.prop('disabled', true).text('Sending...');
 
         // Make AJAX call to WordPress backend
+        stackboost_client_log(`Sending certificates for ${presentAttendees.length} attendees.`);
+
         $.ajax({
             url: odbDashboardVars.ajaxurl, // WordPress AJAX URL
             type: 'POST',
@@ -349,6 +364,7 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
+                    stackboost_client_log('Certificate generation successful.');
                     let successCount = 0;
                     let errorCount = 0;
                     let messages = [];
@@ -407,11 +423,13 @@ jQuery(document).ready(function($) {
                     // This is commented out as it changes navigation flow, but is a common pattern for "completion".
 
                 } else {
+                    stackboost_client_log('Certificate generation failed: ' + JSON.stringify(response.data), 'error');
                     console.error('ODB: AJAX response success was false:', response.data);
                     $completionStatusMessage.text('Error sending certificates: ' + (response.data || 'Unknown error.')).removeClass('notice-success').addClass('notice-error').fadeIn();
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
+                stackboost_client_log('AJAX request failed: ' + textStatus, 'error');
                 console.error('ODB: AJAX request failed:', textStatus, errorThrown, jqXHR);
                 $completionStatusMessage.text('AJAX request failed: ' + textStatus).removeClass('notice-success').addClass('notice-error').fadeIn();
             },
