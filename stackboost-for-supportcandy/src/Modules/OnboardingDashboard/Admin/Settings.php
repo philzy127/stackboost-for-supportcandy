@@ -534,21 +534,6 @@ class Settings {
 			<h2><?php esc_html_e( 'Certificate Configuration', 'stackboost-for-supportcandy' ); ?></h2>
 			<form action="options.php" method="post">
 				<?php
-				// We still use the same option group because all settings are stored in one array.
-				// However, settings_fields outputs the hidden fields (nonce, action, etc) which are needed.
-				// The key is that register_setting was called with 'stackboost_onboarding_general' group.
-				// We can just use that group here too, but we need to ensure we don't overwrite other settings with nulls if they are missing from $_POST.
-				// WordPress settings API merges the new input with get_option value if sanitize callback handles it right?
-				// Actually, if we submit only a subset of fields, the sanitize callback receives ONLY that subset.
-				// Our sanitize_settings function iterates over $input.
-				// If we use the same option name for all settings, we must be careful.
-				// Let's check sanitize_settings: It builds $output from $input. It doesn't merge with existing option!
-				// WARNING: If we submit this form, it will overwrite the entire option array with ONLY the certificate settings,
-				// erasing all other settings (phone, columns, etc).
-				//
-				// FIX: We need to include the other settings as hidden fields OR update sanitize_settings to merge with existing.
-				// Updating sanitize_settings to merge is safer and cleaner.
-
 				settings_fields( self::OPTION_GROUP );
 				?>
 
