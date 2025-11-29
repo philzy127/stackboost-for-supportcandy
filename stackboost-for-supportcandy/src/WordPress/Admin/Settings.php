@@ -61,17 +61,15 @@ class Settings {
 			'callback'    => [ $this, 'render_settings_page' ],
 		];
 
-		// 3. Conditional Views
-		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
-			$menu_config[] = [
-				'slug'        => 'stackboost-conditional-views',
-				'parent'      => 'stackboost-for-supportcandy',
-				'page_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
-				'menu_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
-			];
-		}
+		// 3. Date & Time Formatting (New Module)
+		$menu_config[] = [
+			'slug'        => 'stackboost-date-time',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Date & Time', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page::class, 'render_page' ],
+		];
 
 		// 4. After Hours Notice
 		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
@@ -85,7 +83,19 @@ class Settings {
 			];
 		}
 
-		// 5. Queue Macro
+		// 5. Conditional Views
+		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-conditional-views',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ $this, 'render_settings_page' ],
+			];
+		}
+
+		// 6. Queue Macro
 		if ( stackboost_is_feature_active( 'queue_macro' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-queue-macro',
@@ -97,7 +107,7 @@ class Settings {
 			];
 		}
 
-		// 6. Unified Ticket Macro
+		// 7. Unified Ticket Macro
 		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-utm',
@@ -109,7 +119,7 @@ class Settings {
 			];
 		}
 
-		// 7. After Ticket Survey
+		// 8. After Ticket Survey
 		if ( stackboost_is_feature_active( 'after_ticket_survey' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-ats',
@@ -121,7 +131,7 @@ class Settings {
 			];
 		}
 
-		// 8. Company Directory
+		// 9. Company Directory
 		$menu_config[] = [
 			'slug'        => 'stackboost-directory',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -131,7 +141,7 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance(), 'render_admin_page' ],
 		];
 
-		// 9. Onboarding Dashboard
+		// 10. Onboarding Dashboard
 		$menu_config[] = [
 			'slug'        => 'stackboost-onboarding-dashboard',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -139,16 +149,6 @@ class Settings {
 			'menu_title'  => __( 'Onboarding', 'stackboost-for-supportcandy' ),
 			'capability'  => 'manage_options',
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
-		];
-
-		// 10. Date & Time Formatting (New Module)
-		$menu_config[] = [
-			'slug'        => 'stackboost-date-time',
-			'parent'      => 'stackboost-for-supportcandy',
-			'page_title'  => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
-			'menu_title'  => __( 'Date & Time', 'stackboost-for-supportcandy' ),
-			'capability'  => 'manage_options',
-			'callback'    => [ \StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page::class, 'render_page' ],
 		];
 
 		// 11. Tools
