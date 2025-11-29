@@ -182,6 +182,13 @@ class WordPress extends Module {
 		$date_object = isset($ticket->{$field_slug}) ? $ticket->{$field_slug} : null;
 
 		stackboost_log( "format_date_time_callback: Initial Date Object Type: " . gettype($date_object), 'date_time_formatting' );
+
+		// Fallback: If ticket property is null, try using the filter value itself.
+		if ( empty( $date_object ) && ! empty( $value ) ) {
+			stackboost_log( "format_date_time_callback: Ticket property is empty. Using filter value: " . $value, 'date_time_formatting' );
+			$date_object = $value;
+		}
+
 		if ( is_string($date_object) ) {
 			stackboost_log( "format_date_time_callback: Initial Date String: " . $date_object, 'date_time_formatting' );
 		}

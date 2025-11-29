@@ -194,6 +194,7 @@ final class Plugin {
 			'stackboost_page_stackboost-conditional-views',
 			'stackboost_page_stackboost-queue-macro',
             'stackboost_page_stackboost-onboarding-dashboard',
+			'stackboost_page_stackboost-tools',
 		];
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
