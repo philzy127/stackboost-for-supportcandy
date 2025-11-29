@@ -95,45 +95,54 @@ class CertificateHandler {
 			$attendee_name = $attendee['name'];
 			$ticket_id = $attendee['id'];
 
-			$html = self::generate_html( $attendee_name, $trainer_name, $completion_date, $content_blocks, $estimated_units );
-			$pdf_content = PdfService::get_instance()->generate_pdf( $html );
+			try {
+				$html = self::generate_html( $attendee_name, $trainer_name, $completion_date, $content_blocks, $estimated_units );
+				$pdf_content = PdfService::get_instance()->generate_pdf( $html );
 
-			if ( ! $pdf_content ) {
-				stackboost_log( 'PDF Generation Failed for: ' . $attendee_name, 'error' );
+				if ( ! $pdf_content ) {
+					stackboost_log( 'PDF Generation Failed for: ' . $attendee_name, 'error' );
+					$results[] = [
+						'attendee' => $attendee_name,
+						'status' => 'error',
+						'message' => 'PDF Generation Failed.'
+					];
+					continue;
+				}
+
+				// Save to temp file
+				$filename = sanitize_file_name( 'Onboarding_Certificate_' . $attendee_name . '.pdf' );
+				$filepath = sys_get_temp_dir() . '/' . $filename;
+				file_put_contents( $filepath, $pdf_content );
+
+				// Upload to SupportCandy via Internal Method
+				$upload_result = self::upload_via_internal_method( $ticket_id, $filepath, $filename, $attendee_name );
+
+				if ( is_wp_error( $upload_result ) ) {
+					stackboost_log( 'Upload/Attach failed for: ' . $attendee_name . '. Error: ' . $upload_result->get_error_message(), 'error' );
+					$results[] = [
+						'attendee' => $attendee_name,
+						'status' => 'error',
+						'message' => $upload_result->get_error_message()
+					];
+				} else {
+					stackboost_log( 'Certificate sent successfully for: ' . $attendee_name, 'onboarding' );
+					$results[] = [
+						'attendee' => $attendee_name,
+						'status' => 'success',
+						'message' => 'Certificate sent.'
+					];
+				}
+
+				if ( file_exists( $filepath ) ) {
+					unlink( $filepath );
+				}
+			} catch ( \Throwable $e ) {
+				stackboost_log( 'Critical error processing certificate for ' . $attendee_name . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(), 'error' );
 				$results[] = [
 					'attendee' => $attendee_name,
-					'status' => 'error',
-					'message' => 'PDF Generation Failed.'
+					'status'   => 'error',
+					'message'  => 'Internal Error: ' . $e->getMessage(),
 				];
-				continue;
-			}
-
-			// Save to temp file
-			$filename = sanitize_file_name( 'Onboarding_Certificate_' . $attendee_name . '.pdf' );
-			$filepath = sys_get_temp_dir() . '/' . $filename;
-			file_put_contents( $filepath, $pdf_content );
-
-			// Upload to SupportCandy via Internal Method
-			$upload_result = self::upload_via_internal_method( $ticket_id, $filepath, $filename, $attendee_name );
-
-			if ( is_wp_error( $upload_result ) ) {
-				stackboost_log( 'Upload/Attach failed for: ' . $attendee_name . '. Error: ' . $upload_result->get_error_message(), 'error' );
-				$results[] = [
-					'attendee' => $attendee_name,
-					'status' => 'error',
-					'message' => $upload_result->get_error_message()
-				];
-			} else {
-				stackboost_log( 'Certificate sent successfully for: ' . $attendee_name, 'onboarding' );
-				$results[] = [
-					'attendee' => $attendee_name,
-					'status' => 'success',
-					'message' => 'Certificate sent.'
-				];
-			}
-
-			if ( file_exists( $filepath ) ) {
-				unlink( $filepath );
 			}
 		}
 
