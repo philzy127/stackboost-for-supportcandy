@@ -74,7 +74,15 @@ class CertificateHandler {
 				$items = array_filter( array_map( 'trim', explode( "\n", $raw_checklist ) ) );
 				$clean_items = [];
 				foreach ( $items as $item ) {
-					$clean_items[] = preg_replace( '/\s*\[([^\]]*)\]/', '', trim($item) );
+					$clean = preg_replace( '/\s*\[([^\]]*)\]/', '', trim($item) );
+					if ( empty( $clean ) ) {
+						// If cleaning resulted in empty string (entire item was in brackets),
+						// remove just the brackets and keep the text.
+						$clean = str_replace( [ '[', ']' ], '', trim($item) );
+					}
+					if ( ! empty( $clean ) ) {
+						$clean_items[] = $clean;
+					}
 				}
 
 				if ( ! empty( $clean_items ) ) {
@@ -150,6 +158,34 @@ class CertificateHandler {
 	 * Generate HTML for the PDF.
 	 */
 	private static function generate_html( $attendee_name, $trainer_name, $date, $blocks, $total_units ) {
+		// Get Customization Settings
+		$config = Settings::get_config();
+
+		$company_name = $config['certificate_company_name'];
+		if ( empty( $company_name ) ) {
+			$company_name = get_bloginfo( 'name' );
+		}
+
+		$opening_text = $config['certificate_opening_text'];
+		if ( empty( $opening_text ) ) {
+			$opening_text = 'New Staffmember has completed IT Onboarding Training with [Trainer Name] and has been present for:';
+		}
+
+		$footer_text = $config['certificate_footer_text'];
+		if ( empty( $footer_text ) ) {
+			$footer_text = 'Completed: [Date] - [Trainer Name]';
+		}
+
+		// Replace Placeholders
+		$placeholders = [
+			'[Trainer Name]' => $trainer_name,
+			'[Staff Name]'   => $attendee_name,
+			'[Date]'         => $date,
+		];
+
+		$opening_text = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $opening_text );
+		$footer_text  = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $footer_text );
+
 		// Split into two columns logic
 		$half = $total_units / 2;
 		$current_sum = 0;
@@ -205,16 +241,16 @@ class CertificateHandler {
 
 		$html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' . $css . '</style></head><body>
 			<div class="certificate-container">
-				<div class="header-left">Children\'s Home of Poughkeepsie</div>
+				<div class="header-left">' . esc_html( $company_name ) . '</div>
 				<div class="attendee-name">' . esc_html( $attendee_name ) . '</div>
 				<div class="completion-statement">
-					' . esc_html( $attendee_name ) . ' has completed IT Onboarding Training with ' . esc_html( $trainer_name ) . ' and has been present for:
+					' . nl2br( esc_html( $opening_text ) ) . '
 				</div>
 				<div style="font-size: 0;">
 					<div class="column">' . $render_blocks( $left_col ) . '</div>
 					<div class="column" style="margin-left: 2%;">' . $render_blocks( $right_col ) . '</div>
 				</div>
-				<div class="footer-text">Completed: ' . esc_html( $date ) . ' - ' . esc_html( $trainer_name ) . '</div>
+				<div class="footer-text">' . esc_html( $footer_text ) . '</div>
 			</div>
 		</body></html>';
 
