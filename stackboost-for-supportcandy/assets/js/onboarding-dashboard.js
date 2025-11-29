@@ -342,7 +342,7 @@ jQuery(document).ready(function($) {
             url: odbDashboardVars.ajaxurl, // WordPress AJAX URL
             type: 'POST',
             data: {
-                action: 'odb_send_certificates', // Our custom AJAX action
+                action: 'stackboost_onboarding_send_certificates', // Our custom AJAX action
                 nonce: odbDashboardVars.sendCertificatesNonce, // Security nonce
                 present_attendees: JSON.stringify(presentAttendees),
                 not_present_attendees: JSON.stringify(notPresentAttendees) // Send not present for logging/future use
