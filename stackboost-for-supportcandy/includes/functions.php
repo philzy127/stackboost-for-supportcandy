@@ -24,6 +24,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
             'conditional_views',
             'queue_macro',
             'after_ticket_survey',
+            'unified_ticket_macro',
         ],
         'operations_suite' => [
             'qol_enhancements',
@@ -31,6 +32,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
             'conditional_views',
             'queue_macro',
             'after_ticket_survey',
+            'unified_ticket_macro',
             'onboarding_dashboard', // Coming soon
             'staff_directory',      // Coming soon
         ],
