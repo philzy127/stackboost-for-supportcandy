@@ -137,6 +137,16 @@ class CertificateHandler {
 
 			try {
 				$html = self::generate_html( $attendee_name, $trainer_name, $completion_date, $content_blocks, $estimated_units );
+
+				// Save Debug HTML
+				$upload_dir = wp_upload_dir();
+				$debug_path = $upload_dir['basedir'] . '/wpsc/debug_certificate_last.html';
+				if ( ! file_exists( dirname( $debug_path ) ) ) {
+					mkdir( dirname( $debug_path ), 0755, true );
+				}
+				file_put_contents( $debug_path, $html );
+				stackboost_log( 'Debug HTML saved to: ' . $debug_path, 'onboarding' );
+
 				$pdf_content = PdfService::get_instance()->generate_pdf( $html );
 
 				if ( ! $pdf_content ) {
@@ -250,15 +260,15 @@ class CertificateHandler {
 				if ( $block['type'] === 'heading' ) {
 					$html .= '<div class="checklist-heading">' . esc_html( $block['text'] ) . '</div>';
 				} elseif ( $block['type'] === 'checklist_group' ) {
-					// Ensure valid HTML structure for Dompdf
-					$html .= '<div class="shared-blue-box"><ul>';
+					// Use simple divs with bullets instead of <ul><li> to ensure Dompdf renders text
+					$html .= '<div class="shared-blue-box">';
 					foreach ( $block['items'] as $item ) {
 						// Clean any stray newlines or invalid chars
 						$clean_item = trim( preg_replace( '/\s+/', ' ', $item ) );
-						// Force color and display to ensure visibility
-						$html .= '<li style="color: #000000; list-style-type: disc;">' . esc_html( $clean_item ) . '</li>';
+						// Force color and simplified structure
+						$html .= '<div style="color: #000000; margin-bottom: 2px;">&bull; ' . esc_html( $clean_item ) . '</div>';
 					}
-					$html .= '</ul></div>';
+					$html .= '</div>';
 				}
 			}
 			return $html;
