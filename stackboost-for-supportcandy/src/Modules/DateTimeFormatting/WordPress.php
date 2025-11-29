@@ -144,6 +144,8 @@ class WordPress extends Module {
 			return $value;
 		}
 
+		// stackboost_log( 'format_date_time_callback: Passed context check.', 'date_time_formatting' );
+
 		// GET SLUG
 		$current_filter = current_filter();
 		$field_slug     = null;
@@ -167,6 +169,8 @@ class WordPress extends Module {
 		}
 		$rule = $this->formatted_rules[ $field_slug ];
 
+		stackboost_log( "format_date_time_callback: Rule found for slug: {$field_slug}", 'date_time_formatting' );
+
 		// THE OFFICIAL METHOD: Change the display mode on the field object.
 		// This tells SupportCandy to render the returned value as the visible date.
 		if ( is_object( $cf ) ) {
@@ -177,17 +181,25 @@ class WordPress extends Module {
 		// Note: The property name on the ticket object typically matches the slug.
 		$date_object = isset($ticket->{$field_slug}) ? $ticket->{$field_slug} : null;
 
+		stackboost_log( "format_date_time_callback: Initial Date Object Type: " . gettype($date_object), 'date_time_formatting' );
+		if ( is_string($date_object) ) {
+			stackboost_log( "format_date_time_callback: Initial Date String: " . $date_object, 'date_time_formatting' );
+		}
+
 		// If the date object is a string (raw DB format), convert it to DateTime.
 		if ( is_string( $date_object ) && ! empty( $date_object ) ) {
 			try {
 				$date_object = new DateTime( $date_object );
 				$date_object->setTimezone( wp_timezone() );
+				stackboost_log( "format_date_time_callback: Successfully converted string to DateTime.", 'date_time_formatting' );
 			} catch ( \Exception $e ) {
+				stackboost_log( "format_date_time_callback: Failed to convert string to DateTime. Error: " . $e->getMessage(), 'date_time_formatting' );
 				return $value;
 			}
 		}
 
 		if ( ! ( $date_object instanceof DateTime ) ) {
+			stackboost_log( "format_date_time_callback: Not a valid DateTime object after processing. Returning original value.", 'date_time_formatting' );
 			return $value;
 		}
 
@@ -228,6 +240,8 @@ class WordPress extends Module {
 				}
 				break;
 		}
+
+		stackboost_log( "format_date_time_callback: Returning new value: {$new_value}", 'date_time_formatting' );
 
 		return $new_value;
 	}
