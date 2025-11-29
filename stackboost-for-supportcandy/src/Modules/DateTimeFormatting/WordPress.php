@@ -177,6 +177,16 @@ class WordPress extends Module {
 		// Note: The property name on the ticket object typically matches the slug.
 		$date_object = isset($ticket->{$field_slug}) ? $ticket->{$field_slug} : null;
 
+		// If the date object is a string (raw DB format), convert it to DateTime.
+		if ( is_string( $date_object ) && ! empty( $date_object ) ) {
+			try {
+				$date_object = new DateTime( $date_object );
+				$date_object->setTimezone( wp_timezone() );
+			} catch ( \Exception $e ) {
+				return $value;
+			}
+		}
+
 		if ( ! ( $date_object instanceof DateTime ) ) {
 			return $value;
 		}
