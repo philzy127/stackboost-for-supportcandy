@@ -108,14 +108,18 @@ class DashboardShortcode {
 				$count = count( $tickets_data['this_week_onboarding'] );
 				stackboost_log( "Frontend Dashboard: Found {$count} attendees for this week.", 'onboarding' );
 
+				$config = \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Settings::get_config();
+				$name_field_key = $config['field_staff_name'] ?? '';
+
 				foreach ( $tickets_data['this_week_onboarding'] as $t ) {
 					if ( ! empty( $t['id'] ) ) {
-						// Note: We need to determine the correct name field.
-						// Previously it was hardcoded to 'cust_43', but we should try to be dynamic or fallback safely.
-						// The 'cust_43' likely refers to the "Name" field in SupportCandy.
-						// Checking if 'cust_name' or similar exists in standard array, else fallback.
-						// For now, retaining 'cust_43' as per previous code, but adding fallback to 'subject' or 'id'.
-						$name_val = $t['cust_43'] ?? ( $t['subject'] ?? $t['id'] );
+						// Use configured name field, fallback to subject, then ID.
+						$name_val = '';
+						if ( ! empty( $name_field_key ) && ! empty( $t[ $name_field_key ] ) ) {
+							$name_val = $t[ $name_field_key ];
+						} else {
+							$name_val = $t['subject'] ?? $t['id'];
+						}
 
 						$this_week_attendees[] = [
 							'id'   => $t['id'],

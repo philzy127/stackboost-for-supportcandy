@@ -175,6 +175,7 @@ class Settings {
 			'request_type_field'    => '',
 			'request_type_id'       => '',
 			'inactive_statuses'     => [],
+			'field_staff_name'      => '', // New Name Field
 			'field_onboarding_date' => '',
 			'field_cleared'         => '',
 
@@ -270,6 +271,7 @@ class Settings {
 
 		// Logic Fields Group
 		$logic_fields = [
+			'field_staff_name'      => __( 'Staff Name Field', 'stackboost-for-supportcandy' ),
 			'field_onboarding_date' => __( 'Onboarding Date Field', 'stackboost-for-supportcandy' ),
 			'field_cleared'         => __( 'Onboarding Cleared Field', 'stackboost-for-supportcandy' ),
 		];

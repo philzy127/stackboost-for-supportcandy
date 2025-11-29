@@ -54,6 +54,7 @@ class TicketService {
 
 		// Determine fields to hydrate based on logic requirements
 		$fields_to_hydrate = $config['table_columns'];
+		$fields_to_hydrate[] = $config['field_staff_name'];
 		$fields_to_hydrate[] = $config['field_onboarding_date'];
 		$fields_to_hydrate[] = $config['field_cleared'];
 		$fields_to_hydrate[] = $config['request_type_field'];
