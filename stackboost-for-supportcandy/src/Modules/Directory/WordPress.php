@@ -95,8 +95,11 @@ class WordPress {
 		// Check for missing Support Page setting.
 		add_action( 'admin_notices', array( $this, 'display_support_page_warning' ) );
 
-		// Hook to dequeue conflicting scripts late.
-		add_action( 'admin_enqueue_scripts', array( $this, 'dequeue_conflicting_scripts' ), 9999 );
+		// Hook to dequeue conflicting scripts late. Use PHP_INT_MAX to ensure it runs last.
+		add_action( 'admin_enqueue_scripts', array( $this, 'dequeue_conflicting_scripts' ), PHP_INT_MAX );
+
+		// Hook diagnostic logging for duplicate nonces.
+		add_action( 'admin_footer', array( $this, 'log_duplicate_nonces' ) );
 	}
 
 	/**
@@ -958,6 +961,8 @@ class WordPress {
 			$handles = [
 				'kadence-blocks-style-handler',
 				'kadence-blocks-js',
+				'kadence-blocks-pro-style-handler', // Added pro handle
+				'kadence-blocks-vendor', // Added vendor handle
 				'wp-block-library',
 				'wp-block-library-theme',
 				'wc-block-style', // WooCommerce blocks
@@ -970,6 +975,7 @@ class WordPress {
 			foreach ( $handles as $handle ) {
 				wp_dequeue_script( $handle );
 				wp_dequeue_style( $handle );
+				wp_deregister_script( $handle ); // Aggressively deregister
 			}
 		}
 	}
@@ -1171,6 +1177,52 @@ class WordPress {
 					ticketIdInput.value = ticketId;
 					postForm.appendChild(ticketIdInput);
 				}
+			});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Log duplicate nonces and enqueued scripts for diagnostics.
+	 */
+	public function log_duplicate_nonces() {
+		// Check global diagnostic logging setting.
+		$stackboost_settings = get_option( 'stackboost_settings', array() );
+		if ( empty( $stackboost_settings['diagnostic_log_enabled'] ) ) {
+			return;
+		}
+
+		$screen = get_current_screen();
+
+		// Only run this script on the staff CPT edit screen.
+		if ( ! $screen || 'post' !== $screen->base || $this->core->cpts->post_type !== $screen->post_type ) {
+			return;
+		}
+		?>
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				console.log('--- StackBoost Diagnostics ---');
+				const nonces = document.querySelectorAll('#_ajax_nonce');
+				console.log('Found ' + nonces.length + ' elements with id="_ajax_nonce"');
+
+				nonces.forEach(function(nonce, index) {
+					console.log('Nonce #' + (index + 1) + ' parent:', nonce.parentElement);
+					if (nonce.parentElement) {
+						console.log('Parent ID: ' + nonce.parentElement.id);
+						console.log('Parent Class: ' + nonce.parentElement.className);
+					}
+				});
+
+				console.log('--- Enqueued Scripts (Global) ---');
+				// Try to list script tags src
+				const scripts = document.querySelectorAll('script[src]');
+				scripts.forEach(function(script) {
+					// Filter for likely culprits
+					if (script.src.indexOf('kadence') !== -1 || script.src.indexOf('block') !== -1) {
+						console.log('Potentially conflicting script: ' + script.src);
+					}
+				});
+				console.log('--- End Diagnostics ---');
 			});
 		</script>
 		<?php
