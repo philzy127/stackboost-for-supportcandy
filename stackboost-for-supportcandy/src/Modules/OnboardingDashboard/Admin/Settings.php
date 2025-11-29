@@ -12,22 +12,7 @@ class Settings {
 	 */
 	public static function init() {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
-		add_action( 'admin_init', [ __CLASS__, 'cleanup_legacy_api_options' ] );
 		add_action( 'wp_ajax_stackboost_onboarding_get_field_options', [ __CLASS__, 'ajax_get_field_options' ] );
-	}
-
-	/**
-	 * Cleanup legacy API credentials for security.
-	 *
-	 * @todo Refactor this to run only once or on plugin activation/update in the future.
-	 * Currently runs on every admin init to ensure immediate cleanup.
-	 */
-	public static function cleanup_legacy_api_options() {
-		// Only run if options exist to minimize overhead
-		if ( false !== get_option( 'sc_api_integrator_username' ) || false !== get_option( 'sc_api_integrator_secret_key' ) ) {
-			delete_option( 'sc_api_integrator_username' );
-			delete_option( 'sc_api_integrator_secret_key' );
-		}
 	}
 
 	/**

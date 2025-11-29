@@ -137,16 +137,6 @@ class CertificateHandler {
 
 			try {
 				$html = self::generate_html( $attendee_name, $trainer_name, $completion_date, $content_blocks, $estimated_units );
-
-				// Save Debug HTML
-				$upload_dir = wp_upload_dir();
-				$debug_path = $upload_dir['basedir'] . '/wpsc/debug_certificate_last.html';
-				if ( ! file_exists( dirname( $debug_path ) ) ) {
-					mkdir( dirname( $debug_path ), 0755, true );
-				}
-				file_put_contents( $debug_path, $html );
-				stackboost_log( 'Debug HTML saved to: ' . $debug_path, 'onboarding' );
-
 				$pdf_content = PdfService::get_instance()->generate_pdf( $html );
 
 				if ( ! $pdf_content ) {
