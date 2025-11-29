@@ -213,18 +213,10 @@ class WordPress extends Module {
 		// APPLY FORMAT
 		$timestamp         = $date_object->getTimestamp();
 		$new_value         = $value;
-		$short_date_format = 'm/d/Y'; // Fallback
-		$long_date_format  = 'F j, Y'; // Fallback
-
-		// Get WP formats
-		$wp_date_format = get_option('date_format');
-		if ($wp_date_format) {
-			$short_date_format = $wp_date_format;
-			$long_date_format = $wp_date_format; // Or define a specific long format if needed
-		}
-
+		$short_date_format = 'm/d/Y';
+		$long_date_format  = 'F j, Y';
 		$time_format       = get_option( 'time_format' );
-		$date_format       = ! empty( $rule['use_long_date'] ) ? 'F j, Y' : $short_date_format;
+		$date_format       = ! empty( $rule['use_long_date'] ) ? $long_date_format : $short_date_format;
 
 		if ( ! empty( $rule['show_day_of_week'] ) ) {
 			$day_prefix  = ! empty( $rule['use_long_date'] ) ? 'l, ' : 'D, ';
