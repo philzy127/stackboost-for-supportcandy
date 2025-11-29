@@ -1,6 +1,20 @@
 jQuery(document).ready(function ($) {
     'use strict';
 
+    /**
+     * Central JS Logger.
+     * Checks if debug mode is enabled (passed via stackboost_admin_ajax) before logging.
+     */
+    window.stackboost_log = function(message, data) {
+        if (stackboost_admin_ajax && stackboost_admin_ajax.debug_enabled) {
+            if (data) {
+                console.log('[StackBoost]', message, data);
+            } else {
+                console.log('[StackBoost]', message);
+            }
+        }
+    };
+
     // Handle adding new rules for Conditional Views
     $('#stackboost-add-rule').on('click', function () {
         const rulesContainer = $('#stackboost-rules-container');

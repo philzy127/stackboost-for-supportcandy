@@ -37,9 +37,9 @@ class Sequence {
 
 		$script = '
 		jQuery(document).ready(function($) {
-			console.log("StackBoost: Initializing Sortable for Onboarding Sequence");
+			window.stackboost_log("StackBoost: Initializing Sortable for Onboarding Sequence");
 			if ($("#stkb-sequence-list").length === 0 && $("#stkb-available-list").length === 0) {
-				console.log("StackBoost: Sortable lists not found.");
+				window.stackboost_log("StackBoost: Sortable lists not found.");
 				return;
 			}
 
@@ -60,9 +60,9 @@ class Sequence {
 						}
 					}
 				}).disableSelection();
-				console.log("StackBoost: Sortable initialized successfully.");
+				window.stackboost_log("StackBoost: Sortable initialized successfully.");
 			} catch (e) {
-				console.error("StackBoost: Sortable initialization failed:", e);
+				window.stackboost_log("StackBoost: Sortable initialization failed:", e);
 			}
 		});
 		';

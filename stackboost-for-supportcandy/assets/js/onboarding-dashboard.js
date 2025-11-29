@@ -275,7 +275,7 @@ jQuery(document).ready(function($) {
                 const correctedPermalink = completionStepData.permalink.replace(/&#038;/g, '&');
                 window.location.href = correctedPermalink;
             } else {
-                console.error('ODB: Completion step permalink not found or invalid.');
+                stackboost_client_log('ODB: Completion step permalink not found or invalid.', 'error');
             }
         } else {
             // Logic for 'Next Step' button (regular navigation)

@@ -208,6 +208,10 @@ final class Plugin {
 				STACKBOOST_VERSION,
 				true
 			);
+			// Check debug mode for centralized JS logging
+			$options = get_option( 'stackboost_settings', [] );
+			$debug_enabled = isset( $options['diagnostic_log_enabled'] ) ? (bool) $options['diagnostic_log_enabled'] : false;
+
 			wp_localize_script(
 				'stackboost-admin-common',
 				'stackboost_admin_ajax',
@@ -216,6 +220,7 @@ final class Plugin {
 					'nonce'              => wp_create_nonce( 'stackboost_admin_nonce' ),
 					'i18n_select_option' => __( '-- Select Option --', 'stackboost-for-supportcandy' ),
 					'i18n_loading'       => __( 'Loading...', 'stackboost-for-supportcandy' ),
+					'debug_enabled'      => $debug_enabled,
 				]
 			);
 		}
