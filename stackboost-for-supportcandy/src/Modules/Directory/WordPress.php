@@ -100,6 +100,9 @@ class WordPress {
 
 		// Hook diagnostic logging for duplicate nonces.
 		add_action( 'admin_footer', array( $this, 'log_duplicate_nonces' ) );
+
+		// Remove the default Custom Fields meta box to prevent duplicate nonce errors.
+		add_action( 'admin_menu', array( $this, 'remove_default_custom_fields_meta_box' ) );
 	}
 
 	/**
@@ -1032,6 +1035,25 @@ class WordPress {
 				</a>
 			</div>
 			<?php
+		}
+	}
+
+	/**
+	 * Remove the default "Custom Fields" meta box.
+	 *
+	 * The standard WordPress Custom Fields meta box (`postcustom`) causes duplicate ID errors
+	 * (`_ajax_nonce`) when multiple meta fields are present (e.g., from themes).
+	 * We remove it to prevent these console errors and declutter the UI.
+	 */
+	public function remove_default_custom_fields_meta_box() {
+		$post_types = [
+			$this->core->cpts->post_type,
+			$this->core->cpts->location_post_type,
+			$this->core->cpts->department_post_type,
+		];
+
+		foreach ( $post_types as $post_type ) {
+			remove_meta_box( 'postcustom', $post_type, 'normal' );
 		}
 	}
 
