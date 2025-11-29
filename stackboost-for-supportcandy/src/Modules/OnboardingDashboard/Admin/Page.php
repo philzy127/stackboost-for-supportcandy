@@ -45,6 +45,7 @@ class Page {
 		$tabs = [
 			'steps'         => __( 'Onboarding Steps', 'stackboost-for-supportcandy' ),
 			'staff'         => __( 'Staff', 'stackboost-for-supportcandy' ),
+			'certificate'   => __( 'Certificate', 'stackboost-for-supportcandy' ),
 			'settings'      => __( 'Settings', 'stackboost-for-supportcandy' ),
 			'import_export' => __( 'Import / Export', 'stackboost-for-supportcandy' ),
 		];
@@ -81,6 +82,9 @@ class Page {
 						break;
 					case 'settings':
 						Settings::render_page();
+						break;
+					case 'certificate':
+						Settings::render_certificate_page();
 						break;
 					case 'import_export':
 						ImportExport::render_page();

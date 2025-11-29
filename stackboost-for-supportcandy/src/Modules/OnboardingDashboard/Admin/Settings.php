@@ -126,7 +126,7 @@ class Settings {
 			'stkb_onboarding_certificate_section',
 			__( 'Certificate Configuration', 'stackboost-for-supportcandy' ),
 			null,
-			'stackboost-onboarding-general'
+			'stackboost-onboarding-certificate'
 		);
 	}
 
@@ -137,7 +137,10 @@ class Settings {
 		// Flush the cache whenever settings are saved.
 		delete_transient( 'stackboost_onboarding_tickets_cache' );
 
-		$output = [];
+		// Merge with existing options to prevent overwriting missing keys (e.g., from different tabs)
+		$existing_options = get_option( self::OPTION_NAME, [] );
+		$output = is_array( $existing_options ) ? $existing_options : [];
+
 		if ( is_array( $input ) ) {
 			foreach ( $input as $key => $value ) {
 				if ( 'rename_rules' === $key ) {
@@ -224,7 +227,7 @@ class Settings {
 
 			// Certificate Customization
 			'certificate_company_name' => get_bloginfo( 'name' ),
-			'certificate_opening_text' => 'New Staffmember has completed IT Onboarding Training with [Trainer Name] and has been present for:',
+			'certificate_opening_text' => 'New Staffmember has completed Onboarding Training with [Trainer Name] and has been present for:',
 			'certificate_footer_text'  => 'Completed: [Date] - [Trainer Name]',
 		];
 
@@ -266,7 +269,7 @@ class Settings {
 	 */
 	public static function enqueue_assets() {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : '';
-		if ( 'settings' !== $tab ) {
+		if ( 'settings' !== $tab && 'certificate' !== $tab ) {
 			return;
 		}
 
@@ -502,8 +505,69 @@ class Settings {
 				<h3><?php esc_html_e( 'Column Renaming', 'stackboost-for-supportcandy' ); ?></h3>
 				<?php self::render_rename_rules( $sc_fields, $config['rename_rules'] ); ?>
 
-				<!-- Certificate Configuration -->
-				<h3><?php esc_html_e( 'Certificate Configuration', 'stackboost-for-supportcandy' ); ?></h3>
+				<?php submit_button(); ?>
+			</form>
+		</div>
+
+		<!-- Template for Multiple Phone Fields -->
+		<script type="text/template" id="stkb-phone-multi-template">
+			<div class="stkb-phone-multi-row" style="margin-bottom: 5px;">
+				<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_multi_config][__INDEX__][field]">
+					<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
+					<?php foreach ( $sc_fields as $key => $label ) : ?>
+						<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+
+				<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_multi_config][__INDEX__][type]" style="margin-left: 10px;">
+					<?php foreach ( $phone_types as $val => $label ) : ?>
+						<option value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+
+				<button type="button" class="button stkb-remove-phone-row" title="Remove"><span class="dashicons dashicons-trash"></span></button>
+			</div>
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render the Certificate Settings page.
+	 */
+	public static function render_certificate_page() {
+		self::enqueue_assets();
+
+		if ( isset( $_GET['settings-updated'] ) ) {
+			add_settings_error( 'stackboost_messages', 'stackboost_message', __( 'Settings Saved', 'stackboost-for-supportcandy' ), 'updated' );
+		}
+		settings_errors( 'stackboost_messages' );
+
+		$config = self::get_config();
+
+		?>
+		<div class="wrap">
+			<h2><?php esc_html_e( 'Certificate Configuration', 'stackboost-for-supportcandy' ); ?></h2>
+			<form action="options.php" method="post">
+				<?php
+				// We still use the same option group because all settings are stored in one array.
+				// However, settings_fields outputs the hidden fields (nonce, action, etc) which are needed.
+				// The key is that register_setting was called with 'stackboost_onboarding_general' group.
+				// We can just use that group here too, but we need to ensure we don't overwrite other settings with nulls if they are missing from $_POST.
+				// WordPress settings API merges the new input with get_option value if sanitize callback handles it right?
+				// Actually, if we submit only a subset of fields, the sanitize callback receives ONLY that subset.
+				// Our sanitize_settings function iterates over $input.
+				// If we use the same option name for all settings, we must be careful.
+				// Let's check sanitize_settings: It builds $output from $input. It doesn't merge with existing option!
+				// WARNING: If we submit this form, it will overwrite the entire option array with ONLY the certificate settings,
+				// erasing all other settings (phone, columns, etc).
+				//
+				// FIX: We need to include the other settings as hidden fields OR update sanitize_settings to merge with existing.
+				// Updating sanitize_settings to merge is safer and cleaner.
+
+				settings_fields( self::OPTION_GROUP );
+				?>
+
+				<h3><?php esc_html_e( 'Certificate Details', 'stackboost-for-supportcandy' ); ?></h3>
 				<p><?php esc_html_e( 'Customize the text that appears on the onboarding certificate.', 'stackboost-for-supportcandy' ); ?></p>
 				<table class="form-table">
 					<tr>
@@ -532,26 +596,6 @@ class Settings {
 				<?php submit_button(); ?>
 			</form>
 		</div>
-
-		<!-- Template for Multiple Phone Fields -->
-		<script type="text/template" id="stkb-phone-multi-template">
-			<div class="stkb-phone-multi-row" style="margin-bottom: 5px;">
-				<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_multi_config][__INDEX__][field]">
-					<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
-					<?php foreach ( $sc_fields as $key => $label ) : ?>
-						<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
-					<?php endforeach; ?>
-				</select>
-
-				<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[phone_multi_config][__INDEX__][type]" style="margin-left: 10px;">
-					<?php foreach ( $phone_types as $val => $label ) : ?>
-						<option value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $label ); ?></option>
-					<?php endforeach; ?>
-				</select>
-
-				<button type="button" class="button stkb-remove-phone-row" title="Remove"><span class="dashicons dashicons-trash"></span></button>
-			</div>
-		</script>
 		<?php
 	}
 
