@@ -97,59 +97,22 @@ final class Plugin {
 			'href'  => admin_url( 'admin.php?page=' . $main_menu_slug ),
 		] );
 
-		// Add submenu items.
-		$submenus = [
-			'settings'        => [
-				'title' => __( 'General Settings', 'stackboost-for-supportcandy' ),
-				'slug'  => $main_menu_slug,
-			],
-			'onboarding'      => [
-				'title' => __( 'Onboarding', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-onboarding-dashboard',
-			],
-			'ticket-view'     => [
-				'title' => __( 'Ticket View', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-ticket-view',
-			],
-			'conditional'     => [
-				'title' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-conditional-views',
-			],
-			'queue-macro'     => [
-				'title' => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-queue-macro',
-			],
-			'after-hours'     => [
-				'title' => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-after-hours',
-			],
-			'directory'       => [
-				'title' => __( 'Directory', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-directory',
-			],
-			'ats'             => [
-				'title' => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-ats-settings',
-			],
-			'tools'           => [
-				'title' => __( 'Tools', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-tools',
-			],
-			'how-to'          => [
-				'title' => __( 'How To Use', 'stackboost-for-supportcandy' ),
-				'slug'  => 'stackboost-how-to-use',
-			],
-		];
+		$menu_structure = Settings::get_menu_structure();
 
-		foreach ( $submenus as $id => $menu ) {
-			// For CPTs, the URL structure is different.
-			$is_cpt = str_contains( $menu['slug'], '.php' );
-			$href   = $is_cpt ? admin_url( $menu['slug'] ) : admin_url( 'admin.php?page=' . $menu['slug'] );
+		foreach ( $menu_structure as $key => $item ) {
+			// Skip if the feature is not active
+			if ( ! empty( $item['feature'] ) && ! stackboost_is_feature_active( $item['feature'] ) ) {
+				continue;
+			}
+
+			// For CPTs or direct files, the URL structure is different.
+			$is_cpt = str_contains( $item['slug'], '.php' );
+			$href   = $is_cpt ? admin_url( $item['slug'] ) : admin_url( 'admin.php?page=' . $item['slug'] );
 
 			$wp_admin_bar->add_node( [
-				'id'     => 'stackboost-' . $id,
+				'id'     => 'stackboost-' . $key,
 				'parent' => 'stackboost-menu',
-				'title'  => $menu['title'],
+				'title'  => $item['short_title'], // Use the short title for admin bar
 				'href'   => $href,
 			] );
 		}

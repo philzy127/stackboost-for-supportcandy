@@ -126,6 +126,83 @@ class Settings {
 	}
 
 	/**
+	 * Get the centralized menu structure.
+	 * Acts as the source of truth for both the admin sidebar and the admin bar.
+	 *
+	 * @return array
+	 */
+	public static function get_menu_structure(): array {
+		return [
+			'general' => [
+				'slug'        => 'stackboost-for-supportcandy',
+				'title'       => __( 'General Settings', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'General Settings', 'stackboost-for-supportcandy' ),
+				'feature'     => null,
+			],
+			'onboarding' => [
+				'slug'        => 'stackboost-onboarding-dashboard',
+				'title'       => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'Onboarding', 'stackboost-for-supportcandy' ),
+				'feature'     => 'onboarding_dashboard',
+			],
+			'ticket_view' => [
+				'slug'        => 'stackboost-ticket-view',
+				'title'       => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+				'feature'     => null, // Placeholder always added
+			],
+			'conditional_views' => [
+				'slug'        => 'stackboost-conditional-views',
+				'title'       => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'feature'     => 'conditional_views',
+			],
+			'queue_macro' => [
+				'slug'        => 'stackboost-queue-macro',
+				'title'       => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
+				'feature'     => 'queue_macro',
+			],
+			'after_hours' => [
+				'slug'        => 'stackboost-after-hours',
+				'title'       => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+				'feature'     => 'after_hours_notice',
+			],
+			'directory' => [
+				'slug'        => 'stackboost-directory',
+				'title'       => __( 'Company Directory', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'Directory', 'stackboost-for-supportcandy' ),
+				'feature'     => 'directory',
+			],
+			'ats' => [
+				'slug'        => 'stackboost-ats',
+				'title'       => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
+				'feature'     => 'after_ticket_survey',
+			],
+			'utm' => [
+				'slug'        => 'stackboost-utm',
+				'title'       => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'Ticket Macro', 'stackboost-for-supportcandy' ),
+				'feature'     => 'unified_ticket_macro',
+			],
+			'tools' => [
+				'slug'        => 'stackboost-tools',
+				'title'       => __( 'Tools', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'Tools', 'stackboost-for-supportcandy' ),
+				'feature'     => null,
+			],
+			'how_to' => [
+				'slug'        => 'stackboost-how-to-use',
+				'title'       => __( 'How To Use', 'stackboost-for-supportcandy' ),
+				'short_title' => __( 'How To Use', 'stackboost-for-supportcandy' ),
+				'feature'     => null,
+			],
+		];
+	}
+
+	/**
 	 * Reorder the admin submenu pages for StackBoost.
 	 * This runs late to ensure all modules have added their submenus.
 	 */
@@ -139,18 +216,7 @@ class Settings {
 
 		$menu_items = $submenu[ $parent_slug ];
 		$ordered_menu = [];
-		$order = [
-			'stackboost-for-supportcandy',     // General Settings
-			'stackboost-onboarding-dashboard', // Onboarding Dashboard
-			'stackboost-ticket-view',          // Ticket View
-			'stackboost-conditional-views',    // Conditional Views
-			'stackboost-queue-macro',          // Queue Macro
-			'stackboost-after-hours',          // After Hours Notice
-			'stackboost-directory',            // Company Directory
-			'stackboost-ats',                  // After Ticket Survey
-			'stackboost-tools',                // Tools (Logging)
-			'stackboost-how-to-use',           // How To Use
-		];
+		$defined_structure = self::get_menu_structure();
 
 		// Create a map of slug => menu_item array for easy lookup
 		$menu_map = [];
@@ -158,8 +224,9 @@ class Settings {
 			$menu_map[ $item[2] ] = $item;
 		}
 
-		// Add items to the ordered menu according to the specified order
-		foreach ( $order as $slug ) {
+		// Add items to the ordered menu according to the specified order in get_menu_structure
+		foreach ( $defined_structure as $defined_item ) {
+			$slug = $defined_item['slug'];
 			if ( isset( $menu_map[ $slug ] ) ) {
 				$ordered_menu[] = $menu_map[ $slug ];
 				unset( $menu_map[ $slug ] ); // Remove it from the map
@@ -185,17 +252,19 @@ class Settings {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<div class="notice notice-info inline">
-				<p>
-					<?php
-					if ( is_supportcandy_pro_active() ) {
-						echo '<strong>' . esc_html__( 'SupportCandy Pro detected.', 'stackboost-for-supportcandy' ) . '</strong>';
-					} else {
-						echo '<strong>' . esc_html__( 'SupportCandy (Free) detected.', 'stackboost-for-supportcandy' ) . '</strong>';
-					}
-					?>
-				</p>
-			</div>
+			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
+				<div class="notice notice-info inline">
+					<p>
+						<?php
+						if ( is_supportcandy_pro_active() ) {
+							echo '<strong>' . esc_html__( 'SupportCandy Pro detected.', 'stackboost-for-supportcandy' ) . '</strong>';
+						} else {
+							echo '<strong>' . esc_html__( 'SupportCandy (Free) detected.', 'stackboost-for-supportcandy' ) . '</strong>';
+						}
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
 
 			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
 				<p><?php esc_html_e( 'More settings coming soon.', 'stackboost-for-supportcandy' ); ?></p>
@@ -460,7 +529,7 @@ class Settings {
 						file_put_contents( $log_file, '' );
 					}
 					// Redirect back to the tools page.
-					wp_safe_redirect( admin_url( 'admin.php?page=stackboost-tools&log_cleared=true' ) );
+					wp_safe_redirect( admin_url( 'admin.php?page=stackboost-tools&stackboost_log_cleared=1' ) );
 					exit;
 				}
 				break;

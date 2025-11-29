@@ -130,3 +130,37 @@
     border-radius: 3px;
     font-family: monospace;
 }
+
+/* Reusable Toast Notifications */
+.stackboost-toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 16px;
+    position: fixed;
+    z-index: 10000;
+    right: 30px;
+    bottom: 30px;
+    font-size: 15px;
+    opacity: 0;
+    transition: opacity 0.5s, visibility 0.5s, bottom 0.5s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.stackboost-toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+}
+
+/* Optional generic types */
+.stackboost-toast.success {
+    background-color: #46b450; /* WordPress green */
+}
+
+.stackboost-toast.error {
+    background-color: #dc3232; /* WordPress red */
+}

@@ -72,4 +72,47 @@ jQuery(document).ready(function ($) {
             resultsContent.html('<p>An unexpected error occurred during the AJAX request.</p>');
         });
     });
+
+    /**
+     * Show a standardized toast notification.
+     * @param {string} message The message to display.
+     * @param {string} type Optional. 'success' or 'error'. Defaults to generic dark gray.
+     */
+    window.stackboost_show_toast = function(message, type) {
+        // Create toast element if it doesn't exist
+        if ($('#stackboost-global-toast').length === 0) {
+            $('body').append('<div id="stackboost-global-toast" class="stackboost-toast"></div>');
+        }
+
+        const toast = $('#stackboost-global-toast');
+
+        // Reset classes
+        toast.removeClass('show success error');
+
+        // Set content and type
+        toast.text(message);
+        if (type) {
+            toast.addClass(type);
+        }
+
+        // Show it
+        setTimeout(function() {
+            toast.addClass('show');
+        }, 100); // Slight delay to ensure DOM is ready and transition triggers
+
+        // Hide after 3 seconds
+        setTimeout(function() {
+            toast.removeClass('show');
+        }, 3000);
+    };
+
+    // Check for URL parameters to trigger a toast on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('stackboost_log_cleared')) {
+        window.stackboost_show_toast('Diagnostic log cleared successfully.', 'success');
+
+        // Clean up the URL
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + window.location.search.replace(/[?&]stackboost_log_cleared=[^&]+/, "").replace(/^&/, "?");
+        window.history.replaceState({path: newUrl}, '', newUrl);
+    }
 });
