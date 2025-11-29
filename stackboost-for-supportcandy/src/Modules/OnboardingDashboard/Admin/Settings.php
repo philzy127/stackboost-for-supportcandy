@@ -289,16 +289,16 @@ class Settings {
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( self::OPTION_GROUP );
-				do_settings_sections( 'stackboost-onboarding-general' );
 				?>
 
 				<!-- General Configuration -->
 				<h3><?php esc_html_e( 'General Configuration', 'stackboost-for-supportcandy' ); ?></h3>
+				<p><?php esc_html_e( 'Identify the critical fields required for the onboarding logic.', 'stackboost-for-supportcandy' ); ?></p>
 				<table class="form-table">
 					<tr>
 						<th scope="row"><label for="stkb_req_type"><?php esc_html_e( 'Request Type Field', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_field]" id="stkb_req_type">
+							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_field]" id="stkb_req_type" class="stackboost-ajax-field-selector" data-target="#stkb_req_id">
 								<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
 								<?php foreach ( $sc_fields as $key => $label ) : ?>
 									<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $config['request_type_field'], $key ); ?>>
