@@ -159,8 +159,14 @@ class Core {
 					$display_value = (string) $field_value;
 					break;
 				case 'cf_html':
-				case 'df_description':
 					$display_value = $field_value; // Do not escape HTML content.
+					break;
+				case 'df_description':
+					// Retrieve the initial report thread to get the description text.
+					$description_thread = $ticket->get_description_thread();
+					if ( $description_thread && is_object( $description_thread ) && isset( $description_thread->body ) ) {
+						$display_value = $description_thread->body;
+					}
 					break;
 				case 'cf_date':
 					$date_obj = clone $field_value;
