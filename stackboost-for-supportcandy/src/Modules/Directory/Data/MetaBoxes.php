@@ -99,6 +99,7 @@ class MetaBoxes {
 			'stackboost_staff_job_title' => 'Title',
 			'email_address'       => 'Email Address',
 			'active'              => 'Active',
+			'private'             => 'Private',
 			'active_as_of_date'   => 'Active as of:',
 			'planned_exit_date'   => 'Inactive as of:',
 		);
@@ -159,6 +160,10 @@ class MetaBoxes {
 				$checked = ( 'Yes' === $value || '1' === $value ) ? 'checked' : '';
 				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . $checked . ' />';
 				echo '<p class="description">' . esc_html__( 'Check if this entry is active; uncheck if deprecated.', 'stackboost-for-supportcandy' ) . '</p>';
+			} elseif ( 'private' === $key ) {
+				$checked = ( 'Yes' === $value || '1' === $value ) ? 'checked' : '';
+				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . $checked . ' />';
+				echo '<p class="description">' . esc_html__( 'Private listings are only visible in the backend.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'active_as_of_date' === $key ) {
 				$date_value = $value ? esc_attr( $value ) : ( $is_add_new_screen ? current_time( 'Y-m-d' ) : '' );
 				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . $date_value . '" class="regular-text stackboost-datepicker" />';
@@ -332,6 +337,12 @@ class MetaBoxes {
 		} elseif ( isset( $_POST['active'] ) && 'Yes' === $_POST['active'] ) {
 			$active_status = 'Yes';
 		}
+
+		$private_status = 'No';
+		if ( isset( $_POST['private'] ) && 'Yes' === $_POST['private'] ) {
+			$private_status = 'Yes';
+		}
+		update_post_meta( $post_id, '_private', $private_status );
 
 		$active_as_of_date_str = isset( $_POST['active_as_of_date'] ) ? sanitize_text_field( $_POST['active_as_of_date'] ) : '';
 		$planned_exit_date_str = isset( $_POST['planned_exit_date'] ) ? sanitize_text_field( $_POST['planned_exit_date'] ) : '';

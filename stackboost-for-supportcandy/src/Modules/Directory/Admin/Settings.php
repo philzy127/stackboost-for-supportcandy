@@ -65,6 +65,12 @@ class Settings {
 			$sanitized_input['listing_display_mode'] = 'page';
 		}
 
+		if ( isset( $input['revisions_to_keep'] ) && '' !== $input['revisions_to_keep'] ) {
+			$sanitized_input['revisions_to_keep'] = intval( $input['revisions_to_keep'] );
+		} else {
+			$sanitized_input['revisions_to_keep'] = '';
+		}
+
 		return $sanitized_input;
 	}
 
@@ -76,6 +82,7 @@ class Settings {
 		$edit_roles           = $options['edit_roles'] ?? array( 'administrator', 'editor' );
 		$management_roles     = $options['management_roles'] ?? array( 'administrator' );
 		$listing_display_mode = $options['listing_display_mode'] ?? 'page';
+		$revisions_to_keep    = $options['revisions_to_keep'] ?? '';
 		?>
 		<div class="wrap">
 			<form action="options.php" method="post">
@@ -95,6 +102,17 @@ class Settings {
 								<option value="modal" <?php selected( $listing_display_mode, 'modal' ); ?>><?php esc_html_e( 'Modal View', 'stackboost-for-supportcandy' ); ?></option>
 							</select>
 							<p class="description"><?php esc_html_e( 'Choose how to display individual staff listings on the front-end directory.', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+				<hr>
+				<h2><?php esc_html_e( 'General Settings', 'stackboost-for-supportcandy' ); ?></h2>
+				<table class="form-table">
+					<tr valign="top">
+						<th scope="row"><label for="stackboost-revisions-to-keep"><?php esc_html_e( 'Revisions to Keep', 'stackboost-for-supportcandy' ); ?></label></th>
+						<td>
+							<input type="number" id="stackboost-revisions-to-keep" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[revisions_to_keep]" value="<?php echo esc_attr( $revisions_to_keep ); ?>" class="small-text">
+							<p class="description"><?php esc_html_e( 'Set the number of revisions to keep for Staff, Locations, and Departments. Leave empty or set to -1 for unlimited. Set to 0 to disable revisions.', 'stackboost-for-supportcandy' ); ?></p>
 						</td>
 					</tr>
 				</table>

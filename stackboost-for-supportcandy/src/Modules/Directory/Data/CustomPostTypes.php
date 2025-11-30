@@ -57,6 +57,9 @@ class CustomPostTypes {
 		add_action( 'save_post', array( $this, 'save_revision_meta_data' ), 10, 2 );
 		add_action( 'wp_restore_post_revision', array( $this, 'restore_revision_meta_data' ), 10, 2 );
 		add_filter( '_wp_post_revision_fields', array( $this, 'add_revision_meta_fields' ), 10, 2 );
+
+		// Filter to limit revisions.
+		add_filter( 'wp_revisions_to_keep', array( $this, 'filter_revisions_to_keep' ), 10, 2 );
 	}
 
 	/**
@@ -320,5 +323,24 @@ class CustomPostTypes {
 		}
 
 		return $fields;
+	}
+
+	/**
+	 * Filter the number of revisions to keep for directory post types.
+	 *
+	 * @param int      $num  Number of revisions to keep.
+	 * @param \WP_Post $post The post object.
+	 * @return int The filtered number of revisions.
+	 */
+	public function filter_revisions_to_keep( $num, $post ) {
+		if ( in_array( $post->post_type, array( $this->post_type, $this->location_post_type, $this->department_post_type ), true ) ) {
+			$options           = get_option( \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::OPTION_NAME, array() );
+			$revisions_to_keep = $options['revisions_to_keep'] ?? '';
+
+			if ( '' !== $revisions_to_keep ) {
+				return intval( $revisions_to_keep );
+			}
+		}
+		return $num;
 	}
 }
