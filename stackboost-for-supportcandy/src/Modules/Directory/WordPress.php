@@ -780,21 +780,27 @@ class WordPress {
 					display: none;
 					position: fixed;
 					z-index: 99999;
-					padding-top: 50px;
 					left: 0;
 					top: 0;
 					width: 100%;
 					height: 100%;
-					overflow: auto;
+					overflow: hidden;
 					background-color: rgba(0,0,0,0.8);
 				}
 				#stackboost-widget-modal-content {
-					margin: auto;
 					display: block;
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					transform: translate(-50%, -50%);
+					margin: 0;
+					width: auto !important;
+					height: auto !important;
 					max-width: 90%;
 					max-height: 90%;
 					box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 					border-radius: 4px;
+					object-fit: contain;
 				}
 				#stackboost-widget-modal-close {
 					position: absolute;
