@@ -140,11 +140,11 @@ class Core {
 				$description_thread = $ticket->get_description_thread();
 				\stackboost_log( "[UTM] get_description_thread() result: " . ( $description_thread ? 'Object Found' : 'False/Null' ), 'module-utm' );
 
-				if ( $description_thread && is_object( $description_thread ) && isset( $description_thread->body ) ) {
-					$display_value = $description_thread->body;
+				if ( $description_thread && is_object( $description_thread ) ) {
+					$display_value = $description_thread->body; // Direct access via __get magic method.
 					\stackboost_log( "[UTM] Description body retrieved (length=" . strlen( $display_value ) . ")", 'module-utm' );
 				} else {
-					\stackboost_log( "[UTM] Description thread invalid or no body.", 'module-utm' );
+					\stackboost_log( "[UTM] Description thread invalid.", 'module-utm' );
 				}
 			}
 
