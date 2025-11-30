@@ -144,8 +144,16 @@ class WordPress {
 			);
 		}
 
+		// Enqueue scripts for the SupportCandy Ticket View (for Widget icons).
+		// Dashicons is loaded by default in admin, but just in case.
+		if ( 'supportcandy_page_wpsc-view-ticket' === $screen->id ) {
+			// No action needed for Dashicons in admin.
+		}
+
 		// Enqueue scripts for the main directory admin page.
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
+			// Dashicons is loaded by default in admin.
+
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
 			// Enqueue scripts for the Contact Widget settings tab.
@@ -249,6 +257,9 @@ class WordPress {
 			\STACKBOOST_VERSION,
 			true
 		);
+
+		// Enqueue Dashicons for the frontend shortcode.
+		wp_enqueue_style( 'dashicons' );
 		wp_localize_script(
 			'stackboost-directory-js',
 			'stackboostPublicAjax',
@@ -681,12 +692,46 @@ class WordPress {
 						case 'department_program':
 							$value = $staff_member->department_program;
 							break;
+						case 'photo_link':
+							$photo_url = $staff_member->full_photo_url;
+							if ( ! empty( $photo_url ) ) {
+								$value = sprintf(
+									'<a href="%s" class="stackboost-widget-photo-link" onclick="stackboostOpenWidgetModal(event, this.href); return false;">%s</a>',
+									esc_url( $photo_url ),
+									esc_html__( 'View Photo', 'stackboost-for-supportcandy' )
+								);
+							} else {
+								$value = esc_html__( 'No Photo', 'stackboost-for-supportcandy' );
+							}
+							$is_html = true;
+							break;
+						case 'photo_thumbnail':
+							$photo_url = $staff_member->full_photo_url;
+							if ( ! empty( $photo_url ) ) {
+								// Use thumbnail URL for display if available, but link to full.
+								$display_url = ! empty( $staff_member->thumbnail_url ) ? $staff_member->thumbnail_url : $photo_url;
+								$value       = sprintf(
+									'<a href="%s" class="stackboost-widget-photo-thumb" onclick="stackboostOpenWidgetModal(event, this.href); return false;"><img src="%s" style="max-width: 100px; height: auto; border-radius: 4px;" alt="%s"></a>',
+									esc_url( $photo_url ),
+									esc_url( $display_url ),
+									esc_attr( $staff_member->name )
+								);
+							} else {
+								$value = '<span style="color: #999; font-style: italic;">' . esc_html__( 'No Photo', 'stackboost-for-supportcandy' ) . '</span>';
+							}
+							$is_html = true;
+							break;
 					}
 
 					if ( ! empty( $value ) ) {
 						if ( $is_html ) {
-							// This value is pre-formatted, trusted HTML from the DirectoryService.
-							$list_items .= '<div>' . $value . '</div>';
+							// This value is pre-formatted, trusted HTML from the DirectoryService or constructed above.
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							if ( 'photo_thumbnail' === $field_key || 'photo_link' === $field_key ) {
+								$list_items .= '<div class="stackboost-widget-field-photo">' . $value . '</div>';
+							} else {
+								$list_items .= '<div><strong>' . esc_html( $label ) . ':</strong> ' . $value . '</div>';
+							}
 						} else {
 							$list_items .= '<div><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $value ) . '</div>';
 						}
@@ -740,9 +785,90 @@ class WordPress {
 					?>
 				</div>
 			</div>
+			<style>
+				/* Simple Lightbox Styles for Admin Widget */
+				#stackboost-widget-modal {
+					display: none;
+					position: fixed;
+					z-index: 99999;
+					left: 0;
+					top: 0;
+					width: 100%;
+					height: 100%;
+					overflow: hidden;
+					background-color: rgba(0,0,0,0.8);
+				}
+				#stackboost-widget-modal-content {
+					display: block;
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					transform: translate(-50%, -50%);
+					margin: 0;
+					width: auto !important;
+					height: auto !important;
+					max-width: 90%;
+					max-height: 90%;
+					box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+					border-radius: 4px;
+					object-fit: contain;
+				}
+				#stackboost-widget-modal-close {
+					position: absolute;
+					top: 15px;
+					right: 35px;
+					color: #f1f1f1;
+					font-size: 40px;
+					font-weight: bold;
+					transition: 0.3s;
+					cursor: pointer;
+				}
+				#stackboost-widget-modal-close:hover,
+				#stackboost-widget-modal-close:focus {
+					color: #bbb;
+					text-decoration: none;
+					cursor: pointer;
+				}
+			</style>
 			<script>
 				// Using a closure to keep variables local and avoid polluting the global scope.
 				(function() {
+					// 1. Define Global Open Function (idempotent)
+					if (typeof window.stackboostOpenWidgetModal === 'undefined') {
+						window.stackboostOpenWidgetModal = function(event, imageUrl) {
+							if (event) event.preventDefault();
+							var modal = document.getElementById('stackboost-widget-modal');
+							var modalImg = document.getElementById('stackboost-widget-modal-content');
+							if (modal && modalImg) {
+								modal.style.display = "block";
+								modalImg.src = imageUrl;
+							}
+						};
+					}
+
+					// 2. Inject Modal HTML into Body (idempotent)
+					if (!document.getElementById('stackboost-widget-modal')) {
+						var modalHtml = '<div id="stackboost-widget-modal"><span id="stackboost-widget-modal-close">&times;</span><img class="stackboost-modal-content" id="stackboost-widget-modal-content"></div>';
+						document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+						// 3. Attach Close Listeners
+						var modal = document.getElementById('stackboost-widget-modal');
+						var span = document.getElementById("stackboost-widget-modal-close");
+
+						if (span) {
+							span.onclick = function() {
+								modal.style.display = "none";
+							};
+						}
+						if (modal) {
+							modal.onclick = function(e) {
+								if (e.target === modal) {
+									modal.style.display = "none";
+								}
+							};
+						}
+					}
+
 					// --- Self-Contained Widget Positioning Logic ---
 					var positionTicketWidget = function(serverWidgetId, targetSelector, placement) {
 						const customWidget = document.getElementById(serverWidgetId);
@@ -784,13 +910,11 @@ class WordPress {
 			<?php
 		} catch ( \Throwable $e ) {
 			// Prevent site crash by catching any error.
-			$log_file = WP_CONTENT_DIR . '/jules_recovery.log';
-			$log_message = "--- RECOVERY LOG AT " . date( 'Y-m-d H:i:s' ) . " ---\n";
-			$log_message .= "A critical error was caught in render_ticket_widget:\n";
+			$log_message  = "A critical error was caught in render_ticket_widget:\n";
 			$log_message .= "Error: " . $e->getMessage() . "\n";
 			$log_message .= "File: " . $e->getFile() . "\n";
 			$log_message .= "Line: " . $e->getLine() . "\n";
-			file_put_contents( $log_file, $log_message, FILE_APPEND );
+			stackboost_log( $log_message, 'directory-error' );
 			return;
 		}
 	}
@@ -951,67 +1075,40 @@ class WordPress {
 	 */
 	public function redirect_after_staff_update( $location, $post_id ) {
 		try {
-			// --- Start Diagnostic Logging ---
-			// $debug_log_file = WP_CONTENT_DIR . '/jules_redirect_debug.log';
-			// if ( file_exists( $debug_log_file ) && filesize( $debug_log_file ) > 2000000 ) { unlink( $debug_log_file ); } // Clear log if it gets too big
-			// $log_entry      = '--- REDIRECT DEBUG AT ' . date( 'Y-m-d H:i:s' ) . " ---\n";
-			// $log_entry     .= 'ACTION: redirect_post_location' . "\n";
-			// $log_entry     .= 'POST ID: ' . print_r( $post_id, true ) . "\n";
-			// $log_entry     .= 'ORIGINAL LOCATION: ' . print_r( $location, true ) . "\n";
-			// $log_entry     .= 'POST SUPERGLOBAL: ' . print_r( $_POST, true ) . "\n";
-			// $sc_page_settings = get_option( 'wpsc-gs-page-settings' );
-			// $log_entry     .= 'SUPPORTCANDY PAGE SETTINGS (wpsc-gs-page-settings): ' . print_r( $sc_page_settings, true ) . "\n";
-
 			// Only apply this logic to our staff CPT.
 			if ( get_post_type( $post_id ) !== $this->core->cpts->post_type ) {
-				// $log_entry .= "RESULT: Post type is not staff CPT. No action taken.\n\n";
-				// file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 				return $location;
 			}
 
 			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
 			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
 			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
-			// $log_entry .= 'PARSED from: ' . $from . "\n";
-			// $log_entry .= 'PARSED ticket_id: ' . $ticket_id . "\n";
 
 			if ( 'ticket' === $from && $ticket_id > 0 ) {
-				// $log_entry .= "CONTEXT: 'ticket' context detected. Attempting to get frontend URL.\n";
 				$ticket_url = '';
 
 				// 1. Primary Method: Use the official static helper.
 				if ( class_exists( 'WPSC_Functions' ) ) {
 					$ticket_url = \WPSC_Functions::get_ticket_url( $ticket_id, '1' );
-					// $log_entry .= 'RETURN VALUE of WPSC_Functions::get_ticket_url(): ' . print_r( $ticket_url, true ) . "\n";
 				}
 
 				// 2. Fallback/Primary Method for All Contexts: Use the referer URL.
 				if ( isset( $_POST['_wp_original_http_referer'] ) ) {
-					// $log_entry .= "LOGIC: Using referer URL as the source of truth.\n";
 					$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
-					// $log_entry .= 'Referer URL: ' . $referer_url . "\n";
 
 					// Security check: ensure the referer is for the correct ticket (frontend or backend).
 					$is_frontend_url = strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false;
 					$is_backend_url  = ( strpos( $referer_url, '/wp-admin/' ) !== false && strpos( $referer_url, '&id=' . $ticket_id ) !== false );
 
 					if ( $is_frontend_url || $is_backend_url ) {
+						// This URL is now the definitive target, whether it's frontend or backend.
 						$ticket_url = $referer_url;
-						// $log_entry .= "SUCCESS: Referer URL is a valid frontend or backend URL and matches the ticket ID.\n";
-					} else {
-						// $log_entry .= "FAILED: Referer URL does not contain a valid ticket ID for frontend or backend.\n";
 					}
 				}
 
 				if ( ! empty( $ticket_url ) ) {
-					// $log_entry .= "RESULT: URL found. Redirecting to: " . $ticket_url . "\n\n";
-					// file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 					return $ticket_url;
-				} else {
-					// $log_entry .= "RESULT: All methods failed to get a URL. No redirect will happen.\n\n";
 				}
-			} else {
-				// $log_entry .= "CONTEXT: No 'ticket' context detected.\n";
 			}
 
 			// If we are not redirecting to the ticket, we still need to pass the context
@@ -1024,22 +1121,16 @@ class WordPress {
 					),
 					$location
 				);
-				// $log_entry .= 'RESULT: Not redirecting, but adding query args. Final location: ' . $location . "\n\n";
-			} else {
-				// $log_entry .= "RESULT: No context. Returning original location: " . $location . "\n\n";
 			}
 
-			// file_put_contents( $debug_log_file, $log_entry, FILE_APPEND );
 			return $location;
 		} catch ( \Throwable $e ) {
 			// Prevent site crash by catching any error.
-			$log_file = WP_CONTENT_DIR . '/jules_recovery.log';
-			$log_message = "--- RECOVERY LOG AT " . date( 'Y-m-d H:i:s' ) . " ---\n";
-			$log_message .= "A critical error was caught in redirect_after_staff_update:\n";
+			$log_message  = "A critical error was caught in redirect_after_staff_update:\n";
 			$log_message .= "Error: " . $e->getMessage() . "\n";
 			$log_message .= "File: " . $e->getFile() . "\n";
 			$log_message .= "Line: " . $e->getLine() . "\n";
-			file_put_contents( $log_file, $log_message, FILE_APPEND );
+			stackboost_log( $log_message, 'directory-error' );
 			return $location; // Return the original location to prevent a redirect loop.
 		}
 	}

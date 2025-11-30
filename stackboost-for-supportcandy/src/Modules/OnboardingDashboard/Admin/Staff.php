@@ -41,7 +41,6 @@ class Staff {
 		$transient_key = 'stackboost_onboarding_tickets_cache';
 
 		?>
-		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 		<div>
 			<h2><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
 
@@ -269,9 +268,9 @@ class Staff {
 									$display_value = self::format_phone( $display_value );
 
 									// Get Icon
-									$icon_name = self::get_phone_icon( $phone_type_to_display );
-									if ( $icon_name ) {
-										$display_value .= ' <i class="material-icons" style="font-size: 1em; vertical-align: middle; margin-left: 5px;">' . esc_html( $icon_name ) . '</i>';
+									$icon_class = self::get_phone_icon( $phone_type_to_display );
+									if ( $icon_class ) {
+										$display_value .= ' <span class="dashicons ' . esc_attr( $icon_class ) . '" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-left: 5px;"></span>';
 									}
 								}
 
@@ -296,17 +295,17 @@ class Staff {
 	}
 
 	/**
-	 * Get Material Icon name for a phone type.
+	 * Get Dashicon class for a phone type.
 	 */
 	private static function get_phone_icon( $type ) {
 		$map = [
-			'mobile'  => 'smartphone',
-			'work'    => 'building', // User requested 'building' for Office/Work
-			'home'    => 'home',
-			'fax'     => 'print',
-			'generic' => 'phone',    // User requested 'phone' for Generic
+			'mobile'  => 'dashicons-smartphone',
+			'work'    => 'dashicons-building',
+			'home'    => 'dashicons-admin-home',
+			'fax'     => 'dashicons-printer',
+			'generic' => 'dashicons-phone',
 		];
-		return $map[ $type ] ?? 'phone';
+		return $map[ $type ] ?? 'dashicons-phone';
 	}
 
 	/**

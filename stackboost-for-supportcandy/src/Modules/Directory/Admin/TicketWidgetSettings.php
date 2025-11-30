@@ -85,6 +85,8 @@ class TicketWidgetSettings {
 			'location'            => __( 'Location', 'stackboost-for-supportcandy' ),
 			'room_number'         => __( 'Room #', 'stackboost-for-supportcandy' ),
 			'department_program'  => __( 'Department / Program', 'stackboost-for-supportcandy' ),
+			'photo_link'          => __( 'Photo (Link)', 'stackboost-for-supportcandy' ),
+			'photo_thumbnail'     => __( 'Photo (Thumbnail)', 'stackboost-for-supportcandy' ),
 		];
 	}
 

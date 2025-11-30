@@ -165,10 +165,23 @@ class DirectoryService {
 			'posts_per_page' => -1,
 			'post_status'    => 'publish',
 			'meta_query'     => array(
+				'relation' => 'AND',
 				array(
 					'key'     => '_active',
 					'value'   => 'Yes',
 					'compare' => '=',
+				),
+				array(
+					'relation' => 'OR',
+					array(
+						'key'     => '_private',
+						'compare' => 'NOT EXISTS',
+					),
+					array(
+						'key'     => '_private',
+						'value'   => 'Yes',
+						'compare' => '!=',
+					),
 				),
 			),
 			'orderby'        => 'title',
@@ -220,9 +233,9 @@ class DirectoryService {
 		// Office Phone
 		if ( ! empty( $employee->office_phone ) ) {
 			$formatted_office_phone = $this->_format_phone_number_string( $employee->office_phone );
-			$office_line            = '<strong>Office:</strong> ' . $formatted_office_phone;
+			$office_line            = '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . $formatted_office_phone;
 			if ( ! empty( $employee->extension ) ) {
-				$office_line .= ' ext. ' . esc_html( $employee->extension );
+				$office_line .= ' <span style="color: #777; font-size: 0.9em;">' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . esc_html( $employee->extension ) . '</span>';
 			}
 			$html_lines[] = $office_line;
 		}
@@ -230,7 +243,7 @@ class DirectoryService {
 		// Mobile Phone
 		if ( ! empty( $employee->mobile_phone ) ) {
 			$formatted_mobile_phone = $this->_format_phone_number_string( $employee->mobile_phone );
-			$html_lines[]           = '<strong>Mobile:</strong> ' . $formatted_mobile_phone;
+			$html_lines[]           = '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $formatted_mobile_phone;
 		}
 
 		return implode( '<br>', $html_lines );

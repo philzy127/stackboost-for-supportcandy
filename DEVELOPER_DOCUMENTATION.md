@@ -153,7 +153,11 @@ This module's `Core.php` is minimal and primarily serves to instantiate the Cust
     *   `wpsc_after_ticket_widget`: Hooks into SupportCandy to render the pseudo-widget HTML.
     *   `admin_enqueue_scripts`: Enqueues the `admin-phone-format.js` script on the staff CPT edit screen and the `import-ajax.js` on the management tab.
     *   `save_post`: Hooks into `MetaBoxes::save_directory_meta_box_data()` to sanitize and save staff details.
-*   **Contact Widget (In Development):** This feature is intended to display directory information on the SupportCandy ticket screen. The settings are managed in `src/Modules/Directory/Admin/TicketWidgetSettings.php`, and the rendering logic is in the `render_ticket_widget` method in `WordPress.php`. The frontend positioning is handled by `assets/js/ticket-widget.js`. **Note: This feature is currently not functional.**
+*   **Contact Widget:** Displays directory information on the SupportCandy ticket screen.
+    *   **Implementation:** The `render_ticket_widget` method in `WordPress.php` renders a hidden widget container. An inline JavaScript block then positions this widget into the correct location in the DOM (relative to other SupportCandy widgets).
+    *   **Photo Modal:** The widget supports displaying staff photos. The logic includes a self-contained JavaScript implementation (`stackboostOpenWidgetModal`) that injects a modal into the `body` to display full-size images without page reloads. This is designed to be robust against SupportCandy's AJAX navigation.
+*   **Private Listings:** The module supports "Private" listings via the `_private` meta key. The `DirectoryService` query logic automatically excludes these from frontend retrieval methods like `get_all_active_employees_for_shortcode`.
+*   **Revision Limits:** The module hooks into `wp_revisions_to_keep` in `CustomPostTypes.php` to enforce a user-defined limit on the number of revisions stored for Staff, Location, and Department post types.
 *   **Key Methods:**
     *   `enqueue_admin_scripts()`: Handles loading of all admin-side scripts for the module.
     *   `ajax_import_csv()`: Located in `Admin/Management.php`, this method handles the server-side logic for the CSV import. It sanitizes the data (including stripping non-numeric characters from phone numbers) and creates new staff posts.

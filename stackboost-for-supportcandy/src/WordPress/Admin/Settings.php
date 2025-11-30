@@ -257,6 +257,10 @@ class Settings {
 	public function register_settings() {
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
 
+		// Directory Module Settings
+		register_setting( 'stackboost_directory_settings', 'stackboost_directory_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::class, 'sanitize_settings' ] );
+		register_setting( 'stackboost_directory_widget_settings', 'stackboost_directory_widget_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings::class, 'sanitize_widget_settings' ] );
+
 		// Diagnostic Log Settings Section
 		add_settings_section(
 			'stackboost_tools_section',
@@ -286,8 +290,6 @@ class Settings {
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
-		// error_log('[SB] sanitize_settings() START. Input: ' . print_r($input, true));
-
 		$saved_settings = get_option('stackboost_settings', []);
 		if (!is_array($saved_settings)) {
 			$saved_settings = [];
@@ -295,10 +297,8 @@ class Settings {
 
 		$page_slug = sanitize_key($input['page_slug'] ?? '');
 		if (empty($page_slug)) {
-			// error_log('[SB] sanitize_settings() WARNING: No page_slug provided in input.');
 			return $saved_settings;
 		}
-		// error_log("[SB] sanitize_settings() Processing for page_slug: {$page_slug}");
 
 		$page_options = apply_filters('stackboost_settings_page_options', [
 			'stackboost-for-supportcandy' => [],
@@ -314,7 +314,6 @@ class Settings {
 
 		$current_page_options = $page_options[$page_slug] ?? [];
 		if (empty($current_page_options)) {
-			// error_log("[SB] sanitize_settings() WARNING: No options defined for page_slug: {$page_slug}. Aborting save.");
 			return $saved_settings;
 		}
 
@@ -416,7 +415,6 @@ class Settings {
 			}
 		}
 
-		// error_log('[SB] sanitize_settings() END. Final sanitized settings: ' . print_r($saved_settings, true));
 		return $saved_settings;
 	}
 
