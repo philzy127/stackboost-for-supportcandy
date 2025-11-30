@@ -143,8 +143,22 @@ class Core {
 				if ( $description_thread && is_object( $description_thread ) ) {
 					$display_value = $description_thread->body; // Direct access via __get magic method.
 					\stackboost_log( "[UTM] Description body retrieved (length=" . strlen( $display_value ) . ")", 'module-utm' );
+
+					// Filter out "Not Applicable" text (often used as a placeholder).
+					$clean_text = trim( strip_tags( $display_value ) );
+					if ( 0 === strcasecmp( $clean_text, 'Not Applicable' ) ) {
+						\stackboost_log( "[UTM] Description is 'Not Applicable'. Clearing value.", 'module-utm' );
+						$display_value = '';
+					}
 				} else {
 					\stackboost_log( "[UTM] Description thread invalid.", 'module-utm' );
+				}
+
+				// If description is empty after retrieval/cleaning, skip it entirely.
+				// We do this here to ignore the original $field_value which might be unreliable.
+				if ( empty( $display_value ) || '' === trim( strip_tags( $display_value ) ) ) {
+					\stackboost_log( "[UTM] Skipping 'description' - Value is empty or effectively empty.", 'module-utm' );
+					continue;
 				}
 			}
 
@@ -232,9 +246,9 @@ class Core {
 
 			if ( ! empty( $display_value ) ) {
 				if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
-					$html_output .= '<tr><td style="white-space: nowrap;"><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . $display_value . '</td></tr>';
+					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
 				} else {
-					$html_output .= '<tr><td style="white-space: nowrap;"><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . esc_html( $display_value ) . '</td></tr>';
+					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
 				}
 			}
 		}
