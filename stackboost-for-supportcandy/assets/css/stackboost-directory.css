@@ -216,11 +216,6 @@
     margin-bottom: 1em;
 }
 
-/* Explicitly hide DataTables default search input */
-.dataTables_filter {
-    display: none !important; /* Use !important to ensure override */
-}
-
 /* Ensure table and its rows are visible when needed */
 /* Removed specific display: table !important; from here, as it's handled by JS */
 
