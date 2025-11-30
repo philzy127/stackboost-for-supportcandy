@@ -14,6 +14,7 @@ use StackBoost\ForSupportCandy\Modules\TicketView;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
+use StackBoost\ForSupportCandy\Modules\AgentProtection;
 
 /**
  * Main plugin class.
@@ -68,6 +69,7 @@ final class Plugin {
 		$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
 		$this->modules['onboarding_dashboard'] = OnboardingDashboard\OnboardingDashboard::get_instance();
 		$this->modules['date_time_formatting'] = DateTimeFormatting\WordPress::get_instance();
+		$this->modules['agent_protection']     = AgentProtection\WordPress::get_instance();
 
 	}
 
@@ -194,6 +196,7 @@ final class Plugin {
 			'stackboost_page_stackboost-conditional-views',
 			'stackboost_page_stackboost-queue-macro',
             'stackboost_page_stackboost-onboarding-dashboard',
+			'stackboost_page_stackboost-agent-protection',
 			'stackboost_page_stackboost-tools',
 		];
 

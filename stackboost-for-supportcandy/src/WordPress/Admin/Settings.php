@@ -71,7 +71,17 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page::class, 'render_page' ],
 		];
 
-		// 4. After Hours Notice
+		// 4. Agent Protection Suite (New Module)
+		$menu_config[] = [
+			'slug'        => 'stackboost-agent-protection',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Active Agent Protection', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Agent Protection', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\AgentProtection\Admin\Settings::class, 'render_page' ],
+		];
+
+		// 5. After Hours Notice
 		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-after-hours',
@@ -83,7 +93,7 @@ class Settings {
 			];
 		}
 
-		// 5. Conditional Views
+		// 6. Conditional Views
 		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-conditional-views',
@@ -95,7 +105,7 @@ class Settings {
 			];
 		}
 
-		// 6. Queue Macro
+		// 7. Queue Macro
 		if ( stackboost_is_feature_active( 'queue_macro' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-queue-macro',
@@ -107,7 +117,7 @@ class Settings {
 			];
 		}
 
-		// 7. Unified Ticket Macro
+		// 8. Unified Ticket Macro
 		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-utm',
@@ -119,7 +129,7 @@ class Settings {
 			];
 		}
 
-		// 8. After Ticket Survey
+		// 9. After Ticket Survey
 		if ( stackboost_is_feature_active( 'after_ticket_survey' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-ats',
@@ -131,7 +141,7 @@ class Settings {
 			];
 		}
 
-		// 9. Company Directory
+		// 10. Company Directory
 		$menu_config[] = [
 			'slug'        => 'stackboost-directory',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -141,7 +151,7 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance(), 'render_admin_page' ],
 		];
 
-		// 10. Onboarding Dashboard
+		// 11. Onboarding Dashboard
 		$menu_config[] = [
 			'slug'        => 'stackboost-onboarding-dashboard',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -151,7 +161,7 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
 		];
 
-		// 11. Tools
+		// 12. Tools
 		$menu_config[] = [
 			'slug'        => 'stackboost-tools',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -161,7 +171,7 @@ class Settings {
 			'callback'    => [ $this, 'render_settings_page' ],
 		];
 
-		// 12. How To Use
+		// 13. How To Use
 		$menu_config[] = [
 			'slug'        => 'stackboost-how-to-use',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -310,6 +320,15 @@ class Settings {
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
 			'stackboost-tools'              => ['diagnostic_log_enabled'],
 			'stackboost-date-time'          => ['enable_date_time_formatting', 'date_format_rules'],
+			'stackboost-agent-protection'   => [
+				'enable_agent_protection',
+				'enable_live_monitor',
+				'live_monitor_interval',
+				'enable_auto_save',
+				'enable_content_scanner',
+				'content_scanner_keywords',
+				'attachment_scanner_keywords'
+			],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
@@ -336,7 +355,20 @@ class Settings {
 					case 'utm_enabled':
 					case 'utm_use_sc_order':
 					case 'enable_date_time_formatting':
+					case 'enable_agent_protection':
+					case 'enable_live_monitor':
+					case 'enable_auto_save':
+					case 'enable_content_scanner':
 						$saved_settings[$key] = intval($value);
+						break;
+
+					case 'live_monitor_interval':
+						$saved_settings[$key] = intval($value);
+						break;
+
+					case 'content_scanner_keywords':
+					case 'attachment_scanner_keywords':
+						$saved_settings[$key] = sanitize_textarea_field($value);
 						break;
 
 					case 'holidays':
