@@ -144,8 +144,16 @@ class WordPress {
 			);
 		}
 
+		// Enqueue scripts for the SupportCandy Ticket View (for Widget icons).
+		if ( 'supportcandy_page_wpsc-view-ticket' === $screen->id ) {
+			wp_enqueue_style( 'google-material-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons', [], null );
+		}
+
 		// Enqueue scripts for the main directory admin page.
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
+			// Enqueue Material Icons for admin preview/consistency.
+			wp_enqueue_style( 'google-material-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons', [], null );
+
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
 			// Enqueue scripts for the Contact Widget settings tab.
@@ -249,6 +257,9 @@ class WordPress {
 			\STACKBOOST_VERSION,
 			true
 		);
+
+		// Enqueue Material Icons for phone icons in the directory table.
+		wp_enqueue_style( 'google-material-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons', [], null );
 		wp_localize_script(
 			'stackboost-directory-js',
 			'stackboostPublicAjax',
