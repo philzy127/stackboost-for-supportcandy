@@ -729,6 +729,9 @@ class WordPress {
 							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							if ( 'photo_thumbnail' === $field_key || 'photo_link' === $field_key ) {
 								$list_items .= '<div class="stackboost-widget-field-photo">' . $value . '</div>';
+							} elseif ( 'phone' === $field_key && strpos( $value, '<br>' ) !== false ) {
+								// If multiple phone numbers, add a line break after the label.
+								$list_items .= '<div><strong>' . esc_html( $label ) . ':</strong><br>' . $value . '</div>';
 							} else {
 								$list_items .= '<div><strong>' . esc_html( $label ) . ':</strong> ' . $value . '</div>';
 							}
