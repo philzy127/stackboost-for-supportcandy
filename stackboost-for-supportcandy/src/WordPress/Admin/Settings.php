@@ -257,6 +257,10 @@ class Settings {
 	public function register_settings() {
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
 
+		// Directory Module Settings
+		register_setting( 'stackboost_directory_settings', 'stackboost_directory_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::class, 'sanitize_settings' ] );
+		register_setting( 'stackboost_directory_widget_settings', 'stackboost_directory_widget_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings::class, 'sanitize_widget_settings' ] );
+
 		// Diagnostic Log Settings Section
 		add_settings_section(
 			'stackboost_tools_section',
