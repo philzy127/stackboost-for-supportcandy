@@ -120,7 +120,6 @@ class DirectoryService {
 		$employee_data->permalink           = get_permalink( $profile_id );
 		$employee_data->edit_post_link      = get_edit_post_link( $profile_id );
 		$employee_data->thumbnail_url       = get_the_post_thumbnail_url( $profile_id, 'medium' );
-		$employee_data->full_photo_url      = get_the_post_thumbnail_url( $profile_id, 'full' );
 		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
 		$employee_data->job_title           = get_post_meta( $profile_id, '_chp_staff_job_title', true );
 		$employee_data->department_program  = get_post_meta( $profile_id, '_department_program', true );
@@ -234,7 +233,7 @@ class DirectoryService {
 		// Office Phone
 		if ( ! empty( $employee->office_phone ) ) {
 			$formatted_office_phone = $this->_format_phone_number_string( $employee->office_phone );
-			$office_line            = '<i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '">building</i>' . $formatted_office_phone;
+			$office_line            = '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . $formatted_office_phone;
 			if ( ! empty( $employee->extension ) ) {
 				$office_line .= ' <span style="color: #777; font-size: 0.9em;">' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . esc_html( $employee->extension ) . '</span>';
 			}
@@ -244,7 +243,7 @@ class DirectoryService {
 		// Mobile Phone
 		if ( ! empty( $employee->mobile_phone ) ) {
 			$formatted_mobile_phone = $this->_format_phone_number_string( $employee->mobile_phone );
-			$html_lines[]           = '<i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '">smartphone</i>' . $formatted_mobile_phone;
+			$html_lines[]           = '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $formatted_mobile_phone;
 		}
 
 		return implode( '<br>', $html_lines );

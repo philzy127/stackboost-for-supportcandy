@@ -145,14 +145,14 @@ class WordPress {
 		}
 
 		// Enqueue scripts for the SupportCandy Ticket View (for Widget icons).
+		// Dashicons is loaded by default in admin, but just in case.
 		if ( 'supportcandy_page_wpsc-view-ticket' === $screen->id ) {
-			wp_enqueue_style( 'google-material-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons', [], null );
+			// No action needed for Dashicons in admin.
 		}
 
 		// Enqueue scripts for the main directory admin page.
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
-			// Enqueue Material Icons for admin preview/consistency.
-			wp_enqueue_style( 'google-material-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons', [], null );
+			// Dashicons is loaded by default in admin.
 
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
@@ -258,8 +258,8 @@ class WordPress {
 			true
 		);
 
-		// Enqueue Material Icons for phone icons in the directory table.
-		wp_enqueue_style( 'google-material-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons', [], null );
+		// Enqueue Dashicons for the frontend shortcode.
+		wp_enqueue_style( 'dashicons' );
 		wp_localize_script(
 			'stackboost-directory-js',
 			'stackboostPublicAjax',
