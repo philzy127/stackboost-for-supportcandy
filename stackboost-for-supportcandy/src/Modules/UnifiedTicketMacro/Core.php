@@ -135,6 +135,7 @@ class Core {
 			}
 
 			$field_name    = $rename_rules_map[ $field_slug ] ?? ( $all_columns[ $field_slug ] ?? $field_slug );
+			$field_name    = rtrim( $field_name, ':' );
 			$display_value = '';
 			$field_type    = $field_types_map[ $field_slug ] ?? 'unknown';
 
@@ -208,9 +209,9 @@ class Core {
 
 			if ( ! empty( $display_value ) ) {
 				if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
-					$html_output .= '<tr><td><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . $display_value . '</td></tr>';
+					$html_output .= '<tr><td style="white-space: nowrap;"><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . $display_value . '</td></tr>';
 				} else {
-					$html_output .= '<tr><td><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . esc_html( $display_value ) . '</td></tr>';
+					$html_output .= '<tr><td style="white-space: nowrap;"><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . esc_html( $display_value ) . '</td></tr>';
 				}
 			}
 		}
