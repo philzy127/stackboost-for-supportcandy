@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.7] - 2025-11-12
+
+### Added
+- **Directory Widget:** Added "Photo (Thumbnail)" and "Photo (Link)" options to the Contact Widget. Both open the full-size staff photo in a responsive modal popup.
+- **Directory:** Added "Private" checkbox to staff listings. Private listings are hidden from the frontend directory but remain visible in the backend and ticket widgets.
+- **Directory:** Added "Revisions to Keep" setting to limit the number of revisions stored for Staff, Location, and Department post types.
+
+### Fixed
+- **Directory:** Fixed an issue where the frontend directory search field was hidden.
+- **Settings:** Fixed a bug where Directory and Widget settings could not be saved due to missing registration in the central settings class.
+- **Directory:** Improved modal image sizing to prevent stretching on large screens.
+
 ## [1.2.6] - 2025-11-10
 
 ### Added
