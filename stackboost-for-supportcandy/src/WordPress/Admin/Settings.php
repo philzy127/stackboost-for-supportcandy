@@ -61,17 +61,15 @@ class Settings {
 			'callback'    => [ $this, 'render_settings_page' ],
 		];
 
-		// 3. Conditional Views
-		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
-			$menu_config[] = [
-				'slug'        => 'stackboost-conditional-views',
-				'parent'      => 'stackboost-for-supportcandy',
-				'page_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
-				'menu_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
-			];
-		}
+		// 3. Date & Time Formatting (New Module)
+		$menu_config[] = [
+			'slug'        => 'stackboost-date-time',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Date & Time', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page::class, 'render_page' ],
+		];
 
 		// 4. After Hours Notice
 		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
@@ -85,7 +83,19 @@ class Settings {
 			];
 		}
 
-		// 5. Queue Macro
+		// 5. Conditional Views
+		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-conditional-views',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ $this, 'render_settings_page' ],
+			];
+		}
+
+		// 6. Queue Macro
 		if ( stackboost_is_feature_active( 'queue_macro' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-queue-macro',
@@ -97,7 +107,7 @@ class Settings {
 			];
 		}
 
-		// 6. Unified Ticket Macro
+		// 7. Unified Ticket Macro
 		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-utm',
@@ -109,7 +119,7 @@ class Settings {
 			];
 		}
 
-		// 7. After Ticket Survey
+		// 8. After Ticket Survey
 		if ( stackboost_is_feature_active( 'after_ticket_survey' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-ats',
@@ -121,7 +131,7 @@ class Settings {
 			];
 		}
 
-		// 8. Company Directory
+		// 9. Company Directory
 		$menu_config[] = [
 			'slug'        => 'stackboost-directory',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -131,7 +141,7 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance(), 'render_admin_page' ],
 		];
 
-		// 9. Onboarding Dashboard
+		// 10. Onboarding Dashboard
 		$menu_config[] = [
 			'slug'        => 'stackboost-onboarding-dashboard',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -141,7 +151,7 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
 		];
 
-		// 10. Tools
+		// 11. Tools
 		$menu_config[] = [
 			'slug'        => 'stackboost-tools',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -151,7 +161,7 @@ class Settings {
 			'callback'    => [ $this, 'render_settings_page' ],
 		];
 
-		// 11. How To Use
+		// 12. How To Use
 		$menu_config[] = [
 			'slug'        => 'stackboost-how-to-use',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -299,6 +309,7 @@ class Settings {
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
 			'stackboost-tools'              => ['diagnostic_log_enabled'],
+			'stackboost-date-time'          => ['enable_date_time_formatting', 'date_format_rules'],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
@@ -325,6 +336,7 @@ class Settings {
 					case 'include_all_weekends':
 					case 'utm_enabled':
 					case 'utm_use_sc_order':
+					case 'enable_date_time_formatting':
 						$saved_settings[$key] = intval($value);
 						break;
 
@@ -338,6 +350,29 @@ class Settings {
 
 					case 'utm_rename_rules':
 						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['field', 'name']) : [];
+						break;
+
+					case 'date_format_rules':
+						// Check if rules are present in the submission.
+						if ( is_array( $value ) ) {
+							$sanitized_rules = [];
+							foreach ( $value as $rule ) {
+								if ( ! is_array( $rule ) || empty( $rule['column'] ) ) {
+									continue;
+								}
+								$sanitized_rule                   = [];
+								$sanitized_rule['column']         = sanitize_text_field( $rule['column'] );
+								$sanitized_rule['format_type']    = in_array( $rule['format_type'], [ 'default', 'date_only', 'time_only', 'date_and_time', 'custom' ], true ) ? $rule['format_type'] : 'default';
+								$sanitized_rule['custom_format']  = sanitize_text_field( $rule['custom_format'] );
+								$sanitized_rule['use_long_date']    = ! empty( $rule['use_long_date'] ) ? 1 : 0;
+								$sanitized_rule['show_day_of_week'] = ! empty( $rule['show_day_of_week'] ) ? 1 : 0;
+								$sanitized_rules[]              = $sanitized_rule;
+							}
+							$saved_settings[$key] = $sanitized_rules;
+						} else {
+							// If value is not an array but exists, it might be empty (deleted all rules)
+							$saved_settings[$key] = [];
+						}
 						break;
 
 					case 'after_hours_start':

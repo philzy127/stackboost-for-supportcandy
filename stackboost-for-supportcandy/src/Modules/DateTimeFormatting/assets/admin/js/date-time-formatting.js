@@ -1,0 +1,72 @@
+(function ($) {
+  "use strict";
+
+  $(function () {
+    /**
+     * Handles the dynamic behavior of the date format rule builder.
+     */
+    function initializeDateFormatRuleBuilder() {
+      function toggleDateOptions($rule) {
+        var formatType = $rule.find(".stackboost-date-format-type").val();
+        var $bottomRow = $rule.find(".stackboost-date-rule-row-bottom");
+        var $customFormatWrapper = $rule.find(".stackboost-custom-format-wrapper");
+
+        // Handle visibility of the custom format input.
+        if (formatType === "custom") {
+          $customFormatWrapper.show();
+        } else {
+          $customFormatWrapper.hide();
+        }
+
+        // Handle visibility of the checkboxes row.
+        if (formatType === "date_only" || formatType === "date_and_time") {
+          $bottomRow.show();
+        } else {
+          $bottomRow.hide();
+          // Uncheck the checkboxes when they are hidden to prevent saving unwanted values.
+          $bottomRow.find('input[type="checkbox"]').prop("checked", false);
+        }
+      }
+
+      // Initial setup on page load.
+      $(".stackboost-date-rule-wrapper").each(function () {
+        toggleDateOptions($(this));
+      });
+
+      // Handle change event for the format type dropdown.
+      $("#stackboost-date-rules-container").on(
+        "change",
+        ".stackboost-date-format-type",
+        function () {
+          toggleDateOptions($(this).closest(".stackboost-date-rule-wrapper"));
+        }
+      );
+
+      // Add a new rule.
+      $("#stackboost-add-date-rule").on("click", function () {
+        var ruleTemplate = $("#stackboost-date-rule-template").html();
+        var newIndex = new Date().getTime(); // Use a timestamp for a unique index.
+        var newRule = ruleTemplate.replace(/__INDEX__/g, newIndex);
+        $("#stackboost-no-date-rules-message").hide();
+        $("#stackboost-date-rules-container").append(newRule);
+      });
+
+      // Remove a rule.
+      $("#stackboost-date-rules-container").on(
+        "click",
+        ".stackboost-remove-date-rule",
+        function () {
+          $(this).closest(".stackboost-date-rule-wrapper").remove();
+          if ($("#stackboost-date-rules-container .stackboost-date-rule-wrapper").length === 0) {
+            $("#stackboost-no-date-rules-message").show();
+          }
+        }
+      );
+    }
+
+    // Initialize the rule builder if we are on the correct page.
+    if ($("#stackboost-date-rules-container").length) {
+      initializeDateFormatRuleBuilder();
+    }
+  });
+})(jQuery);
