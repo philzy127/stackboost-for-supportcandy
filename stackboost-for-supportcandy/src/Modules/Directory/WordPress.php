@@ -813,38 +813,42 @@ class WordPress {
 					cursor: pointer;
 				}
 			</style>
-			<!-- Simple Lightbox Modal Markup -->
-			<div id="stackboost-widget-modal">
-				<span id="stackboost-widget-modal-close">&times;</span>
-				<img class="stackboost-modal-content" id="stackboost-widget-modal-content">
-			</div>
-
 			<script>
-				// Global function for opening the modal (called by inline onclick)
-				// We attach it to window to be accessible from the HTML generated above.
-				window.stackboostOpenWidgetModal = function(event, imageUrl) {
-					event.preventDefault();
-					var modal = document.getElementById('stackboost-widget-modal');
-					var modalImg = document.getElementById('stackboost-widget-modal-content');
-					modal.style.display = "block";
-					modalImg.src = imageUrl;
-				};
-
 				// Using a closure to keep variables local and avoid polluting the global scope.
 				(function() {
-					// Modal Close Logic
-					var modal = document.getElementById('stackboost-widget-modal');
-					var span = document.getElementById("stackboost-widget-modal-close");
-					if (span) {
-						span.onclick = function() {
-							modal.style.display = "none";
-						}
-					}
-					if (modal) {
-						modal.onclick = function(e) {
-							if (e.target === modal) {
-								modal.style.display = "none";
+					// 1. Define Global Open Function (idempotent)
+					if (typeof window.stackboostOpenWidgetModal === 'undefined') {
+						window.stackboostOpenWidgetModal = function(event, imageUrl) {
+							if (event) event.preventDefault();
+							var modal = document.getElementById('stackboost-widget-modal');
+							var modalImg = document.getElementById('stackboost-widget-modal-content');
+							if (modal && modalImg) {
+								modal.style.display = "block";
+								modalImg.src = imageUrl;
 							}
+						};
+					}
+
+					// 2. Inject Modal HTML into Body (idempotent)
+					if (!document.getElementById('stackboost-widget-modal')) {
+						var modalHtml = '<div id="stackboost-widget-modal"><span id="stackboost-widget-modal-close">&times;</span><img class="stackboost-modal-content" id="stackboost-widget-modal-content"></div>';
+						document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+						// 3. Attach Close Listeners
+						var modal = document.getElementById('stackboost-widget-modal');
+						var span = document.getElementById("stackboost-widget-modal-close");
+
+						if (span) {
+							span.onclick = function() {
+								modal.style.display = "none";
+							};
+						}
+						if (modal) {
+							modal.onclick = function(e) {
+								if (e.target === modal) {
+									modal.style.display = "none";
+								}
+							};
 						}
 					}
 
