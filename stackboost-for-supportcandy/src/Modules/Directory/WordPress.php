@@ -716,7 +716,7 @@ class WordPress {
 						if ( $is_html ) {
 							// This value is pre-formatted, trusted HTML from the DirectoryService or constructed above.
 							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-							if ( 'photo_thumbnail' === $field_key ) {
+							if ( 'photo_thumbnail' === $field_key || 'photo_link' === $field_key ) {
 								$list_items .= '<div class="stackboost-widget-field-photo">' . $value . '</div>';
 							} else {
 								$list_items .= '<div><strong>' . esc_html( $label ) . ':</strong> ' . $value . '</div>';
