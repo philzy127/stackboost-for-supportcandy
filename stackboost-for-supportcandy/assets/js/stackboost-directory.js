@@ -33,22 +33,24 @@ jQuery(document).ready(function($) {
     }
 
     // Function to handle the copy action
-    function copyToClipboard(text, $icon) {
+    function copyToClipboard(text, $icon, type) {
+        console.log('StackBoost Directory: Attempting to copy', text);
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(function() {
-                handleCopySuccess($icon);
+                handleCopySuccess($icon, text, type);
             }, function(err) {
                 console.error('Async: Could not copy text: ', err);
                 // Fallback to execCommand if async fails
-                fallbackCopyTextToClipboard(text, $icon);
+                fallbackCopyTextToClipboard(text, $icon, type);
             });
         } else {
-            fallbackCopyTextToClipboard(text, $icon);
+            fallbackCopyTextToClipboard(text, $icon, type);
         }
     }
 
     // Fallback using execCommand
-    function fallbackCopyTextToClipboard(text, $icon) {
+    function fallbackCopyTextToClipboard(text, $icon, type) {
+        console.log('StackBoost Directory: Using fallback copy');
         var textArea = document.createElement("textarea");
         textArea.value = text;
 
@@ -64,7 +66,7 @@ jQuery(document).ready(function($) {
         try {
             var successful = document.execCommand('copy');
             if (successful) {
-                handleCopySuccess($icon);
+                handleCopySuccess($icon, text, type);
             } else {
                 console.error('Fallback: Copying text command was unsuccessful');
             }
@@ -76,8 +78,13 @@ jQuery(document).ready(function($) {
     }
 
     // Success UI Feedback
-    function handleCopySuccess($icon) {
+    function handleCopySuccess($icon, text, type) {
+        console.log('StackBoost Directory: Copy successful');
         $icon.addClass('copied');
+
+        var msg = type === 'email' ? 'Email copied: ' + text : 'Phone copied: ' + text;
+        showToast(msg);
+
         setTimeout(function() {
             $icon.removeClass('copied');
         }, 1500); // 1.5s delay to be visible
@@ -85,17 +92,22 @@ jQuery(document).ready(function($) {
 
     // Copy to clipboard functionality for email
     $(document).on('click', '.stackboost-copy-email-icon', function() {
+        console.log('StackBoost Directory: Email icon clicked');
         var email = $(this).data('email');
         if (email) {
-            copyToClipboard(email, $(this));
-            showToast('Email copied: ' + email);
+            copyToClipboard(email, $(this), 'email');
+        } else {
+            console.error('StackBoost Directory: No email data found on icon');
         }
     });
 
     // Copy to clipboard functionality for phone
     $(document).on('click', '.stackboost-copy-phone-icon', function() {
+        console.log('StackBoost Directory: Phone icon clicked');
         var phone = $(this).data('phone');
         var extension = $(this).data('extension');
+
+        console.log('StackBoost Directory: Raw Data', { phone: phone, extension: extension });
 
         // Ensure we treat them as strings to avoid weird addition
         phone = String(phone);
@@ -105,9 +117,10 @@ jQuery(document).ready(function($) {
             fullNumber = phone + ' x' + extension;
         }
 
-        if (fullNumber) {
-            copyToClipboard(fullNumber, $(this));
-            showToast('Phone copied: ' + fullNumber);
+        if (fullNumber && fullNumber !== "undefined") {
+            copyToClipboard(fullNumber, $(this), 'phone');
+        } else {
+             console.error('StackBoost Directory: Failed to construct full number');
         }
     });
 });
