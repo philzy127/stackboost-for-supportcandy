@@ -230,23 +230,88 @@ class DirectoryService {
 	public function get_formatted_phone_numbers_html( \stdClass $employee ): string {
 		$html_lines = [];
 
+		// Copy icon SVG definition
+		$copy_icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; margin-left: 5px; cursor: pointer;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+
 		// Office Phone
 		if ( ! empty( $employee->office_phone ) ) {
 			$formatted_office_phone = $this->_format_phone_number_string( $employee->office_phone );
-			$office_line            = '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . $formatted_office_phone;
+			$office_tel_uri         = $this->_generate_tel_uri( $employee->office_phone, $employee->extension );
+
+			// Visible part wrapped in a link
+			$office_link = '<a href="' . esc_url( $office_tel_uri ) . '">' . $formatted_office_phone . '</a>';
+
+			$office_line = '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . $office_link;
 			if ( ! empty( $employee->extension ) ) {
 				$office_line .= ' <span style="color: #777; font-size: 0.9em;">' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . esc_html( $employee->extension ) . '</span>';
 			}
+
+			// Add copy button
+			// Construct copy text to match display: (xxx) xxx-xxxx ext. yyy
+			$office_copy_text = $formatted_office_phone;
+			if ( ! empty( $employee->extension ) ) {
+				$office_copy_text .= ' ' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . $employee->extension;
+			}
+
+			$office_line .= sprintf(
+				' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="%s" data-copy-text="%s" title="%s">%s</span>',
+				esc_attr( $employee->office_phone ),
+				esc_attr( $employee->extension ),
+				esc_attr( $office_copy_text ),
+				esc_attr__( 'Click to copy phone', 'stackboost-for-supportcandy' ),
+				$copy_icon_svg
+			);
+
 			$html_lines[] = $office_line;
 		}
 
 		// Mobile Phone
 		if ( ! empty( $employee->mobile_phone ) ) {
 			$formatted_mobile_phone = $this->_format_phone_number_string( $employee->mobile_phone );
-			$html_lines[]           = '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $formatted_mobile_phone;
+			$mobile_tel_uri         = $this->_generate_tel_uri( $employee->mobile_phone, '' );
+
+			// Visible part wrapped in a link
+			$mobile_link = '<a href="' . esc_url( $mobile_tel_uri ) . '">' . $formatted_mobile_phone . '</a>';
+
+			$mobile_line = '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $mobile_link;
+
+			// Add copy button (mobile usually has no extension)
+			$mobile_copy_text = $formatted_mobile_phone;
+			$mobile_line .= sprintf(
+				' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="" data-copy-text="%s" title="%s">%s</span>',
+				esc_attr( $employee->mobile_phone ),
+				esc_attr( $mobile_copy_text ),
+				esc_attr__( 'Click to copy phone', 'stackboost-for-supportcandy' ),
+				$copy_icon_svg
+			);
+
+			$html_lines[] = $mobile_line;
 		}
 
 		return implode( '<br>', $html_lines );
+	}
+
+	/**
+	 * Generates a tel: URI complying with RFC 3966.
+	 *
+	 * @param string $number    The phone number.
+	 * @param string $extension Optional extension.
+	 * @return string The tel: URI.
+	 */
+	private function _generate_tel_uri( string $number, string $extension = '' ): string {
+		// Clean the number. Keep digits and the + sign.
+		$clean_number = preg_replace( '/[^0-9+]/', '', $number );
+
+		// Build URI
+		$uri = 'tel:' . $clean_number;
+
+		if ( ! empty( $extension ) ) {
+			// RFC 3966 specifies ;ext= for extensions.
+			$clean_extension = preg_replace( '/[^0-9]/', '', $extension );
+			$uri            .= ';ext=' . $clean_extension;
+		}
+
+		return $uri;
 	}
 
 	/**

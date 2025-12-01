@@ -80,8 +80,10 @@ class DirectoryShortcode {
 									'class'          => true,
 									'data-phone'     => true,
 									'data-extension' => true,
+									'data-copy-text' => true,
 									'title'          => true,
 									'data-email'     => true,
+									'style'          => true, // Allow style for inline styling of icons
 								),
 								'svg'    => array(
 									'class'   => true,
@@ -128,7 +130,7 @@ class DirectoryShortcode {
 											</a>
 										<?php endif; ?>
 									</td>
-									<td data-search="<?php echo esc_attr( $searchable_phone_string ); ?>"><?php echo ! empty( $formatted_phone_output ) ? wp_kses_post( $formatted_phone_output ) : '&mdash;'; ?></td>
+									<td data-search="<?php echo esc_attr( $searchable_phone_string ); ?>"><?php echo ! empty( $formatted_phone_output ) ? wp_kses( $formatted_phone_output, $allowed_html ) : '&mdash;'; ?></td>
 									<td><?php echo esc_html( $employee->department_program ); ?></td>
 									<td><?php echo esc_html( $employee->job_title ); ?></td>
 								</tr>
