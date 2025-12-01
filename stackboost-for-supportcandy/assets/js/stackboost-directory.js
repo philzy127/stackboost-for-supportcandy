@@ -39,67 +39,63 @@ jQuery(document).ready(function($) {
     // Check if table exists and is visible to avoid cloneNode errors
     var $table = $('#stackboostStaffDirectoryTable');
     if ($table.length > 0) {
-        // Robust init: Wait for visibility if needed, or try/catch
-        var initDataTables = function() {
-            try {
-                if ($table.is(':visible')) {
-                    $table.DataTable({
-                        "pageLength": 25,
-                        "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
-                        "responsive": true,
-                        "language": {
-                            "search": "Filter results:",
-                            "lengthMenu": "Show _MENU_ entries"
-                        },
-                        "columnDefs": [
-                            {
-                                "targets": 1, // The 'Phone' column
-                                "render": function ( data, type, row, meta ) {
-                                    if ( type === 'filter' ) {
-                                        var cellNode = meta.settings.aoData[meta.row].anCells[meta.col];
-                                        var dataSearch = $(cellNode).data('search');
-                                        return data + ' ' + dataSearch;
-                                    }
-                                    return data;
-                                }
+
+        // Define common options to avoid duplication
+        var getDtOptions = function(responsive) {
+            return {
+                "pageLength": 25,
+                "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+                "responsive": responsive,
+                "language": {
+                    "search": "Filter results:",
+                    "lengthMenu": "Show _MENU_ entries"
+                },
+                "columnDefs": [
+                    {
+                        "targets": 1, // The 'Phone' column
+                        "render": function ( data, type, row, meta ) {
+                            if ( type === 'filter' ) {
+                                var cellNode = meta.settings.aoData[meta.row].anCells[meta.col];
+                                var dataSearch = $(cellNode).data('search');
+                                return data + ' ' + dataSearch;
                             }
-                        ]
-                    });
-                } else {
-                    // Poll for visibility (common in tabs)
-                    var checkVis = setInterval(function() {
-                        if ($table.is(':visible')) {
-                            clearInterval(checkVis);
-                            $table.DataTable({
-                                "pageLength": 25,
-                                "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
-                                "responsive": true,
-                                "language": {
-                                    "search": "Filter results:",
-                                    "lengthMenu": "Show _MENU_ entries"
-                                },
-                                "columnDefs": [
-                                    {
-                                        "targets": 1, // The 'Phone' column
-                                        "render": function ( data, type, row, meta ) {
-                                            if ( type === 'filter' ) {
-                                                var cellNode = meta.settings.aoData[meta.row].anCells[meta.col];
-                                                var dataSearch = $(cellNode).data('search');
-                                                return data + ' ' + dataSearch;
-                                            }
-                                            return data;
-                                        }
-                                    }
-                                ]
-                            });
+                            return data;
                         }
-                    }, 200);
-                }
+                    }
+                ]
+            };
+        };
+
+        var attemptInit = function() {
+            try {
+                // Attempt 1: Responsive
+                $table.DataTable(getDtOptions(true));
             } catch (e) {
-                console.error('StackBoost Directory: DataTables initialization failed', e);
+                console.warn('StackBoost Directory: Responsive DataTables init failed (likely hidden element). Falling back to non-responsive.', e);
+                // Attempt 2: Non-responsive fallback
+                try {
+                     if ($.fn.DataTable.isDataTable($table)) {
+                        $table.DataTable().destroy();
+                     }
+                    $table.DataTable(getDtOptions(false));
+                } catch (e2) {
+                    console.error('StackBoost Directory: DataTables fallback init failed.', e2);
+                }
             }
         };
-        initDataTables();
+
+        // Robust init logic
+        if ($table.is(':visible')) {
+            attemptInit();
+        } else {
+            // Poll for visibility (common in tabs)
+            var checkVis = setInterval(function() {
+                if ($table.is(':visible')) {
+                    clearInterval(checkVis);
+                    attemptInit();
+                }
+            }, 200);
+        }
     }
 
     // Function to show a toast notification
