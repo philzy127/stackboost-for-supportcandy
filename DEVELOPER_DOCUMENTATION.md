@@ -283,6 +283,23 @@ This module is a collection of smaller, mostly frontend features. The PHP class 
     *   `ajax_test_queue_counts()`: The handler for the "Run Test" button. It retrieves the saved settings and calls `Core::get_all_queue_counts()` to get the data, which it then returns as a JSON response.
     *   `render_statuses_dual_list_field()`: Renders a custom dual-list box UI for selecting the "Non-Closed Statuses" in the admin settings, providing a more user-friendly experience than a simple multi-select box.
 
+### 3.6. Unified Ticket Macro
+
+*   **Namespace:** `StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro`
+*   **Slug:** `unified_ticket_macro`
+
+#### Core Logic (`Core.php`)
+
+*   `replace_utm_macro( string $str, \WPSC_Ticket $ticket, string $macro )`: The main entry point. It intercepts the macro replacement process. If the macro is `stackboost_unified_ticket`, it triggers `build_live_utm_html`.
+*   `build_live_utm_html( \WPSC_Ticket $ticket )`: Constructs the HTML table for the macro.
+    *   **Field Formatting:** Enforces vertical alignment (`vertical-align: top`) and prevents wrapping (`white-space: nowrap`) on field titles. It also strips trailing colons and paragraph margins (`margin: 0`) from rich text fields to ensure clean output.
+    *   **Description Retrieval:** It specifically handles the `df_description` field. Instead of relying on the (often empty) ticket property, it calls `$ticket->get_description_thread()` to fetch the initial report thread. It filters out "Not Applicable" or empty descriptions to prevent clutter.
+
+#### WordPress Adapter (`WordPress.php`)
+
+*   **Hooks:**
+    *   `wpsc_replace_macros`: Hooks into SupportCandy's macro replacement filter to inject the custom UTM output.
+
 ---
 
 ## 4. Helper Functions and Global Context

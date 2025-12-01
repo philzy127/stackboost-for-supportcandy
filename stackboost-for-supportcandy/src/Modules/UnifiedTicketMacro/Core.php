@@ -124,19 +124,55 @@ class Core {
 		$html_output = '<table>';
 
 		foreach ( $selected_fields as $field_slug ) {
-			$field_value = $ticket->{$field_slug};
+			$field_value     = $ticket->{$field_slug};
+			$field_type      = $field_types_map[ $field_slug ] ?? 'unknown';
+			$field_name      = $rename_rules_map[ $field_slug ] ?? ( $all_columns[ $field_slug ] ?? $field_slug );
+			$field_name      = rtrim( $field_name, ':' );
+			$display_value   = '';
 
-			if ( empty( $field_value ) ) {
+			\stackboost_log( "[UTM] Processing Field: Slug='{$field_slug}', Type='{$field_type}', Name='{$field_name}'", 'module-utm' );
+
+			// Special handling for Description: It might be empty in the ticket object property,
+			// but we can try to fetch it regardless of $field_value being empty initially.
+			if ( 'df_description' === $field_type ) {
+				\stackboost_log( "[UTM] Detected df_description field.", 'module-utm' );
+				// Retrieve the initial report thread to get the description text.
+				$description_thread = $ticket->get_description_thread();
+				\stackboost_log( "[UTM] get_description_thread() result: " . ( $description_thread ? 'Object Found' : 'False/Null' ), 'module-utm' );
+
+				if ( $description_thread && is_object( $description_thread ) ) {
+					$display_value = $description_thread->body; // Direct access via __get magic method.
+					\stackboost_log( "[UTM] Description body retrieved (length=" . strlen( $display_value ) . ")", 'module-utm' );
+
+					// Filter out "Not Applicable" text (often used as a placeholder).
+					$clean_text = trim( strip_tags( $display_value ) );
+					if ( 0 === strcasecmp( $clean_text, 'Not Applicable' ) ) {
+						\stackboost_log( "[UTM] Description is 'Not Applicable'. Clearing value.", 'module-utm' );
+						$display_value = '';
+					}
+				} else {
+					\stackboost_log( "[UTM] Description thread invalid.", 'module-utm' );
+				}
+
+				// If description is empty after retrieval/cleaning, skip it entirely.
+				// We do this here to ignore the original $field_value which might be unreliable.
+				if ( empty( $display_value ) || '' === trim( strip_tags( $display_value ) ) ) {
+					\stackboost_log( "[UTM] Skipping 'description' - Value is empty or effectively empty.", 'module-utm' );
+					continue;
+				}
+			}
+
+			if ( empty( $field_value ) && empty( $display_value ) ) {
+				// If both original value and computed display value are empty, skip.
+				\stackboost_log( "[UTM] Skipping '{$field_slug}' - Value is empty.", 'module-utm' );
 				continue;
 			}
+
 			if ( ( is_string( $field_value ) && '0000-00-00 00:00:00' === $field_value ) ||
 				 ( $field_value instanceof \DateTime && '0000-00-00 00:00:00' === $field_value->format( 'Y-m-d H:i:s' ) ) ) {
+				\stackboost_log( "[UTM] Skipping '{$field_slug}' - Invalid Date.", 'module-utm' );
 				continue;
 			}
-
-			$field_name    = $rename_rules_map[ $field_slug ] ?? ( $all_columns[ $field_slug ] ?? $field_slug );
-			$display_value = '';
-			$field_type    = $field_types_map[ $field_slug ] ?? 'unknown';
 
 			switch ( $field_type ) {
 				case 'cf_textfield':
@@ -158,8 +194,10 @@ class Core {
 					$display_value = (string) $field_value;
 					break;
 				case 'cf_html':
-				case 'df_description':
 					$display_value = $field_value; // Do not escape HTML content.
+					break;
+				case 'df_description':
+					// Already handled above to ensure it works even if $field_value is empty.
 					break;
 				case 'cf_date':
 					$date_obj = clone $field_value;
@@ -208,9 +246,11 @@ class Core {
 
 			if ( ! empty( $display_value ) ) {
 				if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
-					$html_output .= '<tr><td><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . $display_value . '</td></tr>';
+					// Fix alignment issue caused by paragraph margins in rich text fields.
+					$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
+					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
 				} else {
-					$html_output .= '<tr><td><strong>' . esc_html( $field_name ) . ':</strong></td><td>' . esc_html( $display_value ) . '</td></tr>';
+					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
 				}
 			}
 		}
