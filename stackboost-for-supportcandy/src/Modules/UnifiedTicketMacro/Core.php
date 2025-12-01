@@ -246,6 +246,8 @@ class Core {
 
 			if ( ! empty( $display_value ) ) {
 				if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
+					// Fix alignment issue caused by paragraph margins in rich text fields.
+					$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
 					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
 				} else {
 					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
