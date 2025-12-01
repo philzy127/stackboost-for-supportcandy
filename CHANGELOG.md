@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.9] - 2025-12-05
+
+### Changed
+- **After-Hours Editor:** The WYSIWYG editor for the "After-Hours Message" has been upgraded. It now features an expanded toolbar with options for Text Color, Horizontal Rules, Blockquotes, and more, while retaining its compact "teeny" mode. This required explicitly loading additional TinyMCE plugins to override the default "teeny" restrictions.
+
 ## [1.2.8] - 2025-11-30
 
 ### Changed
