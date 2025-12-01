@@ -60,7 +60,9 @@ Adds a `{{queue_count}}` macro to email notifications, showing the customer thei
 Replaces multiple email macros with a single `{{stackboost_unified_ticket}}` macro that generates a clean, customizable HTML summary of the ticket.
 
 *   **Configuration:** Go to `StackBoost > Unified Ticket Macro`.
-*   **Customization:** Select which fields to include in the summary and reorder them.
+*   **Customization:** Select which fields to include in the summary, rename them, and reorder them.
+*   **Smart Description:** Automatically fetches the ticket's initial description. The description field is intelligently hidden if it is empty or contains "Not Applicable".
+*   **Formatting:** Field names are formatted to prevent wrapping and ensure clean vertical alignment.
 
 ## 3. General Settings & Tools
 

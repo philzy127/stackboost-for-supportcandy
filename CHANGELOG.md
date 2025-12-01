@@ -2,17 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.7] - 2025-11-12
+## [1.2.8] - 2025-11-30
 
-### Added
-- **Directory Widget:** Added "Photo (Thumbnail)" and "Photo (Link)" options to the Contact Widget. Both open the full-size staff photo in a responsive modal popup.
-- **Directory:** Added "Private" checkbox to staff listings. Private listings are hidden from the frontend directory but remain visible in the backend and ticket widgets.
-- **Directory:** Added "Revisions to Keep" setting to limit the number of revisions stored for Staff, Location, and Department post types.
+### Changed
+- **UTM Formatting:** The Unified Ticket Macro output has been refined. Field names now have `white-space: nowrap` and `vertical-align: top` to prevent wrapping and ensure clean alignment. Trailing colons are stripped from field names to avoid double colons.
+- **Rich Text Fields:** Paragraph tags in rich text fields (like Description) now have `margin: 0` to fix alignment offsets.
 
 ### Fixed
-- **Directory:** Fixed an issue where the frontend directory search field was hidden.
-- **Settings:** Fixed a bug where Directory and Widget settings could not be saved due to missing registration in the central settings class.
-- **Directory:** Improved modal image sizing to prevent stretching on large screens.
+- **UTM Description:** Fixed a bug where the ticket description was missing from the macro output. The module now correctly fetches the description from the initial ticket report thread instead of the empty ticket property.
+- **Description Filtering:** The description field is now intelligently hidden if it is empty, contains only whitespace, or matches "Not Applicable".
 
 ## [1.2.6] - 2025-11-10
 
