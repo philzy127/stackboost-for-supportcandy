@@ -52,6 +52,47 @@ jQuery(document).ready(function($) {
     var $table = $('#stackboostStaffDirectoryTable');
     if ($table.length > 0) {
 
+        // Define Custom Search Function for "Numbers to Numbers" Logic
+        $.fn.dataTable.ext.search.push(
+            function( settings, data, dataIndex ) {
+                // Only filter OUR table
+                if ( settings.nTable.id !== 'stackboostStaffDirectoryTable' ) {
+                    return true;
+                }
+
+                // Get value from input (since we hijacked the built-in search)
+                var term = $('#stackboostStaffDirectoryTable_filter input').val();
+                if (!term) return true;
+
+                var termLower = term.toLowerCase();
+                var termDigits = term.replace(/\D/g, '');
+
+                // Iterate columns (Name=0, Phone=1, Dept=2, Title=3)
+                // Return true if ANY column matches
+
+                // Phone Column (Index 1) - Special "Numbers Only" Logic
+                var phoneData = data[1] || '';
+                var phoneDigits = phoneData.replace(/\D/g, '');
+                if (termDigits.length > 0 && phoneDigits.includes(termDigits)) {
+                    return true;
+                }
+
+                // Other Columns - Standard Logic
+                // We check 0, 2, 3 against the standard term
+                // Strip HTML from data just in case
+                var otherIndices = [0, 2, 3];
+                for (var i = 0; i < otherIndices.length; i++) {
+                    var idx = otherIndices[i];
+                    var colData = (data[idx] || '').replace(/<[^>]+>/g, "").toLowerCase();
+                    if (colData.includes(termLower)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        );
+
         // Define common options to avoid duplication
         var getDtOptions = function(responsive) {
             var opts = {
@@ -74,7 +115,19 @@ jQuery(document).ready(function($) {
                             return data;
                         }
                     }
-                ]
+                ],
+                "initComplete": function(settings, json) {
+                    var api = this.api();
+                    var $searchInput = $(api.table().container()).find('.dataTables_filter input');
+
+                    // Unbind default DataTables search event to prevent it from filtering out our custom matches
+                    $searchInput.unbind();
+
+                    // Bind custom event to trigger redraw (which calls ext.search)
+                    $searchInput.bind('keyup change input', function() {
+                        api.draw();
+                    });
+                }
             };
 
             // If fallback (non-responsive), disable autoWidth to prevent calculation errors on hidden elements
