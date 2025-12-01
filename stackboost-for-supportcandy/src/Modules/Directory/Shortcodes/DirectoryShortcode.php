@@ -82,6 +82,7 @@ class DirectoryShortcode {
 									'data-extension' => true,
 									'title'          => true,
 									'data-email'     => true,
+									'style'          => true, // Allow style for inline styling of icons
 								),
 								'svg'    => array(
 									'class'   => true,
