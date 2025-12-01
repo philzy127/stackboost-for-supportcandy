@@ -247,10 +247,17 @@ class DirectoryService {
 			}
 
 			// Add copy button
+			// Construct copy text to match display: (xxx) xxx-xxxx ext. yyy
+			$office_copy_text = $formatted_office_phone;
+			if ( ! empty( $employee->extension ) ) {
+				$office_copy_text .= ' ' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . $employee->extension;
+			}
+
 			$office_line .= sprintf(
-				' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="%s" title="%s">%s</span>',
+				' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="%s" data-copy-text="%s" title="%s">%s</span>',
 				esc_attr( $employee->office_phone ),
 				esc_attr( $employee->extension ),
+				esc_attr( $office_copy_text ),
 				esc_attr__( 'Click to copy phone', 'stackboost-for-supportcandy' ),
 				$copy_icon_svg
 			);
@@ -269,9 +276,11 @@ class DirectoryService {
 			$mobile_line = '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $mobile_link;
 
 			// Add copy button (mobile usually has no extension)
+			$mobile_copy_text = $formatted_mobile_phone;
 			$mobile_line .= sprintf(
-				' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="" title="%s">%s</span>',
+				' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="" data-copy-text="%s" title="%s">%s</span>',
 				esc_attr( $employee->mobile_phone ),
+				esc_attr( $mobile_copy_text ),
 				esc_attr__( 'Click to copy phone', 'stackboost-for-supportcandy' ),
 				$copy_icon_svg
 			);

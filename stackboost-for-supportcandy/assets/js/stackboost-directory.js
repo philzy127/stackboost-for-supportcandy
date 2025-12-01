@@ -17,6 +17,16 @@ jQuery(document).ready(function($) {
     // Copy to clipboard functionality for phone
     $(document).on('click', '.stackboost-copy-phone-icon', function() {
         console.log('StackBoost Directory: Phone icon clicked');
+
+        // 1. Check for pre-formatted copy text (Primary Method)
+        var copyText = $(this).data('copy-text');
+        if (copyText) {
+             console.log('StackBoost Directory: Using pre-formatted copy text', copyText);
+             copyToClipboard(copyText, $(this), 'phone');
+             return;
+        }
+
+        // 2. Fallback to legacy construction (Secondary Method)
         var phone = $(this).data('phone');
         var extension = $(this).data('extension');
 

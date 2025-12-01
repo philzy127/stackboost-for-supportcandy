@@ -80,6 +80,7 @@ class DirectoryShortcode {
 									'class'          => true,
 									'data-phone'     => true,
 									'data-extension' => true,
+									'data-copy-text' => true,
 									'title'          => true,
 									'data-email'     => true,
 									'style'          => true, // Allow style for inline styling of icons
