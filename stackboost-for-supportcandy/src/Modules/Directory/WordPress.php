@@ -260,6 +260,11 @@ class WordPress {
 
 		// Enqueue Dashicons for the frontend shortcode.
 		wp_enqueue_style( 'dashicons' );
+
+		// Check for debug mode from global settings
+		$settings      = get_option( 'stackboost_settings', [] );
+		$debug_enabled = isset( $settings['enable_logging'] ) && '1' === $settings['enable_logging'];
+
 		wp_localize_script(
 			'stackboost-directory-js',
 			'stackboostPublicAjax',
@@ -267,6 +272,7 @@ class WordPress {
 				'ajax_url'                   => admin_url( 'admin-ajax.php' ),
 				'stackboost_directory_nonce' => wp_create_nonce( 'stackboost_directory_public_nonce' ),
 				'no_entries_found'           => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
+				'debug_enabled'              => $debug_enabled,
 			)
 		);
 

@@ -1,27 +1,48 @@
 jQuery(document).ready(function($) {
-    console.log('StackBoost Directory: Script loaded. Secure Context: ' + window.isSecureContext);
+    // Helper function for conditional logging
+    var sbLog = function(message, data) {
+        if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
+            if (data) {
+                console.log('[StackBoost Directory]', message, data);
+            } else {
+                console.log('[StackBoost Directory]', message);
+            }
+        }
+    };
+
+    var sbError = function(message, data) {
+        if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
+             if (data) {
+                console.error('[StackBoost Directory]', message, data);
+            } else {
+                console.error('[StackBoost Directory]', message);
+            }
+        }
+    };
+
+    sbLog('Script loaded. Secure Context: ' + window.isSecureContext);
 
     // 1. Move Event Listeners FIRST so they attach even if DataTables crashes.
 
     // Copy to clipboard functionality for email
     $(document).on('click', '.stackboost-copy-email-icon', function() {
-        console.log('StackBoost Directory: Email icon clicked');
+        sbLog('Email icon clicked');
         var email = $(this).data('email');
         if (email) {
             copyToClipboard(email, $(this), 'email');
         } else {
-            console.error('StackBoost Directory: No email data found on icon');
+            sbError('No email data found on icon');
         }
     });
 
     // Copy to clipboard functionality for phone
     $(document).on('click', '.stackboost-copy-phone-icon', function() {
-        console.log('StackBoost Directory: Phone icon clicked');
+        sbLog('Phone icon clicked');
 
         // 1. Check for pre-formatted copy text (Primary Method)
         var copyText = $(this).data('copy-text');
         if (copyText) {
-             console.log('StackBoost Directory: Using pre-formatted copy text', copyText);
+             sbLog('Using pre-formatted copy text', copyText);
              copyToClipboard(copyText, $(this), 'phone');
              return;
         }
@@ -30,7 +51,7 @@ jQuery(document).ready(function($) {
         var phone = $(this).data('phone');
         var extension = $(this).data('extension');
 
-        console.log('StackBoost Directory: Raw Data', { phone: phone, extension: extension });
+        sbLog('Raw Data', { phone: phone, extension: extension });
 
         // Ensure we treat them as strings to avoid weird addition
         phone = String(phone);
@@ -43,7 +64,7 @@ jQuery(document).ready(function($) {
         if (fullNumber && fullNumber !== "undefined") {
             copyToClipboard(fullNumber, $(this), 'phone');
         } else {
-             console.error('StackBoost Directory: Failed to construct full number');
+             sbError('Failed to construct full number');
         }
     });
 
@@ -142,9 +163,10 @@ jQuery(document).ready(function($) {
                 // Attempt 1: Responsive
                 // Note: We deliberately don't assign the instance to a variable to avoid potential GC issues in catches
                 $table.DataTable(getDtOptions(true));
-                console.log('StackBoost Directory: Responsive DataTables initialized.');
+                sbLog('Responsive DataTables initialized.');
             } catch (e) {
-                console.warn('StackBoost Directory: Responsive DataTables init failed. Retrying with standard configuration.');
+                // We keep this warn as it's useful even in non-debug mode for developers inspecting console
+                console.warn('[StackBoost Directory] Responsive DataTables init failed (likely hidden). Retrying standard config.');
                 // Attempt 2: Non-responsive fallback
                 try {
                      if ($.fn.DataTable.isDataTable('#stackboostStaffDirectoryTable')) {
@@ -152,9 +174,9 @@ jQuery(document).ready(function($) {
                         $('#stackboostStaffDirectoryTable').DataTable().destroy();
                      }
                     $table.DataTable(getDtOptions(false));
-                    console.log('StackBoost Directory: Standard DataTables initialized (Fallback).');
+                    sbLog('Standard DataTables initialized (Fallback).');
                 } catch (e2) {
-                    console.error('StackBoost Directory: DataTables fallback init failed.', e2);
+                    sbError('DataTables fallback init failed.', e2);
                 }
             }
         };
@@ -184,12 +206,12 @@ jQuery(document).ready(function($) {
 
     // Function to handle the copy action
     function copyToClipboard(text, $icon, type) {
-        console.log('StackBoost Directory: Attempting to copy', text);
+        sbLog('Attempting to copy', text);
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(function() {
                 handleCopySuccess($icon, text, type);
             }, function(err) {
-                console.error('Async: Could not copy text: ', err);
+                sbError('Async: Could not copy text: ', err);
                 // Fallback to execCommand if async fails
                 fallbackCopyTextToClipboard(text, $icon, type);
             });
@@ -200,7 +222,7 @@ jQuery(document).ready(function($) {
 
     // Fallback using execCommand
     function fallbackCopyTextToClipboard(text, $icon, type) {
-        console.log('StackBoost Directory: Using fallback copy');
+        sbLog('Using fallback copy');
         var textArea = document.createElement("textarea");
         textArea.value = text;
 
@@ -218,10 +240,10 @@ jQuery(document).ready(function($) {
             if (successful) {
                 handleCopySuccess($icon, text, type);
             } else {
-                console.error('Fallback: Copying text command was unsuccessful');
+                sbError('Fallback: Copying text command was unsuccessful');
             }
         } catch (err) {
-            console.error('Fallback: Oops, unable to copy', err);
+            sbError('Fallback: Oops, unable to copy', err);
         }
 
         document.body.removeChild(textArea);
@@ -229,7 +251,7 @@ jQuery(document).ready(function($) {
 
     // Success UI Feedback
     function handleCopySuccess($icon, text, type) {
-        console.log('StackBoost Directory: Copy successful');
+        sbLog('Copy successful');
         $icon.addClass('copied');
 
         var msg = type === 'email' ? 'Email copied: ' + text : 'Phone copied: ' + text;
