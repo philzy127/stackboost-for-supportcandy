@@ -164,4 +164,35 @@ class WordPress extends Module {
 
     // Note: The rendering functions (render_checkbox_field, etc.) will be moved to a shared Admin/Settings class.
     // For now, we'll assume they exist on the parent Module class for compilation.
+
+    /**
+     * Render a WP Editor (WYSIWYG) field.
+     * Overrides the parent method to add specific toolbar options.
+     *
+     * @param array $args The arguments for the field.
+     */
+    public function render_wp_editor_field( array $args ) {
+        $options = get_option( 'stackboost_settings', [] );
+        // Use the existing default content from the original Module implementation to preserve behavior.
+        $default_content = '<strong>StackBoost Helpdesk -- After Hours</strong><br><br>You have submitted an IT ticket outside of normal business hours, and it will be handled in the order it was received. If this is an emergency, or has caused a complete stoppage of work, please call the IT On-Call number at: <u>(202) 996-8415</u> <br><br> (Available <b>5pm</b> to <b>11pm(EST) M-F, 8am to 11pm</b> weekends and Holidays)';
+        $content = isset( $options[ $args['id'] ] ) ? $options[ $args['id'] ] : $default_content;
+
+        wp_editor(
+            $content,
+            'stackboost_settings_' . esc_attr( $args['id'] ),
+            [
+                'textarea_name' => 'stackboost_settings[' . esc_attr( $args['id'] ) . ']',
+                'media_buttons' => false,
+                'textarea_rows' => 10,
+                'teeny'         => true,
+                'tinymce'       => [
+                    'toolbar1' => 'formatselect,styleselect,bold,italic,underline,forecolor,blockquote,strikethrough,bullist,numlist,outdent,indent,alignleft,aligncenter,alignright,undo,redo,link,unlink,hr,removeformat,fullscreen',
+                    'plugins'  => 'textcolor,hr',
+                ],
+            ]
+        );
+        if ( ! empty( $args['desc'] ) ) {
+            echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+        }
+    }
 }
