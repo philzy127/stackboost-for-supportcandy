@@ -21,3 +21,10 @@
 ### Usage
 *   **Directory Table:** The features are automatically active on the `[stackboost_directory]` shortcode.
 *   **Directory Widget:** The SupportCandy ticket widget also inherits the click-to-call and copy functionality.
+
+## After-Hours Message (v1.2.9)
+
+### Editor Enhancements
+*   The text editor for the "After-Hours Message" now includes an expanded toolbar for better formatting control.
+*   **New Options:** You can now easily add **Bold**, *Italic*, Underline, Text Color, Bulleted/Numbered Lists, Indentation, Blockquotes, Horizontal Lines, and Alignment.
+*   The editor retains its compact size ("teeny" mode) to keep the settings page clean but provides these powerful formatting tools when needed.

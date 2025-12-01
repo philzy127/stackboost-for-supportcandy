@@ -33,3 +33,10 @@
 *   **Logging:**
     *   Frontend logging uses `sbLog()` and `sbError()` wrappers.
     *   These respect the `debug_enabled` flag passed from `WordPress.php` (derived from the `enable_logging` setting).
+
+## After-Hours Message (v1.2.9)
+
+### WYSIWYG Editor Customization
+*   The `AfterHoursNotice` module overrides the standard `render_wp_editor_field` method.
+*   **Teeny Mode Override:** To provide rich formatting options (Text Color, HR) within the compact `teeny` editor mode, the module explicitly loads the `textcolor` and `hr` TinyMCE plugins via the `tinymce` configuration array.
+*   **Toolbar Configuration:** The `toolbar1` setting is manually defined to include these custom buttons alongside standard formatting options.

@@ -5,7 +5,7 @@ This plugin is an addon for the SupportCandy help desk system. It provides a num
 ## Features
 
 *   **QOL Enhancements:** A collection of small tweaks to the SupportCandy interface to improve usability.
-*   **After Hours Notice:** Display a notice to customers when they create a ticket outside of your normal business hours.
+*   **After Hours Notice:** Display a notice to customers when they create a ticket outside of your normal business hours. **New:** Now features an enhanced rich text editor for customizing the notice message.
 *   **Conditional Views:** Show or hide ticket fields based on the value of other fields.
 *   **Queue Macro:** Quickly apply a set of actions to a ticket.
 *   **After Ticket Survey:** Send a survey to customers after their ticket is closed.
