@@ -1,4 +1,6 @@
 jQuery(document).ready(function($) {
+    console.log('StackBoost Directory: Script loaded. Secure Context: ' + window.isSecureContext);
+
     // 1. Move Event Listeners FIRST so they attach even if DataTables crashes.
 
     // Copy to clipboard functionality for email
@@ -42,7 +44,7 @@ jQuery(document).ready(function($) {
 
         // Define common options to avoid duplication
         var getDtOptions = function(responsive) {
-            return {
+            var opts = {
                 "pageLength": 25,
                 "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
                 "responsive": responsive,
@@ -64,20 +66,30 @@ jQuery(document).ready(function($) {
                     }
                 ]
             };
+
+            // If fallback (non-responsive), disable autoWidth to prevent calculation errors on hidden elements
+            if (!responsive) {
+                opts.autoWidth = false;
+            }
+            return opts;
         };
 
         var attemptInit = function() {
             try {
                 // Attempt 1: Responsive
+                // Note: We deliberately don't assign the instance to a variable to avoid potential GC issues in catches
                 $table.DataTable(getDtOptions(true));
+                console.log('StackBoost Directory: Responsive DataTables initialized.');
             } catch (e) {
-                console.warn('StackBoost Directory: Responsive DataTables init failed (likely hidden element). Falling back to non-responsive.', e);
+                console.warn('StackBoost Directory: Responsive DataTables init failed. Retrying with standard configuration.');
                 // Attempt 2: Non-responsive fallback
                 try {
-                     if ($.fn.DataTable.isDataTable($table)) {
-                        $table.DataTable().destroy();
+                     if ($.fn.DataTable.isDataTable('#stackboostStaffDirectoryTable')) {
+                        // Use the static selector to destroy, in case the jQuery object reference is stale
+                        $('#stackboostStaffDirectoryTable').DataTable().destroy();
                      }
                     $table.DataTable(getDtOptions(false));
+                    console.log('StackBoost Directory: Standard DataTables initialized (Fallback).');
                 } catch (e2) {
                     console.error('StackBoost Directory: DataTables fallback init failed.', e2);
                 }
