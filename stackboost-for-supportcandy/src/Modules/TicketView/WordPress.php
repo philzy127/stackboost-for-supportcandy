@@ -117,13 +117,15 @@ class WordPress extends Module {
 
 		add_settings_section( 'stackboost_separator_general_cleanup_1', '', [ $this, 'render_hr_separator' ], $page_slug );
 
-		add_settings_field( 'stackboost_enable_page_last_loaded', __( 'Enable Page Last Loaded Indicator', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_page_last_loaded', 'desc' => 'Shows the time when the ticket list was last refreshed.' ] );
+		// Section: Page Last Loaded Indicator
+		add_settings_section( 'stackboost_page_last_loaded_section', __( 'Page Last Loaded Indicator', 'stackboost-for-supportcandy' ), null, $page_slug );
+		add_settings_field( 'stackboost_enable_page_last_loaded', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_page_last_loaded_section', [ 'id' => 'enable_page_last_loaded', 'desc' => 'Shows the time when the ticket list was last refreshed.' ] );
 		add_settings_field(
 			'stackboost_page_last_loaded_placement',
 			__( 'Placement', 'stackboost-for-supportcandy' ),
 			[ $this, 'render_select_field' ],
 			$page_slug,
-			'stackboost_general_cleanup_section',
+			'stackboost_page_last_loaded_section',
 			[
 				'id'      => 'page_last_loaded_placement',
 				'choices' => [
@@ -139,7 +141,7 @@ class WordPress extends Module {
 			__( 'Label', 'stackboost-for-supportcandy' ),
 			[ $this, 'render_text_field' ],
 			$page_slug,
-			'stackboost_general_cleanup_section',
+			'stackboost_page_last_loaded_section',
 			[
 				'id'      => 'page_last_loaded_label',
 				'default' => 'Page Last Loaded: ',
@@ -151,7 +153,7 @@ class WordPress extends Module {
 			__( 'Time Format', 'stackboost-for-supportcandy' ),
 			[ $this, 'render_select_field' ],
 			$page_slug,
-			'stackboost_general_cleanup_section',
+			'stackboost_page_last_loaded_section',
 			[
 				'id'      => 'page_last_loaded_format',
 				'choices' => [
