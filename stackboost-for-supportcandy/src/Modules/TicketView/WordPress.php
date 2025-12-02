@@ -57,9 +57,21 @@ class WordPress extends Module {
 	 * @param string $hook_suffix
 	 */
 	public function enqueue_scripts( $hook_suffix = '' ) {
+		stackboost_log( "TicketView::enqueue_scripts called with hook_suffix: {$hook_suffix}", 'ticket_view' );
+
 		// Only enqueue if feature is enabled.
 		$options = get_option( 'stackboost_settings' );
+
+		// Debug log the options relevant to this feature
+		stackboost_log( "TicketView::enqueue_scripts options: " . print_r( [
+			'enable_page_last_loaded'      => $options['enable_page_last_loaded'] ?? 'not set',
+			'page_last_loaded_placement'   => $options['page_last_loaded_placement'] ?? 'not set',
+			'page_last_loaded_label'       => $options['page_last_loaded_label'] ?? 'not set',
+			'page_last_loaded_format'      => $options['page_last_loaded_format'] ?? 'not set',
+		], true ), 'ticket_view' );
+
 		if ( empty( $options['enable_page_last_loaded'] ) ) {
+			stackboost_log( "TicketView::enqueue_scripts: Feature disabled, skipping enqueue.", 'ticket_view' );
 			return;
 		}
 
@@ -68,6 +80,7 @@ class WordPress extends Module {
 			// supportcandy_page_wpsc-tickets is the ticket list page.
 			// supportcandy_page_wpsc-view-ticket is the individual ticket page.
 			if ( 'supportcandy_page_wpsc-tickets' !== $hook_suffix ) {
+				stackboost_log( "TicketView::enqueue_scripts: Not the target admin page. Hook suffix mismatch.", 'ticket_view' );
 				return;
 			}
 		}
@@ -76,6 +89,8 @@ class WordPress extends Module {
 		// To be safe and performant, we might want to check if WPSC is loaded or if we are on a page with the shortcode.
 		// However, for simplicity and robustness (as user requested "Visuals: Both"), we'll enqueue if it's not admin.
 		// A more refined check could be added if needed.
+
+		stackboost_log( "TicketView::enqueue_scripts: Enqueueing script.", 'ticket_view' );
 
 		wp_enqueue_script(
 			'stackboost-page-last-loaded',
