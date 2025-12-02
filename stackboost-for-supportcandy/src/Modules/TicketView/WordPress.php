@@ -44,6 +44,58 @@ class WordPress extends Module {
 	 */
 	public function init_hooks() {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+		// Frontend enqueue might be needed if the ticket list is shown on frontend.
+		// SupportCandy frontend usually uses a shortcode.
+		// We can hook into wp_enqueue_scripts.
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+	}
+
+	/**
+	 * Enqueue scripts.
+	 *
+	 * @param string $hook_suffix
+	 */
+	public function enqueue_scripts( $hook_suffix = '' ) {
+		// Only enqueue if feature is enabled.
+		$options = get_option( 'stackboost_settings' );
+		if ( empty( $options['enable_page_last_loaded'] ) ) {
+			return;
+		}
+
+		// For admin, check hook suffix.
+		if ( is_admin() ) {
+			// supportcandy_page_wpsc-tickets is the ticket list page.
+			// supportcandy_page_wpsc-view-ticket is the individual ticket page.
+			if ( 'supportcandy_page_wpsc-tickets' !== $hook_suffix ) {
+				return;
+			}
+		}
+		// For frontend, we can't easily check for shortcode presence without parsing post content,
+		// but we can rely on SupportCandy's assets usually being loaded.
+		// To be safe and performant, we might want to check if WPSC is loaded or if we are on a page with the shortcode.
+		// However, for simplicity and robustness (as user requested "Visuals: Both"), we'll enqueue if it's not admin.
+		// A more refined check could be added if needed.
+
+		wp_enqueue_script(
+			'stackboost-page-last-loaded',
+			STACKBOOST_PLUGIN_URL . 'src/Modules/TicketView/assets/js/page-last-loaded.js',
+			[ 'jquery' ],
+			STACKBOOST_VERSION,
+			true
+		);
+
+		$placement = $options['page_last_loaded_placement'] ?? 'header';
+		$label     = $options['page_last_loaded_label'] ?? 'Page Last Loaded: ';
+		$format    = $options['page_last_loaded_format'] ?? 'default';
+
+		wp_localize_script( 'stackboost-page-last-loaded', 'stackboostPageLastLoaded', [
+			'enabled'        => true,
+			'placement'      => $placement,
+			'label'          => $label,
+			'format'         => $format,
+			'wp_time_format' => get_option( 'time_format' ),
+		] );
 	}
 
 	/**
@@ -62,6 +114,54 @@ class WordPress extends Module {
 		add_settings_section( 'stackboost_general_cleanup_section', __( 'General Cleanup', 'stackboost-for-supportcandy' ), null, $page_slug );
 		add_settings_field( 'stackboost_enable_hide_empty_columns', __( 'Hide Empty Columns', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_hide_empty_columns', 'desc' => 'Automatically hide any column in the ticket list that is completely empty.' ] );
 		add_settings_field( 'stackboost_enable_hide_priority_column', __( 'Hide Priority Column', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_hide_priority_column', 'desc' => 'Hides the "Priority" column if all visible tickets have a priority of "Low".' ] );
+
+		add_settings_section( 'stackboost_separator_general_cleanup_1', '', [ $this, 'render_hr_separator' ], $page_slug );
+
+		add_settings_field( 'stackboost_enable_page_last_loaded', __( 'Enable Page Last Loaded Indicator', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_page_last_loaded', 'desc' => 'Shows the time when the ticket list was last refreshed.' ] );
+		add_settings_field(
+			'stackboost_page_last_loaded_placement',
+			__( 'Placement', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_select_field' ],
+			$page_slug,
+			'stackboost_general_cleanup_section',
+			[
+				'id'      => 'page_last_loaded_placement',
+				'choices' => [
+					'header' => 'Header',
+					'footer' => 'Footer',
+					'both'   => 'Both',
+				],
+				'desc'    => 'Where to display the indicator.',
+			]
+		);
+		add_settings_field(
+			'stackboost_page_last_loaded_label',
+			__( 'Label', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_text_field' ],
+			$page_slug,
+			'stackboost_general_cleanup_section',
+			[
+				'id'      => 'page_last_loaded_label',
+				'default' => 'Page Last Loaded: ',
+				'desc'    => 'The text to display before the time.',
+			]
+		);
+		add_settings_field(
+			'stackboost_page_last_loaded_format',
+			__( 'Time Format', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_select_field' ],
+			$page_slug,
+			'stackboost_general_cleanup_section',
+			[
+				'id'      => 'page_last_loaded_format',
+				'choices' => [
+					'default' => 'WordPress Default',
+					'12'      => '12-hour (e.g., 2:30 PM)',
+					'24'      => '24-hour (e.g., 14:30)',
+				],
+				'desc'    => 'The format of the time display.',
+			]
+		);
 
 		add_settings_section( 'stackboost_separator_2', '', [ $this, 'render_hr_separator' ], $page_slug );
 
@@ -133,6 +233,19 @@ class WordPress extends Module {
 		$id = $args['id'];
 		$value = $options[ $id ] ?? '';
 		echo '<textarea id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" class="' . esc_attr( $args['class'] ) . '">' . esc_textarea( $value ) . '</textarea>';
+		if ( ! empty( $args['desc'] ) ) {
+			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+		}
+	}
+
+	/**
+	 * Renders a text field for a settings page.
+	 */
+	public function render_text_field( array $args ) {
+		$options = get_option( 'stackboost_settings' );
+		$id = $args['id'];
+		$value = isset( $options[ $id ] ) ? $options[ $id ] : ( $args['default'] ?? '' );
+		echo '<input type="text" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="' . esc_attr( $value ) . '" class="regular-text">';
 		if ( ! empty( $args['desc'] ) ) {
 			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
 		}
