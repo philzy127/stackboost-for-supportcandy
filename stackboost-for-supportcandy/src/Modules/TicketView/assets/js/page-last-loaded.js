@@ -26,33 +26,47 @@
         var label = config.label || 'Page Last Loaded: ';
 
         // Remove existing indicators to prevent duplicates
-        $('.stackboost-last-loaded').remove();
+        $('.stackboost-last-loaded-row').remove();
 
-        var $span = $('<span>')
-            .addClass('stackboost-last-loaded')
+        var $row = $('<div>')
+            .addClass('stackboost-last-loaded-row')
             .css({
-                'margin-left': '10px',
-                'font-weight': 'bold'
+                'width': '100%',
+                'text-align': 'right',
+                'padding': '0 15px 5px',
+                'box-sizing': 'border-box',
+                'font-size': '12px',
+                'color': '#777',
+                'clear': 'both' // Ensure it breaks to a new line if floating elements exist
             })
             .text(label + timeString);
 
         if (config.placement === 'header' || config.placement === 'both') {
-            // SupportCandy Header Pagination
-            var $header = $('.wpsc-ticket-pagination-header');
-            if ($header.length > 0) {
-                $header.append($span.clone());
+            // Place AFTER the bulk actions container (which contains top pagination)
+            // but BEFORE the ticket list table.
+            var $bulkActions = $('.wpsc-bulk-actions');
+            if ($bulkActions.length > 0) {
+                $bulkActions.after($row.clone());
             } else {
-                console.log('StackBoost PageLastLoaded: Header target not found.');
+                // Fallback: if bulk actions hidden/missing, try prepending to the main container
+                var $container = $('.wpsc-tickets-container');
+                if ($container.length > 0) {
+                    $container.prepend($row.clone());
+                }
             }
         }
 
         if (config.placement === 'footer' || config.placement === 'both') {
-            // SupportCandy Footer Pagination
+            // Place AFTER the footer pagination
             var $footer = $('.wpsc-ticket-pagination-footer');
             if ($footer.length > 0) {
-                $footer.append($span.clone());
+                $footer.after($row.clone());
             } else {
-                console.log('StackBoost PageLastLoaded: Footer target not found.');
+                // Fallback: append to main container
+                var $container = $('.wpsc-tickets-container');
+                if ($container.length > 0) {
+                    $container.append($row.clone());
+                }
             }
         }
     }
@@ -66,11 +80,10 @@
 
         // Handle string data (standard jQuery.ajax serialization)
         if (typeof settings.data === 'string') {
-            // Parse query string to be safe
             var urlParams = new URLSearchParams(settings.data);
             action = urlParams.get('action');
         }
-        // Handle object data (if processData is false or interception happens early)
+        // Handle object data
         else if (typeof settings.data === 'object') {
             if (settings.data instanceof FormData) {
                 action = settings.data.get('action');
@@ -79,21 +92,16 @@
             }
         }
 
-        console.log('StackBoost PageLastLoaded: AJAX Action detected:', action);
-
         return action === 'wpsc_get_tickets' || action === 'wpsc_get_ticket_list';
     }
 
     $(document).ajaxComplete(function(event, xhr, settings) {
         if (isTargetAjax(settings)) {
-            // Wait a brief moment for DOM updates to settle if SC uses internal callbacks
             setTimeout(updatePageLastLoaded, 50);
         }
     });
 
-    // Initial run in case the table is already loaded
     $(document).ready(function() {
-        // Retry a few times in case of race conditions with SC's own init scripts
         setTimeout(updatePageLastLoaded, 100);
         setTimeout(updatePageLastLoaded, 1000);
     });
