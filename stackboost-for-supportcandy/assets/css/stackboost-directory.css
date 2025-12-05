@@ -212,8 +212,11 @@
     padding-right: 25px !important; /* Add padding to the right to make space for the arrow */
 }
 
+/* Ensure the filter (search box) is visible and positioned correctly */
 .dataTables_wrapper .dataTables_filter {
     margin-bottom: 1em;
+    display: block !important; /* Force visibility in case something else is hiding it */
+    float: right; /* Standard DataTables positioning */
 }
 
 /* Ensure table and its rows are visible when needed */
