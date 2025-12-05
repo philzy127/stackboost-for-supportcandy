@@ -218,6 +218,11 @@ class Management {
 	public static function ajax_import_json() {
 		check_ajax_referer( 'stackboost_directory_json_import', 'nonce' );
 
+		// Attempt to override execution time limit for large imports.
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 0 );
+		}
+
 		if ( ! self::can_user_manage() ) {
 			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
 		}
@@ -226,14 +231,18 @@ class Management {
 			wp_send_json_error( array( 'message' => 'JSON file not found.' ), 400 );
 		}
 
+		stackboost_log( 'Starting Directory JSON Import...', 'directory-import' );
+
 		$file_content = file_get_contents( $_FILES['json_file']['tmp_name'] );
 		$data = json_decode( $file_content, true );
 
 		if ( ! $data || ! is_array( $data ) ) {
+			stackboost_log( 'Import failed: Invalid JSON file.', 'directory-import' );
 			wp_send_json_error( array( 'message' => 'Invalid JSON file.' ), 400 );
 		}
 
 		// Step 1: Clear Data (Full Replacement)
+		stackboost_log( 'Clearing existing directory data...', 'directory-import' );
 		$cpts = new CustomPostTypes();
 		$post_types = array(
 			$cpts->post_type,
@@ -252,16 +261,19 @@ class Management {
 				wp_delete_post( $post_id, true );
 			}
 		}
+		stackboost_log( 'Existing data cleared.', 'directory-import' );
 
-		// Counters
+		// Counters & Errors
 		$counts = array(
 			'departments' => 0,
 			'locations'   => 0,
 			'staff'       => 0,
 		);
+		$failures = array();
 
 		// Step 2: Import Departments
 		if ( ! empty( $data['departments'] ) ) {
+			stackboost_log( sprintf( 'Importing %d departments...', count( $data['departments'] ) ), 'directory-import' );
 			foreach ( $data['departments'] as $dept ) {
 				$post_data = array(
 					'post_title'  => sanitize_text_field( $dept['title'] ),
@@ -279,6 +291,10 @@ class Management {
 							}
 						}
 					}
+				} else {
+					$error_msg = "Failed to import Department '{$dept['title']}': " . $post_id->get_error_message();
+					stackboost_log( $error_msg, 'directory-import' );
+					$failures[] = $error_msg;
 				}
 			}
 		}
@@ -286,6 +302,7 @@ class Management {
 		// Step 3: Import Locations
 		$location_name_map = array(); // Map Title -> New ID
 		if ( ! empty( $data['locations'] ) ) {
+			stackboost_log( sprintf( 'Importing %d locations...', count( $data['locations'] ) ), 'directory-import' );
 			foreach ( $data['locations'] as $loc ) {
 				$post_data = array(
 					'post_title'  => sanitize_text_field( $loc['title'] ),
@@ -305,6 +322,10 @@ class Management {
 							}
 						}
 					}
+				} else {
+					$error_msg = "Failed to import Location '{$loc['title']}': " . $post_id->get_error_message();
+					stackboost_log( $error_msg, 'directory-import' );
+					$failures[] = $error_msg;
 				}
 			}
 		}
@@ -321,7 +342,15 @@ class Management {
 
 		// Step 5: Import Staff
 		if ( ! empty( $data['staff'] ) ) {
-			foreach ( $data['staff'] as $staff ) {
+			$total_staff = count( $data['staff'] );
+			stackboost_log( sprintf( 'Importing %d staff entries...', $total_staff ), 'directory-import' );
+
+			foreach ( $data['staff'] as $index => $staff ) {
+				// Log progress every 50 items
+				if ( ( $index + 1 ) % 50 === 0 ) {
+					stackboost_log( sprintf( 'Processed %d of %d staff entries...', $index + 1, $total_staff ), 'directory-import' );
+				}
+
 				$post_data = array(
 					'post_title'   => sanitize_text_field( $staff['title'] ),
 					'post_content' => wp_kses_post( isset($staff['content']) ? $staff['content'] : '' ),
@@ -425,10 +454,6 @@ class Management {
 										'post_status'    => 'inherit'
 									);
 									$attachment_id = wp_insert_attachment( $attachment, $abs_path, $post_id );
-									// Require image.php for metadata generation
-									require_once( ABSPATH . 'wp-admin/includes/image.php' );
-									$attach_data = wp_generate_attachment_metadata( $attachment_id, $abs_path );
-									wp_update_attachment_metadata( $attachment_id, $attach_data );
 								}
 
 								if ( $attachment_id ) {
@@ -437,9 +462,15 @@ class Management {
 							}
 						}
 					}
+				} else {
+					$error_msg = "Failed to import Staff '{$staff['title']}': " . $post_id->get_error_message();
+					stackboost_log( $error_msg, 'directory-import' );
+					$failures[] = $error_msg;
 				}
 			}
 		}
+
+		stackboost_log( 'Import completed successfully.', 'directory-import' );
 
 		wp_send_json_success( array(
 			'message' => sprintf(
@@ -448,6 +479,7 @@ class Management {
 				$counts['locations'],
 				$counts['staff']
 			),
+			'failures' => $failures,
 		) );
 	}
 

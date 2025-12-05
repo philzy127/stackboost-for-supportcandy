@@ -52,7 +52,16 @@ jQuery(document).ready(function($) {
             contentType: false,
             success: function(response) {
                 if (response.success) {
-                    messageDiv.html('<p style="color: green;">' + response.data.message + '</p>');
+                    var html = '<p style="color: green;">' + response.data.message + '</p>';
+                    if (response.data.failures && response.data.failures.length > 0) {
+                        html += '<p style="color: orange;"><strong>Import completed with warnings:</strong></p>';
+                        html += '<ul style="color: red; max-height: 200px; overflow-y: auto;">';
+                        $.each(response.data.failures, function(index, value) {
+                            html += '<li>' + value + '</li>';
+                        });
+                        html += '</ul>';
+                    }
+                    messageDiv.html(html);
                     // Optional: reload to show new data, but maybe just show success message is enough.
                     // window.location.reload();
                 } else {
