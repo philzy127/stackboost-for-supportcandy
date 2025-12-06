@@ -30,6 +30,7 @@ class Settings {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_init', [ $this, 'handle_log_actions' ] );
 		add_action( 'wp_ajax_stackboost_clear_log', [ $this, 'ajax_clear_log' ] );
+		add_action( 'wp_ajax_stackboost_save_settings', [ $this, 'ajax_save_settings' ] );
 	}
 
 	/**
@@ -532,5 +533,38 @@ class Settings {
 		} else {
 			wp_send_json_error( __( 'Log file not found.', 'stackboost-for-supportcandy' ) );
 		}
+	}
+
+	/**
+	 * AJAX handler to save settings via the central sanitizer.
+	 */
+	public function ajax_save_settings() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		if ( ! isset( $_POST['stackboost_settings'] ) || ! is_array( $_POST['stackboost_settings'] ) ) {
+			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
+		}
+
+		// Retrieve the new settings from the POST request.
+		$new_settings = $_POST['stackboost_settings'];
+
+		// Get the existing settings.
+		$current_settings = get_option( 'stackboost_settings', [] );
+
+		// Call the sanitize_settings method directly.
+		// NOTE: sanitize_settings() retrieves the current option from DB to merge with unchecked values.
+		// But here, we are simulating a form submission. The $new_settings array should contain the
+		// 'page_slug' which tells sanitize_settings() which fields to process.
+		// It will merge these new values into the existing saved_settings and return the full array.
+		$sanitized_settings = $this->sanitize_settings( $new_settings );
+
+		// Update the option.
+		update_option( 'stackboost_settings', $sanitized_settings );
+
+		wp_send_json_success( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) );
 	}
 }
