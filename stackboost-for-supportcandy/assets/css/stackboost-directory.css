@@ -215,6 +215,7 @@
 /* Ensure the filter (search box) is visible and positioned correctly */
 .dataTables_wrapper .dataTables_filter {
     margin-bottom: 1em;
+    margin-top: 5px;
     display: block !important; /* Force visibility in case something else is hiding it */
     float: right; /* Standard DataTables positioning */
 }
