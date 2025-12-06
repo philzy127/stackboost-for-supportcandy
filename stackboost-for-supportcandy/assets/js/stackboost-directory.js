@@ -117,6 +117,8 @@ jQuery(document).ready(function($) {
         // Define common options to avoid duplication
         var getDtOptions = function(responsive) {
             var opts = {
+                "dom": "lfrtip",
+                "searching": true,
                 "pageLength": 25,
                 "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
                 "responsive": responsive,

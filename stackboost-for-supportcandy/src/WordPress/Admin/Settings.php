@@ -302,7 +302,7 @@ class Settings {
 
 		$page_options = apply_filters('stackboost_settings_page_options', [
 			'stackboost-for-supportcandy' => [],
-			'stackboost-ticket-view' => ['enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide'],
+			'stackboost-ticket-view' => ['enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide', 'enable_page_last_loaded', 'page_last_loaded_placement', 'page_last_loaded_label', 'page_last_loaded_format'],
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
@@ -336,6 +336,7 @@ class Settings {
 					case 'utm_enabled':
 					case 'utm_use_sc_order':
 					case 'enable_date_time_formatting':
+					case 'enable_page_last_loaded':
 						$saved_settings[$key] = intval($value);
 						break;
 

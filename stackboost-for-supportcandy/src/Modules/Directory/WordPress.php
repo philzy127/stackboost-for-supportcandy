@@ -212,6 +212,8 @@ class WordPress {
 						'ajax_url'                  => admin_url( 'admin-ajax.php' ),
 						'clear_nonce'               => wp_create_nonce( 'stackboost_directory_clear_db_nonce' ),
 						'fresh_start_nonce'         => wp_create_nonce( 'stackboost_directory_fresh_start_nonce' ),
+						'export_nonce'              => wp_create_nonce( 'stackboost_directory_json_export' ),
+						'import_nonce'              => wp_create_nonce( 'stackboost_directory_json_import' ),
 						'clearingMessage'           => __( 'Clearing data... please wait.', 'stackboost-for-supportcandy' ),
 						'clearConfirm'              => __( 'Are you sure you want to clear all staff data?', 'stackboost-for-supportcandy' ),
 						'freshStartConfirm'         => __( 'Are you sure you want to proceed? This will permanently delete all staff, locations, and departments.', 'stackboost-for-supportcandy' ),
@@ -220,6 +222,15 @@ class WordPress {
 						'errorMessage'              => __( 'An error occurred:', 'stackboost-for-supportcandy' ),
 						'cancelMessage'             => __( 'Action cancelled.', 'stackboost-for-supportcandy' ),
 					)
+				);
+
+				// Enqueue JSON Import/Export JS
+				wp_enqueue_script(
+					'stackboost-json-import-export',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/json-import-export.js',
+					array( 'jquery', 'stackboost-management-ajax' ), // Depend on management-ajax for localized object
+					\STACKBOOST_VERSION,
+					true
 				);
 			}
 		}

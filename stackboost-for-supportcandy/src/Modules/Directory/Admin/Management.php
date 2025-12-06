@@ -25,6 +25,8 @@ class Management {
 	public static function render_management_page() {
 		?>
 		<div class="wrap">
+			<?php self::render_json_section(); ?>
+			<hr>
 			<?php self::render_import_section(); ?>
 			<hr>
 			<?php self::render_clear_section(); ?>
@@ -57,6 +59,38 @@ class Management {
 		}
 
 		wp_send_json_success( 'All staff data has been cleared.' );
+	}
+
+	/**
+	 * Render the JSON import/export section.
+	 */
+	private static function render_json_section() {
+		?>
+		<h2><?php esc_html_e( 'JSON Import / Export', 'stackboost-for-supportcandy' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Export all directory data to a JSON file, or import data from a JSON file. ', 'stackboost-for-supportcandy' ); ?>
+			<strong style="color: red;"><?php esc_html_e( 'Warning: Importing JSON will REPLACE ALL EXISTING DATA.', 'stackboost-for-supportcandy' ); ?></strong>
+		</p>
+
+		<table class="form-table">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Export', 'stackboost-for-supportcandy' ); ?></th>
+				<td>
+					<button id="stackboost-json-export-button" class="button button-secondary"><?php esc_html_e( 'Export JSON', 'stackboost-for-supportcandy' ); ?></button>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Import', 'stackboost-for-supportcandy' ); ?></th>
+				<td>
+					<form id="stackboost-json-import-form" method="post" enctype="multipart/form-data">
+						<input type="file" name="json_file" id="json_file" accept=".json" required>
+						<input type="submit" name="submit" class="button button-primary" value="<?php esc_attr_e( 'Import JSON (Full Replacement)', 'stackboost-for-supportcandy' ); ?>">
+					</form>
+					<div id="json-import-progress"></div>
+				</td>
+			</tr>
+		</table>
+		<?php
 	}
 
 	/**
@@ -113,6 +147,340 @@ class Management {
 		add_action( 'wp_ajax_stackboost_directory_import_csv', array( __CLASS__, 'ajax_import_csv' ) );
 		add_action( 'wp_ajax_stackboost_directory_fresh_start', array( __CLASS__, 'ajax_fresh_start' ) );
 		add_action( 'wp_ajax_stackboost_directory_clear_data', array( __CLASS__, 'ajax_clear_data' ) );
+		add_action( 'wp_ajax_stackboost_directory_export_json', array( __CLASS__, 'ajax_export_json' ) );
+		add_action( 'wp_ajax_stackboost_directory_import_json', array( __CLASS__, 'ajax_import_json' ) );
+	}
+
+	/**
+	 * AJAX handler for exporting directory data to JSON.
+	 */
+	public static function ajax_export_json() {
+		check_ajax_referer( 'stackboost_directory_json_export', 'nonce' );
+
+		if ( ! self::can_user_manage() ) {
+			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
+		}
+
+		$cpts = new CustomPostTypes();
+		$data = array(
+			'version'     => '1.0',
+			'departments' => array(),
+			'locations'   => array(),
+			'staff'       => array(),
+		);
+
+		// Helper to get posts with meta
+		$get_data = function( $post_type ) {
+			$posts = get_posts( array(
+				'post_type'      => $post_type,
+				'posts_per_page' => -1,
+				'post_status'    => 'any',
+			) );
+
+			$result = array();
+			foreach ( $posts as $post ) {
+				$item = array(
+					'title'   => $post->post_title,
+					'status'  => $post->post_status,
+					'content' => $post->post_content, // Added content
+					'meta'    => get_post_meta( $post->ID ),
+				);
+
+				if ( has_post_thumbnail( $post->ID ) ) {
+					$item['featured_image_url'] = wp_get_attachment_url( get_post_thumbnail_id( $post->ID ) );
+				} else {
+					$item['featured_image_url'] = false;
+				}
+
+				$result[] = $item;
+			}
+			return $result;
+		};
+
+		$data['departments'] = $get_data( $cpts->department_post_type );
+		$data['locations']   = $get_data( $cpts->location_post_type );
+		$data['staff']       = $get_data( $cpts->post_type );
+
+		header( 'Content-Description: File Transfer' );
+		header( 'Content-Type: application/json' );
+		header( 'Content-Disposition: attachment; filename="stackboost-directory-export-' . date( 'Y-m-d' ) . '.json"' );
+		header( 'Expires: 0' );
+		header( 'Cache-Control: must-revalidate' );
+		header( 'Pragma: public' );
+
+		echo json_encode( $data, JSON_PRETTY_PRINT );
+		wp_die();
+	}
+
+	/**
+	 * AJAX handler for importing directory data from JSON.
+	 */
+	public static function ajax_import_json() {
+		check_ajax_referer( 'stackboost_directory_json_import', 'nonce' );
+
+		// Attempt to override execution time limit for large imports.
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 0 );
+		}
+
+		if ( ! self::can_user_manage() ) {
+			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
+		}
+
+		if ( ! isset( $_FILES['json_file'] ) || ! file_exists( $_FILES['json_file']['tmp_name'] ) ) {
+			wp_send_json_error( array( 'message' => 'JSON file not found.' ), 400 );
+		}
+
+		stackboost_log( 'Starting Directory JSON Import...', 'directory-import' );
+
+		$file_content = file_get_contents( $_FILES['json_file']['tmp_name'] );
+		$data = json_decode( $file_content, true );
+
+		if ( ! $data || ! is_array( $data ) ) {
+			stackboost_log( 'Import failed: Invalid JSON file.', 'directory-import' );
+			wp_send_json_error( array( 'message' => 'Invalid JSON file.' ), 400 );
+		}
+
+		// Step 1: Clear Data (Full Replacement)
+		stackboost_log( 'Clearing existing directory data...', 'directory-import' );
+		$cpts = new CustomPostTypes();
+		$post_types = array(
+			$cpts->post_type,
+			$cpts->location_post_type,
+			$cpts->department_post_type,
+		);
+
+		foreach ( $post_types as $post_type ) {
+			$posts = get_posts( array(
+				'post_type'      => $post_type,
+				'posts_per_page' => -1,
+				'post_status'    => 'any',
+				'fields'         => 'ids',
+			) );
+			foreach ( $posts as $post_id ) {
+				wp_delete_post( $post_id, true );
+			}
+		}
+		stackboost_log( 'Existing data cleared.', 'directory-import' );
+
+		// Counters & Errors
+		$counts = array(
+			'departments' => 0,
+			'locations'   => 0,
+			'staff'       => 0,
+		);
+		$failures = array();
+
+		// Step 2: Import Departments
+		if ( ! empty( $data['departments'] ) ) {
+			stackboost_log( sprintf( 'Importing %d departments...', count( $data['departments'] ) ), 'directory-import' );
+			foreach ( $data['departments'] as $dept ) {
+				$post_data = array(
+					'post_title'  => sanitize_text_field( $dept['title'] ),
+					'post_type'   => $cpts->department_post_type,
+					'post_status' => isset( $dept['status'] ) ? sanitize_text_field( $dept['status'] ) : 'publish',
+				);
+				$post_id = wp_insert_post( $post_data );
+				if ( ! is_wp_error( $post_id ) ) {
+					$counts['departments']++;
+					// Restore meta if present
+					if ( ! empty( $dept['meta'] ) ) {
+						foreach ( $dept['meta'] as $key => $values ) {
+							foreach ( (array) $values as $value ) {
+								add_post_meta( $post_id, $key, $value );
+							}
+						}
+					}
+				} else {
+					$error_msg = "Failed to import Department '{$dept['title']}': " . $post_id->get_error_message();
+					stackboost_log( $error_msg, 'directory-import' );
+					$failures[] = $error_msg;
+				}
+			}
+		}
+
+		// Step 3: Import Locations
+		$location_name_map = array(); // Map Title -> New ID
+		if ( ! empty( $data['locations'] ) ) {
+			stackboost_log( sprintf( 'Importing %d locations...', count( $data['locations'] ) ), 'directory-import' );
+			foreach ( $data['locations'] as $loc ) {
+				$post_data = array(
+					'post_title'  => sanitize_text_field( $loc['title'] ),
+					'post_type'   => $cpts->location_post_type,
+					'post_status' => isset( $loc['status'] ) ? sanitize_text_field( $loc['status'] ) : 'publish',
+				);
+				$post_id = wp_insert_post( $post_data );
+				if ( ! is_wp_error( $post_id ) ) {
+					$counts['locations']++;
+					$location_name_map[ $loc['title'] ] = $post_id;
+
+					// Restore meta
+					if ( ! empty( $loc['meta'] ) ) {
+						foreach ( $loc['meta'] as $key => $values ) {
+							foreach ( (array) $values as $value ) {
+								add_post_meta( $post_id, $key, $value );
+							}
+						}
+					}
+				} else {
+					$error_msg = "Failed to import Location '{$loc['title']}': " . $post_id->get_error_message();
+					stackboost_log( $error_msg, 'directory-import' );
+					$failures[] = $error_msg;
+				}
+			}
+		}
+
+		// Step 4: Build Location ID Map from Staff Data (Old ID -> New Name -> New ID)
+		$legacy_location_id_map = array(); // Old ID -> Location Title
+		if ( ! empty( $data['staff'] ) ) {
+			foreach ( $data['staff'] as $staff ) {
+				if ( ! empty( $staff['meta']['_location_id'][0] ) && ! empty( $staff['meta']['_location'][0] ) ) {
+					$legacy_location_id_map[ $staff['meta']['_location_id'][0] ] = $staff['meta']['_location'][0];
+				}
+			}
+		}
+
+		// Step 5: Import Staff
+		if ( ! empty( $data['staff'] ) ) {
+			$total_staff = count( $data['staff'] );
+			stackboost_log( sprintf( 'Importing %d staff entries...', $total_staff ), 'directory-import' );
+
+			foreach ( $data['staff'] as $index => $staff ) {
+				// Log progress every 50 items
+				if ( ( $index + 1 ) % 50 === 0 ) {
+					stackboost_log( sprintf( 'Processed %d of %d staff entries...', $index + 1, $total_staff ), 'directory-import' );
+				}
+
+				$post_data = array(
+					'post_title'   => sanitize_text_field( $staff['title'] ),
+					'post_content' => wp_kses_post( isset($staff['content']) ? $staff['content'] : '' ),
+					'post_type'    => $cpts->post_type,
+					'post_status'  => isset( $staff['status'] ) ? sanitize_text_field( $staff['status'] ) : 'publish',
+				);
+				$post_id = wp_insert_post( $post_data );
+
+				if ( ! is_wp_error( $post_id ) ) {
+					$counts['staff']++;
+
+					// Handle Meta
+					if ( ! empty( $staff['meta'] ) ) {
+						foreach ( $staff['meta'] as $key => $values ) {
+							$value = $values[0]; // Take the first value
+
+							// Map Legacy Job Title
+							if ( '_chp_staff_job_title' === $key ) {
+								update_post_meta( $post_id, '_stackboost_staff_job_title', sanitize_text_field( $value ) );
+								continue;
+							}
+
+							// Skip keys we handle specifically or want to ignore
+							if ( in_array( $key, array( '_location_id', '_location', '_thumbnail_id', '_edit_lock', '_edit_last' ) ) ) {
+								continue;
+							}
+
+							add_post_meta( $post_id, $key, $value );
+						}
+					}
+
+					// Resolve Location
+					$new_location_id = '';
+					$new_location_name = '';
+
+					// First try name from meta
+					if ( ! empty( $staff['meta']['_location'][0] ) ) {
+						$loc_name = $staff['meta']['_location'][0];
+						if ( isset( $location_name_map[ $loc_name ] ) ) {
+							$new_location_id = $location_name_map[ $loc_name ];
+							$new_location_name = $loc_name;
+						}
+					}
+					// Fallback to legacy ID map
+					elseif ( ! empty( $staff['meta']['_location_id'][0] ) ) {
+						$legacy_id = $staff['meta']['_location_id'][0];
+						if ( isset( $legacy_location_id_map[ $legacy_id ] ) ) {
+							$loc_name = $legacy_location_id_map[ $legacy_id ];
+							if ( isset( $location_name_map[ $loc_name ] ) ) {
+								$new_location_id = $location_name_map[ $loc_name ];
+								$new_location_name = $loc_name;
+							}
+						}
+					}
+
+					if ( $new_location_id ) {
+						update_post_meta( $post_id, '_location_id', $new_location_id );
+						update_post_meta( $post_id, '_location', $new_location_name );
+					}
+
+					// Resolve Department
+					if ( ! empty( $staff['meta']['_department_program'][0] ) ) {
+						update_post_meta( $post_id, '_department_program', sanitize_text_field( $staff['meta']['_department_program'][0] ) );
+					}
+
+					// Handle Image
+					if ( ! empty( $staff['featured_image_url'] ) ) {
+						$image_url = $staff['featured_image_url'];
+						// Extract path from URL assuming standard WP structure
+						// URL: https://site.com/wp-content/uploads/2025/12/file.png
+						// We want: /wp-content/uploads/2025/12/file.png
+
+						// Simple parse: find '/wp-content/' and take everything after
+						$path_pos = strpos( $image_url, '/wp-content/' );
+						if ( $path_pos !== false ) {
+							$rel_path = substr( $image_url, $path_pos );
+							$abs_path = ABSPATH . ltrim( $rel_path, '/' );
+
+							if ( file_exists( $abs_path ) ) {
+								// Check if attachment already exists for this file
+								// (Since we cleared DB, likely not, but good practice if we were merging)
+								// Actually we cleared data, so we need to create new attachment post?
+								// Or check if attachment post exists in DB (we didn't delete attachments)?
+								// We only deleted directory CPTs. Attachments are 'attachment' post type.
+
+								// Try to find attachment ID by GUID or similar?
+								// Or just insert a new attachment linked to this file.
+
+								// To avoid duplicates, let's search for an attachment with this GUID (URL)
+								global $wpdb;
+								$attachment_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE guid = %s", $image_url ) );
+
+								if ( ! $attachment_id ) {
+									// Create attachment
+									$filetype = wp_check_filetype( basename( $abs_path ), null );
+									$attachment = array(
+										'guid'           => $image_url,
+										'post_mime_type' => $filetype['type'],
+										'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $abs_path ) ),
+										'post_content'   => '',
+										'post_status'    => 'inherit'
+									);
+									$attachment_id = wp_insert_attachment( $attachment, $abs_path, $post_id );
+								}
+
+								if ( $attachment_id ) {
+									set_post_thumbnail( $post_id, $attachment_id );
+								}
+							}
+						}
+					}
+				} else {
+					$error_msg = "Failed to import Staff '{$staff['title']}': " . $post_id->get_error_message();
+					stackboost_log( $error_msg, 'directory-import' );
+					$failures[] = $error_msg;
+				}
+			}
+		}
+
+		stackboost_log( 'Import completed successfully.', 'directory-import' );
+
+		wp_send_json_success( array(
+			'message' => sprintf(
+				'Import Complete. Imported: %d Departments, %d Locations, %d Staff Entries.',
+				$counts['departments'],
+				$counts['locations'],
+				$counts['staff']
+			),
+			'failures' => $failures,
+		) );
 	}
 
 	/**
