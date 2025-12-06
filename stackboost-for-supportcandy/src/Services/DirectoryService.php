@@ -321,10 +321,12 @@ class DirectoryService {
 	 * @return string Formatted phone number.
 	 */
 	private function _format_phone_number_string( string $number ): string {
-		$number = preg_replace( '/[^0-9]/', '', $number );
-		if ( strlen( $number ) === 10 ) {
+		// Only auto-format if it's a standard US 10-digit raw number.
+		if ( preg_match( '/^\d{10}$/', $number ) ) {
 			return '(' . substr( $number, 0, 3 ) . ') ' . substr( $number, 3, 3 ) . '-' . substr( $number, 6 );
 		}
+
+		// Otherwise, return the user's input as-is (e.g. international formats).
 		return trim( $number );
 	}
 }

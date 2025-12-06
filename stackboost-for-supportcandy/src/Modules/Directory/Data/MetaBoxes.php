@@ -310,9 +310,21 @@ class MetaBoxes {
 		foreach ( $fields_to_save as $field ) {
 			if ( isset( $_POST[ $field ] ) ) {
 				$value = wp_unslash( $_POST[ $field ] );
-				// Sanitize phone numbers to store only digits.
+				// Sanitize phone numbers based on format.
 				if ( 'office_phone' === $field || 'mobile_phone' === $field ) {
-					$value = preg_replace( '/\D/', '', $value );
+					// Check digit-only version first
+					$digits = preg_replace( '/\D/', '', $value );
+
+					if ( 10 === strlen( $digits ) ) {
+						// Standard US 10-digit number: Store raw digits for auto-formatting.
+						$value = $digits;
+					} elseif ( 11 === strlen( $digits ) && '1' === substr( $digits, 0, 1 ) ) {
+						// US 11-digit number starting with 1: Strip 1 and store 10 digits.
+						$value = substr( $digits, 1 );
+					} else {
+						// International or non-standard: Store raw input (sanitized) to preserve formatting.
+						$value = sanitize_text_field( $value );
+					}
 				} else {
 					$value = sanitize_text_field( $value );
 				}
