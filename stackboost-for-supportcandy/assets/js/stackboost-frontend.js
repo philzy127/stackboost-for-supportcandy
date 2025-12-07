@@ -141,6 +141,36 @@
 
 		const contentContainer = floatingCard.querySelector('.stackboost-card-content');
 		const cache = {};
+		let lastEventCoords = { clientX: 0, clientY: 0, pageX: 0, pageY: 0 };
+
+		function updatePosition() {
+			if (!floatingCard || floatingCard.style.display === 'none') return;
+
+			const cardRect = floatingCard.getBoundingClientRect();
+			const viewportWidth = window.innerWidth;
+			const viewportHeight = window.innerHeight;
+			const offset = 15;
+
+			let top = lastEventCoords.pageY + offset;
+			let left = lastEventCoords.pageX + offset;
+
+			// Horizontal Flip
+			if (lastEventCoords.clientX + offset + cardRect.width > viewportWidth) {
+				left = lastEventCoords.pageX - offset - cardRect.width;
+			}
+
+			// Vertical Flip
+			if (lastEventCoords.clientY + offset + cardRect.height > viewportHeight) {
+				top = lastEventCoords.pageY - offset - cardRect.height;
+			}
+
+			// Safety: Ensure we don't flip off the top/left edge of the document
+			if (left < 0) left = 0;
+			if (top < 0) top = 0;
+
+			floatingCard.style.top = `${top}px`;
+			floatingCard.style.left = `${left}px`;
+		}
 
 		async function fetchTicketDetails(ticketId) {
 			if (cache[ticketId]) return cache[ticketId];
@@ -169,11 +199,12 @@
 				e.preventDefault();
 				const ticketId = row.getAttribute('onclick')?.match(/wpsc_tl_handle_click\(.*?,\s*(\d+),/)?.[1];
 				if (ticketId) {
+					lastEventCoords = { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY };
 					contentContainer.innerHTML = 'Loading...';
-					floatingCard.style.top = `${e.pageY + 15}px`;
-					floatingCard.style.left = `${e.pageX + 15}px`;
 					floatingCard.style.display = 'block';
+					updatePosition();
 					contentContainer.innerHTML = await fetchTicketDetails(ticketId);
+					updatePosition();
 				}
 			});
 		});
