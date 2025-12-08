@@ -146,30 +146,41 @@
 		function updatePosition() {
 			if (!floatingCard || floatingCard.style.display === 'none') return;
 
-			const cardRect = floatingCard.getBoundingClientRect();
 			const viewportWidth = window.innerWidth;
 			const viewportHeight = window.innerHeight;
+			const cardWidth = floatingCard.offsetWidth;
+			const cardHeight = floatingCard.offsetHeight;
 			const offset = 15;
 
-			let top = lastEventCoords.pageY + offset;
-			let left = lastEventCoords.pageX + offset;
+			// Cursor position in Viewport
+			const cx = lastEventCoords.clientX;
+			const cy = lastEventCoords.clientY;
 
-			// Horizontal Flip
-			if (lastEventCoords.clientX + offset + cardRect.width > viewportWidth) {
-				left = lastEventCoords.pageX - offset - cardRect.width;
+			// Horizontal Logic: Default Right, Flip Left if needed
+			let posX = cx + offset;
+			if (posX + cardWidth > viewportWidth) {
+				// Not enough space Right. Flip Left.
+				posX = cx - offset - cardWidth;
 			}
 
-			// Vertical Flip
-			if (lastEventCoords.clientY + offset + cardRect.height > viewportHeight) {
-				top = lastEventCoords.pageY - offset - cardRect.height;
+			// Vertical Logic: Default Bottom, Flip Top if needed
+			let posY = cy + offset;
+			if (posY + cardHeight > viewportHeight) {
+				// Not enough space Bottom. Flip Top.
+				posY = cy - offset - cardHeight;
 			}
 
-			// Safety: Ensure we don't flip off the top/left edge of the document
-			if (left < 0) left = 0;
-			if (top < 0) top = 0;
+			// Safety Clamp: Ensure card stays within Viewport bounds (Left/Top)
+			// This prevents the card from disappearing if flipped off-screen.
+			if (posX < 0) posX = 0;
+			if (posY < 0) posY = 0;
 
-			floatingCard.style.top = `${top}px`;
-			floatingCard.style.left = `${left}px`;
+			// Convert Viewport coordinates to Document coordinates for absolute positioning
+			const absLeft = posX + window.scrollX;
+			const absTop = posY + window.scrollY;
+
+			floatingCard.style.left = `${absLeft}px`;
+			floatingCard.style.top = `${absTop}px`;
 		}
 
 		async function fetchTicketDetails(ticketId) {
