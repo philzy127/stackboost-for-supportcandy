@@ -132,10 +132,26 @@ final class Plugin {
 	 * This method now centralizes localization to prevent conflicts.
 	 */
 	public function enqueue_and_localize_frontend_scripts() {
+		// Enqueue Tippy.js and its dependency, Popper.js from CDN
+		wp_enqueue_script(
+			'popper-js',
+			'https://unpkg.com/@popperjs/core@2',
+			[],
+			'2', // Version number
+			true // In footer
+		);
+		wp_enqueue_script(
+			'tippy-js',
+			'https://unpkg.com/tippy.js@6',
+			['popper-js'], // Dependency
+			'6', // Version number
+			true // In footer
+		);
+
 		wp_register_script(
 			'stackboost-frontend',
 			STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-frontend.js',
-			[ 'jquery' ],
+			[ 'jquery', 'tippy-js' ],
 			STACKBOOST_VERSION,
 			true
 		);

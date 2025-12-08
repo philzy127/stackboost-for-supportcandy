@@ -123,65 +123,8 @@
 	 * Feature: Ticket Hover Card.
 	 */
 	function feature_ticket_hover_card() {
-		let floatingCard = document.getElementById('floatingTicketCard');
-		if (!floatingCard) {
-			floatingCard = document.createElement('div');
-			floatingCard.id = 'floatingTicketCard';
-			Object.assign(floatingCard.style, { position: 'absolute', zIndex: '9999', background: '#fff', border: '1px solid #ccc', padding: '10px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)', maxWidth: '400px', display: 'none' });
-			const contentContainer = document.createElement('div');
-			contentContainer.className = 'stackboost-card-content';
-			const closeButton = document.createElement('span');
-			closeButton.innerHTML = '&times;';
-			Object.assign(closeButton.style, { position: 'absolute', top: '3px', right: '5px', cursor: 'pointer', fontSize: '20px', color: '#333', background: '#f1f1f1', borderRadius: '50%', width: '24px', height: '24px', lineHeight: '24px', textAlign: 'center', fontWeight: 'bold' });
-			closeButton.addEventListener('click', () => { floatingCard.style.display = 'none'; });
-			floatingCard.appendChild(closeButton);
-			floatingCard.appendChild(contentContainer);
-			document.body.appendChild(floatingCard);
-		}
-
-		const contentContainer = floatingCard.querySelector('.stackboost-card-content');
 		const cache = {};
-		let lastEventCoords = { clientX: 0, clientY: 0, pageX: 0, pageY: 0 };
-
-		function updatePosition() {
-			if (!floatingCard || floatingCard.style.display === 'none') return;
-
-			const viewportWidth = window.innerWidth;
-			const viewportHeight = window.innerHeight;
-			const cardWidth = floatingCard.offsetWidth;
-			const cardHeight = floatingCard.offsetHeight;
-			const offset = 15;
-
-			// Cursor position in Viewport
-			const cx = lastEventCoords.clientX;
-			const cy = lastEventCoords.clientY;
-
-			// Horizontal Logic: Default Right, Flip Left if needed
-			let posX = cx + offset;
-			if (posX + cardWidth > viewportWidth) {
-				// Not enough space Right. Flip Left.
-				posX = cx - offset - cardWidth;
-			}
-
-			// Vertical Logic: Default Bottom, Flip Top if needed
-			let posY = cy + offset;
-			if (posY + cardHeight > viewportHeight) {
-				// Not enough space Bottom. Flip Top.
-				posY = cy - offset - cardHeight;
-			}
-
-			// Safety Clamp: Ensure card stays within Viewport bounds (Left/Top)
-			// This prevents the card from disappearing if flipped off-screen.
-			if (posX < 0) posX = 0;
-			if (posY < 0) posY = 0;
-
-			// Convert Viewport coordinates to Document coordinates for absolute positioning
-			const absLeft = posX + window.scrollX;
-			const absTop = posY + window.scrollY;
-
-			floatingCard.style.left = `${absLeft}px`;
-			floatingCard.style.top = `${absTop}px`;
-		}
+		let activeTippyInstance = null; // Tracks the currently visible tippy instance
 
 		async function fetchTicketDetails(ticketId) {
 			if (cache[ticketId]) return cache[ticketId];
@@ -200,23 +143,42 @@
 			}
 		}
 
-		document.addEventListener('click', (e) => {
-			if (floatingCard && !floatingCard.contains(e.target)) floatingCard.style.display = 'none';
-		});
-
 		document.querySelectorAll('tr.wpsc_tl_tr:not(._contextAttached)').forEach(row => {
 			row.classList.add('_contextAttached');
-			row.addEventListener('contextmenu', async (e) => {
-				e.preventDefault();
-				const ticketId = row.getAttribute('onclick')?.match(/wpsc_tl_handle_click\(.*?,\s*(\d+),/)?.[1];
-				if (ticketId) {
-					lastEventCoords = { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY };
-					contentContainer.innerHTML = 'Loading...';
-					floatingCard.style.display = 'block';
-					updatePosition();
-					contentContainer.innerHTML = await fetchTicketDetails(ticketId);
-					updatePosition();
+
+			const ticketId = row.getAttribute('onclick')?.match(/wpsc_tl_handle_click\(.*?,\s*(\d+),/)?.[1];
+			if (!ticketId) return;
+
+			const tippyInstance = tippy(row, {
+				allowHTML: true,
+				interactive: true,
+				trigger: 'manual',
+				placement: 'right-start',
+				offset: [0, 10],
+				appendTo: () => document.body,
+				hideOnClick: true, // Use tippy's built-in behavior to hide on outside clicks
+				async onShow(instance) {
+					// Ensure only one tippy is visible at a time
+					if (activeTippyInstance && activeTippyInstance.id !== instance.id) {
+						activeTippyInstance.hide();
+					}
+					activeTippyInstance = instance;
+
+					instance.setContent('Loading...');
+					const content = await fetchTicketDetails(ticketId);
+					instance.setContent(content);
+				},
+				onHide(instance) {
+					// Clear the active instance when it's hidden
+					if (activeTippyInstance && activeTippyInstance.id === instance.id) {
+						activeTippyInstance = null;
+					}
 				}
+			});
+
+			row.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+				tippyInstance.show();
 			});
 		});
 	}
