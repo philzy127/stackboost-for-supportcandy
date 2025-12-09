@@ -137,9 +137,11 @@
 				if (!response.ok) return '<div>Error fetching ticket info.</div>';
 				const html = await response.text();
 				const doc = new DOMParser().parseFromString(html, 'text/html');
-				return (cache[ticketId] = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>');
+				// Wrap in a fixed-width container to prevent resizing/squashing
+				const content = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>';
+				return (cache[ticketId] = `<div style="width: 350px;">${content}</div>`);
 			} catch (error) {
-				return '<div>Error fetching ticket info.</div>';
+				return '<div style="width: 350px;">Error fetching ticket info.</div>';
 			}
 		}
 
@@ -154,9 +156,20 @@
 				interactive: true,
 				trigger: 'manual',
 				placement: 'right-start',
+				maxWidth: 'none', // Allow our fixed width to take precedence
 				offset: [0, 10],
 				appendTo: () => document.body,
 				hideOnClick: true, // Use tippy's built-in behavior to hide on outside clicks
+				popperOptions: {
+					modifiers: [
+						{
+							name: 'flip',
+							options: {
+								fallbackPlacements: ['left-start', 'top-start', 'bottom-start'],
+							},
+						},
+					],
+				},
 				async onShow(instance) {
 					// Ensure only one tippy is visible at a time
 					if (activeTippyInstance && activeTippyInstance.id !== instance.id) {
