@@ -80,6 +80,13 @@ class WordPress {
 
 		// Filter for redirecting after post update.
 		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
+
+		// Register custom image size for Directory photos.
+		// This ensures a consistent, resized version of the image is available server-side,
+		// preventing the loading of massive original files while keeping the original intact.
+		add_action( 'init', function() {
+			add_image_size( 'stackboost_directory_large', 1200, 1200, false );
+		} );
 	}
 
 	/**
@@ -134,6 +141,9 @@ class WordPress {
 
 		// Enqueue scripts for the staff CPT add/edit screens.
 		if ( 'post' === $screen->base && isset( $this->core->cpts->post_type ) && $this->core->cpts->post_type === $screen->post_type ) {
+			// Explicitly enqueue WordPress media scripts to fix blank image issues and ensure plugins like Focus Point load their UI.
+			wp_enqueue_media();
+
 			// Enqueue phone formatting script.
 			wp_enqueue_script(
 				'stackboost-admin-phone-format',
@@ -727,10 +737,18 @@ class WordPress {
 							if ( ! empty( $photo_url ) ) {
 								// Use thumbnail URL for display if available, but link to full.
 								$display_url = ! empty( $staff_member->thumbnail_url ) ? $staff_member->thumbnail_url : $photo_url;
-								$value       = sprintf(
-									'<a href="%s" class="stackboost-widget-photo-thumb" onclick="stackboostOpenWidgetModal(event, this.href); return false;"><img src="%s" style="max-width: 100px; height: auto; border-radius: 4px;" alt="%s"></a>',
+
+								// Check for Focus Point CSS.
+								$img_style = 'max-width: 100px; height: auto; border-radius: 4px;';
+								if ( ! empty( $staff_member->focus_point ) && ! empty( $staff_member->focus_point['css'] ) ) {
+									$img_style .= ' object-fit: cover; width: 100px; height: 100px; ' . $staff_member->focus_point['css'];
+								}
+
+								$value = sprintf(
+									'<a href="%s" class="stackboost-widget-photo-thumb" onclick="stackboostOpenWidgetModal(event, this.href); return false;"><img src="%s" style="%s" alt="%s"></a>',
 									esc_url( $photo_url ),
 									esc_url( $display_url ),
+									esc_attr( $img_style ),
 									esc_attr( $staff_member->name )
 								);
 							} else {

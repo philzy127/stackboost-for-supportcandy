@@ -120,6 +120,26 @@ class DirectoryService {
 		$employee_data->permalink           = get_permalink( $profile_id );
 		$employee_data->edit_post_link      = get_edit_post_link( $profile_id );
 		$employee_data->thumbnail_url       = get_the_post_thumbnail_url( $profile_id, 'medium' );
+
+		// Use 'stackboost_directory_large' size for the full photo to ensure we have a resized version server-side,
+		// avoiding loading huge original files while preserving the original upload in the library.
+		$post_thumbnail_id = get_post_thumbnail_id( $profile_id );
+		$employee_data->full_photo_url = '';
+		$employee_data->focus_point = null;
+
+		if ( $post_thumbnail_id ) {
+			// Try to get our custom size first, fall back to large if it hasn't been generated yet.
+			$full_photo_src = wp_get_attachment_image_src( $post_thumbnail_id, 'stackboost_directory_large' );
+			if ( ! $full_photo_src ) {
+				$full_photo_src = wp_get_attachment_image_src( $post_thumbnail_id, 'large' );
+			}
+
+			if ( $full_photo_src ) {
+				$employee_data->full_photo_url = $full_photo_src[0];
+			}
+			$employee_data->focus_point = $this->get_media_focus_point( $post_thumbnail_id );
+		}
+
 		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
 		$employee_data->job_title           = get_post_meta( $profile_id, '_stackboost_staff_job_title', true );
 		$employee_data->department_program  = get_post_meta( $profile_id, '_department_program', true );
@@ -219,6 +239,50 @@ class DirectoryService {
 		}
 
 		return $this->retrieve_employee_data( $profile_id );
+	}
+
+	/**
+	 * Get Media Focus Point data for an attachment.
+	 *
+	 * Tries to retrieve focus point data from the "Media Focus Point" plugin
+	 * by WP Company. Checks for common meta keys.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 * @return array|null An array with 'x' and 'y' percentages, or null if not found.
+	 */
+	public function get_media_focus_point( int $attachment_id ): ?array {
+		// Common meta keys used by Media Focus Point plugins.
+		// The specific plugin "Media Focus Point" by WP Company often uses 'mfp_focus_point'.
+		$focus_point_data = get_post_meta( $attachment_id, 'mfp_focus_point', true );
+
+		if ( ! empty( $focus_point_data ) && is_array( $focus_point_data ) ) {
+			// Expected format: array('x' => float, 'y' => float) usually in range 0-1 or -1 to 1.
+			// However, CSS object-position needs percentages.
+			// Let's inspect the data format. Usually it's like [x => 0.5, y => 0.5] (center).
+
+			// Normalize to percentages if they are 0-1 floats.
+			$x = isset( $focus_point_data['x'] ) ? floatval( $focus_point_data['x'] ) : 0.5;
+			$y = isset( $focus_point_data['y'] ) ? floatval( $focus_point_data['y'] ) : 0.5;
+
+			// If the values are -1 to 1 (like some crop plugins), map them to 0-100%.
+			// But 'Media Focus Point' usually stores 0-1 relative coordinates.
+			// Just in case, clamp to 0-1.
+
+			// Simple heuristic: if values are outside 0-1 range but within -100 to 100, treat as percent.
+			// If -1 to 1, map to percentage.
+
+			// Let's assume standard 0 to 1 relative coordinates for now, which is common.
+			$x_pct = $x * 100;
+			$y_pct = $y * 100;
+
+			return array(
+				'x' => $x_pct,
+				'y' => $y_pct,
+				'css' => sprintf( 'object-position: %.1f%% %.1f%%;', $x_pct, $y_pct ),
+			);
+		}
+
+		return null;
 	}
 
 	/**
