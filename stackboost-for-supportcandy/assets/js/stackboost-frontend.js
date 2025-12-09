@@ -178,6 +178,23 @@
 
 			row.addEventListener('contextmenu', (e) => {
 				e.preventDefault();
+
+				// Set the reference to a virtual element at the cursor position
+				// This makes the tippy appear at the cursor, but stay static afterwards.
+				const rect = {
+					width: 0,
+					height: 0,
+					top: e.clientY,
+					right: e.clientX,
+					bottom: e.clientY,
+					left: e.clientX,
+				};
+
+				tippyInstance.setProps({
+					getReferenceClientRect: () => rect,
+					placement: 'right-start', // Initial preference
+				});
+
 				tippyInstance.show();
 			});
 		});
