@@ -166,6 +166,14 @@
 							name: 'flip',
 							options: {
 								fallbackPlacements: ['left-start', 'top-start', 'bottom-start'],
+								altBoundary: true, // Force flip to check alternative boundaries
+							},
+						},
+						{
+							name: 'preventOverflow',
+							options: {
+								tether: false, // Prevent squashing/sticking to reference
+								altAxis: true, // Allow shifting on the cross axis
 							},
 						},
 					],
