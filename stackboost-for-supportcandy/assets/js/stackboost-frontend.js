@@ -137,11 +137,11 @@
 				if (!response.ok) return '<div>Error fetching ticket info.</div>';
 				const html = await response.text();
 				const doc = new DOMParser().parseFromString(html, 'text/html');
-				// Wrap in a fixed-width container to prevent resizing/squashing
+				// Wrap in a fixed-width container with min-width to prevent resizing/squashing
 				const content = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>';
-				return (cache[ticketId] = `<div style="width: 350px;">${content}</div>`);
+				return (cache[ticketId] = `<div style="width: 350px; min-width: 350px !important;">${content}</div>`);
 			} catch (error) {
-				return '<div style="width: 350px;">Error fetching ticket info.</div>';
+				return '<div style="width: 350px; min-width: 350px !important;">Error fetching ticket info.</div>';
 			}
 		}
 
