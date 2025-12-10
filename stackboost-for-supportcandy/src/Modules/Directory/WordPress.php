@@ -241,70 +241,113 @@ class WordPress {
 	 * Enqueue public scripts and styles.
 	 */
 	public function enqueue_public_scripts() {
-		wp_enqueue_style(
-			'stackboost-directory-datatables-style',
-			'https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css',
-			array(),
-			'1.11.5'
-		);
-		wp_enqueue_style(
-			'stackboost-directory-style',
-			\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
-			array(),
-			\STACKBOOST_VERSION
-		);
+		global $post;
 
-		wp_enqueue_script(
-			'stackboost-directory-datatables',
-			'https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js',
-			array( 'jquery' ),
-			'1.11.5',
-			true
-		);
-		wp_enqueue_script(
-			'stackboost-directory-js',
-			\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-directory.js',
-			array( 'jquery', 'stackboost-directory-datatables' ),
-			\STACKBOOST_VERSION,
-			true
-		);
+		// Determine if we need to load assets based on shortcodes.
+		$has_directory_shortcode = is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'stackboost_directory' );
+		$has_ticket_shortcode    = is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'wpsc_ticket' );
 
-		// Enqueue Dashicons for the frontend shortcode.
-		wp_enqueue_style( 'dashicons' );
-
-		// Check for debug mode from global settings
-		$settings      = get_option( 'stackboost_settings', [] );
-		$debug_enabled = isset( $settings['enable_logging'] ) && '1' === $settings['enable_logging'];
-
-		wp_localize_script(
-			'stackboost-directory-js',
-			'stackboostPublicAjax',
-			array(
-				'ajax_url'                   => admin_url( 'admin-ajax.php' ),
-				'stackboost_directory_nonce' => wp_create_nonce( 'stackboost_directory_public_nonce' ),
-				'no_entries_found'           => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
-				'debug_enabled'              => $debug_enabled,
-			)
-		);
-
-		// Only enqueue modal assets if the setting is active.
-		$settings             = get_option( Settings::OPTION_NAME, array() );
-		$listing_display_mode = $settings['listing_display_mode'] ?? 'page';
-
-		if ( 'modal' === $listing_display_mode ) {
+		// Enqueue Util Script (Shared functionality like Copy to Clipboard, Toast).
+		// Load if either the Directory or the Ticket Widget is present.
+		if ( $has_directory_shortcode || $has_ticket_shortcode ) {
 			wp_enqueue_style(
-				'stackboost-modal-style',
-				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-modal.css',
+				'stackboost-util-style',
+				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
 				array(),
 				\STACKBOOST_VERSION
 			);
+
 			wp_enqueue_script(
-				'stackboost-modal-js',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-modal.js',
-				array( 'jquery', 'stackboost-directory-js' ),
+				'stackboost-util-js',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
+				array( 'jquery' ),
 				\STACKBOOST_VERSION,
 				true
 			);
+
+			// Check for debug mode from global settings
+			$settings      = get_option( 'stackboost_settings', [] );
+			$debug_enabled = isset( $settings['enable_logging'] ) && '1' === $settings['enable_logging'];
+
+			wp_localize_script(
+				'stackboost-util-js',
+				'stackboostPublicAjax',
+				array(
+					'debug_enabled' => $debug_enabled,
+				)
+			);
+		}
+
+		// Enqueue Directory Assets (DataTables, Main Logic).
+		// Load ONLY if the directory shortcode is present.
+		if ( $has_directory_shortcode ) {
+			wp_enqueue_style(
+				'stackboost-directory-datatables-style',
+				'https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css',
+				array(),
+				'1.11.5'
+			);
+			wp_enqueue_style(
+				'stackboost-directory-style',
+				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
+				array( 'stackboost-util-style' ), // Depend on util style
+				\STACKBOOST_VERSION
+			);
+
+			wp_enqueue_script(
+				'stackboost-directory-datatables',
+				'https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js',
+				array( 'jquery' ),
+				'1.11.5',
+				true
+			);
+			wp_enqueue_script(
+				'stackboost-directory-js',
+				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-directory.js',
+				array( 'jquery', 'stackboost-directory-datatables', 'stackboost-util-js' ), // Depend on util js
+				\STACKBOOST_VERSION,
+				true
+			);
+
+			// Enqueue Dashicons for the frontend shortcode.
+			wp_enqueue_style( 'dashicons' );
+
+			// Check for debug mode from global settings (re-fetch if not already fetched)
+			if ( ! isset( $debug_enabled ) ) {
+				$settings      = get_option( 'stackboost_settings', [] );
+				$debug_enabled = isset( $settings['enable_logging'] ) && '1' === $settings['enable_logging'];
+			}
+
+			wp_localize_script(
+				'stackboost-directory-js',
+				'stackboostPublicAjax',
+				array(
+					'ajax_url'                   => admin_url( 'admin-ajax.php' ),
+					'stackboost_directory_nonce' => wp_create_nonce( 'stackboost_directory_public_nonce' ),
+					'no_entries_found'           => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
+					'debug_enabled'              => $debug_enabled,
+				)
+			);
+
+			// Only enqueue modal assets if the setting is active.
+			$settings             = get_option( Settings::OPTION_NAME, array() );
+			$listing_display_mode = $settings['listing_display_mode'] ?? 'page';
+
+			if ( 'modal' === $listing_display_mode ) {
+				wp_enqueue_style(
+					'stackboost-modal-style',
+					\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-modal.css',
+					array(),
+					\STACKBOOST_VERSION
+				);
+				wp_enqueue_script(
+					'stackboost-modal-js',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-modal.js',
+					array( 'jquery', 'stackboost-directory-js' ),
+					\STACKBOOST_VERSION,
+					true
+				);
+			}
 		}
 	}
 
