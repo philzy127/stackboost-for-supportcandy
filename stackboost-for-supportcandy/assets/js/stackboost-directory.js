@@ -22,52 +22,6 @@ jQuery(document).ready(function($) {
 
     sbLog('Script loaded. Secure Context: ' + window.isSecureContext);
 
-    // 1. Move Event Listeners FIRST so they attach even if DataTables crashes.
-
-    // Copy to clipboard functionality for email
-    $(document).on('click', '.stackboost-copy-email-icon', function() {
-        sbLog('Email icon clicked');
-        var email = $(this).data('email');
-        if (email) {
-            copyToClipboard(email, $(this), 'email');
-        } else {
-            sbError('No email data found on icon');
-        }
-    });
-
-    // Copy to clipboard functionality for phone
-    $(document).on('click', '.stackboost-copy-phone-icon', function() {
-        sbLog('Phone icon clicked');
-
-        // 1. Check for pre-formatted copy text (Primary Method)
-        var copyText = $(this).data('copy-text');
-        if (copyText) {
-             sbLog('Using pre-formatted copy text', copyText);
-             copyToClipboard(copyText, $(this), 'phone');
-             return;
-        }
-
-        // 2. Fallback to legacy construction (Secondary Method)
-        var phone = $(this).data('phone');
-        var extension = $(this).data('extension');
-
-        sbLog('Raw Data', { phone: phone, extension: extension });
-
-        // Ensure we treat them as strings to avoid weird addition
-        phone = String(phone);
-
-        var fullNumber = phone;
-        if (extension) {
-            fullNumber = phone + ' x' + extension;
-        }
-
-        if (fullNumber && fullNumber !== "undefined") {
-            copyToClipboard(fullNumber, $(this), 'phone');
-        } else {
-             sbError('Failed to construct full number');
-        }
-    });
-
     // 2. Robust DataTables Initialization
     // Check if table exists and is visible to avoid cloneNode errors
     var $table = $('#stackboostStaffDirectoryTable');
@@ -195,73 +149,6 @@ jQuery(document).ready(function($) {
                 }
             }, 200);
         }
-    }
-
-    // Function to show a toast notification
-    function showToast(message) {
-        var toast = $('<div class="stackboost-toast"></div>').text(message);
-        $('body').append(toast);
-        toast.fadeIn(400).delay(3000).fadeOut(400, function() {
-            $(this).remove();
-        });
-    }
-
-    // Function to handle the copy action
-    function copyToClipboard(text, $icon, type) {
-        sbLog('Attempting to copy', text);
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(function() {
-                handleCopySuccess($icon, text, type);
-            }, function(err) {
-                sbError('Async: Could not copy text: ', err);
-                // Fallback to execCommand if async fails
-                fallbackCopyTextToClipboard(text, $icon, type);
-            });
-        } else {
-            fallbackCopyTextToClipboard(text, $icon, type);
-        }
-    }
-
-    // Fallback using execCommand
-    function fallbackCopyTextToClipboard(text, $icon, type) {
-        sbLog('Using fallback copy');
-        var textArea = document.createElement("textarea");
-        textArea.value = text;
-
-        // Ensure it's not visible but part of the DOM
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        textArea.style.top = "0";
-
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        try {
-            var successful = document.execCommand('copy');
-            if (successful) {
-                handleCopySuccess($icon, text, type);
-            } else {
-                sbError('Fallback: Copying text command was unsuccessful');
-            }
-        } catch (err) {
-            sbError('Fallback: Oops, unable to copy', err);
-        }
-
-        document.body.removeChild(textArea);
-    }
-
-    // Success UI Feedback
-    function handleCopySuccess($icon, text, type) {
-        sbLog('Copy successful');
-        $icon.addClass('copied');
-
-        var msg = type === 'email' ? 'Email copied: ' + text : 'Phone copied: ' + text;
-        showToast(msg);
-
-        setTimeout(function() {
-            $icon.removeClass('copied');
-        }, 1500); // 1.5s delay to be visible
     }
 
 });
