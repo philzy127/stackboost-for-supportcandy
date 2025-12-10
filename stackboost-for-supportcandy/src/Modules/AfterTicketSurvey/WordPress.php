@@ -80,6 +80,10 @@ class WordPress extends Module {
 
 		// AJAX handlers
 		add_action( 'wp_ajax_stackboost_ats_update_report_heading', [ $this->ajax, 'update_report_heading' ] );
+        add_action( 'wp_ajax_stackboost_ats_save_question', [ $this->ajax, 'save_question' ] );
+        add_action( 'wp_ajax_stackboost_ats_get_question', [ $this->ajax, 'get_question' ] );
+        add_action( 'wp_ajax_stackboost_ats_delete_question', [ $this->ajax, 'delete_question' ] );
+        add_action( 'wp_ajax_stackboost_ats_reorder_questions', [ $this->ajax, 'reorder_questions' ] );
 
 		// Settings registration
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
@@ -113,10 +117,28 @@ class WordPress extends Module {
         wp_enqueue_style( 'stackboost-ats-admin', STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-ats-admin.css', [], STACKBOOST_VERSION );
 
         $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'main';
+
+        if ( 'questions' === $current_tab ) {
+            wp_enqueue_script( 'jquery-ui-dialog' );
+            wp_enqueue_script( 'jquery-ui-sortable' );
+            wp_enqueue_style( 'wp-jquery-ui-dialog' ); // Load WP's default jQuery UI styles
+
+            wp_enqueue_script( 'stackboost-ats-manage-questions', STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-ats-manage-questions.js', [ 'jquery', 'jquery-ui-dialog', 'jquery-ui-sortable' ], STACKBOOST_VERSION, true );
+            wp_localize_script(
+                'stackboost-ats-manage-questions',
+                'stackboost_ats_manage',
+                [
+                    'ajax_url' => admin_url( 'admin-ajax.php' ),
+                    'nonce'    => wp_create_nonce( 'stackboost_ats_manage_questions_nonce' ),
+                ]
+            );
+        }
+
         if ( 'settings' === $current_tab ) {
             wp_enqueue_style( 'wp-color-picker' );
             wp_enqueue_script( 'stackboost-ats-color-picker', STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-ats-color-picker.js', [ 'wp-color-picker' ], STACKBOOST_VERSION, true );
         }
+
         if ( 'results' === $current_tab ) {
             wp_enqueue_script( 'stackboost-ats-results-modal', STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-ats-results-modal.js', ['jquery'], STACKBOOST_VERSION, true );
             wp_localize_script(

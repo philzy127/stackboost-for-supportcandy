@@ -78,48 +78,12 @@ class AdminController {
         $post_action = $_POST['form_action'] ?? '';
 
         switch ($post_action) {
-            case 'manage_questions':
-                check_admin_referer( 'stackboost_ats_manage_questions_nonce' );
-                $this->process_question_form();
-                break;
+            // Question management is now handled via AJAX in Ajax.php
             case 'manage_submissions':
                 check_admin_referer( 'stackboost_ats_manage_submissions_nonce' );
                 $this->process_submissions_form();
                 break;
         }
-    }
-
-    private function process_question_form() {
-        global $wpdb;
-        $action = $_POST['ats_action'] ?? '';
-        $question_id = isset( $_POST['question_id'] ) ? intval( $_POST['question_id'] ) : 0;
-        $data = [
-            'question_text' => sanitize_text_field( $_POST['question_text'] ),
-            'question_type' => sanitize_text_field( $_POST['question_type'] ),
-            'is_required'   => isset( $_POST['is_required'] ) ? 1 : 0,
-            'sort_order'    => intval( $_POST['sort_order'] )
-        ];
-
-        if ( $action === 'add' ) {
-            $wpdb->insert( $this->questions_table_name, $data );
-            $question_id = $wpdb->insert_id;
-            $message = 'added';
-        } elseif ( $action === 'update' && $question_id ) {
-            $wpdb->update( $this->questions_table_name, $data, array( 'id' => $question_id ) );
-            $message = 'updated';
-        }
-
-        if ( $question_id && $data['question_type'] === 'dropdown' ) {
-            $wpdb->delete( $this->dropdown_options_table_name, array( 'question_id' => $question_id ) );
-            $options = array_map( 'trim', explode( ',', $_POST['dropdown_options'] ) );
-            foreach ( $options as $opt ) {
-                if ( ! empty( $opt ) ) {
-                    $wpdb->insert( $this->dropdown_options_table_name, [ 'question_id' => $question_id, 'option_value' => $opt ] );
-                }
-            }
-        }
-        wp_redirect( admin_url( 'admin.php?page=stackboost-ats&tab=questions&message=' . ( $message ?? 'error' ) ) );
-        exit;
     }
 
     private function process_submissions_form() {
@@ -140,9 +104,6 @@ class AdminController {
         if ( isset( $_GET['page'] ) && 'stackboost-ats' === $_GET['page'] && isset( $_GET['message'] ) ) {
             $type = strpos( $_GET['message'], 'fail' ) !== false || $_GET['message'] === 'error' ? 'error' : 'success';
             $messages = [
-                'added' => 'Question added successfully!',
-                'updated' => 'Question updated successfully!',
-                'deleted' => 'Question deleted successfully!',
                 'submissions_deleted' => 'Selected submissions deleted!',
                 'error' => 'An error occurred.',
             ];
@@ -159,20 +120,8 @@ class AdminController {
 
     private function render_questions_tab() {
         global $wpdb;
-        if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['question_id'] ) ) {
-            check_admin_referer( 'stackboost_ats_delete_q' );
-            $wpdb->delete( $this->questions_table_name, array( 'id' => intval( $_GET['question_id'] ) ) );
-            wp_redirect( admin_url( 'admin.php?page=stackboost-ats&tab=questions&message=deleted' ) );
-            exit;
-        }
-        $editing_question = null;
-        if ( isset( $_GET['action'] ) && $_GET['action'] === 'edit' && isset( $_GET['question_id'] ) ) {
-            $editing_question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$this->questions_table_name} WHERE id = %d", intval( $_GET['question_id'] ) ), ARRAY_A );
-            if ( $editing_question && $editing_question['question_type'] === 'dropdown' ) {
-                $options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d", $editing_question['id'] ) );
-                $editing_question['options_str'] = implode( ', ', array_column( $options, 'option_value' ) );
-            }
-        }
+        // Logic for handling GET based delete/edit has been moved to AJAX.
+        // We only need to fetch the list for initial display.
         $questions = $wpdb->get_results( "SELECT * FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
         include __DIR__ . '/Admin/manage-questions-template.php';
     }
