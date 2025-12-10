@@ -67,6 +67,43 @@
     // Initialize the rule builder if we are on the correct page.
     if ($("#stackboost-date-rules-container").length) {
       initializeDateFormatRuleBuilder();
+
+      // Intercept the form submission for AJAX saving
+      $('form[action="options.php"]').on('submit', function (e) {
+          e.preventDefault();
+
+          var $form = $(this);
+          var $submitButton = $form.find('input[type="submit"], button[type="submit"]');
+          var originalButtonText = $submitButton.val() || $submitButton.text();
+
+          // Disable button and change text
+          $submitButton.prop('disabled', true).val('Saving...');
+          if ($submitButton.is('button')) {
+              $submitButton.text('Saving...');
+          }
+
+          var formData = $form.serialize();
+
+          // Append action and nonce
+          formData += '&action=stackboost_save_settings';
+          formData += '&nonce=' + stackboost_admin_ajax.nonce;
+
+          $.post(stackboost_admin_ajax.ajax_url, formData, function (response) {
+              if (response.success) {
+                  window.stackboost_show_toast(response.data, 'success');
+              } else {
+                  alert('Error: ' + (response.data || 'Unknown error'));
+              }
+          }).fail(function () {
+              alert('An unexpected error occurred.');
+          }).always(function () {
+              // Restore button state
+              $submitButton.prop('disabled', false).val(originalButtonText);
+              if ($submitButton.is('button')) {
+                  $submitButton.text(originalButtonText);
+              }
+          });
+      });
     }
   });
 })(jQuery);

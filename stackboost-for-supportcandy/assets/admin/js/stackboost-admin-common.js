@@ -16,6 +16,37 @@
         }
     };
 
+    /**
+     * Central Toast Notification Helper.
+     * Displays a dismissible admin notice that auto-hides.
+     *
+     * @param {string} message The message to display.
+     * @param {string} type    'success' or 'error' (default: 'success').
+     */
+    window.stackboost_show_toast = function(message, type) {
+        type = type || 'success';
+        var noticeClass = type === 'error' ? 'notice-error' : 'notice-success';
+        // Manually include the dismissal button markup
+        var notice = $('<div class="notice ' + noticeClass + ' is-dismissible stackboost-toast"><p>' + message + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>');
+
+        // Insert after the page title
+        $('.wrap > h1').after(notice);
+
+        // Make it dismissible using WordPress standard JS if available, but manual dismiss is safer for dynamic content
+        notice.on('click', '.notice-dismiss', function() {
+            notice.remove();
+        });
+
+        // Auto-dismiss after 3 seconds for success messages
+        if (type === 'success') {
+            setTimeout(function () {
+                notice.fadeOut(function () {
+                    $(this).remove();
+                });
+            }, 3000);
+        }
+    };
+
     jQuery(document).ready(function ($) {
 
         // Handle adding new rules for Conditional Views
@@ -107,15 +138,7 @@
                 nonce: stackboost_admin_ajax.nonce
             }, function (response) {
                 if (response.success) {
-                    // Show a simple toast-like notice
-                    const notice = $('<div class="notice notice-success is-dismissible"><p>' + response.data + '</p></div>');
-                    $('.wrap > h1').after(notice);
-                    // Auto-dismiss after 3 seconds
-                    setTimeout(function () {
-                        notice.fadeOut(function () {
-                            $(this).remove();
-                        });
-                    }, 3000);
+                    window.stackboost_show_toast(response.data, 'success');
                 } else {
                     alert('Error: ' + (response.data || 'Unknown error'));
                 }

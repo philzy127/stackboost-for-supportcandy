@@ -1,0 +1,54 @@
+/* Styling for copy icons (email and phone) */
+.stackboost-copy-email-icon,
+.stackboost-copy-phone-icon {
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px; /* Match SVG width */
+    height: 16px; /* Match SVG height */
+    margin-left: 8px; /* Space from the name */
+    cursor: pointer;
+    color: #0073aa; /* Default icon color */
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.stackboost-copy-email-icon:hover,
+.stackboost-copy-phone-icon:hover {
+    color: #005177; /* Darker blue on hover */
+    transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+.stackboost-copy-email-icon svg,
+.stackboost-copy-phone-icon svg {
+    display: block; /* Ensure SVG fills its container */
+}
+
+/* Copied Icon Feedback */
+.stackboost-copy-phone-icon,
+.stackboost-copy-email-icon {
+    transition: color 0.2s ease-in-out;
+}
+
+.stackboost-copy-email-icon.copied,
+.stackboost-copy-phone-icon.copied {
+    color: #4CAF50 !important; /* Green color on copy */
+}
+
+.stackboost-copy-phone-icon.copied svg,
+.stackboost-copy-email-icon.copied svg {
+    fill: #4CAF50; /* Green color on copy */
+}
+
+/* Toast Notification Styles */
+.stackboost-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 5px;
+    z-index: 9999;
+    display: none; /* Hidden by default */
+    font-size: 16px;
+}

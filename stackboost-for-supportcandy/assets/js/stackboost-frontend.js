@@ -123,24 +123,8 @@
 	 * Feature: Ticket Hover Card.
 	 */
 	function feature_ticket_hover_card() {
-		let floatingCard = document.getElementById('floatingTicketCard');
-		if (!floatingCard) {
-			floatingCard = document.createElement('div');
-			floatingCard.id = 'floatingTicketCard';
-			Object.assign(floatingCard.style, { position: 'absolute', zIndex: '9999', background: '#fff', border: '1px solid #ccc', padding: '10px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)', maxWidth: '400px', display: 'none' });
-			const contentContainer = document.createElement('div');
-			contentContainer.className = 'stackboost-card-content';
-			const closeButton = document.createElement('span');
-			closeButton.innerHTML = '&times;';
-			Object.assign(closeButton.style, { position: 'absolute', top: '3px', right: '5px', cursor: 'pointer', fontSize: '20px', color: '#333', background: '#f1f1f1', borderRadius: '50%', width: '24px', height: '24px', lineHeight: '24px', textAlign: 'center', fontWeight: 'bold' });
-			closeButton.addEventListener('click', () => { floatingCard.style.display = 'none'; });
-			floatingCard.appendChild(closeButton);
-			floatingCard.appendChild(contentContainer);
-			document.body.appendChild(floatingCard);
-		}
-
-		const contentContainer = floatingCard.querySelector('.stackboost-card-content');
 		const cache = {};
+		let activeTippyInstance = null; // Tracks the currently visible tippy instance
 
 		async function fetchTicketDetails(ticketId) {
 			if (cache[ticketId]) return cache[ticketId];
@@ -153,28 +137,86 @@
 				if (!response.ok) return '<div>Error fetching ticket info.</div>';
 				const html = await response.text();
 				const doc = new DOMParser().parseFromString(html, 'text/html');
-				return (cache[ticketId] = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>');
+				// Wrap in a fixed-width container with min-width to prevent resizing/squashing
+				const content = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>';
+				return (cache[ticketId] = `<div style="width: 350px; min-width: 350px !important;">${content}</div>`);
 			} catch (error) {
-				return '<div>Error fetching ticket info.</div>';
+				return '<div style="width: 350px; min-width: 350px !important;">Error fetching ticket info.</div>';
 			}
 		}
 
-		document.addEventListener('click', (e) => {
-			if (floatingCard && !floatingCard.contains(e.target)) floatingCard.style.display = 'none';
-		});
-
 		document.querySelectorAll('tr.wpsc_tl_tr:not(._contextAttached)').forEach(row => {
 			row.classList.add('_contextAttached');
-			row.addEventListener('contextmenu', async (e) => {
-				e.preventDefault();
-				const ticketId = row.getAttribute('onclick')?.match(/wpsc_tl_handle_click\(.*?,\s*(\d+),/)?.[1];
-				if (ticketId) {
-					contentContainer.innerHTML = 'Loading...';
-					floatingCard.style.top = `${e.pageY + 15}px`;
-					floatingCard.style.left = `${e.pageX + 15}px`;
-					floatingCard.style.display = 'block';
-					contentContainer.innerHTML = await fetchTicketDetails(ticketId);
+
+			const ticketId = row.getAttribute('onclick')?.match(/wpsc_tl_handle_click\(.*?,\s*(\d+),/)?.[1];
+			if (!ticketId) return;
+
+			const tippyInstance = tippy(row, {
+				allowHTML: true,
+				interactive: true,
+				trigger: 'manual',
+				placement: 'right-start',
+				maxWidth: 'none', // Allow our fixed width to take precedence
+				offset: [0, 10],
+				appendTo: () => document.body,
+				hideOnClick: true, // Use tippy's built-in behavior to hide on outside clicks
+				popperOptions: {
+					modifiers: [
+						{
+							name: 'flip',
+							options: {
+								fallbackPlacements: ['left-start', 'top-start', 'bottom-start'],
+								altBoundary: true, // Force flip to check alternative boundaries
+							},
+						},
+						{
+							name: 'preventOverflow',
+							options: {
+								tether: false, // Prevent squashing/sticking to reference
+								altAxis: true, // Allow shifting on the cross axis
+							},
+						},
+					],
+				},
+				async onShow(instance) {
+					// Ensure only one tippy is visible at a time
+					if (activeTippyInstance && activeTippyInstance.id !== instance.id) {
+						activeTippyInstance.hide();
+					}
+					activeTippyInstance = instance;
+
+					instance.setContent('Loading...');
+					const content = await fetchTicketDetails(ticketId);
+					instance.setContent(content);
+				},
+				onHide(instance) {
+					// Clear the active instance when it's hidden
+					if (activeTippyInstance && activeTippyInstance.id === instance.id) {
+						activeTippyInstance = null;
+					}
 				}
+			});
+
+			row.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+
+				// Set the reference to a virtual element at the cursor position
+				// This makes the tippy appear at the cursor, but stay static afterwards.
+				const rect = {
+					width: 0,
+					height: 0,
+					top: e.clientY,
+					right: e.clientX,
+					bottom: e.clientY,
+					left: e.clientX,
+				};
+
+				tippyInstance.setProps({
+					getReferenceClientRect: () => rect,
+					placement: 'right-start', // Initial preference
+				});
+
+				tippyInstance.show();
 			});
 		});
 	}
