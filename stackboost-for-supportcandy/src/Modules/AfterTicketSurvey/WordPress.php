@@ -111,12 +111,16 @@ class WordPress extends Module {
      * @param string $hook_suffix
      */
     public function enqueue_admin_assets(string $hook_suffix) {
-        if ( 'stackboost-for-supportcandy_page_stackboost-ats' !== $hook_suffix ) {
+        // Robust check for the admin page
+        if ( ! isset( $_GET['page'] ) || 'stackboost-ats' !== $_GET['page'] ) {
             return;
         }
+
         wp_enqueue_style( 'stackboost-ats-admin', STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-ats-admin.css', [], STACKBOOST_VERSION );
 
         $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'main';
+        $options = get_option( 'stackboost_settings', [] );
+        $diagnostic_log_enabled = ! empty( $options['diagnostic_log_enabled'] );
 
         if ( 'questions' === $current_tab ) {
             wp_enqueue_script( 'jquery-ui-dialog' );
@@ -130,6 +134,7 @@ class WordPress extends Module {
                 [
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'stackboost_ats_manage_questions_nonce' ),
+                    'diagnostic_log_enabled' => $diagnostic_log_enabled
                 ]
             );
         }
@@ -147,6 +152,7 @@ class WordPress extends Module {
                 [
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'stackboost_ats_results_nonce' ),
+                    'diagnostic_log_enabled' => $diagnostic_log_enabled
                 ]
             );
         }

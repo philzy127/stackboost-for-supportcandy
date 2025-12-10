@@ -3,6 +3,15 @@ jQuery(document).ready(function($) {
     var form = $('#stackboost-ats-question-form');
     var tableBody = $('#stackboost-ats-questions-list tbody');
 
+    // Central Logging Helper
+    function log(message, context) {
+        if (stackboost_ats_manage.diagnostic_log_enabled) {
+            console.log('[StackBoost ATS] ' + message, context || '');
+        }
+    }
+
+    log('Manage Questions script initialized.');
+
     // Initialize Dialog
     modal.dialog({
         autoOpen: false,
@@ -27,6 +36,7 @@ jQuery(document).ready(function($) {
     tableBody.sortable({
         handle: '.stackboost-ats-sort-handle',
         update: function(event, ui) {
+            log('Order updated via sortable.');
             var order = [];
             tableBody.find('tr').each(function() {
                 order.push($(this).data('id'));
@@ -38,7 +48,10 @@ jQuery(document).ready(function($) {
                 order: order
             }, function(response) {
                 if (!response.success) {
+                    log('Reorder failed', response);
                     alert('Failed to save order: ' + response.data);
+                } else {
+                    log('Reorder successful');
                 }
             });
         }
@@ -56,6 +69,7 @@ jQuery(document).ready(function($) {
     // Open Modal for New Question
     $('#stackboost-ats-add-question').on('click', function(e) {
         e.preventDefault();
+        log('Add Question button clicked.');
         modal.dialog('option', 'title', 'Add New Question');
         modal.dialog('open');
     });
@@ -64,6 +78,7 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.stackboost-ats-edit-question', function(e) {
         e.preventDefault();
         var questionId = $(this).data('id');
+        log('Edit Question button clicked.', questionId);
 
         $.post(stackboost_ats_manage.ajax_url, {
             action: 'stackboost_ats_get_question',
@@ -71,6 +86,7 @@ jQuery(document).ready(function($) {
             question_id: questionId
         }, function(response) {
             if (response.success) {
+                log('Question data retrieved.', response.data);
                 var q = response.data;
                 $('#question_id').val(q.id);
                 $('#question_text').val(q.question_text);
@@ -82,6 +98,7 @@ jQuery(document).ready(function($) {
                 modal.dialog('option', 'title', 'Edit Question');
                 modal.dialog('open');
             } else {
+                log('Error fetching question.', response);
                 alert('Error fetching question: ' + response.data);
             }
         });
@@ -94,6 +111,7 @@ jQuery(document).ready(function($) {
 
         var row = $(this).closest('tr');
         var questionId = $(this).data('id');
+        log('Delete Question requested.', questionId);
 
         $.post(stackboost_ats_manage.ajax_url, {
             action: 'stackboost_ats_delete_question',
@@ -101,8 +119,10 @@ jQuery(document).ready(function($) {
             question_id: questionId
         }, function(response) {
             if (response.success) {
+                log('Question deleted successfully.');
                 row.fadeOut(300, function() { $(this).remove(); });
             } else {
+                log('Error deleting question.', response);
                 alert('Error deleting question: ' + response.data);
             }
         });
@@ -120,11 +140,15 @@ jQuery(document).ready(function($) {
             dropdown_options: $('#ats_dropdown_options').val()
         };
 
+        log('Saving question...', data);
+
         $.post(stackboost_ats_manage.ajax_url, data, function(response) {
             if (response.success) {
+                log('Question saved successfully.');
                 modal.dialog("close");
                 location.reload(); // Reload to refresh list simply and robustly
             } else {
+                log('Error saving question.', response);
                 alert('Error saving question: ' + response.data);
             }
         });
