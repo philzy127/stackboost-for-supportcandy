@@ -62,11 +62,29 @@ class Install {
 
 	/**
 	 * Check if the database needs to be updated and run the installer if so.
+     * Includes a self-healing check for schema drift.
 	 */
 	public function check_db_version() {
+        global $wpdb;
         $installed_ver = get_option( 'stackboost_ats_db_version' );
-		if ( $installed_ver !== $this->db_version ) {
-            stackboost_log("ATS: DB Version Mismatch. Installed: {$installed_ver}, Current: {$this->db_version}. Running install.", 'ats');
+
+        // Self-healing: Check if critical columns exist. If not, force install.
+        $needs_repair = false;
+
+        // Check for 'prefill_key' column in questions table
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$this->questions_table_name}'" ) === $this->questions_table_name ) {
+            $col_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$this->questions_table_name} LIKE 'prefill_key'" );
+            if ( empty( $col_exists ) ) {
+                stackboost_log("ATS: Schema Drift Detected. 'prefill_key' missing. forcing install.", 'ats');
+                $needs_repair = true;
+            }
+        } else {
+            // Table doesn't exist at all
+            $needs_repair = true;
+        }
+
+		if ( $needs_repair || $installed_ver !== $this->db_version ) {
+            stackboost_log("ATS: DB Update/Repair needed. Installed: {$installed_ver}, Current: {$this->db_version}. Running install.", 'ats');
 			$this->install();
 		}
 	}
