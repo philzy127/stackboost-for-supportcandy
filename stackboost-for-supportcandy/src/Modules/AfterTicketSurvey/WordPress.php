@@ -67,8 +67,9 @@ class WordPress extends Module {
 	 */
 	public function init_hooks() {
 		// Installation and DB checks
-		register_activation_hook( STACKBOOST_PLUGIN_FILE, [ $this->install, 'run_install' ] );
-		add_action( 'plugins_loaded', [ $this->install, 'check_db_version' ] );
+        // Using admin_init to ensure reliability on admin pages, as activation hooks
+        // may be registered too late in this architecture.
+		add_action( 'admin_init', [ $this->install, 'check_db_version' ] );
 
 		// Admin UI
 		add_action( 'admin_menu', [ $this->admin, 'add_admin_menu' ], 11 );
@@ -183,8 +184,15 @@ class WordPress extends Module {
         $field_id = 'ats_' . ($args['type'] === 'dropdown' ? 'technician' : 'ticket') . '_question_id';
         $selected = $options[$field_id] ?? '';
 
+        // Ensure table exists before querying to avoid fatal error during settings render if install failed
+        $table_name = $wpdb->prefix . 'stackboost_ats_questions';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) !== $table_name ) {
+            echo '<p style="color:red;">' . __('Error: ATS Database tables not found. Please refresh the page or contact support.', 'stackboost-for-supportcandy') . '</p>';
+            return;
+        }
+
         $where_clause = $args['type'] === 'dropdown' ? "WHERE question_type = 'dropdown'" : '';
-        $questions = $wpdb->get_results( "SELECT id, question_text FROM {$wpdb->prefix}stackboost_ats_questions {$where_clause} ORDER BY sort_order ASC" );
+        $questions = $wpdb->get_results( "SELECT id, question_text FROM {$table_name} {$where_clause} ORDER BY sort_order ASC" );
 
         echo '<select name="stackboost_settings[' . esc_attr($field_id) . ']"><option value="">-- ' . __('Select', 'stackboost-for-supportcandy') . ' --</option>';
         foreach ( $questions as $q ) {
