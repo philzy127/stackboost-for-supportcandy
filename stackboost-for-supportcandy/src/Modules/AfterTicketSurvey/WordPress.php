@@ -67,8 +67,9 @@ class WordPress extends Module {
 	 */
 	public function init_hooks() {
 		// Installation and DB checks
-		register_activation_hook( STACKBOOST_PLUGIN_FILE, [ $this->install, 'run_install' ] );
-		add_action( 'plugins_loaded', [ $this->install, 'check_db_version' ] );
+        // Using admin_init to ensure reliability on admin pages, as activation hooks
+        // may be registered too late in this architecture.
+		add_action( 'admin_init', [ $this->install, 'check_db_version' ] );
 
 		// Admin UI
 		add_action( 'admin_menu', [ $this->admin, 'add_admin_menu' ], 11 );
@@ -80,6 +81,10 @@ class WordPress extends Module {
 
 		// AJAX handlers
 		add_action( 'wp_ajax_stackboost_ats_update_report_heading', [ $this->ajax, 'update_report_heading' ] );
+        add_action( 'wp_ajax_stackboost_ats_save_question', [ $this->ajax, 'save_question' ] );
+        add_action( 'wp_ajax_stackboost_ats_get_question', [ $this->ajax, 'get_question' ] );
+        add_action( 'wp_ajax_stackboost_ats_delete_question', [ $this->ajax, 'delete_question' ] );
+        add_action( 'wp_ajax_stackboost_ats_reorder_questions', [ $this->ajax, 'reorder_questions' ] );
 
 		// Settings registration
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
@@ -107,16 +112,39 @@ class WordPress extends Module {
      * @param string $hook_suffix
      */
     public function enqueue_admin_assets(string $hook_suffix) {
-        if ( 'stackboost-for-supportcandy_page_stackboost-ats' !== $hook_suffix ) {
+        // Robust check for the admin page
+        if ( ! isset( $_GET['page'] ) || 'stackboost-ats' !== $_GET['page'] ) {
             return;
         }
+
         wp_enqueue_style( 'stackboost-ats-admin', STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-ats-admin.css', [], STACKBOOST_VERSION );
 
         $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'main';
+        $options = get_option( 'stackboost_settings', [] );
+        $diagnostic_log_enabled = ! empty( $options['diagnostic_log_enabled'] );
+
+        if ( 'questions' === $current_tab ) {
+            wp_enqueue_script( 'jquery-ui-dialog' );
+            wp_enqueue_script( 'jquery-ui-sortable' );
+            wp_enqueue_style( 'wp-jquery-ui-dialog' ); // Load WP's default jQuery UI styles
+
+            wp_enqueue_script( 'stackboost-ats-manage-questions', STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-ats-manage-questions.js', [ 'jquery', 'jquery-ui-dialog', 'jquery-ui-sortable' ], STACKBOOST_VERSION, true );
+            wp_localize_script(
+                'stackboost-ats-manage-questions',
+                'stackboost_ats_manage',
+                [
+                    'ajax_url' => admin_url( 'admin-ajax.php' ),
+                    'nonce'    => wp_create_nonce( 'stackboost_ats_manage_questions_nonce' ),
+                    'diagnostic_log_enabled' => $diagnostic_log_enabled
+                ]
+            );
+        }
+
         if ( 'settings' === $current_tab ) {
             wp_enqueue_style( 'wp-color-picker' );
             wp_enqueue_script( 'stackboost-ats-color-picker', STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-ats-color-picker.js', [ 'wp-color-picker' ], STACKBOOST_VERSION, true );
         }
+
         if ( 'results' === $current_tab ) {
             wp_enqueue_script( 'stackboost-ats-results-modal', STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-ats-results-modal.js', ['jquery'], STACKBOOST_VERSION, true );
             wp_localize_script(
@@ -125,6 +153,7 @@ class WordPress extends Module {
                 [
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'stackboost_ats_results_nonce' ),
+                    'diagnostic_log_enabled' => $diagnostic_log_enabled
                 ]
             );
         }
@@ -155,8 +184,15 @@ class WordPress extends Module {
         $field_id = 'ats_' . ($args['type'] === 'dropdown' ? 'technician' : 'ticket') . '_question_id';
         $selected = $options[$field_id] ?? '';
 
+        // Ensure table exists before querying to avoid fatal error during settings render if install failed
+        $table_name = $wpdb->prefix . 'stackboost_ats_questions';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) !== $table_name ) {
+            echo '<p style="color:red;">' . __('Error: ATS Database tables not found. Please refresh the page or contact support.', 'stackboost-for-supportcandy') . '</p>';
+            return;
+        }
+
         $where_clause = $args['type'] === 'dropdown' ? "WHERE question_type = 'dropdown'" : '';
-        $questions = $wpdb->get_results( "SELECT id, question_text FROM {$wpdb->prefix}stackboost_ats_questions {$where_clause} ORDER BY sort_order ASC" );
+        $questions = $wpdb->get_results( "SELECT id, question_text FROM {$table_name} {$where_clause} ORDER BY sort_order ASC" );
 
         echo '<select name="stackboost_settings[' . esc_attr($field_id) . ']"><option value="">-- ' . __('Select', 'stackboost-for-supportcandy') . ' --</option>';
         foreach ( $questions as $q ) {

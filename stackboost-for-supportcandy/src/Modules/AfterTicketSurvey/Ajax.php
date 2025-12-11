@@ -12,12 +12,16 @@ class Ajax {
     /** @var string The name of the questions table. */
     private string $questions_table_name;
 
+    /** @var string The name of the dropdown options table. */
+    private string $dropdown_options_table_name;
+
     /**
      * Constructor.
      */
     public function __construct() {
         global $wpdb;
-        $this->questions_table_name = $wpdb->prefix . 'stackboost_ats_questions';
+        $this->questions_table_name        = $wpdb->prefix . 'stackboost_ats_questions';
+        $this->dropdown_options_table_name = $wpdb->prefix . 'stackboost_ats_dropdown_options';
     }
 
     /**
@@ -50,5 +54,176 @@ class Ajax {
         } else {
             wp_send_json_success( 'Heading updated successfully.' );
         }
+    }
+
+    /**
+     * Get a single question's data.
+     */
+    public function get_question() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Permission denied.' );
+        }
+        check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
+
+        global $wpdb;
+        $question_id = isset( $_POST['question_id'] ) ? intval( $_POST['question_id'] ) : 0;
+
+        stackboost_log( "ATS get_question requested for ID: {$question_id}", 'ats' );
+
+        if ( ! $question_id ) {
+            wp_send_json_error( 'Invalid question ID.' );
+        }
+
+        $question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$this->questions_table_name} WHERE id = %d", $question_id ), ARRAY_A );
+
+        if ( ! $question ) {
+            stackboost_log( "ATS get_question: Question not found.", 'ats' );
+            wp_send_json_error( 'Question not found.' );
+        }
+
+        if ( $question['question_type'] === 'dropdown' ) {
+            $options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question_id ), ARRAY_A );
+            $question['options_str'] = implode( ', ', array_column( $options, 'option_value' ) );
+        } else {
+            $question['options_str'] = '';
+        }
+
+        wp_send_json_success( $question );
+    }
+
+    /**
+     * Save a question (add or update).
+     */
+    public function save_question() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            stackboost_log( "ATS save_question: Permission denied.", 'ats' );
+            wp_send_json_error( 'Permission denied.' );
+        }
+        check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
+
+        global $wpdb;
+        $question_id = isset( $_POST['question_id'] ) ? intval( $_POST['question_id'] ) : 0;
+
+        stackboost_log( "ATS save_question called. ID: {$question_id}", 'ats' );
+
+        // Get the current max sort order if adding new
+        $current_max_order = 0;
+        if ( ! $question_id ) {
+            $current_max_order = (int) $wpdb->get_var( "SELECT MAX(sort_order) FROM {$this->questions_table_name}" );
+        }
+
+        $data = [
+            'question_text' => sanitize_text_field( $_POST['question_text'] ),
+            'question_type' => sanitize_text_field( $_POST['question_type'] ),
+            'is_required'   => isset( $_POST['is_required'] ) && $_POST['is_required'] === '1' ? 1 : 0,
+            'sort_order'    => isset( $_POST['sort_order'] ) ? intval( $_POST['sort_order'] ) : ($question_id ? 0 : $current_max_order + 1),
+            'prefill_key'   => sanitize_text_field( $_POST['prefill_key'] ?? '' )
+        ];
+
+        // Note: prefill_key is allowed for ALL types now.
+
+        stackboost_log( "ATS save_question data: " . print_r($data, true), 'ats' );
+
+        if ( empty( $data['question_text'] ) ) {
+            wp_send_json_error( 'Question text is required.' );
+        }
+
+        if ( $question_id ) {
+            // Update
+            $result = $wpdb->update( $this->questions_table_name, $data, [ 'id' => $question_id ] );
+            if ( false === $result ) {
+                stackboost_log( "ATS save_question update failed. DB Error: " . $wpdb->last_error, 'ats' );
+                wp_send_json_error( 'Failed to update question.' );
+            }
+        } else {
+            // Add
+            if ( ! isset( $data['report_heading'] ) ) {
+                $data['report_heading'] = '';
+            }
+
+            $result = $wpdb->insert( $this->questions_table_name, $data );
+            if ( false === $result ) {
+                stackboost_log( "ATS save_question insert failed. Data: " . print_r($data, true) . " DB Error: " . $wpdb->last_error, 'ats' );
+                wp_send_json_error( 'Failed to add question.' );
+            }
+            $question_id = $wpdb->insert_id;
+        }
+
+        // Handle Dropdown Options
+        if ( $data['question_type'] === 'dropdown' ) {
+            $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
+
+            if ( ! empty( $_POST['dropdown_options'] ) ) {
+                $options = array_map( 'trim', explode( ',', $_POST['dropdown_options'] ) );
+                foreach ( $options as $index => $opt ) {
+                    if ( ! empty( $opt ) ) {
+                        $wpdb->insert( $this->dropdown_options_table_name, [
+                            'question_id'  => $question_id,
+                            'option_value' => $opt,
+                            'sort_order'   => $index
+                        ] );
+                    }
+                }
+            }
+        } elseif ( $data['question_type'] !== 'dropdown' ) {
+             // Clean up options if type changed away from dropdown
+             $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
+        }
+
+        stackboost_log( "ATS save_question success. ID: {$question_id}", 'ats' );
+        wp_send_json_success( [ 'id' => $question_id, 'message' => 'Question saved successfully.' ] );
+    }
+
+    /**
+     * Delete a question.
+     */
+    public function delete_question() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Permission denied.' );
+        }
+        check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
+
+        global $wpdb;
+        $question_id = isset( $_POST['question_id'] ) ? intval( $_POST['question_id'] ) : 0;
+
+        stackboost_log( "ATS delete_question: {$question_id}", 'ats' );
+
+        if ( ! $question_id ) {
+            wp_send_json_error( 'Invalid question ID.' );
+        }
+
+        $wpdb->delete( $this->questions_table_name, [ 'id' => $question_id ] );
+        $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
+
+        wp_send_json_success( 'Question deleted successfully.' );
+    }
+
+    /**
+     * Reorder questions.
+     */
+    public function reorder_questions() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Permission denied.' );
+        }
+        check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
+
+        global $wpdb;
+        $order = isset( $_POST['order'] ) ? $_POST['order'] : [];
+
+        stackboost_log( "ATS reorder_questions: " . print_r($order, true), 'ats' );
+
+        if ( empty( $order ) || ! is_array( $order ) ) {
+            wp_send_json_error( 'Invalid order data.' );
+        }
+
+        foreach ( $order as $position => $question_id ) {
+            $wpdb->update(
+                $this->questions_table_name,
+                [ 'sort_order' => intval( $position ) ],
+                [ 'id' => intval( $question_id ) ]
+            );
+        }
+
+        wp_send_json_success( 'Questions reordered successfully.' );
     }
 }
