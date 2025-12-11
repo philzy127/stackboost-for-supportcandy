@@ -1,4 +1,22 @@
 
+## After Ticket Survey Development (v1.3.0)
+
+### Database Architecture
+*   **Self-Healing Installation:** The `Install` class now includes a self-healing check in `check_db_version()`. Instead of relying solely on version numbers, it explicitly queries the database schema (`SHOW COLUMNS`). If critical columns (like `prefill_key`) or tables are missing, it forces the installation logic to run. This prevents schema drift issues.
+*   **New Column:** A `prefill_key` (VARCHAR 50) column has been added to the `stackboost_ats_questions` table to store the URL parameter mapping for each question.
+
+### Smart Matching Logic (Fuzzy Logic)
+*   **Location:** `Shortcode.php` -> `render_question_field()`
+*   **Purpose:** To robustly select a Dropdown option based on a potentially inexact URL parameter value.
+*   **Algorithm:** "Best Match Wins"
+    1.  Iterates through all available options for the question.
+    2.  Calculates a **Score** for each option against the Input Value:
+        *   **Exact Match (100):** Case-insensitive string equality.
+        *   **Start Match (50 + Length):** The Option starts with the Input, or Input starts with Option.
+        *   **Contains Match (10 + Length):** The Option contains the Input, or Input contains Option.
+    3.  Selects the option with the highest score.
+    *   **Example:** Input "Philip Edwards" matches Option "Philip" (Score: 50+6) better than Option "Ed" (Score: 10+2).
+
 ## Directory Module Development (v1.2.14)
 
 ### Phone Number Handling

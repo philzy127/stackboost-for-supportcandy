@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2025-12-11
+
+### Added
+- **ATS Modern UI:** The "Manage Questions" tab in the After Ticket Survey module has been completely overhauled. It now uses a modal interface for adding/editing questions and supports drag-and-drop reordering.
+- **ATS URL Prefill:** Added a "URL Parameter (Prefill Key)" feature to all question types. This allows survey answers to be pre-filled via URL parameters (e.g., `&ticket_id=123`).
+- **ATS Fuzzy Logic:** Implemented "Smart Matching" for Dropdown questions. When pre-filling from a URL, the system now intelligently selects the best option using a "Best Match Wins" scoring algorithm (Exact > Starts With > Contains), solving issues with partial name matches.
+- **ATS Self-Healing DB:** Implemented a robust installation check that detects missing database tables or columns and automatically repairs the schema without requiring manual intervention.
+
+### Changed
+- **ATS Architecture:** Moved form handling from legacy POST controllers to a modern AJAX-based system for better performance and user experience.
+- **ATS Install Logic:** Moved the database version check from `plugins_loaded` to `admin_init` to ensure reliable execution during plugin updates.
+
 ## [1.2.9] - 2025-12-05
 
 ### Changed
