@@ -170,25 +170,43 @@ class Shortcode {
 			case 'dropdown':
 				$dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
 
-                // Fuzzy Logic for selection
+                // Advanced Fuzzy Logic for selection (Best Match Wins)
                 $best_match_value = '';
+                $highest_score = 0;
+
                 if ( ! empty( $input_value ) ) {
-                    // Pass 1: Exact Match
+                    $input_lower = strtolower( $input_value );
                     foreach ( $dd_options as $opt ) {
-                        if ( strcasecmp( $opt->option_value, $input_value ) === 0 ) {
-                            $best_match_value = $opt->option_value;
-                            break;
+                        $opt_lower = strtolower( $opt->option_value );
+                        $score = 0;
+
+                        // Tier 1: Exact Match (Score: 100)
+                        if ( $opt_lower === $input_lower ) {
+                            $score = 100;
                         }
-                    }
-                    // Pass 2: Containment Match (Option contains Input OR Input contains Option)
-                    if ( empty( $best_match_value ) ) {
-                        foreach ( $dd_options as $opt ) {
-                            // Example: Input "Phil", Option "Philip Edwards" -> Match
-                            // Example: Input "Ticket #123", Option "123" -> Match
-                            if ( stripos( $opt->option_value, $input_value ) !== false || stripos( $input_value, $opt->option_value ) !== false ) {
-                                $best_match_value = $opt->option_value;
-                                break;
-                            }
+                        // Tier 2: Option STARTS with Input (Score: 50 + length overlap)
+                        // Example: Input "Phil" -> "Philip" (Matches at 0)
+                        elseif ( strpos( $opt_lower, $input_lower ) === 0 ) {
+                            $score = 50 + strlen( $input_lower );
+                        }
+                        // Tier 3: Input STARTS with Option (Score: 50 + length overlap)
+                        // Example: Input "Philip Edwards" -> "Philip" (Matches at 0)
+                        elseif ( strpos( $input_lower, $opt_lower ) === 0 ) {
+                            $score = 50 + strlen( $opt_lower );
+                        }
+                        // Tier 4: Containment (Score: 10 + length overlap)
+                        // Example: Input "Ticket 123" -> "123"
+                        elseif ( strpos( $opt_lower, $input_lower ) !== false ) {
+                            $score = 10 + strlen( $input_lower );
+                        }
+                        elseif ( strpos( $input_lower, $opt_lower ) !== false ) {
+                            $score = 10 + strlen( $opt_lower );
+                        }
+
+                        // Determine Best Match
+                        if ( $score > $highest_score ) {
+                            $highest_score = $score;
+                            $best_match_value = $opt->option_value;
                         }
                     }
                 }
