@@ -20,12 +20,13 @@
                     <th class="manage-column"><?php _e('Type', 'stackboost-for-supportcandy'); ?></th>
                     <th class="manage-column"><?php _e('Required', 'stackboost-for-supportcandy'); ?></th>
                     <th class="manage-column"><?php _e('Options', 'stackboost-for-supportcandy'); ?></th>
+                    <th class="manage-column"><?php _e('Prefill Key', 'stackboost-for-supportcandy'); ?></th>
                     <th class="manage-column"><?php _e('Actions', 'stackboost-for-supportcandy'); ?></th>
                 </tr>
             </thead>
             <tbody>
             <?php if ( empty( $questions ) ) : ?>
-                <tr class="no-items"><td colspan="6"><?php _e('No questions found.', 'stackboost-for-supportcandy'); ?></td></tr>
+                <tr class="no-items"><td colspan="7"><?php _e('No questions found.', 'stackboost-for-supportcandy'); ?></td></tr>
             <?php else : ?>
                 <?php foreach ( $questions as $q ) : ?>
                 <tr data-id="<?php echo esc_attr($q['id']); ?>">
@@ -45,6 +46,7 @@
                         }
                         ?>
                     </td>
+                    <td><?php echo esc_html( $q['prefill_key'] ?? '-' ); ?></td>
                     <td>
                         <button class="button button-small stackboost-ats-edit-question" data-id="<?php echo esc_attr($q['id']); ?>"><?php _e('Edit', 'stackboost-for-supportcandy'); ?></button>
                         <button class="button button-small button-link-delete stackboost-ats-delete-question" data-id="<?php echo esc_attr($q['id']); ?>"><?php _e('Delete', 'stackboost-for-supportcandy'); ?></button>
@@ -75,6 +77,13 @@
                     <option value="rating"><?php _e('Rating (1-5)', 'stackboost-for-supportcandy'); ?></option>
                     <option value="dropdown"><?php _e('Dropdown', 'stackboost-for-supportcandy'); ?></option>
                 </select>
+            </div>
+
+            <!-- New Prefill Key Field -->
+            <div class="form-group" id="ats_prefill_key_group" style="margin-top:10px;">
+                <label for="ats_prefill_key" style="display:block; margin-bottom:5px;"><strong><?php _e('URL Parameter (Prefill Key):', 'stackboost-for-supportcandy'); ?></strong></label>
+                <input type="text" id="ats_prefill_key" name="prefill_key" class="widefat" placeholder="e.g. ticket_id">
+                <p class="description"><?php _e('Optional. Matches a URL parameter to pre-fill this field.', 'stackboost-for-supportcandy'); ?></p>
             </div>
 
             <div class="form-group" style="margin-top:10px;">

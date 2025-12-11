@@ -13,7 +13,7 @@ class Install {
 	 * The current database version for this module.
 	 * @var string
 	 */
-	private string $db_version = '1.2';
+	private string $db_version = '1.4';
 
 	/**
 	 * The name of the questions table.
@@ -88,6 +88,7 @@ class Install {
 			id bigint(20) NOT NULL AUTO_INCREMENT,
 			question_text text NOT NULL,
 			report_heading varchar(255) DEFAULT '' NOT NULL,
+            prefill_key varchar(50) DEFAULT '' NOT NULL,
 			question_type varchar(50) NOT NULL,
 			sort_order int(11) DEFAULT 0 NOT NULL,
 			is_required tinyint(1) DEFAULT 1 NOT NULL,
@@ -151,7 +152,7 @@ class Install {
         stackboost_log("ATS: Seeding default questions.", 'ats');
 
 		$default_questions = [
-			[ 'text' => 'What is your ticket number?', 'type' => 'short_text', 'required' => 1, 'order' => 0 ],
+			[ 'text' => 'What is your ticket number?', 'type' => 'short_text', 'key' => 'ticket_id', 'required' => 1, 'order' => 0 ],
 			[ 'text' => 'Who was your technician for this ticket?', 'type' => 'dropdown', 'options' => [ 'Technician A', 'Technician B', 'Technician C' ], 'required' => 1, 'order' => 1 ],
 			[ 'text' => 'Overall, how would you rate the handling of your issue?', 'type' => 'rating', 'required' => 1, 'order' => 2 ],
 			[ 'text' => 'Were you helped in a timely manner?', 'type' => 'rating', 'required' => 1, 'order' => 3 ],
@@ -167,6 +168,7 @@ class Install {
 					'is_required'   => $q_data['required'],
 					'sort_order'    => $q_data['order'],
                     'report_heading' => '', // Ensure default value
+                    'prefill_key'   => $q_data['key'] ?? '',
 				]
 			);
 			$question_id = $wpdb->insert_id;

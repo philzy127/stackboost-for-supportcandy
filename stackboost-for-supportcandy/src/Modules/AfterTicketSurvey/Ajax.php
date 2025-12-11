@@ -116,8 +116,11 @@ class Ajax {
             'question_text' => sanitize_text_field( $_POST['question_text'] ),
             'question_type' => sanitize_text_field( $_POST['question_type'] ),
             'is_required'   => isset( $_POST['is_required'] ) && $_POST['is_required'] === '1' ? 1 : 0,
-            'sort_order'    => isset( $_POST['sort_order'] ) ? intval( $_POST['sort_order'] ) : ($question_id ? 0 : $current_max_order + 1)
+            'sort_order'    => isset( $_POST['sort_order'] ) ? intval( $_POST['sort_order'] ) : ($question_id ? 0 : $current_max_order + 1),
+            'prefill_key'   => sanitize_text_field( $_POST['prefill_key'] ?? '' )
         ];
+
+        // Note: prefill_key is allowed for ALL types now.
 
         stackboost_log( "ATS save_question data: " . print_r($data, true), 'ats' );
 
@@ -134,7 +137,6 @@ class Ajax {
             }
         } else {
             // Add
-            // Explicitly set empty string for default columns if not provided, just in case strict mode is on
             if ( ! isset( $data['report_heading'] ) ) {
                 $data['report_heading'] = '';
             }
@@ -150,6 +152,7 @@ class Ajax {
         // Handle Dropdown Options
         if ( $data['question_type'] === 'dropdown' ) {
             $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
+
             if ( ! empty( $_POST['dropdown_options'] ) ) {
                 $options = array_map( 'trim', explode( ',', $_POST['dropdown_options'] ) );
                 foreach ( $options as $index => $opt ) {
@@ -162,6 +165,9 @@ class Ajax {
                     }
                 }
             }
+        } elseif ( $data['question_type'] !== 'dropdown' ) {
+             // Clean up options if type changed away from dropdown
+             $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
         }
 
         stackboost_log( "ATS save_question success. ID: {$question_id}", 'ats' );

@@ -94,12 +94,14 @@ class Shortcode {
 		global $wpdb;
 		$options = get_option( 'stackboost_settings', [] );
 
-		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
+		// We fetch prefill_key as well
+		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
 		if ( empty( $questions ) ) {
 			echo '<p class="stackboost-ats-no-questions">No survey questions have been configured.</p>';
 			return;
 		}
 
+		// Legacy support
 		$prefill_ticket_id = isset( $_GET['ticket_id'] ) ? sanitize_text_field( $_GET['ticket_id'] ) : '';
 		$prefill_tech_name = isset( $_GET['tech'] ) ? sanitize_text_field( $_GET['tech'] ) : '';
 
@@ -130,8 +132,8 @@ class Shortcode {
 	 *
 	 * @param array  $question          The question data from the database.
 	 * @param array  $options           The plugin's settings.
-	 * @param string $prefill_ticket_id The ticket ID from the URL.
-	 * @param string $prefill_tech_name The technician name from the URL.
+	 * @param string $prefill_ticket_id The ticket ID from the URL (legacy param).
+	 * @param string $prefill_tech_name The technician name from the URL (legacy param).
 	 */
 	private function render_question_field( array $question, array $options, string $prefill_ticket_id, string $prefill_tech_name ) {
 		global $wpdb;
@@ -139,7 +141,12 @@ class Shortcode {
 		$required_attr = $question['is_required'] ? 'required' : '';
 		$input_value   = '';
 
-		if ( ( $options['ats_ticket_question_id'] ?? 0 ) == $question['id'] && ! empty( $prefill_ticket_id ) ) {
+		// 1. Check for specific prefill key first (Generic logic)
+		if ( ! empty( $question['prefill_key'] ) && isset( $_GET[ $question['prefill_key'] ] ) ) {
+			$input_value = sanitize_text_field( $_GET[ $question['prefill_key'] ] );
+		}
+		// 2. Fallback to legacy logic
+		elseif ( ( $options['ats_ticket_question_id'] ?? 0 ) == $question['id'] && ! empty( $prefill_ticket_id ) ) {
 			$input_value = esc_attr( $prefill_ticket_id );
 		}
 
@@ -148,12 +155,15 @@ class Shortcode {
 				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
 				break;
 			case 'long_text':
-				echo "<textarea name='{$input_name}' rows='4' class='stackboost-ats-input' {$required_attr}></textarea>";
+				// If textarea has a prefill value, put it inside the tags
+				echo "<textarea name='{$input_name}' rows='4' class='stackboost-ats-input' {$required_attr}>" . esc_textarea( $input_value ) . "</textarea>";
 				break;
 			case 'rating':
 				echo '<div class="stackboost-ats-rating-options">';
 				for ( $i = 1; $i <= 5; $i++ ) {
-					echo "<label class='stackboost-ats-radio-label'><input type='radio' name='{$input_name}' value='{$i}' class='stackboost-ats-radio' {$required_attr}><span class='stackboost-ats-radio-text'>{$i}</span></label>";
+                    // Check if prefill value matches the rating option
+                    $checked = ( $input_value == $i ) ? 'checked' : '';
+					echo "<label class='stackboost-ats-radio-label'><input type='radio' name='{$input_name}' value='{$i}' class='stackboost-ats-radio' {$required_attr} {$checked}><span class='stackboost-ats-radio-text'>{$i}</span></label>";
 				}
 				echo '<span class="stackboost-ats-rating-guide">(1 = Poor, 5 = Excellent)</span></div>';
 				break;
@@ -162,12 +172,15 @@ class Shortcode {
 				echo "<select name='{$input_name}' class='stackboost-ats-input' {$required_attr}>";
 				echo '<option value="">-- Select --</option>';
 				foreach ( $dd_options as $opt ) {
-					$selected = selected( strtolower( $prefill_tech_name ), strtolower( $opt->option_value ), false );
-					if ( ( $options['ats_technician_question_id'] ?? 0 ) == $question['id'] && ! empty( $prefill_tech_name ) ) {
-						echo '<option value="' . esc_attr( $opt->option_value ) . '" ' . $selected . '>' . esc_html( $opt->option_value ) . '</option>';
-					} else {
-						echo '<option value="' . esc_attr( $opt->option_value ) . '">' . esc_html( $opt->option_value ) . '</option>';
-					}
+                    // Generic prefill logic for dropdown (exact match, case-insensitive)
+                    $selected = selected( strtolower( $input_value ), strtolower( $opt->option_value ), false );
+
+                    // Legacy Technician prefill override if generic not found
+                    if ( empty($selected) && ( $options['ats_technician_question_id'] ?? 0 ) == $question['id'] && ! empty( $prefill_tech_name ) ) {
+                        $selected = selected( strtolower( $prefill_tech_name ), strtolower( $opt->option_value ), false );
+                    }
+
+					echo '<option value="' . esc_attr( $opt->option_value ) . '" ' . $selected . '>' . esc_html( $opt->option_value ) . '</option>';
 				}
 				echo '</select>';
 				break;

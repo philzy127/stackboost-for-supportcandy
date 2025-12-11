@@ -46,6 +46,8 @@ jQuery(document).ready(function($) {
             form[0].reset();
             $('#question_id').val('');
             $('#ats_dropdown_options_group').hide();
+            // Reset visibility
+            $('#question_type').trigger('change');
         }
     });
 
@@ -54,7 +56,7 @@ jQuery(document).ready(function($) {
         handle: '.stackboost-ats-sort-handle',
         update: function(event, ui) {
             log('Order updated via sortable.');
-            showStatus('Saving order...', 'info'); // Immediate feedback
+            showStatus('Saving order...', 'info');
 
             var order = [];
             tableBody.find('tr').each(function() {
@@ -77,12 +79,17 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Toggle Dropdown Options Visibility
+    // Toggle Fields Visibility
     $('#question_type').on('change', function() {
-        if ($(this).val() === 'dropdown') {
-            $('#ats_dropdown_options_group').show();
+        var type = $(this).val();
+        var dropdownGroup = $('#ats_dropdown_options_group');
+        // Prefill key is now available for all types, so no logic needed for it
+
+        // Dropdown options logic
+        if (type === 'dropdown') {
+            dropdownGroup.show();
         } else {
-            $('#ats_dropdown_options_group').hide();
+            dropdownGroup.hide();
         }
     });
 
@@ -90,6 +97,7 @@ jQuery(document).ready(function($) {
     $('#stackboost-ats-add-question').on('click', function(e) {
         e.preventDefault();
         log('Add Question button clicked.');
+        $('#question_type').trigger('change');
         modal.dialog('option', 'title', 'Add New Question');
         modal.dialog('open');
     });
@@ -114,6 +122,9 @@ jQuery(document).ready(function($) {
                 $('#ats_sort_order').val(q.sort_order);
                 $('#ats_is_required').prop('checked', q.is_required == 1);
                 $('#ats_dropdown_options').val(q.options_str);
+
+                // Set Prefill Key
+                $('#ats_prefill_key').val(q.prefill_key || '');
 
                 modal.dialog('option', 'title', 'Edit Question');
                 modal.dialog('open');
@@ -158,7 +169,8 @@ jQuery(document).ready(function($) {
             question_type: $('#question_type').val(),
             sort_order: $('#ats_sort_order').val(),
             is_required: $('#ats_is_required').is(':checked') ? 1 : 0,
-            dropdown_options: $('#ats_dropdown_options').val()
+            dropdown_options: $('#ats_dropdown_options').val(),
+            prefill_key: $('#ats_prefill_key').val() // Include new field
         };
 
         log('Saving question...', data);
