@@ -12,6 +12,23 @@ jQuery(document).ready(function($) {
 
     log('Manage Questions script initialized.');
 
+    // Helper to show a temporary status message
+    function showStatus(message, type) {
+        // Remove existing notices
+        $('.stackboost-ats-status-notice').remove();
+
+        var noticeClass = type === 'error' ? 'notice-error' : 'notice-success';
+        var notice = $('<div class="notice ' + noticeClass + ' stackboost-ats-status-notice is-dismissible"><p>' + message + '</p></div>');
+
+        $('.stackboost-ats-questions-list').before(notice);
+
+        if (type !== 'error') {
+            setTimeout(function() {
+                notice.fadeOut(function() { $(this).remove(); });
+            }, 3000);
+        }
+    }
+
     // Initialize Dialog
     modal.dialog({
         autoOpen: false,
@@ -37,6 +54,8 @@ jQuery(document).ready(function($) {
         handle: '.stackboost-ats-sort-handle',
         update: function(event, ui) {
             log('Order updated via sortable.');
+            showStatus('Saving order...', 'info'); // Immediate feedback
+
             var order = [];
             tableBody.find('tr').each(function() {
                 order.push($(this).data('id'));
@@ -49,9 +68,10 @@ jQuery(document).ready(function($) {
             }, function(response) {
                 if (!response.success) {
                     log('Reorder failed', response);
-                    alert('Failed to save order: ' + response.data);
+                    showStatus('Failed to save order: ' + response.data, 'error');
                 } else {
                     log('Reorder successful');
+                    showStatus('Order saved!', 'success');
                 }
             });
         }
@@ -121,6 +141,7 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 log('Question deleted successfully.');
                 row.fadeOut(300, function() { $(this).remove(); });
+                showStatus('Question deleted.', 'success');
             } else {
                 log('Error deleting question.', response);
                 alert('Error deleting question: ' + response.data);
