@@ -169,14 +169,41 @@ class Shortcode {
 				break;
 			case 'dropdown':
 				$dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
-				echo "<select name='{$input_name}' class='stackboost-ats-input' {$required_attr}>";
+
+                // Fuzzy Logic for selection
+                $best_match_value = '';
+                if ( ! empty( $input_value ) ) {
+                    // Pass 1: Exact Match
+                    foreach ( $dd_options as $opt ) {
+                        if ( strcasecmp( $opt->option_value, $input_value ) === 0 ) {
+                            $best_match_value = $opt->option_value;
+                            break;
+                        }
+                    }
+                    // Pass 2: Containment Match (Option contains Input OR Input contains Option)
+                    if ( empty( $best_match_value ) ) {
+                        foreach ( $dd_options as $opt ) {
+                            // Example: Input "Phil", Option "Philip Edwards" -> Match
+                            // Example: Input "Ticket #123", Option "123" -> Match
+                            if ( stripos( $opt->option_value, $input_value ) !== false || stripos( $input_value, $opt->option_value ) !== false ) {
+                                $best_match_value = $opt->option_value;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                echo "<select name='{$input_name}' class='stackboost-ats-input' {$required_attr}>";
 				echo '<option value="">-- Select --</option>';
 				foreach ( $dd_options as $opt ) {
-                    // Generic prefill logic for dropdown (exact match, case-insensitive)
-                    $selected = selected( strtolower( $input_value ), strtolower( $opt->option_value ), false );
+                    $selected = '';
 
-                    // Legacy Technician prefill override if generic not found
-                    if ( empty($selected) && ( $options['ats_technician_question_id'] ?? 0 ) == $question['id'] && ! empty( $prefill_tech_name ) ) {
+                    // Use fuzzy match if available
+                    if ( ! empty( $best_match_value ) ) {
+                        $selected = selected( $best_match_value, $opt->option_value, false );
+                    }
+                    // Legacy Fallback
+                    elseif ( ( $options['ats_technician_question_id'] ?? 0 ) == $question['id'] && ! empty( $prefill_tech_name ) ) {
                         $selected = selected( strtolower( $prefill_tech_name ), strtolower( $opt->option_value ), false );
                     }
 
