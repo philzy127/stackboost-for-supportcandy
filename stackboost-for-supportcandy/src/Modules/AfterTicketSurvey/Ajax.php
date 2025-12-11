@@ -68,6 +68,8 @@ class Ajax {
         global $wpdb;
         $question_id = isset( $_POST['question_id'] ) ? intval( $_POST['question_id'] ) : 0;
 
+        stackboost_log( "ATS get_question requested for ID: {$question_id}", 'ats' );
+
         if ( ! $question_id ) {
             wp_send_json_error( 'Invalid question ID.' );
         }
@@ -75,6 +77,7 @@ class Ajax {
         $question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$this->questions_table_name} WHERE id = %d", $question_id ), ARRAY_A );
 
         if ( ! $question ) {
+            stackboost_log( "ATS get_question: Question not found.", 'ats' );
             wp_send_json_error( 'Question not found.' );
         }
 
@@ -93,12 +96,15 @@ class Ajax {
      */
     public function save_question() {
         if ( ! current_user_can( 'manage_options' ) ) {
+            stackboost_log( "ATS save_question: Permission denied.", 'ats' );
             wp_send_json_error( 'Permission denied.' );
         }
         check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
 
         global $wpdb;
         $question_id = isset( $_POST['question_id'] ) ? intval( $_POST['question_id'] ) : 0;
+
+        stackboost_log( "ATS save_question called. ID: {$question_id}", 'ats' );
 
         // Get the current max sort order if adding new
         $current_max_order = 0;
@@ -113,6 +119,8 @@ class Ajax {
             'sort_order'    => isset( $_POST['sort_order'] ) ? intval( $_POST['sort_order'] ) : ($question_id ? 0 : $current_max_order + 1)
         ];
 
+        stackboost_log( "ATS save_question data: " . print_r($data, true), 'ats' );
+
         if ( empty( $data['question_text'] ) ) {
             wp_send_json_error( 'Question text is required.' );
         }
@@ -121,12 +129,19 @@ class Ajax {
             // Update
             $result = $wpdb->update( $this->questions_table_name, $data, [ 'id' => $question_id ] );
             if ( false === $result ) {
+                stackboost_log( "ATS save_question update failed. DB Error: " . $wpdb->last_error, 'ats' );
                 wp_send_json_error( 'Failed to update question.' );
             }
         } else {
             // Add
+            // Explicitly set empty string for default columns if not provided, just in case strict mode is on
+            if ( ! isset( $data['report_heading'] ) ) {
+                $data['report_heading'] = '';
+            }
+
             $result = $wpdb->insert( $this->questions_table_name, $data );
             if ( false === $result ) {
+                stackboost_log( "ATS save_question insert failed. Data: " . print_r($data, true) . " DB Error: " . $wpdb->last_error, 'ats' );
                 wp_send_json_error( 'Failed to add question.' );
             }
             $question_id = $wpdb->insert_id;
@@ -149,6 +164,7 @@ class Ajax {
             }
         }
 
+        stackboost_log( "ATS save_question success. ID: {$question_id}", 'ats' );
         wp_send_json_success( [ 'id' => $question_id, 'message' => 'Question saved successfully.' ] );
     }
 
@@ -163,6 +179,8 @@ class Ajax {
 
         global $wpdb;
         $question_id = isset( $_POST['question_id'] ) ? intval( $_POST['question_id'] ) : 0;
+
+        stackboost_log( "ATS delete_question: {$question_id}", 'ats' );
 
         if ( ! $question_id ) {
             wp_send_json_error( 'Invalid question ID.' );
@@ -185,6 +203,8 @@ class Ajax {
 
         global $wpdb;
         $order = isset( $_POST['order'] ) ? $_POST['order'] : [];
+
+        stackboost_log( "ATS reorder_questions: " . print_r($order, true), 'ats' );
 
         if ( empty( $order ) || ! is_array( $order ) ) {
             wp_send_json_error( 'Invalid order data.' );
