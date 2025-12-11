@@ -13,7 +13,7 @@ class Install {
 	 * The current database version for this module.
 	 * @var string
 	 */
-	private string $db_version = '1.0';
+	private string $db_version = '1.2';
 
 	/**
 	 * The name of the questions table.
@@ -56,6 +56,7 @@ class Install {
      * This is intended to be called on plugin activation.
      */
     public function run_install() {
+        stackboost_log('ATS: run_install triggered via activation hook.', 'ats');
         $this->install();
     }
 
@@ -63,7 +64,9 @@ class Install {
 	 * Check if the database needs to be updated and run the installer if so.
 	 */
 	public function check_db_version() {
-		if ( get_option( 'stackboost_ats_db_version' ) !== $this->db_version ) {
+        $installed_ver = get_option( 'stackboost_ats_db_version' );
+		if ( $installed_ver !== $this->db_version ) {
+            stackboost_log("ATS: DB Version Mismatch. Installed: {$installed_ver}, Current: {$this->db_version}. Running install.", 'ats');
 			$this->install();
 		}
 	}
@@ -77,7 +80,10 @@ class Install {
 		$charset_collate = $wpdb->get_charset_collate();
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+        stackboost_log("ATS: Running dbDelta for tables.", 'ats');
+
 		// SQL for Questions Table
+        // dbDelta requires 2 spaces after PRIMARY KEY
 		$sql_questions = "CREATE TABLE {$this->questions_table_name} (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
 			question_text text NOT NULL,
@@ -87,9 +93,8 @@ class Install {
 			is_required tinyint(1) DEFAULT 1 NOT NULL,
 			PRIMARY KEY  (id)
 		) $charset_collate;";
-		dbDelta( $sql_questions );
 
-		// SQL for Dropdown Options Table
+        // SQL for Dropdown Options Table
 		$sql_dropdown_options = "CREATE TABLE {$this->dropdown_options_table_name} (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
 			question_id bigint(20) NOT NULL,
@@ -98,18 +103,16 @@ class Install {
 			PRIMARY KEY  (id),
 			KEY question_id (question_id)
 		) $charset_collate;";
-		dbDelta( $sql_dropdown_options );
 
-		// SQL for Submissions Table
+        // SQL for Submissions Table
 		$sql_submissions = "CREATE TABLE {$this->survey_submissions_table_name} (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
 			user_id bigint(20) DEFAULT 0 NOT NULL,
 			submission_date datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			PRIMARY KEY  (id)
 		) $charset_collate;";
-		dbDelta( $sql_submissions );
 
-		// SQL for Answers Table
+        // SQL for Answers Table
 		$sql_answers = "CREATE TABLE {$this->survey_answers_table_name} (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
 			submission_id bigint(20) NOT NULL,
@@ -119,11 +122,14 @@ class Install {
 			KEY submission_id (submission_id),
 			KEY question_id (question_id)
 		) $charset_collate;";
-		dbDelta( $sql_answers );
+
+        $result = dbDelta( [ $sql_questions, $sql_dropdown_options, $sql_submissions, $sql_answers ] );
+        stackboost_log("ATS: dbDelta result: " . print_r($result, true), 'ats');
 
 		$this->seed_default_questions();
 
 		update_option( 'stackboost_ats_db_version', $this->db_version );
+        stackboost_log("ATS: DB Version updated to {$this->db_version}", 'ats');
 	}
 
 	/**
@@ -132,9 +138,17 @@ class Install {
 	private function seed_default_questions() {
 		global $wpdb;
 
+        // Check if table exists before querying
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$this->questions_table_name}'" ) != $this->questions_table_name ) {
+            stackboost_log("ATS: seed_default_questions aborted. Table does not exist.", 'ats');
+            return;
+        }
+
 		if ( $wpdb->get_var( "SELECT COUNT(*) FROM {$this->questions_table_name}" ) > 0 ) {
 			return; // Don't seed if questions already exist.
 		}
+
+        stackboost_log("ATS: Seeding default questions.", 'ats');
 
 		$default_questions = [
 			[ 'text' => 'What is your ticket number?', 'type' => 'short_text', 'required' => 1, 'order' => 0 ],
@@ -152,6 +166,7 @@ class Install {
 					'question_type' => $q_data['type'],
 					'is_required'   => $q_data['required'],
 					'sort_order'    => $q_data['order'],
+                    'report_heading' => '', // Ensure default value
 				]
 			);
 			$question_id = $wpdb->insert_id;
