@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2025-12-14
+
+### Added
+- **Diagnostic Logging:** Introduced a comprehensive, granular diagnostic logging system.
+    - **Diagnostics Page:** Renamed the "Tools" admin menu item to "Diagnostics" to better reflect its purpose.
+    - **Module Toggles:** Added a "Module Logging" section to the Diagnostics settings page, allowing administrators to enable/disable logging for individual modules (e.g., General, UTM, Onboarding, Ticket View).
+    - **Master Switch:** A master "Enable Diagnostic Log" switch controls the entire logging system.
+- **Logging Standardization:** Updated the `stackboost_log()` function to support logging contexts and respect the new module-specific settings. All modules have been instrumented to use this central logger with appropriate context tags.
+
+### Changed
+- **Menu Structure:** Renamed the "Tools" submenu to "Diagnostics".
+
+### Fixed
+- **Logging Consistency:** Standardized logging across the plugin. Replaced disparate log calls with the centralized `stackboost_log()` function, ensuring all debug information is captured in a single, controlled log file.
+
 ## [1.3.1] - 2025-12-14
 
 ### Added

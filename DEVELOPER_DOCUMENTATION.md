@@ -1,52 +1,68 @@
-# Developer Documentation
+# StackBoost for SupportCandy - Developer Documentation
 
-## Directory Module
+## Overview
 
-### Overview
-The Directory module handles Staff, Locations, and Departments. It has been refactored to use a `DirectoryService` as the single source of truth for data access.
+StackBoost for SupportCandy is a modular WordPress plugin designed to enhance the capabilities of the SupportCandy helpdesk plugin. It uses a modern, namespace-based architecture to provide features like a Company Directory, Onboarding Dashboard, Unified Ticket Macros, and more.
 
-### Key Classes
-*   `StackBoost\ForSupportCandy\Services\DirectoryService`: The main service class. Use this for all data retrieval.
-*   `StackBoost\ForSupportCandy\Modules\Directory\Admin\Management`: Handles the CSV import/export and management UI.
-*   `StackBoost\ForSupportCandy\Modules\Directory\Shortcodes\DirectoryShortcode`: Renders the frontend directory table.
+## Architecture
 
-### Data Model
-*   **Phone Numbers:** Stored as raw digits in post meta (`_stackboost_office_phone`, `_stackboost_mobile_phone`). Extensions are stored as part of the string if they were imported that way, but the formatting logic (`stackboost_format_phone_number`) handles cleaning this up for display.
-*   **Search Logic:** The `DirectoryService::get_staff_members()` method accepts a `search` argument. This search uses a special "phone-aware" logic where it strips non-numeric characters from the search string and compares it against phone fields if the query looks like a number.
+### Directory Structure
 
-### Helper Functions
-*   `stackboost_format_phone_number( $number )`: A global helper function located in `bootstrap.php`.
-    *   **Input:** Raw phone number string.
-    *   **Output:** HTML string containing the formatted number, a `tel:` link, and a copy-to-clipboard button.
-    *   **Usage:** Use this in any template or output buffer where a phone number needs to be displayed. Do not manually format phone numbers.
+The plugin is organized into the following directory structure:
 
-## After Ticket Survey (ATS)
+*   `bootstrap.php`: The entry point for the plugin, handling the autoloader and initialization.
+*   `includes/`: Helper functions and third-party libraries.
+*   `src/`: The core source code, following PSR-4 standards.
+    *   `Core/`: Abstract base classes and interfaces (e.g., `Module`).
+    *   `Modules/`: Self-contained feature modules (e.g., `Directory`, `OnboardingDashboard`).
+    *   `WordPress/`: WordPress integration classes (e.g., `Plugin`, `Admin/Settings`).
 
-### Overview
-The ATS module handles post-ticket surveys. It includes a custom question builder, frontend form rendering via shortcode, and a results reporting view.
+### Modules
 
-### Architecture
-*   **Admin UI:** The "Manage Questions" tab (`manage-questions-template.php`) uses a jQuery-based modal system for adding/editing questions. It now supports a `ticket_number` question type.
-*   **AJAX:** All form actions (Save, Delete, Reorder) are handled via `Ajax.php` to provide a seamless experience without page reloads.
-*   **Frontend Rendering:** `Shortcode.php` renders the form. For `ticket_number` questions, it renders a text input but enforces numeric validation server-side (`handle_submission`).
-*   **Data Storage:**
-    *   `wp_stackboost_ats_questions`: Stores question definitions.
-    *   `wp_stackboost_ats_dropdown_options`: Stores options for dropdown questions.
-    *   `wp_stackboost_ats_survey_submissions`: Stores metadata for each user submission.
-    *   `wp_stackboost_ats_survey_answers`: Stores the actual answers linked to submissions and questions.
+Each feature is encapsulated as a "Module". A typical module structure looks like this:
 
-### URL Prefill Logic
-*   The `Shortcode.php` class handles pre-filling.
-*   It checks for a `prefill_key` property on the question object.
-*   If found, it looks for that key in `$_GET`.
-*   **Smart Matching (Dropdowns):** The logic in `Shortcode::render_question_field` calculates a "match score" based on exact match, prefix match, and substring match to select the most appropriate option from the URL value.
+*   `Core.php`: Contains the business logic, decoupled from WordPress as much as possible.
+*   `WordPress.php`: The WordPress adapter that handles hooks, filters, and settings registration.
+*   `Admin/`: Admin-specific classes (e.g., settings pages, list tables).
+*   `Data/`: Data access objects or custom post type definitions.
 
-## Unified Ticket Macro (UTM)
+### Logging System
 
-### Overview
-The UTM module generates a standardized HTML summary of a ticket for use in email notifications or external systems.
+The plugin features a centralized, granular logging system for diagnostics.
 
-### Formatting Rules
-*   Field names are forced to `white-space: nowrap` to prevent awkward wrapping.
-*   Trailing colons are stripped from field labels before display.
-*   Empty fields (or fields with "Not Applicable" or whitespace only) are automatically filtered out unless explicitly configured otherwise.
+*   **Central Function:** `stackboost_log( $message, $context = 'general' )` defined in `bootstrap.php`.
+*   **Contexts:** Logs are categorized by context (e.g., `'module-utm'`, `'onboarding'`).
+*   **Configuration:**
+    *   A **Master Switch** (`diagnostic_log_enabled`) controls the entire system.
+    *   **Module Toggles** (`enable_log_utm`, etc.) control logging for specific contexts.
+    *   The `stackboost_log` function automatically maps the `context` argument to the corresponding setting to determine if the log should be written.
+*   **Log Location:** Logs are written to `wp-content/uploads/stackboost-logs/debug.log`.
+
+**Usage Example:**
+
+```php
+stackboost_log( 'Starting import process...', 'directory-import' );
+```
+
+### Settings API
+
+All settings are centralized through `src/WordPress/Admin/Settings.php`.
+
+*   **Registration:** Settings are registered via `register_settings` in the `Settings` class.
+*   **Sanitization:** A central `sanitize_settings` method handles validation for all fields, using a whitelist approach keyed by the admin page slug.
+*   **Menu Management:** The `get_menu_config()` method in `Settings.php` is the single source of truth for the admin menu structure.
+
+## Deployment
+
+### Versioning
+
+The plugin follows Semantic Versioning. The version is defined in:
+1.  `stackboost-for-supportcandy.php` (Plugin Header)
+2.  `STACKBOOST_VERSION` constant in `stackboost-for-supportcandy.php`
+
+### Release Process
+
+1.  Update the `CHANGELOG.md` with new features and fixes.
+2.  Increment the version number in `stackboost-for-supportcandy.php`.
+3.  Commit changes with a standard message (e.g., `Bump version to 1.3.2`).
+4.  Tag the release in git.
