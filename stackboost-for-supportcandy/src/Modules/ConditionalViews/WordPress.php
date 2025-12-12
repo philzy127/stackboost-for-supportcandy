@@ -70,6 +70,10 @@ class WordPress extends Module {
             'columns' => $plugin_instance->get_supportcandy_columns(),
         ];
 
+        if ( ! empty( $options['enable_conditional_hiding'] ) ) {
+            stackboost_log( 'ConditionalViews: Enqueuing scripts. Rules count: ' . count( $features['conditional_hiding']['rules'] ), 'conditional_views' );
+        }
+
         // This is a simplified approach. A filter-based system in the main Plugin class would be better.
         if (wp_script_is('stackboost-frontend', 'registered')) {
             $existing_data = wp_scripts()->get_data('stackboost-frontend', 'data');

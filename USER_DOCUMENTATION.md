@@ -1,58 +1,61 @@
+# StackBoost for SupportCandy - User Documentation
 
-## After Ticket Survey Enhancements (v1.3.1)
+## Welcome to StackBoost
 
-### Streamlined Configuration
-*   **Settings Tab Removed:** The obsolete "Settings" tab has been removed. All necessary configuration is now handled directly within the "Manage Questions" interface.
-*   **New "Ticket Number" Question Type:**
-    *   To link a survey answer to a SupportCandy ticket, simply select the **"Ticket Number"** type when creating or editing a question.
-    *   **Automatic Linking:** In the "View Results" tab, any answer to a "Ticket Number" question will automatically be converted into a clickable link to the ticket.
-    *   **Validation:** This field accepts any input on the frontend (to prevent browser issues with number fields), but strictly enforces **numeric-only** values on submission. Users will see an error message if they attempt to submit non-numeric data.
+StackBoost enhances your SupportCandy helpdesk with powerful new features like a Company Directory, Onboarding Dashboard, and advanced automation tools.
 
-## After Ticket Survey Enhancements (v1.3.0)
+## Getting Started
 
-### Modernized "Manage Questions" Interface
-*   **Modal Editing:** Adding and editing questions is now done in a clean popup modal, replacing the old inline form at the bottom of the page.
-*   **Drag-and-Drop Reordering:** You can now easily reorder questions by dragging and dropping rows in the table. Changes are saved automatically.
-*   **Top-Level Actions:** The "Add New Question" button has been moved to the top of the page for better visibility.
+After activating the plugin, you will see a new **StackBoost** menu in your WordPress admin dashboard.
 
-### URL Prefill & Smart Matching
-*   **Prefill Key:** Every question type now has an optional **"URL Parameter (Prefill Key)"** setting.
-    *   This allows you to pre-fill survey answers by passing data in the survey link (e.g., `&ticket_id=12345` or `&rating=5`).
-    *   Simply enter the parameter name (e.g., `ticket_id`) in the question settings to link it.
-*   **Editable Fields:** Pre-filled fields remain fully editable by the user, ensuring they can correct any wrong information.
-*   **Smart Matching for Dropdowns:**
-    *   Dropdown fields now use "Smart Logic" to select the correct option from a URL parameter.
-    *   **Logic:**
-        1.  **Exact Match:** It first looks for an exact match (case-insensitive).
-        2.  **Best Partial Match:** If no exact match is found, it looks for the best partial match. This handles cases where the URL value is shorter (e.g., "Philip") but the dropdown option is longer (e.g., "Philip Edwards"), or vice-versa (e.g., URL has "Ticket #123" and option is "123").
-    *   **Note:** Dropdowns stop at the *first* best match found. This logic does not support "fuzzy" matching for misspellings, but is designed for data structure variations.
+### General Settings
 
-## Company Directory Enhancements (v1.2.14)
+The **General Settings** page provides an overview of the plugin status and allows you to configure global options.
 
-### New Features
-*   **Click-to-Call Phone Numbers:**
-    *   Phone numbers in the directory table and modal are now clickable links (`tel:`).
-    *   These links automatically handle extensions (using the RFC 3966 standard `;ext=`), ensuring they work correctly on mobile devices.
-    *   The link target includes the international format (preserving `+`), but the visual display remains user-friendly.
+### Diagnostics
 
-*   **Copy to Clipboard:**
-    *   Added copy buttons next to all phone numbers (Office and Mobile).
-    *   **Smart Formatting:** When copying a phone number, the text placed on the clipboard matches the formatted display (e.g., `(555) 123-4567 ext. 890`) rather than the raw link format. This ensures pasted numbers look professional.
-    *   Visual feedback (green checkmark and toast notification) confirms the action.
+The **Diagnostics** page (formerly "Tools") gives you control over the system's health and debugging features.
 
-*   **Smart "Numbers-Only" Search:**
-    *   The directory search bar now features intelligent phone number filtering.
-    *   You can search for a phone number using any format (e.g., `5551234`, `555-1234`, `(555) 1234`) and it will correctly match the record regardless of how it is stored or displayed.
-    *   This "Numbers-to-Numbers" logic strips punctuation from both your search query and the stored data to find the match.
-    *   Search behavior for Names, Titles, and Departments remains standard (text-based).
+*   **Enable Diagnostic Log:** This master switch controls the entire logging system.
+    *   **Console Logging:** When this switch is ON, debug messages will appear in your browser's developer console for all modules.
+    *   **File Logging:** This switch must be ON for any logs to be written to the server's log file.
+*   **Module Logging:** This section allows you to enable **file logging** for specific features (e.g., "Unified Ticket Macro" or "Company Directory").
+    *   **How it works:** If the Master Switch is ON, you can selectively turn on file logging for individual modules to troubleshoot specific issues without cluttering the log file with unrelated data.
+*   **Log Actions:**
+    *   **Download Log:** Download the current debug log file to share with support.
+    *   **Clear Log:** Instantly clear the log file to start fresh.
 
-### Usage
-*   **Directory Table:** The features are automatically active on the `[stackboost_directory]` shortcode.
-*   **Directory Widget:** The SupportCandy ticket widget also inherits the click-to-call and copy functionality.
+### Company Directory
 
-## After-Hours Message (v1.2.9)
+Manage your staff, locations, and departments.
 
-### Editor Enhancements
-*   The text editor for the "After-Hours Message" now includes an expanded toolbar for better formatting control.
-*   **New Options:** You can now easily add **Bold**, *Italic*, Underline, Text Color, Bulleted/Numbered Lists, Indentation, Blockquotes, Horizontal Lines, and Alignment.
-*   The editor retains its compact size ("teeny" mode) to keep the settings page clean but provides these powerful formatting tools when needed.
+*   **Staff:** Add and edit staff members. You can link them to WordPress users for advanced integration.
+*   **Import:** Use the "Management" tab to import staff from a JSON file.
+*   **Contact Widget:** Configure a widget to show staff contact details directly on the SupportCandy ticket view.
+
+### Onboarding Dashboard
+
+Streamline your employee onboarding process.
+
+*   **Steps:** Define the sequence of onboarding tasks.
+*   **Dashboard:** View the progress of new hires.
+*   **Certificates:** Automatically generate and email PDF completion certificates.
+
+### Unified Ticket Macro (UTM)
+
+Create consistent, formatted ticket updates.
+
+*   **Configuration:** Go to the "Unified Ticket Macro" page to select which fields to include in your macro.
+*   **Usage:** Use the `{{stackboost_unified_ticket}}` macro in your SupportCandy email templates.
+
+### After Ticket Survey (ATS)
+
+Collect feedback from your users.
+
+*   **Questions:** Design your survey using the "Manage Questions" tab.
+*   **Settings:** Configure color schemes and behavior.
+*   **Integration:** The survey link is automatically added to closed ticket emails if configured.
+
+## Support
+
+If you encounter issues, please check the **Diagnostics** page to see if any errors are being logged. You can download the log file and send it to our support team for assistance.

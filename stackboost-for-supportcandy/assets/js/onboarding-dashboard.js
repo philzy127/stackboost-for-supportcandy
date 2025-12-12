@@ -34,24 +34,32 @@ jQuery(document).ready(function($) {
         // 2. Reset Button Functionality
         $('#reset-checkboxes').on('click', function(e) {
             e.preventDefault();
+            var $button = $(this);
 
-            if (confirm('This will clear all saved progress for ALL onboarding steps. Are you sure?')) {
-                let keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && key.startsWith('odb_checklist_step_')) {
-                        keysToRemove.push(key);
+            stackboostConfirm(
+                'This will clear all saved progress for ALL onboarding steps. Are you sure?',
+                'Reset Progress',
+                function() {
+                    let keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('odb_checklist_step_')) {
+                            keysToRemove.push(key);
+                        }
                     }
-                }
-                keysToRemove.forEach(key => localStorage.removeItem(key));
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
 
-                const $button = $(this);
-                const originalText = $button.text();
-                $button.text('Progress Reset!').css('background-color', '#27ae60').prop('disabled', true);
-                setTimeout(function() {
-                    $button.text(originalText).css('background-color', '').prop('disabled', false);
-                }, 2500);
-            }
+                    const originalText = $button.text();
+                    $button.text('Progress Reset!').css('background-color', '#27ae60').prop('disabled', true);
+                    setTimeout(function() {
+                        $button.text(originalText).css('background-color', '').prop('disabled', false);
+                    }, 2500);
+                },
+                null, // No action on cancel
+                'Yes, Reset',
+                'Cancel',
+                true // isDanger
+            );
         });
 
         return; // Stop further execution, as we are not in a step view.

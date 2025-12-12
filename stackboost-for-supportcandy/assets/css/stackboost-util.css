@@ -51,4 +51,134 @@
     z-index: 9999;
     display: none; /* Hidden by default */
     font-size: 16px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Modern Modal Styles */
+.stackboost-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.stackboost-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.stackboost-modal-box {
+    background: #fff;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.stackboost-modal-overlay.active .stackboost-modal-box {
+    transform: translateY(0);
+}
+
+.stackboost-modal-header {
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stackboost-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.stackboost-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+}
+
+.stackboost-modal-close:hover {
+    color: #666;
+}
+
+.stackboost-modal-body {
+    padding: 20px;
+    font-size: 15px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.stackboost-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.stackboost-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color 0.2s;
+}
+
+.stackboost-btn-primary {
+    background-color: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+}
+
+.stackboost-btn-primary:hover {
+    background-color: #005177;
+    border-color: #005177;
+}
+
+.stackboost-btn-secondary {
+    background-color: #fff;
+    color: #555;
+    border-color: #ccc;
+}
+
+.stackboost-btn-secondary:hover {
+    background-color: #f0f0f1;
+    border-color: #bbb;
+    color: #333;
+}
+
+.stackboost-btn-danger {
+    background-color: #d63638;
+    color: #fff;
+    border-color: #d63638;
+}
+
+.stackboost-btn-danger:hover {
+    background-color: #b32d2e;
+    border-color: #b32d2e;
 }

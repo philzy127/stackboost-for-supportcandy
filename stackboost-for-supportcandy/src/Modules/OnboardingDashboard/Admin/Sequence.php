@@ -64,6 +64,24 @@ class Sequence {
 			} catch (e) {
 				window.stackboost_log("StackBoost: Sortable initialization failed:", e);
 			}
+
+            // Handle delete confirmation via StackBoost Modal
+            $(".stackboost-delete-step-btn").on("click", function(e) {
+                e.preventDefault();
+                var deleteUrl = $(this).attr("href");
+
+                stackboostConfirm(
+                    "' . esc_js( __( 'Are you sure you want to delete this step?', 'stackboost-for-supportcandy' ) ) . '",
+                    "' . esc_js( __( 'Confirm Delete', 'stackboost-for-supportcandy' ) ) . '",
+                    function() {
+                        window.location.href = deleteUrl;
+                    },
+                    null,
+                    "' . esc_js( __( 'Yes, Delete', 'stackboost-for-supportcandy' ) ) . '",
+                    "' . esc_js( __( 'Cancel', 'stackboost-for-supportcandy' ) ) . '",
+                    true
+                );
+            });
 		});
 		';
 
@@ -149,7 +167,7 @@ class Sequence {
 									<span class="stkb-step-title"><?php echo esc_html( $post->post_title ); ?></span>
 									<div class="stkb-step-actions">
 										<a href="<?php echo get_edit_post_link( $post->ID ); ?>" class="dashicons dashicons-edit" title="<?php esc_attr_e( 'Edit', 'stackboost-for-supportcandy' ); ?>"></a>
-										<a href="<?php echo get_delete_post_link( $post->ID ); ?>" class="dashicons dashicons-trash" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this step?', 'stackboost-for-supportcandy' ); ?>');"></a>
+										<a href="<?php echo get_delete_post_link( $post->ID ); ?>" class="dashicons dashicons-trash stackboost-delete-step-btn" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>"></a>
 									</div>
 									<input type="hidden" name="onboarding_sequence[]" value="<?php echo esc_attr( $post->ID ); ?>">
 								</li>
@@ -165,7 +183,7 @@ class Sequence {
 									<span class="stkb-step-title"><?php echo esc_html( $post->post_title ); ?></span>
 									<div class="stkb-step-actions">
 										<a href="<?php echo get_edit_post_link( $post->ID ); ?>" class="dashicons dashicons-edit" title="<?php esc_attr_e( 'Edit', 'stackboost-for-supportcandy' ); ?>"></a>
-										<a href="<?php echo get_delete_post_link( $post->ID ); ?>" class="dashicons dashicons-trash" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this step?', 'stackboost-for-supportcandy' ); ?>');"></a>
+										<a href="<?php echo get_delete_post_link( $post->ID ); ?>" class="dashicons dashicons-trash stackboost-delete-step-btn" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>"></a>
 									</div>
 								</li>
 							<?php endforeach; ?>

@@ -92,10 +92,10 @@
               if (response.success) {
                   window.stackboost_show_toast(response.data, 'success');
               } else {
-                  alert('Error: ' + (response.data || 'Unknown error'));
+                  stackboostAlert('Error: ' + (response.data || 'Unknown error'), 'Error');
               }
           }).fail(function () {
-              alert('An unexpected error occurred.');
+              stackboostAlert('An unexpected error occurred.', 'Error');
           }).always(function () {
               // Restore button state
               $submitButton.prop('disabled', false).val(originalButtonText);

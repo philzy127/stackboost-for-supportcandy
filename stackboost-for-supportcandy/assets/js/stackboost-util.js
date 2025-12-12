@@ -1,6 +1,6 @@
 jQuery(document).ready(function($) {
     // Helper function for conditional logging
-    var sbUtilLog = function(message, data) {
+    window.sbUtilLog = function(message, data) {
         if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
             if (data) {
                 console.log('[StackBoost Util]', message, data);
@@ -10,7 +10,7 @@ jQuery(document).ready(function($) {
         }
     };
 
-    var sbUtilError = function(message, data) {
+    window.sbUtilError = function(message, data) {
         if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
              if (data) {
                 console.error('[StackBoost Util]', message, data);
@@ -21,6 +21,88 @@ jQuery(document).ready(function($) {
     };
 
     sbUtilLog('Utility script loaded.');
+
+    // --- Modal System Implementation ---
+
+    // Inject Modal HTML into body if not present
+    if ($('#stackboost-modal-overlay').length === 0) {
+        var modalHtml = `
+            <div id="stackboost-modal-overlay" class="stackboost-modal-overlay">
+                <div class="stackboost-modal-box">
+                    <div class="stackboost-modal-header">
+                        <h3 class="stackboost-modal-title"></h3>
+                        <button class="stackboost-modal-close">&times;</button>
+                    </div>
+                    <div class="stackboost-modal-body"></div>
+                    <div class="stackboost-modal-footer"></div>
+                </div>
+            </div>
+        `;
+        $('body').append(modalHtml);
+    }
+
+    var $modalOverlay = $('#stackboost-modal-overlay');
+    var $modalTitle = $modalOverlay.find('.stackboost-modal-title');
+    var $modalBody = $modalOverlay.find('.stackboost-modal-body');
+    var $modalFooter = $modalOverlay.find('.stackboost-modal-footer');
+    var $modalClose = $modalOverlay.find('.stackboost-modal-close');
+
+    // Close modal event
+    function closeModal() {
+        $modalOverlay.removeClass('active');
+    }
+    $modalClose.on('click', closeModal);
+
+    // Global Alert Function
+    window.stackboostAlert = function(message, title = 'Alert', callback = null) {
+        $modalTitle.text(title);
+        $modalBody.html(message); // Allow HTML in message
+        $modalFooter.empty();
+
+        var $okBtn = $('<button class="stackboost-btn stackboost-btn-primary">OK</button>');
+        $okBtn.on('click', function() {
+            closeModal();
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+
+        $modalFooter.append($okBtn);
+        $modalOverlay.addClass('active');
+        $okBtn.focus();
+    };
+
+    // Global Confirm Function
+    window.stackboostConfirm = function(message, title = 'Confirm', onConfirm, onCancel, confirmText = 'Yes', cancelText = 'No', isDanger = false) {
+        $modalTitle.text(title);
+        $modalBody.html(message); // Allow HTML in message
+        $modalFooter.empty();
+
+        var $cancelBtn = $('<button class="stackboost-btn stackboost-btn-secondary">' + cancelText + '</button>');
+        var $confirmBtn = $('<button class="stackboost-btn ' + (isDanger ? 'stackboost-btn-danger' : 'stackboost-btn-primary') + '">' + confirmText + '</button>');
+
+        $cancelBtn.on('click', function() {
+            closeModal();
+            if (typeof onCancel === 'function') {
+                onCancel();
+            }
+        });
+
+        $confirmBtn.on('click', function() {
+            closeModal();
+            if (typeof onConfirm === 'function') {
+                onConfirm();
+            }
+        });
+
+        $modalFooter.append($cancelBtn);
+        $modalFooter.append($confirmBtn);
+        $modalOverlay.addClass('active');
+        $confirmBtn.focus();
+    };
+
+    // --- End Modal System ---
+
 
     // Copy to clipboard functionality for email
     $(document).on('click', '.stackboost-copy-email-icon', function() {

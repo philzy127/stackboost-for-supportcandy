@@ -215,6 +215,21 @@ final class Plugin {
 		];
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
+			// Enqueue shared utilities (Modals, etc.)
+			wp_enqueue_style(
+				'stackboost-util',
+				STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
+				[],
+				STACKBOOST_VERSION
+			);
+			wp_enqueue_script(
+				'stackboost-util',
+				STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
+				[ 'jquery' ],
+				STACKBOOST_VERSION,
+				true
+			);
+
 			wp_enqueue_style(
 				'stackboost-admin-common',
 				STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-admin-common.css',
@@ -224,7 +239,7 @@ final class Plugin {
 			wp_enqueue_script(
 				'stackboost-admin-common',
 				STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-admin-common.js',
-				[ 'jquery', 'jquery-ui-sortable' ],
+				[ 'jquery', 'jquery-ui-sortable', 'stackboost-util' ], // Added util dependency
 				STACKBOOST_VERSION,
 				true
 			);

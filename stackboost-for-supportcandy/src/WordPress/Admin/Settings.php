@@ -152,12 +152,12 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
 		];
 
-		// 11. Tools
+		// 11. Tools / Diagnostics
 		$menu_config[] = [
 			'slug'        => 'stackboost-tools',
 			'parent'      => 'stackboost-for-supportcandy',
-			'page_title'  => __( 'Tools', 'stackboost-for-supportcandy' ),
-			'menu_title'  => __( 'Tools', 'stackboost-for-supportcandy' ),
+			'page_title'  => __( 'Diagnostics', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Diagnostics', 'stackboost-for-supportcandy' ),
 			'capability'  => 'manage_options',
 			'callback'    => [ $this, 'render_settings_page' ],
 		];
@@ -272,8 +272,16 @@ class Settings {
 
 		add_settings_field(
 			'stackboost_diagnostic_log_enabled',
-			__( 'Enable Diagnostic Log', 'stackboost-for-supportcandy' ),
+			__( 'Master Switch', 'stackboost-for-supportcandy' ),
 			[ $this, 'render_diagnostic_log_enable_checkbox' ],
+			'stackboost-tools',
+			'stackboost_tools_section'
+		);
+
+		add_settings_field(
+			'stackboost_diagnostic_module_toggles',
+			__( 'Module Logging', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_diagnostic_module_toggles' ],
 			'stackboost-tools',
 			'stackboost_tools_section'
 		);
@@ -309,7 +317,19 @@ class Settings {
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
-			'stackboost-tools'              => ['diagnostic_log_enabled'],
+			'stackboost-tools'              => [
+				'diagnostic_log_enabled',
+				'enable_log_general',
+				'enable_log_ticket_view',
+				'enable_log_date_time',
+				'enable_log_after_hours',
+				'enable_log_conditional_views',
+				'enable_log_queue_macro',
+				'enable_log_utm',
+				'enable_log_ats',
+				'enable_log_directory',
+				'enable_log_onboarding',
+			],
 			'stackboost-date-time'          => ['enable_date_time_formatting', 'date_format_rules'],
 		]);
 
@@ -338,6 +358,17 @@ class Settings {
 					case 'utm_use_sc_order':
 					case 'enable_date_time_formatting':
 					case 'enable_page_last_loaded':
+					// Logging toggles
+					case 'enable_log_general':
+					case 'enable_log_ticket_view':
+					case 'enable_log_date_time':
+					case 'enable_log_after_hours':
+					case 'enable_log_conditional_views':
+					case 'enable_log_queue_macro':
+					case 'enable_log_utm':
+					case 'enable_log_ats':
+					case 'enable_log_directory':
+					case 'enable_log_onboarding':
 						$saved_settings[$key] = intval($value);
 						break;
 
@@ -433,12 +464,42 @@ class Settings {
 		?>
 		<label>
 			<input type="checkbox" name="stackboost_settings[diagnostic_log_enabled]" value="1" <?php checked( $is_enabled ); ?> />
-			<?php esc_html_e( 'Enable the diagnostic logging system.', 'stackboost-for-supportcandy' ); ?>
+			<?php esc_html_e( 'Enable the diagnostic logging system (Master Switch).', 'stackboost-for-supportcandy' ); ?>
 		</label>
 		<p class="description">
-			<?php esc_html_e( 'When enabled, the plugin will write detailed diagnostic information to a log file. This should only be enabled when requested by support.', 'stackboost-for-supportcandy' ); ?>
+			<?php esc_html_e( 'When enabled, the plugin will write detailed diagnostic information to a log file. Individual modules must also be enabled below.', 'stackboost-for-supportcandy' ); ?>
 		</p>
 		<?php
+	}
+
+	/**
+	 * Render the individual module logging toggles.
+	 */
+	public function render_diagnostic_module_toggles() {
+		$options = get_option( 'stackboost_settings', [] );
+
+		$modules = [
+			'enable_log_general'           => __( 'General Settings', 'stackboost-for-supportcandy' ),
+			'enable_log_ticket_view'       => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+			'enable_log_date_time'         => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
+			'enable_log_after_hours'       => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+			'enable_log_conditional_views' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+			'enable_log_queue_macro'       => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
+			'enable_log_utm'               => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+			'enable_log_ats'               => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
+			'enable_log_directory'         => __( 'Company Directory', 'stackboost-for-supportcandy' ),
+			'enable_log_onboarding'        => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
+		];
+
+		foreach ( $modules as $key => $label ) {
+			$is_enabled = ! empty( $options[ $key ] );
+			?>
+			<label style="display: block; margin-bottom: 5px;">
+				<input type="checkbox" name="stackboost_settings[<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( $is_enabled ); ?> />
+				<?php echo esc_html( $label ); ?>
+			</label>
+			<?php
+		}
 	}
 
 	/**

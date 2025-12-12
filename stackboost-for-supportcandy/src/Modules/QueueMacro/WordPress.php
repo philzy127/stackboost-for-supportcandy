@@ -93,7 +93,11 @@ class WordPress extends Module {
 		// Get the type value from the submitted form data.
 		$type_value = isset( $_POST[ $type_field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $type_field ] ) ) : '';
 
+		stackboost_log( "QueueMacro: Calculating count for field '{$type_field}' with value '{$type_value}'.", 'queue_macro' );
+
 		$count = $this->core->calculate_queue_count( $wpdb, $type_field, $type_value, $statuses );
+
+		stackboost_log( "QueueMacro: Calculated count is {$count}. Replacing macro.", 'queue_macro' );
 
 		$data['body'] = str_replace( '{{queue_count}}', (string) $count, $data['body'] );
 
