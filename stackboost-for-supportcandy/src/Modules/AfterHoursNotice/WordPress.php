@@ -90,6 +90,7 @@ class WordPress extends Module {
         $timezone_string = wp_timezone_string();
 
         if ( $this->core->is_after_hours( $settings, null, $timezone_string ) ) {
+            stackboost_log( 'AfterHoursNotice: Currently after hours. Displaying notice on form.', 'after_hours' );
             $message = $options['after_hours_message'] ?? '';
             if ( ! empty( $message ) ) {
                 // The message is saved via wp_kses_post, so it's safe to display.
@@ -123,6 +124,7 @@ class WordPress extends Module {
         $timezone_string = wp_timezone_string();
 
         if ( $this->core->is_after_hours( $settings, null, $timezone_string ) ) {
+            stackboost_log( 'AfterHoursNotice: Currently after hours. Prepending notice to email.', 'after_hours' );
             $message = $options['after_hours_message'] ?? '';
             if ( ! empty( $message ) ) {
                 $notice      = '<div class="stackboost-after-hours-notice" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #ffba00; background-color: #fff8e5;">' . wpautop( $message ) . '</div>';

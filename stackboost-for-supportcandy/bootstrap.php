@@ -81,6 +81,9 @@ function stackboost_log( $message, $context = 'general' ) {
         'onboarding'           => 'enable_log_onboarding',
         'date_time_formatting' => 'enable_log_date_time',
         'ticket_view'          => 'enable_log_ticket_view',
+        'after_hours'          => 'enable_log_after_hours',
+        'conditional_views'    => 'enable_log_conditional_views',
+        'queue_macro'          => 'enable_log_queue_macro',
 
         // Directory (handles multiple contexts)
         'directory-import'     => 'enable_log_directory',
