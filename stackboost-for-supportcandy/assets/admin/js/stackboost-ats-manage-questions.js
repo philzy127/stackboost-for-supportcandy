@@ -81,10 +81,43 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Toggle Fields Visibility
+    // Toggle Fields Visibility & Highlander Rule Check
     $('#question_type').on('change', function() {
         var type = $(this).val();
         var dropdownGroup = $('#ats_dropdown_options_group');
+        var currentId = $('#question_id').val(); // ID of question being edited (if any)
+
+        // Highlander Rule for 'ticket_number'
+        if (type === 'ticket_number') {
+            var existingTicketNum = false;
+            // Iterate over existing rows to find if one exists
+            $('#stackboost-ats-questions-list tbody tr').each(function() {
+                var rowId = $(this).data('id');
+                // Check 3rd column (Type) for "Ticket Number"
+                var rowType = $(this).find('td:nth-child(3)').text().trim();
+
+                // If it's a ticket number question AND it's not the one we are currently editing
+                // We use toLowerCase() for robust comparison against 'ticket number', 'Ticket number', etc.
+                if (rowType.toLowerCase() === 'ticket number' && rowId != currentId) {
+                    existingTicketNum = true;
+                    return false; // break loop
+                }
+            });
+
+            if (existingTicketNum) {
+                // Reset to previous or default (short_text)
+                // Since we don't track 'previous', we just default to 'short_text'
+                $(this).val('short_text');
+
+                // Show toast
+                stackboostToast('Only one "Ticket Number" question is allowed.', 'warning');
+
+                // Re-trigger change to update UI for the new value (short_text)
+                $(this).trigger('change');
+                return;
+            }
+        }
+
         // Prefill key is now available for all types, so no logic needed for it
 
         // Dropdown options logic
@@ -123,6 +156,7 @@ jQuery(document).ready(function($) {
                 $('#question_type').val(q.question_type).trigger('change');
                 $('#ats_sort_order').val(q.sort_order);
                 $('#ats_is_required').prop('checked', q.is_required == 1);
+            $('#ats_is_readonly_if_prefilled').prop('checked', q.is_readonly_if_prefilled == 1);
                 $('#ats_dropdown_options').val(q.options_str);
 
                 // Set Prefill Key
@@ -180,6 +214,7 @@ jQuery(document).ready(function($) {
             question_type: $('#question_type').val(),
             sort_order: $('#ats_sort_order').val(),
             is_required: $('#ats_is_required').is(':checked') ? 1 : 0,
+            is_readonly_if_prefilled: $('#ats_is_readonly_if_prefilled').is(':checked') ? 1 : 0,
             dropdown_options: $('#ats_dropdown_options').val(),
             prefill_key: $('#ats_prefill_key').val() // Include new field
         };

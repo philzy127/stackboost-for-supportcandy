@@ -179,25 +179,44 @@ class Shortcode {
 			$input_value = esc_attr( $prefill_ticket_id );
 		}
 
+        // --- Read-Only Logic ---
+        // If config enabled AND value is present (from prefill or sticky), lock it.
+        $is_locked = false;
+        $readonly_attr = '';
+        $disabled_attr = '';
+        $lock_icon = '';
+
+        if ( ! empty( $question['is_readonly_if_prefilled'] ) && ! empty( $input_value ) ) {
+            $is_locked = true;
+            $readonly_attr = 'readonly style="background-color: #f0f0f1; color: #555;"'; // Visual cue for readonly text
+            $disabled_attr = 'disabled style="background-color: #f0f0f1; color: #555;"'; // Visual cue for disabled selects
+            // Lock icon (dashicons-lock)
+            $lock_icon = '<span class="dashicons dashicons-lock stackboost-ats-lock-icon" title="Field is locked because it was pre-filled via link" style="color:#888; margin-left:5px; vertical-align:middle;"></span>';
+        }
+
 		switch ( $question['question_type'] ) {
 			case 'ticket_number':
-				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
+				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr} {$readonly_attr}>{$lock_icon}";
 				break;
 			case 'short_text':
-				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
+				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr} {$readonly_attr}>{$lock_icon}";
 				break;
 			case 'long_text':
 				// If textarea has a prefill value, put it inside the tags
-				echo "<textarea name='{$input_name}' rows='4' class='stackboost-ats-input' {$required_attr}>" . esc_textarea( $input_value ) . "</textarea>";
+				echo "<textarea name='{$input_name}' rows='4' class='stackboost-ats-input' {$required_attr} {$readonly_attr}>" . esc_textarea( $input_value ) . "</textarea>{$lock_icon}";
 				break;
 			case 'rating':
 				echo '<div class="stackboost-ats-rating-options">';
+                if ($is_locked) {
+                     // If locked, we must inject hidden input to pass value
+                     echo "<input type='hidden' name='{$input_name}' value='" . esc_attr($input_value) . "'>";
+                }
 				for ( $i = 1; $i <= 5; $i++ ) {
                     // Check if prefill value matches the rating option
                     $checked = ( $input_value == $i ) ? 'checked' : '';
-					echo "<label class='stackboost-ats-radio-label'><input type='radio' name='{$input_name}' value='{$i}' class='stackboost-ats-radio' {$required_attr} {$checked}><span class='stackboost-ats-radio-text'>{$i}</span></label>";
+					echo "<label class='stackboost-ats-radio-label'><input type='radio' name='{$input_name}' value='{$i}' class='stackboost-ats-radio' {$required_attr} {$checked} {$disabled_attr}><span class='stackboost-ats-radio-text'>{$i}</span></label>";
 				}
-				echo '<span class="stackboost-ats-rating-guide">(1 = Poor, 5 = Excellent)</span></div>';
+				echo '<span class="stackboost-ats-rating-guide">(1 = Poor, 5 = Excellent)</span> ' . $lock_icon . '</div>';
 				break;
 			case 'dropdown':
 				$dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
@@ -243,7 +262,14 @@ class Shortcode {
                     }
                 }
 
-                echo "<select name='{$input_name}' class='stackboost-ats-input' {$required_attr}>";
+                if ($is_locked) {
+                     // Since select is disabled, we need hidden input
+                     // Use the best matched value if found, otherwise the raw input value
+                     $final_value = !empty($best_match_value) ? $best_match_value : $input_value;
+                     echo "<input type='hidden' name='{$input_name}' value='" . esc_attr($final_value) . "'>";
+                }
+
+                echo "<select name='{$input_name}' class='stackboost-ats-input' {$required_attr} {$disabled_attr}>";
 				echo '<option value="">-- Select --</option>';
 				foreach ( $dd_options as $opt ) {
                     $selected = '';
@@ -260,6 +286,7 @@ class Shortcode {
 					echo '<option value="' . esc_attr( $opt->option_value ) . '" ' . $selected . '>' . esc_html( $opt->option_value ) . '</option>';
 				}
 				echo '</select>';
+                echo $lock_icon;
 				break;
 		}
 	}

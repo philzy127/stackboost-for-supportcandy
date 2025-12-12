@@ -87,10 +87,15 @@
                 <p class="description"><?php _e('Optional. Matches a URL parameter to pre-fill this field.', 'stackboost-for-supportcandy'); ?></p>
             </div>
 
-            <div class="form-group" style="margin-top:10px;">
+            <div class="form-group" style="margin-top:10px; display: flex; align-items: center; gap: 20px;">
                 <label>
                     <input type="checkbox" id="ats_is_required" name="is_required" value="1">
                     <?php _e('Required?', 'stackboost-for-supportcandy'); ?>
+                </label>
+                <label>
+                    <input type="checkbox" id="ats_is_readonly_if_prefilled" name="is_readonly_if_prefilled" value="1">
+                    <?php _e('Read-only if prefilled?', 'stackboost-for-supportcandy'); ?>
+                    <span class="dashicons dashicons-lock" style="font-size: 16px; height: 16px; width: 16px; vertical-align: text-top; color: #666;"></span>
                 </label>
             </div>
 

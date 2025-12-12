@@ -116,6 +116,7 @@ class Ajax {
             'question_text' => sanitize_text_field( $_POST['question_text'] ),
             'question_type' => sanitize_text_field( $_POST['question_type'] ),
             'is_required'   => isset( $_POST['is_required'] ) && $_POST['is_required'] === '1' ? 1 : 0,
+            'is_readonly_if_prefilled' => isset( $_POST['is_readonly_if_prefilled'] ) && $_POST['is_readonly_if_prefilled'] === '1' ? 1 : 0,
             'sort_order'    => isset( $_POST['sort_order'] ) ? intval( $_POST['sort_order'] ) : ($question_id ? 0 : $current_max_order + 1),
             'prefill_key'   => sanitize_text_field( $_POST['prefill_key'] ?? '' )
         ];
