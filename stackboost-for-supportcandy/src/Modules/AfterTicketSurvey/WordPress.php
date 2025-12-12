@@ -86,9 +86,6 @@ class WordPress extends Module {
         add_action( 'wp_ajax_stackboost_ats_delete_question', [ $this->ajax, 'delete_question' ] );
         add_action( 'wp_ajax_stackboost_ats_reorder_questions', [ $this->ajax, 'reorder_questions' ] );
 
-		// Settings registration
-		add_action( 'admin_init', [ $this, 'register_settings' ] );
-
         // Asset Enqueueing
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
@@ -101,9 +98,6 @@ class WordPress extends Module {
         global $post;
         if ( is_a($post, 'WP_Post') && has_shortcode( $post->post_content, 'stackboost_after_ticket_survey' ) ) {
             wp_enqueue_style( 'stackboost-ats-frontend', STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-ats-frontend.css', [], STACKBOOST_VERSION );
-            $options = get_option( 'stackboost_settings' );
-            $bg_color = ! empty( $options['ats_background_color'] ) ? $options['ats_background_color'] : '#f0f0f0';
-            wp_add_inline_style( 'stackboost-ats-frontend', 'body { background-color: ' . esc_attr( $bg_color ) . ' !important; }' );
         }
     }
 
@@ -140,11 +134,6 @@ class WordPress extends Module {
             );
         }
 
-        if ( 'settings' === $current_tab ) {
-            wp_enqueue_style( 'wp-color-picker' );
-            wp_enqueue_script( 'stackboost-ats-color-picker', STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-ats-color-picker.js', [ 'wp-color-picker' ], STACKBOOST_VERSION, true );
-        }
-
         if ( 'results' === $current_tab ) {
             wp_enqueue_script( 'stackboost-ats-results-modal', STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-ats-results-modal.js', ['jquery'], STACKBOOST_VERSION, true );
             wp_localize_script(
@@ -157,53 +146,6 @@ class WordPress extends Module {
                 ]
             );
         }
-    }
-
-	/**
-	 * Register settings fields for this module.
-	 */
-	public function register_settings() {
-        $page = 'stackboost-ats-settings';
-		add_settings_section( 'stackboost_ats_settings_section', '', null, $page );
-		add_settings_field( 'ats_background_color', __('Survey Page Background Color', 'stackboost-for-supportcandy'), [ $this, 'render_color_picker' ], $page, 'stackboost_ats_settings_section' );
-		add_settings_field( 'ats_ticket_question_id', __('Ticket Number Question', 'stackboost-for-supportcandy'), [ $this, 'render_question_dropdown' ], $page, 'stackboost_ats_settings_section', ['type' => 'any'] );
-		add_settings_field( 'ats_technician_question_id', __('Technician Question', 'stackboost-for-supportcandy'), [ $this, 'render_question_dropdown' ], $page, 'stackboost_ats_settings_section', ['type' => 'dropdown'] );
-		add_settings_field( 'ats_ticket_url_base', __('Ticket System Base URL', 'stackboost-for-supportcandy'), [ $this, 'render_text_field' ], $page, 'stackboost_ats_settings_section' );
-	}
-
-    // --- Settings Field Rendering Callbacks --- //
-
-    public function render_color_picker() {
-        $options = get_option( 'stackboost_settings' );
-        echo '<input type="text" name="stackboost_settings[ats_background_color]" value="' . esc_attr( $options['ats_background_color'] ?? '#f0f0f0' ) . '" class="stackboost-color-picker" />';
-    }
-
-    public function render_question_dropdown(array $args) {
-        global $wpdb;
-        $options = get_option( 'stackboost_settings' );
-        $field_id = 'ats_' . ($args['type'] === 'dropdown' ? 'technician' : 'ticket') . '_question_id';
-        $selected = $options[$field_id] ?? '';
-
-        // Ensure table exists before querying to avoid fatal error during settings render if install failed
-        $table_name = $wpdb->prefix . 'stackboost_ats_questions';
-        if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) !== $table_name ) {
-            echo '<p style="color:red;">' . __('Error: ATS Database tables not found. Please refresh the page or contact support.', 'stackboost-for-supportcandy') . '</p>';
-            return;
-        }
-
-        $where_clause = $args['type'] === 'dropdown' ? "WHERE question_type = 'dropdown'" : '';
-        $questions = $wpdb->get_results( "SELECT id, question_text FROM {$table_name} {$where_clause} ORDER BY sort_order ASC" );
-
-        echo '<select name="stackboost_settings[' . esc_attr($field_id) . ']"><option value="">-- ' . __('Select', 'stackboost-for-supportcandy') . ' --</option>';
-        foreach ( $questions as $q ) {
-            echo '<option value="' . esc_attr($q->id) . '"' . selected( $selected, $q->id, false ) . '>' . esc_html( $q->question_text ) . '</option>';
-        }
-        echo '</select>';
-    }
-
-    public function render_text_field() {
-        $options = get_option( 'stackboost_settings' );
-        echo '<input type="text" name="stackboost_settings[ats_ticket_url_base]" value="' . esc_attr( $options['ats_ticket_url_base'] ?? '' ) . '" class="regular-text" placeholder="https://support.example.com/ticket/">';
     }
 
 	/**

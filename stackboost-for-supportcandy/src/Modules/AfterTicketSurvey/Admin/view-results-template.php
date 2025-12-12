@@ -4,8 +4,6 @@
  *
  * @var array $questions   List of survey questions.
  * @var array $submissions List of survey submissions with answers.
- * @var int   $ticket_question_id The ID of the question designated for the ticket number.
- * @var string $ticket_url_base The base URL for linking to tickets.
  */
 ?>
 <h2><?php _e('View Survey Results', 'stackboost-for-supportcandy'); ?></h2>
@@ -38,8 +36,8 @@
             $answers = $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM {$wpdb->prefix}stackboost_ats_survey_answers WHERE submission_id = %d", $sub['id'] ), OBJECT_K );
             foreach ( $questions as $q ) {
                 $answer = $answers[ $q['id'] ]->answer_value ?? '';
-                if ( $q['id'] == $ticket_question_id && !empty($ticket_url_base) && is_numeric( $answer ) ) {
-                    echo '<td><a href="' . esc_url( $ticket_url_base . $answer ) . '" target="_blank">' . esc_html( $answer ) . '</a></td>';
+                if ( isset( $q['prefill_key'] ) && $q['prefill_key'] === 'ticket_id' && is_numeric( $answer ) ) {
+                    echo '<td><a href="' . esc_url( \WPSC_Functions::get_ticket_url( $answer, '1' ) ) . '" target="_blank">' . esc_html( $answer ) . '</a></td>';
                 } else {
                     echo '<td>' . nl2br(esc_html( $answer )) . '</td>';
                 }
