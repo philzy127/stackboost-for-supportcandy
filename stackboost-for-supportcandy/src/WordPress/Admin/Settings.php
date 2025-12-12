@@ -479,24 +479,20 @@ class Settings {
 		$options = get_option( 'stackboost_settings', [] );
 
 		$modules = [
-			'enable_log_general'           => [ 'label' => __( 'General Settings', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_ticket_view'       => [ 'label' => __( 'Ticket View', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_date_time'         => [ 'label' => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_after_hours'       => [ 'label' => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_conditional_views' => [ 'label' => __( 'Conditional Views', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_queue_macro'       => [ 'label' => __( 'Queue Macro', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_utm'               => [ 'label' => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_ats'               => [ 'label' => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_directory'         => [ 'label' => __( 'Company Directory', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_onboarding'        => [ 'label' => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ), 'ready' => true ],
+			'enable_log_general'           => __( 'General Settings', 'stackboost-for-supportcandy' ),
+			'enable_log_ticket_view'       => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+			'enable_log_date_time'         => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
+			'enable_log_after_hours'       => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+			'enable_log_conditional_views' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
+			'enable_log_queue_macro'       => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
+			'enable_log_utm'               => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+			'enable_log_ats'               => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
+			'enable_log_directory'         => __( 'Company Directory', 'stackboost-for-supportcandy' ),
+			'enable_log_onboarding'        => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
 		];
 
-		foreach ( $modules as $key => $module ) {
+		foreach ( $modules as $key => $label ) {
 			$is_enabled = ! empty( $options[ $key ] );
-			$label      = $module['label'];
-			if ( ! $module['ready'] ) {
-				$label .= ' *';
-			}
 			?>
 			<label style="display: block; margin-bottom: 5px;">
 				<input type="checkbox" name="stackboost_settings[<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( $is_enabled ); ?> />
@@ -504,8 +500,6 @@ class Settings {
 			</label>
 			<?php
 		}
-
-		echo '<p class="description">' . esc_html__( '* Indicates modules that are not yet fully configured for detailed logging.', 'stackboost-for-supportcandy' ) . '</p>';
 	}
 
 	/**
