@@ -29,7 +29,7 @@
                 <tr class="no-items"><td colspan="7"><?php _e('No questions found.', 'stackboost-for-supportcandy'); ?></td></tr>
             <?php else : ?>
                 <?php foreach ( $questions as $q ) : ?>
-                <tr data-id="<?php echo esc_attr($q['id']); ?>">
+                <tr data-id="<?php echo esc_attr($q['id']); ?>" data-type="<?php echo esc_attr($q['question_type']); ?>">
                     <td class="stackboost-ats-sort-handle" style="cursor: move;"><span class="dashicons dashicons-menu"></span></td>
                     <td><?php echo esc_html( $q['question_text'] ); ?></td>
                     <td><?php echo esc_html( str_replace('_', ' ', ucfirst( $q['question_type'] ) ) ); ?></td>
@@ -78,6 +78,9 @@
                     <option value="rating"><?php _e('Rating (1-5)', 'stackboost-for-supportcandy'); ?></option>
                     <option value="dropdown"><?php _e('Dropdown', 'stackboost-for-supportcandy'); ?></option>
                 </select>
+                <div id="ats_limit_reached_msg" class="notice notice-warning inline" style="display:none; margin-top: 5px;">
+                    <p><?php _e('Only one Ticket Number field is allowed per form.', 'stackboost-for-supportcandy'); ?></p>
+                </div>
             </div>
 
             <!-- New Prefill Key Field -->
@@ -87,7 +90,11 @@
                 <p class="description"><?php _e('Optional. Matches a URL parameter to pre-fill this field.', 'stackboost-for-supportcandy'); ?></p>
             </div>
 
-            <div class="form-group" style="margin-top:10px;">
+            <div class="form-group" style="margin-top:10px; display: flex; gap: 20px;">
+                <label>
+                    <input type="checkbox" id="ats_is_readonly_prefill" name="is_readonly_prefill" value="1">
+                    <?php _e('Read-only if Pre-filled?', 'stackboost-for-supportcandy'); ?>
+                </label>
                 <label>
                     <input type="checkbox" id="ats_is_required" name="is_required" value="1">
                     <?php _e('Required?', 'stackboost-for-supportcandy'); ?>

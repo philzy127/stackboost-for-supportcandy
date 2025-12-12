@@ -48,6 +48,12 @@ jQuery(document).ready(function($) {
             form[0].reset();
             $('#question_id').val('');
             $('#ats_dropdown_options_group').hide();
+
+            // Re-enable option if it was disabled (cleanup)
+            var ticketOption = $('#question_type option[value="ticket_number"]');
+            ticketOption.prop('disabled', false).text('Ticket Number');
+            $('#ats_limit_reached_msg').hide();
+
             // Reset visibility
             $('#question_type').trigger('change');
         }
@@ -81,6 +87,34 @@ jQuery(document).ready(function($) {
         }
     });
 
+    // Check for existing Ticket Number question and update UI
+    function updateTicketNumberAvailability() {
+        var currentQuestionId = $('#question_id').val();
+        var ticketNumberExists = false;
+        var existingId = null;
+
+        tableBody.find('tr').each(function() {
+            if ($(this).data('type') === 'ticket_number') {
+                ticketNumberExists = true;
+                existingId = $(this).data('id');
+                return false; // break
+            }
+        });
+
+        var ticketOption = $('#question_type option[value="ticket_number"]');
+        var limitMsg = $('#ats_limit_reached_msg');
+
+        // Logic: Disable if one exists AND we are NOT editing that specific question
+        // Note: currentQuestionId is string, existingId is integer usually, loose comparison ok
+        if (ticketNumberExists && (!currentQuestionId || currentQuestionId != existingId)) {
+            ticketOption.prop('disabled', true).text('Ticket Number (Limit Reached)');
+            limitMsg.show();
+        } else {
+            ticketOption.prop('disabled', false).text('Ticket Number');
+            limitMsg.hide();
+        }
+    }
+
     // Toggle Fields Visibility
     $('#question_type').on('change', function() {
         var type = $(this).val();
@@ -99,6 +133,7 @@ jQuery(document).ready(function($) {
     $('#stackboost-ats-add-question').on('click', function(e) {
         e.preventDefault();
         log('Add Question button clicked.');
+        updateTicketNumberAvailability();
         $('#question_type').trigger('change');
         modal.dialog('option', 'title', 'Add New Question');
         modal.dialog('open');
@@ -127,7 +162,9 @@ jQuery(document).ready(function($) {
 
                 // Set Prefill Key
                 $('#ats_prefill_key').val(q.prefill_key || '');
+                $('#ats_is_readonly_prefill').prop('checked', q.is_readonly_prefill == 1);
 
+                updateTicketNumberAvailability();
                 modal.dialog('option', 'title', 'Edit Question');
                 modal.dialog('open');
             } else {
@@ -180,6 +217,7 @@ jQuery(document).ready(function($) {
             question_type: $('#question_type').val(),
             sort_order: $('#ats_sort_order').val(),
             is_required: $('#ats_is_required').is(':checked') ? 1 : 0,
+            is_readonly_prefill: $('#ats_is_readonly_prefill').is(':checked') ? 1 : 0,
             dropdown_options: $('#ats_dropdown_options').val(),
             prefill_key: $('#ats_prefill_key').val() // Include new field
         };

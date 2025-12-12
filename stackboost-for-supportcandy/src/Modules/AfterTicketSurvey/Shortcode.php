@@ -120,7 +120,7 @@ class Shortcode {
 		$options = get_option( 'stackboost_settings', [] );
 
 		// We fetch prefill_key as well
-		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
+		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key, is_readonly_prefill FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
 		if ( empty( $questions ) ) {
 			echo '<p class="stackboost-ats-no-questions">No survey questions have been configured.</p>';
 			return;
@@ -179,19 +179,69 @@ class Shortcode {
 			$input_value = esc_attr( $prefill_ticket_id );
 		}
 
+        // Validate Pre-filled Values
+        $validation_failed = false;
+        $best_match_value = '';
+
+        if ( ! empty( $input_value ) && ! isset( $_POST[ $input_name ] ) ) { // Only validate if from URL/prefill, not POST
+            if ( $question['question_type'] === 'ticket_number' ) {
+                if ( ! is_numeric( $input_value ) ) {
+                    $validation_failed = true;
+                }
+            }
+            elseif ( $question['question_type'] === 'dropdown' ) {
+                // We need to resolve the best match here for validation purposes
+                $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
+                $highest_score = 0;
+                $input_lower = strtolower( $input_value );
+
+                foreach ( $dd_options as $opt ) {
+                    $opt_lower = strtolower( $opt->option_value );
+                    $score = 0;
+                    if ( $opt_lower === $input_lower ) $score = 100;
+                    elseif ( strpos( $opt_lower, $input_lower ) === 0 ) $score = 50 + strlen( $input_lower );
+                    elseif ( strpos( $input_lower, $opt_lower ) === 0 ) $score = 50 + strlen( $opt_lower );
+                    elseif ( strpos( $opt_lower, $input_lower ) !== false ) $score = 10 + strlen( $input_lower );
+                    elseif ( strpos( $input_lower, $opt_lower ) !== false ) $score = 10 + strlen( $opt_lower );
+
+                    if ( $score > $highest_score ) {
+                        $highest_score = $score;
+                        $best_match_value = $opt->option_value;
+                    }
+                }
+
+                if ( empty( $best_match_value ) ) {
+                    $validation_failed = true;
+                }
+            }
+        }
+
+        // Handle Validation Failure
+        if ( $validation_failed ) {
+            $input_value = ''; // Reset invalid value
+            $best_match_value = '';
+            echo "<script>console.warn('[StackBoost ATS] Invalid pre-fill value for field ID {$question['id']} ignored.');</script>";
+        }
+
+        // Determine Read-Only State
+        $readonly_style = '';
+        if ( ! $validation_failed && ! empty( $input_value ) && ! empty( $question['is_readonly_prefill'] ) ) {
+             $readonly_style = 'style="pointer-events: none;" tabindex="-1"';
+        }
+
 		switch ( $question['question_type'] ) {
 			case 'ticket_number':
-				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
+				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr} {$readonly_style}>";
 				break;
 			case 'short_text':
-				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
+				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr} {$readonly_style}>";
 				break;
 			case 'long_text':
 				// If textarea has a prefill value, put it inside the tags
-				echo "<textarea name='{$input_name}' rows='4' class='stackboost-ats-input' {$required_attr}>" . esc_textarea( $input_value ) . "</textarea>";
+				echo "<textarea name='{$input_name}' rows='4' class='stackboost-ats-input' {$required_attr} {$readonly_style}>" . esc_textarea( $input_value ) . "</textarea>";
 				break;
 			case 'rating':
-				echo '<div class="stackboost-ats-rating-options">';
+				echo '<div class="stackboost-ats-rating-options" ' . $readonly_style . '>';
 				for ( $i = 1; $i <= 5; $i++ ) {
                     // Check if prefill value matches the rating option
                     $checked = ( $input_value == $i ) ? 'checked' : '';
@@ -200,42 +250,28 @@ class Shortcode {
 				echo '<span class="stackboost-ats-rating-guide">(1 = Poor, 5 = Excellent)</span></div>';
 				break;
 			case 'dropdown':
-				$dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
+                // Note: $dd_options and $best_match_value might already be calculated above during validation
+                if ( ! isset( $dd_options ) ) {
+				    $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
+                }
 
-                // Advanced Fuzzy Logic for selection (Best Match Wins)
-                $best_match_value = '';
-                $highest_score = 0;
-
-                if ( ! empty( $input_value ) ) {
-                    $input_lower = strtolower( $input_value );
-                    foreach ( $dd_options as $opt ) {
+                // Recalculate match if we didn't do it for validation (i.e. not prefilled/readonly check)
+                // Or use the one we found during validation
+                if ( empty( $best_match_value ) && ! empty( $input_value ) ) {
+                     // Reuse logic for standard prefill without readonly constraint...
+                     // Actually, we can just use the same logic block.
+                     // Copy-paste logic here for completeness if not run above
+                     $highest_score = 0;
+                     $input_lower = strtolower( $input_value );
+                     foreach ( $dd_options as $opt ) {
                         $opt_lower = strtolower( $opt->option_value );
                         $score = 0;
+                        if ( $opt_lower === $input_lower ) $score = 100;
+                        elseif ( strpos( $opt_lower, $input_lower ) === 0 ) $score = 50 + strlen( $input_lower );
+                        elseif ( strpos( $input_lower, $opt_lower ) === 0 ) $score = 50 + strlen( $opt_lower );
+                        elseif ( strpos( $opt_lower, $input_lower ) !== false ) $score = 10 + strlen( $input_lower );
+                        elseif ( strpos( $input_lower, $opt_lower ) !== false ) $score = 10 + strlen( $opt_lower );
 
-                        // Tier 1: Exact Match (Score: 100)
-                        if ( $opt_lower === $input_lower ) {
-                            $score = 100;
-                        }
-                        // Tier 2: Option STARTS with Input (Score: 50 + length overlap)
-                        // Example: Input "Phil" -> "Philip" (Matches at 0)
-                        elseif ( strpos( $opt_lower, $input_lower ) === 0 ) {
-                            $score = 50 + strlen( $input_lower );
-                        }
-                        // Tier 3: Input STARTS with Option (Score: 50 + length overlap)
-                        // Example: Input "Philip Edwards" -> "Philip" (Matches at 0)
-                        elseif ( strpos( $input_lower, $opt_lower ) === 0 ) {
-                            $score = 50 + strlen( $opt_lower );
-                        }
-                        // Tier 4: Containment (Score: 10 + length overlap)
-                        // Example: Input "Ticket 123" -> "123"
-                        elseif ( strpos( $opt_lower, $input_lower ) !== false ) {
-                            $score = 10 + strlen( $input_lower );
-                        }
-                        elseif ( strpos( $input_lower, $opt_lower ) !== false ) {
-                            $score = 10 + strlen( $opt_lower );
-                        }
-
-                        // Determine Best Match
                         if ( $score > $highest_score ) {
                             $highest_score = $score;
                             $best_match_value = $opt->option_value;
@@ -243,7 +279,7 @@ class Shortcode {
                     }
                 }
 
-                echo "<select name='{$input_name}' class='stackboost-ats-input' {$required_attr}>";
+                echo "<select name='{$input_name}' class='stackboost-ats-input' {$required_attr} {$readonly_style}>";
 				echo '<option value="">-- Select --</option>';
 				foreach ( $dd_options as $opt ) {
                     $selected = '';

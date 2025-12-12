@@ -13,7 +13,7 @@ class Install {
 	 * The current database version for this module.
 	 * @var string
 	 */
-	private string $db_version = '1.4';
+	private string $db_version = '1.5';
 
 	/**
 	 * The name of the questions table.
@@ -71,11 +71,17 @@ class Install {
         // Self-healing: Check if critical columns exist. If not, force install.
         $needs_repair = false;
 
-        // Check for 'prefill_key' column in questions table
+        // Check for 'prefill_key' and 'is_readonly_prefill' columns in questions table
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$this->questions_table_name}'" ) === $this->questions_table_name ) {
-            $col_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$this->questions_table_name} LIKE 'prefill_key'" );
-            if ( empty( $col_exists ) ) {
+            $prefill_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$this->questions_table_name} LIKE 'prefill_key'" );
+            $readonly_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$this->questions_table_name} LIKE 'is_readonly_prefill'" );
+
+            if ( empty( $prefill_exists ) ) {
                 stackboost_log("ATS: Schema Drift Detected. 'prefill_key' missing. forcing install.", 'ats');
+                $needs_repair = true;
+            }
+            if ( empty( $readonly_exists ) ) {
+                stackboost_log("ATS: Schema Drift Detected. 'is_readonly_prefill' missing. forcing install.", 'ats');
                 $needs_repair = true;
             }
         } else {
@@ -110,6 +116,7 @@ class Install {
 			question_type varchar(50) NOT NULL,
 			sort_order int(11) DEFAULT 0 NOT NULL,
 			is_required tinyint(1) DEFAULT 1 NOT NULL,
+            is_readonly_prefill tinyint(1) DEFAULT 0 NOT NULL,
 			PRIMARY KEY  (id)
 		) $charset_collate;";
 
