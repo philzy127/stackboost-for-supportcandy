@@ -186,7 +186,7 @@ class Settings {
 			'manage_options',
 			'stackboost-for-supportcandy',
 			[ $this, 'render_settings_page' ],
-			'dashicons-superhero',
+			STACKBOOST_PLUGIN_URL . 'assets/images/stackboost-mono-50.svg',
 			30
 		);
 
