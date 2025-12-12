@@ -480,14 +480,14 @@ class Settings {
 
 		$modules = [
 			'enable_log_general'           => [ 'label' => __( 'General Settings', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_ticket_view'       => [ 'label' => __( 'Ticket View', 'stackboost-for-supportcandy' ), 'ready' => false ],
+			'enable_log_ticket_view'       => [ 'label' => __( 'Ticket View', 'stackboost-for-supportcandy' ), 'ready' => true ],
 			'enable_log_date_time'         => [ 'label' => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ), 'ready' => true ],
 			'enable_log_after_hours'       => [ 'label' => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ), 'ready' => false ],
 			'enable_log_conditional_views' => [ 'label' => __( 'Conditional Views', 'stackboost-for-supportcandy' ), 'ready' => false ],
 			'enable_log_queue_macro'       => [ 'label' => __( 'Queue Macro', 'stackboost-for-supportcandy' ), 'ready' => false ],
 			'enable_log_utm'               => [ 'label' => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ), 'ready' => true ],
 			'enable_log_ats'               => [ 'label' => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ), 'ready' => true ],
-			'enable_log_directory'         => [ 'label' => __( 'Company Directory', 'stackboost-for-supportcandy' ), 'ready' => false ],
+			'enable_log_directory'         => [ 'label' => __( 'Company Directory', 'stackboost-for-supportcandy' ), 'ready' => true ],
 			'enable_log_onboarding'        => [ 'label' => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ), 'ready' => true ],
 		];
 

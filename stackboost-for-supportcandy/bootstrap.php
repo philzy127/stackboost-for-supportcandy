@@ -70,13 +70,22 @@ function stackboost_log( $message, $context = 'general' ) {
     // Maps the log context string to the specific settings key that controls it.
     // If a context maps to 'enable_log_general', it is controlled by the General Settings toggle.
     $context_map = [
+        // General / Core
         'general'              => 'enable_log_general',
         'core'                 => 'enable_log_general',
         'error'                => 'enable_log_general',
+
+        // Modules
         'module-utm'           => 'enable_log_utm',
         'ats'                  => 'enable_log_ats',
         'onboarding'           => 'enable_log_onboarding',
         'date_time_formatting' => 'enable_log_date_time',
+        'ticket_view'          => 'enable_log_ticket_view',
+
+        // Directory (handles multiple contexts)
+        'directory-import'     => 'enable_log_directory',
+        'directory-error'      => 'enable_log_directory',
+
         // Future mappings can be added here as features adopt logging.
     ];
 
