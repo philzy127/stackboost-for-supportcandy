@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.3] - 2025-12-12
+
+### Added
+- **ATS Highlander Rule:** Implemented a new constraint that restricts the "Ticket Number" question type to a maximum of one per survey form.
+    - **UI:** The "Ticket Number" option in the "Question Type" dropdown is now automatically disabled if a ticket number question already exists, with a visible warning message.
+    - **Validation:** Added server-side checks to prevent bypassing this rule via API manipulation.
+- **ATS Read-only Prefill:** Introduced a new "Read-only if Pre-filled" configuration option for survey questions.
+    - **Functionality:** Allows questions to be locked (made read-only) if they are successfully populated via a URL parameter (e.g., `?ticket_id=123`).
+    - **Validation:** Ensures that the field is only locked if the pre-filled data is valid (numeric for ticket numbers, matching option for dropdowns). Invalid data is ignored, leaving the field editable.
+- **ATS Self-Healing Schema:** The database installer now automatically detects and adds the new `is_readonly_prefill` column if it is missing.
+
 ## [1.3.2] - 2025-12-14
 
 ### Added
