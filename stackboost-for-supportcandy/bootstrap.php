@@ -60,7 +60,33 @@ require_once __DIR__ . '/src/WordPress/supportcandy-pro-check.php';
  */
 function stackboost_log( $message, $context = 'general' ) {
     $options = get_option( 'stackboost_settings', [] );
+
+    // 1. Master Kill Switch
     if ( empty( $options['diagnostic_log_enabled'] ) ) {
+        return;
+    }
+
+    // 2. Define Context to Setting Mapping
+    // Maps the log context string to the specific settings key that controls it.
+    // If a context maps to 'enable_log_general', it is controlled by the General Settings toggle.
+    $context_map = [
+        'general'              => 'enable_log_general',
+        'core'                 => 'enable_log_general',
+        'error'                => 'enable_log_general',
+        'module-utm'           => 'enable_log_utm',
+        'ats'                  => 'enable_log_ats',
+        'onboarding'           => 'enable_log_onboarding',
+        'date_time_formatting' => 'enable_log_date_time',
+        // Future mappings can be added here as features adopt logging.
+    ];
+
+    // 3. Determine the controlling setting for this context
+    $setting_key = $context_map[ $context ] ?? 'enable_log_general'; // Default to General if unknown context
+
+    // 4. Check the specific module setting
+    // If the key exists in options, check its boolean value.
+    // We assume that if the key is missing from options (e.g. fresh install), it defaults to false (off).
+    if ( empty( $options[ $setting_key ] ) ) {
         return;
     }
 
