@@ -1,60 +1,52 @@
+# Developer Documentation
 
-## After Ticket Survey Development (v1.3.0)
+## Directory Module
 
-### Database Architecture
-*   **Self-Healing Installation:** The `Install` class now includes a self-healing check in `check_db_version()`. Instead of relying solely on version numbers, it explicitly queries the database schema (`SHOW COLUMNS`). If critical columns (like `prefill_key`) or tables are missing, it forces the installation logic to run. This prevents schema drift issues.
-*   **New Column:** A `prefill_key` (VARCHAR 50) column has been added to the `stackboost_ats_questions` table to store the URL parameter mapping for each question.
+### Overview
+The Directory module handles Staff, Locations, and Departments. It has been refactored to use a `DirectoryService` as the single source of truth for data access.
 
-### Smart Matching Logic (Fuzzy Logic)
-*   **Location:** `Shortcode.php` -> `render_question_field()`
-*   **Purpose:** To robustly select a Dropdown option based on a potentially inexact URL parameter value.
-*   **Algorithm:** "Best Match Wins"
-    1.  Iterates through all available options for the question.
-    2.  Calculates a **Score** for each option against the Input Value:
-        *   **Exact Match (100):** Case-insensitive string equality.
-        *   **Start Match (50 + Length):** The Option starts with the Input, or Input starts with Option.
-        *   **Contains Match (10 + Length):** The Option contains the Input, or Input contains Option.
-    3.  Selects the option with the highest score.
-    *   **Example:** Input "Philip Edwards" matches Option "Philip" (Score: 50+6) better than Option "Ed" (Score: 10+2).
+### Key Classes
+*   `StackBoost\ForSupportCandy\Services\DirectoryService`: The main service class. Use this for all data retrieval.
+*   `StackBoost\ForSupportCandy\Modules\Directory\Admin\Management`: Handles the CSV import/export and management UI.
+*   `StackBoost\ForSupportCandy\Modules\Directory\Shortcodes\DirectoryShortcode`: Renders the frontend directory table.
 
-## Directory Module Development (v1.2.14)
+### Data Model
+*   **Phone Numbers:** Stored as raw digits in post meta (`_stackboost_office_phone`, `_stackboost_mobile_phone`). Extensions are stored as part of the string if they were imported that way, but the formatting logic (`stackboost_format_phone_number`) handles cleaning this up for display.
+*   **Search Logic:** The `DirectoryService::get_staff_members()` method accepts a `search` argument. This search uses a special "phone-aware" logic where it strips non-numeric characters from the search string and compares it against phone fields if the query looks like a number.
 
-### Phone Number Handling
+### Helper Functions
+*   `stackboost_format_phone_number( $number )`: A global helper function located in `bootstrap.php`.
+    *   **Input:** Raw phone number string.
+    *   **Output:** HTML string containing the formatted number, a `tel:` link, and a copy-to-clipboard button.
+    *   **Usage:** Use this in any template or output buffer where a phone number needs to be displayed. Do not manually format phone numbers.
 
-*   **Central Formatting Function:** `stackboost_format_phone_number( string $phone, string $extension, string $copy_icon_svg ): string`
-    *   Located in `includes/functions.php`.
-    *   Used by both the Directory Shortcode (`DirectoryShortcode.php`) and the Modal Template (`directory-modal-content.php`).
-    *   **Logic:**
-        *   Generates an RFC 3966 compliant `tel:` URI (e.g., `tel:+15551234567;ext=890`).
-        *   Preserves the user-friendly display format.
-        *   Appends a copy icon `<span>`.
-        *   **Crucial:** Adds a `data-copy-text` attribute to the `<span>` containing the exact formatted display string.
+## After Ticket Survey (ATS)
 
-*   **Copy Functionality (`stackboost-directory.js`)**
-    *   **Event Delegation:** Listeners are attached to `document` to handle dynamic content (DataTables, Modals).
-    *   **Priority:** The script checks for `data-copy-text` first. If present, it uses that value. If not, it falls back to constructing the number from `data-phone` and `data-extension`.
-    *   **Clipboard API:** Uses `navigator.clipboard.writeText` with a robust `document.execCommand` fallback for older contexts or non-secure origins.
+### Overview
+The ATS module handles post-ticket surveys. It includes a custom question builder, frontend form rendering via shortcode, and a results reporting view.
 
-*   **DataTables Custom Search**
-    *   A custom filter is pushed to `$.fn.dataTable.ext.search` in `stackboost-directory.js`.
-    *   **Phone Column (Index 1):** Strips all non-digit characters (`\D`) from both the search input and the table cell data before comparing. This enables "fuzzy" phone search.
-    *   **Other Columns:** Uses standard substring matching (stripping HTML tags).
-    *   **Initialization:** The script hijacks the default DataTables search input (`unbind` default, `bind` custom) to trigger a redraw, which fires the custom filter.
+### Architecture
+*   **Admin UI:** The "Manage Questions" tab (`manage-questions-template.php`) uses a jQuery-based modal system for adding/editing questions. It now supports a `ticket_number` question type.
+*   **AJAX:** All form actions (Save, Delete, Reorder) are handled via `Ajax.php` to provide a seamless experience without page reloads.
+*   **Frontend Rendering:** `Shortcode.php` renders the form. For `ticket_number` questions, it renders a text input but enforces numeric validation server-side (`handle_submission`).
+*   **Data Storage:**
+    *   `wp_stackboost_ats_questions`: Stores question definitions.
+    *   `wp_stackboost_ats_dropdown_options`: Stores options for dropdown questions.
+    *   `wp_stackboost_ats_survey_submissions`: Stores metadata for each user submission.
+    *   `wp_stackboost_ats_survey_answers`: Stores the actual answers linked to submissions and questions.
 
-### Troubleshooting & Robustness
+### URL Prefill Logic
+*   The `Shortcode.php` class handles pre-filling.
+*   It checks for a `prefill_key` property on the question object.
+*   If found, it looks for that key in `$_GET`.
+*   **Smart Matching (Dropdowns):** The logic in `Shortcode::render_question_field` calculates a "match score" based on exact match, prefix match, and substring match to select the most appropriate option from the URL value.
 
-*   **DataTables Crash Protection:**
-    *   DataTables will crash (`cloneNode` error) if initialized on a hidden element (e.g., inside a non-active tab) when `responsive: true` is set.
-    *   **Fix:** `stackboost-directory.js` wraps initialization in a `try...catch`. If the responsive init fails, it automatically falls back to a standard initialization (`responsive: false`, `autoWidth: false`) and logs a warning.
-    *   **Listeners:** Click listeners are defined *before* the DataTables init block to ensure they work even if the table fails to render enhanced features.
+## Unified Ticket Macro (UTM)
 
-*   **Logging:**
-    *   Frontend logging uses `sbLog()` and `sbError()` wrappers.
-    *   These respect the `debug_enabled` flag passed from `WordPress.php` (derived from the `enable_logging` setting).
+### Overview
+The UTM module generates a standardized HTML summary of a ticket for use in email notifications or external systems.
 
-## After-Hours Message (v1.2.9)
-
-### WYSIWYG Editor Customization
-*   The `AfterHoursNotice` module overrides the standard `render_wp_editor_field` method.
-*   **Teeny Mode Override:** To provide rich formatting options (Text Color, HR) within the compact `teeny` editor mode, the module explicitly loads the `textcolor` and `hr` TinyMCE plugins via the `tinymce` configuration array.
-*   **Toolbar Configuration:** The `toolbar1` setting is manually defined to include these custom buttons alongside standard formatting options.
+### Formatting Rules
+*   Field names are forced to `white-space: nowrap` to prevent awkward wrapping.
+*   Trailing colons are stripped from field labels before display.
+*   Empty fields (or fields with "Not Applicable" or whitespace only) are automatically filtered out unless explicitly configured otherwise.

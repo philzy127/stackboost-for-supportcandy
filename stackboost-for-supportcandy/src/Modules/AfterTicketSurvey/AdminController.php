@@ -52,7 +52,6 @@ class AdminController {
                 <a href="?page=stackboost-ats&tab=questions" class="nav-tab <?php if($current_tab === 'questions') echo 'nav-tab-active'; ?>"><?php _e('Manage Questions', 'stackboost-for-supportcandy'); ?></a>
                 <a href="?page=stackboost-ats&tab=submissions" class="nav-tab <?php if($current_tab === 'submissions') echo 'nav-tab-active'; ?>"><?php _e('Manage Submissions', 'stackboost-for-supportcandy'); ?></a>
                 <a href="?page=stackboost-ats&tab=results" class="nav-tab <?php if($current_tab === 'results') echo 'nav-tab-active'; ?>"><?php _e('View Results', 'stackboost-for-supportcandy'); ?></a>
-                <a href="?page=stackboost-ats&tab=settings" class="nav-tab <?php if($current_tab === 'settings') echo 'nav-tab-active'; ?>"><?php _e('Settings', 'stackboost-for-supportcandy'); ?></a>
             </nav>
             <div class="tab-content" style="margin-top: 20px;">
             <?php
@@ -60,7 +59,6 @@ class AdminController {
                     case 'questions': $this->render_questions_tab(); break;
                     case 'submissions': $this->render_submissions_tab(); break;
                     case 'results': $this->render_results_tab(); break;
-                    case 'settings': $this->render_settings_tab(); break;
                     default: $this->render_main_tab(); break;
                 }
             ?>
@@ -134,25 +132,8 @@ class AdminController {
 
     private function render_results_tab() {
         global $wpdb;
-        $options = get_option( 'stackboost_settings' );
-        $ticket_question_id = ! empty( $options['ats_ticket_question_id'] ) ? (int) $options['ats_ticket_question_id'] : 0;
-        $ticket_url_base = ! empty( $options['ats_ticket_url_base'] ) ? $options['ats_ticket_url_base'] : '';
-        $questions = $wpdb->get_results( "SELECT id, question_text, report_heading, question_type FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
+        $questions = $wpdb->get_results( "SELECT id, question_text, report_heading, question_type, prefill_key FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
         $submissions = $wpdb->get_results( "SELECT s.*, u.display_name FROM {$this->survey_submissions_table_name} s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID ORDER BY submission_date DESC", ARRAY_A );
         include __DIR__ . '/Admin/view-results-template.php';
-    }
-
-    private function render_settings_tab() {
-        ?>
-        <h2><?php _e('After Ticket Survey Settings', 'stackboost-for-supportcandy'); ?></h2>
-        <form method="post" action="options.php">
-            <?php
-                settings_fields( 'stackboost_settings' );
-                echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-ats-settings">';
-                do_settings_sections( 'stackboost-ats-settings' );
-                submit_button();
-            ?>
-        </form>
-        <?php
     }
 }

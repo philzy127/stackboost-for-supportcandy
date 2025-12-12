@@ -1,4 +1,13 @@
 
+## After Ticket Survey Enhancements (v1.3.1)
+
+### Streamlined Configuration
+*   **Settings Tab Removed:** The obsolete "Settings" tab has been removed. All necessary configuration is now handled directly within the "Manage Questions" interface.
+*   **New "Ticket Number" Question Type:**
+    *   To link a survey answer to a SupportCandy ticket, simply select the **"Ticket Number"** type when creating or editing a question.
+    *   **Automatic Linking:** In the "View Results" tab, any answer to a "Ticket Number" question will automatically be converted into a clickable link to the ticket.
+    *   **Validation:** This field accepts any input on the frontend (to prevent browser issues with number fields), but strictly enforces **numeric-only** values on submission. Users will see an error message if they attempt to submit non-numeric data.
+
 ## After Ticket Survey Enhancements (v1.3.0)
 
 ### Modernized "Manage Questions" Interface

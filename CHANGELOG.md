@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2025-12-14
+
+### Added
+- **ATS Ticket Number Type:** Introduced a new "Ticket Number" question type. This simplifies configuration by automatically enabling clickable ticket links in the results view without needing manual ID mapping.
+- **ATS Validation:** Implemented strict server-side validation for "Ticket Number" fields to ensuring only numeric values are saved. The frontend input remains a text field to avoid browser-specific number input quirks.
+
+### Removed
+- **ATS Settings Tab:** Removed the obsolete "Settings" tab and its associated backend logic. Configuration is now streamlined within the "Manage Questions" interface.
+
 ## [1.3.0] - 2025-12-11
 
 ### Added

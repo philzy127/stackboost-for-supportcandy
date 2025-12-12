@@ -72,6 +72,7 @@
             <div class="form-group" style="margin-top:10px;">
                 <label for="question_type" style="display:block; margin-bottom:5px;"><strong><?php _e('Question Type:', 'stackboost-for-supportcandy'); ?></strong></label>
                 <select id="question_type" name="question_type" class="widefat">
+                    <option value="ticket_number"><?php _e('Ticket Number', 'stackboost-for-supportcandy'); ?></option>
                     <option value="short_text"><?php _e('Short Text', 'stackboost-for-supportcandy'); ?></option>
                     <option value="long_text"><?php _e('Long Text', 'stackboost-for-supportcandy'); ?></option>
                     <option value="rating"><?php _e('Rating (1-5)', 'stackboost-for-supportcandy'); ?></option>
