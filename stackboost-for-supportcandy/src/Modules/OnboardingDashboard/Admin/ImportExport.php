@@ -106,28 +106,37 @@ class ImportExport {
 				});
 
 				// Migrate Data
-				$('#migrateDataBtn').on('click', function() {
-					if (!confirm('<?php esc_html_e( 'Are you sure you want to migrate all legacy data? This action cannot be undone.', 'stackboost-for-supportcandy' ); ?>')) {
-						return;
-					}
-					var btn = $(this);
-					var msg = $('#migrationMessage');
-					btn.prop('disabled', true).text('Migrating...');
+				$('#migrateDataBtn').on('click', function(e) {
+                    e.preventDefault();
+                    var btn = $(this);
 
-					$.post(ajaxurl, {
-						action: 'stackboost_onboarding_migrate_data',
-						nonce: '<?php echo wp_create_nonce( 'stackboost_onboarding_settings_nonce' ); ?>'
-					}, function(response) {
-						msg.removeClass('notice-error notice-success').hide();
-						if (response.success) {
-							msg.addClass('notice-success').html('<p>' + response.data.message + '</p>').show();
-							btn.text('Migration Complete');
-							setTimeout(function() { location.reload(); }, 2000);
-						} else {
-							btn.prop('disabled', false).text('<?php esc_html_e( 'Migrate Legacy Data Now', 'stackboost-for-supportcandy' ); ?>');
-							msg.addClass('notice-error').html('<p>' + response.data.message + '</p>').show();
-						}
-					});
+                    stackboostConfirm(
+                        '<?php echo esc_js( __( 'Are you sure you want to migrate all legacy data? This action cannot be undone.', 'stackboost-for-supportcandy' ) ); ?>',
+                        '<?php echo esc_js( __( 'Confirm Migration', 'stackboost-for-supportcandy' ) ); ?>',
+                        function() {
+                            var msg = $('#migrationMessage');
+                            btn.prop('disabled', true).text('Migrating...');
+
+                            $.post(ajaxurl, {
+                                action: 'stackboost_onboarding_migrate_data',
+                                nonce: '<?php echo wp_create_nonce( 'stackboost_onboarding_settings_nonce' ); ?>'
+                            }, function(response) {
+                                msg.removeClass('notice-error notice-success').hide();
+                                if (response.success) {
+                                    msg.addClass('notice-success').html('<p>' + response.data.message + '</p>').show();
+                                    btn.text('Migration Complete');
+                                    setTimeout(function() { location.reload(); }, 2000);
+                                } else {
+                                    btn.prop('disabled', false).text('<?php esc_html_e( 'Migrate Legacy Data Now', 'stackboost-for-supportcandy' ); ?>');
+                                    msg.addClass('notice-error').html('<p>' + response.data.message + '</p>').show();
+                                }
+                            });
+                        },
+                        null,
+                        '<?php echo esc_js( __( 'Yes, Migrate', 'stackboost-for-supportcandy' ) ); ?>',
+                        '<?php echo esc_js( __( 'Cancel', 'stackboost-for-supportcandy' ) ); ?>',
+                        true
+                    );
 				});
 			});
 		</script>

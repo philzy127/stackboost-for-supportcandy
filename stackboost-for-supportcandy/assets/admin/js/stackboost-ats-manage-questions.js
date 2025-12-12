@@ -3,9 +3,11 @@ jQuery(document).ready(function($) {
     var form = $('#stackboost-ats-question-form');
     var tableBody = $('#stackboost-ats-questions-list tbody');
 
-    // Central Logging Helper
+    // Central Logging Helper - Wraps global utility
     function log(message, context) {
-        if (stackboost_ats_manage.diagnostic_log_enabled) {
+        if (typeof stackboost_log === 'function') {
+            stackboost_log('[StackBoost ATS] ' + message, context);
+        } else if (stackboost_ats_manage.diagnostic_log_enabled) {
             console.log('[StackBoost ATS] ' + message, context || '');
         }
     }
@@ -130,7 +132,7 @@ jQuery(document).ready(function($) {
                 modal.dialog('open');
             } else {
                 log('Error fetching question.', response);
-                alert('Error fetching question: ' + response.data);
+                stackboostAlert('Error fetching question: ' + response.data, 'Error');
             }
         });
     });
@@ -138,26 +140,35 @@ jQuery(document).ready(function($) {
     // Delete Question
     $(document).on('click', '.stackboost-ats-delete-question', function(e) {
         e.preventDefault();
-        if (!confirm('Are you sure you want to delete this question?')) return;
-
         var row = $(this).closest('tr');
         var questionId = $(this).data('id');
-        log('Delete Question requested.', questionId);
 
-        $.post(stackboost_ats_manage.ajax_url, {
-            action: 'stackboost_ats_delete_question',
-            nonce: stackboost_ats_manage.nonce,
-            question_id: questionId
-        }, function(response) {
-            if (response.success) {
-                log('Question deleted successfully.');
-                row.fadeOut(300, function() { $(this).remove(); });
-                showStatus('Question deleted.', 'success');
-            } else {
-                log('Error deleting question.', response);
-                alert('Error deleting question: ' + response.data);
-            }
-        });
+        stackboostConfirm(
+            'Are you sure you want to delete this question?',
+            'Confirm Delete',
+            function() {
+                log('Delete Question requested.', questionId);
+
+                $.post(stackboost_ats_manage.ajax_url, {
+                    action: 'stackboost_ats_delete_question',
+                    nonce: stackboost_ats_manage.nonce,
+                    question_id: questionId
+                }, function(response) {
+                    if (response.success) {
+                        log('Question deleted successfully.');
+                        row.fadeOut(300, function() { $(this).remove(); });
+                        showStatus('Question deleted.', 'success');
+                    } else {
+                        log('Error deleting question.', response);
+                        stackboostAlert('Error deleting question: ' + response.data, 'Error');
+                    }
+                });
+            },
+            null, // No action on cancel
+            'Yes, Delete',
+            'Cancel',
+            true // isDanger
+        );
     });
 
     function saveQuestion() {
@@ -182,7 +193,7 @@ jQuery(document).ready(function($) {
                 location.reload(); // Reload to refresh list simply and robustly
             } else {
                 log('Error saving question.', response);
-                alert('Error saving question: ' + response.data);
+                stackboostAlert('Error saving question: ' + response.data, 'Error');
             }
         });
     }

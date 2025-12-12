@@ -33,9 +33,9 @@ The plugin features a centralized, granular logging system for diagnostics.
 *   **Central Function:** `stackboost_log( $message, $context = 'general' )` defined in `bootstrap.php`.
 *   **Contexts:** Logs are categorized by context (e.g., `'module-utm'`, `'onboarding'`).
 *   **Configuration:**
-    *   A **Master Switch** (`diagnostic_log_enabled`) controls the entire system.
-    *   **Module Toggles** (`enable_log_utm`, etc.) control logging for specific contexts.
-    *   The `stackboost_log` function automatically maps the `context` argument to the corresponding setting to determine if the log should be written.
+    *   **Master Switch (`diagnostic_log_enabled`):** Controls ALL console logging (client-side) and enables the system globally. If this is OFF, no logs (file or console) are generated.
+    *   **Module Toggles (`enable_log_module`):** Control FILE logging for specific contexts. If the Master Switch is ON but a module toggle is OFF, logs for that module will appear in the browser console (if implemented in JS) but NOT in the `debug.log` file.
+    *   The `stackboost_log` function automatically maps the `context` argument to the corresponding setting to determine if the log should be written to the file.
 *   **Log Location:** Logs are written to `wp-content/uploads/stackboost-logs/debug.log`.
 
 **Usage Example:**
@@ -43,6 +43,14 @@ The plugin features a centralized, granular logging system for diagnostics.
 ```php
 stackboost_log( 'Starting import process...', 'directory-import' );
 ```
+
+### Modal System
+
+The plugin includes a centralized modal system to replace native browser `alert()` and `confirm()` dialogs.
+
+*   **Helper Functions:** `stackboostAlert(message, title, callback)` and `stackboostConfirm(message, title, onConfirm, onCancel, confirmText, cancelText, isDanger)`.
+*   **Assets:** Defined in `assets/js/stackboost-util.js` and `assets/css/stackboost-util.css`.
+*   **Usage:** Enqueue `stackboost-util` script and style to use these functions.
 
 ### Settings API
 

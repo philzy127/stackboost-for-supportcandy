@@ -16,8 +16,11 @@ The **General Settings** page provides an overview of the plugin status and allo
 
 The **Diagnostics** page (formerly "Tools") gives you control over the system's health and debugging features.
 
-*   **Enable Diagnostic Log:** This master switch turns on the logging system. Keep this OFF unless you are troubleshooting an issue.
-*   **Module Logging:** This section allows you to turn on logging for specific features (e.g., "Unified Ticket Macro" or "Company Directory"). This is useful for troubleshooting a specific problem without generating too much noise.
+*   **Enable Diagnostic Log:** This master switch controls the entire logging system.
+    *   **Console Logging:** When this switch is ON, debug messages will appear in your browser's developer console for all modules.
+    *   **File Logging:** This switch must be ON for any logs to be written to the server's log file.
+*   **Module Logging:** This section allows you to enable **file logging** for specific features (e.g., "Unified Ticket Macro" or "Company Directory").
+    *   **How it works:** If the Master Switch is ON, you can selectively turn on file logging for individual modules to troubleshoot specific issues without cluttering the log file with unrelated data.
 *   **Log Actions:**
     *   **Download Log:** Download the current debug log file to share with support.
     *   **Clear Log:** Instantly clear the log file to start fresh.

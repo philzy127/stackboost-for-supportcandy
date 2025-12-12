@@ -267,7 +267,7 @@ class WordPress {
 
 			// Check for debug mode from global settings
 			$settings      = get_option( 'stackboost_settings', [] );
-			$debug_enabled = isset( $settings['enable_logging'] ) && '1' === $settings['enable_logging'];
+			$debug_enabled = isset( $settings['diagnostic_log_enabled'] ) && '1' === $settings['diagnostic_log_enabled'];
 
 			wp_localize_script(
 				'stackboost-util-js',
@@ -315,7 +315,7 @@ class WordPress {
 			// Check for debug mode from global settings (re-fetch if not already fetched)
 			if ( ! isset( $debug_enabled ) ) {
 				$settings      = get_option( 'stackboost_settings', [] );
-				$debug_enabled = isset( $settings['enable_logging'] ) && '1' === $settings['enable_logging'];
+				$debug_enabled = isset( $settings['diagnostic_log_enabled'] ) && '1' === $settings['diagnostic_log_enabled'];
 			}
 
 			wp_localize_script(

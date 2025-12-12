@@ -9,10 +9,11 @@ All notable changes to this project will be documented in this file.
     - **Diagnostics Page:** Renamed the "Tools" admin menu item to "Diagnostics" to better reflect its purpose.
     - **Module Toggles:** Added a "Module Logging" section to the Diagnostics settings page, allowing administrators to enable/disable logging for individual modules (e.g., General, UTM, Onboarding, Ticket View).
     - **Master Switch:** A master "Enable Diagnostic Log" switch controls the entire logging system.
-- **Logging Standardization:** Updated the `stackboost_log()` function to support logging contexts and respect the new module-specific settings. All modules have been instrumented to use this central logger with appropriate context tags.
+- **Modern Modal System:** Implemented a custom, styled modal system to replace native browser `alert()` and `confirm()` dialogs across the admin interface. This provides a consistent and modern user experience.
 
 ### Changed
 - **Menu Structure:** Renamed the "Tools" submenu to "Diagnostics".
+- **UI Refinement:** Replaced all native browser alerts and confirmation dialogs with the new StackBoost modal system in the Directory, Onboarding Dashboard, ATS, and Diagnostics modules.
 
 ### Fixed
 - **Logging Consistency:** Standardized logging across the plugin. Replaced disparate log calls with the centralized `stackboost_log()` function, ensuring all debug information is captured in a single, controlled log file.

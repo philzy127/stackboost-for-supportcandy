@@ -73,12 +73,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 3000);
 
             } else {
-                alert('Error: ' + result.data);
+                stackboostAlert('Error: ' + result.data, 'Error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An unexpected error occurred.');
+            stackboostAlert('An unexpected error occurred.', 'Error');
         });
     });
 });

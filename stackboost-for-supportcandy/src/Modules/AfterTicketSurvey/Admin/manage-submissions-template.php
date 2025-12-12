@@ -9,7 +9,7 @@
 <p><?php _e('Select one or more submissions below and click "Delete" to permanently remove them.', 'stackboost-for-supportcandy'); ?></p>
 
 <?php if ( ! empty( $submissions ) ) : ?>
-    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="stackboost-ats-submissions-form">
         <input type="hidden" name="action" value="stackboost_ats_admin_actions">
         <input type="hidden" name="form_action" value="manage_submissions">
         <?php wp_nonce_field( 'stackboost_ats_manage_submissions_nonce' ); ?>
@@ -35,7 +35,7 @@
             </tbody>
         </table>
         <br>
-        <button type="submit" class="button button-primary" onclick="return confirm('<?php _e('Are you sure you want to delete the selected submissions? This cannot be undone.', 'stackboost-for-supportcandy'); ?>');">
+        <button type="submit" class="button button-primary" id="stackboost-delete-submissions-btn">
             <?php _e('Delete Selected Submissions', 'stackboost-for-supportcandy'); ?>
         </button>
     </form>
@@ -43,6 +43,23 @@
         jQuery(document).ready(function($){
             $('#stackboost-ats-select-all').on('change', function(){
                 $('input[name="selected_submissions[]"]').prop('checked', $(this).prop('checked'));
+            });
+
+            $('#stackboost-delete-submissions-btn').on('click', function(e) {
+                e.preventDefault();
+                var $form = $('#stackboost-ats-submissions-form');
+
+                stackboostConfirm(
+                    '<?php echo esc_js( __( 'Are you sure you want to delete the selected submissions? This cannot be undone.', 'stackboost-for-supportcandy' ) ); ?>',
+                    '<?php echo esc_js( __( 'Confirm Delete', 'stackboost-for-supportcandy' ) ); ?>',
+                    function() {
+                        $form.submit();
+                    },
+                    null,
+                    '<?php echo esc_js( __( 'Yes, Delete', 'stackboost-for-supportcandy' ) ); ?>',
+                    '<?php echo esc_js( __( 'Cancel', 'stackboost-for-supportcandy' ) ); ?>',
+                    true
+                );
             });
         });
     </script>
