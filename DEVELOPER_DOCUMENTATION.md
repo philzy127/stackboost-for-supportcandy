@@ -60,6 +60,16 @@ All settings are centralized through `src/WordPress/Admin/Settings.php`.
 *   **Sanitization:** A central `sanitize_settings` method handles validation for all fields, using a whitelist approach keyed by the admin page slug.
 *   **Menu Management:** The `get_menu_config()` method in `Settings.php` is the single source of truth for the admin menu structure.
 
+## Module Specifics
+
+### After Ticket Survey (ATS)
+
+*   **Tables:** `wp_stackboost_ats_questions` (contains question definitions).
+*   **Schema Update:** The `is_readonly_prefill` column (`tinyint(1)`) was added to the questions table in version 1.5. The `Install` class handles schema updates via `dbDelta` and includes self-healing logic in `check_db_version()`.
+*   **Validation:**
+    *   **Highlander Rule:** Implemented in `Ajax.php` (backend) and `stackboost-ats-manage-questions.js` (frontend) to strictly limit one 'ticket_number' question per form.
+    *   **Frontend Read-only:** `Shortcode.php` validates pre-filled values against question constraints (numeric for tickets, existing options for dropdowns) before rendering the field as read-only (`pointer-events: none`).
+
 ## Deployment
 
 ### Versioning

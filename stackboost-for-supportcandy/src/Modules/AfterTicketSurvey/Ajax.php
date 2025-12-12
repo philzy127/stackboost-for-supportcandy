@@ -116,6 +116,7 @@ class Ajax {
             'question_text' => sanitize_text_field( $_POST['question_text'] ),
             'question_type' => sanitize_text_field( $_POST['question_type'] ),
             'is_required'   => isset( $_POST['is_required'] ) && $_POST['is_required'] === '1' ? 1 : 0,
+            'is_readonly_prefill' => isset( $_POST['is_readonly_prefill'] ) && $_POST['is_readonly_prefill'] === '1' ? 1 : 0,
             'sort_order'    => isset( $_POST['sort_order'] ) ? intval( $_POST['sort_order'] ) : ($question_id ? 0 : $current_max_order + 1),
             'prefill_key'   => sanitize_text_field( $_POST['prefill_key'] ?? '' )
         ];
@@ -126,6 +127,16 @@ class Ajax {
 
         if ( empty( $data['question_text'] ) ) {
             wp_send_json_error( 'Question text is required.' );
+        }
+
+        // Highlander Rule: Only one 'ticket_number' question allowed per form.
+        if ( $data['question_type'] === 'ticket_number' ) {
+            $existing_id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$this->questions_table_name} WHERE question_type = %s", 'ticket_number' ) );
+            // If one exists AND (we are creating new OR we are updating a different question)
+            if ( $existing_id && ( ! $question_id || $existing_id != $question_id ) ) {
+                 stackboost_log( "ATS save_question failed: Highlander Rule violated. Existing ID: $existing_id", 'ats' );
+                 wp_send_json_error( 'Only one Ticket Number question is allowed per form.' );
+            }
         }
 
         if ( $question_id ) {

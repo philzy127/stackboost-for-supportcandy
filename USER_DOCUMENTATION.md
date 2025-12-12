@@ -53,6 +53,8 @@ Create consistent, formatted ticket updates.
 Collect feedback from your users.
 
 *   **Questions:** Design your survey using the "Manage Questions" tab.
+    *   **Highlander Rule:** You can now only add one **Ticket Number** field per survey. If you attempt to add a second one, the option will be disabled.
+    *   **Read-only if Pre-filled:** A new option in the question settings allows you to lock a field if it is populated via a URL parameter (e.g., `?ticket_id=123`). This is useful for preventing users from changing critical data like ticket numbers or technician names. The field will remain uneditable but will still be submitted with the form.
 *   **Settings:** Configure color schemes and behavior.
 *   **Integration:** The survey link is automatically added to closed ticket emails if configured.
 
