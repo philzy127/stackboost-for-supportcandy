@@ -127,26 +127,32 @@
             const $btn = $(this);
             const originalText = $btn.text();
 
-            if (!confirm('Are you sure you want to clear the diagnostic log?')) {
-                return;
-            }
+            stackboostConfirm(
+                'Are you sure you want to clear the diagnostic log?',
+                'Clear Log',
+                function() {
+                    $btn.text('Clearing...').prop('disabled', true);
 
-            $btn.text('Clearing...').prop('disabled', true);
-
-            $.post(stackboost_admin_ajax.ajax_url, {
-                action: 'stackboost_clear_log',
-                nonce: stackboost_admin_ajax.nonce
-            }, function (response) {
-                if (response.success) {
-                    window.stackboost_show_toast(response.data, 'success');
-                } else {
-                    alert('Error: ' + (response.data || 'Unknown error'));
-                }
-            }).fail(function () {
-                alert('An unexpected error occurred.');
-            }).always(function () {
-                $btn.text(originalText).prop('disabled', false);
-            });
+                    $.post(stackboost_admin_ajax.ajax_url, {
+                        action: 'stackboost_clear_log',
+                        nonce: stackboost_admin_ajax.nonce
+                    }, function (response) {
+                        if (response.success) {
+                            window.stackboost_show_toast(response.data, 'success');
+                        } else {
+                            stackboostAlert('Error: ' + (response.data || 'Unknown error'), 'Error');
+                        }
+                    }).fail(function () {
+                        stackboostAlert('An unexpected error occurred.', 'Error');
+                    }).always(function () {
+                        $btn.text(originalText).prop('disabled', false);
+                    });
+                },
+                null, // Cancel callback
+                'Yes, Clear It',
+                'Cancel',
+                true // isDanger
+            );
         });
     });
 })(jQuery);
