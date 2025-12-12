@@ -68,7 +68,32 @@ class Shortcode {
 			return;
 		}
 
-		$questions = $wpdb->get_results( "SELECT id FROM {$this->questions_table_name}", ARRAY_A );
+		$questions = $wpdb->get_results( "SELECT id, question_type FROM {$this->questions_table_name}", ARRAY_A );
+
+		// VALIDATION PHASE
+		$errors = [];
+		foreach ( $questions as $question ) {
+			$input_name = 'stackboost_ats_q_' . $question['id'];
+			if ( isset( $_POST[ $input_name ] ) ) {
+				$val = is_array( $_POST[ $input_name ] ) ? implode( '', $_POST[ $input_name ] ) : $_POST[ $input_name ];
+				if ( 'ticket_number' === $question['question_type'] && ! is_numeric( $val ) ) {
+					$errors[] = "Ticket Number must be numeric.";
+				}
+			}
+		}
+
+		if ( ! empty( $errors ) ) {
+			// Clean up the empty submission created above
+			$wpdb->delete( $this->survey_submissions_table_name, [ 'id' => $submission_id ] );
+
+			foreach ( $errors as $err ) {
+				echo '<div class="stackboost-ats-error-message">' . esc_html( $err ) . '</div>';
+			}
+			$this->display_form();
+			return;
+		}
+
+		// SAVING PHASE
 		foreach ( $questions as $question ) {
 			$input_name = 'stackboost_ats_q_' . $question['id'];
 			if ( isset( $_POST[ $input_name ] ) ) {
@@ -141,8 +166,12 @@ class Shortcode {
 		$required_attr = $question['is_required'] ? 'required' : '';
 		$input_value   = '';
 
+		// 0. Sticky Input (Validation Errors)
+		if ( isset( $_POST[ $input_name ] ) ) {
+			$input_value = sanitize_text_field( is_array( $_POST[ $input_name ] ) ? implode( ',', $_POST[ $input_name ] ) : $_POST[ $input_name ] );
+		}
 		// 1. Check for specific prefill key first (Generic logic)
-		if ( ! empty( $question['prefill_key'] ) && isset( $_GET[ $question['prefill_key'] ] ) ) {
+		elseif ( ! empty( $question['prefill_key'] ) && isset( $_GET[ $question['prefill_key'] ] ) ) {
 			$input_value = sanitize_text_field( $_GET[ $question['prefill_key'] ] );
 		}
 		// 2. Fallback to legacy logic
@@ -151,6 +180,9 @@ class Shortcode {
 		}
 
 		switch ( $question['question_type'] ) {
+			case 'ticket_number':
+				echo "<input type='number' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
+				break;
 			case 'short_text':
 				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
 				break;

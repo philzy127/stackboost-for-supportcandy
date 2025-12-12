@@ -36,7 +36,7 @@
             $answers = $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM {$wpdb->prefix}stackboost_ats_survey_answers WHERE submission_id = %d", $sub['id'] ), OBJECT_K );
             foreach ( $questions as $q ) {
                 $answer = $answers[ $q['id'] ]->answer_value ?? '';
-                if ( isset( $q['prefill_key'] ) && $q['prefill_key'] === 'ticket_id' && is_numeric( $answer ) ) {
+                if ( $q['question_type'] === 'ticket_number' && is_numeric( $answer ) ) {
                     echo '<td><a href="' . esc_url( \WPSC_Functions::get_ticket_url( $answer, '1' ) ) . '" target="_blank">' . esc_html( $answer ) . '</a></td>';
                 } else {
                     echo '<td>' . nl2br(esc_html( $answer )) . '</td>';
