@@ -181,7 +181,7 @@ class Shortcode {
 
 		switch ( $question['question_type'] ) {
 			case 'ticket_number':
-				echo "<input type='number' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
+				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
 				break;
 			case 'short_text':
 				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr}>";
