@@ -14,11 +14,11 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
     $current_tier = License::get_tier();
 
     $features_by_tier = [
-        'free' => [
+        'lite' => [
             'qol_enhancements',
             'after_hours_notice',
         ],
-        'plus' => [
+        'pro' => [
             'qol_enhancements',
             'after_hours_notice',
             'conditional_views',
@@ -26,7 +26,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
             'after_ticket_survey',
             'unified_ticket_macro',
         ],
-        'operations_suite' => [
+        'business' => [
             'qol_enhancements',
             'after_hours_notice',
             'conditional_views',
