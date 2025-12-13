@@ -616,8 +616,11 @@ class Settings {
 				mask-repeat: no-repeat;
 				-webkit-mask-position: center;
 				mask-position: center;
-				-webkit-mask-size: contain;
-				mask-size: contain;
+				-webkit-mask-size: 16px;
+				mask-size: 16px;
+			}
+			#wpadminbar .dashicons-stackboost {
+				top: 2px;
 			}
 		</style>
 		<?php

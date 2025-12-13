@@ -95,7 +95,7 @@ final class Plugin {
 		// Add the main "StackBoost" parent menu item.
 		$wp_admin_bar->add_node( [
 			'id'    => 'stackboost-menu',
-			'title' => '<span class="ab-icon dashicons-superhero"></span>' . __( 'StackBoost', 'stackboost-for-supportcandy' ),
+			'title' => '<span class="ab-icon dashicons-stackboost"></span>' . __( 'StackBoost', 'stackboost-for-supportcandy' ),
 			'href'  => admin_url( 'admin.php?page=' . $main_menu_slug ),
 		] );
 
