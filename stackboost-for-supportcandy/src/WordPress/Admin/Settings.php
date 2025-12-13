@@ -618,9 +618,19 @@ class Settings {
 				mask-position: center;
 				-webkit-mask-size: 16px;
 				mask-size: 16px;
+				display: inline-block;
+				width: 20px;
+				height: 20px;
+				vertical-align: middle;
 			}
 			#wpadminbar .dashicons-stackboost {
-				top: 2px;
+				background-color: #a0a5aa;
+				top: auto;
+				margin-top: 4px;
+			}
+			#wpadminbar .quicklinks .menupop:hover .dashicons-stackboost,
+			#wpadminbar .quicklinks .menupop.hover .dashicons-stackboost {
+				background-color: #72aee6;
 			}
 		</style>
 		<?php
