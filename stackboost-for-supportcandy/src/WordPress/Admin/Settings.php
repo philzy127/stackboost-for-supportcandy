@@ -219,6 +219,7 @@ class Settings {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+            <p><?php printf( esc_html__( 'StackBoost Version: %s', 'stackboost-for-supportcandy' ), STACKBOOST_VERSION ); ?></p>
 
 			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
 				<div class="notice notice-info inline">
