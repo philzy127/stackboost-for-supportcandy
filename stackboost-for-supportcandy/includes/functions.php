@@ -13,37 +13,44 @@ use StackBoost\ForSupportCandy\Core\License;
 function stackboost_is_feature_active( string $feature_slug ): bool {
     $current_tier = License::get_tier();
 
-    $features_by_tier = [
-        'lite' => [
-            'qol_enhancements',
-            'after_hours_notice',
-        ],
-        'pro' => [
-            'qol_enhancements',
-            'after_hours_notice',
-            'conditional_views',
-            'queue_macro',
-            'after_ticket_survey',
-            'unified_ticket_macro',
-        ],
-        'business' => [
-            'qol_enhancements',
-            'after_hours_notice',
-            'conditional_views',
-            'queue_macro',
-            'after_ticket_survey',
-            'unified_ticket_macro',
-            'onboarding_dashboard', // Coming soon
-            'staff_directory',      // Coming soon
-        ],
+    // Define features exclusive to each tier.
+    // Logic below will handle inheritance (Pro gets Lite features, etc.)
+
+    $features_lite = [
+        'qol_enhancements',
+        'after_hours_notice',
+        'date_time_formatting',
     ];
 
-    // Check if the tier exists and if the feature is in the list for that tier.
-    if ( isset( $features_by_tier[ $current_tier ] ) ) {
-        return in_array( $feature_slug, $features_by_tier[ $current_tier ], true );
+    $features_pro = [
+        'conditional_views',
+        'queue_macro',
+        'after_ticket_survey',
+        'unified_ticket_macro',
+    ];
+
+    $features_business = [
+        'onboarding_dashboard',
+        'staff_directory',
+    ];
+
+    // Build the list of active features based on the current tier.
+    $active_features = [];
+
+    // Lite Tier (Base)
+    $active_features = array_merge( $active_features, $features_lite );
+
+    // Pro Tier (Includes Lite)
+    if ( in_array( $current_tier, [ 'pro', 'business' ], true ) ) {
+        $active_features = array_merge( $active_features, $features_pro );
     }
 
-    return false;
+    // Business Tier (Includes Pro & Lite)
+    if ( 'business' === $current_tier ) {
+        $active_features = array_merge( $active_features, $features_business );
+    }
+
+    return in_array( $feature_slug, $active_features, true );
 }
 
 /**
