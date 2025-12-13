@@ -4,7 +4,7 @@
  * Description: A collection of enhancements for the SupportCandy plugin, rebranded and refactored.
  * Version: 1.3.3
  * Author: StackBoost
- * Author URI: https://example.com
+ * Author URI: https://stackboost.net
  * Text Domain: stackboost-for-supportcandy
  * Domain Path: /languages
  */
