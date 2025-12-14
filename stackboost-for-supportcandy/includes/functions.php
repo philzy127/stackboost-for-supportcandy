@@ -50,7 +50,17 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
         $active_features = array_merge( $active_features, $features_business );
     }
 
-    return in_array( $feature_slug, $active_features, true );
+    $is_active = in_array( $feature_slug, $active_features, true );
+
+    // Diagnostic Logging
+    if ( function_exists( 'stackboost_log' ) ) {
+        stackboost_log(
+            sprintf( 'Checking feature "%s" for tier "%s". Result: %s', $feature_slug, $current_tier, $is_active ? 'ACTIVE' : 'INACTIVE' ),
+            'core'
+        );
+    }
+
+    return $is_active;
 }
 
 /**

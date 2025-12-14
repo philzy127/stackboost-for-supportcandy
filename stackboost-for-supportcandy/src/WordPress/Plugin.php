@@ -58,17 +58,51 @@ final class Plugin {
 		Settings::get_instance();
 
 		// Load all module adapters.
-		$this->modules['ticket_view']         = TicketView\WordPress::get_instance();
-		$this->modules['qol_enhancements']    = QolEnhancements\WordPress::get_instance();
-		$this->modules['after_hours_notice']  = AfterHoursNotice\WordPress::get_instance();
-		$this->modules['conditional_views']   = ConditionalViews\WordPress::get_instance();
-		$this->modules['queue_macro']         = QueueMacro\WordPress::get_instance();
-		$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
-		$this->modules['directory']           = Directory\WordPress::get_instance();
-		$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
-		$this->modules['onboarding_dashboard'] = OnboardingDashboard\OnboardingDashboard::get_instance();
-		$this->modules['date_time_formatting'] = DateTimeFormatting\WordPress::get_instance();
+		// Note: Some modules are always loaded (like TicketView, QolEnhancements) because they are free/lite
+		// or handle their own internal checks. However, for stricter control, we can wrap them.
 
+		// Lite Features
+		if ( stackboost_is_feature_active( 'qol_enhancements' ) ) {
+			$this->modules['qol_enhancements'] = QolEnhancements\WordPress::get_instance();
+		}
+
+		// Ticket View is currently not feature-gated (Core functionality) but we can gate it if needed.
+		// For now, assuming it's part of the base package.
+		$this->modules['ticket_view'] = TicketView\WordPress::get_instance();
+
+		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
+			$this->modules['after_hours_notice'] = AfterHoursNotice\WordPress::get_instance();
+		}
+
+		if ( stackboost_is_feature_active( 'date_time_formatting' ) ) {
+			$this->modules['date_time_formatting'] = DateTimeFormatting\WordPress::get_instance();
+		}
+
+		// Pro Features
+		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
+			$this->modules['conditional_views'] = ConditionalViews\WordPress::get_instance();
+		}
+
+		if ( stackboost_is_feature_active( 'queue_macro' ) ) {
+			$this->modules['queue_macro'] = QueueMacro\WordPress::get_instance();
+		}
+
+		if ( stackboost_is_feature_active( 'after_ticket_survey' ) ) {
+			$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
+		}
+
+		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
+			$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
+		}
+
+		// Business Features
+		if ( stackboost_is_feature_active( 'staff_directory' ) ) {
+			$this->modules['directory'] = Directory\WordPress::get_instance();
+		}
+
+		if ( stackboost_is_feature_active( 'onboarding_dashboard' ) ) {
+			$this->modules['onboarding_dashboard'] = OnboardingDashboard\OnboardingDashboard::get_instance();
+		}
 	}
 
 	/**
