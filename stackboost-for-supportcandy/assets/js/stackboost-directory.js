@@ -1,7 +1,9 @@
 jQuery(document).ready(function($) {
     // Helper function for conditional logging
     var sbLog = function(message, data) {
-        if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
+        if (typeof window.stackboost_log === 'function') {
+            window.stackboost_log('[Directory] ' + message, data);
+        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
             if (data) {
                 console.log('[StackBoost Directory]', message, data);
             } else {
@@ -11,7 +13,9 @@ jQuery(document).ready(function($) {
     };
 
     var sbError = function(message, data) {
-        if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
+        if (typeof window.stackboost_log === 'function') {
+            window.stackboost_log('[Directory] ' + message, data);
+        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
              if (data) {
                 console.error('[StackBoost Directory]', message, data);
             } else {
@@ -150,5 +154,4 @@ jQuery(document).ready(function($) {
             }, 200);
         }
     }
-
 });

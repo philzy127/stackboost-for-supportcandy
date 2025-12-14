@@ -2,6 +2,8 @@
 
 namespace StackBoost\ForSupportCandy\WordPress\Admin;
 
+use StackBoost\ForSupportCandy\Services\LicenseManager;
+
 /**
  * Manages the admin settings pages and sanitization for the plugin.
  *
@@ -29,8 +31,11 @@ class Settings {
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_init', [ $this, 'handle_log_actions' ] );
+        add_action( 'admin_notices', [ $this, 'display_license_notices' ] );
 		add_action( 'wp_ajax_stackboost_clear_log', [ $this, 'ajax_clear_log' ] );
 		add_action( 'wp_ajax_stackboost_save_settings', [ $this, 'ajax_save_settings' ] );
+		add_action( 'wp_ajax_stackboost_activate_license', [ $this, 'ajax_activate_license' ] );
+		add_action( 'wp_ajax_stackboost_deactivate_license', [ $this, 'ajax_deactivate_license' ] );
 	}
 
 	/**
@@ -62,17 +67,19 @@ class Settings {
 			'callback'    => [ $this, 'render_settings_page' ],
 		];
 
-		// 3. Date & Time Formatting (New Module)
-		$menu_config[] = [
-			'slug'        => 'stackboost-date-time',
-			'parent'      => 'stackboost-for-supportcandy',
-			'page_title'  => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
-			'menu_title'  => __( 'Date & Time', 'stackboost-for-supportcandy' ),
-			'capability'  => 'manage_options',
-			'callback'    => [ \StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page::class, 'render_page' ],
-		];
+		// 3. Date & Time Formatting (New Module) - Lite
+		if ( stackboost_is_feature_active( 'date_time_formatting' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-date-time',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Date & Time', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page::class, 'render_page' ],
+			];
+		}
 
-		// 4. After Hours Notice
+		// 4. After Hours Notice - Lite
 		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-after-hours',
@@ -84,7 +91,7 @@ class Settings {
 			];
 		}
 
-		// 5. Conditional Views
+		// 5. Conditional Views - Pro
 		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-conditional-views',
@@ -96,7 +103,7 @@ class Settings {
 			];
 		}
 
-		// 6. Queue Macro
+		// 6. Queue Macro - Pro
 		if ( stackboost_is_feature_active( 'queue_macro' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-queue-macro',
@@ -108,7 +115,7 @@ class Settings {
 			];
 		}
 
-		// 7. Unified Ticket Macro
+		// 7. Unified Ticket Macro - Pro
 		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-utm',
@@ -120,7 +127,7 @@ class Settings {
 			];
 		}
 
-		// 8. After Ticket Survey
+		// 8. After Ticket Survey - Pro
 		if ( stackboost_is_feature_active( 'after_ticket_survey' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-ats',
@@ -132,25 +139,29 @@ class Settings {
 			];
 		}
 
-		// 9. Company Directory
-		$menu_config[] = [
-			'slug'        => 'stackboost-directory',
-			'parent'      => 'stackboost-for-supportcandy',
-			'page_title'  => __( 'Company Directory', 'stackboost-for-supportcandy' ),
-			'menu_title'  => __( 'Directory', 'stackboost-for-supportcandy' ), // Shortened for menu
-			'capability'  => 'manage_options',
-			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance(), 'render_admin_page' ],
-		];
+		// 9. Company Directory - Business
+		if ( stackboost_is_feature_active( 'staff_directory' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-directory',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Company Directory', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Directory', 'stackboost-for-supportcandy' ), // Shortened for menu
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance(), 'render_admin_page' ],
+			];
+		}
 
-		// 10. Onboarding Dashboard
-		$menu_config[] = [
-			'slug'        => 'stackboost-onboarding-dashboard',
-			'parent'      => 'stackboost-for-supportcandy',
-			'page_title'  => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
-			'menu_title'  => __( 'Onboarding', 'stackboost-for-supportcandy' ),
-			'capability'  => 'manage_options',
-			'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
-		];
+		// 10. Onboarding Dashboard - Business
+		if ( stackboost_is_feature_active( 'onboarding_dashboard' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-onboarding-dashboard',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Onboarding', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
+			];
+		}
 
 		// 11. Tools / Diagnostics
 		$menu_config[] = [
@@ -215,6 +226,7 @@ class Settings {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+            <p><?php printf( esc_html__( 'StackBoost Version: %s', 'stackboost-for-supportcandy' ), STACKBOOST_VERSION ); ?></p>
 
 			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
 				<div class="notice notice-info inline">
@@ -228,7 +240,13 @@ class Settings {
 						?>
 					</p>
 				</div>
-				<p><?php esc_html_e( 'More settings coming soon.', 'stackboost-for-supportcandy' ); ?></p>
+                <form action="options.php" method="post">
+                    <?php
+                    // Render License Settings Section specifically for the general page
+                    do_settings_sections( 'stackboost-for-supportcandy' );
+                    ?>
+                </form>
+				<p><?php esc_html_e( 'More general settings coming soon.', 'stackboost-for-supportcandy' ); ?></p>
 			<?php else : ?>
 				<form action="options.php" method="post">
 					<?php
@@ -262,6 +280,22 @@ class Settings {
 		register_setting( 'stackboost_directory_settings', 'stackboost_directory_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::class, 'sanitize_settings' ] );
 		register_setting( 'stackboost_directory_widget_settings', 'stackboost_directory_widget_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings::class, 'sanitize_widget_settings' ] );
 
+        // License Settings (General Page)
+        add_settings_section(
+            'stackboost_license_section',
+            __( 'License Activation', 'stackboost-for-supportcandy' ),
+            '__return_null',
+            'stackboost-for-supportcandy'
+        );
+
+        add_settings_field(
+            'stackboost_license_key',
+            __( 'License Key', 'stackboost-for-supportcandy' ),
+            [ $this, 'render_license_input' ],
+            'stackboost-for-supportcandy',
+            'stackboost_license_section'
+        );
+
 		// Diagnostic Log Settings Section
 		add_settings_section(
 			'stackboost_tools_section',
@@ -294,6 +328,114 @@ class Settings {
 			'stackboost_tools_section'
 		);
 	}
+
+    /**
+     * Render the License Key input and activation controls.
+     */
+    public function render_license_input() {
+        $license_key = get_option( 'stackboost_license_key', '' );
+        $license_tier = get_option( 'stackboost_license_tier', 'lite' );
+        $is_active = ! empty( $license_key );
+
+        ?>
+        <div id="stackboost-license-wrapper">
+            <?php if ( $is_active ) : ?>
+                <div class="stackboost-license-status" style="margin-bottom: 10px;">
+                    <span class="dashicons dashicons-yes-alt" style="color: green;"></span>
+                    <strong><?php esc_html_e( 'Active', 'stackboost-for-supportcandy' ); ?></strong>
+                    <span style="color: #666;">(<?php echo esc_html( ucfirst( $license_tier ) ); ?> Plan)</span>
+                </div>
+                <input type="password" value="<?php echo esc_attr( $license_key ); ?>" class="regular-text" readonly disabled />
+                <button type="button" id="stackboost-deactivate-license" class="button"><?php esc_html_e( 'Deactivate', 'stackboost-for-supportcandy' ); ?></button>
+            <?php else : ?>
+                <input type="text" id="stackboost-license-key" class="regular-text" placeholder="<?php esc_attr_e( 'Enter your license key', 'stackboost-for-supportcandy' ); ?>" />
+                <button type="button" id="stackboost-activate-license" class="button button-primary"><?php esc_html_e( 'Activate', 'stackboost-for-supportcandy' ); ?></button>
+            <?php endif; ?>
+            <p class="description" id="stackboost-license-message"></p>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            // Activate License
+            $('#stackboost-activate-license').on('click', function() {
+                var btn = $(this);
+                var key = $('#stackboost-license-key').val().trim();
+                var msg = $('#stackboost-license-message');
+
+                if (!key) {
+                    msg.css('color', 'red').text('<?php esc_html_e( 'Please enter a license key.', 'stackboost-for-supportcandy' ); ?>');
+                    return;
+                }
+
+                btn.prop('disabled', true).text('<?php esc_html_e( 'Activating...', 'stackboost-for-supportcandy' ); ?>');
+                msg.text('');
+
+                $.post(ajaxurl, {
+                    action: 'stackboost_activate_license',
+                    license_key: key,
+                    nonce: '<?php echo wp_create_nonce( 'stackboost_license_nonce' ); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        msg.css('color', 'green').text('<?php esc_html_e( 'License activated successfully! Reloading...', 'stackboost-for-supportcandy' ); ?>');
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        btn.prop('disabled', false).text('<?php esc_html_e( 'Activate', 'stackboost-for-supportcandy' ); ?>');
+                        msg.css('color', 'red').text(response.data);
+                    }
+                });
+            });
+
+            // Deactivate License
+            $('#stackboost-deactivate-license').on('click', function() {
+                if (!confirm('<?php esc_html_e( 'Are you sure you want to deactivate this license?', 'stackboost-for-supportcandy' ); ?>')) {
+                    return;
+                }
+
+                var btn = $(this);
+                var msg = $('#stackboost-license-message');
+
+                btn.prop('disabled', true).text('<?php esc_html_e( 'Deactivating...', 'stackboost-for-supportcandy' ); ?>');
+
+                $.post(ajaxurl, {
+                    action: 'stackboost_deactivate_license',
+                    nonce: '<?php echo wp_create_nonce( 'stackboost_license_nonce' ); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        msg.css('color', 'green').text('<?php esc_html_e( 'License deactivated. Reloading...', 'stackboost-for-supportcandy' ); ?>');
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        btn.prop('disabled', false).text('<?php esc_html_e( 'Deactivate', 'stackboost-for-supportcandy' ); ?>');
+                        msg.css('color', 'red').text(response.data);
+                    }
+                });
+            });
+        });
+        </script>
+        <?php
+    }
+
+    /**
+     * Display license-related notices if an error flag is set.
+     */
+    public function display_license_notices() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        $error_message = get_transient( 'stackboost_license_error_msg' );
+        if ( ! empty( $error_message ) ) {
+            ?>
+            <div class="notice notice-error is-dismissible">
+                <p>
+                    <strong><?php esc_html_e( 'StackBoost License Alert:', 'stackboost-for-supportcandy' ); ?></strong>
+                    <?php echo esc_html( $error_message ); ?>
+                </p>
+            </div>
+            <?php
+            // Optionally clear the transient on display if desired, or let it expire/be cleared by a re-check.
+            // For now, we leave it until the user takes action or it expires (12 hours) to ensure visibility.
+        }
+    }
 
 	/**
 	 * Sanitize all settings.
@@ -632,4 +774,66 @@ class Settings {
 
 		wp_send_json_success( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) );
 	}
+
+    /**
+     * AJAX handler to activate a license.
+     */
+    public function ajax_activate_license() {
+        check_ajax_referer( 'stackboost_license_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+        }
+
+        $license_key = sanitize_text_field( $_POST['license_key'] ?? '' );
+        if ( empty( $license_key ) ) {
+            wp_send_json_error( __( 'Missing license key.', 'stackboost-for-supportcandy' ) );
+        }
+
+        $instance_name = get_site_url();
+        $manager = new LicenseManager();
+        $response = $manager->activate_license( $license_key, $instance_name );
+
+        if ( ! $response['success'] ) {
+            wp_send_json_error( $response['error'] );
+        }
+
+        // Use Variant ID to determine tier
+        $variant_id = $response['meta']['variant_id'] ?? 0;
+        $tier = $manager->get_tier_from_variant( $variant_id );
+
+        update_option( 'stackboost_license_key', $license_key );
+        update_option( 'stackboost_license_instance_id', $response['instance']['id'] ?? '' );
+        update_option( 'stackboost_license_tier', $tier );
+
+        wp_send_json_success();
+    }
+
+    /**
+     * AJAX handler to deactivate a license.
+     */
+    public function ajax_deactivate_license() {
+        check_ajax_referer( 'stackboost_license_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+        }
+
+        $license_key = get_option( 'stackboost_license_key', '' );
+        $instance_id = get_option( 'stackboost_license_instance_id', '' );
+
+        if ( ! empty( $license_key ) && ! empty( $instance_id ) ) {
+            $manager = new LicenseManager();
+            $manager->deactivate_license( $license_key, $instance_id );
+        }
+
+        // Clean up options
+        delete_option( 'stackboost_license_key' );
+        delete_option( 'stackboost_license_instance_id' );
+        delete_option( 'stackboost_license_variant_id' );
+        delete_option( 'sb_last_verified_at' );
+        update_option( 'stackboost_license_tier', 'lite' );
+
+        wp_send_json_success();
+    }
 }

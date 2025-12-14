@@ -89,14 +89,20 @@ jQuery(document).ready(function($) {
 
     // --- Logging Helper ---
     function stackboost_client_log(message, context = 'onboarding_js') {
-        if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
+        // Use central logger if available, otherwise fallback
+        if (typeof window.stackboost_log === 'function') {
+            window.stackboost_log(`[Onboarding ${context}] ` + message);
+        } else if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
             console.log(`[StackBoost ${context}]`, message);
-            // Send to server
+        }
+
+        // Send to server if debug is enabled (preserving original logic)
+        if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
             $.post(odbDashboardVars.ajaxurl, {
                 action: 'stackboost_log_client_event',
                 message: message,
                 context: context,
-                nonce: odbDashboardVars.sendCertificatesNonce // reusing nonce for simplicity or create a generic one
+                nonce: odbDashboardVars.sendCertificatesNonce
             });
         }
     }

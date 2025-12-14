@@ -2,6 +2,8 @@
 
 namespace StackBoost\ForSupportCandy\Core;
 
+use StackBoost\ForSupportCandy\Services\LicenseManager;
+
 /**
  * Manages the plugin's license and feature tiers.
  *
@@ -12,13 +14,11 @@ class License {
 	/**
 	 * The currently active license tier.
 	 *
-	 * Can be 'free', 'plus', or 'operations_suite'.
-	 * In a real application, this would be determined by checking a stored license key
-	 * against an external API. For now, we can hardcode it for development.
+	 * Can be 'lite', 'pro', or 'business'.
 	 *
 	 * @var string
 	 */
-	private static string $tier = 'operations_suite'; // Default to the highest tier for development
+	private static string $tier = 'lite'; // Default to lite for safety
 
 	/**
 	 * Get the current active license tier.
@@ -26,22 +26,29 @@ class License {
 	 * @return string
 	 */
 	public static function get_tier(): string {
-		// TODO: Replace this with actual license checking logic.
-		// For example, get a stored option and validate it.
-		// $saved_tier = get_option('stackboost_license_tier', 'free');
-		// return self::is_valid_tier($saved_tier) ? $saved_tier : 'free';
-		return self::$tier;
+        // Validate license status periodically (12h cache)
+        $license_key = get_option( 'stackboost_license_key', '' );
+
+        if ( ! empty( $license_key ) ) {
+            $manager = new LicenseManager();
+            $status = $manager->check_license_status( $license_key );
+
+            if ( $status && isset( $status['variant_id'] ) ) {
+                return $manager->get_tier_from_variant( $status['variant_id'] );
+            }
+        }
+
+		// Fallback to 'lite' if no valid option is found or validation fails.
+		return 'lite';
 	}
 
     /**
      * Set the license tier for testing purposes.
      *
-     * @param string $tier The tier to set ('free', 'plus', 'operations_suite').
+     * @param string $tier The tier to set ('lite', 'pro', 'business').
      */
     public static function set_tier_for_testing(string $tier) {
-        if (in_array($tier, ['free', 'plus', 'operations_suite'])) {
-            self::$tier = $tier;
-        }
+		// Mock implementation for testing if needed
     }
 
 	/**
@@ -51,6 +58,6 @@ class License {
 	 * @return bool
 	 */
 	public static function is_valid_tier( string $tier ): bool {
-		return in_array( $tier, [ 'free', 'plus', 'operations_suite' ], true );
+		return in_array( $tier, [ 'lite', 'pro', 'business' ], true );
 	}
 }
