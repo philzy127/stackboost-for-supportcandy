@@ -2,7 +2,7 @@
 
 namespace StackBoost\ForSupportCandy\WordPress\Admin;
 
-use StackBoost\ForSupportCandy\Services\LicenseService;
+use StackBoost\ForSupportCandy\Services\LicenseManager;
 
 /**
  * Manages the admin settings pages and sanitization for the plugin.
@@ -767,24 +767,16 @@ class Settings {
         }
 
         $instance_name = get_site_url();
-        $service = new LicenseService();
-        $response = $service->activate_license( $license_key, $instance_name );
+        $manager = new LicenseManager();
+        $response = $manager->activate_license( $license_key, $instance_name );
 
         if ( ! $response['success'] ) {
             wp_send_json_error( $response['error'] );
         }
 
-        // Mapping Logic: Product Variant -> Internal Tier
-        // Expected strings: "StackBoost Pro", "StackBoost Business"
-        // Default to "lite" if no match (though valid license usually implies at least pro).
-        $tier = 'lite';
-        $variant = $response['meta']['variant_name'] ?? '';
-
-        if ( stripos( $variant, 'Business' ) !== false ) {
-            $tier = 'business';
-        } elseif ( stripos( $variant, 'Pro' ) !== false ) {
-            $tier = 'pro';
-        }
+        // Use Variant ID to determine tier
+        $variant_id = $response['meta']['variant_id'] ?? 0;
+        $tier = $manager->get_tier_from_variant( $variant_id );
 
         update_option( 'stackboost_license_key', $license_key );
         update_option( 'stackboost_license_instance_id', $response['instance']['id'] ?? '' );
@@ -807,13 +799,15 @@ class Settings {
         $instance_id = get_option( 'stackboost_license_instance_id', '' );
 
         if ( ! empty( $license_key ) && ! empty( $instance_id ) ) {
-            $service = new LicenseService();
-            $service->deactivate_license( $license_key, $instance_id );
+            $manager = new LicenseManager();
+            $manager->deactivate_license( $license_key, $instance_id );
         }
 
         // Clean up options
         delete_option( 'stackboost_license_key' );
         delete_option( 'stackboost_license_instance_id' );
+        delete_option( 'stackboost_license_variant_id' );
+        delete_option( 'sb_last_verified_at' );
         update_option( 'stackboost_license_tier', 'lite' );
 
         wp_send_json_success();
