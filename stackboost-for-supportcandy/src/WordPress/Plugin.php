@@ -196,7 +196,7 @@ final class Plugin {
 		// Gather data from QOL Enhancements module
 		if ( stackboost_is_feature_active( 'qol_enhancements' ) ) {
 			$qol_core                       = new QolEnhancements\Core();
-			$features_data['hover_card']    = [ 'enabled' => ! empty( $options['enable_ticket_details_card'] ) ];
+			$features_data['ticket_details_card']    = [ 'enabled' => ! empty( $options['enable_ticket_details_card'] ) ];
 			$features_data['hide_empty_columns'] = [
 				'enabled'       => ! empty( $options['enable_hide_empty_columns'] ),
 				'hide_priority' => ! empty( $options['enable_hide_priority_column'] ),
@@ -221,7 +221,7 @@ final class Plugin {
 		if ( ! empty( $features_data ) ) {
 			$localized_data = [
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
-				'nonce'    => wp_create_nonce( 'stackboost_frontend_nonce' ),
+				'nonce'    => wp_create_nonce( 'wpsc_get_individual_ticket' ),
 				'features' => $features_data,
 			];
 			wp_localize_script( 'stackboost-frontend', 'stackboost_settings', $localized_data );

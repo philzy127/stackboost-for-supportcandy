@@ -38,8 +38,8 @@
 	 * Central dispatcher. Checks if features are enabled and calls the corresponding function.
 	 */
 	function run_features() {
-		if (features.hover_card?.enabled) {
-			feature_ticket_hover_card();
+		if (features.ticket_details_card?.enabled) {
+			feature_ticket_details_card();
 		}
 
 		const emptyColsConfig = features.hide_empty_columns || {};
@@ -120,9 +120,9 @@
 	}
 
 	/**
-	 * Feature: Ticket Hover Card.
+	 * Feature: Ticket Details Card.
 	 */
-	function feature_ticket_hover_card() {
+	function feature_ticket_details_card() {
 		const cache = {};
 		let activeTippyInstance = null; // Tracks the currently visible tippy instance
 
