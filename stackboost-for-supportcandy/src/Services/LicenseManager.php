@@ -75,6 +75,9 @@ class LicenseManager {
         // Cache the result immediately
         $this->cache_license_status( $license_key, $variant_id );
 
+        // Clear error flag on success
+        delete_transient( 'stackboost_license_error_msg' );
+
         return $response;
     }
 
@@ -93,6 +96,7 @@ class LicenseManager {
         // Clear cache first
         delete_transient( 'sb_license_status_' . md5( $license_key ) );
         delete_option( 'sb_last_verified_at' );
+        delete_transient( 'stackboost_license_error_msg' );
 
         return $this->remote_post( 'deactivate', [
             'license_key' => $license_key,
@@ -135,6 +139,10 @@ class LicenseManager {
                 stackboost_log( "Remote validation successful. Variant ID: {$variant_id}. Caching result.", 'core' );
             }
             $data = $this->cache_license_status( $license_key, $variant_id );
+
+            // Clear any error notice since validation succeeded
+            delete_transient( 'stackboost_license_error_msg' );
+
             return $data;
         }
 
@@ -157,14 +165,19 @@ class LicenseManager {
                     return [ 'valid' => true, 'variant_id' => $backup_variant, 'grace_period' => true ];
                 }
             } else {
+                // Grace period expired
                 if ( function_exists( 'stackboost_log' ) ) {
                     stackboost_log( "Remote validation failed and Grace Period expired. Last verified: {$time_diff}s ago.", 'core' );
                 }
+                set_transient( 'stackboost_license_error_msg', 'Your license validation failed and the grace period has expired. Please check your license key.', 12 * HOUR_IN_SECONDS );
             }
         } else {
+            // Invalid Key
             if ( function_exists( 'stackboost_log' ) ) {
                 stackboost_log( "Remote validation failed: Invalid Key. Removing cache.", 'core' );
             }
+            // Set error message for admin notice
+            set_transient( 'stackboost_license_error_msg', 'Your license key is invalid or has expired. Features have been restricted.', 12 * HOUR_IN_SECONDS );
         }
 
         return false;

@@ -31,6 +31,7 @@ class Settings {
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_init', [ $this, 'handle_log_actions' ] );
+        add_action( 'admin_notices', [ $this, 'display_license_notices' ] );
 		add_action( 'wp_ajax_stackboost_clear_log', [ $this, 'ajax_clear_log' ] );
 		add_action( 'wp_ajax_stackboost_save_settings', [ $this, 'ajax_save_settings' ] );
 		add_action( 'wp_ajax_stackboost_activate_license', [ $this, 'ajax_activate_license' ] );
@@ -411,6 +412,29 @@ class Settings {
         });
         </script>
         <?php
+    }
+
+    /**
+     * Display license-related notices if an error flag is set.
+     */
+    public function display_license_notices() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        $error_message = get_transient( 'stackboost_license_error_msg' );
+        if ( ! empty( $error_message ) ) {
+            ?>
+            <div class="notice notice-error is-dismissible">
+                <p>
+                    <strong><?php esc_html_e( 'StackBoost License Alert:', 'stackboost-for-supportcandy' ); ?></strong>
+                    <?php echo esc_html( $error_message ); ?>
+                </p>
+            </div>
+            <?php
+            // Optionally clear the transient on display if desired, or let it expire/be cleared by a re-check.
+            // For now, we leave it until the user takes action or it expires (12 hours) to ensure visibility.
+        }
     }
 
 	/**
