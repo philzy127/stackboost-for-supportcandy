@@ -47,6 +47,10 @@ class LicenseManager {
      * @return array The API response (decoded) with 'success' boolean.
      */
     public function activate_license( string $license_key, string $instance_name ): array {
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( "Attempting activation for instance: {$instance_name}", 'core' );
+        }
+
         // First, attempt to activate the instance
         $response = $this->remote_post( 'activate', [
             'license_key'   => $license_key,
@@ -54,15 +58,19 @@ class LicenseManager {
         ] );
 
         if ( ! $response['success'] ) {
+            if ( function_exists( 'stackboost_log' ) ) {
+                stackboost_log( "Activation failed: " . ( $response['error'] ?? 'Unknown error' ), 'core' );
+            }
             return $response;
         }
 
         // Activation successful. Now we must VALIDATE to get the variant ID and cache it.
-        // The activate response contains some info, but validate is the source of truth for checking features.
-        // We can use the data from activation for the initial setup.
-
         $meta = $response['meta'] ?? [];
         $variant_id = $meta['variant_id'] ?? 0;
+
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( "Activation successful. Variant ID: {$variant_id}", 'core' );
+        }
 
         // Cache the result immediately
         $this->cache_license_status( $license_key, $variant_id );
@@ -78,6 +86,10 @@ class LicenseManager {
      * @return array The API response.
      */
     public function deactivate_license( string $license_key, string $instance_id ): array {
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( "Deactivating license instance: {$instance_id}", 'core' );
+        }
+
         // Clear cache first
         delete_transient( 'sb_license_status_' . md5( $license_key ) );
         delete_option( 'sb_last_verified_at' );
@@ -104,7 +116,13 @@ class LicenseManager {
 
         // 1. Check Cache
         if ( $cached_data !== false ) {
-            return $cached_data; // Return the cached array (variant_id, etc.)
+            // Uncomment for very verbose logging
+            // if ( function_exists( 'stackboost_log' ) ) { stackboost_log( "License check: Cache hit.", 'core' ); }
+            return $cached_data;
+        }
+
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( "License check: Cache miss. Validating with remote API.", 'core' );
         }
 
         // 2. Check Remote
@@ -113,31 +131,39 @@ class LicenseManager {
         if ( $response['success'] ) {
             // Valid! Cache it.
             $variant_id = $response['meta']['variant_id'] ?? 0;
+            if ( function_exists( 'stackboost_log' ) ) {
+                stackboost_log( "Remote validation successful. Variant ID: {$variant_id}. Caching result.", 'core' );
+            }
             $data = $this->cache_license_status( $license_key, $variant_id );
             return $data;
         }
 
         // 3. Grace Period (Fail-Safe)
-        // If the API call failed due to network error (not just "invalid key")
-        // Note: Our simple remote_post wrapper currently returns success=false for both API errors and network errors.
-        // For a robust implementation, we should distinguish them.
-        // For now, if the error is explicitly "Invalid license key", we fail.
-        // If it's something else (timeout, or generic), we check grace period.
-
         $error_msg = $response['error'] ?? '';
         $is_definitive_failure = ( stripos( $error_msg, 'not found' ) !== false || stripos( $error_msg, 'invalid' ) !== false );
 
         if ( ! $is_definitive_failure ) {
             $last_verified = get_option( 'sb_last_verified_at', 0 );
+            $time_diff = time() - $last_verified;
+
             // 72 Hours = 3 Days
-            if ( ( time() - $last_verified ) < ( 72 * HOUR_IN_SECONDS ) ) {
-                // Inside grace period. Return the LAST KNOWN variant ID if we can find it?
-                // Problem: We don't have the last known variant ID if the transient is gone.
-                // Solution: We should store the variant_id in a persistent option as backup.
+            if ( $time_diff < ( 72 * HOUR_IN_SECONDS ) ) {
+                if ( function_exists( 'stackboost_log' ) ) {
+                    stackboost_log( "Remote validation failed (Error: {$error_msg}). Entering Grace Period. Last verified: {$time_diff}s ago.", 'core' );
+                }
+
                 $backup_variant = get_option( 'stackboost_license_variant_id', 0 );
                 if ( $backup_variant ) {
                     return [ 'valid' => true, 'variant_id' => $backup_variant, 'grace_period' => true ];
                 }
+            } else {
+                if ( function_exists( 'stackboost_log' ) ) {
+                    stackboost_log( "Remote validation failed and Grace Period expired. Last verified: {$time_diff}s ago.", 'core' );
+                }
+            }
+        } else {
+            if ( function_exists( 'stackboost_log' ) ) {
+                stackboost_log( "Remote validation failed: Invalid Key. Removing cache.", 'core' );
             }
         }
 
@@ -186,6 +212,11 @@ class LicenseManager {
 	private function remote_post( string $endpoint, array $body ): array {
 		$url = self::API_URL . '/' . $endpoint;
 
+        // Log the request (masking the key for security if logging is enabled)
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( "POST {$url}", 'core' );
+        }
+
 		$response = wp_remote_post( $url, [
 			'timeout' => 15,
 			'headers' => [
@@ -195,6 +226,9 @@ class LicenseManager {
 		] );
 
 		if ( is_wp_error( $response ) ) {
+            if ( function_exists( 'stackboost_log' ) ) {
+                stackboost_log( "API Error: " . $response->get_error_message(), 'core' );
+            }
 			return [
 				'success' => false,
 				'error'   => $response->get_error_message(),
@@ -205,6 +239,9 @@ class LicenseManager {
 		$data          = json_decode( $response_body, true );
 
 		if ( empty( $data ) ) {
+            if ( function_exists( 'stackboost_log' ) ) {
+                stackboost_log( "API Error: Empty response body.", 'core' );
+            }
 			return [
 				'success' => false,
 				'error'   => 'Empty response from licensing server.',
@@ -221,6 +258,10 @@ class LicenseManager {
 		}
 
 		if ( ! empty( $data['error'] ) ) {
+            // Log API-level errors
+            if ( function_exists( 'stackboost_log' ) ) {
+                stackboost_log( "API returned error: " . $data['error'], 'core' );
+            }
 			return [
 				'success' => false,
 				'error'   => $data['error'],
