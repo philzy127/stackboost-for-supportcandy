@@ -4,14 +4,26 @@ A comprehensive enhancement suite for the SupportCandy WordPress plugin. This pl
 
 ## Features
 
+### Core (Lite)
+*   **Quality of Life Enhancements:** Various UI tweaks to improve the SupportCandy experience.
+*   **After-Hours Notice:** Display a warning to users when they submit tickets outside of business hours.
+*   **Date & Time Formatting:** Customize how dates and times are displayed in tickets.
+
+### Pro
+*   **Conditional Views:** Show or hide ticket columns based on the active view.
+*   **Queue Macro:** Display the customer's position in the support queue dynamically.
+*   **After Ticket Survey (ATS):** Collect customer satisfaction feedback with a customizable survey system.
+*   **Unified Ticket Macro (UTM):** Generate consistent, formatted HTML summaries of ticket data for email notifications.
+
+### Business
 *   **Company Directory:** Manage staff, locations, and departments. Includes a searchable frontend directory and a backend contact widget for tickets.
 *   **Onboarding Dashboard:** A complete workflow for managing employee onboarding steps, tracking progress, and generating completion certificates.
-*   **Unified Ticket Macro (UTM):** Generate consistent, formatted HTML summaries of ticket data for email notifications.
-*   **After Ticket Survey (ATS):** Collect customer satisfaction feedback with a customizable survey system.
-*   **Queue Macro:** Display the customer's position in the support queue dynamically.
-*   **Conditional Views:** Show or hide ticket columns based on the active view.
-*   **After-Hours Notice:** Display a warning to users when they submit tickets outside of business hours.
-*   **Diagnostics:** A robust, granular logging system to help troubleshoot issues.
+
+## Licensing
+
+StackBoost uses a tiered licensing system (Lite, Pro, Business).
+*   Enter your license key in **StackBoost > General Settings** to activate Pro or Business features.
+*   The system automatically detects your plan level based on the key.
 
 ## Requirements
 

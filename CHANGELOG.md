@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.8] - 2025-12-16
+
+### Added
+- **License Management:** Implemented a full licensing system powered by Lemon Squeezy.
+    - **Activation UI:** A new interface in General Settings allows users to enter a license key to activate Pro or Business features.
+    - **Tiered Access:** The plugin now enforces strict feature gating based on three tiers: Lite, Pro, and Business.
+    - **Validation Engine:** A robust `LicenseManager` service handles validation, including a 12-hour local cache to improve performance and a 72-hour grace period to prevent lockouts during API outages.
+- **Strict Feature Gating:** Major architectural update to ensure that premium modules (like Company Directory and Onboarding) are physically prevented from loading or registering menus unless a valid license for that tier is active.
+- **Admin Notices:** Added dismissible admin notices to alert administrators if their license key becomes invalid or expires.
+
+### Changed
+- **Logging Standardization:** Refactored all client-side JavaScript logging to use the centralized `stackboost_log()` utility, ensuring that browser console output respects the global "Enable Diagnostic Log" setting.
+- **Feature Matrix:** Updated the internal feature definitions to strictly follow the new product tiers:
+    - **Lite:** Quality of Life, After-Hours Notice, Date/Time Formatting.
+    - **Pro:** Conditional Views, Queue Macro, After Ticket Survey, Unified Ticket Macro.
+    - **Business:** Company Directory, Onboarding Dashboard.
+
+### Fixed
+- **Settings Visibility:** Resolved a bug where Business-tier settings would not appear immediately after activation due to legacy tier naming in the code.
+- **Cleanup:** Removed development artifacts (`test_phone_logic.php`, `phpunit.xml`) to prepare for distribution.
+
 ## [1.3.3] - 2025-12-12
 
 ### Added

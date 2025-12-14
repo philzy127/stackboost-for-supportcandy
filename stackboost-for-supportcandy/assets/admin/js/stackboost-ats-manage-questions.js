@@ -5,8 +5,8 @@ jQuery(document).ready(function($) {
 
     // Central Logging Helper - Wraps global utility
     function log(message, context) {
-        if (typeof stackboost_log === 'function') {
-            stackboost_log('[StackBoost ATS] ' + message, context);
+        if (typeof window.stackboost_log === 'function') {
+            window.stackboost_log('[ATS] ' + message, context);
         } else if (stackboost_ats_manage.diagnostic_log_enabled) {
             console.log('[StackBoost ATS] ' + message, context || '');
         }

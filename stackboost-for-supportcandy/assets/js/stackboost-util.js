@@ -1,7 +1,10 @@
 jQuery(document).ready(function($) {
     // Helper function for conditional logging
+    // Use window.stackboost_log (central logger) if available, otherwise fallback.
     window.sbUtilLog = function(message, data) {
-        if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
+        if (typeof window.stackboost_log === 'function') {
+            window.stackboost_log('[Util] ' + message, data);
+        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
             if (data) {
                 console.log('[StackBoost Util]', message, data);
             } else {
@@ -11,7 +14,9 @@ jQuery(document).ready(function($) {
     };
 
     window.sbUtilError = function(message, data) {
-        if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
+        if (typeof window.stackboost_log === 'function') {
+            window.stackboost_log('[Util Error] ' + message, data);
+        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
              if (data) {
                 console.error('[StackBoost Util]', message, data);
             } else {
