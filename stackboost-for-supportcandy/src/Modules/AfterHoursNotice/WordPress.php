@@ -77,31 +77,26 @@ class WordPress extends Module {
      */
     public function enqueue_admin_scripts( $hook ) {
         // Only load on our settings page.
-        // The slug registered via add_submenu_page (which calls our register_settings indirectly via StackBoost\ForSupportCandy\WordPress\Admin\Settings)
-        // usually results in 'support-candy_page_stackboost-after-hours' or similar.
-        // We can check if the page query arg matches.
         if ( isset( $_GET['page'] ) && 'stackboost-after-hours' === $_GET['page'] ) {
-            wp_enqueue_script( 'jquery-ui-slider' );
-            wp_enqueue_script( 'jquery-ui-datepicker' );
+
             wp_enqueue_script(
-                'stackboost-jquery-ui-timepicker-addon',
-                STACKBOOST_PLUGIN_URL . 'assets/admin/js/jquery-ui-timepicker-addon.min.js',
-                [ 'jquery', 'jquery-ui-datepicker', 'jquery-ui-slider' ],
-                '1.6.3',
+                'stackboost-jquery-clockpicker',
+                STACKBOOST_PLUGIN_URL . 'assets/admin/js/jquery-clockpicker.min.js',
+                [ 'jquery' ],
+                '0.0.7',
                 true
             );
             wp_enqueue_style(
-                'stackboost-jquery-ui-timepicker-addon-css',
-                STACKBOOST_PLUGIN_URL . 'assets/admin/css/jquery-ui-timepicker-addon.min.css',
+                'stackboost-jquery-clockpicker-css',
+                STACKBOOST_PLUGIN_URL . 'assets/admin/css/jquery-clockpicker.min.css',
                 [],
-                '1.6.3'
+                '0.0.7'
             );
-            wp_enqueue_style( 'jquery-ui-style', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css', [], '1.12.1' );
 
             wp_enqueue_script(
                 'stackboost-admin-after-hours',
                 STACKBOOST_PLUGIN_URL . 'assets/admin/js/admin-after-hours.js',
-                [ 'stackboost-jquery-ui-timepicker-addon' ],
+                [ 'stackboost-jquery-clockpicker' ],
                 STACKBOOST_VERSION,
                 true
             );
@@ -190,7 +185,7 @@ class WordPress extends Module {
         add_settings_field( 'stackboost_enable_after_hours_notice', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'enable_after_hours_notice', 'desc' => 'Displays a notice on the ticket form when submitted outside of business hours.' ] );
         add_settings_field( 'stackboost_after_hours_in_email', __( 'Add Notice to Emails', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_in_email', 'desc' => 'Prepend the after-hours message to email notifications if the main feature is enabled.' ] );
 
-        // Changed to use render_time_field instead of render_number_field
+        // Use render_time_field for time inputs
         add_settings_field( 'stackboost_after_hours_start', __( 'After Hours Start', 'stackboost-for-supportcandy' ), [ $this, 'render_time_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_start', 'default' => '17:00', 'desc' => 'The time when after-hours starts.' ] );
         add_settings_field( 'stackboost_before_hours_end', __( 'Before Hours End', 'stackboost-for-supportcandy' ), [ $this, 'render_time_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'before_hours_end', 'default' => '08:00', 'desc' => 'The time when business hours resume.' ] );
 

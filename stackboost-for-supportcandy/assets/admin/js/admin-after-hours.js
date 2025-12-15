@@ -3,10 +3,9 @@
 
     $(document).ready(function() {
         if ($('.stackboost-timepicker').length) {
-            $('.stackboost-timepicker').timepicker({
-                timeFormat: 'h:mm tt',
-                controlType: 'select',
-                oneLine: true
+            $('.stackboost-timepicker').clockpicker({
+                autoclose: true,
+                twelvehour: true
             });
         }
     });
