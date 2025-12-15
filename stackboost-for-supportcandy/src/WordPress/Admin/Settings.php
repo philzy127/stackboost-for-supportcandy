@@ -173,16 +173,6 @@ class Settings {
 			'callback'    => [ $this, 'render_settings_page' ],
 		];
 
-		// 12. How To Use
-		$menu_config[] = [
-			'slug'        => 'stackboost-how-to-use',
-			'parent'      => 'stackboost-for-supportcandy',
-			'page_title'  => __( 'How To Use', 'stackboost-for-supportcandy' ),
-			'menu_title'  => __( 'How To Use', 'stackboost-for-supportcandy' ),
-			'capability'  => 'manage_options',
-			'callback'    => [ $this, 'render_how_to_use_page' ],
-		];
-
 		return $menu_config;
 	}
 
@@ -224,29 +214,50 @@ class Settings {
         $page_slug = str_replace(['stackboost_page_', 'toplevel_page_'], '', $page_slug);
 
 		?>
-		<div class="wrap">
+		<div class="wrap stackboost-dashboard">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-            <p><?php printf( esc_html__( 'StackBoost Version: %s', 'stackboost-for-supportcandy' ), STACKBOOST_VERSION ); ?></p>
 
 			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
-				<div class="notice notice-info inline">
-					<p>
-						<?php
-						if ( is_supportcandy_pro_active() ) {
-							echo '<strong>' . esc_html__( 'SupportCandy Pro detected.', 'stackboost-for-supportcandy' ) . '</strong>';
-						} else {
-							echo '<strong>' . esc_html__( 'SupportCandy (Free) detected.', 'stackboost-for-supportcandy' ) . '</strong>';
-						}
-						?>
-					</p>
-				</div>
-                <form action="options.php" method="post">
-                    <?php
-                    // Render License Settings Section specifically for the general page
-                    do_settings_sections( 'stackboost-for-supportcandy' );
-                    ?>
-                </form>
-				<p><?php esc_html_e( 'More general settings coming soon.', 'stackboost-for-supportcandy' ); ?></p>
+                <div class="stackboost-dashboard-grid">
+                    <!-- Card 1: System Status -->
+                    <div class="stackboost-card">
+                        <h2><?php esc_html_e( 'System Status', 'stackboost-for-supportcandy' ); ?></h2>
+                        <div class="stackboost-status-item">
+                            <span class="stackboost-status-label"><?php esc_html_e( 'StackBoost Version', 'stackboost-for-supportcandy' ); ?></span>
+                            <span class="stackboost-status-value"><?php echo esc_html( STACKBOOST_VERSION ); ?></span>
+                        </div>
+                        <div class="stackboost-status-item">
+                            <span class="stackboost-status-label"><?php esc_html_e( 'SupportCandy Status', 'stackboost-for-supportcandy' ); ?></span>
+                            <?php if ( is_supportcandy_pro_active() ) : ?>
+                                <span class="stackboost-status-value success"><?php esc_html_e( 'Pro Active', 'stackboost-for-supportcandy' ); ?></span>
+                            <?php else : ?>
+                                <span class="stackboost-status-value warning"><?php esc_html_e( 'Free Version', 'stackboost-for-supportcandy' ); ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: License -->
+                    <div class="stackboost-card">
+                        <!-- Form wrapper is needed for options.php submission logic if we add normal fields here later,
+                             but for the license AJAX buttons it's not strictly required. Keeping it for consistency. -->
+                        <form action="options.php" method="post">
+                            <?php
+                            // Render License Settings Section specifically for the general page
+                            // This outputs the "License Activation" title and the fields.
+                            // The CSS will target #stackboost-license-wrapper to fit it nicely.
+                            do_settings_sections( 'stackboost-for-supportcandy' );
+                            ?>
+                        </form>
+                    </div>
+
+                    <!-- Card 3: Resources -->
+                    <div class="stackboost-card">
+                        <h2><?php esc_html_e( 'Resources', 'stackboost-for-supportcandy' ); ?></h2>
+                        <p><?php esc_html_e( 'For the latest documentation, changelog, and support, please visit our website.', 'stackboost-for-supportcandy' ); ?></p>
+                        <a href="https://stackboost.net" target="_blank" class="stackboost-resources-btn"><?php esc_html_e( 'Visit StackBoost.net', 'stackboost-for-supportcandy' ); ?></a>
+                    </div>
+                </div>
+
 			<?php else : ?>
 				<form action="options.php" method="post">
 					<?php
@@ -259,15 +270,6 @@ class Settings {
 			<?php endif; ?>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Render the "How To Use" page content.
-	 */
-	public function render_how_to_use_page() {
-        echo '<div class="wrap"><h1>' . esc_html__( 'How To Use StackBoost', 'stackboost-for-supportcandy' ) . '</h1>';
-        echo '<p>' . esc_html__( 'Thank you for using StackBoost! Please refer to the individual settings pages for instructions on how to use each feature.', 'stackboost-for-supportcandy' ) . '</p>';
-        echo '</div>';
 	}
 
 	/**

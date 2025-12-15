@@ -249,6 +249,16 @@ final class Plugin {
 		];
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
+			// Enqueue General Dashboard Styles if on main page
+			if ( 'toplevel_page_stackboost-for-supportcandy' === $hook_suffix ) {
+				wp_enqueue_style(
+					'stackboost-admin-general',
+					STACKBOOST_PLUGIN_URL . 'assets/css/admin-general.css',
+					[],
+					STACKBOOST_VERSION
+				);
+			}
+
 			// Enqueue shared utilities (Modals, etc.)
 			wp_enqueue_style(
 				'stackboost-util',
