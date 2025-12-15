@@ -9,7 +9,6 @@
 namespace StackBoost\ForSupportCandy\Modules\Directory;
 
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\DepartmentsListTable;
-use StackBoost\ForSupportCandy\Modules\Directory\Admin\HowToUse;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\LocationsListTable;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\Management;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings;
@@ -366,17 +365,14 @@ class WordPress {
 		$advanced_tabs = array();
 		if ( $this->can_user_manage() ) {
 			$advanced_tabs['management'] = __( 'Management', 'stackboost-for-supportcandy' );
-			$advanced_tabs['how_to_use'] = __( 'How to Use', 'stackboost-for-supportcandy' );
 			$advanced_tabs['testing']    = __( 'Testing', 'stackboost-for-supportcandy' );
-		} else {
-			$advanced_tabs['how_to_use'] = __( 'How to Use', 'stackboost-for-supportcandy' );
 		}
 
 		$tabs = array_merge( $base_tabs, $advanced_tabs );
 
-		// Reorder per user request: Staff > Departments > Locations > Contact Widget > Settings > Management > How to Use > Testing
+		// Reorder per user request: Staff > Departments > Locations > Contact Widget > Settings > Management > Testing
 		$ordered_tabs = [];
-		$order = ['staff', 'departments', 'locations', 'contact_widget', 'settings', 'management', 'how_to_use', 'testing'];
+		$order = ['staff', 'departments', 'locations', 'contact_widget', 'settings', 'management', 'testing'];
 		foreach($order as $key) {
 			if(isset($tabs[$key])) {
 				$ordered_tabs[$key] = $tabs[$key];
@@ -469,9 +465,6 @@ class WordPress {
 						break;
 					case 'settings':
 						Settings::render_settings_page();
-						break;
-					case 'how_to_use':
-						HowToUse::render_how_to_use_page();
 						break;
 					case 'testing':
 						if ( $this->can_user_manage() ) {
