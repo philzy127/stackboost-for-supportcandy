@@ -553,6 +553,17 @@ class Settings {
 
 					case 'after_hours_start':
 					case 'before_hours_end':
+                        // Sanitize time fields (e.g., "05:00 PM" -> "17:00")
+                        $sanitized_time = '';
+                        if ( ! empty( $value ) ) {
+                            $timestamp = strtotime( sanitize_text_field( $value ) );
+                            if ( $timestamp ) {
+                                $sanitized_time = date( 'H:i', $timestamp );
+                            }
+                        }
+                        $saved_settings[$key] = $sanitized_time;
+                        break;
+
 					case 'ats_ticket_question_id':
 					case 'ats_technician_question_id':
 						$saved_settings[$key] = intval($value);
