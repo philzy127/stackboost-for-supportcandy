@@ -244,10 +244,20 @@ class WordPress extends Module {
         $options = get_option( 'stackboost_settings', [] );
         $value   = isset( $options[ $args['id'] ] ) ? $options[ $args['id'] ] : ( $args['default'] ?? '' );
 
-        // Compatibility check: Convert legacy integer values (e.g., '17') to time string (e.g., '17:00').
-        // This ensures the timepicker initializes correctly for existing users without needing a database migration.
+        // Compatibility check: Convert legacy integer values (e.g., '17') to 24h string (e.g., '17:00').
+        // This is a necessary intermediate step because date() expects a valid time string.
         if ( is_numeric( $value ) ) {
             $value = sprintf( '%02d:00', (int) $value );
+        }
+
+        // Force 12-hour format with AM/PM for display.
+        // This handles standardizing '17:00' to '05:00 PM', or ensuring '5:00 PM' is clean.
+        // If strtotime fails (empty), it falls back to empty string.
+        if ( ! empty( $value ) ) {
+            $timestamp = strtotime( $value );
+            if ( $timestamp ) {
+                $value = date( 'h:i A', $timestamp );
+            }
         }
 
         echo '<input type="text" id="' . esc_attr( $args['id'] ) . '" name="stackboost_settings[' . esc_attr( $args['id'] ) . ']" value="' . esc_attr( $value ) . '" class="regular-text stackboost-timepicker">';
