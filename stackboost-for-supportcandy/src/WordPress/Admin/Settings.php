@@ -259,7 +259,6 @@ class Settings {
                 </div>
 
 			<?php else : ?>
-                <p><?php printf( esc_html__( 'StackBoost Version: %s', 'stackboost-for-supportcandy' ), STACKBOOST_VERSION ); ?></p>
 				<form action="options.php" method="post">
 					<?php
 					settings_fields( 'stackboost_settings' );
