@@ -22,10 +22,10 @@ class Core {
 	 * @param array $settings {
 	 *     An array of settings for the feature.
 	 *
-	 *     @type int    $start_hour       The hour when after-hours starts (e.g., 17 for 5 PM).
-	 *     @type int    $end_hour         The hour when business hours resume (e.g., 8 for 8 AM).
-	 *     @type bool   $include_weekends Whether to consider all day Saturday and Sunday as after hours.
-	 *     @type array  $holidays         An array of holiday dates in 'Y-m-d' format.
+	 *     @type string|int $start_hour       The time when after-hours starts (e.g., '17:00' or 17).
+	 *     @type string|int $end_hour         The time when business hours resume (e.g., '08:00' or 8).
+	 *     @type bool       $include_weekends Whether to consider all day Saturday and Sunday as after hours.
+	 *     @type array      $holidays         An array of holiday dates in 'Y-m-d' format.
 	 * }
 	 * @param int|null $current_timestamp The timestamp to check. Defaults to the current time.
 	 * @param string   $timezone_string   The timezone string (e.g., 'America/New_York').
@@ -33,8 +33,15 @@ class Core {
 	 * @return bool True if it is after hours, false otherwise.
 	 */
 	public function is_after_hours( array $settings, ?int $current_timestamp = null, string $timezone_string = 'UTC' ): bool {
-		$start_hour       = $settings['start_hour'] ?? 17;
-		$end_hour         = $settings['end_hour'] ?? 8;
+        // Normalize start/end times.
+        // Handles legacy integer (e.g., 17) by appending ':00', or uses string directly.
+        $start_input = $settings['start_hour'] ?? '17:00';
+        $end_input   = $settings['end_hour'] ?? '08:00';
+
+        // Parse inputs to standard H:i format for comparison
+        $start_time_str = is_numeric( $start_input ) ? sprintf( '%02d:00', (int) $start_input ) : $start_input;
+        $end_time_str   = is_numeric( $end_input ) ? sprintf( '%02d:00', (int) $end_input ) : $end_input;
+
 		$include_weekends = $settings['include_weekends'] ?? false;
 		$holidays         = $settings['holidays'] ?? [];
 
@@ -55,19 +62,49 @@ class Core {
 			return true;
 		}
 
-		// Check if the current time is within the after-hours window.
-		$current_hour = (int) $now->format( 'G' ); // 24-hour format of an hour without leading zeros
+        // Create DateTime objects for start and end times on the CURRENT day.
+        // We use the current date from $now combined with the configured times.
+        $today_date = $now->format('Y-m-d');
 
-		// This handles overnight periods (e.g., 17:00 to 08:00)
-		if ( $start_hour > $end_hour ) {
-			if ( $current_hour >= $start_hour || $current_hour < $end_hour ) {
-				return true;
-			}
-		} else { // This handles same-day periods (e.g., 00:00 to 08:00)
-			if ( $current_hour >= $start_hour && $current_hour < $end_hour ) {
-				return true;
-			}
-		}
+        $start_dt = DateTime::createFromFormat( 'Y-m-d H:i', $today_date . ' ' . date( 'H:i', strtotime( $start_time_str ) ), $timezone );
+        $end_dt   = DateTime::createFromFormat( 'Y-m-d H:i', $today_date . ' ' . date( 'H:i', strtotime( $end_time_str ) ), $timezone );
+
+        // Validation check for malformed dates
+        if ( ! $start_dt || ! $end_dt ) {
+            // Fallback to safe default behavior (assume business hours, return false) or log error.
+            // For now, returning false prevents blocking the user.
+            return false;
+        }
+
+        // Determine if the range is overnight (e.g., Start 17:00, End 08:00).
+        // If Start > End, it crosses midnight.
+        // If Start < End, it's a same-day block (e.g., Lunch 12:00 to 13:00, though 'After Hours' usually implies overnight).
+        // However, we treat it strictly:
+        // Overnight: Current time must be >= Start OR < End.
+        // Same Day: Current time must be >= Start AND < End.
+
+        // We use timestamps for comparison to be precise.
+        $now_ts   = $now->getTimestamp();
+
+        // To compare purely based on time-of-day, we can normalize everything to a dummy date (e.g., Jan 1, 1970).
+        // Or we can use the logic derived from the hour-based implementation:
+
+        $start_ts_today = $start_dt->getTimestamp();
+        $end_ts_today   = $end_dt->getTimestamp();
+
+        if ( $start_ts_today > $end_ts_today ) {
+            // Overnight Logic (e.g. 5pm to 8am)
+            // It is after hours if time is AFTER 5pm OR BEFORE 8am.
+            if ( $now_ts >= $start_ts_today || $now_ts < $end_ts_today ) {
+                return true;
+            }
+        } else {
+            // Same Day Logic (e.g. 12pm to 1pm)
+            // It is after hours if time is AFTER 12pm AND BEFORE 1pm.
+            if ( $now_ts >= $start_ts_today && $now_ts < $end_ts_today ) {
+                return true;
+            }
+        }
 
 		return false;
 	}

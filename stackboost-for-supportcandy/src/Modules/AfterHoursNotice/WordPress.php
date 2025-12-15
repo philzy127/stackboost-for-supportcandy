@@ -67,6 +67,45 @@ class WordPress extends Module {
         add_filter( 'wpsc_create_ticket_email_data', [ $this, 'add_after_hours_notice_to_email' ] );
         add_filter( 'wpsc_agent_reply_email_data', [ $this, 'add_after_hours_notice_to_email' ] );
         add_filter( 'wpsc_cust_reply_email_data', [ $this, 'add_after_hours_notice_to_email' ] );
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
+    }
+
+    /**
+     * Enqueue admin scripts and styles for the settings page.
+     *
+     * @param string $hook The current admin page hook.
+     */
+    public function enqueue_admin_scripts( $hook ) {
+        // Only load on our settings page.
+        // The slug registered via add_submenu_page (which calls our register_settings indirectly via StackBoost\ForSupportCandy\WordPress\Admin\Settings)
+        // usually results in 'support-candy_page_stackboost-after-hours' or similar.
+        // We can check if the page query arg matches.
+        if ( isset( $_GET['page'] ) && 'stackboost-after-hours' === $_GET['page'] ) {
+            wp_enqueue_script( 'jquery-ui-slider' );
+            wp_enqueue_script( 'jquery-ui-datepicker' );
+            wp_enqueue_script(
+                'stackboost-jquery-ui-timepicker-addon',
+                STACKBOOST_PLUGIN_URL . 'assets/admin/js/jquery-ui-timepicker-addon.min.js',
+                [ 'jquery', 'jquery-ui-datepicker', 'jquery-ui-slider' ],
+                '1.6.3',
+                true
+            );
+            wp_enqueue_style(
+                'stackboost-jquery-ui-timepicker-addon-css',
+                STACKBOOST_PLUGIN_URL . 'assets/admin/css/jquery-ui-timepicker-addon.min.css',
+                [],
+                '1.6.3'
+            );
+            wp_enqueue_style( 'jquery-ui-style', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css', [], '1.12.1' );
+
+            wp_enqueue_script(
+                'stackboost-admin-after-hours',
+                STACKBOOST_PLUGIN_URL . 'assets/admin/js/admin-after-hours.js',
+                [ 'stackboost-jquery-ui-timepicker-addon' ],
+                STACKBOOST_VERSION,
+                true
+            );
+        }
     }
 
     /**
@@ -80,8 +119,8 @@ class WordPress extends Module {
         }
 
         $settings = [
-            'start_hour'       => $options['after_hours_start'] ?? 17,
-            'end_hour'         => $options['before_hours_end'] ?? 8,
+            'start_hour'       => $options['after_hours_start'] ?? '17:00',
+            'end_hour'         => $options['before_hours_end'] ?? '08:00',
             'include_weekends' => ! empty( $options['include_all_weekends'] ),
             'holidays'         => $this->core->parse_holidays( $options['holidays'] ?? '' ),
         ];
@@ -114,8 +153,8 @@ class WordPress extends Module {
         }
 
         $settings = [
-            'start_hour'       => $options['after_hours_start'] ?? 17,
-            'end_hour'         => $options['before_hours_end'] ?? 8,
+            'start_hour'       => $options['after_hours_start'] ?? '17:00',
+            'end_hour'         => $options['before_hours_end'] ?? '08:00',
             'include_weekends' => ! empty( $options['include_all_weekends'] ),
             'holidays'         => $this->core->parse_holidays( $options['holidays'] ?? '' ),
         ];
@@ -150,8 +189,11 @@ class WordPress extends Module {
 
         add_settings_field( 'stackboost_enable_after_hours_notice', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'enable_after_hours_notice', 'desc' => 'Displays a notice on the ticket form when submitted outside of business hours.' ] );
         add_settings_field( 'stackboost_after_hours_in_email', __( 'Add Notice to Emails', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_in_email', 'desc' => 'Prepend the after-hours message to email notifications if the main feature is enabled.' ] );
-        add_settings_field( 'stackboost_after_hours_start', __( 'After Hours Start (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_start', 'default' => '17', 'desc' => 'The hour when after-hours starts (e.g., 17 for 5 PM).' ] );
-        add_settings_field( 'stackboost_before_hours_end', __( 'Before Hours End (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'before_hours_end', 'default' => '8', 'desc' => 'The hour when business hours resume (e.g., 8 for 8 AM).' ] );
+
+        // Changed to use render_time_field instead of render_number_field
+        add_settings_field( 'stackboost_after_hours_start', __( 'After Hours Start', 'stackboost-for-supportcandy' ), [ $this, 'render_time_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_start', 'default' => '17:00', 'desc' => 'The time when after-hours starts.' ] );
+        add_settings_field( 'stackboost_before_hours_end', __( 'Before Hours End', 'stackboost-for-supportcandy' ), [ $this, 'render_time_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'before_hours_end', 'default' => '08:00', 'desc' => 'The time when business hours resume.' ] );
+
         add_settings_field( 'stackboost_include_all_weekends', __( 'Include All Weekends', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'include_all_weekends', 'desc' => 'Enable this to show the notice all day on Saturdays and Sundays.' ] );
         add_settings_field( 'stackboost_holidays', __( 'Holidays', 'stackboost-for-supportcandy' ), [ $this, 'render_textarea_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'holidays', 'class' => 'regular-text', 'desc' => 'List holidays, one per line, in MM-DD-YYYY format (e.g., 12-25-2024). The notice will show all day on these dates.' ] );
 
@@ -193,6 +235,27 @@ class WordPress extends Module {
                 ],
             ]
         );
+        if ( ! empty( $args['desc'] ) ) {
+            echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+        }
+    }
+
+    /**
+     * Render a time picker field.
+     *
+     * @param array $args The arguments for the field.
+     */
+    public function render_time_field( array $args ) {
+        $options = get_option( 'stackboost_settings', [] );
+        $value   = isset( $options[ $args['id'] ] ) ? $options[ $args['id'] ] : ( $args['default'] ?? '' );
+
+        // Compatibility check: Convert legacy integer values (e.g., '17') to time string (e.g., '17:00').
+        // This ensures the timepicker initializes correctly for existing users without needing a database migration.
+        if ( is_numeric( $value ) ) {
+            $value = sprintf( '%02d:00', (int) $value );
+        }
+
+        echo '<input type="text" id="' . esc_attr( $args['id'] ) . '" name="stackboost_settings[' . esc_attr( $args['id'] ) . ']" value="' . esc_attr( $value ) . '" class="regular-text stackboost-timepicker">';
         if ( ! empty( $args['desc'] ) ) {
             echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
         }
