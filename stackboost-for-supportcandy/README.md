@@ -6,7 +6,7 @@ StackBoost - For SupportCandy is a powerful enhancement plugin for the SupportCa
 
 This plugin includes several modules that can be enabled or disabled based on your needs:
 
-*   **Ticket Hover Card:** Quickly view ticket details by hovering over them in the ticket list.
+*   **Ticket Details Card:** Quickly view ticket details by hovering over them in the ticket list.
 *   **General Cleanup:** Automatically hide empty columns or the priority column to reduce clutter.
 *   **Ticket Type Hiding:** Restrict which ticket types are visible to non-agent users.
 *   **After Hours Notice:** Display a customizable notice on the ticket form outside of business hours.

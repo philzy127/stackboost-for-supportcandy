@@ -43,12 +43,11 @@ class AdminController {
      * Render the main admin page with its tabbed interface.
      */
     public function render_page() {
-        $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'main';
+        $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'questions';
         ?>
         <div class="wrap">
             <h1><?php _e( 'After Ticket Survey', 'stackboost-for-supportcandy' ); ?></h1>
             <nav class="nav-tab-wrapper">
-                <a href="?page=stackboost-ats&tab=main" class="nav-tab <?php if($current_tab === 'main') echo 'nav-tab-active'; ?>"><?php _e('How to Use', 'stackboost-for-supportcandy'); ?></a>
                 <a href="?page=stackboost-ats&tab=questions" class="nav-tab <?php if($current_tab === 'questions') echo 'nav-tab-active'; ?>"><?php _e('Manage Questions', 'stackboost-for-supportcandy'); ?></a>
                 <a href="?page=stackboost-ats&tab=submissions" class="nav-tab <?php if($current_tab === 'submissions') echo 'nav-tab-active'; ?>"><?php _e('Manage Submissions', 'stackboost-for-supportcandy'); ?></a>
                 <a href="?page=stackboost-ats&tab=results" class="nav-tab <?php if($current_tab === 'results') echo 'nav-tab-active'; ?>"><?php _e('View Results', 'stackboost-for-supportcandy'); ?></a>
@@ -56,10 +55,12 @@ class AdminController {
             <div class="tab-content" style="margin-top: 20px;">
             <?php
                 switch ( $current_tab ) {
-                    case 'questions': $this->render_questions_tab(); break;
                     case 'submissions': $this->render_submissions_tab(); break;
                     case 'results': $this->render_results_tab(); break;
-                    default: $this->render_main_tab(); break;
+                    case 'questions':
+                    default:
+                        $this->render_questions_tab();
+                        break;
                 }
             ?>
             </div>
@@ -111,10 +112,6 @@ class AdminController {
     }
 
     // --- Tab Rendering Methods --- //
-
-    private function render_main_tab() {
-        include __DIR__ . '/Admin/how-to-use-template.php';
-    }
 
     private function render_questions_tab() {
         global $wpdb;

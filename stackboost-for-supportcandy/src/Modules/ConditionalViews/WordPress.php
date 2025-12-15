@@ -54,40 +54,7 @@ class WordPress extends Module {
 	 */
 	public function init_hooks() {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_scripts' ] );
 	}
-
-    /**
-     * Enqueue and localize frontend scripts for this feature.
-     */
-    public function enqueue_frontend_scripts() {
-        $options = get_option( 'stackboost_settings', [] );
-        $plugin_instance = Plugin::get_instance();
-
-        $features['conditional_hiding'] = [
-            'enabled' => ! empty( $options['enable_conditional_hiding'] ),
-            'rules'   => $this->core->get_processed_rules($options['conditional_hiding_rules'] ?? []),
-            'columns' => $plugin_instance->get_supportcandy_columns(),
-        ];
-
-        if ( ! empty( $options['enable_conditional_hiding'] ) ) {
-            stackboost_log( 'ConditionalViews: Enqueuing scripts. Rules count: ' . count( $features['conditional_hiding']['rules'] ), 'conditional_views' );
-        }
-
-        // This is a simplified approach. A filter-based system in the main Plugin class would be better.
-        if (wp_script_is('stackboost-frontend', 'registered')) {
-            $existing_data = wp_scripts()->get_data('stackboost-frontend', 'data');
-            $existing_features = json_decode(str_replace('var stackboost_settings = ', '', rtrim($existing_data, ';')), true)['features'] ?? [];
-
-            $localized_data = [
-                'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce'    => wp_create_nonce('wpsc_get_individual_ticket'),
-                'features' => array_merge($existing_features, $features),
-            ];
-            wp_localize_script('stackboost-frontend', 'stackboost_settings', $localized_data);
-        }
-    }
-
 
 	/**
 	 * Register settings fields for this module.
