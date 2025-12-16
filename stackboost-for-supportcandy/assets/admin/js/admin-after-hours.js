@@ -3,9 +3,11 @@
 
     $(document).ready(function() {
         if ($('.stackboost-timepicker').length) {
-            $('.stackboost-timepicker').clockpicker({
-                autoclose: true,
-                twelvehour: true
+            $('.stackboost-timepicker').flatpickr({
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "h:i K",
+                time_24hr: false
             });
         }
     });

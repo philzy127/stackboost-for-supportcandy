@@ -80,23 +80,23 @@ class WordPress extends Module {
         if ( isset( $_GET['page'] ) && 'stackboost-after-hours' === $_GET['page'] ) {
 
             wp_enqueue_script(
-                'stackboost-jquery-clockpicker',
-                STACKBOOST_PLUGIN_URL . 'assets/admin/js/jquery-clockpicker.min.js',
-                [ 'jquery' ],
-                '0.0.7',
+                'stackboost-flatpickr',
+                STACKBOOST_PLUGIN_URL . 'assets/admin/js/flatpickr.min.js',
+                [],
+                '4.6.13',
                 true
             );
             wp_enqueue_style(
-                'stackboost-jquery-clockpicker-css',
-                STACKBOOST_PLUGIN_URL . 'assets/admin/css/jquery-clockpicker.min.css',
+                'stackboost-flatpickr-css',
+                STACKBOOST_PLUGIN_URL . 'assets/admin/css/flatpickr.min.css',
                 [],
-                '0.0.7'
+                '4.6.13'
             );
 
             wp_enqueue_script(
                 'stackboost-admin-after-hours',
                 STACKBOOST_PLUGIN_URL . 'assets/admin/js/admin-after-hours.js',
-                [ 'stackboost-jquery-clockpicker' ],
+                [ 'jquery', 'stackboost-flatpickr' ],
                 STACKBOOST_VERSION,
                 true
             );
