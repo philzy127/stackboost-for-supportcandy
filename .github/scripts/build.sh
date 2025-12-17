@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Exit on error
+set -e
+
+echo "Starting build process..."
+
+# Define directories
+SRC_DIR="stackboost-for-supportcandy"
+BUILD_DIR="build"
+PRO_DIR="$BUILD_DIR/pro/stackboost-for-supportcandy"
+REPO_DIR="$BUILD_DIR/repo/stackboost-for-supportcandy"
+
+# Clean previous builds
+rm -rf "$BUILD_DIR"
+mkdir -p "$PRO_DIR"
+mkdir -p "$REPO_DIR"
+
+echo "Copying source files..."
+rsync -av --exclude '.git' --exclude '.github' --exclude 'build' --exclude 'tests' --exclude 'Documentation' --exclude '*.md' "$SRC_DIR/" "$PRO_DIR/" > /dev/null
+rsync -av --exclude '.git' --exclude '.github' --exclude 'build' --exclude 'tests' --exclude 'Documentation' --exclude '*.md' "$SRC_DIR/" "$REPO_DIR/" > /dev/null
+
+# --- BUILD PRO VERSION ---
+echo "Building Pro version..."
+python3 .github/scripts/pro_modifier.py "$PRO_DIR/stackboost-for-supportcandy.php"
+
+cd "$BUILD_DIR/pro"
+zip -r -q ../../stackboost-for-supportcandy-pro.zip .
+cd ../..
+
+# --- BUILD REPO (FREE) VERSION ---
+echo "Building Repo version..."
+echo "Removing prohibited directories..."
+rm -rf "$REPO_DIR/src/Modules/Directory"
+rm -rf "$REPO_DIR/src/Modules/ConditionalViews"
+rm -rf "$REPO_DIR/src/Modules/OnboardingDashboard"
+rm -rf "$REPO_DIR/src/Modules/QueueMacro"
+rm -rf "$REPO_DIR/src/Modules/UnifiedTicketMacro"
+rm -rf "$REPO_DIR/src/Modules/AfterTicketSurvey"
+rm -rf "$REPO_DIR/includes/libraries/dompdf"
+
+echo "Sanitizing Plugin.php..."
+python3 .github/scripts/repo_sanitizer.py "$REPO_DIR/src/WordPress/Plugin.php"
+
+cd "$BUILD_DIR/repo"
+zip -r -q ../../stackboost-for-supportcandy.zip .
+cd ../..
+
+echo "Build complete!"
