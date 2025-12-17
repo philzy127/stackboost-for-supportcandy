@@ -174,6 +174,22 @@ class WordPress {
 
 			// Enqueue scripts for the Management tab.
 			if ( 'management' === $active_tab ) {
+				// Enqueue Util Script (Shared functionality like Modals).
+				wp_enqueue_style(
+					'stackboost-util-style',
+					\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
+					array(),
+					\STACKBOOST_VERSION
+				);
+
+				wp_enqueue_script(
+					'stackboost-util-js',
+					\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
+					array( 'jquery' ),
+					\STACKBOOST_VERSION,
+					true
+				);
+
 				// Enqueue scripts for import.
 				wp_enqueue_script(
 					'stackboost-import-ajax',
@@ -227,7 +243,7 @@ class WordPress {
 				wp_enqueue_script(
 					'stackboost-json-import-export',
 					\STACKBOOST_PLUGIN_URL . 'assets/js/json-import-export.js',
-					array( 'jquery', 'stackboost-management-ajax' ), // Depend on management-ajax for localized object
+					array( 'jquery', 'stackboost-management-ajax', 'stackboost-util-js' ), // Depend on management-ajax for localized object and util for modals
 					\STACKBOOST_VERSION,
 					true
 				);
