@@ -4,15 +4,9 @@ namespace StackBoost\ForSupportCandy\WordPress;
 
 use StackBoost\ForSupportCandy\WordPress\Admin\Settings;
 use StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
-use StackBoost\ForSupportCandy\Modules\ConditionalViews;
 use StackBoost\ForSupportCandy\Modules\QolEnhancements;
-use StackBoost\ForSupportCandy\Modules\QueueMacro;
-use StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro;
-use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
-use StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\TicketView;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
-use StackBoost\ForSupportCandy\Modules\OnboardingDashboard;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 
 /**
@@ -80,28 +74,46 @@ final class Plugin {
 
 		// Pro Features
 		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
-			$this->modules['conditional_views'] = ConditionalViews\WordPress::get_instance();
+			$class = 'StackBoost\ForSupportCandy\Modules\ConditionalViews\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['conditional_views'] = $class::get_instance();
+			}
 		}
 
 		if ( stackboost_is_feature_active( 'queue_macro' ) ) {
-			$this->modules['queue_macro'] = QueueMacro\WordPress::get_instance();
+			$class = 'StackBoost\ForSupportCandy\Modules\QueueMacro\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['queue_macro'] = $class::get_instance();
+			}
 		}
 
 		if ( stackboost_is_feature_active( 'after_ticket_survey' ) ) {
-			$this->modules['after_ticket_survey'] = AfterTicketSurvey\WordPress::get_instance();
+			$class = 'StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['after_ticket_survey'] = $class::get_instance();
+			}
 		}
 
 		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
-			$this->modules['unified_ticket_macro'] = UnifiedTicketMacro\WordPress::get_instance();
+			$class = 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['unified_ticket_macro'] = $class::get_instance();
+			}
 		}
 
 		// Business Features
 		if ( stackboost_is_feature_active( 'staff_directory' ) ) {
-			$this->modules['directory'] = Directory\WordPress::get_instance();
+			$class = 'StackBoost\ForSupportCandy\Modules\Directory\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['directory'] = $class::get_instance();
+			}
 		}
 
 		if ( stackboost_is_feature_active( 'onboarding_dashboard' ) ) {
-			$this->modules['onboarding_dashboard'] = OnboardingDashboard\OnboardingDashboard::get_instance();
+			$class = 'StackBoost\ForSupportCandy\Modules\OnboardingDashboard\OnboardingDashboard';
+			if ( class_exists( $class ) ) {
+				$this->modules['onboarding_dashboard'] = $class::get_instance();
+			}
 		}
 	}
 
@@ -210,12 +222,15 @@ final class Plugin {
 
 		// Gather data from Conditional Views module
 		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
-			$cv_core                        = new ConditionalViews\Core();
-			$features_data['conditional_hiding'] = [
-				'enabled' => ! empty( $options['enable_conditional_hiding'] ),
-				'rules'   => $cv_core->get_processed_rules( $options['conditional_hiding_rules'] ?? [] ),
-				'columns' => $this->get_supportcandy_columns(),
-			];
+			// Check if ConditionalViews Core exists before usage
+			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\ConditionalViews\Core' ) ) {
+				$cv_core = new \StackBoost\ForSupportCandy\Modules\ConditionalViews\Core();
+				$features_data['conditional_hiding'] = [
+					'enabled' => ! empty( $options['enable_conditional_hiding'] ),
+					'rules'   => $cv_core->get_processed_rules( $options['conditional_hiding_rules'] ?? [] ),
+					'columns' => $this->get_supportcandy_columns(),
+				];
+			}
 		}
 
 		if ( ! empty( $features_data ) ) {

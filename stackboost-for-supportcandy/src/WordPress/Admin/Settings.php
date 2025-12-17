@@ -2,8 +2,6 @@
 
 namespace StackBoost\ForSupportCandy\WordPress\Admin;
 
-use StackBoost\ForSupportCandy\Services\LicenseManager;
-
 /**
  * Manages the admin settings pages and sanitization for the plugin.
  *
@@ -279,8 +277,15 @@ class Settings {
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
 
 		// Directory Module Settings
-		register_setting( 'stackboost_directory_settings', 'stackboost_directory_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::class, 'sanitize_settings' ] );
-		register_setting( 'stackboost_directory_widget_settings', 'stackboost_directory_widget_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings::class, 'sanitize_widget_settings' ] );
+		if ( stackboost_is_feature_active( 'staff_directory' ) ) {
+			// Ensure classes exist before using them in callback (though feature gate should handle this, safety first for packaging)
+			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings' ) ) {
+				register_setting( 'stackboost_directory_settings', 'stackboost_directory_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::class, 'sanitize_settings' ] );
+			}
+			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings' ) ) {
+				register_setting( 'stackboost_directory_widget_settings', 'stackboost_directory_widget_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings::class, 'sanitize_widget_settings' ] );
+			}
+		}
 
         // License Settings (General Page)
         add_settings_section(
@@ -792,8 +797,13 @@ class Settings {
             wp_send_json_error( __( 'Missing license key.', 'stackboost-for-supportcandy' ) );
         }
 
+        $class = 'StackBoost\ForSupportCandy\Services\LicenseManager';
+        if ( ! class_exists( $class ) ) {
+             wp_send_json_error( __( 'License manager service is unavailable.', 'stackboost-for-supportcandy' ) );
+        }
+
         $instance_name = get_site_url();
-        $manager = new LicenseManager();
+        $manager = new $class();
         $response = $manager->activate_license( $license_key, $instance_name );
 
         if ( ! $response['success'] ) {
@@ -825,8 +835,11 @@ class Settings {
         $instance_id = get_option( 'stackboost_license_instance_id', '' );
 
         if ( ! empty( $license_key ) && ! empty( $instance_id ) ) {
-            $manager = new LicenseManager();
-            $manager->deactivate_license( $license_key, $instance_id );
+            $class = 'StackBoost\ForSupportCandy\Services\LicenseManager';
+            if ( class_exists( $class ) ) {
+                $manager = new $class();
+                $manager->deactivate_license( $license_key, $instance_id );
+            }
         }
 
         // Clean up options
