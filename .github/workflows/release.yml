@@ -1,0 +1,44 @@
+name: Release Build
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Build Artifacts
+      run: |
+        chmod +x .github/scripts/build.sh
+        ./.github/scripts/build.sh
+
+    - name: Upload Test Artifacts
+      uses: actions/upload-artifact@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        name: stackboost-builds
+        path: |
+          stackboost-for-supportcandy.zip
+          stackboost-for-supportcandy-pro.zip
+
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          stackboost-for-supportcandy.zip
+          stackboost-for-supportcandy-pro.zip

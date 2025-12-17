@@ -2,8 +2,6 @@
 
 namespace StackBoost\ForSupportCandy\WordPress\Admin;
 
-use StackBoost\ForSupportCandy\Services\LicenseManager;
-
 /**
  * Manages the admin settings pages and sanitization for the plugin.
  *
@@ -36,6 +34,8 @@ class Settings {
 		add_action( 'wp_ajax_stackboost_save_settings', [ $this, 'ajax_save_settings' ] );
 		add_action( 'wp_ajax_stackboost_activate_license', [ $this, 'ajax_activate_license' ] );
 		add_action( 'wp_ajax_stackboost_deactivate_license', [ $this, 'ajax_deactivate_license' ] );
+		add_action( 'wp_ajax_stackboost_authorize_uninstall', [ $this, 'ajax_authorize_uninstall' ] );
+		add_action( 'wp_ajax_stackboost_cancel_uninstall', [ $this, 'ajax_cancel_uninstall' ] );
 	}
 
 	/**
@@ -279,8 +279,15 @@ class Settings {
 		register_setting( 'stackboost_settings', 'stackboost_settings', [ $this, 'sanitize_settings' ] );
 
 		// Directory Module Settings
-		register_setting( 'stackboost_directory_settings', 'stackboost_directory_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::class, 'sanitize_settings' ] );
-		register_setting( 'stackboost_directory_widget_settings', 'stackboost_directory_widget_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings::class, 'sanitize_widget_settings' ] );
+		if ( stackboost_is_feature_active( 'staff_directory' ) ) {
+			// Ensure classes exist before using them in callback (though feature gate should handle this, safety first for packaging)
+			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings' ) ) {
+				register_setting( 'stackboost_directory_settings', 'stackboost_directory_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::class, 'sanitize_settings' ] );
+			}
+			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings' ) ) {
+				register_setting( 'stackboost_directory_widget_settings', 'stackboost_directory_widget_settings', [ \StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings::class, 'sanitize_widget_settings' ] );
+			}
+		}
 
         // License Settings (General Page)
         add_settings_section(
@@ -329,6 +336,110 @@ class Settings {
 			'stackboost-tools',
 			'stackboost_tools_section'
 		);
+
+		// Uninstall Protocol Section
+		add_settings_section(
+			'stackboost_tools_uninstall_section',
+			__( 'Data Management', 'stackboost-for-supportcandy' ),
+			'__return_null',
+			'stackboost-tools'
+		);
+
+		add_settings_field(
+			'stackboost_uninstall_actions',
+			__( 'Uninstall Protocols', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_uninstall_actions' ],
+			'stackboost-tools',
+			'stackboost_tools_uninstall_section'
+		);
+	}
+
+	/**
+	 * Render the Uninstall Protocol actions.
+	 */
+	public function render_uninstall_actions() {
+		// Enqueue the JS specifically here or via a general enqueue hook.
+		// Since we are in the render callback, we should enqueue it if not already done,
+		// but typically enqueueing happens in 'admin_enqueue_scripts'.
+		// We'll add it to 'admin_enqueue_scripts' logic or verify it's loaded.
+		// For now, let's rely on the separate JS file which we will create and enqueue.
+
+		$settings = get_option( 'stackboost_settings', [] );
+		$auth_timestamp = isset( $settings['uninstall_authorized_timestamp'] ) ? (int) $settings['uninstall_authorized_timestamp'] : 0;
+
+		// Calculate remaining time if any
+		$remaining = 0;
+		if ( $auth_timestamp > 0 ) {
+			$remaining = 300 - ( time() - $auth_timestamp );
+			if ( $remaining < 0 ) {
+				$remaining = 0;
+				// Auto-cleanup stale timestamp could be done here, but let's just treat it as 0.
+			}
+		}
+
+		$is_authorized = ( $remaining > 0 );
+
+		// Data attributes for JS to pick up state
+		?>
+		<div id="stackboost-uninstall-wrapper"
+		     data-authorized="<?php echo $is_authorized ? '1' : '0'; ?>"
+		     data-remaining="<?php echo esc_attr( $remaining ); ?>"
+		     class="<?php echo $is_authorized ? 'authorized-mode' : 'safe-mode'; ?>">
+
+			<div class="stackboost-uninstall-status">
+				<strong><?php esc_html_e( 'Current Status:', 'stackboost-for-supportcandy' ); ?></strong>
+				<span class="status-text">
+					<?php echo $is_authorized ? esc_html__( 'AUTHORIZED FOR REMOVAL', 'stackboost-for-supportcandy' ) : esc_html__( 'Standard Uninstall (Safe)', 'stackboost-for-supportcandy' ); ?>
+				</span>
+			</div>
+
+			<p class="description stackboost-uninstall-desc">
+				<?php esc_html_e( 'By default, deleting this plugin keeps your Staff Directory and Settings in the database so you can reinstall later without losing work.', 'stackboost-for-supportcandy' ); ?>
+			</p>
+
+			<?php if ( $is_authorized ) : ?>
+				<div class="stackboost-uninstall-timer-warning">
+					<p><?php esc_html_e( 'This authorization expires in:', 'stackboost-for-supportcandy' ); ?> <span id="stackboost-uninstall-timer"></span></p>
+					<p class="warning-text"><?php esc_html_e( 'Go to the Plugins page and delete StackBoost now to wipe all data.', 'stackboost-for-supportcandy' ); ?></p>
+				</div>
+			<?php endif; ?>
+
+			<div class="stackboost-uninstall-controls">
+				<button type="button" id="stackboost-authorize-uninstall-btn" class="button button-link-delete" style="<?php echo $is_authorized ? 'display:none;' : ''; ?>">
+					<?php esc_html_e( 'Authorize Complete Data Removal', 'stackboost-for-supportcandy' ); ?>
+				</button>
+
+				<button type="button" id="stackboost-cancel-uninstall-btn" class="button" style="<?php echo $is_authorized ? '' : 'display:none;'; ?>">
+					<?php esc_html_e( 'Cancel Authorization', 'stackboost-for-supportcandy' ); ?>
+				</button>
+			</div>
+
+			<!-- Hidden Modal Markup -->
+			<div id="stackboost-uninstall-modal" class="stackboost-modal" style="display:none;">
+				<div class="stackboost-modal-content">
+					<span class="stackboost-modal-close-button">&times;</span>
+					<h2><?php esc_html_e( 'Confirm Full Data Removal?', 'stackboost-for-supportcandy' ); ?></h2>
+					<div class="stackboost-modal-body">
+						<p class="warning-text" style="color: #d63638; font-weight: bold;">
+							<?php esc_html_e( 'Warning: This action allows the permanent deletion of:', 'stackboost-for-supportcandy' ); ?>
+						</p>
+						<ul style="text-align: left; display: inline-block; margin-bottom: 20px;">
+							<li>- <?php esc_html_e( 'All General Settings', 'stackboost-for-supportcandy' ); ?></li>
+							<li>- <?php esc_html_e( 'The entire Staff Directory (Staff, Locations, Departments)', 'stackboost-for-supportcandy' ); ?></li>
+							<li>- <?php esc_html_e( 'Onboarding Dashboard progress', 'stackboost-for-supportcandy' ); ?></li>
+						</ul>
+						<p><?php esc_html_e( 'You will have 5 minutes to delete the plugin after clicking Yes.', 'stackboost-for-supportcandy' ); ?></p>
+					</div>
+					<div class="stackboost-modal-footer">
+						<button type="button" class="button button-secondary stackboost-modal-close-btn"><?php esc_html_e( 'Cancel', 'stackboost-for-supportcandy' ); ?></button>
+						<button type="button" id="stackboost-confirm-uninstall-auth" class="button button-primary" style="background-color: #d63638; border-color: #d63638;">
+							<?php esc_html_e( 'Yes, Authorize Removal', 'stackboost-for-supportcandy' ); ?>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php
 	}
 
     /**
@@ -792,8 +903,13 @@ class Settings {
             wp_send_json_error( __( 'Missing license key.', 'stackboost-for-supportcandy' ) );
         }
 
+        $class = 'StackBoost\ForSupportCandy\Services\LicenseManager';
+        if ( ! class_exists( $class ) ) {
+             wp_send_json_error( __( 'License manager service is unavailable.', 'stackboost-for-supportcandy' ) );
+        }
+
         $instance_name = get_site_url();
-        $manager = new LicenseManager();
+        $manager = new $class();
         $response = $manager->activate_license( $license_key, $instance_name );
 
         if ( ! $response['success'] ) {
@@ -825,8 +941,11 @@ class Settings {
         $instance_id = get_option( 'stackboost_license_instance_id', '' );
 
         if ( ! empty( $license_key ) && ! empty( $instance_id ) ) {
-            $manager = new LicenseManager();
-            $manager->deactivate_license( $license_key, $instance_id );
+            $class = 'StackBoost\ForSupportCandy\Services\LicenseManager';
+            if ( class_exists( $class ) ) {
+                $manager = new $class();
+                $manager->deactivate_license( $license_key, $instance_id );
+            }
         }
 
         // Clean up options
@@ -838,4 +957,38 @@ class Settings {
 
         wp_send_json_success();
     }
+
+	/**
+	 * AJAX Handler: Authorize Clean Uninstall.
+	 */
+	public function ajax_authorize_uninstall() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$settings = get_option( 'stackboost_settings', [] );
+		$settings['uninstall_authorized_timestamp'] = time();
+		update_option( 'stackboost_settings', $settings );
+
+		wp_send_json_success( [ 'timestamp' => $settings['uninstall_authorized_timestamp'] ] );
+	}
+
+	/**
+	 * AJAX Handler: Cancel Clean Uninstall.
+	 */
+	public function ajax_cancel_uninstall() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$settings = get_option( 'stackboost_settings', [] );
+		unset( $settings['uninstall_authorized_timestamp'] );
+		update_option( 'stackboost_settings', $settings );
+
+		wp_send_json_success();
+	}
 }

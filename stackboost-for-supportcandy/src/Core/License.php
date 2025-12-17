@@ -2,8 +2,6 @@
 
 namespace StackBoost\ForSupportCandy\Core;
 
-use StackBoost\ForSupportCandy\Services\LicenseManager;
-
 /**
  * Manages the plugin's license and feature tiers.
  *
@@ -26,11 +24,16 @@ class License {
 	 * @return string
 	 */
 	public static function get_tier(): string {
+        $class = 'StackBoost\ForSupportCandy\Services\LicenseManager';
+        if ( ! class_exists( $class ) ) {
+            return 'lite';
+        }
+
         // Validate license status periodically (12h cache)
         $license_key = get_option( 'stackboost_license_key', '' );
 
         if ( ! empty( $license_key ) ) {
-            $manager = new LicenseManager();
+            $manager = new $class();
             $status = $manager->check_license_status( $license_key );
 
             if ( $status && isset( $status['variant_id'] ) ) {
