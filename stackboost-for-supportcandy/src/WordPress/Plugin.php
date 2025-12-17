@@ -274,6 +274,26 @@ final class Plugin {
 				);
 			}
 
+            // Enqueue Clean Uninstall Script on Tools page
+            if ( 'stackboost_page_stackboost-tools' === $hook_suffix ) {
+                wp_enqueue_script(
+                    'stackboost-clean-uninstall',
+                    STACKBOOST_PLUGIN_URL . 'assets/js/clean-uninstall.js',
+                    [ 'jquery' ],
+                    STACKBOOST_VERSION,
+                    true
+                );
+
+                // We need to localize the script with the generic admin nonce
+                wp_localize_script(
+                    'stackboost-clean-uninstall',
+                    'stackboost_admin',
+                    [
+                        'nonce' => wp_create_nonce( 'stackboost_admin_nonce' ),
+                    ]
+                );
+            }
+
 			// Enqueue shared utilities (Modals, etc.)
 			wp_enqueue_style(
 				'stackboost-util',
