@@ -1,2 +1,20 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Exclude Dev/Meta files from GitHub Source Code Zip
+.github export-ignore
+Documentation export-ignore
+*.md export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+
+# Exclude Pro Modules
+stackboost-for-supportcandy/src/Modules/Directory export-ignore
+stackboost-for-supportcandy/src/Modules/ConditionalViews export-ignore
+stackboost-for-supportcandy/src/Modules/OnboardingDashboard export-ignore
+stackboost-for-supportcandy/src/Modules/QueueMacro export-ignore
+stackboost-for-supportcandy/src/Modules/UnifiedTicketMacro export-ignore
+stackboost-for-supportcandy/src/Modules/AfterTicketSurvey export-ignore
+
+# Exclude Libraries
+stackboost-for-supportcandy/includes/libraries/dompdf export-ignore
