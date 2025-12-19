@@ -975,6 +975,11 @@ class Settings {
 		$timestamp = time();
 		$settings['uninstall_authorized_timestamp'] = $timestamp;
 
+		// IMPORTANT: Remove the sanitization filter for this programmatic update.
+		// The central sanitization function requires a 'page_slug' which isn't present here.
+		// Without removing the filter, the update is silently rejected/ignored because sanitize_settings returns the old value.
+		remove_filter( 'sanitize_option_stackboost_settings', [ $this, 'sanitize_settings' ] );
+
 		if ( update_option( 'stackboost_settings', $settings ) ) {
 			// Log for debugging
 			if ( function_exists( 'stackboost_log' ) ) {
@@ -1006,6 +1011,10 @@ class Settings {
 
 		$settings = get_option( 'stackboost_settings', [] );
 		unset( $settings['uninstall_authorized_timestamp'] );
+
+		// Remove sanitization filter for raw update
+		remove_filter( 'sanitize_option_stackboost_settings', [ $this, 'sanitize_settings' ] );
+
 		update_option( 'stackboost_settings', $settings );
 
 		wp_send_json_success();
