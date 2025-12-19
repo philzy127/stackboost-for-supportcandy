@@ -22,10 +22,20 @@ class Upgrade {
 	 * Initialize the upgrade notice.
 	 */
 	public static function init() {
-		if ( 'completed' !== get_option( self::MIGRATION_OPTION_NAME ) ) {
-			add_action( 'admin_notices', array( __CLASS__, 'show_migration_notice' ) );
-			add_action( 'wp_ajax_stackboost_run_phone_migration', array( __CLASS__, 'run_migration' ) );
+		if ( 'completed' === get_option( self::MIGRATION_OPTION_NAME ) ) {
+			return;
 		}
+
+		// Check if this is a fresh install (no settings exist).
+		// If it is, we don't need to migrate anything; just mark it as done.
+		if ( false === get_option( 'stackboost_settings' ) ) {
+			update_option( self::MIGRATION_OPTION_NAME, 'completed' );
+			return;
+		}
+
+		// Otherwise, show the migration notice.
+		add_action( 'admin_notices', array( __CLASS__, 'show_migration_notice' ) );
+		add_action( 'wp_ajax_stackboost_run_phone_migration', array( __CLASS__, 'run_migration' ) );
 	}
 
 	/**
