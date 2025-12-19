@@ -30,7 +30,7 @@ cd ../..
 
 # --- BUILD REPO (FREE) VERSION ---
 echo "Building Repo version..."
-echo "Removing prohibited directories..."
+echo "Removing prohibited directories and files..."
 rm -rf "$REPO_DIR/src/Modules/Directory"
 rm -rf "$REPO_DIR/src/Modules/ConditionalViews"
 rm -rf "$REPO_DIR/src/Modules/OnboardingDashboard"
@@ -39,8 +39,14 @@ rm -rf "$REPO_DIR/src/Modules/UnifiedTicketMacro"
 rm -rf "$REPO_DIR/src/Modules/AfterTicketSurvey"
 rm -rf "$REPO_DIR/includes/libraries/dompdf"
 
-echo "Sanitizing Plugin.php..."
-python3 .github/scripts/repo_sanitizer.py "$REPO_DIR/src/WordPress/Plugin.php"
+# Remove License and PDF Service files
+rm -f "$REPO_DIR/src/Services/LicenseManager.php"
+rm -f "$REPO_DIR/src/Core/License.php"
+rm -f "$REPO_DIR/src/Services/PdfService.php"
+
+echo "Sanitizing Code..."
+# Pass the root directory to the sanitizer
+python3 .github/scripts/repo_sanitizer.py "$REPO_DIR"
 
 cd "$BUILD_DIR/repo"
 zip -r -q ../../stackboost-for-supportcandy.zip .
