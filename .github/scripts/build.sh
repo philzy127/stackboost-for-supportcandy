@@ -25,7 +25,7 @@ echo "Building Pro version..."
 python3 .github/scripts/pro_modifier.py "$PRO_DIR/stackboost-for-supportcandy.php"
 
 cd "$BUILD_DIR/pro"
-zip -r -q ../../stackboost-for-supportcandy-pro.zip .
+zip -r -q ../../stackboost-for-supportcandy-premium.zip .
 cd ../..
 
 # --- BUILD REPO (FREE) VERSION ---
