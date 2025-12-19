@@ -75,7 +75,7 @@ class Core {
 	 * @param \WPSC_Ticket $ticket The ticket object.
 	 * @return string The generated HTML.
 	 */
-	private function build_live_utm_html( \WPSC_Ticket $ticket ): string {
+	public function build_live_utm_html( \WPSC_Ticket $ticket ): string {
 		\stackboost_log( '[UTM] build_live_utm_html() - ENTER for ticket ID: ' . $ticket->id, 'module-utm' );
 		$options          = get_option( 'stackboost_settings', [] );
 		$is_enabled       = $options['utm_enabled'] ?? false;

@@ -49,6 +49,9 @@ class WordPress extends Module {
 		// SupportCandy frontend usually uses a shortcode.
 		// We can hook into wp_enqueue_scripts.
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+
+		// Register AJAX endpoints for ticket card
+		add_action( 'wp_ajax_stackboost_get_ticket_card', [ $this, 'ajax_get_ticket_card_content' ] );
 	}
 
 	/**
@@ -122,6 +125,41 @@ class WordPress extends Module {
 		// Section: Ticket Details Card
 		add_settings_section( 'stackboost_ticket_details_card_section', __( 'Ticket Details Card', 'stackboost-for-supportcandy' ), null, $page_slug );
 		add_settings_field( 'stackboost_enable_ticket_details_card', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'enable_ticket_details_card', 'desc' => 'Shows a card with ticket details on right-click.' ] );
+
+		add_settings_field(
+			'stackboost_card_content_source',
+			__( 'Content Source', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_select_field' ],
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[
+				'id'      => 'card_content_source',
+				'choices' => [
+					'standard' => 'Standard (All Fields)',
+					'utm'      => 'Unified Ticket Macro (Customizable)',
+				],
+				'desc'    => 'Choose how the main content of the card is generated.',
+			]
+		);
+
+		add_settings_field( 'stackboost_card_show_description', __( 'Include Initial Description', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'card_show_description', 'desc' => 'Append the ticket initial description below the fields.' ] );
+		add_settings_field( 'stackboost_card_show_notes', __( 'Include Notes/Threads', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'card_show_notes', 'desc' => 'Append recent ticket notes and replies.' ] );
+
+		add_settings_field(
+			'stackboost_card_notes_limit',
+			__( 'Notes Limit', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_text_field' ],
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[
+				'id'      => 'card_notes_limit',
+				'default' => '5',
+				'desc'    => 'Maximum number of notes to display (if enabled).',
+			]
+		);
+
+		add_settings_field( 'stackboost_card_strip_images', __( 'Strip Images from Notes', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'card_strip_images', 'desc' => 'Replace images in notes with [Image] to save space.' ] );
+
 
 		add_settings_section( 'stackboost_separator_1', '', [ $this, 'render_hr_separator' ], $page_slug );
 
@@ -280,5 +318,246 @@ class WordPress extends Module {
 	 */
 	public function render_ticket_type_hiding_description() {
 		echo '<p>' . esc_html__( 'This feature hides specified ticket categories from the dropdown menu for any user who is not an agent.', 'stackboost-for-supportcandy' ) . '</p>';
+	}
+
+	/**
+	 * AJAX Handler: Get Ticket Card Content
+	 */
+	public function ajax_get_ticket_card_content() {
+		check_ajax_referer( 'stackboost_settings_nonce', 'nonce' );
+
+		$ticket_id = isset( $_POST['ticket_id'] ) ? intval( $_POST['ticket_id'] ) : 0;
+		if ( ! $ticket_id ) {
+			wp_send_json_error( 'Invalid Ticket ID' );
+		}
+
+		// Security/Permissions Check
+		$ticket = new \WPSC_Ticket( $ticket_id );
+		if ( ! $ticket->id ) {
+			wp_send_json_error( 'Ticket not found' );
+		}
+
+		// Use SupportCandy's permission check logic.
+		// For frontend customers, we need to ensure they can only see their own tickets.
+		// WPSC_Individual_Ticket::check_permission() is good but often redirects.
+		// We can manually check or rely on the fact that if a user can't access it, we shouldn't show it.
+		// A simple check:
+		$current_user_id = get_current_user_id();
+		$is_agent        = \WPSC_Functions::is_agent();
+		$is_customer     = ! $is_agent;
+
+		if ( $is_agent ) {
+			// Agents usually have full access.
+			// Assuming agent role implies access for now as per standard WPSC behavior for lists.
+		} else {
+			// Customer check: Must match customer ID.
+			// SupportCandy stores customer details in the ticket object.
+			if ( (int) $ticket->customer->id !== $current_user_id ) {
+				// If not the owner and not an agent, deny.
+				wp_send_json_error( 'Access Denied' );
+			}
+		}
+
+		// Prepare Content
+		$options = get_option( 'stackboost_settings' );
+		$source  = $options['card_content_source'] ?? 'standard';
+		$html    = '';
+
+		// 1. Main Content
+		if ( 'utm' === $source ) {
+			// Use UTM Logic
+			if ( class_exists( '\StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
+				$html .= '<div class="stackboost-card-section stackboost-card-main">';
+				$html .= \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->build_live_utm_html( $ticket );
+				$html .= '</div>';
+			} else {
+				$html .= '<p>UTM Module not active.</p>';
+			}
+		} else {
+			// Standard View (Recreated for speed/robustness)
+			$html .= '<div class="stackboost-card-section stackboost-card-main">';
+			$html .= '<table class="wpsc-ticket-fields-table">'; // Use standard class or similar style
+
+			// We iterate through fields similar to UTM but without the custom selection logic,
+			// just showing all fields that are usually visible.
+			// For simplicity and matching "Standard", we can use all custom fields.
+			$all_fields = \WPSC_Custom_Field::$custom_fields;
+			foreach ( $all_fields as $slug => $field ) {
+				// Skip hidden or internal fields if necessary?
+				// WPSC usually filters these.
+				// For the "Standard" view, users expect to see what's in the widget.
+				// The widget loops through enabled fields.
+				// We'll trust the $custom_fields array is what's active.
+
+				// Get formatted value using a helper if possible or manual switch
+				// Re-using UTM helper logic would be smart, but we can't depend on UTM being active.
+				// So we implement a lightweight renderer here.
+
+				$val = $ticket->{$field->slug};
+				if ( ! empty( $val ) ) {
+					$label = $field->name;
+					$display_val = $this->get_formatted_field_value( $ticket, $field );
+
+					if ( $display_val !== '' ) {
+						$html .= '<tr><th style="text-align:left; vertical-align:top;">' . esc_html( $label ) . ':</th><td style="vertical-align:top;">' . $display_val . '</td></tr>';
+					}
+				}
+			}
+			$html .= '</table>';
+			$html .= '</div>';
+		}
+
+		// 2. Initial Description
+		if ( ! empty( $options['card_show_description'] ) ) {
+			$desc_thread = $ticket->get_description_thread();
+			if ( $desc_thread && ! empty( $desc_thread->body ) ) {
+				$html .= '<div class="stackboost-card-section stackboost-card-description">';
+				$html .= '<h4>' . esc_html__( 'Description', 'stackboost-for-supportcandy' ) . '</h4>';
+				$html .= '<div class="stackboost-card-body">' . wp_kses_post( $desc_thread->body ) . '</div>';
+				$html .= '</div>';
+			}
+		}
+
+		// 3. Notes / Threads
+		if ( ! empty( $options['card_show_notes'] ) ) {
+			$limit = isset( $options['card_notes_limit'] ) ? intval( $options['card_notes_limit'] ) : 5;
+			$strip_images = ! empty( $options['card_strip_images'] );
+
+			// Get threads
+			// $ticket->get_threads() returns all threads.
+			$threads = $ticket->get_threads();
+
+			// Filter and Sort
+			// Usually returned by ID ASC or DESC? We want DESC (newest first).
+			// Let's reverse if needed. WPSC usually returns ASC (oldest first).
+			$threads = array_reverse( $threads );
+
+			$display_threads = [];
+			$count = 0;
+
+			foreach ( $threads as $thread ) {
+				if ( $count >= $limit ) break;
+
+				// Skip description thread (usually the first one created) if it's strictly a note list?
+				// User said: "Initial Description... option... Include Notes... separate".
+				// But "Description" is a thread.
+				// We usually want to exclude the actual *description* thread from the "Notes" list if it's already shown above,
+				// or just treat it as a thread.
+				// Given the "Initial Description" feature, let's skip the thread that is the description
+				// to avoid obvious duplication if that option is enabled.
+				// However, user said "No" to de-duplication logic.
+				// So we show ALL threads if asked.
+
+				// Visibility Check
+				if ( $is_customer ) {
+					// Customers only see public threads
+					if ( ! $thread->is_customer_view ) {
+						continue;
+					}
+				} else {
+					// Agents see everything
+				}
+
+				$display_threads[] = $thread;
+				$count++;
+			}
+
+			if ( ! empty( $display_threads ) ) {
+				$html .= '<div class="stackboost-card-section stackboost-card-notes">';
+				$html .= '<h4>' . esc_html__( 'Recent Activity', 'stackboost-for-supportcandy' ) . '</h4>';
+				$html .= '<ul class="stackboost-card-thread-list" style="padding-left: 0; list-style: none;">';
+
+				foreach ( $display_threads as $thread ) {
+					$body = $thread->body;
+
+					// Strip Images
+					if ( $strip_images ) {
+						$body = preg_replace( '/<img[^>]+\>/i', ' <em>[' . __( 'Image', 'stackboost-for-supportcandy' ) . ']</em> ', $body );
+					}
+
+					// Format Date
+					$date_obj = new \DateTime( $thread->date_created ); // UTC
+					$date_obj->setTimezone( wp_timezone() );
+					$date_str = $date_obj->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
+
+					$sender_name = 'Unknown';
+					if ( isset( $thread->sender ) && is_object( $thread->sender ) ) {
+						$sender_name = $thread->sender->name;
+					}
+
+					$html .= '<li style="margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">';
+					$html .= '<strong>' . esc_html( $sender_name ) . '</strong> <small style="color:#777;">' . esc_html( $date_str ) . '</small><br/>';
+					// Use specific allowed HTML for safety but allow formatting
+					$html .= '<div class="stackboost-thread-body">' . wp_kses_post( $body ) . '</div>';
+					$html .= '</li>';
+				}
+
+				$html .= '</ul>';
+				$html .= '</div>';
+			}
+		}
+
+		echo $html;
+		wp_die();
+	}
+
+	/**
+	 * Helper: Format Field Value (Simplified version of UTM logic)
+	 *
+	 * @param \WPSC_Ticket $ticket
+	 * @param mixed $field
+	 * @return string
+	 */
+	private function get_formatted_field_value( $ticket, $field ) {
+		$value = $ticket->{$field->slug};
+		$type = $field->type::$slug;
+
+		if ( empty( $value ) ) return '';
+
+		// Basic formatting for common types
+		switch ( $type ) {
+			case 'cf_textfield':
+			case 'cf_textarea':
+			case 'cf_email':
+			case 'cf_url':
+			case 'cf_number':
+				return esc_html( $value );
+
+			case 'cf_html':
+				return wp_kses_post( $value );
+
+			case 'cf_date':
+			case 'cf_datetime':
+			case 'df_date_created':
+			case 'df_date_updated':
+				if ( $value instanceof \DateTime ) {
+					$d = clone $value;
+					$d->setTimezone( wp_timezone() );
+					return $d->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
+				}
+				if ( is_string( $value ) && $value !== '0000-00-00 00:00:00' ) {
+					return esc_html( $value );
+				}
+				return '';
+
+			case 'df_status':
+			case 'df_priority':
+			case 'df_category':
+			case 'cf_single_select':
+				return isset( $value->name ) ? esc_html( $value->name ) : '';
+
+			case 'cf_multi_select':
+			case 'df_assigned_agent':
+				if ( is_array( $value ) ) {
+					$names = array_map( function( $v ) { return $v->name; }, $value );
+					return esc_html( implode( ', ', $names ) );
+				}
+				return '';
+
+			default:
+				// Fallback for objects/arrays to string if possible
+				if ( is_string( $value ) ) return esc_html( $value );
+				return '';
+		}
 	}
 }

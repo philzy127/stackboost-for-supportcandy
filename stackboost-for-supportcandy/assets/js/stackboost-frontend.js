@@ -132,14 +132,26 @@
 				const response = await fetch(settings.ajax_url, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-					body: new URLSearchParams({ action: 'wpsc_get_individual_ticket', nonce: settings.nonce, ticket_id: ticketId })
+					body: new URLSearchParams({
+						action: 'stackboost_get_ticket_card',
+						nonce: settings.nonce,
+						ticket_id: ticketId
+					})
 				});
+
 				if (!response.ok) return '<div>Error fetching ticket info.</div>';
+
 				const html = await response.text();
-				const doc = new DOMParser().parseFromString(html, 'text/html');
-				// Wrap in a fixed-width container with min-width to prevent resizing/squashing
-				const content = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>';
-				return (cache[ticketId] = `<div style="width: 350px; min-width: 350px !important;">${content}</div>`);
+
+				// Check for JSON error response (manual check since we might output error as json)
+				if (html.startsWith('{"success":false')) {
+					try {
+						const json = JSON.parse(html);
+						return `<div style="padding:10px;">${json.data}</div>`;
+					} catch(e) {}
+				}
+
+				return (cache[ticketId] = `<div style="width: 350px; min-width: 350px !important; max-height: 500px; overflow-y: auto;">${html}</div>`);
 			} catch (error) {
 				return '<div style="width: 350px; min-width: 350px !important;">Error fetching ticket info.</div>';
 			}
