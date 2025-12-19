@@ -68,7 +68,7 @@ class Settings {
 		];
 
 		// 3. Date & Time Formatting (New Module) - Lite
-		if ( stackboost_is_feature_active( 'date_time_formatting' ) ) {
+		if ( stackboost_is_feature_active( 'date_time_formatting' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-date-time',
 				'parent'      => 'stackboost-for-supportcandy',
@@ -81,6 +81,9 @@ class Settings {
 
 		// 4. After Hours Notice - Lite
 		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
+			// Note: This module uses the central renderer, so no specific class check for the callback is strictly needed,
+			// but we should ensure the module logic is present if we were instantiating it.
+			// Since we just use $this->render_settings_page, it's safe as long as Settings.php exists.
 			$menu_config[] = [
 				'slug'        => 'stackboost-after-hours',
 				'parent'      => 'stackboost-for-supportcandy',
@@ -116,7 +119,7 @@ class Settings {
 		}
 
 		// 7. Unified Ticket Macro - Pro
-		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
+		if ( stackboost_is_feature_active( 'unified_ticket_macro' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\WordPress' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-utm',
 				'parent'      => 'stackboost-for-supportcandy',
@@ -128,7 +131,7 @@ class Settings {
 		}
 
 		// 8. After Ticket Survey - Pro
-		if ( stackboost_is_feature_active( 'after_ticket_survey' ) ) {
+		if ( stackboost_is_feature_active( 'after_ticket_survey' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\WordPress' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-ats',
 				'parent'      => 'stackboost-for-supportcandy',
@@ -140,7 +143,7 @@ class Settings {
 		}
 
 		// 9. Company Directory - Business
-		if ( stackboost_is_feature_active( 'staff_directory' ) ) {
+		if ( stackboost_is_feature_active( 'staff_directory' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\Directory\WordPress' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-directory',
 				'parent'      => 'stackboost-for-supportcandy',
@@ -152,7 +155,7 @@ class Settings {
 		}
 
 		// 10. Onboarding Dashboard - Business
-		if ( stackboost_is_feature_active( 'onboarding_dashboard' ) ) {
+		if ( stackboost_is_feature_active( 'onboarding_dashboard' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-onboarding-dashboard',
 				'parent'      => 'stackboost-for-supportcandy',
@@ -969,10 +972,31 @@ class Settings {
 		}
 
 		$settings = get_option( 'stackboost_settings', [] );
-		$settings['uninstall_authorized_timestamp'] = time();
-		update_option( 'stackboost_settings', $settings );
+		$timestamp = time();
+		$settings['uninstall_authorized_timestamp'] = $timestamp;
 
-		wp_send_json_success( [ 'timestamp' => $settings['uninstall_authorized_timestamp'] ] );
+		// IMPORTANT: Remove the sanitization filter for this programmatic update.
+		// The central sanitization function requires a 'page_slug' which isn't present here.
+		// Without removing the filter, the update is silently rejected/ignored because sanitize_settings returns the old value.
+		remove_filter( 'sanitize_option_stackboost_settings', [ $this, 'sanitize_settings' ] );
+
+		if ( update_option( 'stackboost_settings', $settings ) ) {
+			// Log for debugging
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "Uninstall Authorized at timestamp: {$timestamp}", 'core' );
+			}
+			// Attempt to clear object cache if persistent cache is used, ensuring uninstall.php reads fresh data
+			if ( function_exists( 'wp_cache_delete' ) ) {
+				wp_cache_delete( 'stackboost_settings', 'options' );
+			}
+		} else {
+            // Update might fail if value hasn't changed (unlikely with time()) or DB error.
+             if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "Uninstall Authorization Failed to update DB option.", 'core' );
+			}
+        }
+
+		wp_send_json_success( [ 'timestamp' => $timestamp ] );
 	}
 
 	/**
@@ -987,6 +1011,10 @@ class Settings {
 
 		$settings = get_option( 'stackboost_settings', [] );
 		unset( $settings['uninstall_authorized_timestamp'] );
+
+		// Remove sanitization filter for raw update
+		remove_filter( 'sanitize_option_stackboost_settings', [ $this, 'sanitize_settings' ] );
+
 		update_option( 'stackboost_settings', $settings );
 
 		wp_send_json_success();

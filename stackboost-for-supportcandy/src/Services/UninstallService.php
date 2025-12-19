@@ -15,9 +15,17 @@ class UninstallService {
      * CAUTION: This permanently deletes all StackBoost data.
      */
     public static function run_clean_uninstall() {
+        if ( function_exists( 'stackboost_uninstall_log' ) ) {
+            stackboost_uninstall_log( 'UninstallService: Starting clean uninstall.' );
+        }
+
         self::delete_custom_post_types();
         self::delete_options();
         self::delete_transients();
+
+        if ( function_exists( 'stackboost_uninstall_log' ) ) {
+            stackboost_uninstall_log( 'UninstallService: Finished clean uninstall.' );
+        }
     }
 
     /**
@@ -39,6 +47,10 @@ class UninstallService {
                 'post_status' => 'any',
                 'fields'      => 'ids',
             ] );
+
+            if ( function_exists( 'stackboost_uninstall_log' ) ) {
+                stackboost_uninstall_log( "UninstallService: Found " . count( $posts ) . " posts for CPT {$post_type}." );
+            }
 
             foreach ( $posts as $post_id ) {
                 wp_delete_post( $post_id, true ); // Force delete (skip trash)
@@ -65,7 +77,15 @@ class UninstallService {
         ];
 
         foreach ( $options as $option ) {
-            delete_option( $option );
+            if ( delete_option( $option ) ) {
+                if ( function_exists( 'stackboost_uninstall_log' ) ) {
+                    stackboost_uninstall_log( "UninstallService: Deleted option {$option}." );
+                }
+            } else {
+                if ( function_exists( 'stackboost_uninstall_log' ) ) {
+                    stackboost_uninstall_log( "UninstallService: Failed to delete option {$option} (or it did not exist)." );
+                }
+            }
         }
     }
 
@@ -73,7 +93,17 @@ class UninstallService {
      * Delete StackBoost transients.
      */
     private static function delete_transients() {
-        delete_transient( 'stackboost_license_error_msg' );
-        delete_transient( 'stackboost_onboarding_tickets_cache' );
+        $transients = [
+            'stackboost_license_error_msg',
+            'stackboost_onboarding_tickets_cache',
+        ];
+
+        foreach ( $transients as $transient ) {
+             if ( delete_transient( $transient ) ) {
+                if ( function_exists( 'stackboost_uninstall_log' ) ) {
+                    stackboost_uninstall_log( "UninstallService: Deleted transient {$transient}." );
+                }
+            }
+        }
     }
 }
