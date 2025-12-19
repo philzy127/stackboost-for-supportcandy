@@ -264,7 +264,7 @@ final class Plugin {
 		if ( ! empty( $features_data ) ) {
 			$localized_data = [
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
-				'nonce'    => wp_create_nonce( 'wpsc_get_individual_ticket' ),
+				'nonce'    => wp_create_nonce( 'stackboost_get_ticket_card' ),
 				'features' => $features_data,
 			];
 			wp_localize_script( 'stackboost-frontend', 'stackboost_settings', $localized_data );

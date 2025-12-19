@@ -121,10 +121,17 @@ class WordPress extends Module {
 	 */
 	public function register_settings() {
 		$page_slug = 'stackboost-ticket-view'; // The new settings page.
+		$tier = get_option( 'stackboost_license_tier', 'lite' );
+		$is_premium = in_array( $tier, [ 'pro', 'business' ], true );
 
 		// Section: Ticket Details Card
 		add_settings_section( 'stackboost_ticket_details_card_section', __( 'Ticket Details Card', 'stackboost-for-supportcandy' ), null, $page_slug );
 		add_settings_field( 'stackboost_enable_ticket_details_card', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'enable_ticket_details_card', 'desc' => 'Shows a card with ticket details on right-click.' ] );
+
+		$disabled_msg = '';
+		if ( ! $is_premium ) {
+			$disabled_msg = ' <span class="stackboost-pro-badge" style="background:#e74c3c;color:#fff;padding:2px 5px;border-radius:3px;font-size:10px;">' . __( 'PRO', 'stackboost-for-supportcandy' ) . '</span> ' . __( 'Upgrade to Pro or Business to unlock.', 'stackboost-for-supportcandy' );
+		}
 
 		add_settings_field(
 			'stackboost_card_content_source',
@@ -138,12 +145,13 @@ class WordPress extends Module {
 					'standard' => 'Standard (All Fields)',
 					'utm'      => 'Unified Ticket Macro (Customizable)',
 				],
-				'desc'    => 'Choose how the main content of the card is generated.',
+				'desc'    => 'Choose how the main content of the card is generated.' . $disabled_msg,
+				'disabled'=> ! $is_premium
 			]
 		);
 
-		add_settings_field( 'stackboost_card_show_description', __( 'Include Initial Description', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'card_show_description', 'desc' => 'Append the ticket initial description below the fields.' ] );
-		add_settings_field( 'stackboost_card_show_notes', __( 'Include Notes/Threads', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'card_show_notes', 'desc' => 'Append recent ticket notes and replies.' ] );
+		add_settings_field( 'stackboost_card_show_description', __( 'Include Initial Description', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'card_show_description', 'desc' => 'Append the ticket initial description below the fields.' . $disabled_msg, 'disabled' => ! $is_premium ] );
+		add_settings_field( 'stackboost_card_show_notes', __( 'Include Notes/Threads', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'card_show_notes', 'desc' => 'Append recent ticket notes and replies.' . $disabled_msg, 'disabled' => ! $is_premium ] );
 
 		add_settings_field(
 			'stackboost_card_notes_limit',
@@ -154,11 +162,12 @@ class WordPress extends Module {
 			[
 				'id'      => 'card_notes_limit',
 				'default' => '5',
-				'desc'    => 'Maximum number of notes to display (if enabled).',
+				'desc'    => 'Maximum number of notes to display (if enabled).' . $disabled_msg,
+				'disabled'=> ! $is_premium
 			]
 		);
 
-		add_settings_field( 'stackboost_card_strip_images', __( 'Strip Images from Notes', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'card_strip_images', 'desc' => 'Replace images in notes with [Image] to save space.' ] );
+		add_settings_field( 'stackboost_card_strip_images', __( 'Strip Images from Notes', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'card_strip_images', 'desc' => 'Replace images in notes with [Image] to save space.' . $disabled_msg, 'disabled' => ! $is_premium ] );
 
 
 		add_settings_section( 'stackboost_separator_1', '', [ $this, 'render_hr_separator' ], $page_slug );
@@ -254,9 +263,12 @@ class WordPress extends Module {
 		$options = get_option( 'stackboost_settings' );
 		$id = $args['id'];
 		$checked = isset( $options[ $id ] ) && $options[ $id ] ? 'checked' : '';
-		echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="1" ' . $checked . '>';
+		$disabled = ! empty( $args['disabled'] ) ? 'disabled' : '';
+
+		echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="1" ' . $checked . ' ' . $disabled . '>';
 		if ( ! empty( $args['desc'] ) ) {
-			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+			// Allow HTML in description (for badges)
+			echo '<p class="description">' . wp_kses_post( $args['desc'] ) . '</p>';
 		}
 	}
 
@@ -267,7 +279,9 @@ class WordPress extends Module {
 		$options = get_option( 'stackboost_settings' );
 		$id = $args['id'];
 		$selected = $options[ $id ] ?? '';
-		echo '<select id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']">';
+		$disabled = ! empty( $args['disabled'] ) ? 'disabled' : '';
+
+		echo '<select id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" ' . $disabled . '>';
 		if ( ! empty( $args['placeholder'] ) ) {
 			echo '<option value="">' . esc_html( $args['placeholder'] ) . '</option>';
 		}
@@ -276,7 +290,8 @@ class WordPress extends Module {
 		}
 		echo '</select>';
 		if ( ! empty( $args['desc'] ) ) {
-			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+			// Allow HTML in description
+			echo '<p class="description">' . wp_kses_post( $args['desc'] ) . '</p>';
 		}
 	}
 
@@ -300,9 +315,12 @@ class WordPress extends Module {
 		$options = get_option( 'stackboost_settings' );
 		$id = $args['id'];
 		$value = isset( $options[ $id ] ) ? $options[ $id ] : ( $args['default'] ?? '' );
-		echo '<input type="text" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="' . esc_attr( $value ) . '" class="regular-text">';
+		$disabled = ! empty( $args['disabled'] ) ? 'disabled' : '';
+
+		echo '<input type="text" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="' . esc_attr( $value ) . '" class="regular-text" ' . $disabled . '>';
 		if ( ! empty( $args['desc'] ) ) {
-			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+			// Allow HTML in description
+			echo '<p class="description">' . wp_kses_post( $args['desc'] ) . '</p>';
 		}
 	}
 
@@ -324,7 +342,7 @@ class WordPress extends Module {
 	 * AJAX Handler: Get Ticket Card Content
 	 */
 	public function ajax_get_ticket_card_content() {
-		check_ajax_referer( 'stackboost_settings_nonce', 'nonce' );
+		check_ajax_referer( 'stackboost_get_ticket_card', 'nonce' );
 
 		$ticket_id = isset( $_POST['ticket_id'] ) ? intval( $_POST['ticket_id'] ) : 0;
 		if ( ! $ticket_id ) {
@@ -360,12 +378,17 @@ class WordPress extends Module {
 
 		// Prepare Content
 		$options = get_option( 'stackboost_settings' );
+
+		// Check License Tier
+		$tier = get_option( 'stackboost_license_tier', 'lite' );
+		$is_premium = in_array( $tier, [ 'pro', 'business' ], true );
+
 		$source  = $options['card_content_source'] ?? 'standard';
 		$html    = '';
 
 		// 1. Main Content
-		if ( 'utm' === $source ) {
-			// Use UTM Logic
+		if ( 'utm' === $source && $is_premium ) {
+			// Use UTM Logic (Premium Feature)
 			if ( class_exists( '\StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
 				$html .= '<div class="stackboost-card-section stackboost-card-main">';
 				$html .= \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->build_live_utm_html( $ticket );
@@ -407,8 +430,8 @@ class WordPress extends Module {
 			$html .= '</div>';
 		}
 
-		// 2. Initial Description
-		if ( ! empty( $options['card_show_description'] ) ) {
+		// 2. Initial Description (Premium Feature)
+		if ( $is_premium && ! empty( $options['card_show_description'] ) ) {
 			$desc_thread = $ticket->get_description_thread();
 			if ( $desc_thread && ! empty( $desc_thread->body ) ) {
 				$html .= '<div class="stackboost-card-section stackboost-card-description">';
@@ -418,8 +441,8 @@ class WordPress extends Module {
 			}
 		}
 
-		// 3. Notes / Threads
-		if ( ! empty( $options['card_show_notes'] ) ) {
+		// 3. Notes / Threads (Premium Feature)
+		if ( $is_premium && ! empty( $options['card_show_notes'] ) ) {
 			$limit = isset( $options['card_notes_limit'] ) ? intval( $options['card_notes_limit'] ) : 5;
 			$strip_images = ! empty( $options['card_strip_images'] );
 
