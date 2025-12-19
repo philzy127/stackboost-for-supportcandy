@@ -2,12 +2,120 @@ import re
 import sys
 import os
 
+def remove_method_by_name(content, method_name):
+    """
+    Removes a PHP method by name using a state machine to correctly handle braces,
+    and safely identifies preceding docblocks without greedy regex backtracking.
+    """
+    # Regex to find the method definition ONLY.
+    # We do NOT try to match the docblock here to avoid catastrophic backtracking.
+    pattern = re.compile(r"(public function " + re.escape(method_name) + r"\s*\(.*?\)\s*\{)", re.DOTALL)
+
+    match = pattern.search(content)
+    if not match:
+        return content
+
+    start_index = match.start()
+    # The match includes the opening brace '{', so end-1 is that brace.
+    open_brace_index = match.end() - 1
+
+    # --- Docblock Detection (Look Backwards) ---
+    # Scan backwards from start_index to see if there is a docblock.
+    cursor = start_index - 1
+
+    # 1. Skip whitespace backwards
+    while cursor >= 0 and content[cursor].isspace():
+        cursor -= 1
+
+    # 2. Check for closing comment '*/'
+    if cursor >= 1 and content[cursor] == '/' and content[cursor-1] == '*':
+        # We found a docblock end. Now find the start '/**'
+        cursor -= 2 # Move past '*/'
+
+        # Iterate backwards
+        found_start = False
+        while cursor >= 2:
+            if content[cursor] == '*' and content[cursor-1] == '*' and content[cursor-2] == '/':
+                found_start = True
+                cursor -= 2 # Point to '/'
+                break
+            cursor -= 1
+
+        if found_start:
+            # We found the docblock start.
+            start_index = cursor
+
+            # Optional: Consume preceding newline if present
+            if start_index > 0 and content[start_index-1] == '\n':
+                 start_index -= 1
+
+    # --- Brace Balancing (Forward Scan) ---
+    STATE_CODE = 0
+    STATE_STRING_SINGLE = 1
+    STATE_STRING_DOUBLE = 2
+    STATE_COMMENT_SINGLE = 3
+    STATE_COMMENT_MULTI = 4
+
+    state = STATE_CODE
+    balance = 1 # We start after the first opening brace
+    i = open_brace_index + 1
+    length = len(content)
+
+    while i < length and balance > 0:
+        char = content[i]
+        prev_char = content[i-1] if i > 0 else ''
+
+        # Handle State Transitions
+        if state == STATE_CODE:
+            if char == "'":
+                state = STATE_STRING_SINGLE
+            elif char == '"':
+                state = STATE_STRING_DOUBLE
+            elif char == '/' and i+1 < length and content[i+1] == '/':
+                state = STATE_COMMENT_SINGLE
+                i += 1 # Skip next char
+            elif char == '/' and i+1 < length and content[i+1] == '*':
+                state = STATE_COMMENT_MULTI
+                i += 1 # Skip next char
+            elif char == '{':
+                balance += 1
+            elif char == '}':
+                balance -= 1
+
+        elif state == STATE_STRING_SINGLE:
+            if char == "'" and prev_char != '\\': # Not escaped
+                state = STATE_CODE
+
+        elif state == STATE_STRING_DOUBLE:
+            if char == '"' and prev_char != '\\': # Not escaped
+                state = STATE_CODE
+
+        elif state == STATE_COMMENT_SINGLE:
+            if char == '\n':
+                state = STATE_CODE
+
+        elif state == STATE_COMMENT_MULTI:
+            if char == '*' and i+1 < length and content[i+1] == '/':
+                state = STATE_CODE
+                i += 1 # Skip next char
+
+        i += 1
+
+    if balance == 0:
+        # We found the closing brace.
+        # Remove from start_index to i
+        return content[:start_index] + content[i:]
+    else:
+        # Failed to find matching brace, return original (safety)
+        print(f"Warning: Could not find matching brace for method {method_name}")
+        return content
+
 def sanitize_plugin_file(filepath):
     if not os.path.exists(filepath):
         print(f"File not found: {filepath}")
         return
 
-    print(f"Sanitizing {filepath}...")
+    # print(f"Sanitizing {filepath}...")
     with open(filepath, 'r') as f:
         content = f.read()
 
@@ -48,7 +156,7 @@ def sanitize_functions_file(filepath):
         print(f"File not found: {filepath}")
         return
 
-    print(f"Sanitizing {filepath}...")
+    # print(f"Sanitizing {filepath}...")
     with open(filepath, 'r') as f:
         content = f.read()
 
@@ -66,7 +174,7 @@ def sanitize_settings_file(filepath):
         print(f"File not found: {filepath}")
         return
 
-    print(f"Sanitizing {filepath}...")
+    # print(f"Sanitizing {filepath}...")
     with open(filepath, 'r') as f:
         content = f.read()
 
@@ -78,17 +186,14 @@ def sanitize_settings_file(filepath):
     ]
     for action in actions_to_remove:
         # Regex to match add_action( 'hook', [ $this, 'method' ] );
-        # We look for the method name in the callback array.
         pattern = r"^\s*add_action\s*\(\s*['\"][^'\"]+['\"]\s*,\s*\[\s*\$this\s*,\s*['\"]" + action + r"['\"]\s*\]\s*\);\s*$"
         content = re.sub(pattern, '', content, flags=re.MULTILINE)
 
     # Remove Settings Registration
-    # add_settings_section( 'stackboost_license_section', ... );
     content = re.sub(r"^\s*add_settings_section\s*\(\s*['\"]stackboost_license_section['\"].*?\);\s*$", "", content, flags=re.MULTILINE | re.DOTALL)
-    # add_settings_field( 'stackboost_license_key', ... );
     content = re.sub(r"^\s*add_settings_field\s*\(\s*['\"]stackboost_license_key['\"].*?\);\s*$", "", content, flags=re.MULTILINE | re.DOTALL)
 
-    # Remove Methods
+    # Remove Methods using robust parser
     methods_to_remove = [
         'display_license_notices',
         'render_license_input',
@@ -96,40 +201,9 @@ def sanitize_settings_file(filepath):
         'ajax_deactivate_license',
     ]
     for method in methods_to_remove:
-        # Regex to match: public function method_name() { ... }
-        # Assumes standard formatting.
-        # Captures the function definition and recursively matches braces.
-        # Since python's re module doesn't support recursion, we use a simpler approach for well-formatted code
-        # or we scan line by line. Given the constraints and likely formatting, we can try to match the block.
-        # However, a safer way for this specific file structure (standard PSR-like) is to match from declaration to end of method.
-        # But for reliability, let's use a pattern that consumes the method body.
-
-        # NOTE: Python re doesn't support recursive patterns.
-        # We will use a counting approach to find the closing brace.
-
-        pattern = r"(\s*/\*\*.*?\*/\s*)?public function " + method + r"\s*\(.*?\)\s*\{"
-        match = re.search(pattern, content, re.DOTALL)
-        if match:
-            start_index = match.start()
-            # Find the opening brace of the function
-            open_brace_index = content.find('{', match.end() - 1)
-
-            # Walk through to find matching closing brace
-            balance = 1
-            i = open_brace_index + 1
-            while i < len(content) and balance > 0:
-                if content[i] == '{':
-                    balance += 1
-                elif content[i] == '}':
-                    balance -= 1
-                i += 1
-
-            if balance == 0:
-                # Remove the block
-                content = content[:start_index] + content[i:]
+        content = remove_method_by_name(content, method)
 
     # Remove the License Card HTML Block
-    # Identified by <!-- Card 2: License --> and the following <div class="stackboost-card">...</div>
     card_pattern = r'<!-- Card 2: License -->\s*<div class="stackboost-card">.*?do_settings_sections\( \'stackboost-for-supportcandy\' \);\s*\?>\s*</form>\s*</div>'
     content = re.sub(card_pattern, '', content, flags=re.DOTALL)
 
@@ -141,7 +215,7 @@ def sanitize_uninstall_service(filepath):
         print(f"File not found: {filepath}")
         return
 
-    print(f"Sanitizing {filepath}...")
+    # print(f"Sanitizing {filepath}...")
     with open(filepath, 'r') as f:
         content = f.read()
 
@@ -154,7 +228,6 @@ def sanitize_uninstall_service(filepath):
     ]
 
     for opt in options_to_remove:
-        # Match array line: 'option_name',
         pattern = r"^\s*['\"]" + opt + r"['\"],\s*$"
         content = re.sub(pattern, '', content, flags=re.MULTILINE)
 
@@ -169,6 +242,10 @@ def sanitize_uninstall_service(filepath):
         f.write(content)
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python3 repo_sanitizer.py <repo_dir>")
+        sys.exit(1)
+
     base_dir = sys.argv[1]
 
     plugin_file = os.path.join(base_dir, 'src/WordPress/Plugin.php')
