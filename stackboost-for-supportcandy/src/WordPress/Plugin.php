@@ -124,6 +124,34 @@ final class Plugin {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_and_localize_frontend_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_menu' ], 999 );
+		add_filter( 'all_plugins', [ $this, 'filter_plugin_name' ] );
+	}
+
+	/**
+	 * Dynamically update the plugin name in the plugins list based on the active license tier.
+	 *
+	 * @param array $all_plugins The array of all plugins.
+	 * @return array The modified array of plugins.
+	 */
+	public function filter_plugin_name( $all_plugins ) {
+		// Identify the plugin file relative to the plugins directory.
+		// Since we are in src/WordPress/Plugin.php, the main file is likely ../../stackboost-for-supportcandy.php
+		// However, a more robust way is to rely on the constant defined in the main file if available,
+		// or construct it. The standard basename is 'stackboost-for-supportcandy/stackboost-for-supportcandy.php'.
+
+		$plugin_basename = plugin_basename( STACKBOOST_PLUGIN_FILE );
+
+		if ( isset( $all_plugins[ $plugin_basename ] ) ) {
+			$tier = get_option( 'stackboost_license_tier', 'lite' );
+
+			if ( 'pro' === $tier ) {
+				$all_plugins[ $plugin_basename ]['Name'] .= ' - Pro';
+			} elseif ( 'business' === $tier ) {
+				$all_plugins[ $plugin_basename ]['Name'] .= ' - Business';
+			}
+		}
+
+		return $all_plugins;
 	}
 
 	/**

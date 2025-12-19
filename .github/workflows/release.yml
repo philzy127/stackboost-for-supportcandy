@@ -30,4 +30,4 @@ jobs:
       with:
         files: |
           stackboost-for-supportcandy.zip
-          stackboost-for-supportcandy-pro.zip
+          stackboost-for-supportcandy-premium.zip
