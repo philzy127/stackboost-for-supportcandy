@@ -20,12 +20,12 @@ echo "Copying source files..."
 rsync -av --exclude '.git' --exclude '.github' --exclude 'build' --exclude 'tests' --exclude 'Documentation' --exclude '*.md' "$SRC_DIR/" "$PRO_DIR/" > /dev/null
 rsync -av --exclude '.git' --exclude '.github' --exclude 'build' --exclude 'tests' --exclude 'Documentation' --exclude '*.md' "$SRC_DIR/" "$REPO_DIR/" > /dev/null
 
-# --- BUILD PRO VERSION ---
-echo "Building Pro version..."
-python3 .github/scripts/pro_modifier.py "$PRO_DIR/stackboost-for-supportcandy.php"
+# --- BUILD PREMIUM VERSION ---
+echo "Building Premium version..."
+# No longer modifying header; handled dynamically by plugin code based on license.
 
 cd "$BUILD_DIR/pro"
-zip -r -q ../../stackboost-for-supportcandy-pro.zip .
+zip -r -q ../../stackboost-for-supportcandy-premium.zip .
 cd ../..
 
 # --- BUILD REPO (FREE) VERSION ---
