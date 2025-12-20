@@ -315,7 +315,12 @@ class Core {
 			if ( 'strip' === $image_handling ) {
 				$body = preg_replace( '/<img[^>]+\>/i', '', $body );
 			} elseif ( 'placeholder' === $image_handling ) {
-				$body = preg_replace( '/<img[^>]+\>/i', '<div style="font-style:italic; color:#777;">[' . __( 'Image', 'stackboost-for-supportcandy' ) . ']</div>', $body );
+				// Replace image tags with a clickable [Image] link that opens the Lightbox
+				$body = preg_replace(
+					'/<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>/i',
+					'<a href="$1" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="font-style:italic; color:#0073aa; cursor:pointer;">[' . __( 'Image', 'stackboost-for-supportcandy' ) . ']</a>',
+					$body
+				);
 			} else {
 				// 'fit' (default) - inject max-width style
 				// We can't easily inject style into existing img tags without parsing HTML,

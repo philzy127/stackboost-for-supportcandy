@@ -103,20 +103,8 @@ class WordPress extends Module {
 			} else {
 				$html .= '<p>' . __( 'UTM Module not available.', 'stackboost-for-supportcandy' ) . '</p>';
 			}
-		} else {
-			// 'standard' view is usually scraped client-side.
-			// However, if the client called this AJAX, it likely expects us to provide the content
-			// OR it's calling for the 'threads' part.
-			// The current JS plan for 'standard' is to scrape, so this AJAX might only be called for UTM.
-			// But if we want to support "History" in Standard view reliably, we should return it here.
-			// For consistency, if this AJAX is called, we return what we can.
-			// If JS is in 'standard' mode, it might only use the 'threads' part of this response, or we can return just threads?
-			// Let's assume this endpoint returns the *additional* content or the *full* content if UTM.
-			// If standard, let's return an empty string for the details part (letting JS scrape)
-			// unless we want to move 'standard' rendering here too (which would be "reinventing").
-			// So, if standard, HTML starts empty (JS handles details), and we just append threads.
-			$html .= '';
 		}
+		// 'standard' view returns empty html for the base part, letting JS scrape standard fields.
 
 		// 2. Append Threads (Description / History)
 		if ( 'details_only' !== $content_type ) {
