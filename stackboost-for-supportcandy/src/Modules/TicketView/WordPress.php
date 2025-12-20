@@ -155,7 +155,7 @@ class WordPress extends Module {
 
 						// Wrap in WPSC Widget Structure for seamless look
 						$html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
-						$html .= '<div class="wpsc-widget-header"><h3>' . __( 'Description', 'stackboost-for-supportcandy' ) . '</h3></div>';
+						$html .= '<div class="wpsc-widget-header"><h2>' . __( 'Description', 'stackboost-for-supportcandy' ) . '</h2></div>';
 						$html .= '<div class="wpsc-widget-body stackboost-thread-body">';
 						$html .= '<div>' . wp_kses_post( $body ) . '</div>';
 						$html .= '</div></div>';
@@ -167,7 +167,7 @@ class WordPress extends Module {
 
 					if ( ! empty( $threads_html ) ) {
 						$html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
-						$html .= '<div class="wpsc-widget-header"><h3>' . __( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h3></div>';
+						$html .= '<div class="wpsc-widget-header"><h2>' . __( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h2></div>';
 						$html .= '<div class="wpsc-widget-body">';
 						$html .= $threads_html;
 						$html .= '</div></div>';
