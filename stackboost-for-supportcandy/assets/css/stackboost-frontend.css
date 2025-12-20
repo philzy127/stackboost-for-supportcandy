@@ -1,0 +1,23 @@
+/**
+ * StackBoost Frontend Styles
+ *
+ * Styles for frontend features like the Ticket Details Card history.
+ */
+
+/* Thread History & Images */
+.stackboost-thread-body img {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* Card Styling Enhancements */
+.stackboost-ticket-history {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.stackboost-thread-item {
+    font-size: 13px;
+    line-height: 1.4;
+}

@@ -56,7 +56,8 @@ class WordPress extends Module {
 	 * AJAX handler to get the content for the ticket details card.
 	 */
 	public function ajax_get_ticket_details_card() {
-		check_ajax_referer( 'stackboost-frontend-nonce', 'nonce' );
+		// Use the same nonce action as the frontend script, which is 'wpsc_get_individual_ticket'
+		check_ajax_referer( 'wpsc_get_individual_ticket', 'nonce' );
 
 		$ticket_id = isset( $_POST['ticket_id'] ) ? intval( $_POST['ticket_id'] ) : 0;
 		if ( ! $ticket_id ) {
