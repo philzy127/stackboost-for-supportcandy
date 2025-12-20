@@ -302,4 +302,22 @@
 
 	$(document).ready(init);
 
+	// Event Delegation for Collapsible Widgets (Injected via Tippy or Standard)
+	$(document).on('click', '.wpsc-itw-toggle', function() {
+		const $toggle = $(this);
+		const $widget = $toggle.closest('.wpsc-it-widget');
+		const $body = $widget.find('.wpsc-widget-body');
+
+		// Check if this is one of our managed widgets or standard scraped content
+		// We use slideToggle for animation
+		$body.slideToggle(200, function() {
+			// Update icon after animation
+			if ($body.is(':visible')) {
+				$toggle.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
+			} else {
+				$toggle.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
+			}
+		});
+	});
+
 })(jQuery);
