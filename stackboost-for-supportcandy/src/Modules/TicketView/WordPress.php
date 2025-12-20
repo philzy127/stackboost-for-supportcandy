@@ -93,6 +93,7 @@ class WordPress extends Module {
 		// Determine Content to Include
 		$content_type = $options['ticket_details_content'] ?? 'details_only';
 		$image_handling = $options['ticket_details_image_handling'] ?? 'fit';
+		$limit = isset( $options['ticket_details_history_limit'] ) ? intval( $options['ticket_details_history_limit'] ) : 0;
 
 		$html = '';
 
@@ -151,7 +152,7 @@ class WordPress extends Module {
 					}
 				} elseif ( 'with_history' === $content_type ) {
 					// Render threads but strip the internal header from Core since we wrap it here
-					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling );
+					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling, $limit );
 
 					if ( ! empty( $threads_html ) ) {
 						$html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
@@ -229,6 +230,19 @@ class WordPress extends Module {
 			$page_slug,
 			'stackboost_ticket_details_card_section',
 			[ 'id' => 'ticket_details_view_type', 'desc' => 'Choose how the ticket details are displayed.' ]
+		);
+
+		add_settings_field(
+			'stackboost_ticket_details_history_limit',
+			__( 'Conversation History Limit', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_text_field' ],
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[
+				'id' => 'ticket_details_history_limit',
+				'default' => '0',
+				'desc' => 'Maximum number of items to show in history (0 = Unlimited). Only applies if "Full Conversation History" is selected.'
+			]
 		);
 
 		add_settings_field(
@@ -414,6 +428,28 @@ class WordPress extends Module {
 		if ( ! $is_pro_active ) {
 			echo ' <span class="dashicons dashicons-lock" title="' . esc_attr__( 'Upgrade to Pro or Business to enable this feature.', 'stackboost-for-supportcandy' ) . '" style="color: #666; vertical-align: middle;"></span>';
 		}
+
+		// Inline script to warn about UTM configuration
+		?>
+		<script>
+		jQuery(document).ready(function($) {
+			var utmEnabled = <?php echo stackboost_is_feature_active( 'unified_ticket_macro' ) ? 'true' : 'false'; ?>;
+			// We can't easily check if the UTM module itself is enabled in settings from here without an AJAX call or passing more data.
+			// However, the prompt asked for a reminder.
+
+			$('#ticket_details_view_type').on('change', function() {
+				if ($(this).val() === 'utm') {
+					if (!utmEnabled) {
+						alert('<?php echo esc_js( __( 'The Unified Ticket Macro feature is not active on your plan.', 'stackboost-for-supportcandy' ) ); ?>');
+					} else {
+						// Simple reminder
+						alert('<?php echo esc_js( __( 'Reminder: Please ensure the Unified Ticket Macro module is enabled and configured in its settings page for this view to function correctly.', 'stackboost-for-supportcandy' ) ); ?>');
+					}
+				}
+			});
+		});
+		</script>
+		<?php
 
 		if ( ! empty( $args['desc'] ) ) {
 			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';

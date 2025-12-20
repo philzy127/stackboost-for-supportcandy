@@ -264,9 +264,10 @@ class Core {
 	 * @param \WPSC_Ticket $ticket The ticket object.
 	 * @param bool         $include_private Whether to include private notes (for agents).
 	 * @param string       $image_handling How to handle images ('fit', 'strip', 'placeholder').
+	 * @param int          $limit Maximum number of threads to return (0 for unlimited).
 	 * @return string HTML of the threads.
 	 */
-	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit' ): string {
+	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0 ): string {
 		// Define which thread types to fetch
 		// Public always gets 'report' and 'reply'.
 		$types = [ 'report', 'reply' ];
@@ -276,8 +277,10 @@ class Core {
 
 		// Fetch threads using SupportCandy's method:
 		// get_threads( $page_no = 1, $items_per_page = 0, $types = array(), $orderby = 'date_created', $order = 'DESC' )
-		// We want all threads (items_per_page=0), ascending order (oldest first).
-		$threads = $ticket->get_threads( 1, 0, $types, 'date_created', 'ASC' );
+		// If limit is 0, we want all threads.
+		// Note: WPSC's get_threads pagination might expect items_per_page > 0 for limiting.
+		// If 0 is passed, it returns all.
+		$threads = $ticket->get_threads( 1, $limit, $types, 'date_created', 'ASC' );
 
 		if ( empty( $threads ) ) {
 			return '';
@@ -309,9 +312,11 @@ class Core {
 			$html .= '<div style="font-size: 0.8em; color: #999;">' . esc_html( $date_str ) . '</div>';
 
 			// Body content processing
-			$body = $thread->body;
+			// We sanitize FIRST to ensure the content is safe.
+			$body = wp_kses_post( $thread->body );
 
 			// Handle Images
+			// We apply our trusted regex replacements AFTER sanitization so our onclick attributes are not stripped.
 			if ( 'strip' === $image_handling ) {
 				$body = preg_replace( '/<img[^>]+\>/i', '', $body );
 			} elseif ( 'placeholder' === $image_handling ) {
@@ -322,17 +327,20 @@ class Core {
 					$body
 				);
 			} else {
-				// 'fit' (default) - inject max-width style
-				// We can't easily inject style into existing img tags without parsing HTML,
-				// but we can wrap the content or rely on CSS.
-				// Let's rely on a wrapper class in CSS or inline style on the container.
-				// However, `wpsc-thread-body` usually handles some of this.
-				// We'll add a style block to the image tags just in case.
-				$body = preg_replace( '/(<img\s+[^>]*?style=["\'])([^"\']*?)(["\'])/i', '$1$2; max-width:100%; height:auto;$3', $body ); // append to existing style
-				$body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body ); // add style if missing
+				// 'fit' (default) - inject max-width style AND lightbox link
+				// Wrap images in a link that opens the Lightbox
+				$body = preg_replace(
+					'/(<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>)/i',
+					'<a href="$2" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="cursor:pointer;">$1</a>',
+					$body
+				);
+
+				// Ensure max-width style is present (backup to CSS)
+				$body = preg_replace( '/(<img\s+[^>]*?style=["\'])([^"\']*?)(["\'])/i', '$1$2; max-width:100%; height:auto;$3', $body );
+				$body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body );
 			}
 
-			$html .= '<div class="stackboost-thread-body" style="margin-top: 5px;">' . wp_kses_post( $body ) . '</div>';
+			$html .= '<div class="stackboost-thread-body" style="margin-top: 5px;">' . $body . '</div>';
 
 			$html .= '</div>'; // End container
 			$html .= '</div>'; // End item
