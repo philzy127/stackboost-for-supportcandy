@@ -56,8 +56,11 @@ class WordPress extends Module {
 	 * AJAX handler to get the content for the ticket details card.
 	 */
 	public function ajax_get_ticket_details_card() {
-		// Use the same nonce action as the frontend script, which is 'wpsc_get_individual_ticket'
-		check_ajax_referer( 'wpsc_get_individual_ticket', 'nonce' );
+		// Use the same nonce action as the frontend script, which is 'wpsc_get_individual_ticket'.
+		// We use wp_verify_nonce instead of check_ajax_referer to handle failures gracefully with JSON.
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'wpsc_get_individual_ticket' ) ) {
+			wp_send_json_error( [ 'message' => 'Security check failed (Nonce mismatch)' ] );
+		}
 
 		$ticket_id = isset( $_POST['ticket_id'] ) ? intval( $_POST['ticket_id'] ) : 0;
 		if ( ! $ticket_id ) {

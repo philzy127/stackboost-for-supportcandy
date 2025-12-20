@@ -304,6 +304,12 @@ final class Plugin {
 			'stackboost_page_stackboost-date-time',
 		];
 
+		// Enqueue Frontend Features in Admin (Ticket List)
+		// This ensures features like the Ticket Details Card work for agents in the backend.
+		if ( 'supportcandy_page_wpsc-tickets' === $hook_suffix ) {
+			$this->enqueue_and_localize_frontend_scripts();
+		}
+
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
 			// Enqueue General Dashboard Styles if on main page
 			if ( 'toplevel_page_stackboost-for-supportcandy' === $hook_suffix ) {
