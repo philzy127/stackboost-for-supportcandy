@@ -136,11 +136,32 @@ class WordPress extends Module {
 						// let's just use it for 'with_history'.
 						// For 'with_description', I can just fetch the body.
 
-						$body = $desc_thread->body;
-						// Apply image handling
-						if ( 'strip' === $image_handling ) $body = preg_replace( '/<img[^>]+\>/i', '', $body );
-						elseif ( 'placeholder' === $image_handling ) $body = preg_replace( '/<img[^>]+\>/i', '<div style="font-style:italic; color:#777;">[Image]</div>', $body );
-						else $body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body );
+						// We sanitize FIRST to ensure the content is safe.
+						$body = wp_kses_post( $desc_thread->body );
+
+						// Apply image handling (Matched to UTM Core logic with Lightbox support)
+						if ( 'strip' === $image_handling ) {
+							$body = preg_replace( '/<img[^>]+\>/i', '', $body );
+						} elseif ( 'placeholder' === $image_handling ) {
+							// Replace image tags with a clickable [Image] link that opens the Lightbox
+							$body = preg_replace(
+								'/<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>/i',
+								'<a href="$1" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="font-style:italic; color:#0073aa; cursor:pointer;">[' . __( 'Image', 'stackboost-for-supportcandy' ) . ']</a>',
+								$body
+							);
+						} else {
+							// 'fit' (default) - inject max-width style AND lightbox link
+							// Wrap images in a link that opens the Lightbox
+							$body = preg_replace(
+								'/(<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>)/i',
+								'<a href="$2" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="cursor:pointer;">$1</a>',
+								$body
+							);
+
+							// Ensure max-width style is present (backup to CSS)
+							$body = preg_replace( '/(<img\s+[^>]*?style=["\'])([^"\']*?)(["\'])/i', '$1$2; max-width:100%; height:auto;$3', $body );
+							$body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body );
+						}
 
 						// Wrap in WPSC Widget Structure for seamless look
 						$html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
@@ -233,19 +254,6 @@ class WordPress extends Module {
 		);
 
 		add_settings_field(
-			'stackboost_ticket_details_history_limit',
-			__( 'Conversation History Limit', 'stackboost-for-supportcandy' ),
-			[ $this, 'render_text_field' ],
-			$page_slug,
-			'stackboost_ticket_details_card_section',
-			[
-				'id' => 'ticket_details_history_limit',
-				'default' => '0',
-				'desc' => 'Maximum number of items to show in history (0 = Unlimited). Only applies if "Full Conversation History" is selected.'
-			]
-		);
-
-		add_settings_field(
 			'stackboost_ticket_details_content',
 			__( 'Include Content', 'stackboost-for-supportcandy' ),
 			[ $this, 'render_select_field' ],
@@ -259,6 +267,19 @@ class WordPress extends Module {
 					'with_history'     => __( 'Full Conversation History (Public)', 'stackboost-for-supportcandy' ),
 				],
 				'desc' => 'Select what additional content to include below the details.'
+			]
+		);
+
+		add_settings_field(
+			'stackboost_ticket_details_history_limit',
+			__( 'Conversation History Limit', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_number_field' ],
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[
+				'id' => 'ticket_details_history_limit',
+				'default' => '0',
+				'desc' => 'Maximum number of items to show (0 = Unlimited).'
 			]
 		);
 
@@ -429,24 +450,39 @@ class WordPress extends Module {
 			echo ' <span class="dashicons dashicons-lock" title="' . esc_attr__( 'Upgrade to Pro or Business to enable this feature.', 'stackboost-for-supportcandy' ) . '" style="color: #666; vertical-align: middle;"></span>';
 		}
 
-		// Inline script to warn about UTM configuration
+		// Inline script to warn about UTM configuration AND toggle limit field
 		?>
 		<script>
 		jQuery(document).ready(function($) {
+			// UTM Alert Logic
 			var utmEnabled = <?php echo stackboost_is_feature_active( 'unified_ticket_macro' ) ? 'true' : 'false'; ?>;
-			// We can't easily check if the UTM module itself is enabled in settings from here without an AJAX call or passing more data.
-			// However, the prompt asked for a reminder.
-
 			$('#ticket_details_view_type').on('change', function() {
 				if ($(this).val() === 'utm') {
 					if (!utmEnabled) {
 						alert('<?php echo esc_js( __( 'The Unified Ticket Macro feature is not active on your plan.', 'stackboost-for-supportcandy' ) ); ?>');
 					} else {
-						// Simple reminder
 						alert('<?php echo esc_js( __( 'Reminder: Please ensure the Unified Ticket Macro module is enabled and configured in its settings page for this view to function correctly.', 'stackboost-for-supportcandy' ) ); ?>');
 					}
 				}
 			});
+
+			// Conditional Logic for History Limit
+			var $limitRow = $('#ticket_details_history_limit').closest('tr');
+			var $contentSelect = $('#ticket_details_content');
+
+			function toggleLimitField() {
+				if ($contentSelect.val() === 'with_history') {
+					$limitRow.show();
+				} else {
+					$limitRow.hide();
+				}
+			}
+
+			// Initial State
+			toggleLimitField();
+
+			// Change Listener
+			$contentSelect.on('change', toggleLimitField);
 		});
 		</script>
 		<?php
