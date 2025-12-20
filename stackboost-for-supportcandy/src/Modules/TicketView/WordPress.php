@@ -153,14 +153,25 @@ class WordPress extends Module {
 						elseif ( 'placeholder' === $image_handling ) $body = preg_replace( '/<img[^>]+\>/i', '<div style="font-style:italic; color:#777;">[Image]</div>', $body );
 						else $body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body );
 
-						$html .= '<div class="stackboost-ticket-description" style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">';
-						$html .= '<h4>' . __( 'Description', 'stackboost-for-supportcandy' ) . '</h4>';
+						// Wrap in WPSC Widget Structure for seamless look
+						$html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
+						$html .= '<div class="wpsc-widget-header"><h3>' . __( 'Description', 'stackboost-for-supportcandy' ) . '</h3></div>';
+						$html .= '<div class="wpsc-widget-body stackboost-thread-body">';
 						$html .= '<div>' . wp_kses_post( $body ) . '</div>';
-						$html .= '</div>';
+						$html .= '</div></div>';
 
 					}
 				} elseif ( 'with_history' === $content_type ) {
-					$html .= \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling );
+					// Render threads but strip the internal header from Core since we wrap it here
+					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling );
+
+					if ( ! empty( $threads_html ) ) {
+						$html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
+						$html .= '<div class="wpsc-widget-header"><h3>' . __( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h3></div>';
+						$html .= '<div class="wpsc-widget-body">';
+						$html .= $threads_html;
+						$html .= '</div></div>';
+					}
 				}
 			}
 		}

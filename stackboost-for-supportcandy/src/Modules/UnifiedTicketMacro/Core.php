@@ -284,7 +284,8 @@ class Core {
 		}
 
 		$html = '<div class="stackboost-ticket-history">';
-		$html .= '<h4>' . esc_html__( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h4>';
+		// Internal header removed to allow wrapping in WPSC widget structure.
+		// $html .= '<h4>' . esc_html__( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h4>';
 
 		foreach ( $threads as $thread ) {
 			$html .= '<div class="stackboost-thread-item">';
