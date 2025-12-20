@@ -75,7 +75,7 @@ class Core {
 	 * @param \WPSC_Ticket $ticket The ticket object.
 	 * @return string The generated HTML.
 	 */
-	private function build_live_utm_html( \WPSC_Ticket $ticket ): string {
+	public function build_live_utm_html( \WPSC_Ticket $ticket ): string {
 		\stackboost_log( '[UTM] build_live_utm_html() - ENTER for ticket ID: ' . $ticket->id, 'module-utm' );
 		$options          = get_option( 'stackboost_settings', [] );
 		$is_enabled       = $options['utm_enabled'] ?? false;
@@ -256,6 +256,84 @@ class Core {
 		}
 		$html_output .= '</table>';
 		return $html_output;
+	}
+
+	/**
+	 * Renders the conversation threads for a ticket.
+	 *
+	 * @param \WPSC_Ticket $ticket The ticket object.
+	 * @param bool         $include_private Whether to include private notes (for agents).
+	 * @param string       $image_handling How to handle images ('fit', 'strip', 'placeholder').
+	 * @return string HTML of the threads.
+	 */
+	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit' ): string {
+		// Define which thread types to fetch
+		// Public always gets 'report' and 'reply'.
+		$types = [ 'report', 'reply' ];
+		if ( $include_private ) {
+			$types[] = 'note';
+		}
+
+		// Fetch threads using SupportCandy's method:
+		// get_threads( $page_no = 1, $items_per_page = 0, $types = array(), $orderby = 'date_created', $order = 'DESC' )
+		// We want all threads (items_per_page=0), ascending order (oldest first).
+		$threads = $ticket->get_threads( 1, 0, $types, 'date_created', 'ASC' );
+
+		if ( empty( $threads ) ) {
+			return '';
+		}
+
+		$html = '<div class="stackboost-ticket-history">';
+		$html .= '<h4>' . esc_html__( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h4>';
+
+		foreach ( $threads as $thread ) {
+			$html .= '<div class="stackboost-thread-item">';
+
+			// Header: Author + Date + Type
+			$author_name = $thread->customer ? $thread->customer->name : __( 'Unknown', 'stackboost-for-supportcandy' );
+			$date_str = $thread->date_created->setTimezone( wp_timezone() )->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
+
+			$type_label = '';
+			switch ( $thread->type ) {
+				case 'report': $type_label = __( 'Reported', 'stackboost-for-supportcandy' ); break;
+				case 'reply': $type_label = __( 'Replied', 'stackboost-for-supportcandy' ); break;
+				case 'note': $type_label = __( 'Private Note', 'stackboost-for-supportcandy' ); break;
+			}
+
+			$style_bg = ( 'note' === $thread->type ) ? 'background: #fff8e1;' : 'background: #f9f9f9;';
+			$style_border = ( 'note' === $thread->type ) ? 'border-left: 4px solid #fbc02d;' : 'border-left: 4px solid #ddd;';
+
+			$html .= '<div style="padding: 8px; margin-bottom: 10px; ' . $style_bg . $style_border . '">';
+			$html .= '<strong>' . esc_html( $author_name ) . '</strong> <span style="color:#777; font-size: 0.9em;">(' . esc_html( $type_label ) . ')</span>';
+			$html .= '<div style="font-size: 0.8em; color: #999;">' . esc_html( $date_str ) . '</div>';
+
+			// Body content processing
+			$body = $thread->body;
+
+			// Handle Images
+			if ( 'strip' === $image_handling ) {
+				$body = preg_replace( '/<img[^>]+\>/i', '', $body );
+			} elseif ( 'placeholder' === $image_handling ) {
+				$body = preg_replace( '/<img[^>]+\>/i', '<div style="font-style:italic; color:#777;">[' . __( 'Image', 'stackboost-for-supportcandy' ) . ']</div>', $body );
+			} else {
+				// 'fit' (default) - inject max-width style
+				// We can't easily inject style into existing img tags without parsing HTML,
+				// but we can wrap the content or rely on CSS.
+				// Let's rely on a wrapper class in CSS or inline style on the container.
+				// However, `wpsc-thread-body` usually handles some of this.
+				// We'll add a style block to the image tags just in case.
+				$body = preg_replace( '/(<img\s+[^>]*?style=["\'])([^"\']*?)(["\'])/i', '$1$2; max-width:100%; height:auto;$3', $body ); // append to existing style
+				$body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body ); // add style if missing
+			}
+
+			$html .= '<div class="stackboost-thread-body" style="margin-top: 5px;">' . wp_kses_post( $body ) . '</div>';
+
+			$html .= '</div>'; // End container
+			$html .= '</div>'; // End item
+		}
+		$html .= '</div>';
+
+		return $html;
 	}
 
 }

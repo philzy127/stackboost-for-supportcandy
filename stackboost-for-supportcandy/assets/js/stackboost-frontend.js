@@ -126,23 +126,78 @@
 		const cache = {};
 		let activeTippyInstance = null; // Tracks the currently visible tippy instance
 
+		const viewType = settings.ticket_details_view_type || 'standard';
+		// If using UTM, content is included in the backend response.
+		// If using Standard, we might need to fetch content separately or from the same new AJAX endpoint if we want the new content features.
+		// Wait, my PHP implementation for Standard returns empty HTML for details but appends content.
+		// So if Standard + Content, we need to Merge.
+		// If Standard + No Content, we use the old scraping method.
+
+		// Wait, if I use the new AJAX for 'standard' it returns ONLY the extra content.
+		// So I need to Combine: (Scraped Details) + (AJAX Extra Content).
+
+		// If UTM, the AJAX returns (UTM Details + Extra Content).
+
 		async function fetchTicketDetails(ticketId) {
 			if (cache[ticketId]) return cache[ticketId];
+
+			let detailsHtml = '';
+			let extraContentHtml = '';
+
+			// 1. Fetch from Backend (UTM or Extra Content)
 			try {
 				const response = await fetch(settings.ajax_url, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-					body: new URLSearchParams({ action: 'wpsc_get_individual_ticket', nonce: settings.nonce, ticket_id: ticketId })
+					body: new URLSearchParams({
+						action: 'stackboost_get_ticket_details_card',
+						nonce: settings.nonce,
+						ticket_id: ticketId
+					})
 				});
-				if (!response.ok) return '<div>Error fetching ticket info.</div>';
-				const html = await response.text();
-				const doc = new DOMParser().parseFromString(html, 'text/html');
-				// Wrap in a fixed-width container with min-width to prevent resizing/squashing
-				const content = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>';
-				return (cache[ticketId] = `<div style="width: 350px; min-width: 350px !important;">${content}</div>`);
-			} catch (error) {
-				return '<div style="width: 350px; min-width: 350px !important;">Error fetching ticket info.</div>';
+
+				if (response.ok) {
+					const json = await response.json();
+					if (json.success) {
+						if (viewType === 'utm') {
+							// For UTM, the backend returns everything
+							detailsHtml = json.data.html;
+						} else {
+							// For Standard, backend returns ONLY the extra content (Description/History)
+							extraContentHtml = json.data.html;
+						}
+					}
+				}
+			} catch (e) {
+				console.error('Error fetching ticket details from backend', e);
 			}
+
+			// 2. Fetch/Scrape Standard Details (if needed)
+			if (viewType === 'standard') {
+				try {
+					const response = await fetch(settings.ajax_url, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+						body: new URLSearchParams({ action: 'wpsc_get_individual_ticket', nonce: settings.nonce, ticket_id: ticketId })
+					});
+					if (response.ok) {
+						const html = await response.text();
+						const doc = new DOMParser().parseFromString(html, 'text/html');
+						const content = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>';
+						detailsHtml = content;
+					}
+				} catch (error) {
+					detailsHtml = '<div>Error fetching ticket info.</div>';
+				}
+			}
+
+			// Combine
+			const finalHtml = `<div style="width: 350px; min-width: 350px !important;">
+				${detailsHtml}
+				${extraContentHtml}
+			</div>`;
+
+			return (cache[ticketId] = finalHtml);
 		}
 
 		document.querySelectorAll('tr.wpsc_tl_tr:not(._contextAttached)').forEach(row => {
