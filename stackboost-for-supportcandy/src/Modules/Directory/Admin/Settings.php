@@ -83,8 +83,13 @@ class Settings {
 		$management_roles     = $options['management_roles'] ?? array( 'administrator' );
 		$listing_display_mode = $options['listing_display_mode'] ?? 'page';
 		$revisions_to_keep    = $options['revisions_to_keep'] ?? '';
+
+        $theme_class = 'sb-theme-clean-tech';
+        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
 		?>
-		<div class="wrap">
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( self::OPTION_GROUP );

@@ -397,8 +397,13 @@ class WordPress {
 		$tabs = array_merge($ordered_tabs, array_diff_key($tabs, $ordered_tabs));
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
+
+        $theme_class = 'sb-theme-clean-tech';
+        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
 		?>
-		<div class="wrap">
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1>
 				<?php esc_html_e( 'Company Directory', 'stackboost-for-supportcandy' ); ?>
 				<?php if ( $this->can_user_edit() ) : ?>

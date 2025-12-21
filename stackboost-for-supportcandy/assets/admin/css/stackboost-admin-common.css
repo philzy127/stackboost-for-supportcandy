@@ -4,22 +4,12 @@
 .stackboost-dashboard {
     background-color: var(--sb-bg-main, #f6f7f7);
     color: #3c434a; /* Standard WP Text Color */
-    /* Ensure full height/width coverage if needed, though 'wrap' usually handles width */
-    padding: 20px; /* Add some internal spacing */
+    padding: 20px; /* Internal spacing */
     box-sizing: border-box;
-    /* Reset margins that might be inherited from .wrap */
-    margin-left: -20px; /* Counteract generic .wrap padding if necessary, but standard WP structure usually keeps .wrap clean. */
-    margin-right: -20px;
-    width: auto;
-    /* Actually, standard .wrap has margin-left: 20px; margin-right: 20px;
-       If we want the background to stretch, we might need to be aggressive.
-       But standard 'Settings API' pages are contained in .wrap.
-       For a full "App-like" feel, we might want to target the body, but that's invasive.
-       For now, let's just style the dashboard container itself.
-       If the user wants the WHOLE page background to change, we'd need to target 'body'.
-       The Prompt said: "Transform the StackBoost admin interface...".
-       It also said: "Modify the main settings wrapper to inject the selected theme class".
-       So targeting .stackboost-dashboard is correct. */
+    /* Standard WP behavior: contain within .wrap */
+    width: 100%;
+    max-width: 100%;
+    margin-top: 10px; /* Slight separation from title if inside wrap */
     border-radius: var(--sb-radius, 4px);
 }
 

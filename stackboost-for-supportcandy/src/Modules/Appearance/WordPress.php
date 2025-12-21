@@ -96,7 +96,14 @@ class WordPress {
      */
     public static function get_active_theme_class() {
         $settings = get_option( 'stackboost_settings', [] );
-        return isset( $settings['admin_theme'] ) ? $settings['admin_theme'] : 'sb-theme-clean-tech';
+        $theme = isset( $settings['admin_theme'] ) ? $settings['admin_theme'] : 'sb-theme-clean-tech';
+
+        // Log theme retrieval
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( "Appearance: Retrieved active theme class: {$theme}", 'appearance' );
+        }
+
+        return $theme;
     }
 
     /**

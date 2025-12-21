@@ -15,8 +15,12 @@ class Page {
 	 * Render the Date & Time Formatting settings page content.
 	 */
 	public static function render_page() {
+        $theme_class = 'sb-theme-clean-tech';
+        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
 		?>
-		<div class="wrap">
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<p><?php esc_html_e( 'Create rules to customize the date and time format for specific columns in the ticket list.', 'stackboost-for-supportcandy' ); ?></p>
 			<form action="options.php" method="post">

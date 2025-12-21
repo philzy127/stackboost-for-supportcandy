@@ -620,6 +620,7 @@ class Settings {
 				'enable_log_ats',
 				'enable_log_directory',
 				'enable_log_onboarding',
+				'enable_log_appearance', // Added Appearance Logging
 			],
 			'stackboost-date-time'          => ['enable_date_time_formatting', 'date_format_rules'],
 		]);
@@ -660,6 +661,7 @@ class Settings {
 					case 'enable_log_ats':
 					case 'enable_log_directory':
 					case 'enable_log_onboarding':
+					case 'enable_log_appearance':
 						$saved_settings[$key] = intval($value);
 						break;
 
@@ -780,6 +782,7 @@ class Settings {
 			'enable_log_ats'               => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
 			'enable_log_directory'         => __( 'Company Directory', 'stackboost-for-supportcandy' ),
 			'enable_log_onboarding'        => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
+			'enable_log_appearance'        => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ),
 		];
 
 		foreach ( $modules as $key => $label ) {

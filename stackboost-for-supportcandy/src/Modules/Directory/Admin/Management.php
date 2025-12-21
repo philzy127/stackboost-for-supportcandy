@@ -23,8 +23,12 @@ class Management {
 	 * Render the management page.
 	 */
 	public static function render_management_page() {
+        $theme_class = 'sb-theme-clean-tech';
+        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
 		?>
-		<div class="wrap">
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<?php self::render_json_section(); ?>
 			<hr>
 			<?php self::render_import_section(); ?>
