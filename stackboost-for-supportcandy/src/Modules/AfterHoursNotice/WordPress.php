@@ -93,8 +93,24 @@ class WordPress extends Module {
             stackboost_log( 'AfterHoursNotice: Currently after hours. Displaying notice on form.', 'after_hours' );
             $message = $options['after_hours_message'] ?? '';
             if ( ! empty( $message ) ) {
+
+                // Get active theme class for wrapper
+                $theme_class = 'sb-theme-clean-tech'; // Default
+                if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+                    $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+                }
+
+                // Wrap in theme container if we are in admin area
+                if ( is_admin() ) {
+                    echo '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; margin:0; border:none; box-shadow:none;">';
+                }
+
                 // The message is saved via wp_kses_post, so it's safe to display.
                 echo '<div class="stackboost-after-hours-notice" style="margin-left: 15px; margin-bottom: 15px;">' . wpautop( $message ) . '</div>';
+
+                if ( is_admin() ) {
+                    echo '</div>';
+                }
             }
         }
     }

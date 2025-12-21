@@ -27,7 +27,6 @@
 .stackboost-dashboard input[type="number"],
 .stackboost-dashboard input[type="email"],
 .stackboost-dashboard input[type="password"],
-.stackboost-dashboard select,
 .stackboost-dashboard textarea {
     background-color: var(--sb-input-bg, #ffffff);
     border-radius: var(--sb-radius, 4px);
@@ -35,12 +34,27 @@
     border: var(--sb-card-border, 1px solid #ccd0d4);
 }
 
+/* Specific styling for selects to account for the dropdown arrow */
+.stackboost-dashboard select {
+    background-color: var(--sb-input-bg, #ffffff);
+    border-radius: var(--sb-radius, 4px);
+    /* Top/Bottom: 6px to balance height, Right: 30px for arrow, Left: 10px for text */
+    padding: 6px 30px 6px 10px;
+    border: var(--sb-card-border, 1px solid #ccd0d4);
+    min-height: 34px; /* Ensure consistent height with text inputs */
+    vertical-align: middle;
+}
+
 .stackboost-dashboard input[type="text"]:focus,
 .stackboost-dashboard input[type="number"]:focus,
 .stackboost-dashboard input[type="email"]:focus,
 .stackboost-dashboard input[type="password"]:focus,
-.stackboost-dashboard select:focus,
 .stackboost-dashboard textarea:focus {
+    border-color: var(--sb-accent, #1a3d5c);
+    box-shadow: 0 0 0 1px var(--sb-accent, #1a3d5c);
+}
+
+.stackboost-dashboard select:focus {
     border-color: var(--sb-accent, #1a3d5c);
     box-shadow: 0 0 0 1px var(--sb-accent, #1a3d5c);
 }

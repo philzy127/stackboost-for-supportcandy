@@ -155,12 +155,16 @@
             );
         });
 
-        // Appearance: Theme Switching
-        $('#stackboost_admin_theme').on('change', function() {
-            var newTheme = $(this).val();
+        /**
+         * Save Theme Preference
+         * @param {string} newTheme The CSS class name of the theme.
+         * @param {string} themeName The display name of the theme (for UI updates).
+         * @param {object} $btn Optional button element to show loading state.
+         */
+        function stackboost_save_theme(newTheme, themeName, $btn) {
             var $dashboard = $('.stackboost-dashboard');
             var $previewName = $('#stackboost-preview-theme-name');
-            var themeName = $(this).find('option:selected').text();
+            var originalBtnText = $btn ? $btn.text() : '';
 
             // 1. Live Preview: Remove old theme classes and add new one
             $dashboard.removeClass(function (index, css) {
@@ -169,11 +173,16 @@
             $dashboard.addClass(newTheme);
 
             // Update preview text
-            if ($previewName.length) {
+            if ($previewName.length && themeName) {
                 $previewName.text(themeName);
             }
 
-            // 2. AJAX Auto-Save
+            // Show loading state on button if provided
+            if ($btn) {
+                $btn.text('Saving...').prop('disabled', true);
+            }
+
+            // 2. AJAX Save
             $.post(stackboost_admin_ajax.ajax_url, {
                 action: 'stackboost_save_theme_preference',
                 theme: newTheme,
@@ -186,7 +195,26 @@
                 }
             }).fail(function() {
                 window.stackboost_show_toast('Communication error while saving theme.', 'error');
+            }).always(function() {
+                if ($btn) {
+                    $btn.text(originalBtnText).prop('disabled', false);
+                }
             });
+        }
+
+        // Appearance: Theme Switching (Auto-Save)
+        $('#stackboost_admin_theme').on('change', function() {
+            var newTheme = $(this).val();
+            var themeName = $(this).find('option:selected').text();
+            stackboost_save_theme(newTheme, themeName);
+        });
+
+        // Appearance: Manual Save Button
+        $('#stackboost_save_theme_btn').on('click', function() {
+            var $select = $('#stackboost_admin_theme');
+            var newTheme = $select.val();
+            var themeName = $select.find('option:selected').text();
+            stackboost_save_theme(newTheme, themeName, $(this));
         });
     });
 })(jQuery);

@@ -84,6 +84,12 @@ class WordPress extends Module {
 
 		$options = get_option( 'stackboost_settings', [] );
 
+		// Get active theme class for wrapper
+		$theme_class = 'sb-theme-clean-tech'; // Default
+		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+		}
+
 		// Determine View Type
 		$view_type = $options['ticket_details_view_type'] ?? 'standard';
 		if ( 'utm' === $view_type && ! stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
@@ -102,6 +108,9 @@ class WordPress extends Module {
 		if ( 'utm' === $view_type ) {
 			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
 				$utm_content = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->build_live_utm_html( $ticket );
+
+				// Apply Theme Wrapper
+				$details_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
 				$details_html .= '<div class="wpsc-it-widget stackboost-utm-details" style="margin-bottom: 10px;">';
 				$details_html .= '<div class="wpsc-widget-header">';
 				$details_html .= '<h2>' . __( 'Ticket Details', 'stackboost-for-supportcandy' ) . '</h2>';
@@ -109,6 +118,7 @@ class WordPress extends Module {
 				$details_html .= '</div>';
 				$details_html .= '<div class="wpsc-widget-body" style="display: block;">' . $utm_content . '</div>';
 				$details_html .= '</div>';
+				$details_html .= '</div>'; // End wrapper
 			} else {
 				$details_html .= '<p>' . __( 'UTM Module not available.', 'stackboost-for-supportcandy' ) . '</p>';
 			}
@@ -172,6 +182,7 @@ class WordPress extends Module {
 						}
 
 						// Wrap in WPSC Widget Structure for seamless look
+						$history_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
 						$history_html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
 						$history_html .= '<div class="wpsc-widget-header">';
 						$history_html .= '<h2>' . __( 'Description', 'stackboost-for-supportcandy' ) . '</h2>';
@@ -180,6 +191,7 @@ class WordPress extends Module {
 						$history_html .= '<div class="wpsc-widget-body stackboost-thread-body" style="display: block;">';
 						$history_html .= '<div>' . wp_kses_post( $body ) . '</div>';
 						$history_html .= '</div></div>';
+						$history_html .= '</div>'; // End wrapper
 
 					}
 				} elseif ( 'with_history' === $content_type ) {
@@ -187,6 +199,7 @@ class WordPress extends Module {
 					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling, $limit );
 
 					if ( ! empty( $threads_html ) ) {
+						$history_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
 						$history_html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
 						$history_html .= '<div class="wpsc-widget-header">';
 						$history_html .= '<h2>' . __( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h2>';
@@ -195,6 +208,7 @@ class WordPress extends Module {
 						$history_html .= '<div class="wpsc-widget-body" style="display: block;">';
 						$history_html .= $threads_html;
 						$history_html .= '</div></div>';
+						$history_html .= '</div>'; // End wrapper
 					}
 				}
 			}
