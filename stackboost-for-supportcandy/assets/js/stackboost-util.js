@@ -1,6 +1,5 @@
 jQuery(document).ready(function($) {
     // Helper function for conditional logging
-    // Use window.stackboost_log (central logger) if available, otherwise fallback.
     window.sbUtilLog = function(message, data) {
         if (typeof window.stackboost_log === 'function') {
             window.stackboost_log('[Util] ' + message, data);
@@ -27,9 +26,7 @@ jQuery(document).ready(function($) {
 
     sbUtilLog('Utility script loaded.');
 
-    // --- Modal System Implementation ---
-
-    // Inject Modal HTML into body if not present
+    // --- Modal System Implementation (Standard) ---
     if ($('#stackboost-modal-overlay').length === 0) {
         var modalHtml = `
             <div id="stackboost-modal-overlay" class="stackboost-modal-overlay">
@@ -52,125 +49,130 @@ jQuery(document).ready(function($) {
     var $modalFooter = $modalOverlay.find('.stackboost-modal-footer');
     var $modalClose = $modalOverlay.find('.stackboost-modal-close');
 
-    // Close modal event
     function closeModal() {
         $modalOverlay.removeClass('active');
     }
     $modalClose.on('click', closeModal);
 
-    // Global Alert Function
     window.stackboostAlert = function(message, title = 'Alert', callback = null) {
         $modalTitle.text(title);
-        $modalBody.html(message); // Allow HTML in message
+        $modalBody.html(message);
         $modalFooter.empty();
-
         var $okBtn = $('<button class="stackboost-btn stackboost-btn-primary">OK</button>');
         $okBtn.on('click', function() {
             closeModal();
-            if (typeof callback === 'function') {
-                callback();
-            }
+            if (typeof callback === 'function') callback();
         });
-
         $modalFooter.append($okBtn);
         $modalOverlay.addClass('active');
         $okBtn.focus();
     };
 
-    // Global Confirm Function
     window.stackboostConfirm = function(message, title = 'Confirm', onConfirm, onCancel, confirmText = 'Yes', cancelText = 'No', isDanger = false) {
         $modalTitle.text(title);
-        $modalBody.html(message); // Allow HTML in message
+        $modalBody.html(message);
         $modalFooter.empty();
-
         var $cancelBtn = $('<button class="stackboost-btn stackboost-btn-secondary">' + cancelText + '</button>');
         var $confirmBtn = $('<button class="stackboost-btn ' + (isDanger ? 'stackboost-btn-danger' : 'stackboost-btn-primary') + '">' + confirmText + '</button>');
-
         $cancelBtn.on('click', function() {
             closeModal();
-            if (typeof onCancel === 'function') {
-                onCancel();
-            }
+            if (typeof onCancel === 'function') onCancel();
         });
-
         $confirmBtn.on('click', function() {
             closeModal();
-            if (typeof onConfirm === 'function') {
-                onConfirm();
-            }
+            if (typeof onConfirm === 'function') onConfirm();
         });
-
         $modalFooter.append($cancelBtn);
         $modalFooter.append($confirmBtn);
         $modalOverlay.addClass('active');
         $confirmBtn.focus();
     };
 
-    // --- End Modal System ---
+    // --- Image Lightbox Implementation (Ported from Directory/WordPress.php) ---
+    // This allows images to be opened in a simple, full-screen overlay.
 
+    // 1. Inject Modal HTML into Body (idempotent)
+    if (!document.getElementById('stackboost-widget-modal')) {
+        var lightboxHtml = '<div id="stackboost-widget-modal"><span id="stackboost-widget-modal-close">&times;</span><img class="stackboost-modal-content" id="stackboost-widget-modal-content"></div>';
+        document.body.insertAdjacentHTML('beforeend', lightboxHtml);
+
+        // 2. Attach Close Listeners
+        var lightbox = document.getElementById('stackboost-widget-modal');
+        var span = document.getElementById("stackboost-widget-modal-close");
+
+        if (span) {
+            span.onclick = function(e) {
+                e.stopPropagation(); // Prevent bubbling to Tippy/other listeners
+                lightbox.style.display = "none";
+            };
+            // Prevent interaction with the close button from closing the Tippy
+            // Added pointerdown and stopImmediatePropagation for stronger isolation
+            ['mousedown', 'touchstart', 'click', 'pointerdown'].forEach(function(evt) {
+                span.addEventListener(evt, function(e) { e.stopImmediatePropagation(); });
+            });
+        }
+        if (lightbox) {
+            lightbox.onclick = function(e) {
+                e.stopImmediatePropagation(); // Prevent bubbling
+                if (e.target === lightbox) {
+                    lightbox.style.display = "none";
+                }
+            };
+            // Prevent interaction with the overlay from closing the Tippy
+            // Added pointerdown and stopImmediatePropagation for stronger isolation
+            ['mousedown', 'touchstart', 'click', 'pointerdown'].forEach(function(evt) {
+                lightbox.addEventListener(evt, function(e) { e.stopImmediatePropagation(); });
+            });
+        }
+    }
+
+    // 3. Define Global Open Function (idempotent)
+    if (typeof window.stackboostOpenWidgetModal === 'undefined') {
+        window.stackboostOpenWidgetModal = function(event, imageUrl) {
+            if (event) event.preventDefault();
+            var lightbox = document.getElementById('stackboost-widget-modal');
+            var lightboxImg = document.getElementById('stackboost-widget-modal-content');
+            if (lightbox && lightboxImg) {
+                lightbox.style.display = "block";
+                lightboxImg.src = imageUrl;
+            }
+        };
+    }
+
+    // --- Utility Functions ---
 
     // Copy to clipboard functionality for email
     $(document).on('click', '.stackboost-copy-email-icon', function() {
-        sbUtilLog('Email icon clicked');
         var email = $(this).data('email');
-        if (email) {
-            copyToClipboard(email, $(this), 'email');
-        } else {
-            sbUtilError('No email data found on icon');
-        }
+        if (email) copyToClipboard(email, $(this), 'email');
     });
 
     // Copy to clipboard functionality for phone
     $(document).on('click', '.stackboost-copy-phone-icon', function() {
-        sbUtilLog('Phone icon clicked');
-
-        // 1. Check for pre-formatted copy text (Primary Method)
         var copyText = $(this).data('copy-text');
         if (copyText) {
-             sbUtilLog('Using pre-formatted copy text', copyText);
              copyToClipboard(copyText, $(this), 'phone');
              return;
         }
-
-        // 2. Fallback to legacy construction (Secondary Method)
         var phone = $(this).data('phone');
         var extension = $(this).data('extension');
-
-        sbUtilLog('Raw Data', { phone: phone, extension: extension });
-
-        // Ensure we treat them as strings to avoid weird addition
         phone = String(phone);
-
         var fullNumber = phone;
-        if (extension) {
-            fullNumber = phone + ' x' + extension;
-        }
-
-        if (fullNumber && fullNumber !== "undefined") {
-            copyToClipboard(fullNumber, $(this), 'phone');
-        } else {
-             sbUtilError('Failed to construct full number');
-        }
+        if (extension) fullNumber = phone + ' x' + extension;
+        if (fullNumber) copyToClipboard(fullNumber, $(this), 'phone');
     });
 
-    // Function to show a toast notification
     function showToast(message) {
         var toast = $('<div class="stackboost-toast"></div>').text(message);
         $('body').append(toast);
-        toast.fadeIn(400).delay(3000).fadeOut(400, function() {
-            $(this).remove();
-        });
+        toast.fadeIn(400).delay(3000).fadeOut(400, function() { $(this).remove(); });
     }
 
-    // Function to handle the copy action
     function copyToClipboard(text, $icon, type) {
-        sbUtilLog('Attempting to copy', text);
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(function() {
                 handleCopySuccess($icon, text, type);
-            }, function(err) {
-                sbUtilError('Async: Could not copy text: ', err);
-                // Fallback to execCommand if async fails
+            }, function() {
                 fallbackCopyTextToClipboard(text, $icon, type);
             });
         } else {
@@ -178,46 +180,27 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Fallback using execCommand
     function fallbackCopyTextToClipboard(text, $icon, type) {
-        sbUtilLog('Using fallback copy');
         var textArea = document.createElement("textarea");
         textArea.value = text;
-
-        // Ensure it's not visible but part of the DOM
         textArea.style.position = "fixed";
         textArea.style.left = "-9999px";
         textArea.style.top = "0";
-
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-
         try {
             var successful = document.execCommand('copy');
-            if (successful) {
-                handleCopySuccess($icon, text, type);
-            } else {
-                sbUtilError('Fallback: Copying text command was unsuccessful');
-            }
-        } catch (err) {
-            sbUtilError('Fallback: Oops, unable to copy', err);
-        }
-
+            if (successful) handleCopySuccess($icon, text, type);
+        } catch (err) {}
         document.body.removeChild(textArea);
     }
 
-    // Success UI Feedback
     function handleCopySuccess($icon, text, type) {
-        sbUtilLog('Copy successful');
         $icon.addClass('copied');
-
         var msg = type === 'email' ? 'Email copied: ' + text : 'Phone copied: ' + text;
         showToast(msg);
-
-        setTimeout(function() {
-            $icon.removeClass('copied');
-        }, 1500); // 1.5s delay to be visible
+        setTimeout(function() { $icon.removeClass('copied'); }, 1500);
     }
 
 });

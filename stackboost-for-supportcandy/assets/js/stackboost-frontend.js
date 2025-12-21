@@ -126,24 +126,83 @@
 		const cache = {};
 		let activeTippyInstance = null; // Tracks the currently visible tippy instance
 
+		const viewType = settings.ticket_details_view_type || 'standard';
+
 		async function fetchTicketDetails(ticketId) {
 			if (cache[ticketId]) return cache[ticketId];
+
+			let detailsHtml = '';
+			let extraContentHtml = '';
+			let effectiveViewType = viewType;
+
+			// 1. Fetch from Backend (UTM or Extra Content)
 			try {
 				const response = await fetch(settings.ajax_url, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-					body: new URLSearchParams({ action: 'wpsc_get_individual_ticket', nonce: settings.nonce, ticket_id: ticketId })
+					body: new URLSearchParams({
+						action: 'stackboost_get_ticket_details_card',
+						nonce: settings.nonce,
+						ticket_id: ticketId
+					})
 				});
-				if (!response.ok) return '<div>Error fetching ticket info.</div>';
-				const html = await response.text();
-				const doc = new DOMParser().parseFromString(html, 'text/html');
-				// Wrap in a fixed-width container with min-width to prevent resizing/squashing
-				const content = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>';
-				return (cache[ticketId] = `<div style="width: 350px; min-width: 350px !important;">${content}</div>`);
-			} catch (error) {
-				return '<div style="width: 350px; min-width: 350px !important;">Error fetching ticket info.</div>';
+
+				if (response.ok) {
+					const json = await response.json();
+					if (json.success) {
+						// Check if backend forced a fallback
+						if (json.data.effective_view_type) {
+							effectiveViewType = json.data.effective_view_type;
+						}
+
+						if (effectiveViewType === 'utm') {
+							// For UTM, the backend returns separated parts
+							detailsHtml = json.data.details || '';
+							extraContentHtml = json.data.history || '';
+						} else {
+							// For Standard, backend returns ONLY the extra content (Description/History)
+							extraContentHtml = json.data.history || '';
+						}
+					}
+				}
+			} catch (e) {
+				if (typeof sbUtilError === 'function') {
+					sbUtilError('Error fetching ticket details from backend', e);
+				}
 			}
+
+			// 2. Fetch/Scrape Standard Details (if needed)
+			// Checks effectiveViewType to handle fallback from UTM -> Standard
+			if (effectiveViewType === 'standard') {
+				try {
+					const response = await fetch(settings.ajax_url, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+						body: new URLSearchParams({ action: 'wpsc_get_individual_ticket', nonce: settings.nonce, ticket_id: ticketId })
+					});
+					if (response.ok) {
+						const html = await response.text();
+						const doc = new DOMParser().parseFromString(html, 'text/html');
+						const content = doc.querySelector('.wpsc-it-widget.wpsc-itw-ticket-fields')?.outerHTML || '<div>No details found.</div>';
+						detailsHtml = content;
+					}
+				} catch (error) {
+					detailsHtml = '<div>Error fetching ticket info.</div>';
+				}
+			}
+
+			// Combine
+			// We check the content size logic later in onShow
+			const finalHtml = `<div class="stackboost-ticket-card-container" style="width: 350px; min-width: 350px !important;">
+				<div class="stackboost-card-section stackboost-card-details">${detailsHtml}</div>
+				<div class="stackboost-card-section stackboost-card-history">${extraContentHtml}</div>
+			</div>`;
+
+			return (cache[ticketId] = finalHtml);
 		}
+
+		// Public accessor to get active instance (for toggle updates)
+		window.stackboostActiveTippy = function() { return activeTippyInstance; };
 
 		document.querySelectorAll('tr.wpsc_tl_tr:not(._contextAttached)').forEach(row => {
 			row.classList.add('_contextAttached');
@@ -159,7 +218,19 @@
 				maxWidth: 'none', // Allow our fixed width to take precedence
 				offset: [0, 10],
 				appendTo: () => document.body,
-				hideOnClick: true, // Use tippy's built-in behavior to hide on outside clicks
+				hideOnClick: false, // We handle outside clicks manually to safely ignore the lightbox
+				onClickOutside(instance, event) {
+					// Prevent closing if clicking inside our lightbox
+					// We check for the lightbox ID, the close button ID, or the class hierarchy
+					if (
+						event.target.id === 'stackboost-widget-modal' ||
+						event.target.id === 'stackboost-widget-modal-close' ||
+						event.target.closest('#stackboost-widget-modal')
+					) {
+						return;
+					}
+					instance.hide();
+				},
 				popperOptions: {
 					modifiers: [
 						{
@@ -188,6 +259,43 @@
 					instance.setContent('Loading...');
 					const content = await fetchTicketDetails(ticketId);
 					instance.setContent(content);
+
+					// Smart Layout Logic
+					// We need to wait for render or force a check
+					requestAnimationFrame(() => {
+						const popper = instance.popper;
+						if (!popper) return;
+
+						const windowHeight = window.innerHeight;
+						const contentHeight = popper.getBoundingClientRect().height;
+						// Increase threshold to 85% to be less aggressive for standard content
+						const threshold = windowHeight * 0.85;
+
+						const $container = $(instance.popper).find('.stackboost-ticket-card-container');
+						const hasDetails = $container.find('.stackboost-card-details').html().trim().length > 10;
+						const hasHistory = $container.find('.stackboost-card-history').html().trim().length > 10;
+
+						// Only switch to horizontal if we have both sections AND it's too tall
+						if (hasDetails && hasHistory && contentHeight > threshold) {
+							// Too tall! Switch to horizontal layout
+							$container.addClass('stackboost-layout-horizontal');
+							// Increase width to accommodate two columns
+							$container.css({
+								'width': '720px',
+								'min-width': '720px',
+								'display': 'flex',
+								'gap': '15px',
+								'align-items': 'flex-start'
+							});
+							$container.find('.stackboost-card-section').css({
+								'flex': '1',
+								'width': '50%'
+							});
+
+							// Force Tippy to update position with new dimensions
+							instance.setProps({ maxWidth: 'none' }); // Ensure no constraint
+						}
+					});
 				},
 				onHide(instance) {
 					// Clear the active instance when it's hidden
@@ -246,5 +354,34 @@
 	}
 
 	$(document).ready(init);
+
+	// Event Delegation for Collapsible Widgets (Injected via Tippy or Standard)
+	$(document).on('click', '.wpsc-itw-toggle', function() {
+		const $toggle = $(this);
+		const $widget = $toggle.closest('.wpsc-it-widget');
+		const $body = $widget.find('.wpsc-widget-body');
+
+		// Check if this is one of our managed widgets or standard scraped content
+		// We use slideToggle for animation
+		$body.slideToggle(200, function() {
+			// Update icon after animation
+			if ($body.is(':visible')) {
+				$toggle.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
+			} else {
+				$toggle.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
+			}
+
+			// If inside a Tippy, force an update to resize/reposition
+			if (typeof window.stackboostActiveTippy === 'function') {
+				const activeInstance = window.stackboostActiveTippy();
+				if (activeInstance && activeInstance.popperInstance) {
+					activeInstance.popperInstance.update();
+				} else if (activeInstance && activeInstance.popper) {
+					// Fallback for older tippy versions
+					activeInstance.popper.update();
+				}
+			}
+		});
+	});
 
 })(jQuery);

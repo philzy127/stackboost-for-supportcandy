@@ -230,8 +230,23 @@ final class Plugin {
 			true
 		);
 
+		// Enqueue dedicated CSS for frontend features (e.g., ticket history images)
+		wp_enqueue_style(
+			'stackboost-frontend-css',
+			STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-frontend.css',
+			[],
+			STACKBOOST_VERSION
+		);
+
 		$options         = get_option( 'stackboost_settings', [] );
 		$features_data   = [];
+
+		// Pass global Ticket View settings that are needed in JS
+		$localized_data = [
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'nonce'    => wp_create_nonce( 'wpsc_get_individual_ticket' ),
+			'ticket_details_view_type' => $options['ticket_details_view_type'] ?? 'standard',
+		];
 
 		// Gather data from QOL Enhancements module
 		if ( stackboost_is_feature_active( 'qol_enhancements' ) ) {
@@ -262,13 +277,11 @@ final class Plugin {
 		}
 
 		if ( ! empty( $features_data ) ) {
-			$localized_data = [
-				'ajax_url' => admin_url( 'admin-ajax.php' ),
-				'nonce'    => wp_create_nonce( 'wpsc_get_individual_ticket' ),
-				'features' => $features_data,
-			];
-			wp_localize_script( 'stackboost-frontend', 'stackboost_settings', $localized_data );
+			$localized_data['features'] = $features_data;
 		}
+
+		// Localize unconditionally so base settings (nonce, ajax_url) are always available.
+		wp_localize_script( 'stackboost-frontend', 'stackboost_settings', $localized_data );
 
 		wp_enqueue_script( 'stackboost-frontend' );
 	}
@@ -290,6 +303,12 @@ final class Plugin {
 			'stackboost_page_stackboost-tools',
 			'stackboost_page_stackboost-date-time',
 		];
+
+		// Enqueue Frontend Features in Admin (Ticket List)
+		// This ensures features like the Ticket Details Card work for agents in the backend.
+		if ( 'supportcandy_page_wpsc-tickets' === $hook_suffix ) {
+			$this->enqueue_and_localize_frontend_scripts();
+		}
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
 			// Enqueue General Dashboard Styles if on main page

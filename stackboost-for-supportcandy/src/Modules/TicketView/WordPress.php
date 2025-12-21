@@ -45,10 +45,166 @@ class WordPress extends Module {
 	public function init_hooks() {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
-		// Frontend enqueue might be needed if the ticket list is shown on frontend.
-		// SupportCandy frontend usually uses a shortcode.
-		// We can hook into wp_enqueue_scripts.
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+
+		// AJAX handler for fetching ticket details card content.
+		add_action( 'wp_ajax_stackboost_get_ticket_details_card', [ $this, 'ajax_get_ticket_details_card' ] );
+		add_action( 'wp_ajax_nopriv_stackboost_get_ticket_details_card', [ $this, 'ajax_get_ticket_details_card' ] );
+	}
+
+	/**
+	 * AJAX handler to get the content for the ticket details card.
+	 */
+	public function ajax_get_ticket_details_card() {
+		// Use the same nonce action as the frontend script, which is 'wpsc_get_individual_ticket'.
+		// We use wp_verify_nonce instead of check_ajax_referer to handle failures gracefully with JSON.
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'wpsc_get_individual_ticket' ) ) {
+			wp_send_json_error( [ 'message' => 'Security check failed (Nonce mismatch)' ] );
+		}
+
+		$ticket_id = isset( $_POST['ticket_id'] ) ? intval( $_POST['ticket_id'] ) : 0;
+		if ( ! $ticket_id ) {
+			wp_send_json_error( [ 'message' => 'Invalid Ticket ID' ] );
+		}
+
+		$ticket = new \WPSC_Ticket( $ticket_id );
+		if ( ! $ticket->id ) {
+			wp_send_json_error( [ 'message' => 'Ticket not found' ] );
+		}
+
+		// Security check: Ensure user can access this ticket
+		// WPSC_Ticket usually handles this via `get_tickets` or capabilities,
+		// but since we loaded direct by ID, we must check permissions.
+		// Standard WPSC logic for visibility:
+		$current_user = \WPSC_Current_User::$current_user;
+		if ( ! $current_user->is_agent && $ticket->customer->id !== $current_user->customer->id ) {
+			// If not agent and not the owner
+			wp_send_json_error( [ 'message' => 'Permission denied' ] );
+		}
+
+		$options = get_option( 'stackboost_settings', [] );
+
+		// Determine View Type
+		$view_type = $options['ticket_details_view_type'] ?? 'standard';
+		if ( 'utm' === $view_type && ! stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
+			$view_type = 'standard'; // Fallback if Pro feature is disabled
+		}
+
+		// Determine Content to Include
+		$content_type = $options['ticket_details_content'] ?? 'details_only';
+		$image_handling = $options['ticket_details_image_handling'] ?? 'fit';
+		$limit = isset( $options['ticket_details_history_limit'] ) ? intval( $options['ticket_details_history_limit'] ) : 0;
+
+		$details_html = '';
+		$history_html = '';
+
+		// 1. Generate Base Details (Table/Card)
+		if ( 'utm' === $view_type ) {
+			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
+				$utm_content = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->build_live_utm_html( $ticket );
+				$details_html .= '<div class="wpsc-it-widget stackboost-utm-details" style="margin-bottom: 10px;">';
+				$details_html .= '<div class="wpsc-widget-header">';
+				$details_html .= '<h2>' . __( 'Ticket Details', 'stackboost-for-supportcandy' ) . '</h2>';
+				$details_html .= '<span class="wpsc-itw-toggle dashicons dashicons-arrow-up-alt2" data-widget="stackboost-utm-details"></span>';
+				$details_html .= '</div>';
+				$details_html .= '<div class="wpsc-widget-body" style="display: block;">' . $utm_content . '</div>';
+				$details_html .= '</div>';
+			} else {
+				$details_html .= '<p>' . __( 'UTM Module not available.', 'stackboost-for-supportcandy' ) . '</p>';
+			}
+		}
+		// 'standard' view returns empty html for the base part, letting JS scrape standard fields.
+
+		// 2. Append Threads (Description / History)
+		if ( 'details_only' !== $content_type ) {
+			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
+				$include_private = $current_user->is_agent; // Bonus point logic
+
+				// Special handling: 'with_description' only wants the report.
+				// 'with_history' wants everything.
+				// The `render_ticket_threads` function in UTM Core fetches based on types.
+				// We might need to adjust it or filter the result.
+				// Actually, `render_ticket_threads` fetches ALL history.
+				// If we only want description, we should just fetch the description thread.
+
+				if ( 'with_description' === $content_type ) {
+					$desc_thread = $ticket->get_description_thread();
+					if ( $desc_thread ) {
+						// Reuse logic? Or manually render?
+						// Let's use a temporary ticket object or modify parameters? No.
+						// Let's just manually render the description using the same style as `render_ticket_threads`.
+						// OR better: Update `render_ticket_threads` to accept a 'limit' or 'type' filter.
+						// But I already wrote `render_ticket_threads`.
+						// Let's just use it and filter strictly by type 'report' if needed?
+						// No, `render_ticket_threads` is built to fetch all.
+
+						// Let's implement a simple render for single thread here to avoid modifying Core again if not needed.
+						// Wait, consistency is key. I'll use `render_ticket_threads` but I need to make sure it only returns what I want.
+						// I'll update `render_ticket_threads` in the next step if I need to, but for now,
+						// let's just use it for 'with_history'.
+						// For 'with_description', I can just fetch the body.
+
+						// We sanitize FIRST to ensure the content is safe.
+						$body = wp_kses_post( $desc_thread->body );
+
+						// Apply image handling (Matched to UTM Core logic with Lightbox support)
+						if ( 'strip' === $image_handling ) {
+							$body = preg_replace( '/<img[^>]+\>/i', '', $body );
+						} elseif ( 'placeholder' === $image_handling ) {
+							// Replace image tags with a clickable [Image] link that opens the Lightbox
+							$body = preg_replace(
+								'/<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>/i',
+								'<a href="$1" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="font-style:italic; color:#0073aa; cursor:pointer;">[' . __( 'Image', 'stackboost-for-supportcandy' ) . ']</a>',
+								$body
+							);
+						} else {
+							// 'fit' (default) - inject max-width style AND lightbox link
+							// Wrap images in a link that opens the Lightbox
+							$body = preg_replace(
+								'/(<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>)/i',
+								'<a href="$2" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="cursor:pointer;">$1</a>',
+								$body
+							);
+
+							// Ensure max-width style is present (backup to CSS)
+							$body = preg_replace( '/(<img\s+[^>]*?style=["\'])([^"\']*?)(["\'])/i', '$1$2; max-width:100%; height:auto;$3', $body );
+							$body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body );
+						}
+
+						// Wrap in WPSC Widget Structure for seamless look
+						$history_html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
+						$history_html .= '<div class="wpsc-widget-header">';
+						$history_html .= '<h2>' . __( 'Description', 'stackboost-for-supportcandy' ) . '</h2>';
+						$history_html .= '<span class="wpsc-itw-toggle dashicons dashicons-arrow-up-alt2" data-widget="stackboost-description"></span>';
+						$history_html .= '</div>';
+						$history_html .= '<div class="wpsc-widget-body stackboost-thread-body" style="display: block;">';
+						$history_html .= '<div>' . wp_kses_post( $body ) . '</div>';
+						$history_html .= '</div></div>';
+
+					}
+				} elseif ( 'with_history' === $content_type ) {
+					// Render threads but strip the internal header from Core since we wrap it here
+					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling, $limit );
+
+					if ( ! empty( $threads_html ) ) {
+						$history_html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
+						$history_html .= '<div class="wpsc-widget-header">';
+						$history_html .= '<h2>' . __( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h2>';
+						$history_html .= '<span class="wpsc-itw-toggle dashicons dashicons-arrow-up-alt2" data-widget="stackboost-history"></span>';
+						$history_html .= '</div>';
+						$history_html .= '<div class="wpsc-widget-body" style="display: block;">';
+						$history_html .= $threads_html;
+						$history_html .= '</div></div>';
+					}
+				}
+			}
+		}
+
+		wp_send_json_success( [
+			'details'             => $details_html,
+			'history'             => $history_html,
+			'effective_view_type' => $view_type,
+		] );
 	}
 
 	/**
@@ -59,69 +215,130 @@ class WordPress extends Module {
 	public function enqueue_scripts( $hook_suffix = '' ) {
 		stackboost_log( "TicketView::enqueue_scripts called with hook_suffix: {$hook_suffix}", 'ticket_view' );
 
-		// Only enqueue if feature is enabled.
+		// Enqueue Utility Script (contains Lightbox logic)
+		// We load this on the admin ticket list OR on the frontend (where hook_suffix is empty/irrelevant)
+		$is_ticket_page_admin = 'supportcandy_page_wpsc-tickets' === $hook_suffix;
+		$is_frontend = ! is_admin();
+
+		if ( $is_ticket_page_admin || $is_frontend ) {
+			wp_enqueue_style(
+				'stackboost-util',
+				STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
+				[],
+				STACKBOOST_VERSION
+			);
+
+			wp_enqueue_script(
+				'stackboost-util',
+				STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
+				[ 'jquery' ],
+				STACKBOOST_VERSION,
+				true
+			);
+		}
+
 		$options = get_option( 'stackboost_settings' );
 
-		// Debug log the options relevant to this feature
+		// Debug log options
 		stackboost_log( "TicketView::enqueue_scripts options: " . print_r( [
 			'enable_page_last_loaded'      => $options['enable_page_last_loaded'] ?? 'not set',
-			'page_last_loaded_placement'   => $options['page_last_loaded_placement'] ?? 'not set',
-			'page_last_loaded_label'       => $options['page_last_loaded_label'] ?? 'not set',
-			'page_last_loaded_format'      => $options['page_last_loaded_format'] ?? 'not set',
+			'enable_ticket_details_card'   => $options['enable_ticket_details_card'] ?? 'not set',
 		], true ), 'ticket_view' );
 
-		if ( empty( $options['enable_page_last_loaded'] ) ) {
-			stackboost_log( "TicketView::enqueue_scripts: Feature disabled, skipping enqueue.", 'ticket_view' );
-			return;
-		}
+		// Enqueue Page Last Loaded Script
+		if ( ! empty( $options['enable_page_last_loaded'] ) ) {
+			if ( is_admin() && 'supportcandy_page_wpsc-tickets' !== $hook_suffix ) {
+				// Skip if admin but not the ticket list
+			} else {
+				wp_enqueue_script(
+					'stackboost-page-last-loaded',
+					STACKBOOST_PLUGIN_URL . 'src/Modules/TicketView/assets/js/page-last-loaded.js',
+					[ 'jquery' ],
+					STACKBOOST_VERSION,
+					true
+				);
+				$placement = $options['page_last_loaded_placement'] ?? 'header';
+				$label     = $options['page_last_loaded_label'] ?? 'Page Last Loaded: ';
+				$format    = $options['page_last_loaded_format'] ?? 'default';
 
-		// For admin, check hook suffix.
-		if ( is_admin() ) {
-			// supportcandy_page_wpsc-tickets is the ticket list page.
-			// supportcandy_page_wpsc-view-ticket is the individual ticket page.
-			if ( 'supportcandy_page_wpsc-tickets' !== $hook_suffix ) {
-				stackboost_log( "TicketView::enqueue_scripts: Not the target admin page. Hook suffix mismatch.", 'ticket_view' );
-				return;
+				wp_localize_script( 'stackboost-page-last-loaded', 'stackboostPageLastLoaded', [
+					'enabled'        => true,
+					'placement'      => $placement,
+					'label'          => $label,
+					'format'         => $format,
+					'wp_time_format' => get_option( 'time_format' ),
+				] );
 			}
 		}
-		// For frontend, we can't easily check for shortcode presence without parsing post content,
-		// but we can rely on SupportCandy's assets usually being loaded.
-		// To be safe and performant, we might want to check if WPSC is loaded or if we are on a page with the shortcode.
-		// However, for simplicity and robustness (as user requested "Visuals: Both"), we'll enqueue if it's not admin.
-		// A more refined check could be added if needed.
-
-		stackboost_log( "TicketView::enqueue_scripts: Enqueueing script.", 'ticket_view' );
-
-		wp_enqueue_script(
-			'stackboost-page-last-loaded',
-			STACKBOOST_PLUGIN_URL . 'src/Modules/TicketView/assets/js/page-last-loaded.js',
-			[ 'jquery' ],
-			STACKBOOST_VERSION,
-			true
-		);
-
-		$placement = $options['page_last_loaded_placement'] ?? 'header';
-		$label     = $options['page_last_loaded_label'] ?? 'Page Last Loaded: ';
-		$format    = $options['page_last_loaded_format'] ?? 'default';
-
-		wp_localize_script( 'stackboost-page-last-loaded', 'stackboostPageLastLoaded', [
-			'enabled'        => true,
-			'placement'      => $placement,
-			'label'          => $label,
-			'format'         => $format,
-			'wp_time_format' => get_option( 'time_format' ),
-		] );
 	}
 
 	/**
 	 * Register settings fields for this module.
 	 */
 	public function register_settings() {
-		$page_slug = 'stackboost-ticket-view'; // The new settings page.
+		$page_slug = 'stackboost-ticket-view';
 
 		// Section: Ticket Details Card
 		add_settings_section( 'stackboost_ticket_details_card_section', __( 'Ticket Details Card', 'stackboost-for-supportcandy' ), null, $page_slug );
+
 		add_settings_field( 'stackboost_enable_ticket_details_card', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'enable_ticket_details_card', 'desc' => 'Shows a card with ticket details on right-click.' ] );
+
+		// New Options for Ticket Details Card
+		add_settings_field(
+			'stackboost_ticket_details_view_type',
+			__( 'Card View Type', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_view_type_select' ], // Custom renderer for Pro badge
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[ 'id' => 'ticket_details_view_type', 'desc' => 'Choose how the ticket details are displayed.' ]
+		);
+
+		add_settings_field(
+			'stackboost_ticket_details_content',
+			__( 'Include Content', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_select_field' ],
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[
+				'id' => 'ticket_details_content',
+				'choices' => [
+					'details_only'     => __( 'None', 'stackboost-for-supportcandy' ),
+					'with_description' => __( 'Initial Description Only', 'stackboost-for-supportcandy' ),
+					'with_history'     => __( 'Full Conversation History', 'stackboost-for-supportcandy' ),
+				],
+				'desc' => 'Select what additional content to include below the details.'
+			]
+		);
+
+		add_settings_field(
+			'stackboost_ticket_details_history_limit',
+			__( 'Conversation History Limit', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_number_field' ],
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[
+				'id' => 'ticket_details_history_limit',
+				'default' => '0',
+				'desc' => 'Maximum number of items to show (0 = Unlimited).'
+			]
+		);
+
+		add_settings_field(
+			'stackboost_ticket_details_image_handling',
+			__( 'Image Handling in Notes', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_select_field' ],
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[
+				'id' => 'ticket_details_image_handling',
+				'choices' => [
+					'fit'         => __( 'Fit to Container', 'stackboost-for-supportcandy' ),
+					'strip'       => __( 'Remove Images', 'stackboost-for-supportcandy' ),
+					'placeholder' => __( '[Image] Placeholder', 'stackboost-for-supportcandy' ),
+				],
+				'desc' => 'How to handle images within the description and notes.'
+			]
+		);
 
 		add_settings_section( 'stackboost_separator_1', '', [ $this, 'render_hr_separator' ], $page_slug );
 
@@ -237,6 +454,88 @@ class WordPress extends Module {
 			echo '<option value="' . esc_attr( $value ) . '" ' . selected( $selected, $value, false ) . '>' . esc_html( $label ) . '</option>';
 		}
 		echo '</select>';
+		if ( ! empty( $args['desc'] ) ) {
+			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+		}
+	}
+
+	/**
+	 * Renders the view type select field with Pro logic.
+	 */
+	public function render_view_type_select( $args ) {
+		$options = get_option( 'stackboost_settings' );
+		$id = $args['id'];
+		$selected = $options[ $id ] ?? 'standard';
+
+		$is_pro_active = stackboost_is_feature_active( 'unified_ticket_macro' );
+
+		echo '<select id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']">';
+
+		// Standard
+		echo '<option value="standard" ' . selected( $selected, 'standard', false ) . '>' . esc_html__( 'Standard', 'stackboost-for-supportcandy' ) . '</option>';
+
+		// UTM (Pro)
+		$utm_label = esc_html__( 'Unified Ticket Macro', 'stackboost-for-supportcandy' );
+		$disabled_attr = '';
+		if ( ! $is_pro_active ) {
+			$disabled_attr = 'disabled';
+		}
+
+		echo '<option value="utm" ' . selected( $selected, 'utm', false ) . ' ' . $disabled_attr . '>' . $utm_label . '</option>';
+
+		echo '</select>';
+
+		if ( ! $is_pro_active ) {
+			echo ' <span title="' . esc_attr__( 'Upgrade to Pro or Business to enable this feature.', 'stackboost-for-supportcandy' ) . '" style="background-color: #2271b1; color: #fff; padding: 2px 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; border-radius: 4px; vertical-align: middle;">PRO</span>';
+		}
+
+		// Inline script to warn about UTM configuration AND toggle limit field
+		?>
+		<script>
+		jQuery(document).ready(function($) {
+			// UTM Alert Logic
+			var utmEnabled = <?php echo stackboost_is_feature_active( 'unified_ticket_macro' ) ? 'true' : 'false'; ?>;
+			$('#ticket_details_view_type').on('change', function() {
+				if ($(this).val() === 'utm') {
+					if (!utmEnabled) {
+						alert('<?php echo esc_js( __( 'The Unified Ticket Macro feature is not active on your plan.', 'stackboost-for-supportcandy' ) ); ?>');
+					} else {
+						alert('<?php echo esc_js( __( 'Reminder: Please ensure the Unified Ticket Macro module is enabled and configured in its settings page for this view to function correctly.', 'stackboost-for-supportcandy' ) ); ?>');
+					}
+				}
+			});
+
+			// Conditional Logic for Content Options
+			var $limitRow = $('#ticket_details_history_limit').closest('tr');
+			var $imageHandlingRow = $('#ticket_details_image_handling').closest('tr');
+			var $contentSelect = $('#ticket_details_content');
+
+			function toggleFields() {
+				var val = $contentSelect.val();
+				if (val === 'details_only') {
+					// Hide both
+					$limitRow.hide();
+					$imageHandlingRow.hide();
+				} else if (val === 'with_description') {
+					// Show Image Handling, Hide Limit
+					$limitRow.hide();
+					$imageHandlingRow.show();
+				} else if (val === 'with_history') {
+					// Show Both
+					$limitRow.show();
+					$imageHandlingRow.show();
+				}
+			}
+
+			// Initial State
+			toggleFields();
+
+			// Change Listener
+			$contentSelect.on('change', toggleFields);
+		});
+		</script>
+		<?php
+
 		if ( ! empty( $args['desc'] ) ) {
 			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
 		}

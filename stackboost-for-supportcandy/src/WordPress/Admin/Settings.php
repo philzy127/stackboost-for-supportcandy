@@ -569,7 +569,22 @@ class Settings {
 
 		$page_options = apply_filters('stackboost_settings_page_options', [
 			'stackboost-for-supportcandy' => [],
-			'stackboost-ticket-view' => ['enable_ticket_details_card', 'enable_hide_empty_columns', 'enable_hide_priority_column', 'enable_ticket_type_hiding', 'ticket_type_custom_field_name', 'ticket_types_to_hide', 'enable_page_last_loaded', 'page_last_loaded_placement', 'page_last_loaded_label', 'page_last_loaded_format'],
+			'stackboost-ticket-view' => [
+				'enable_ticket_details_card',
+				'ticket_details_view_type',
+				'ticket_details_content',
+				'ticket_details_history_limit',
+				'ticket_details_image_handling',
+				'enable_hide_empty_columns',
+				'enable_hide_priority_column',
+				'enable_ticket_type_hiding',
+				'ticket_type_custom_field_name',
+				'ticket_types_to_hide',
+				'enable_page_last_loaded',
+				'page_last_loaded_placement',
+				'page_last_loaded_label',
+				'page_last_loaded_format'
+			],
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],

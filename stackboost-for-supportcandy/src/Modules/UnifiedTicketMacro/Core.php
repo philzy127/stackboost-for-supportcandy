@@ -75,7 +75,7 @@ class Core {
 	 * @param \WPSC_Ticket $ticket The ticket object.
 	 * @return string The generated HTML.
 	 */
-	private function build_live_utm_html( \WPSC_Ticket $ticket ): string {
+	public function build_live_utm_html( \WPSC_Ticket $ticket ): string {
 		\stackboost_log( '[UTM] build_live_utm_html() - ENTER for ticket ID: ' . $ticket->id, 'module-utm' );
 		$options          = get_option( 'stackboost_settings', [] );
 		$is_enabled       = $options['utm_enabled'] ?? false;
@@ -256,6 +256,98 @@ class Core {
 		}
 		$html_output .= '</table>';
 		return $html_output;
+	}
+
+	/**
+	 * Renders the conversation threads for a ticket.
+	 *
+	 * @param \WPSC_Ticket $ticket The ticket object.
+	 * @param bool         $include_private Whether to include private notes (for agents).
+	 * @param string       $image_handling How to handle images ('fit', 'strip', 'placeholder').
+	 * @param int          $limit Maximum number of threads to return (0 for unlimited).
+	 * @return string HTML of the threads.
+	 */
+	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0 ): string {
+		// Define which thread types to fetch
+		// Public always gets 'report' and 'reply'.
+		$types = [ 'report', 'reply' ];
+		if ( $include_private ) {
+			$types[] = 'note';
+		}
+
+		// Fetch threads using SupportCandy's method:
+		// get_threads( $page_no = 1, $items_per_page = 0, $types = array(), $orderby = 'date_created', $order = 'DESC' )
+		// If limit is 0, we want all threads.
+		// Note: WPSC's get_threads pagination might expect items_per_page > 0 for limiting.
+		// If 0 is passed, it returns all.
+		$threads = $ticket->get_threads( 1, $limit, $types, 'date_created', 'ASC' );
+
+		if ( empty( $threads ) ) {
+			return '';
+		}
+
+		$html = '<div class="stackboost-ticket-history">';
+		// Internal header removed to allow wrapping in WPSC widget structure.
+		// $html .= '<h4>' . esc_html__( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h4>';
+
+		foreach ( $threads as $thread ) {
+			$html .= '<div class="stackboost-thread-item">';
+
+			// Header: Author + Date + Type
+			$author_name = $thread->customer ? $thread->customer->name : __( 'Unknown', 'stackboost-for-supportcandy' );
+			$date_str = $thread->date_created->setTimezone( wp_timezone() )->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
+
+			$type_label = '';
+			switch ( $thread->type ) {
+				case 'report': $type_label = __( 'Reported', 'stackboost-for-supportcandy' ); break;
+				case 'reply': $type_label = __( 'Replied', 'stackboost-for-supportcandy' ); break;
+				case 'note': $type_label = __( 'Private Note', 'stackboost-for-supportcandy' ); break;
+			}
+
+			$style_bg = ( 'note' === $thread->type ) ? 'background: #fff8e1;' : 'background: #f9f9f9;';
+			$style_border = ( 'note' === $thread->type ) ? 'border-left: 4px solid #fbc02d;' : 'border-left: 4px solid #ddd;';
+
+			$html .= '<div style="padding: 8px; margin-bottom: 10px; ' . $style_bg . $style_border . '">';
+			$html .= '<strong>' . esc_html( $author_name ) . '</strong> <span style="color:#777; font-size: 0.9em;">(' . esc_html( $type_label ) . ')</span>';
+			$html .= '<div style="font-size: 0.8em; color: #999;">' . esc_html( $date_str ) . '</div>';
+
+			// Body content processing
+			// We sanitize FIRST to ensure the content is safe.
+			$body = wp_kses_post( $thread->body );
+
+			// Handle Images
+			// We apply our trusted regex replacements AFTER sanitization so our onclick attributes are not stripped.
+			if ( 'strip' === $image_handling ) {
+				$body = preg_replace( '/<img[^>]+\>/i', '', $body );
+			} elseif ( 'placeholder' === $image_handling ) {
+				// Replace image tags with a clickable [Image] link that opens the Lightbox
+				$body = preg_replace(
+					'/<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>/i',
+					'<a href="$1" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="font-style:italic; color:#0073aa; cursor:pointer;">[' . __( 'Image', 'stackboost-for-supportcandy' ) . ']</a>',
+					$body
+				);
+			} else {
+				// 'fit' (default) - inject max-width style AND lightbox link
+				// Wrap images in a link that opens the Lightbox
+				$body = preg_replace(
+					'/(<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>)/i',
+					'<a href="$2" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="cursor:pointer;">$1</a>',
+					$body
+				);
+
+				// Ensure max-width style is present (backup to CSS)
+				$body = preg_replace( '/(<img\s+[^>]*?style=["\'])([^"\']*?)(["\'])/i', '$1$2; max-width:100%; height:auto;$3', $body );
+				$body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body );
+			}
+
+			$html .= '<div class="stackboost-thread-body" style="margin-top: 5px;">' . $body . '</div>';
+
+			$html .= '</div>'; // End container
+			$html .= '</div>'; // End item
+		}
+		$html .= '</div>';
+
+		return $html;
 	}
 
 }

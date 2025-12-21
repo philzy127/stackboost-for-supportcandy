@@ -27,12 +27,12 @@ jQuery(document).ready(function($) {
                     modalBody.html(response.data.html);
                 } else {
                     modalBody.html('<p>Error: Could not load content.</p>');
-                    console.error('AJAX Error:', response);
+                    if (typeof sbUtilError === 'function') sbUtilError('AJAX Error:', response);
                 }
             },
             error: function(xhr, status, error) {
                 modalBody.html('<p>Error: Could not load content.</p>');
-                console.error('AJAX Failure:', error);
+                if (typeof sbUtilError === 'function') sbUtilError('AJAX Failure:', error);
             }
         });
     }

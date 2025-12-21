@@ -1,74 +1,61 @@
-/* Styling for copy icons (email and phone) */
-.stackboost-copy-email-icon,
-.stackboost-copy-phone-icon {
-    display: inline-block;
-    vertical-align: middle;
-    width: 16px; /* Match SVG width */
-    height: 16px; /* Match SVG height */
-    margin-left: 8px; /* Space from the name */
-    cursor: pointer;
-    color: #0073aa; /* Default icon color */
-    transition: color 0.2s ease, transform 0.2s ease;
+/* StackBoost Utility Styles */
+
+/* Toast Notification */
+.stackboost-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 100000;
+    display: none;
+    font-size: 14px;
 }
 
-.stackboost-copy-email-icon:hover,
-.stackboost-copy-phone-icon:hover {
-    color: #005177; /* Darker blue on hover */
-    transform: scale(1.1); /* Slightly enlarge on hover */
+/* Copy Icons */
+.stackboost-copy-email-icon,
+.stackboost-copy-phone-icon {
+    cursor: pointer;
+    margin-left: 5px;
+    vertical-align: middle;
 }
 
 .stackboost-copy-email-icon svg,
 .stackboost-copy-phone-icon svg {
-    display: block; /* Ensure SVG fills its container */
+    width: 16px;
+    height: 16px;
+    fill: #666;
+    transition: fill 0.2s;
 }
 
-/* Copied Icon Feedback */
-.stackboost-copy-phone-icon,
-.stackboost-copy-email-icon {
-    transition: color 0.2s ease-in-out;
+.stackboost-copy-email-icon:hover svg,
+.stackboost-copy-phone-icon:hover svg {
+    fill: #0073aa;
 }
 
-.stackboost-copy-email-icon.copied,
-.stackboost-copy-phone-icon.copied {
-    color: #4CAF50 !important; /* Green color on copy */
+.stackboost-copy-email-icon.copied svg,
+.stackboost-copy-phone-icon.copied svg {
+    fill: #46b450;
 }
 
-.stackboost-copy-phone-icon.copied svg,
-.stackboost-copy-email-icon.copied svg {
-    fill: #4CAF50; /* Green color on copy */
-}
-
-/* Toast Notification Styles */
-.stackboost-toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #333;
-    color: #fff;
-    padding: 15px 25px;
-    border-radius: 5px;
-    z-index: 9999;
-    display: none; /* Hidden by default */
-    font-size: 16px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-/* Modern Modal Styles */
+/* Modal System (Standard) */
 .stackboost-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 10000;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
     display: flex;
     justify-content: center;
     align-items: center;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.3s, visibility 0.3s;
 }
 
 .stackboost-modal-overlay.active {
@@ -78,15 +65,14 @@
 
 .stackboost-modal-box {
     background: #fff;
-    width: 90%;
-    max-width: 500px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 5px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
     transform: translateY(-20px);
-    transition: transform 0.3s ease;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    transition: transform 0.3s;
 }
 
 .stackboost-modal-overlay.active .stackboost-modal-box {
@@ -94,91 +80,118 @@
 }
 
 .stackboost-modal-header {
-    padding: 15px 20px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
 }
 
 .stackboost-modal-title {
     margin: 0;
     font-size: 18px;
-    font-weight: 600;
-    color: #333;
 }
 
 .stackboost-modal-close {
     background: none;
     border: none;
-    font-size: 24px;
-    line-height: 1;
-    color: #999;
+    font-size: 20px;
     cursor: pointer;
-    padding: 0;
+    color: #999;
 }
 
 .stackboost-modal-close:hover {
-    color: #666;
-}
-
-.stackboost-modal-body {
-    padding: 20px;
-    font-size: 15px;
-    color: #555;
-    line-height: 1.5;
+    color: #333;
 }
 
 .stackboost-modal-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #eee;
-    background-color: #f8f9fa;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
 }
 
 .stackboost-btn {
     padding: 8px 16px;
+    border: none;
     border-radius: 4px;
-    font-size: 14px;
-    font-weight: 500;
     cursor: pointer;
-    border: 1px solid transparent;
-    transition: background-color 0.2s;
+    font-size: 14px;
+    transition: background 0.2s;
 }
 
 .stackboost-btn-primary {
-    background-color: #0073aa;
+    background: #0073aa;
     color: #fff;
-    border-color: #0073aa;
 }
 
 .stackboost-btn-primary:hover {
-    background-color: #005177;
-    border-color: #005177;
+    background: #005177;
 }
 
 .stackboost-btn-secondary {
-    background-color: #fff;
-    color: #555;
-    border-color: #ccc;
+    background: #f0f0f1;
+    color: #2c3338;
+    border: 1px solid #c3c4c7;
 }
 
 .stackboost-btn-secondary:hover {
-    background-color: #f0f0f1;
-    border-color: #bbb;
-    color: #333;
+    background: #f6f7f7;
+    border-color: #8c8f94;
 }
 
 .stackboost-btn-danger {
-    background-color: #d63638;
+    background: #d63638;
     color: #fff;
-    border-color: #d63638;
 }
 
 .stackboost-btn-danger:hover {
-    background-color: #b32d2e;
-    border-color: #b32d2e;
+    background: #b32d2e;
+}
+
+/* Image Lightbox (Simple) */
+#stackboost-widget-modal {
+    display: none;
+    position: fixed;
+    z-index: 99999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: rgba(0,0,0,0.8);
+}
+#stackboost-widget-modal-content {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    width: auto !important;
+    height: auto !important;
+    max-width: 90%;
+    max-height: 90%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    border-radius: 4px;
+    object-fit: contain;
+}
+#stackboost-widget-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+}
+#stackboost-widget-modal-close:hover,
+#stackboost-widget-modal-close:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
 }
