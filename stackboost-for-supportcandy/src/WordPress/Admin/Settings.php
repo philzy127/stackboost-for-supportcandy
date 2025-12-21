@@ -233,6 +233,8 @@ class Settings {
         }
 
 		?>
+		<!-- StackBoost Wrapper Start -->
+		<!-- Theme: <?php echo esc_html( $theme_class ); ?> -->
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 
