@@ -199,7 +199,7 @@ class WordPress extends Module {
 			}
 		}
 
-		wp_send_json_success( [ 'html' => $html ] );
+		wp_send_json_success( [ 'html' => $html, 'effective_view_type' => $view_type ] );
 	}
 
 	/**
@@ -481,7 +481,7 @@ class WordPress extends Module {
 		echo '</select>';
 
 		if ( ! $is_pro_active ) {
-			echo ' <span class="dashicons dashicons-lock" title="' . esc_attr__( 'Upgrade to Pro or Business to enable this feature.', 'stackboost-for-supportcandy' ) . '" style="color: #666; vertical-align: middle;"></span>';
+			echo ' <span title="' . esc_attr__( 'Upgrade to Pro or Business to enable this feature.', 'stackboost-for-supportcandy' ) . '" style="background-color: #2271b1; color: #fff; padding: 2px 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; border-radius: 4px; vertical-align: middle;">PRO</span>';
 		}
 
 		// Inline script to warn about UTM configuration AND toggle limit field
