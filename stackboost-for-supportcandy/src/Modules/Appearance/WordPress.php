@@ -17,7 +17,7 @@ class WordPress {
      * Constructor.
      */
     public function __construct() {
-        error_log( 'StackBoost: Appearance WordPress Adapter Constructing...' );
+        stackboost_log( 'Appearance WordPress Adapter Constructing...', 'appearance' );
         $this->page = new Page();
     }
 
@@ -25,12 +25,12 @@ class WordPress {
      * Initialize the module.
      */
     public function init() {
-        error_log( 'StackBoost: Appearance WordPress Adapter Init...' );
+        stackboost_log( 'Appearance WordPress Adapter Init...', 'appearance' );
         // Menu is registered centrally in Settings.php to ensure correct order
         add_action( 'wp_ajax_stackboost_save_theme_preference', [ $this, 'ajax_save_theme' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
         add_filter( 'admin_body_class', [ $this, 'add_theme_body_class' ] );
-        error_log( 'StackBoost: Appearance WordPress Adapter Init Done. Hooks registered.' );
+        stackboost_log( 'Appearance WordPress Adapter Init Done. Hooks registered.', 'appearance' );
     }
 
     /**
@@ -119,28 +119,22 @@ class WordPress {
      */
     public function ajax_save_theme() {
         // 1. Entry Log
-        if ( function_exists( 'stackboost_log' ) ) {
-            stackboost_log( 'Appearance: ajax_save_theme called.', 'appearance' );
-        }
-        error_log( 'StackBoost Appearance: ajax_save_theme called.' );
+        stackboost_log( 'Appearance: ajax_save_theme called.', 'appearance' );
 
         // 2. Nonce Check
         if ( ! check_ajax_referer( 'stackboost_admin_nonce', 'nonce', false ) ) {
-            error_log( 'StackBoost Appearance: Nonce verification failed.' );
-            if ( function_exists( 'stackboost_log' ) ) {
-                stackboost_log( 'Appearance: Nonce verification failed.', 'appearance' );
-            }
+            stackboost_log( 'Appearance: Nonce verification failed.', 'appearance' );
             wp_send_json_error( 'Security check failed' );
         }
 
         // 3. Permission Check
         if ( ! current_user_can( 'manage_options' ) ) {
-            error_log( 'StackBoost Appearance: Unauthorized user.' );
+            stackboost_log( 'Appearance: Unauthorized user.', 'appearance' );
             wp_send_json_error( 'Unauthorized' );
         }
 
         $theme = isset( $_POST['theme'] ) ? sanitize_text_field( $_POST['theme'] ) : '';
-        error_log( 'StackBoost Appearance: Saving theme: ' . $theme );
+        stackboost_log( 'Appearance: Saving theme: ' . $theme, 'appearance' );
 
         // Validate theme
         $valid_themes = [
@@ -153,7 +147,7 @@ class WordPress {
         ];
 
         if ( ! in_array( $theme, $valid_themes ) ) {
-            error_log( 'StackBoost Appearance: Invalid theme value received.' );
+            stackboost_log( 'Appearance: Invalid theme value received.', 'appearance' );
             wp_send_json_error( 'Invalid theme' );
         }
 
@@ -162,10 +156,8 @@ class WordPress {
 
         $updated = update_option( 'stackboost_settings', $settings );
 
-        error_log( 'StackBoost Appearance: Option update result: ' . ( $updated ? 'true' : 'false' ) );
-        if ( function_exists( 'stackboost_log' ) ) {
-            stackboost_log( 'Appearance: Theme updated to ' . $theme, 'appearance' );
-        }
+        stackboost_log( 'Appearance: Option update result: ' . ( $updated ? 'true' : 'false' ), 'appearance' );
+        stackboost_log( 'Appearance: Theme updated to ' . $theme, 'appearance' );
 
         wp_send_json_success( 'Theme saved' );
     }

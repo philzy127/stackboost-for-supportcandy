@@ -62,9 +62,9 @@ final class Plugin {
 		}
 
 		// Appearance Module (Always Active)
-        error_log( 'StackBoost: Loading Appearance Module...' );
+        stackboost_log( 'Loading Appearance Module...', 'appearance' );
 		$this->modules['appearance'] = Appearance\Core::get_instance();
-        error_log( 'StackBoost: Appearance Module Loaded.' );
+        stackboost_log( 'Appearance Module Loaded.', 'appearance' );
 
 		// Ticket View is currently not feature-gated (Core functionality) but we can gate it if needed.
 		// For now, assuming it's part of the base package.
