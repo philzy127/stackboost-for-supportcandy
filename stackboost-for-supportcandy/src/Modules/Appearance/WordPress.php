@@ -53,7 +53,7 @@ class WordPress {
 
         wp_enqueue_style(
             'stackboost-admin-themes',
-            plugin_dir_url( dirname( dirname( dirname( __DIR__ ) ) ) ) . 'assets/admin/css/admin-themes.css',
+            STACKBOOST_PLUGIN_URL . 'assets/admin/css/admin-themes.css',
             [],
             STACKBOOST_VERSION
         );
