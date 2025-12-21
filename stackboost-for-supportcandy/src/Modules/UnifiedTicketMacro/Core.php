@@ -291,6 +291,8 @@ class Core {
 		// $html .= '<h4>' . esc_html__( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h4>';
 
 		foreach ( $threads as $thread ) {
+			$html .= '<div class="stackboost-thread-item">';
+
 			// Header: Author + Date + Type
 			$author_name = $thread->customer ? $thread->customer->name : __( 'Unknown', 'stackboost-for-supportcandy' );
 			$date_str = $thread->date_created->setTimezone( wp_timezone() )->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
@@ -302,20 +304,12 @@ class Core {
 				case 'note': $type_label = __( 'Private Note', 'stackboost-for-supportcandy' ); break;
 			}
 
-			// Unique ID for toggle
-			$thread_id = isset( $thread->id ) ? $thread->id : uniqid('thread_');
+			$style_bg = ( 'note' === $thread->type ) ? 'background: #fff8e1;' : 'background: #f9f9f9;';
+			$style_border = ( 'note' === $thread->type ) ? 'border-left: 4px solid #fbc02d;' : 'border-left: 4px solid #ddd;';
 
-			// Widget Wrapper
-			$html .= '<div class="wpsc-it-widget stackboost-thread-card" style="margin-bottom: 10px;">';
-
-			// Header with Toggle
-			$html .= '<div class="wpsc-widget-header">';
-			$html .= '<h3>' . esc_html( $author_name ) . ' <span style="font-weight:normal; font-size:0.9em; color:#777;">(' . esc_html( $type_label ) . ')</span> <span style="font-weight:normal; font-size:0.8em; color:#999;">- ' . esc_html( $date_str ) . '</span></h3>';
-			$html .= '<span class="wpsc-itw-toggle dashicons dashicons-arrow-up-alt2" data-widget="thread-' . esc_attr( $thread_id ) . '"></span>';
-			$html .= '</div>';
-
-			// Body Style
-			$style_bg = ( 'note' === $thread->type ) ? 'background-color: #fff8e1;' : '';
+			$html .= '<div style="padding: 8px; margin-bottom: 10px; ' . $style_bg . $style_border . '">';
+			$html .= '<strong>' . esc_html( $author_name ) . '</strong> <span style="color:#777; font-size: 0.9em;">(' . esc_html( $type_label ) . ')</span>';
+			$html .= '<div style="font-size: 0.8em; color: #999;">' . esc_html( $date_str ) . '</div>';
 
 			// Body content processing
 			// We sanitize FIRST to ensure the content is safe.
@@ -346,12 +340,10 @@ class Core {
 				$body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body );
 			}
 
-			// Widget Body
-			$html .= '<div class="wpsc-widget-body stackboost-thread-body" style="display: block; ' . $style_bg . '">';
-			$html .= $body;
-			$html .= '</div>'; // End Body
+			$html .= '<div class="stackboost-thread-body" style="margin-top: 5px;">' . $body . '</div>';
 
-			$html .= '</div>'; // End Widget
+			$html .= '</div>'; // End container
+			$html .= '</div>'; // End item
 		}
 		$html .= '</div>';
 
