@@ -29,7 +29,9 @@ class Core {
      * Constructor.
      */
     private function __construct() {
+        error_log( 'StackBoost: Appearance Core Initializing...' );
         $this->wordpress = new WordPress();
         $this->wordpress->init();
+        error_log( 'StackBoost: Appearance Core Initialized.' );
     }
 }

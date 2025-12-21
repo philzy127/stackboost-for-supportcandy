@@ -17,6 +17,7 @@ class WordPress {
      * Constructor.
      */
     public function __construct() {
+        error_log( 'StackBoost: Appearance WordPress Adapter Constructing...' );
         $this->page = new Page();
     }
 
@@ -24,10 +25,12 @@ class WordPress {
      * Initialize the module.
      */
     public function init() {
+        error_log( 'StackBoost: Appearance WordPress Adapter Init...' );
         // Menu is registered centrally in Settings.php to ensure correct order
         add_action( 'wp_ajax_stackboost_save_theme_preference', [ $this, 'ajax_save_theme' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
         add_filter( 'admin_body_class', [ $this, 'add_theme_body_class' ] );
+        error_log( 'StackBoost: Appearance WordPress Adapter Init Done. Hooks registered.' );
     }
 
     /**
