@@ -105,6 +105,10 @@ jQuery(document).ready(function($) {
                 e.stopPropagation(); // Prevent bubbling to Tippy/other listeners
                 lightbox.style.display = "none";
             };
+            // Prevent interaction with the close button from closing the Tippy
+            ['mousedown', 'touchstart', 'click'].forEach(function(evt) {
+                span.addEventListener(evt, function(e) { e.stopPropagation(); });
+            });
         }
         if (lightbox) {
             lightbox.onclick = function(e) {
@@ -113,6 +117,11 @@ jQuery(document).ready(function($) {
                     lightbox.style.display = "none";
                 }
             };
+            // Prevent interaction with the overlay from closing the Tippy
+            // We must stop propagation of mousedown/touchstart so Tippy doesn't think we clicked outside
+            ['mousedown', 'touchstart', 'click'].forEach(function(evt) {
+                lightbox.addEventListener(evt, function(e) { e.stopPropagation(); });
+            });
         }
     }
 

@@ -156,11 +156,12 @@
 						}
 
 						if (effectiveViewType === 'utm') {
-							// For UTM, the backend returns everything
-							detailsHtml = json.data.html;
+							// For UTM, the backend returns separated parts
+							detailsHtml = json.data.details || '';
+							extraContentHtml = json.data.history || '';
 						} else {
 							// For Standard, backend returns ONLY the extra content (Description/History)
-							extraContentHtml = json.data.html;
+							extraContentHtml = json.data.history || '';
 						}
 					}
 				}
@@ -260,8 +261,8 @@
 
 						const windowHeight = window.innerHeight;
 						const contentHeight = popper.getBoundingClientRect().height;
-						// Lower threshold to 75% to trigger horizontal layout more easily
-						const threshold = windowHeight * 0.75;
+						// Increase threshold to 85% to be less aggressive for standard content
+						const threshold = windowHeight * 0.85;
 
 						const $container = $(instance.popper).find('.stackboost-ticket-card-container');
 						const hasDetails = $container.find('.stackboost-card-details').html().trim().length > 10;
