@@ -3,6 +3,7 @@
 namespace StackBoost\ForSupportCandy\Modules\Appearance;
 
 use StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page;
+use StackBoost\ForSupportCandy\WordPress\Admin\Settings;
 
 class WordPress {
 
@@ -153,6 +154,11 @@ class WordPress {
 
         $settings = get_option( 'stackboost_settings', [] );
         $settings['admin_theme'] = $theme;
+
+        // Bypassing the central sanitizer for this specific programmatic update.
+        // The sanitizer requires 'page_slug' which is not applicable here.
+        remove_filter( 'sanitize_option_stackboost_settings', [ Settings::get_instance(), 'sanitize_settings' ] );
+        stackboost_log( 'Appearance: Sanitization filter removed for direct update.', 'appearance' );
 
         $updated = update_option( 'stackboost_settings', $settings );
 
