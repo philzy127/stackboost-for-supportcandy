@@ -218,8 +218,20 @@
         // Using event delegation to ensure it works even if DOM manipulation happens
         $(document).on('click', '#stackboost_save_theme_btn', function(e) {
             e.preventDefault();
+
+            // Proof of Life Debugging
+            console.log('[StackBoost] Save Theme button clicked');
+
+            if (typeof stackboost_admin_ajax === 'undefined') {
+                alert('Error: StackBoost configuration script not loaded. Please verify the plugin is installed correctly.');
+                return;
+            }
+
             var $select = $('#stackboost_admin_theme');
             var newTheme = $select.val();
+
+            console.log('[StackBoost] Saving theme:', newTheme);
+
             // Pass null for themeName since preview text element was removed
             stackboost_save_theme(newTheme, null, $(this));
         });
