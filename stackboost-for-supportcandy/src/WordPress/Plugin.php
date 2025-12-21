@@ -307,6 +307,24 @@ final class Plugin {
 			'stackboost_page_stackboost-tools',
 			'stackboost_page_stackboost-date-time',
 			'stackboost_page_stackboost-appearance',
+            // Missing Pages added:
+            'stackboost_page_stackboost-ticket-view',
+            'stackboost_page_stackboost-after-hours',
+            'stackboost_page_stackboost-utm',
+            'stackboost_page_stackboost-ats',
+            'stackboost_page_stackboost-directory',
+            // Robust fallback for standard hook naming convention
+            'stackboost-for-supportcandy_page_stackboost-ticket-view',
+            'stackboost-for-supportcandy_page_stackboost-after-hours',
+            'stackboost-for-supportcandy_page_stackboost-utm',
+            'stackboost-for-supportcandy_page_stackboost-ats',
+            'stackboost-for-supportcandy_page_stackboost-directory',
+            'stackboost-for-supportcandy_page_stackboost-conditional-views',
+            'stackboost-for-supportcandy_page_stackboost-queue-macro',
+            'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard',
+            'stackboost-for-supportcandy_page_stackboost-tools',
+            'stackboost-for-supportcandy_page_stackboost-date-time',
+            'stackboost-for-supportcandy_page_stackboost-appearance',
 		];
 
 		// Enqueue Frontend Features in Admin (Ticket List)

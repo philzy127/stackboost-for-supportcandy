@@ -7,7 +7,7 @@
     padding: 20px; /* Internal spacing */
     box-sizing: border-box;
     /* Standard WP behavior: contain within .wrap */
-    width: 100%;
+    width: auto;
     max-width: 100%;
     margin-top: 10px; /* Slight separation from title if inside wrap */
     border-radius: var(--sb-radius, 4px);

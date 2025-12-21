@@ -44,10 +44,15 @@ class WordPress {
             return;
         }
 
-        // Check if we are on a StackBoost page
-        // Submenu pages usually have ID: stackboost-for-supportcandy_page_slug
-        // Main menu ID: toplevel_page_stackboost-for-supportcandy
-        if ( strpos( $screen->id, 'stackboost' ) === false ) {
+        // Check if we are on a StackBoost page via GET param (more robust) or Screen ID
+        $is_stackboost_page = false;
+        if ( isset( $_GET['page'] ) && strpos( $_GET['page'], 'stackboost' ) !== false ) {
+            $is_stackboost_page = true;
+        } elseif ( strpos( $screen->id, 'stackboost' ) !== false ) {
+            $is_stackboost_page = true;
+        }
+
+        if ( ! $is_stackboost_page ) {
             return;
         }
 
