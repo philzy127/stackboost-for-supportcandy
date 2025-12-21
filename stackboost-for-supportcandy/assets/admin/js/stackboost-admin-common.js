@@ -202,19 +202,26 @@
             });
         }
 
-        // Appearance: Theme Switching (Auto-Save)
+        // Appearance: Theme Switching (Live Preview Only - No Auto Save)
         $('#stackboost_admin_theme').on('change', function() {
             var newTheme = $(this).val();
-            var themeName = $(this).find('option:selected').text();
-            stackboost_save_theme(newTheme, themeName);
+            var $dashboard = $('.stackboost-dashboard');
+
+            // Just update the class for preview
+            $dashboard.removeClass(function (index, css) {
+                return (css.match(/(^|\s)sb-theme-\S+/g) || []).join(' ');
+            });
+            $dashboard.addClass(newTheme);
         });
 
         // Appearance: Manual Save Button
-        $('#stackboost_save_theme_btn').on('click', function() {
+        // Using event delegation to ensure it works even if DOM manipulation happens
+        $(document).on('click', '#stackboost_save_theme_btn', function(e) {
+            e.preventDefault();
             var $select = $('#stackboost_admin_theme');
             var newTheme = $select.val();
-            var themeName = $select.find('option:selected').text();
-            stackboost_save_theme(newTheme, themeName, $(this));
+            // Pass null for themeName since preview text element was removed
+            stackboost_save_theme(newTheme, null, $(this));
         });
     });
 })(jQuery);

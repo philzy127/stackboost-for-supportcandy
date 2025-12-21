@@ -57,23 +57,6 @@ class Page {
                     </form>
                 </div>
 
-                <!-- Preview Area (to show off the theme) -->
-                <div class="stackboost-card">
-                    <h2><?php esc_html_e( 'Theme Preview', 'stackboost-for-supportcandy' ); ?></h2>
-                    <p><?php esc_html_e( 'This card demonstrates the current theme styling.', 'stackboost-for-supportcandy' ); ?></p>
-
-                    <div class="stackboost-status-item">
-                        <span class="stackboost-status-label">Active Theme</span>
-                        <span class="stackboost-status-value" id="stackboost-preview-theme-name">
-                            <?php echo esc_html( $themes[ $current_theme ] ); ?>
-                        </span>
-                    </div>
-
-                    <div style="margin-top: 15px;">
-                        <input type="text" value="Sample Text Input" readonly style="width: 100%; margin-bottom: 10px;">
-                        <a href="#" class="button stackboost-resources-btn">Sample Button</a>
-                    </div>
-                </div>
             </div>
         </div>
         <?php
