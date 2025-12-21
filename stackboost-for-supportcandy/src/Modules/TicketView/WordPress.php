@@ -211,7 +211,18 @@ class WordPress extends Module {
 		stackboost_log( "TicketView::enqueue_scripts called with hook_suffix: {$hook_suffix}", 'ticket_view' );
 
 		// Enqueue Utility Script (contains Lightbox logic)
-		if ( 'supportcandy_page_wpsc-tickets' === $hook_suffix ) {
+		// We load this on the admin ticket list OR on the frontend (where hook_suffix is empty/irrelevant)
+		$is_ticket_page_admin = 'supportcandy_page_wpsc-tickets' === $hook_suffix;
+		$is_frontend = ! is_admin();
+
+		if ( $is_ticket_page_admin || $is_frontend ) {
+			wp_enqueue_style(
+				'stackboost-util',
+				STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
+				[],
+				STACKBOOST_VERSION
+			);
+
 			wp_enqueue_script(
 				'stackboost-util',
 				STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
@@ -286,9 +297,9 @@ class WordPress extends Module {
 			[
 				'id' => 'ticket_details_content',
 				'choices' => [
-					'details_only'     => __( 'Details Only (None)', 'stackboost-for-supportcandy' ),
+					'details_only'     => __( 'None', 'stackboost-for-supportcandy' ),
 					'with_description' => __( 'Initial Description Only', 'stackboost-for-supportcandy' ),
-					'with_history'     => __( 'Full Conversation History (Public)', 'stackboost-for-supportcandy' ),
+					'with_history'     => __( 'Full Conversation History', 'stackboost-for-supportcandy' ),
 				],
 				'desc' => 'Select what additional content to include below the details.'
 			]
@@ -316,9 +327,9 @@ class WordPress extends Module {
 			[
 				'id' => 'ticket_details_image_handling',
 				'choices' => [
-					'fit'         => __( 'Fit to Container (Default)', 'stackboost-for-supportcandy' ),
-					'strip'       => __( 'Remove Images (Text Only)', 'stackboost-for-supportcandy' ),
-					'placeholder' => __( 'Replace with [Image] Placeholder', 'stackboost-for-supportcandy' ),
+					'fit'         => __( 'Fit to Container', 'stackboost-for-supportcandy' ),
+					'strip'       => __( 'Remove Images', 'stackboost-for-supportcandy' ),
+					'placeholder' => __( '[Image] Placeholder', 'stackboost-for-supportcandy' ),
 				],
 				'desc' => 'How to handle images within the description and notes.'
 			]
@@ -462,7 +473,6 @@ class WordPress extends Module {
 		$utm_label = esc_html__( 'Unified Ticket Macro', 'stackboost-for-supportcandy' );
 		$disabled_attr = '';
 		if ( ! $is_pro_active ) {
-			$utm_label .= ' (Pro)'; // Badge in text for simpler select
 			$disabled_attr = 'disabled';
 		}
 
@@ -490,23 +500,33 @@ class WordPress extends Module {
 				}
 			});
 
-			// Conditional Logic for History Limit
+			// Conditional Logic for Content Options
 			var $limitRow = $('#ticket_details_history_limit').closest('tr');
+			var $imageHandlingRow = $('#ticket_details_image_handling').closest('tr');
 			var $contentSelect = $('#ticket_details_content');
 
-			function toggleLimitField() {
-				if ($contentSelect.val() === 'with_history') {
-					$limitRow.show();
-				} else {
+			function toggleFields() {
+				var val = $contentSelect.val();
+				if (val === 'details_only') {
+					// Hide both
 					$limitRow.hide();
+					$imageHandlingRow.hide();
+				} else if (val === 'with_description') {
+					// Show Image Handling, Hide Limit
+					$limitRow.hide();
+					$imageHandlingRow.show();
+				} else if (val === 'with_history') {
+					// Show Both
+					$limitRow.show();
+					$imageHandlingRow.show();
 				}
 			}
 
 			// Initial State
-			toggleLimitField();
+			toggleFields();
 
 			// Change Listener
-			$contentSelect.on('change', toggleLimitField);
+			$contentSelect.on('change', toggleFields);
 		});
 		</script>
 		<?php
