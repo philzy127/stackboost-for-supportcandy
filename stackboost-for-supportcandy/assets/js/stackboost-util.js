@@ -101,12 +101,14 @@ jQuery(document).ready(function($) {
         var span = document.getElementById("stackboost-widget-modal-close");
 
         if (span) {
-            span.onclick = function() {
+            span.onclick = function(e) {
+                e.stopPropagation(); // Prevent bubbling to Tippy/other listeners
                 lightbox.style.display = "none";
             };
         }
         if (lightbox) {
             lightbox.onclick = function(e) {
+                e.stopPropagation(); // Prevent bubbling
                 if (e.target === lightbox) {
                     lightbox.style.display = "none";
                 }

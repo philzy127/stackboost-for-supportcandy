@@ -192,9 +192,10 @@
 			}
 
 			// Combine
-			const finalHtml = `<div style="width: 350px; min-width: 350px !important;">
-				${detailsHtml}
-				${extraContentHtml}
+			// We check the content size logic later in onShow
+			const finalHtml = `<div class="stackboost-ticket-card-container" style="width: 350px; min-width: 350px !important;">
+				<div class="stackboost-card-section stackboost-card-details">${detailsHtml}</div>
+				<div class="stackboost-card-section stackboost-card-history">${extraContentHtml}</div>
 			</div>`;
 
 			return (cache[ticketId] = finalHtml);
@@ -215,6 +216,13 @@
 				offset: [0, 10],
 				appendTo: () => document.body,
 				hideOnClick: true, // Use tippy's built-in behavior to hide on outside clicks
+				onClickOutside(instance, event) {
+					// Prevent closing if clicking inside our lightbox
+					if (event.target.closest('#stackboost-widget-modal')) {
+						return;
+					}
+					instance.hide();
+				},
 				popperOptions: {
 					modifiers: [
 						{
@@ -243,6 +251,39 @@
 					instance.setContent('Loading...');
 					const content = await fetchTicketDetails(ticketId);
 					instance.setContent(content);
+
+					// Smart Layout Logic
+					// We need to wait for render or force a check
+					requestAnimationFrame(() => {
+						const popper = instance.popper;
+						if (!popper) return;
+
+						const windowHeight = window.innerHeight;
+						const contentHeight = popper.getBoundingClientRect().height;
+						const threshold = windowHeight * 0.8; // 80% of viewport
+
+						const $container = $(instance.popper).find('.stackboost-ticket-card-container');
+
+						if (contentHeight > threshold) {
+							// Too tall! Switch to horizontal layout
+							$container.addClass('stackboost-layout-horizontal');
+							// Increase width to accommodate two columns
+							$container.css({
+								'width': '720px',
+								'min-width': '720px',
+								'display': 'flex',
+								'gap': '15px',
+								'align-items': 'flex-start'
+							});
+							$container.find('.stackboost-card-section').css({
+								'flex': '1',
+								'width': '50%'
+							});
+
+							// Force Tippy to update position with new dimensions
+							instance.setProps({ maxWidth: 'none' }); // Ensure no constraint
+						}
+					});
 				},
 				onHide(instance) {
 					// Clear the active instance when it's hidden
