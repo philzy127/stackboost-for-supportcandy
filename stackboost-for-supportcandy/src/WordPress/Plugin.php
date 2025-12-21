@@ -322,7 +322,7 @@ final class Plugin {
 					'stackboost-admin-general',
 					STACKBOOST_PLUGIN_URL . 'assets/css/admin-general.css',
 					[],
-					STACKBOOST_VERSION
+					STACKBOOST_VERSION . '.1' // Cache bust
 				);
 			}
 
@@ -365,7 +365,7 @@ final class Plugin {
 				'stackboost-admin-common',
 				STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-admin-common.css',
 				[],
-				STACKBOOST_VERSION
+				STACKBOOST_VERSION . '.1' // Cache bust
 			);
 			wp_enqueue_script(
 				'stackboost-admin-common',
