@@ -127,22 +127,13 @@
 		let activeTippyInstance = null; // Tracks the currently visible tippy instance
 
 		const viewType = settings.ticket_details_view_type || 'standard';
-		// If using UTM, content is included in the backend response.
-		// If using Standard, we might need to fetch content separately or from the same new AJAX endpoint if we want the new content features.
-		// Wait, my PHP implementation for Standard returns empty HTML for details but appends content.
-		// So if Standard + Content, we need to Merge.
-		// If Standard + No Content, we use the old scraping method.
-
-		// Wait, if I use the new AJAX for 'standard' it returns ONLY the extra content.
-		// So I need to Combine: (Scraped Details) + (AJAX Extra Content).
-
-		// If UTM, the AJAX returns (UTM Details + Extra Content).
 
 		async function fetchTicketDetails(ticketId) {
 			if (cache[ticketId]) return cache[ticketId];
 
 			let detailsHtml = '';
 			let extraContentHtml = '';
+			let effectiveViewType = viewType;
 
 			// 1. Fetch from Backend (UTM or Extra Content)
 			try {
@@ -159,21 +150,30 @@
 				if (response.ok) {
 					const json = await response.json();
 					if (json.success) {
-						if (viewType === 'utm') {
-							// For UTM, the backend returns everything
-							detailsHtml = json.data.html;
+						// Check if backend forced a fallback
+						if (json.data.effective_view_type) {
+							effectiveViewType = json.data.effective_view_type;
+						}
+
+						if (effectiveViewType === 'utm') {
+							// For UTM, the backend returns separated parts
+							detailsHtml = json.data.details || '';
+							extraContentHtml = json.data.history || '';
 						} else {
 							// For Standard, backend returns ONLY the extra content (Description/History)
-							extraContentHtml = json.data.html;
+							extraContentHtml = json.data.history || '';
 						}
 					}
 				}
 			} catch (e) {
-				console.error('Error fetching ticket details from backend', e);
+				if (typeof sbUtilError === 'function') {
+					sbUtilError('Error fetching ticket details from backend', e);
+				}
 			}
 
 			// 2. Fetch/Scrape Standard Details (if needed)
-			if (viewType === 'standard') {
+			// Checks effectiveViewType to handle fallback from UTM -> Standard
+			if (effectiveViewType === 'standard') {
 				try {
 					const response = await fetch(settings.ajax_url, {
 						method: 'POST',
@@ -201,6 +201,9 @@
 			return (cache[ticketId] = finalHtml);
 		}
 
+		// Public accessor to get active instance (for toggle updates)
+		window.stackboostActiveTippy = function() { return activeTippyInstance; };
+
 		document.querySelectorAll('tr.wpsc_tl_tr:not(._contextAttached)').forEach(row => {
 			row.classList.add('_contextAttached');
 
@@ -215,10 +218,15 @@
 				maxWidth: 'none', // Allow our fixed width to take precedence
 				offset: [0, 10],
 				appendTo: () => document.body,
-				hideOnClick: true, // Use tippy's built-in behavior to hide on outside clicks
+				hideOnClick: false, // We handle outside clicks manually to safely ignore the lightbox
 				onClickOutside(instance, event) {
 					// Prevent closing if clicking inside our lightbox
-					if (event.target.closest('#stackboost-widget-modal')) {
+					// We check for the lightbox ID, the close button ID, or the class hierarchy
+					if (
+						event.target.id === 'stackboost-widget-modal' ||
+						event.target.id === 'stackboost-widget-modal-close' ||
+						event.target.closest('#stackboost-widget-modal')
+					) {
 						return;
 					}
 					instance.hide();
@@ -260,11 +268,15 @@
 
 						const windowHeight = window.innerHeight;
 						const contentHeight = popper.getBoundingClientRect().height;
-						const threshold = windowHeight * 0.8; // 80% of viewport
+						// Increase threshold to 85% to be less aggressive for standard content
+						const threshold = windowHeight * 0.85;
 
 						const $container = $(instance.popper).find('.stackboost-ticket-card-container');
+						const hasDetails = $container.find('.stackboost-card-details').html().trim().length > 10;
+						const hasHistory = $container.find('.stackboost-card-history').html().trim().length > 10;
 
-						if (contentHeight > threshold) {
+						// Only switch to horizontal if we have both sections AND it's too tall
+						if (hasDetails && hasHistory && contentHeight > threshold) {
 							// Too tall! Switch to horizontal layout
 							$container.addClass('stackboost-layout-horizontal');
 							// Increase width to accommodate two columns
@@ -357,6 +369,17 @@
 				$toggle.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
 			} else {
 				$toggle.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
+			}
+
+			// If inside a Tippy, force an update to resize/reposition
+			if (typeof window.stackboostActiveTippy === 'function') {
+				const activeInstance = window.stackboostActiveTippy();
+				if (activeInstance && activeInstance.popperInstance) {
+					activeInstance.popperInstance.update();
+				} else if (activeInstance && activeInstance.popper) {
+					// Fallback for older tippy versions
+					activeInstance.popper.update();
+				}
 			}
 		});
 	});

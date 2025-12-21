@@ -58,6 +58,15 @@ Collect feedback from your users.
 *   **Settings:** Configure color schemes and behavior.
 *   **Integration:** The survey link is automatically added to closed ticket emails if configured.
 
+### Ticket View
+
+Enhance the ticket list with a quick-preview popup.
+
+*   **Right-Click Preview:** Right-click any ticket in the list to see a "Details Card" popup.
+*   **Smart Layout:** The card automatically switches to a side-by-side (horizontal) layout if the content is too tall to fit comfortably on the screen.
+*   **Interactive:** You can expand and collapse sections (like "Conversation History") within the card.
+*   **Pro Features:** Advanced layouts (Unified Ticket Macro view) are marked with a **PRO** badge in the settings and require an active Pro or Business license.
+
 ## Support
 
 If you encounter issues, please check the **Diagnostics** page to see if any errors are being logged. You can download the log file and send it to our support team for assistance.

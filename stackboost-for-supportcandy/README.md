@@ -4,45 +4,64 @@ StackBoost - For SupportCandy is a powerful enhancement plugin for the SupportCa
 
 ## Features
 
-This plugin includes several modules that can be enabled or disabled based on your needs:
+StackBoost includes several modules that can be enabled or disabled based on your needs.
 
-*   **Ticket Details Card:** Quickly view ticket details by hovering over them in the ticket list.
-*   **General Cleanup:** Automatically hide empty columns or the priority column to reduce clutter.
-*   **Ticket Type Hiding:** Restrict which ticket types are visible to non-agent users.
-*   **After Hours Notice:** Display a customizable notice on the ticket form outside of business hours.
-*   **Conditional Column Hiding:** Create powerful, context-aware rules to control column visibility in the ticket list.
+### Core Enhancements
+*   **Ticket View Popup:** Right-click any ticket in the list to see a quick "Details Card" popup.
+    *   **Smart Layout:** Automatically switches to a side-by-side view if the content is too tall.
+    *   **Interactive History:** Expand and collapse conversation history directly within the popup.
+    *   **License Fallback:** gracefully degrades to standard fields if the PRO license is inactive.
+*   **General Cleanup:** Automatically hide empty columns or the priority column to reduce clutter in the ticket list.
+*   **Ticket Type Hiding:** Restrict which ticket types are visible to non-agent users in the submission form.
+*   **After Hours Notice:** Display a customizable warning notice on the ticket form when users attempt to submit a ticket outside of configured business hours.
 
----
+### Conditional Column Hiding
+Create powerful, context-aware rules to control column visibility in the ticket list based on the active view (filter).
 
-## Conditional Column Hiding
+*   **SHOW ONLY:** Make a column visible *only* in a specific view and hide it everywhere else by default.
+*   **HIDE:** Explicitly hide a column in a specific view.
+*   **SHOW:** Create exceptions to override implicit hiding rules.
 
-This is one of the most powerful features of StackBoost - For SupportCandy. It allows you to create a set of rules to control the visibility of columns in the ticket list based on the currently selected ticket view (filter). This creates a dynamic and context-aware ticket list, showing agents only the information they need for a specific task.
+*Example:* Show the "Billing Code" column *only* when the "Accounting" view is active.
 
-### How the Rule Builder Works
+### Company Directory (Business Tier)
+A complete system to manage staff, locations, and departments.
+*   **Staff Profiles:** Detailed profiles with photo, contact info, and WordPress user linking.
+*   **Contact Widget:** A dashboard widget on the ticket view showing the contact details of the ticket requester (if they are in the directory).
+*   **Frontend Directory:** A searchable staff directory for your users.
 
-You can create multiple rules to define the visibility of your columns. The rules are processed in a logical order to determine the final state of each column in any given view.
+### Onboarding Dashboard (Business Tier)
+Streamline your employee onboarding process.
+*   **Steps Sequence:** Define a drag-and-drop sequence of onboarding tasks.
+*   **Progress Tracking:** Track the progress of new hires through the dashboard.
+*   **PDF Certificates:** Automatically generate and email completion certificates.
 
-Each rule consists of four parts:
+### Unified Ticket Macro (Pro Tier)
+Generate consistent, professional ticket summaries for email notifications.
+*   **Customizable Fields:** Select exactly which fields to include in the email summary.
+*   **Macro Support:** Use `{{stackboost_unified_ticket}}` in your SupportCandy email templates.
 
-1.  **Action (SHOW / SHOW ONLY / HIDE):** This is the core of the rule.
-    *   `HIDE`: Explicitly hides a column in a specific view. This is the most powerful action and acts as a final veto, overriding any other rules for that column in that view.
-    *   `SHOW ONLY`: This is the best way to handle columns that are only relevant in one context. It makes the column visible in the specified view but implicitly hides it in **all other views** by default.
-    *   `SHOW`: Explicitly shows a column. This is primarily used to create exceptions and override the implicit hiding caused by a `SHOW ONLY` rule in another view.
+### After Ticket Survey (Pro Tier)
+Collect customer satisfaction feedback automatically.
+*   **Survey Builder:** Create custom surveys with various question types.
+*   **Automation:** Automatically email the survey link when a ticket is closed.
+*   **Highlander Rule:** Enforces a limit of one "Ticket Number" field per survey to prevent data conflicts.
 
-2.  **Column:** The specific column that the rule will affect.
+### Diagnostics & Logging
+A robust system for troubleshooting.
+*   **Centralized Logging:** A master switch controls logging across all modules.
+*   **Module-Level Control:** Enable file logging for specific modules (e.g., UTM, Directory) while keeping others silent.
+*   **Browser Console Logs:** View debug information directly in the browser console when enabled.
 
-3.  **Condition:**
-    *   `WHEN IN VIEW`: The rule applies only when the selected view is active.
-    *   `WHEN NOT IN VIEW`: The rule applies when **any other** view is active.
+## Installation
 
-4.  **View:** The SupportCandy ticket view (filter) that triggers the rule.
+1.  Upload the `stackboost-for-supportcandy` folder to the `/wp-content/plugins/` directory.
+2.  Activate the plugin through the 'Plugins' menu in WordPress.
+3.  Navigate to the **StackBoost** menu to configure your settings.
+4.  (Optional) Enter your license key in **StackBoost > General Settings** to activate Pro or Business features.
 
-### Example Scenario
+## Requirements
 
-Imagine you have a column named "Billing Code" that should only be seen by the Accounting department. You also have a special "Manager" view where managers need to see it as well.
-
-*   **Rule 1:** `SHOW ONLY` | `Billing Code` | `WHEN IN VIEW` | `Accounting View`
-    *   *This single rule accomplishes two things: it makes "Billing Code" visible in the "Accounting View" and hides it everywhere else by default. You no longer need extra "hide" rules for every other view.*
-
-*   **Rule 2:** `SHOW` | `Billing Code` | `WHEN IN VIEW` | `Manager View`
-    *   *This rule creates an exception. It overrides the default hiding from the "Show Only" rule and makes the "Billing Code" column visible in the "Manager View" as well.*
+*   WordPress 6.0+
+*   PHP 7.4+
+*   SupportCandy (Free or Pro)

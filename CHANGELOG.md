@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.9] - 2025-12-21
+
+### Changed
+- **Ticket View UI:** Implemented a new "PRO" badge for restricted features, replacing the generic lock icon.
+- **Ticket View Interaction:** Refined the behavior of the Ticket View popup.
+    - **Layout Logic:** The "Smart Layout" (switching to horizontal view) now triggers more intelligently (at 85% viewport height) and only when sufficient content exists in both columns.
+    - **Tippy Resizing:** Expanding/collapsing sections within the popup now correctly recalculates the popup's size and position.
+    - **Lightbox Isolation:** Interacting with a lightbox/modal inside the popup no longer inadvertently closes the entire popup.
+- **License Fallback:** Improved the robustness of the license validation logic. If the backend reverts to "Standard" view due to an inactive license, the frontend now correctly detects this and triggers the standard scraping logic instead of rendering an empty view.
+- **Logging Standardization:** Audited and updated client-side logging to use the centralized `stackboost_log` utilities in key frontend scripts.
+
 ## [1.3.8] - 2025-12-16
 
 ### Added
