@@ -6,6 +6,7 @@ use StackBoost\ForSupportCandy\WordPress\Admin\Settings;
 use StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
 use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\TicketView;
+use StackBoost\ForSupportCandy\Modules\Appearance;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 
@@ -59,6 +60,9 @@ final class Plugin {
 		if ( stackboost_is_feature_active( 'qol_enhancements' ) ) {
 			$this->modules['qol_enhancements'] = QolEnhancements\WordPress::get_instance();
 		}
+
+		// Appearance Module (Always Active)
+		$this->modules['appearance'] = Appearance\Core::get_instance();
 
 		// Ticket View is currently not feature-gated (Core functionality) but we can gate it if needed.
 		// For now, assuming it's part of the base package.
@@ -302,6 +306,7 @@ final class Plugin {
             'stackboost_page_stackboost-onboarding-dashboard',
 			'stackboost_page_stackboost-tools',
 			'stackboost_page_stackboost-date-time',
+			'stackboost_page_stackboost-appearance',
 		];
 
 		// Enqueue Frontend Features in Admin (Ticket List)

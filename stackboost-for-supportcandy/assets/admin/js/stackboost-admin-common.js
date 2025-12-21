@@ -154,5 +154,39 @@
                 true // isDanger
             );
         });
+
+        // Appearance: Theme Switching
+        $('#stackboost_admin_theme').on('change', function() {
+            var newTheme = $(this).val();
+            var $dashboard = $('.stackboost-dashboard');
+            var $previewName = $('#stackboost-preview-theme-name');
+            var themeName = $(this).find('option:selected').text();
+
+            // 1. Live Preview: Remove old theme classes and add new one
+            $dashboard.removeClass(function (index, css) {
+                return (css.match(/(^|\s)sb-theme-\S+/g) || []).join(' ');
+            });
+            $dashboard.addClass(newTheme);
+
+            // Update preview text
+            if ($previewName.length) {
+                $previewName.text(themeName);
+            }
+
+            // 2. AJAX Auto-Save
+            $.post(stackboost_admin_ajax.ajax_url, {
+                action: 'stackboost_save_theme_preference',
+                theme: newTheme,
+                nonce: stackboost_admin_ajax.nonce
+            }, function(response) {
+                if (response.success) {
+                    window.stackboost_show_toast('Theme Updated Successfully', 'success');
+                } else {
+                    window.stackboost_show_toast('Error saving theme: ' + (response.data || 'Unknown error'), 'error');
+                }
+            }).fail(function() {
+                window.stackboost_show_toast('Communication error while saving theme.', 'error');
+            });
+        });
     });
 })(jQuery);

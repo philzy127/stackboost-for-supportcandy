@@ -166,7 +166,17 @@ class Settings {
 			];
 		}
 
-		// 11. Tools / Diagnostics
+		// 11. Appearance (Themification)
+		$menu_config[] = [
+			'slug'        => 'stackboost-appearance',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page::class, 'render' ], // Using static call for consistency, though class is not static
+		];
+
+		// 12. Tools / Diagnostics
 		$menu_config[] = [
 			'slug'        => 'stackboost-tools',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -216,8 +226,14 @@ class Settings {
 		$page_slug = $screen->base === 'toplevel_page_stackboost-for-supportcandy' ? 'stackboost-for-supportcandy' : $screen->id;
         $page_slug = str_replace(['stackboost_page_', 'toplevel_page_'], '', $page_slug);
 
+        // Get active theme class
+        $theme_class = 'sb-theme-clean-tech'; // Default
+        if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
+
 		?>
-		<div class="wrap stackboost-dashboard">
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 
 			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
