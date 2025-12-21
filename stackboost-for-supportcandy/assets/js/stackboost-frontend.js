@@ -166,7 +166,9 @@
 					}
 				}
 			} catch (e) {
-				console.error('Error fetching ticket details from backend', e);
+				if (typeof sbUtilError === 'function') {
+					sbUtilError('Error fetching ticket details from backend', e);
+				}
 			}
 
 			// 2. Fetch/Scrape Standard Details (if needed)

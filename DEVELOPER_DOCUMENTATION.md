@@ -70,6 +70,22 @@ All settings are centralized through `src/WordPress/Admin/Settings.php`.
     *   **Highlander Rule:** Implemented in `Ajax.php` (backend) and `stackboost-ats-manage-questions.js` (frontend) to strictly limit one 'ticket_number' question per form.
     *   **Frontend Read-only:** `Shortcode.php` validates pre-filled values against question constraints (numeric for tickets, existing options for dropdowns) before rendering the field as read-only (`pointer-events: none`).
 
+### Ticket View
+
+*   **AJAX Endpoint:** `stackboost_get_ticket_details_card`
+*   **Response Structure:**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "details": "HTML string for the standard fields table",
+            "history": "HTML string for the description and conversation history",
+            "effective_view_type": "standard|utm"
+        }
+    }
+    ```
+*   **Effective View Type:** The `effective_view_type` property is critical. It indicates the *actual* view type rendered by the backend. The frontend MUST use this value to determine behavior (e.g., whether to scrape standard fields or rely on the backend content) rather than relying solely on the local settings, as the backend may force a fallback (e.g., due to license status).
+
 ## Deployment
 
 ### Versioning
