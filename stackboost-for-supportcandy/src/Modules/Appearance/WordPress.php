@@ -115,13 +115,29 @@ class WordPress {
      * AJAX Handler to save theme.
      */
     public function ajax_save_theme() {
-        check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+        // 1. Entry Log
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( 'Appearance: ajax_save_theme called.', 'appearance' );
+        }
+        error_log( 'StackBoost Appearance: ajax_save_theme called.' );
 
+        // 2. Nonce Check
+        if ( ! check_ajax_referer( 'stackboost_admin_nonce', 'nonce', false ) ) {
+            error_log( 'StackBoost Appearance: Nonce verification failed.' );
+            if ( function_exists( 'stackboost_log' ) ) {
+                stackboost_log( 'Appearance: Nonce verification failed.', 'appearance' );
+            }
+            wp_send_json_error( 'Security check failed' );
+        }
+
+        // 3. Permission Check
         if ( ! current_user_can( 'manage_options' ) ) {
+            error_log( 'StackBoost Appearance: Unauthorized user.' );
             wp_send_json_error( 'Unauthorized' );
         }
 
         $theme = isset( $_POST['theme'] ) ? sanitize_text_field( $_POST['theme'] ) : '';
+        error_log( 'StackBoost Appearance: Saving theme: ' . $theme );
 
         // Validate theme
         $valid_themes = [
@@ -134,12 +150,19 @@ class WordPress {
         ];
 
         if ( ! in_array( $theme, $valid_themes ) ) {
+            error_log( 'StackBoost Appearance: Invalid theme value received.' );
             wp_send_json_error( 'Invalid theme' );
         }
 
         $settings = get_option( 'stackboost_settings', [] );
         $settings['admin_theme'] = $theme;
-        update_option( 'stackboost_settings', $settings );
+
+        $updated = update_option( 'stackboost_settings', $settings );
+
+        error_log( 'StackBoost Appearance: Option update result: ' . ( $updated ? 'true' : 'false' ) );
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( 'Appearance: Theme updated to ' . $theme, 'appearance' );
+        }
 
         wp_send_json_success( 'Theme saved' );
     }

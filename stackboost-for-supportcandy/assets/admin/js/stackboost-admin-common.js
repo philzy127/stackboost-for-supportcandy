@@ -193,8 +193,20 @@
                 } else {
                     window.stackboost_show_toast('Error saving theme: ' + (response.data || 'Unknown error'), 'error');
                 }
-            }).fail(function() {
-                window.stackboost_show_toast('Communication error while saving theme.', 'error');
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                var errorMsg = 'Save Failed: ' + textStatus;
+                if (jqXHR.status) {
+                    errorMsg += ' (' + jqXHR.status + ')';
+                }
+                if (jqXHR.responseText) {
+                    console.log('Server Error Details:', jqXHR.responseText);
+                    // Optionally show a bit of the response if it's short
+                    if (jqXHR.responseText.length < 100) {
+                         errorMsg += ' - ' + jqXHR.responseText;
+                    }
+                }
+                alert(errorMsg); // Use alert for critical visibility
+                window.stackboost_show_toast(errorMsg, 'error');
             }).always(function() {
                 if ($btn) {
                     $btn.text(originalBtnText).prop('disabled', false);
