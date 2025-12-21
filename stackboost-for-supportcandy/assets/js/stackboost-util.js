@@ -106,21 +106,22 @@ jQuery(document).ready(function($) {
                 lightbox.style.display = "none";
             };
             // Prevent interaction with the close button from closing the Tippy
-            ['mousedown', 'touchstart', 'click'].forEach(function(evt) {
-                span.addEventListener(evt, function(e) { e.stopPropagation(); });
+            // Added pointerdown and stopImmediatePropagation for stronger isolation
+            ['mousedown', 'touchstart', 'click', 'pointerdown'].forEach(function(evt) {
+                span.addEventListener(evt, function(e) { e.stopImmediatePropagation(); });
             });
         }
         if (lightbox) {
             lightbox.onclick = function(e) {
-                e.stopPropagation(); // Prevent bubbling
+                e.stopImmediatePropagation(); // Prevent bubbling
                 if (e.target === lightbox) {
                     lightbox.style.display = "none";
                 }
             };
             // Prevent interaction with the overlay from closing the Tippy
-            // We must stop propagation of mousedown/touchstart so Tippy doesn't think we clicked outside
-            ['mousedown', 'touchstart', 'click'].forEach(function(evt) {
-                lightbox.addEventListener(evt, function(e) { e.stopPropagation(); });
+            // Added pointerdown and stopImmediatePropagation for stronger isolation
+            ['mousedown', 'touchstart', 'click', 'pointerdown'].forEach(function(evt) {
+                lightbox.addEventListener(evt, function(e) { e.stopImmediatePropagation(); });
             });
         }
     }

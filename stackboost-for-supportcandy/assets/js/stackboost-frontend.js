@@ -216,10 +216,15 @@
 				maxWidth: 'none', // Allow our fixed width to take precedence
 				offset: [0, 10],
 				appendTo: () => document.body,
-				hideOnClick: true, // Use tippy's built-in behavior to hide on outside clicks
+				hideOnClick: false, // We handle outside clicks manually to safely ignore the lightbox
 				onClickOutside(instance, event) {
 					// Prevent closing if clicking inside our lightbox
-					if (event.target.closest('#stackboost-widget-modal')) {
+					// We check for the lightbox ID, the close button ID, or the class hierarchy
+					if (
+						event.target.id === 'stackboost-widget-modal' ||
+						event.target.id === 'stackboost-widget-modal-close' ||
+						event.target.closest('#stackboost-widget-modal')
+					) {
 						return;
 					}
 					instance.hide();
