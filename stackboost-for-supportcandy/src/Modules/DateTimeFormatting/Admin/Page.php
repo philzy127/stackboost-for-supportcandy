@@ -15,27 +15,48 @@ class Page {
 	 * Render the Date & Time Formatting settings page content.
 	 */
 	public static function render_page() {
-        $theme_class = 'sb-theme-clean-tech';
-        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
-            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
-        }
+		$theme_class = 'sb-theme-clean-tech';
+		if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+		}
 		?>
+		<!-- StackBoost Wrapper Start -->
+		<!-- Theme: <?php echo esc_html( $theme_class ); ?> -->
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<p><?php esc_html_e( 'Create rules to customize the date and time format for specific columns in the ticket list.', 'stackboost-for-supportcandy' ); ?></p>
+
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'stackboost_settings' );
-				// Add the hidden field for page slug to identify this settings group in sanitization
 				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-date-time">';
-
-				do_settings_sections( 'stackboost-date-time' );
-
-				// Render the Rules Builder manually as it's a complex field
-				self::render_date_time_formatting_rules_section();
-
-				submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) );
 				?>
+
+				<div class="stackboost-dashboard-grid">
+					<!-- Single Card: Date & Time Formatting -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Date & Time Formatting', 'stackboost-for-supportcandy' ); ?></h2>
+						<p><?php esc_html_e( 'Create rules to customize the date and time format for specific columns in the ticket list.', 'stackboost-for-supportcandy' ); ?></p>
+
+						<table class="form-table" role="presentation">
+							<tbody>
+								<tr>
+									<th scope="row"><?php esc_html_e( 'Enable Feature', 'stackboost-for-supportcandy' ); ?></th>
+									<td>
+										<?php self::render_enable_checkbox(); ?>
+									</td>
+								</tr>
+								<tr>
+									<th scope="row"><?php esc_html_e( 'Formatting Rules', 'stackboost-for-supportcandy' ); ?></th>
+									<td>
+										<?php self::render_rules_builder(); ?>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
 			</form>
 		</div>
 		<?php
@@ -43,27 +64,10 @@ class Page {
 
 	/**
 	 * Render the Rules Builder section.
+	 * (Deprecated in favor of inline rendering within render_page, keeping empty for safety if called elsewhere)
 	 */
 	public static function render_date_time_formatting_rules_section() {
-		?>
-		<h2><?php esc_html_e( 'Formatting Rules', 'stackboost-for-supportcandy' ); ?></h2>
-		<table class="form-table" role="presentation">
-			<tbody>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Enable Feature', 'stackboost-for-supportcandy' ); ?></th>
-					<td>
-						<?php self::render_enable_checkbox(); ?>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Rules', 'stackboost-for-supportcandy' ); ?></th>
-					<td>
-						<?php self::render_rules_builder(); ?>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-		<?php
+		// No-op
 	}
 
 	/**
