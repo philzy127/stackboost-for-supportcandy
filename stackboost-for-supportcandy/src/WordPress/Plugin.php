@@ -338,6 +338,8 @@ final class Plugin {
 		}
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
+            stackboost_log( "Common scripts (and nonce) enqueued for hook: " . $hook_suffix, 'core' );
+
 			// Enqueue General Dashboard Styles if on main page
 			if ( 'toplevel_page_stackboost-for-supportcandy' === $hook_suffix ) {
 				wp_enqueue_style(
