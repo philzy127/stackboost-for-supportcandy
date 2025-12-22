@@ -289,8 +289,8 @@ class WordPress extends Module {
                 </select>
             </div>
             <div class="dual-buttons">
-                <button type="button" class="button" id="stackboost_add_status">&rarr;</button>
-                <button type="button" class="button" id="stackboost_remove_status">&larr;</button>
+                <button type="button" class="button" id="stackboost_add_status"><span class="dashicons dashicons-arrow-right"></span></button>
+                <button type="button" class="button" id="stackboost_remove_status"><span class="dashicons dashicons-arrow-left"></span></button>
             </div>
             <div class="dual-list-box">
                 <h3><?php _e( 'Selected Statuses', 'stackboost-for-supportcandy' ); ?></h3>
