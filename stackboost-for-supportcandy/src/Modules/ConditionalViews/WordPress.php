@@ -65,7 +65,7 @@ class WordPress extends Module {
 		add_settings_section(
 			'stackboost_conditional_hiding_section',
 			__( 'Conditional Column Hiding Rules', 'stackboost-for-supportcandy' ),
-			[ $this, 'render_section_description' ],
+			null, // Removed generic render description in favor of Card UI
 			$page_slug
 		);
 		add_settings_field(
@@ -86,10 +86,54 @@ class WordPress extends Module {
 	}
 
 	/**
-	 * Render the description for the section.
+	 * Render the administration page.
 	 */
-	public function render_section_description() {
-		echo '<p>' . esc_html__( 'Create rules to show or hide columns based on the selected ticket view. This allows for powerful customization of the ticket list for different contexts.', 'stackboost-for-supportcandy' ) . '</p>';
+	public function render_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Get active theme class
+		$theme_class = 'sb-theme-clean-tech'; // Default
+		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+		}
+
+		?>
+		<!-- StackBoost Wrapper Start -->
+		<!-- Theme: <?php echo esc_html( $theme_class ); ?> -->
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
+			<h1><?php esc_html_e( 'Conditional Views', 'stackboost-for-supportcandy' ); ?></h1>
+			<?php settings_errors(); ?>
+
+			<form action="options.php" method="post">
+				<?php
+				settings_fields( 'stackboost_settings' );
+				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-conditional-views">';
+				?>
+
+				<div class="stackboost-dashboard-grid">
+					<!-- Card 1: Conditional Rules -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Conditional Column Hiding', 'stackboost-for-supportcandy' ); ?></h2>
+						<p><?php esc_html_e( 'Create rules to show or hide columns based on the selected ticket view. This allows for powerful customization of the ticket list for different contexts.', 'stackboost-for-supportcandy' ); ?></p>
+						<table class="form-table">
+							<tr>
+								<th><?php esc_html_e( 'Enable Feature', 'stackboost-for-supportcandy' ); ?></th>
+								<td><?php $this->render_checkbox_field( [ 'id' => 'enable_conditional_hiding', 'desc' => 'Enable the rule-based system to show or hide columns.' ] ); ?></td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'Rules', 'stackboost-for-supportcandy' ); ?></th>
+								<td><?php $this->render_rule_builder(); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+
+				<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
+			</form>
+		</div>
+		<?php
 	}
 
 	/**

@@ -102,7 +102,7 @@ class Settings {
 				'page_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\ConditionalViews\WordPress::get_instance(), 'render_page' ],
 			];
 		}
 
@@ -114,7 +114,7 @@ class Settings {
 				'page_title'  => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
 				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\QueueMacro\WordPress::get_instance(), 'render_page' ],
 			];
 		}
 
