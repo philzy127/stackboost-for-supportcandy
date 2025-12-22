@@ -83,9 +83,6 @@
       initializeDateFormatRuleBuilder();
 
       // Intercept the form submission for AJAX saving
-      // REVERTED: AJAX saving caused issues with settings not persisting correctly compared to standard options.php.
-      // Reverting to standard form submission which is robust and correctly handles the page_slug logic.
-      /*
       $('form[action="options.php"]').on('submit', function (e) {
           e.preventDefault();
           console.log("[StackBoost] Form submission intercepted.");
@@ -113,9 +110,7 @@
           formData += '&action=stackboost_save_settings';
           formData += '&nonce=' + stackboost_admin_ajax.nonce;
 
-          // HARDENED FIX: Explicitly append page_slug to ensure sanitize_settings works
-          // This prevents failure if the hidden input is missing or stripped
-          formData += '&stackboost_settings[page_slug]=stackboost-date-time';
+          // Note: page_slug is now included in formData via the hidden input in HTML
 
           console.log("[StackBoost] Serialized Form Data:", formData);
           console.log("[StackBoost] Sending AJAX request to:", stackboost_admin_ajax.ajax_url);
@@ -147,7 +142,6 @@
               }
           });
       });
-      */
     }
   });
 })(jQuery);

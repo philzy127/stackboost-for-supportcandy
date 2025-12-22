@@ -41,48 +41,8 @@ class WordPress extends Module {
 	 * Initialize hooks.
 	 */
 	public function init_hooks() {
-		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'init', [ $this, 'apply_date_time_formats' ] );
-	}
-
-	/**
-	 * Register the isolated settings for this module.
-	 */
-	public function register_settings() {
-		register_setting( 'stackboost_date_time_settings', 'stackboost_date_time_settings', [ $this, 'sanitize_settings' ] );
-	}
-
-	/**
-	 * Sanitize the settings.
-	 *
-	 * @param array $input
-	 * @return array
-	 */
-	public function sanitize_settings( $input ) {
-		$output = [];
-		$output['enable_date_time_formatting'] = ! empty( $input['enable_date_time_formatting'] ) ? 1 : 0;
-
-		if ( isset( $input['date_format_rules'] ) && is_array( $input['date_format_rules'] ) ) {
-			$sanitized_rules = [];
-			foreach ( $input['date_format_rules'] as $rule ) {
-				if ( ! is_array( $rule ) || empty( $rule['column'] ) ) {
-					continue;
-				}
-				$sanitized_rule                   = [];
-				$sanitized_rule['column']         = sanitize_text_field( $rule['column'] );
-				$sanitized_rule['format_type']    = in_array( $rule['format_type'], [ 'default', 'date_only', 'time_only', 'date_and_time', 'custom' ], true ) ? $rule['format_type'] : 'default';
-				$sanitized_rule['custom_format']  = sanitize_text_field( $rule['custom_format'] );
-				$sanitized_rule['use_long_date']    = ! empty( $rule['use_long_date'] ) ? 1 : 0;
-				$sanitized_rule['show_day_of_week'] = ! empty( $rule['show_day_of_week'] ) ? 1 : 0;
-				$sanitized_rules[]              = $sanitized_rule;
-			}
-			$output['date_format_rules'] = $sanitized_rules;
-		} else {
-			$output['date_format_rules'] = [];
-		}
-
-		return $output;
 	}
 
 	/**
@@ -133,8 +93,7 @@ class WordPress extends Module {
 	 * Apply the date/time formatting rules.
 	 */
 	public function apply_date_time_formats() {
-		// Use isolated option
-		$options = get_option( 'stackboost_date_time_settings', [] );
+		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['enable_date_time_formatting'] ) ) {
 			return;
 		}
