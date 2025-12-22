@@ -172,15 +172,34 @@ class WordPress {
 				<?php
 				// This will output the nonces and other fields for the 'stackboost_settings' group.
 				settings_fields( 'stackboost_settings' );
-
-				// This will render the sections and fields that were registered for this page.
-				do_settings_sections( 'stackboost-utm' );
-
 				// Add the hidden page slug field, which is critical for the central sanitizer.
 				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-utm">';
-
-				submit_button();
 				?>
+
+				<div class="stackboost-dashboard-grid">
+					<!-- Card 1: General Settings & Fields -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'General Settings & Fields', 'stackboost-for-supportcandy' ); ?></h2>
+						<table class="form-table">
+							<?php
+							do_settings_fields( 'stackboost-utm', 'stackboost_utm_main_section' );
+							do_settings_fields( 'stackboost-utm', 'stackboost_utm_fields_section' );
+							?>
+						</table>
+					</div>
+
+					<!-- Card 2: Rename Rules -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Rename Field Titles', 'stackboost-for-supportcandy' ); ?></h2>
+						<table class="form-table">
+							<?php
+							do_settings_fields( 'stackboost-utm', 'stackboost_utm_rename_section' );
+							?>
+						</table>
+					</div>
+				</div>
+
+				<?php submit_button(); ?>
 			</form>
 		</div>
 		<?php
