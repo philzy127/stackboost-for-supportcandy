@@ -21,6 +21,8 @@
     border-right: var(--sb-card-border, 1px solid #ccd0d4);
     border-bottom: var(--sb-card-border, 1px solid #ccd0d4);
     border-left: var(--sb-card-border, 1px solid #ccd0d4);
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 .stackboost-dashboard input[type="text"],
@@ -30,7 +32,7 @@
 .stackboost-dashboard textarea {
     background-color: var(--sb-input-bg, #ffffff);
     border-radius: var(--sb-radius, 4px);
-    padding: var(--sb-spacing, 8px);
+    padding: 4px 8px; /* Compact padding */
     border: var(--sb-card-border, 1px solid #ccd0d4);
 }
 
@@ -38,10 +40,10 @@
 .stackboost-dashboard select {
     background-color: var(--sb-input-bg, #ffffff);
     border-radius: var(--sb-radius, 4px);
-    /* Top/Bottom: 6px to balance height, Right: 30px for arrow, Left: 10px for text */
-    padding: 6px 30px 6px 10px;
+    /* Top/Bottom: 4px to balance height (compact), Right: 30px for arrow, Left: 8px for text */
+    padding: 4px 30px 4px 8px;
     border: var(--sb-card-border, 1px solid #ccd0d4);
-    min-height: 34px; /* Ensure consistent height with text inputs */
+    min-height: 30px; /* Compact height */
     vertical-align: middle;
 }
 
@@ -349,4 +351,32 @@
     border-radius: 4px;
     vertical-align: middle;
     display: inline-block;
+}
+
+/* Stacked Form Layout (Option B) - Scoped to Cards for safe migration */
+.stackboost-dashboard .stackboost-card .form-table,
+.stackboost-dashboard .stackboost-card .form-table tbody,
+.stackboost-dashboard .stackboost-card .form-table tr,
+.stackboost-dashboard .stackboost-card .form-table th,
+.stackboost-dashboard .stackboost-card .form-table td {
+    display: block;
+    width: 100%;
+}
+
+.stackboost-dashboard .stackboost-card .form-table th {
+    padding: 0;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--sb-accent, #333); /* Use theme accent for label */
+}
+
+.stackboost-dashboard .stackboost-card .form-table td {
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.stackboost-dashboard .stackboost-card .form-table p.description {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #666;
 }
