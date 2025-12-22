@@ -64,7 +64,7 @@ class Settings {
 			'page_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
 			'menu_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
 			'capability'  => 'manage_options',
-			'callback'    => [ $this, 'render_settings_page' ],
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketView\WordPress::get_instance(), 'render_page' ],
 		];
 
 		// 3. Date & Time Formatting (New Module) - Lite
