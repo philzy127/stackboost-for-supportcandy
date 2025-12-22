@@ -360,6 +360,12 @@
     border-color: var(--sb-accent, #2271b1) !important;
 }
 
+/* Button Margins within Cards */
+.stackboost-dashboard .stackboost-card .button,
+.stackboost-dashboard .stackboost-card .button-primary {
+    margin-bottom: 10px;
+}
+
 /* Section Headers */
 .stackboost-dashboard h2 {
     color: var(--sb-accent, #1a3d5c);

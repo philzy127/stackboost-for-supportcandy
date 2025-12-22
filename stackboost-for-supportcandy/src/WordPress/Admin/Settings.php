@@ -279,6 +279,34 @@ class Settings {
                     </div>
                 </div>
 
+			<?php elseif ( 'stackboost-tools' === $page_slug ) : ?>
+				<form action="options.php" method="post">
+					<?php
+					settings_fields( 'stackboost_settings' );
+					echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-tools">';
+					?>
+
+					<div class="stackboost-dashboard-grid">
+						<!-- Card 1: Diagnostic Log -->
+						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'Diagnostic Log', 'stackboost-for-supportcandy' ); ?></h2>
+							<table class="form-table">
+								<?php do_settings_fields( 'stackboost-tools', 'stackboost_tools_section' ); ?>
+							</table>
+						</div>
+
+						<!-- Card 2: Data Management -->
+						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'Data Management', 'stackboost-for-supportcandy' ); ?></h2>
+							<table class="form-table">
+								<?php do_settings_fields( 'stackboost-tools', 'stackboost_tools_uninstall_section' ); ?>
+							</table>
+						</div>
+					</div>
+
+					<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
+				</form>
+
 			<?php else : ?>
 				<form action="options.php" method="post">
 					<?php
