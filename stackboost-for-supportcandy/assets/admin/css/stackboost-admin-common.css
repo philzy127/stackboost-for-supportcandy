@@ -116,7 +116,7 @@
 .stackboost-dual-list-container .dual-list-box {
     display: flex;
     flex-direction: column;
-    flex: 1; /* Match UTM flex */
+    /* Removed flex: 1 to fix massive gap issue requested by user */
 }
 
 .stackboost-dual-list-container .dual-list-box h3 {
@@ -127,9 +127,8 @@
 }
 
 .stackboost-dual-list-container .dual-list-box select {
-    width: 100%; /* Full width */
+    width: 250px; /* Revert to fixed width to prevent massive expansion */
     height: 180px !important;
-    min-width: 250px;
 }
 
 .stackboost-dual-list-container .dual-buttons {
