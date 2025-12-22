@@ -83,7 +83,7 @@ class WordPress extends Module {
 		wp_enqueue_script(
 			'stackboost-date-time-formatting',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/DateTimeFormatting/assets/admin/js/date-time-formatting.js',
-			[ 'jquery' ],
+			[ 'jquery', 'stackboost-admin-common' ],
 			STACKBOOST_VERSION,
 			true
 		);

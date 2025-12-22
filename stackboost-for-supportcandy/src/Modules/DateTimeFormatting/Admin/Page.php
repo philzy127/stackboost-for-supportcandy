@@ -93,7 +93,6 @@ class Page {
 		$rules   = isset( $options['date_format_rules'] ) && is_array( $options['date_format_rules'] ) ? $options['date_format_rules'] : [];
 		$columns = self::get_date_columns();
 		?>
-		<input type="hidden" name="stackboost_settings[date_format_rules]" value="">
 		<div id="stackboost-date-rules-container">
 			<?php
 			if ( ! empty( $rules ) ) {
