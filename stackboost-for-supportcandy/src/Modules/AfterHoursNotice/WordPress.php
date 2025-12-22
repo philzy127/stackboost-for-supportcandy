@@ -101,7 +101,14 @@ class WordPress extends Module {
                     <div class="stackboost-card">
                         <h2><?php esc_html_e( 'Configuration', 'stackboost-for-supportcandy' ); ?></h2>
                         <table class="form-table">
-                            <?php do_settings_fields( 'stackboost-after-hours', 'stackboost_ahn_config' ); ?>
+                            <tr>
+                                <th><?php esc_html_e( 'Enable Feature', 'stackboost-for-supportcandy' ); ?></th>
+                                <td><?php $this->render_checkbox_field( [ 'id' => 'enable_after_hours_notice', 'desc' => 'Displays a notice on the ticket form when submitted outside of business hours.' ] ); ?></td>
+                            </tr>
+                            <tr>
+                                <th><?php esc_html_e( 'Add Notice to Emails', 'stackboost-for-supportcandy' ); ?></th>
+                                <td><?php $this->render_checkbox_field( [ 'id' => 'after_hours_in_email', 'desc' => 'Prepend the after-hours message to email notifications if the main feature is enabled.' ] ); ?></td>
+                            </tr>
                         </table>
                     </div>
 
@@ -109,7 +116,18 @@ class WordPress extends Module {
                     <div class="stackboost-card">
                         <h2><?php esc_html_e( 'Schedule', 'stackboost-for-supportcandy' ); ?></h2>
                         <table class="form-table">
-                            <?php do_settings_fields( 'stackboost-after-hours', 'stackboost_ahn_schedule' ); ?>
+                            <tr>
+                                <th><?php esc_html_e( 'After Hours Start (24h)', 'stackboost-for-supportcandy' ); ?></th>
+                                <td><?php $this->render_number_field( [ 'id' => 'after_hours_start', 'default' => '17', 'desc' => 'The hour when after-hours starts (e.g., 17 for 5 PM).' ] ); ?></td>
+                            </tr>
+                            <tr>
+                                <th><?php esc_html_e( 'Before Hours End (24h)', 'stackboost-for-supportcandy' ); ?></th>
+                                <td><?php $this->render_number_field( [ 'id' => 'before_hours_end', 'default' => '8', 'desc' => 'The hour when business hours resume (e.g., 8 for 8 AM).' ] ); ?></td>
+                            </tr>
+                            <tr>
+                                <th><?php esc_html_e( 'Include All Weekends', 'stackboost-for-supportcandy' ); ?></th>
+                                <td><?php $this->render_checkbox_field( [ 'id' => 'include_all_weekends', 'desc' => 'Enable this to show the notice all day on Saturdays and Sundays.' ] ); ?></td>
+                            </tr>
                         </table>
                     </div>
 
@@ -117,7 +135,10 @@ class WordPress extends Module {
                     <div class="stackboost-card">
                         <h2><?php esc_html_e( 'Holidays', 'stackboost-for-supportcandy' ); ?></h2>
                         <table class="form-table">
-                            <?php do_settings_fields( 'stackboost-after-hours', 'stackboost_ahn_holidays' ); ?>
+                            <tr>
+                                <th><?php esc_html_e( 'Holidays', 'stackboost-for-supportcandy' ); ?></th>
+                                <td><?php $this->render_textarea_field( [ 'id' => 'holidays', 'class' => 'regular-text', 'desc' => 'List holidays, one per line, in MM-DD-YYYY format (e.g., 12-25-2024). The notice will show all day on these dates.' ] ); ?></td>
+                            </tr>
                         </table>
                     </div>
 
@@ -125,7 +146,15 @@ class WordPress extends Module {
                     <div class="stackboost-card">
                         <h2><?php esc_html_e( 'Notice Message', 'stackboost-for-supportcandy' ); ?></h2>
                         <table class="form-table">
-                            <?php do_settings_fields( 'stackboost-after-hours', 'stackboost_ahn_message' ); ?>
+                            <tr>
+                                <th><?php esc_html_e( 'After Hours Message', 'stackboost-for-supportcandy' ); ?></th>
+                                <td>
+                                    <?php
+                                    $default_message = '<strong>StackBoost Helpdesk -- After Hours</strong><br><br>You have submitted an IT ticket outside of normal business hours, and it will be handled in the order it was received. If this is an emergency, or has caused a complete stoppage of work, please call the IT On-Call number at: <u>(719) 266-2837</u> <br><br> (Available <b>5pm</b> to <b>11pm(EST) M-F, 8am to 11pm</b> weekends and Holidays)';
+                                    $this->render_wp_editor_field( [ 'id' => 'after_hours_message', 'default' => $default_message, 'desc' => 'The message to display to users. Basic HTML is allowed.' ] );
+                                    ?>
+                                </td>
+                            </tr>
                         </table>
                     </div>
 
@@ -225,26 +254,30 @@ class WordPress extends Module {
     public function register_settings() {
         $page_slug = 'stackboost-after-hours';
 
-        // 1. Configuration Section
-        add_settings_section( 'stackboost_ahn_config', __( 'Configuration', 'stackboost-for-supportcandy' ), null, $page_slug );
-        add_settings_field( 'stackboost_enable_after_hours_notice', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ahn_config', [ 'id' => 'enable_after_hours_notice', 'desc' => 'Displays a notice on the ticket form when submitted outside of business hours.' ] );
-        add_settings_field( 'stackboost_after_hours_in_email', __( 'Add Notice to Emails', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ahn_config', [ 'id' => 'after_hours_in_email', 'desc' => 'Prepend the after-hours message to email notifications if the main feature is enabled.' ] );
+        add_settings_section(
+            'stackboost_after_hours_section',
+            __( 'After Hours Notice', 'stackboost-for-supportcandy' ),
+            [ $this, 'render_section_description' ],
+            $page_slug
+        );
 
-        // 2. Schedule Section
-        add_settings_section( 'stackboost_ahn_schedule', __( 'Schedule', 'stackboost-for-supportcandy' ), null, $page_slug );
-        add_settings_field( 'stackboost_after_hours_start', __( 'After Hours Start (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_ahn_schedule', [ 'id' => 'after_hours_start', 'default' => '17', 'desc' => 'The hour when after-hours starts (e.g., 17 for 5 PM).' ] );
-        add_settings_field( 'stackboost_before_hours_end', __( 'Before Hours End (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_ahn_schedule', [ 'id' => 'before_hours_end', 'default' => '8', 'desc' => 'The hour when business hours resume (e.g., 8 for 8 AM).' ] );
-        add_settings_field( 'stackboost_include_all_weekends', __( 'Include All Weekends', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ahn_schedule', [ 'id' => 'include_all_weekends', 'desc' => 'Enable this to show the notice all day on Saturdays and Sundays.' ] );
+        add_settings_field( 'stackboost_enable_after_hours_notice', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'enable_after_hours_notice', 'desc' => 'Displays a notice on the ticket form when submitted outside of business hours.' ] );
+        add_settings_field( 'stackboost_after_hours_in_email', __( 'Add Notice to Emails', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_in_email', 'desc' => 'Prepend the after-hours message to email notifications if the main feature is enabled.' ] );
+        add_settings_field( 'stackboost_after_hours_start', __( 'After Hours Start (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_start', 'default' => '17', 'desc' => 'The hour when after-hours starts (e.g., 17 for 5 PM).' ] );
+        add_settings_field( 'stackboost_before_hours_end', __( 'Before Hours End (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'before_hours_end', 'default' => '8', 'desc' => 'The hour when business hours resume (e.g., 8 for 8 AM).' ] );
+        add_settings_field( 'stackboost_include_all_weekends', __( 'Include All Weekends', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'include_all_weekends', 'desc' => 'Enable this to show the notice all day on Saturdays and Sundays.' ] );
+        add_settings_field( 'stackboost_holidays', __( 'Holidays', 'stackboost-for-supportcandy' ), [ $this, 'render_textarea_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'holidays', 'class' => 'regular-text', 'desc' => 'List holidays, one per line, in MM-DD-YYYY format (e.g., 12-25-2024). The notice will show all day on these dates.' ] );
 
-        // 3. Holidays Section
-        add_settings_section( 'stackboost_ahn_holidays', __( 'Holidays', 'stackboost-for-supportcandy' ), null, $page_slug );
-        add_settings_field( 'stackboost_holidays', __( 'Holidays', 'stackboost-for-supportcandy' ), [ $this, 'render_textarea_field' ], $page_slug, 'stackboost_ahn_holidays', [ 'id' => 'holidays', 'class' => 'regular-text', 'desc' => 'List holidays, one per line, in MM-DD-YYYY format (e.g., 12-25-2024). The notice will show all day on these dates.' ] );
-
-        // 4. Message Section
-        add_settings_section( 'stackboost_ahn_message', __( 'Notice Message', 'stackboost-for-supportcandy' ), null, $page_slug );
         $default_message = '<strong>StackBoost Helpdesk -- After Hours</strong><br><br>You have submitted an IT ticket outside of normal business hours, and it will be handled in the order it was received. If this is an emergency, or has caused a complete stoppage of work, please call the IT On-Call number at: <u>(719) 266-2837</u> <br><br> (Available <b>5pm</b> to <b>11pm(EST) M-F, 8am to 11pm</b> weekends and Holidays)';
-        add_settings_field( 'stackboost_after_hours_message', __( 'After Hours Message', 'stackboost-for-supportcandy' ), [ $this, 'render_wp_editor_field' ], $page_slug, 'stackboost_ahn_message', [ 'id' => 'after_hours_message', 'default' => $default_message, 'desc' => 'The message to display to users. Basic HTML is allowed.' ] );
+        add_settings_field( 'stackboost_after_hours_message', __( 'After Hours Message', 'stackboost-for-supportcandy' ), [ $this, 'render_wp_editor_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_message', 'default' => $default_message, 'desc' => 'The message to display to users. Basic HTML is allowed.' ] );
     }
+
+	/**
+	 * Render the description for the section.
+	 */
+	public function render_section_description() {
+		echo '<p>' . esc_html__( 'This feature shows a customizable message at the top of the "Create Ticket" form if a user is accessing it outside of your defined business hours.', 'stackboost-for-supportcandy' ) . '</p>';
+	}
 
     // Note: The rendering functions (render_checkbox_field, etc.) will be moved to a shared Admin/Settings class.
     // For now, we'll assume they exist on the parent Module class for compilation.
