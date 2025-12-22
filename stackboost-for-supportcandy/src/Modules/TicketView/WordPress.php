@@ -305,6 +305,7 @@ class WordPress extends Module {
 		<!-- Theme: <?php echo esc_html( $theme_class ); ?> -->
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php esc_html_e( 'Ticket View', 'stackboost-for-supportcandy' ); ?></h1>
+			<?php settings_errors(); ?>
 
 			<form action="options.php" method="post">
 				<?php

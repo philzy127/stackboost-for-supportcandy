@@ -24,6 +24,7 @@ class Page {
 		<!-- Theme: <?php echo esc_html( $theme_class ); ?> -->
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+			<?php settings_errors(); ?>
 
 			<form action="options.php" method="post">
 				<?php

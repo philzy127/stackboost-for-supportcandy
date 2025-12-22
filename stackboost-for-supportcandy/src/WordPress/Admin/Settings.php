@@ -575,12 +575,21 @@ class Settings {
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'Settings::sanitize_settings called.', 'core' );
+			stackboost_log( 'Input Data: ' . print_r( $input, true ), 'core' );
+		}
+
 		$saved_settings = get_option('stackboost_settings', []);
 		if (!is_array($saved_settings)) {
 			$saved_settings = [];
 		}
 
 		$page_slug = sanitize_key($input['page_slug'] ?? '');
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "Processing page_slug: {$page_slug}", 'core' );
+		}
+
 		if (empty($page_slug)) {
 			return $saved_settings;
 		}
@@ -678,11 +687,17 @@ class Settings {
 						break;
 
 					case 'date_format_rules':
+						if ( function_exists( 'stackboost_log' ) ) {
+							stackboost_log( 'Sanitizing date_format_rules. Raw Value: ' . print_r( $value, true ), 'core' );
+						}
 						// Check if rules are present in the submission.
 						if ( is_array( $value ) ) {
 							$sanitized_rules = [];
-							foreach ( $value as $rule ) {
+							foreach ( $value as $index => $rule ) {
 								if ( ! is_array( $rule ) || empty( $rule['column'] ) ) {
+									if ( function_exists( 'stackboost_log' ) ) {
+										stackboost_log( "Skipping rule at index {$index}: Invalid structure or missing column.", 'core' );
+									}
 									continue;
 								}
 								$sanitized_rule                   = [];
@@ -692,6 +707,9 @@ class Settings {
 								$sanitized_rule['use_long_date']    = ! empty( $rule['use_long_date'] ) ? 1 : 0;
 								$sanitized_rule['show_day_of_week'] = ! empty( $rule['show_day_of_week'] ) ? 1 : 0;
 								$sanitized_rules[]              = $sanitized_rule;
+							}
+							if ( function_exists( 'stackboost_log' ) ) {
+								stackboost_log( 'Final Sanitized Rules: ' . print_r( $sanitized_rules, true ), 'core' );
 							}
 							$saved_settings[$key] = $sanitized_rules;
 						} else {

@@ -55,11 +55,18 @@ class WordPress extends Module {
 		// Pattern: stackboost_page_{page_slug}
 		$page_slug = 'stackboost-date-time';
 
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "DateTimeFormatting::enqueue_admin_scripts called. Hook: {$hook_suffix}", 'date_time_formatting' );
+		}
+
 		// Note: The main plugin uses 'toplevel_page_stackboost-for-supportcandy' for the main menu,
 		// and 'stackboost_page_stackboost-...' for submenus.
 		// We need to match the specific hook.
 
 		if ( strpos( $hook_suffix, $page_slug ) === false ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "DateTimeFormatting: Hook suffix does not match slug '{$page_slug}'. Skipping enqueue.", 'date_time_formatting' );
+			}
 			return;
 		}
 
