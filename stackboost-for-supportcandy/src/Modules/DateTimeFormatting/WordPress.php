@@ -61,11 +61,14 @@ class WordPress extends Module {
 
 		// Note: The main plugin uses 'toplevel_page_stackboost-for-supportcandy' for the main menu,
 		// and 'stackboost_page_stackboost-...' for submenus.
-		// We need to match the specific hook.
+		// However, relying on the hook suffix can be fragile if WordPress sanitizes it unexpectedly.
+		// A more robust check is to verify the 'page' query parameter directly.
 
-		if ( strpos( $hook_suffix, $page_slug ) === false ) {
+		$current_page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+
+		if ( $current_page !== $page_slug ) {
 			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "DateTimeFormatting: Hook suffix does not match slug '{$page_slug}'. Skipping enqueue.", 'date_time_formatting' );
+				stackboost_log( "DateTimeFormatting: Current page '{$current_page}' does not match slug '{$page_slug}'. Skipping enqueue.", 'date_time_formatting' );
 			}
 			return;
 		}
