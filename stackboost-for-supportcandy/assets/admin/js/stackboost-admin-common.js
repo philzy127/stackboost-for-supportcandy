@@ -247,5 +247,50 @@
             // Pass null for themeName since preview text element was removed
             stackboost_save_theme(newTheme, null, $(this));
         });
+
+        /* ----------------------------------------------------------------
+         * Date & Time Formatting Logic (Restored)
+         * ---------------------------------------------------------------- */
+
+        // Add Rule
+        $('#stackboost-add-date-rule').on('click', function() {
+            var template = $('#stackboost-date-rule-template').html();
+            // Simple unique index based on timestamp
+            var index = new Date().getTime();
+            var row = template.replace(/__INDEX__/g, index);
+
+            $('#stackboost-date-rules-container').append(row);
+            $('#stackboost-no-date-rules-message').hide();
+        });
+
+        // Remove Rule
+        $(document).on('click', '.stackboost-remove-date-rule', function() {
+            $(this).closest('.stackboost-date-rule-wrapper').remove();
+            if ($('#stackboost-date-rules-container').children('.stackboost-date-rule-wrapper').length === 0) {
+                $('#stackboost-no-date-rules-message').show();
+            }
+        });
+
+        // Toggle Format Options
+        $(document).on('change', '.stackboost-date-format-type', function() {
+            var value = $(this).val();
+            var $wrapper = $(this).closest('.stackboost-date-rule-wrapper');
+            var $customWrapper = $wrapper.find('.stackboost-custom-format-wrapper');
+            var $bottomRow = $wrapper.find('.stackboost-date-rule-row-bottom');
+
+            // Show/Hide Custom Format Input
+            if (value === 'custom') {
+                $customWrapper.show();
+            } else {
+                $customWrapper.hide();
+            }
+
+            // Show/Hide Long Date & Day Options (Only valid for date types)
+            if (value === 'date_only' || value === 'date_and_time') {
+                $bottomRow.show();
+            } else {
+                $bottomRow.hide();
+            }
+        });
     });
 })(jQuery);
