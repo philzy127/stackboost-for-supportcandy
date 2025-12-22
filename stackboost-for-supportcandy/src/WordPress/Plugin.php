@@ -327,6 +327,8 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-tools',
             'stackboost-for-supportcandy_page_stackboost-date-time',
             'stackboost-for-supportcandy_page_stackboost-appearance',
+            // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
+            'stackboost_page_stackboost-date-time',
 		];
 
 		// Enqueue Frontend Features in Admin (Ticket List)
