@@ -631,7 +631,7 @@ class Settings {
 				'enable_log_onboarding',
 				'enable_log_appearance', // Added Appearance Logging
 			],
-			'stackboost-date-time'          => ['enable_date_time_formatting', 'date_format_rules'],
+			// 'stackboost-date-time' removed - uses isolated option group
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];

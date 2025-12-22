@@ -83,6 +83,9 @@
       initializeDateFormatRuleBuilder();
 
       // Intercept the form submission for AJAX saving
+      // REVERTED: AJAX saving caused issues with settings not persisting correctly compared to standard options.php.
+      // Reverting to standard form submission which is robust and correctly handles the page_slug logic.
+      /*
       $('form[action="options.php"]').on('submit', function (e) {
           e.preventDefault();
           console.log("[StackBoost] Form submission intercepted.");
@@ -144,6 +147,7 @@
               }
           });
       });
+      */
     }
   });
 })(jQuery);
