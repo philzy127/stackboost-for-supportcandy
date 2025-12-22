@@ -90,7 +90,7 @@ class Settings {
 				'page_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\AfterHoursNotice\WordPress::get_instance(), 'render_page' ],
 			];
 		}
 
