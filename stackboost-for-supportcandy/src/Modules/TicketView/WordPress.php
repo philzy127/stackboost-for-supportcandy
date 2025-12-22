@@ -317,26 +317,34 @@ class WordPress extends Module {
 					<!-- Card 1: Ticket Details Card -->
 					<div class="stackboost-card">
 						<h2><?php esc_html_e( 'Ticket Details Card', 'stackboost-for-supportcandy' ); ?></h2>
-						<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_ticket_details_card_section' ); ?>
+						<table class="form-table">
+							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_ticket_details_card_section' ); ?>
+						</table>
 					</div>
 
 					<!-- Card 2: Organization (General Cleanup) -->
 					<div class="stackboost-card">
 						<h2><?php esc_html_e( 'Organization', 'stackboost-for-supportcandy' ); ?></h2>
-						<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_general_cleanup_section' ); ?>
+						<table class="form-table">
+							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_general_cleanup_section' ); ?>
+						</table>
 					</div>
 
 					<!-- Card 3: Page Last Loaded -->
 					<div class="stackboost-card">
 						<h2><?php esc_html_e( 'Page Last Loaded Indicator', 'stackboost-for-supportcandy' ); ?></h2>
-						<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_page_last_loaded_section' ); ?>
+						<table class="form-table">
+							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_page_last_loaded_section' ); ?>
+						</table>
 					</div>
 
 					<!-- Card 4: Ticket Type Hiding -->
 					<div class="stackboost-card">
 						<h2><?php esc_html_e( 'Hide Ticket Types from Non-Agents', 'stackboost-for-supportcandy' ); ?></h2>
 						<p><?php esc_html_e( 'This feature hides specified ticket categories from the dropdown menu for any user who is not an agent.', 'stackboost-for-supportcandy' ); ?></p>
-						<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_ticket_type_hiding_section' ); ?>
+						<table class="form-table">
+							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_ticket_type_hiding_section' ); ?>
+						</table>
 					</div>
 
 				</div>

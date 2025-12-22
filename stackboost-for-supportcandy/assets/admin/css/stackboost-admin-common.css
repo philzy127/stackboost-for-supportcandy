@@ -21,8 +21,8 @@
     border-right: var(--sb-card-border, 1px solid #ccd0d4);
     border-bottom: var(--sb-card-border, 1px solid #ccd0d4);
     border-left: var(--sb-card-border, 1px solid #ccd0d4);
-    padding: 20px;
-    margin-bottom: 20px;
+    padding-left: 20px;
+    margin-top: 20px;
 }
 
 .stackboost-dashboard input[type="text"],
