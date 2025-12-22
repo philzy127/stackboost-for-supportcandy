@@ -110,6 +110,7 @@
           formData += '&action=stackboost_save_settings';
           formData += '&nonce=' + stackboost_admin_ajax.nonce;
 
+          console.log("[StackBoost] Serialized Form Data:", formData);
           console.log("[StackBoost] Sending AJAX request to:", stackboost_admin_ajax.ajax_url);
 
           $.post(stackboost_admin_ajax.ajax_url, formData, function (response) {

@@ -916,6 +916,11 @@ class Settings {
 	 * AJAX handler to save settings via the central sanitizer.
 	 */
 	public function ajax_save_settings() {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'AJAX Save Settings Called', 'core' );
+			stackboost_log( 'POST Data: ' . print_r( $_POST, true ), 'core' );
+		}
+
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -923,11 +928,18 @@ class Settings {
 		}
 
 		if ( ! isset( $_POST['stackboost_settings'] ) || ! is_array( $_POST['stackboost_settings'] ) ) {
+            if ( function_exists( 'stackboost_log' ) ) {
+                stackboost_log( 'Invalid settings data structure.', 'core' );
+            }
 			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
 		}
 
 		// Retrieve the new settings from the POST request.
 		$new_settings = $_POST['stackboost_settings'];
+
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( 'New Settings to Process: ' . print_r( $new_settings, true ), 'core' );
+        }
 
 		// Get the existing settings.
 		$current_settings = get_option( 'stackboost_settings', [] );
@@ -938,6 +950,10 @@ class Settings {
 		// 'page_slug' which tells sanitize_settings() which fields to process.
 		// It will merge these new values into the existing saved_settings and return the full array.
 		$sanitized_settings = $this->sanitize_settings( $new_settings );
+
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( 'Final Sanitized Settings: ' . print_r( $sanitized_settings, true ), 'core' );
+        }
 
 		// Update the option.
 		update_option( 'stackboost_settings', $sanitized_settings );
