@@ -310,8 +310,9 @@ class WordPress extends Module {
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'stackboost_settings' );
-				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-ticket-view">';
+				// stackboost_settings[page_slug] added below manually
 				?>
+				<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-ticket-view">
 
 				<div class="stackboost-dashboard-grid">
 

@@ -110,6 +110,10 @@
           formData += '&action=stackboost_save_settings';
           formData += '&nonce=' + stackboost_admin_ajax.nonce;
 
+          // HARDENED FIX: Explicitly append page_slug to ensure sanitize_settings works
+          // This prevents failure if the hidden input is missing or stripped
+          formData += '&stackboost_settings[page_slug]=stackboost-date-time';
+
           console.log("[StackBoost] Serialized Form Data:", formData);
           console.log("[StackBoost] Sending AJAX request to:", stackboost_admin_ajax.ajax_url);
 
