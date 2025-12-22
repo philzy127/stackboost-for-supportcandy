@@ -306,3 +306,47 @@
     justify-content: center;
     gap: 15px;
 }
+
+/* Theme Application for Standard WP Elements */
+
+/* Primary Buttons */
+.stackboost-dashboard .button-primary {
+    background: var(--sb-accent, #2271b1) !important;
+    border-color: var(--sb-accent, #2271b1) !important;
+    color: #fff !important;
+    transition: all 0.2s ease;
+}
+
+.stackboost-dashboard .button-primary:hover,
+.stackboost-dashboard .button-primary:focus {
+    /* Slight opacity change to simulate darkening without a separate variable */
+    opacity: 0.9;
+    background: var(--sb-accent, #2271b1) !important;
+    border-color: var(--sb-accent, #2271b1) !important;
+}
+
+/* Section Headers */
+.stackboost-dashboard h2 {
+    color: var(--sb-accent, #1a3d5c);
+    /* Ensure it overrides any default WP h2 styles if necessary, though usually color isn't set aggressively */
+}
+
+/* Separators */
+.stackboost-dashboard hr {
+    border: 0;
+    border-top: 1px solid var(--sb-card-border, #ccd0d4);
+    margin: 20px 0;
+}
+
+/* PRO Badge */
+.stackboost-badge-pro {
+    background-color: var(--sb-accent, #2271b1);
+    color: #fff;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 4px;
+    vertical-align: middle;
+    display: inline-block;
+}
