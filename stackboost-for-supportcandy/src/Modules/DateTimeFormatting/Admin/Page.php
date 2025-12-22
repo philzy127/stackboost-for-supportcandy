@@ -28,8 +28,8 @@ class Page {
 
 			<form action="options.php" method="post">
 				<?php
-				settings_fields( 'stackboost_settings' );
-				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-date-time">';
+				settings_fields( 'stackboost_date_time_settings' );
+				// Use isolated option for stability
 				?>
 
 				<div class="stackboost-dashboard-grid">
@@ -75,11 +75,11 @@ class Page {
 	 * Render the enable checkbox.
 	 */
 	private static function render_enable_checkbox() {
-		$options = get_option( 'stackboost_settings', [] );
+		$options = get_option( 'stackboost_date_time_settings', [] );
 		$is_enabled = ! empty( $options['enable_date_time_formatting'] );
 		?>
 		<label>
-			<input type="checkbox" name="stackboost_settings[enable_date_time_formatting]" value="1" <?php checked( $is_enabled ); ?>>
+			<input type="checkbox" name="stackboost_date_time_settings[enable_date_time_formatting]" value="1" <?php checked( $is_enabled ); ?>>
 			<?php esc_html_e( 'Enable custom date and time formatting for the ticket list.', 'stackboost-for-supportcandy' ); ?>
 		</label>
 		<?php
@@ -89,11 +89,11 @@ class Page {
 	 * Render the rule builder UI.
 	 */
 	private static function render_rules_builder() {
-		$options = get_option( 'stackboost_settings', [] );
+		$options = get_option( 'stackboost_date_time_settings', [] );
 		$rules   = isset( $options['date_format_rules'] ) && is_array( $options['date_format_rules'] ) ? $options['date_format_rules'] : [];
 		$columns = self::get_date_columns();
 		?>
-		<input type="hidden" name="stackboost_settings[date_format_rules]" value="">
+		<input type="hidden" name="stackboost_date_time_settings[date_format_rules]" value="">
 		<div id="stackboost-date-rules-container">
 			<?php
 			if ( ! empty( $rules ) ) {
@@ -133,14 +133,14 @@ class Page {
 			<div>
 				<div class="stackboost-date-rule-row stackboost-date-rule-row-top">
 					<span class="stackboost-rule-label"><?php esc_html_e( 'Display', 'stackboost-for-supportcandy' ); ?></span>
-					<select name="stackboost_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][column]">
+					<select name="stackboost_date_time_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][column]">
 						<option value=""><?php esc_html_e( '-- Select a Column --', 'stackboost-for-supportcandy' ); ?></option>
 						<?php foreach ( $columns as $slug => $name ) : ?>
 							<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $column, $slug ); ?>><?php echo esc_html( $name ); ?></option>
 						<?php endforeach; ?>
 					</select>
 					<span class="stackboost-rule-label"><?php esc_html_e( 'as', 'stackboost-for-supportcandy' ); ?></span>
-					<select class="stackboost-date-format-type" name="stackboost_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][format_type]">
+					<select class="stackboost-date-format-type" name="stackboost_date_time_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][format_type]">
 						<option value="default" <?php selected( $format_type, 'default' ); ?>><?php esc_html_e( 'Hours/Days Ago', 'stackboost-for-supportcandy' ); ?></option>
 						<option value="date_only" <?php selected( $format_type, 'date_only' ); ?>><?php esc_html_e( 'Date Only', 'stackboost-for-supportcandy' ); ?></option>
 						<option value="time_only" <?php selected( $format_type, 'time_only' ); ?>><?php esc_html_e( 'Time Only', 'stackboost-for-supportcandy' ); ?></option>
@@ -152,7 +152,7 @@ class Page {
 						<input
 							type="text"
 							class="stackboost-date-custom-format"
-							name="stackboost_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][custom_format]"
+							name="stackboost_date_time_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][custom_format]"
 							value="<?php echo esc_attr( $custom_format ); ?>"
 							placeholder="<?php esc_attr_e( 'e.g., Y-m-d H:i', 'stackboost-for-supportcandy' ); ?>"
 						/>
@@ -162,14 +162,14 @@ class Page {
 				<div class="stackboost-date-rule-row stackboost-date-rule-row-bottom" style="<?php echo in_array( $format_type, [ 'date_only', 'date_and_time' ], true ) ? '' : 'display: none;'; ?>">
 					<div class="stackboost-date-options">
 						<label>
-							<input type="hidden" name="stackboost_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][use_long_date]" value="0">
-							<input type="checkbox" name="stackboost_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][use_long_date]" value="1" <?php checked( $use_long_date ); ?>>
+							<input type="hidden" name="stackboost_date_time_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][use_long_date]" value="0">
+							<input type="checkbox" name="stackboost_date_time_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][use_long_date]" value="1" <?php checked( $use_long_date ); ?>>
 							<?php esc_html_e( 'Use Long Date Format', 'stackboost-for-supportcandy' ); ?>
 						</label>
 						<span class="stackboost-date-day-toggle stackboost-checkbox-indent">
 							<label>
-								<input type="hidden" name="stackboost_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][show_day_of_week]" value="0">
-								<input type="checkbox" name="stackboost_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][show_day_of_week]" value="1" <?php checked( $show_day_of_week ); ?>>
+								<input type="hidden" name="stackboost_date_time_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][show_day_of_week]" value="0">
+								<input type="checkbox" name="stackboost_date_time_settings[date_format_rules][<?php echo esc_attr( $index ); ?>][show_day_of_week]" value="1" <?php checked( $show_day_of_week ); ?>>
 								<?php esc_html_e( 'Show Day of the Week', 'stackboost-for-supportcandy' ); ?>
 							</label>
 						</span>

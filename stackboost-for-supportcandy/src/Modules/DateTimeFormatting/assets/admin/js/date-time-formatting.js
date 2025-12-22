@@ -106,11 +106,9 @@
 
           var formData = $form.serialize();
 
-          // Append action and nonce
-          formData += '&action=stackboost_save_settings';
+          // Append action and nonce for CUSTOM AJAX handler
+          formData += '&action=stackboost_save_date_time_settings';
           formData += '&nonce=' + stackboost_admin_ajax.nonce;
-
-          // Note: page_slug is now included in formData via the hidden input in HTML
 
           console.log("[StackBoost] Serialized Form Data:", formData);
           console.log("[StackBoost] Sending AJAX request to:", stackboost_admin_ajax.ajax_url);
