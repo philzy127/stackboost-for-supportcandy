@@ -221,6 +221,11 @@
 }
 
 /* Add margin to filter dropdown in Locations tab (and similar views) */
+.tablenav.top {
+    margin-bottom: 15px !important;
+    height: auto !important;
+}
+
 .tablenav.top .actions {
     margin-bottom: 10px;
 }
