@@ -93,7 +93,7 @@ jQuery(document).ready(function($) {
         if (typeof window.stackboost_log === 'function') {
             window.stackboost_log(`[Onboarding ${context}] ` + message);
         } else if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
-            console.log(`[StackBoost ${context}]`, message);
+            window.stackboost_log(`[StackBoost ${context}] ` + message);
         }
 
         // Send to server if debug is enabled (preserving original logic)

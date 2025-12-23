@@ -220,13 +220,7 @@ class Shortcode {
         if ( $validation_failed ) {
             $input_value = ''; // Reset invalid value
             $best_match_value = '';
-            // Using error_log instead of echoing script tag, to avoid frontend pollution if not desired.
-            // However, user specifically asked for console warning in plan step 3.
-            // "Empty and Editable, with a console warning following stackboost console policies"
-            // StackBoost policy typically uses a wrapper. Since this is frontend PHP outputting HTML,
-            // we will stick to the script injection but ensure it matches the pattern if possible.
-            // There is no easy way to call the JS helper here without ensuring the script is loaded and initialized.
-            // We will leave the raw console.warn but ensure it's wrapped safely.
+            stackboost_log( "Invalid pre-fill value for field ID {$question['id']} ignored.", 'ats' );
             echo "<script>if(typeof console !== 'undefined') { console.warn('[StackBoost ATS] Invalid pre-fill value for field ID {$question['id']} ignored.'); }</script>";
         }
 

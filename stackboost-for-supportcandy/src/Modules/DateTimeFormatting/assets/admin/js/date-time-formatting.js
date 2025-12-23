@@ -2,7 +2,7 @@
   "use strict";
 
   $(function () {
-    console.log("[StackBoost] Date & Time Formatting script loaded.");
+    window.stackboost_log("[StackBoost] Date & Time Formatting script loaded.");
 
     /**
      * Handles the dynamic behavior of the date format rule builder.
@@ -68,7 +68,7 @@
 
     // Initialize the rule builder if we are on the correct page.
     if ($("#stackboost-date-rules-container").length) {
-      console.log("[StackBoost] Date & Time settings container found. Initializing...");
+      window.stackboost_log("[StackBoost] Date & Time settings container found. Initializing...");
 
       // Critical Dependency Check
       if (typeof stackboost_admin_ajax === 'undefined') {
@@ -77,7 +77,7 @@
           // For diagnostics, alert is annoying but effective.
           // Let's rely on console for now unless we are sure it's failing silently.
       } else {
-          console.log("[StackBoost] stackboost_admin_ajax is defined. Nonce available.");
+          window.stackboost_log("[StackBoost] stackboost_admin_ajax is defined. Nonce available.");
       }
 
       initializeDateFormatRuleBuilder();
@@ -85,7 +85,7 @@
       // Intercept the form submission for AJAX saving
       $('form[action="options.php"]').on('submit', function (e) {
           e.preventDefault();
-          console.log("[StackBoost] Form submission intercepted.");
+          window.stackboost_log("[StackBoost] Form submission intercepted.");
 
           var $form = $(this);
           var $submitButton = $form.find('input[type="submit"], button[type="submit"]');
@@ -110,11 +110,11 @@
           formData += '&action=stackboost_save_date_time_settings';
           formData += '&nonce=' + stackboost_admin_ajax.nonce;
 
-          console.log("[StackBoost] Serialized Form Data:", formData);
-          console.log("[StackBoost] Sending AJAX request to:", stackboost_admin_ajax.ajax_url);
+          window.stackboost_log("[StackBoost] Serialized Form Data:", formData);
+          window.stackboost_log("[StackBoost] Sending AJAX request to:", stackboost_admin_ajax.ajax_url);
 
           $.post(stackboost_admin_ajax.ajax_url, formData, function (response) {
-              console.log("[StackBoost] AJAX Response:", response);
+              window.stackboost_log("[StackBoost] AJAX Response:", response);
               if (response.success) {
                   window.stackboost_show_toast(response.data, 'success');
               } else {
