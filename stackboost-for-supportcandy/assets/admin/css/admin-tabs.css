@@ -4,6 +4,12 @@
     margin-bottom: 20px;
 }
 
+/* Connected Tabs (For "Big Card" Layouts) */
+.stackboost-dashboard .nav-tab-wrapper.stackboost-tabs-connected {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
 /* Active Tab Styling */
 .stackboost-dashboard .nav-tab-wrapper .nav-tab-active {
     background: #f0f0f1;
@@ -11,6 +17,21 @@
     color: var(--sb-accent, #1a3d5c);
     border-top: 4px solid var(--sb-accent, #1a3d5c) !important; /* Accent Top Border */
     margin-bottom: -1px;
+}
+
+/* Active Tab Styling for Connected Layouts (Blends with Card) */
+.stackboost-dashboard .nav-tab-wrapper.stackboost-tabs-connected .nav-tab-active {
+    background: var(--sb-card-bg, #ffffff);
+    border-bottom-color: var(--sb-card-bg, #ffffff);
+}
+
+/* Connected Card Styling */
+.stackboost-dashboard .stackboost-card.stackboost-card-connected {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    /* We keep the accent top border unless it clashes.
+       If it clashes with the "seamless" tab look, we can suppress it or rely on the tab covering it.
+       Standard WP tabs sit *over* the border. */
 }
 
 /* Tab Hover State */

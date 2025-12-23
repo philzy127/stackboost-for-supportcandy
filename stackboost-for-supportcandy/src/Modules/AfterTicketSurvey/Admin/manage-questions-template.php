@@ -5,8 +5,8 @@
  * @var array $questions The list of all existing questions.
  */
 ?>
-<div class="wrap">
-    <h2 class="nav-tab-wrapper-header">
+<div>
+    <h2 class="nav-tab-wrapper-header" style="margin-top: 0; padding-top: 10px;">
         <?php _e('Manage Questions', 'stackboost-for-supportcandy'); ?>
         <button id="stackboost-ats-add-question" class="page-title-action"><?php _e('Add New Question', 'stackboost-for-supportcandy'); ?></button>
     </h2>
