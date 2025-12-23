@@ -445,3 +445,9 @@
     font-size: 13px;
     color: #666;
 }
+
+/* Ensure spacing below top table navigation */
+.tablenav.top {
+    margin-bottom: 20px !important;
+    height: auto !important;
+}
