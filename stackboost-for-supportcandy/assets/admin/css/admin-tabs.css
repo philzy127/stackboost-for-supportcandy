@@ -23,15 +23,19 @@
 .stackboost-dashboard .nav-tab-wrapper.stackboost-tabs-connected .nav-tab-active {
     background: var(--sb-card-bg, #ffffff);
     border-bottom-color: var(--sb-card-bg, #ffffff);
+    /* Ensure the tab sits on top of the card border */
+    position: relative;
+    z-index: 10;
+    margin-bottom: -4px; /* Overlap the 3px card border */
+    padding-bottom: 7px; /* Compensate for the overlap to keep text vertically centered */
 }
 
 /* Connected Card Styling */
 .stackboost-dashboard .stackboost-card.stackboost-card-connected {
     margin-top: 0;
     border-top-left-radius: 0;
-    /* We keep the accent top border unless it clashes.
-       If it clashes with the "seamless" tab look, we can suppress it or rely on the tab covering it.
-       Standard WP tabs sit *over* the border. */
+    position: relative;
+    z-index: 1;
 }
 
 /* Tab Hover State */
