@@ -116,10 +116,15 @@
     height: 20px;
 }
 
-/* Specific Trash Icon Hover */
+/* Specific Icon Hover Colors */
+.stackboost-icon-btn .dashicons-edit:hover,
+.stackboost-icon-btn:hover .dashicons-edit {
+    color: #ffb605;
+}
+
 .stackboost-icon-btn .dashicons-trash:hover,
 .stackboost-icon-btn:hover .dashicons-trash {
-    color: var(--sb-destructive, #d63638);
+    color: #CC0202;
 }
 
 #stackboost-no-rules-message {

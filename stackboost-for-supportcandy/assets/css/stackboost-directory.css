@@ -220,6 +220,11 @@
     float: right; /* Standard DataTables positioning */
 }
 
+/* Add margin to filter dropdown in Locations tab (and similar views) */
+.tablenav.top .actions {
+    margin-bottom: 10px;
+}
+
 /* Ensure table and its rows are visible when needed */
 /* Removed specific display: table !important; from here, as it's handled by JS */
 
