@@ -107,6 +107,14 @@ class WordPress extends Module {
                                 <td><?php $this->render_checkbox_field( [ 'id' => 'enable_after_hours_notice', 'desc' => 'Displays a notice on the ticket form when submitted outside of business hours.' ] ); ?></td>
                             </tr>
                             <tr>
+                                <th><?php esc_html_e( 'Use SupportCandy Working Hours & Exceptions', 'stackboost-for-supportcandy' ); ?></th>
+                                <td><?php $this->render_checkbox_field( [ 'id' => 'use_sc_hours', 'desc' => 'If enabled, the schedule below is ignored, and SupportCandy\'s Working Hours and Exceptions are used instead.' ] ); ?></td>
+                            </tr>
+                            <tr>
+                                <th><?php esc_html_e( 'Use SupportCandy Holiday Schedule', 'stackboost-for-supportcandy' ); ?></th>
+                                <td><?php $this->render_checkbox_field( [ 'id' => 'use_sc_holidays', 'desc' => 'If enabled, the holiday list below is ignored, and SupportCandy\'s Holiday Schedule is used instead.' ] ); ?></td>
+                            </tr>
+                            <tr>
                                 <th><?php esc_html_e( 'Add Notice to Emails', 'stackboost-for-supportcandy' ); ?></th>
                                 <td><?php $this->render_checkbox_field( [ 'id' => 'after_hours_in_email', 'desc' => 'Prepend the after-hours message to email notifications if the main feature is enabled.' ] ); ?></td>
                             </tr>
@@ -114,7 +122,7 @@ class WordPress extends Module {
                     </div>
 
                     <!-- Card 2: Schedule -->
-                    <div class="stackboost-card">
+                    <div class="stackboost-card" id="stackboost-card-schedule">
                         <h2><?php esc_html_e( 'Schedule', 'stackboost-for-supportcandy' ); ?></h2>
                         <table class="form-table">
                             <tr>
@@ -133,7 +141,7 @@ class WordPress extends Module {
                     </div>
 
                     <!-- Card 3: Holidays -->
-                    <div class="stackboost-card">
+                    <div class="stackboost-card" id="stackboost-card-holidays">
                         <h2><?php esc_html_e( 'Holidays', 'stackboost-for-supportcandy' ); ?></h2>
                         <table class="form-table">
                             <tr>
@@ -163,6 +171,36 @@ class WordPress extends Module {
 
                 <?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
             </form>
+
+            <script type="text/javascript">
+                (function($) {
+                    $(document).ready(function() {
+                        function toggleScheduleCard() {
+                            if ($('#use_sc_hours').is(':checked')) {
+                                $('#stackboost-card-schedule').hide();
+                            } else {
+                                $('#stackboost-card-schedule').show();
+                            }
+                        }
+
+                        function toggleHolidaysCard() {
+                            if ($('#use_sc_holidays').is(':checked')) {
+                                $('#stackboost-card-holidays').hide();
+                            } else {
+                                $('#stackboost-card-holidays').show();
+                            }
+                        }
+
+                        // Initial check
+                        toggleScheduleCard();
+                        toggleHolidaysCard();
+
+                        // Bind events
+                        $('#use_sc_hours').on('change', toggleScheduleCard);
+                        $('#use_sc_holidays').on('change', toggleHolidaysCard);
+                    });
+                })(jQuery);
+            </script>
         </div>
         <?php
     }
@@ -182,6 +220,8 @@ class WordPress extends Module {
             'end_hour'         => $options['before_hours_end'] ?? 8,
             'include_weekends' => ! empty( $options['include_all_weekends'] ),
             'holidays'         => $this->core->parse_holidays( $options['holidays'] ?? '' ),
+            'use_sc_hours'     => ! empty( $options['use_sc_hours'] ),
+            'use_sc_holidays'  => ! empty( $options['use_sc_holidays'] ),
         ];
 
         // Use the WordPress timezone string.
@@ -232,6 +272,8 @@ class WordPress extends Module {
             'end_hour'         => $options['before_hours_end'] ?? 8,
             'include_weekends' => ! empty( $options['include_all_weekends'] ),
             'holidays'         => $this->core->parse_holidays( $options['holidays'] ?? '' ),
+            'use_sc_hours'     => ! empty( $options['use_sc_hours'] ),
+            'use_sc_holidays'  => ! empty( $options['use_sc_holidays'] ),
         ];
 
         // Use the WordPress timezone string.
@@ -263,7 +305,10 @@ class WordPress extends Module {
         );
 
         add_settings_field( 'stackboost_enable_after_hours_notice', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'enable_after_hours_notice', 'desc' => 'Displays a notice on the ticket form when submitted outside of business hours.' ] );
+        add_settings_field( 'stackboost_use_sc_hours', __( 'Use SupportCandy Working Hours & Exceptions', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'use_sc_hours', 'desc' => 'If enabled, the schedule below is ignored, and SupportCandy\'s Working Hours and Exceptions are used instead.' ] );
+        add_settings_field( 'stackboost_use_sc_holidays', __( 'Use SupportCandy Holiday Schedule', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'use_sc_holidays', 'desc' => 'If enabled, the holiday list below is ignored, and SupportCandy\'s Holiday Schedule is used instead.' ] );
         add_settings_field( 'stackboost_after_hours_in_email', __( 'Add Notice to Emails', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_in_email', 'desc' => 'Prepend the after-hours message to email notifications if the main feature is enabled.' ] );
+
         add_settings_field( 'stackboost_after_hours_start', __( 'After Hours Start (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'after_hours_start', 'default' => '17', 'desc' => 'The hour when after-hours starts (e.g., 17 for 5 PM).' ] );
         add_settings_field( 'stackboost_before_hours_end', __( 'Before Hours End (24h)', 'stackboost-for-supportcandy' ), [ $this, 'render_number_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'before_hours_end', 'default' => '8', 'desc' => 'The hour when business hours resume (e.g., 8 for 8 AM).' ] );
         add_settings_field( 'stackboost_include_all_weekends', __( 'Include All Weekends', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_after_hours_section', [ 'id' => 'include_all_weekends', 'desc' => 'Enable this to show the notice all day on Saturdays and Sundays.' ] );
