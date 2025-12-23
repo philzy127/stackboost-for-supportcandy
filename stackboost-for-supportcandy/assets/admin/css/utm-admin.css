@@ -88,20 +88,6 @@
     gap: 10px;
 }
 
-.stackboost-utm-remove-rule.button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-		padding: 0;
-		width: 30px;
-		height: 30px;
-}
-.stackboost-utm-remove-rule .dashicons {
-    font-size: 18px;
-    margin: 0;
-    vertical-align: middle;
-}
-
 #stackboost-utm-toast-container {
     position: fixed;
     top: 40px;

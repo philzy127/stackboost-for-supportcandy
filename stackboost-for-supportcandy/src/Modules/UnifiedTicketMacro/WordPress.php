@@ -314,7 +314,7 @@ class WordPress {
 						</select>
 						<span><?php esc_html_e( 'as', 'stackboost-for-supportcandy' ); ?></span>
 						<input type="text" name="stackboost_settings[utm_rename_rules][<?php echo (int) $index; ?>][name]" class="stackboost-utm-rule-name" value="<?php echo esc_attr( $rule['name'] ); ?>" />
-						<button type="button" class="button stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
+						<button type="button" class="stackboost-icon-btn stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
 					</div>
 					<?php
 				endforeach;
@@ -334,7 +334,7 @@ class WordPress {
 				</select>
 				<span><?php esc_html_e( 'as', 'stackboost-for-supportcandy' ); ?></span>
 				<input type="text" name="stackboost_settings[utm_rename_rules][__INDEX__][name]" class="stackboost-utm-rule-name" value="" />
-				<button type="button" class="button stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
+				<button type="button" class="stackboost-icon-btn stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
 			</div>
 		</script>
 		<?php
