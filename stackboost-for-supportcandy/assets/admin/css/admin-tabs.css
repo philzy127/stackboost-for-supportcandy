@@ -1,0 +1,26 @@
+/* StackBoost Admin Tabs Styling */
+.stackboost-dashboard .nav-tab-wrapper {
+    border-bottom: 1px solid #c3c4c7;
+    margin-bottom: 20px;
+}
+
+/* Active Tab Styling */
+.stackboost-dashboard .nav-tab-wrapper .nav-tab-active {
+    background: #f0f0f1;
+    border-bottom: 1px solid #f0f0f1;
+    color: var(--sb-accent, #1a3d5c);
+    border-top: 4px solid var(--sb-accent, #1a3d5c) !important; /* Accent Top Border */
+    margin-bottom: -1px;
+}
+
+/* Tab Hover State */
+.stackboost-dashboard .nav-tab-wrapper .nav-tab:hover:not(.nav-tab-active) {
+    color: var(--sb-accent, #1a3d5c);
+    border-top-color: var(--sb-accent-secondary, #3b5f7d);
+}
+
+/* Focus State */
+.stackboost-dashboard .nav-tab-wrapper .nav-tab:focus {
+    box-shadow: none;
+    outline: 1px solid var(--sb-accent, #1a3d5c);
+}

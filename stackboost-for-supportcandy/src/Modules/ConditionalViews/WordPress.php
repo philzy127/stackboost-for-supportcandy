@@ -203,7 +203,7 @@ class WordPress extends Module {
 					<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $view_id, $id ); ?>><?php echo esc_html( $name ); ?></option>
 				<?php endforeach; ?>
 			</select>
-			<button type="button" class="button stackboost-remove-rule">&times;</button>
+			<button type="button" class="stackboost-icon-btn stackboost-remove-rule"><span class="dashicons dashicons-trash"></span></button>
 		</div>
 		<?php
 	}

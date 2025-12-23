@@ -176,7 +176,7 @@ class Page {
 					</div>
 				</div>
 			</div>
-			<button type="button" class="button stackboost-remove-date-rule">&times;</button>
+			<button type="button" class="stackboost-icon-btn stackboost-remove-date-rule"><span class="dashicons dashicons-trash"></span></button>
 		</div>
 		<?php
 	}

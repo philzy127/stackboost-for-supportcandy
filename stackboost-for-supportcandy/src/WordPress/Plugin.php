@@ -386,6 +386,13 @@ final class Plugin {
 			);
 
 			wp_enqueue_style(
+				'stackboost-admin-tabs',
+				STACKBOOST_PLUGIN_URL . 'assets/admin/css/admin-tabs.css',
+				[],
+				STACKBOOST_VERSION
+			);
+
+			wp_enqueue_style(
 				'stackboost-admin-common',
 				STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-admin-common.css',
 				[],
