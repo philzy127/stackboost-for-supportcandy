@@ -21,8 +21,8 @@ class Staff {
 		$config = Settings::get_config();
 		if ( empty( $config['request_type_field'] ) || empty( $config['request_type_id'] ) ) {
 			?>
-			<div class="wrap">
-				<h2><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
+			<div class="stackboost-card stackboost-card-connected">
+				<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
 				<div class="notice notice-warning inline">
 					<p>
 						<?php

@@ -311,7 +311,6 @@ class Settings {
 
 		?>
 		<div>
-			<h2 style="display:none;"><?php esc_html_e( 'Onboarding Settings', 'stackboost-for-supportcandy' ); ?></h2>
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( self::OPTION_GROUP );
