@@ -310,7 +310,7 @@ class Settings {
 		];
 
 		?>
-		<div class="wrap">
+		<div>
 			<h2 style="display:none;"><?php esc_html_e( 'Onboarding Settings', 'stackboost-for-supportcandy' ); ?></h2>
 			<form action="options.php" method="post">
 				<?php
@@ -537,8 +537,8 @@ class Settings {
 		$config = self::get_config();
 
 		?>
-		<div class="wrap">
-			<h2><?php esc_html_e( 'Certificate Configuration', 'stackboost-for-supportcandy' ); ?></h2>
+		<div class="stackboost-card stackboost-card-connected">
+			<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Certificate Configuration', 'stackboost-for-supportcandy' ); ?></h2>
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( self::OPTION_GROUP );

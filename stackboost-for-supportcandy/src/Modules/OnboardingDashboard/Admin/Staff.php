@@ -98,23 +98,35 @@ class Staff {
 			// Render Tables
 
 			// Table 1: Previous (Inside connected card)
+			// Nesting strategy: We keep the main card wrapper open.
+			// The content inside the main card is just structured divs or h2s.
+			// The user wants "three cards inside of the main card".
+			// Since we are already inside a card (.stackboost-card-connected), we can just use <div class="stackboost-card"> for visual separation if desired,
+			// BUT .stackboost-card has a white background and shadow. Inside another white card, it might look odd unless the outer card is transparent?
+			// The outer card (.stackboost-card-connected) HAS white background.
+			// If we put cards inside cards, we get borders inside borders.
+			// Let's assume the user wants visual grouping.
+			// "Staff needs a big card with the three cards inside of the main card".
+			// This implies the outer container IS the card, and inner sections are just blocks.
+			// OR it implies nested cards.
+			// I will use a simple divider approach for now as standard nesting doubles up styling.
+			// Wait, the previous implementation closed the connected card and opened new ones.
+			// The requirement is "inside of the main card".
+			// So I will NOT close the connected card.
+
+			echo '<hr style="margin: 20px 0;">';
 			self::render_table( $onboarding_tickets['previous_onboarding'] ?? [], __( 'Previous Onboarding Tickets', 'stackboost-for-supportcandy' ) );
-			echo '</div>'; // Close Connected Card
 
-			// Table 2: This Week
-			echo '<div class="stackboost-card">';
+			echo '<hr style="margin: 20px 0;">';
 			self::render_table( $onboarding_tickets['this_week_onboarding'] ?? [], __( 'Onboarding Tickets for This Week', 'stackboost-for-supportcandy' ) );
-			echo '</div>';
 
-			// Table 3: Future
-			echo '<div class="stackboost-card">';
+			echo '<hr style="margin: 20px 0;">';
 			self::render_table( $onboarding_tickets['future_onboarding'] ?? [], __( 'Future Onboarding Tickets', 'stackboost-for-supportcandy' ) );
-			echo '</div>';
 
-			// Table 4: Unscheduled
-			echo '<div class="stackboost-card">';
+			echo '<hr style="margin: 20px 0;">';
 			self::render_table( $onboarding_tickets['uncleared_or_unscheduled'] ?? [], __( 'Onboarding Tickets Not Yet Scheduled or Cleared', 'stackboost-for-supportcandy' ) );
-			echo '</div>';
+
+			echo '</div>'; // Close Main Connected Card
 			?>
 
 			<script type="text/javascript">
