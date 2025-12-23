@@ -23,6 +23,7 @@
     border-left: var(--sb-card-border, 1px solid #ccd0d4);
     padding-left: 20px;
     padding-right: 20px; /* Added padding-right */
+    padding-bottom: 20px; /* Added padding-bottom to prevent content touching edge */
     margin-top: 20px;
 }
 
