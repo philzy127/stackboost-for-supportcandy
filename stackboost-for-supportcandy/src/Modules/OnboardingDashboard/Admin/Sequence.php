@@ -149,10 +149,11 @@ class Sequence {
 
 		ksort( $sequence_posts );
 		?>
-		<div>
-			<h2><?php esc_html_e( 'Onboarding Steps', 'stackboost-for-supportcandy' ); ?>
-				<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=stkb_onboarding_step' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New Step', 'stackboost-for-supportcandy' ); ?></a>
-			</h2>
+		<div class="stackboost-card stackboost-card-connected">
+			<div style="display: flex; justify-content: space-between; align-items: center;">
+				<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Onboarding Steps', 'stackboost-for-supportcandy' ); ?></h2>
+				<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=stkb_onboarding_step' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Add New Step', 'stackboost-for-supportcandy' ); ?></a>
+			</div>
 			<p><?php esc_html_e( 'Drag and drop the steps below to set the onboarding sequence.', 'stackboost-for-supportcandy' ); ?></p>
 
 			<form method="post" action="">

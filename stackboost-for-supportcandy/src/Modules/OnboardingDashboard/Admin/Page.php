@@ -45,7 +45,7 @@ class Page {
 		?>
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php esc_html_e( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ); ?></h1>
-			<h2 class="nav-tab-wrapper">
+			<h2 class="nav-tab-wrapper stackboost-tabs-connected">
 				<?php
 				foreach ( $tabs as $tab_id => $tab_name ) {
 					$tab_url = add_query_arg(

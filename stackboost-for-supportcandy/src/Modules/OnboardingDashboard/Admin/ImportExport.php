@@ -21,18 +21,16 @@ class ImportExport {
 		$legacy_count = wp_count_posts( 'onboarding_step' )->publish ?? 0;
 		?>
 		<div>
-			<h2><?php esc_html_e( 'Import / Export & Migration', 'stackboost-for-supportcandy' ); ?></h2>
-
-			<!-- Export Section -->
-			<div class="card" style="max-width: 800px; margin-top: 20px; padding: 20px;">
-				<h3><?php esc_html_e( 'Export Onboarding Steps', 'stackboost-for-supportcandy' ); ?></h3>
+			<!-- Export Section (Connected) -->
+			<div class="stackboost-card stackboost-card-connected">
+				<h3 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Export Onboarding Steps', 'stackboost-for-supportcandy' ); ?></h3>
 				<p><?php esc_html_e( 'Download all Onboarding Steps and their settings as a JSON file.', 'stackboost-for-supportcandy' ); ?></p>
 				<button type="button" id="exportStepsBtn" class="button button-primary"><?php esc_html_e( 'Export JSON', 'stackboost-for-supportcandy' ); ?></button>
 			</div>
 
 			<!-- Import Section -->
-			<div class="card" style="max-width: 800px; margin-top: 20px; padding: 20px;">
-				<h3><?php esc_html_e( 'Import Onboarding Steps', 'stackboost-for-supportcandy' ); ?></h3>
+			<div class="stackboost-card">
+				<h3 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Import Onboarding Steps', 'stackboost-for-supportcandy' ); ?></h3>
 				<p><?php esc_html_e( 'Upload a JSON file to import Onboarding Steps. This process will automatically handle migration from legacy data formats if present.', 'stackboost-for-supportcandy' ); ?></p>
 
 				<form id="importForm" enctype="multipart/form-data">
@@ -48,8 +46,8 @@ class ImportExport {
 			</div>
 
 			<!-- Data Migration Section -->
-			<div class="card" style="max-width: 800px; margin-top: 20px; padding: 20px;">
-				<h3><?php esc_html_e( 'Legacy Data Migration (Manual)', 'stackboost-for-supportcandy' ); ?></h3>
+			<div class="stackboost-card">
+				<h3 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Legacy Data Migration (Manual)', 'stackboost-for-supportcandy' ); ?></h3>
 				<p><?php esc_html_e( 'If you have imported data from the old "Onboarding Dashboard" plugin using WordPress Importer, the posts may be stored as "Legacy Onboarding Steps". Use this tool to convert them to the new format.', 'stackboost-for-supportcandy' ); ?></p>
 
 				<p><strong><?php printf( esc_html__( 'Found %d legacy items.', 'stackboost-for-supportcandy' ), $legacy_count ); ?></strong></p>
