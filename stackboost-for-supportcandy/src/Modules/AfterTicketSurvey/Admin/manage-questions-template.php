@@ -5,8 +5,8 @@
  * @var array $questions The list of all existing questions.
  */
 ?>
-<div class="wrap">
-    <h2 class="nav-tab-wrapper-header">
+<div>
+    <h2 class="nav-tab-wrapper-header" style="margin-top: 0; padding-top: 10px;">
         <?php _e('Manage Questions', 'stackboost-for-supportcandy'); ?>
         <button id="stackboost-ats-add-question" class="page-title-action"><?php _e('Add New Question', 'stackboost-for-supportcandy'); ?></button>
     </h2>
@@ -48,8 +48,8 @@
                     </td>
                     <td><?php echo esc_html( $q['prefill_key'] ?? '-' ); ?></td>
                     <td>
-                        <button class="button button-small stackboost-ats-edit-question" data-id="<?php echo esc_attr($q['id']); ?>"><?php _e('Edit', 'stackboost-for-supportcandy'); ?></button>
-                        <button class="button button-small button-link-delete stackboost-ats-delete-question" data-id="<?php echo esc_attr($q['id']); ?>"><?php _e('Delete', 'stackboost-for-supportcandy'); ?></button>
+                        <button type="button" class="stackboost-icon-btn stackboost-ats-edit-question" data-id="<?php echo esc_attr($q['id']); ?>" title="<?php esc_attr_e('Edit', 'stackboost-for-supportcandy'); ?>"><span class="dashicons dashicons-edit"></span></button>
+                        <button type="button" class="stackboost-icon-btn stackboost-ats-delete-question" data-id="<?php echo esc_attr($q['id']); ?>" title="<?php esc_attr_e('Delete', 'stackboost-for-supportcandy'); ?>"><span class="dashicons dashicons-trash"></span></button>
                     </td>
                 </tr>
                 <?php endforeach; ?>

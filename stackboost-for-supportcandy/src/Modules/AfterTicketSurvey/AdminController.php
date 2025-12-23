@@ -44,15 +44,20 @@ class AdminController {
      */
     public function render_page() {
         $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'questions';
+
+        $theme_class = 'sb-theme-clean-tech';
+        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
         ?>
-        <div class="wrap">
+        <div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
             <h1><?php _e( 'After Ticket Survey', 'stackboost-for-supportcandy' ); ?></h1>
-            <nav class="nav-tab-wrapper">
+            <nav class="nav-tab-wrapper stackboost-tabs-connected">
                 <a href="?page=stackboost-ats&tab=questions" class="nav-tab <?php if($current_tab === 'questions') echo 'nav-tab-active'; ?>"><?php _e('Manage Questions', 'stackboost-for-supportcandy'); ?></a>
                 <a href="?page=stackboost-ats&tab=submissions" class="nav-tab <?php if($current_tab === 'submissions') echo 'nav-tab-active'; ?>"><?php _e('Manage Submissions', 'stackboost-for-supportcandy'); ?></a>
                 <a href="?page=stackboost-ats&tab=results" class="nav-tab <?php if($current_tab === 'results') echo 'nav-tab-active'; ?>"><?php _e('View Results', 'stackboost-for-supportcandy'); ?></a>
             </nav>
-            <div class="tab-content" style="margin-top: 20px;">
+            <div class="stackboost-card stackboost-card-connected">
             <?php
                 switch ( $current_tab ) {
                     case 'submissions': $this->render_submissions_tab(); break;

@@ -23,12 +23,20 @@ class Management {
 	 * Render the management page.
 	 */
 	public static function render_management_page() {
+        $theme_class = 'sb-theme-clean-tech';
+        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
 		?>
-		<div class="wrap">
+		<div class="stackboost-card stackboost-card-connected">
+			<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Data Migration', 'stackboost-for-supportcandy' ); ?></h2>
 			<?php self::render_json_section(); ?>
 			<hr>
 			<?php self::render_import_section(); ?>
-			<hr>
+		</div>
+
+		<div class="stackboost-card">
+			<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Reset Database', 'stackboost-for-supportcandy' ); ?></h2>
 			<?php self::render_clear_section(); ?>
 			<hr>
 			<?php self::render_fresh_start_section(); ?>
@@ -66,7 +74,7 @@ class Management {
 	 */
 	private static function render_json_section() {
 		?>
-		<h2><?php esc_html_e( 'JSON Import / Export', 'stackboost-for-supportcandy' ); ?></h2>
+		<h3><?php esc_html_e( 'JSON Import / Export', 'stackboost-for-supportcandy' ); ?></h3>
 		<p class="description">
 			<?php esc_html_e( 'Export all directory data to a JSON file, or import data from a JSON file. ', 'stackboost-for-supportcandy' ); ?>
 			<strong style="color: red;"><?php esc_html_e( 'Warning: Importing JSON will REPLACE ALL EXISTING DATA.', 'stackboost-for-supportcandy' ); ?></strong>
@@ -98,7 +106,7 @@ class Management {
 	 */
 	private static function render_import_section() {
 		?>
-		<h2><?php esc_html_e( 'Import Staff from CSV', 'stackboost-for-supportcandy' ); ?></h2>
+		<h3><?php esc_html_e( 'Import Staff from CSV', 'stackboost-for-supportcandy' ); ?></h3>
 		<p><?php esc_html_e( 'Upload a CSV file to import staff members. The CSV should have the following columns: Name, Email, Office Phone, Extension, Mobile Phone, Job Title, Department/Program.', 'stackboost-for-supportcandy' ); ?></p>
 		<form id="stackboost-csv-import-form" method="post" enctype="multipart/form-data">
 			<p>
@@ -117,7 +125,7 @@ class Management {
 	 */
 	private static function render_clear_section() {
 		?>
-		<h2><?php esc_html_e( 'Clear Directory Data', 'stackboost-for-supportcandy' ); ?></h2>
+		<h3><?php esc_html_e( 'Clear Directory Data', 'stackboost-for-supportcandy' ); ?></h3>
 		<p><?php esc_html_e( 'This will delete all staff members from the directory, but not locations or departments.', 'stackboost-for-supportcandy' ); ?></p>
 		<button id="stackboost-clear-db-button" class="button"><?php esc_html_e( 'Clear Staff Data', 'stackboost-for-supportcandy' ); ?></button>
 		<div id="clear-progress"></div>
@@ -129,7 +137,7 @@ class Management {
 	 */
 	private static function render_fresh_start_section() {
 		?>
-		<h2><?php esc_html_e( 'Fresh Start', 'stackboost-for-supportcandy' ); ?></h2>
+		<h3><?php esc_html_e( 'Fresh Start', 'stackboost-for-supportcandy' ); ?></h3>
 		<p class="description" style="color: red; font-weight: bold;">
 			<?php esc_html_e( 'WARNING: This is a destructive action. It will permanently delete all staff, locations, and departments, and clear the trash. This cannot be undone.', 'stackboost-for-supportcandy' ); ?>
 		</p>

@@ -64,7 +64,7 @@ class Settings {
 			'page_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
 			'menu_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
 			'capability'  => 'manage_options',
-			'callback'    => [ $this, 'render_settings_page' ],
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketView\WordPress::get_instance(), 'render_page' ],
 		];
 
 		// 3. Date & Time Formatting (New Module) - Lite
@@ -90,7 +90,7 @@ class Settings {
 				'page_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\AfterHoursNotice\WordPress::get_instance(), 'render_page' ],
 			];
 		}
 
@@ -102,7 +102,7 @@ class Settings {
 				'page_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\ConditionalViews\WordPress::get_instance(), 'render_page' ],
 			];
 		}
 
@@ -114,7 +114,7 @@ class Settings {
 				'page_title'  => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
 				'capability'  => 'manage_options',
-				'callback'    => [ $this, 'render_settings_page' ],
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\QueueMacro\WordPress::get_instance(), 'render_page' ],
 			];
 		}
 
@@ -166,7 +166,17 @@ class Settings {
 			];
 		}
 
-		// 11. Tools / Diagnostics
+		// 11. Appearance (Themification)
+		$menu_config[] = [
+			'slug'        => 'stackboost-appearance',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
+			'capability'  => 'manage_options',
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page::class, 'render' ], // Using static call for consistency, though class is not static
+		];
+
+		// 12. Tools / Diagnostics
 		$menu_config[] = [
 			'slug'        => 'stackboost-tools',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -216,8 +226,16 @@ class Settings {
 		$page_slug = $screen->base === 'toplevel_page_stackboost-for-supportcandy' ? 'stackboost-for-supportcandy' : $screen->id;
         $page_slug = str_replace(['stackboost_page_', 'toplevel_page_'], '', $page_slug);
 
+        // Get active theme class
+        $theme_class = 'sb-theme-clean-tech'; // Default
+        if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
+
 		?>
-		<div class="wrap stackboost-dashboard">
+		<!-- StackBoost Wrapper Start -->
+		<!-- Theme: <?php echo esc_html( $theme_class ); ?> -->
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 
 			<?php if ( 'stackboost-for-supportcandy' === $page_slug ) : ?>
@@ -260,6 +278,34 @@ class Settings {
                         <a href="https://stackboost.net" target="_blank" class="stackboost-resources-btn"><?php esc_html_e( 'Visit StackBoost.net', 'stackboost-for-supportcandy' ); ?></a>
                     </div>
                 </div>
+
+			<?php elseif ( 'stackboost-tools' === $page_slug ) : ?>
+				<form action="options.php" method="post">
+					<?php
+					settings_fields( 'stackboost_settings' );
+					echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-tools">';
+					?>
+
+					<div class="stackboost-dashboard-grid">
+						<!-- Card 1: Diagnostic Log -->
+						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'Diagnostic Log', 'stackboost-for-supportcandy' ); ?></h2>
+							<table class="form-table">
+								<?php do_settings_fields( 'stackboost-tools', 'stackboost_tools_section' ); ?>
+							</table>
+						</div>
+
+						<!-- Card 2: Data Management -->
+						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'Data Management', 'stackboost-for-supportcandy' ); ?></h2>
+							<table class="form-table">
+								<?php do_settings_fields( 'stackboost-tools', 'stackboost_tools_uninstall_section' ); ?>
+							</table>
+						</div>
+					</div>
+
+					<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
+				</form>
 
 			<?php else : ?>
 				<form action="options.php" method="post">
@@ -557,12 +603,21 @@ class Settings {
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'Settings::sanitize_settings called.', 'core' );
+			stackboost_log( 'Input Data: ' . print_r( $input, true ), 'core' );
+		}
+
 		$saved_settings = get_option('stackboost_settings', []);
 		if (!is_array($saved_settings)) {
 			$saved_settings = [];
 		}
 
 		$page_slug = sanitize_key($input['page_slug'] ?? '');
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "Processing page_slug: {$page_slug}", 'core' );
+		}
+
 		if (empty($page_slug)) {
 			return $saved_settings;
 		}
@@ -602,8 +657,9 @@ class Settings {
 				'enable_log_ats',
 				'enable_log_directory',
 				'enable_log_onboarding',
+				'enable_log_appearance', // Added Appearance Logging
 			],
-			'stackboost-date-time'          => ['enable_date_time_formatting', 'date_format_rules'],
+			// 'stackboost-date-time' removed - uses isolated option group via custom AJAX
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
@@ -642,6 +698,7 @@ class Settings {
 					case 'enable_log_ats':
 					case 'enable_log_directory':
 					case 'enable_log_onboarding':
+					case 'enable_log_appearance':
 						$saved_settings[$key] = intval($value);
 						break;
 
@@ -658,11 +715,17 @@ class Settings {
 						break;
 
 					case 'date_format_rules':
+						if ( function_exists( 'stackboost_log' ) ) {
+							stackboost_log( 'Sanitizing date_format_rules. Raw Value: ' . print_r( $value, true ), 'core' );
+						}
 						// Check if rules are present in the submission.
 						if ( is_array( $value ) ) {
 							$sanitized_rules = [];
-							foreach ( $value as $rule ) {
+							foreach ( $value as $index => $rule ) {
 								if ( ! is_array( $rule ) || empty( $rule['column'] ) ) {
+									if ( function_exists( 'stackboost_log' ) ) {
+										stackboost_log( "Skipping rule at index {$index}: Invalid structure or missing column.", 'core' );
+									}
 									continue;
 								}
 								$sanitized_rule                   = [];
@@ -672,6 +735,9 @@ class Settings {
 								$sanitized_rule['use_long_date']    = ! empty( $rule['use_long_date'] ) ? 1 : 0;
 								$sanitized_rule['show_day_of_week'] = ! empty( $rule['show_day_of_week'] ) ? 1 : 0;
 								$sanitized_rules[]              = $sanitized_rule;
+							}
+							if ( function_exists( 'stackboost_log' ) ) {
+								stackboost_log( 'Final Sanitized Rules: ' . print_r( $sanitized_rules, true ), 'core' );
 							}
 							$saved_settings[$key] = $sanitized_rules;
 						} else {
@@ -762,6 +828,7 @@ class Settings {
 			'enable_log_ats'               => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
 			'enable_log_directory'         => __( 'Company Directory', 'stackboost-for-supportcandy' ),
 			'enable_log_onboarding'        => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
+			'enable_log_appearance'        => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ),
 		];
 
 		foreach ( $modules as $key => $label ) {
@@ -877,6 +944,11 @@ class Settings {
 	 * AJAX handler to save settings via the central sanitizer.
 	 */
 	public function ajax_save_settings() {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'AJAX Save Settings Called', 'core' );
+			stackboost_log( 'POST Data: ' . print_r( $_POST, true ), 'core' );
+		}
+
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -884,11 +956,18 @@ class Settings {
 		}
 
 		if ( ! isset( $_POST['stackboost_settings'] ) || ! is_array( $_POST['stackboost_settings'] ) ) {
+            if ( function_exists( 'stackboost_log' ) ) {
+                stackboost_log( 'Invalid settings data structure.', 'core' );
+            }
 			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
 		}
 
 		// Retrieve the new settings from the POST request.
 		$new_settings = $_POST['stackboost_settings'];
+
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( 'New Settings to Process: ' . print_r( $new_settings, true ), 'core' );
+        }
 
 		// Get the existing settings.
 		$current_settings = get_option( 'stackboost_settings', [] );
@@ -899,6 +978,10 @@ class Settings {
 		// 'page_slug' which tells sanitize_settings() which fields to process.
 		// It will merge these new values into the existing saved_settings and return the full array.
 		$sanitized_settings = $this->sanitize_settings( $new_settings );
+
+        if ( function_exists( 'stackboost_log' ) ) {
+            stackboost_log( 'Final Sanitized Settings: ' . print_r( $sanitized_settings, true ), 'core' );
+        }
 
 		// Update the option.
 		update_option( 'stackboost_settings', $sanitized_settings );

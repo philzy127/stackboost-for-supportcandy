@@ -8,7 +8,7 @@ jQuery(document).ready(function($) {
         if (typeof window.stackboost_log === 'function') {
             window.stackboost_log('[ATS] ' + message, context);
         } else if (stackboost_ats_manage.diagnostic_log_enabled) {
-            console.log('[StackBoost ATS] ' + message, context || '');
+            window.stackboost_log('[StackBoost ATS] ' + message, context || '');
         }
     }
 

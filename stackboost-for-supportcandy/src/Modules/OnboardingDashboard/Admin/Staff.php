@@ -21,8 +21,8 @@ class Staff {
 		$config = Settings::get_config();
 		if ( empty( $config['request_type_field'] ) || empty( $config['request_type_id'] ) ) {
 			?>
-			<div class="wrap">
-				<h2><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
+			<div class="stackboost-card stackboost-card-connected">
+				<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
 				<div class="notice notice-warning inline">
 					<p>
 						<?php
@@ -42,10 +42,15 @@ class Staff {
 
 		?>
 		<div>
-			<h2><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
-
-			<button id="stkb-force-refresh" class="button" style="margin-bottom: 15px;"><?php esc_html_e( 'Update Now', 'stackboost-for-supportcandy' ); ?></button>
-			<span id="stkb-refresh-status" style="margin-left: 10px; display: none; vertical-align: middle;"></span>
+			<!-- Header & Controls -->
+			<div class="stackboost-card stackboost-card-connected">
+				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+					<h2 style="margin:0; padding:0;"><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
+					<div>
+						<button id="stkb-force-refresh" class="button"><?php esc_html_e( 'Update Now', 'stackboost-for-supportcandy' ); ?></button>
+						<span id="stkb-refresh-status" style="margin-left: 10px; display: none; vertical-align: middle;"></span>
+					</div>
+				</div>
 
 			<?php
 			$cached_data = get_transient( $transient_key );
@@ -91,13 +96,37 @@ class Staff {
 			}
 
 			// Render Tables
+
+			// Table 1: Previous (Inside connected card)
+			// Nesting strategy: We keep the main card wrapper open.
+			// The content inside the main card is just structured divs or h2s.
+			// The user wants "three cards inside of the main card".
+			// Since we are already inside a card (.stackboost-card-connected), we can just use <div class="stackboost-card"> for visual separation if desired,
+			// BUT .stackboost-card has a white background and shadow. Inside another white card, it might look odd unless the outer card is transparent?
+			// The outer card (.stackboost-card-connected) HAS white background.
+			// If we put cards inside cards, we get borders inside borders.
+			// Let's assume the user wants visual grouping.
+			// "Staff needs a big card with the three cards inside of the main card".
+			// This implies the outer container IS the card, and inner sections are just blocks.
+			// OR it implies nested cards.
+			// I will use a simple divider approach for now as standard nesting doubles up styling.
+			// Wait, the previous implementation closed the connected card and opened new ones.
+			// The requirement is "inside of the main card".
+			// So I will NOT close the connected card.
+
+			echo '<hr style="margin: 20px 0;">';
 			self::render_table( $onboarding_tickets['previous_onboarding'] ?? [], __( 'Previous Onboarding Tickets', 'stackboost-for-supportcandy' ) );
-			echo '<hr>';
+
+			echo '<hr style="margin: 20px 0;">';
 			self::render_table( $onboarding_tickets['this_week_onboarding'] ?? [], __( 'Onboarding Tickets for This Week', 'stackboost-for-supportcandy' ) );
-			echo '<hr>';
+
+			echo '<hr style="margin: 20px 0;">';
 			self::render_table( $onboarding_tickets['future_onboarding'] ?? [], __( 'Future Onboarding Tickets', 'stackboost-for-supportcandy' ) );
-			echo '<hr>';
+
+			echo '<hr style="margin: 20px 0;">';
 			self::render_table( $onboarding_tickets['uncleared_or_unscheduled'] ?? [], __( 'Onboarding Tickets Not Yet Scheduled or Cleared', 'stackboost-for-supportcandy' ) );
+
+			echo '</div>'; // Close Main Connected Card
 			?>
 
 			<script type="text/javascript">

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2025-12-22
+
+### Added
+- **UI Themification:** Introduced a comprehensive theming system with a standardized color palette (accent, secondary, destructive, success) across the admin interface.
+- **Card Layouts:** Implemented a new "Connected Card" layout for tabbed interfaces (Directory, Onboarding, After Ticket Survey) to create a seamless, modern visual experience where tabs blend into the content area.
+- **Standardized Buttons:** Unified the design of "delete" and "remove" buttons across all modules (Conditional Views, Date & Time, UTM, After Ticket Survey, Onboarding) to use a consistent icon-only style with a red hover effect.
+- **Admin Tabs Styling:** Added dedicated styling for admin tabs to match the active theme's accent color.
+
+### Changed
+- **Logging Standardization:** Audited and refactored client-side (JS) and server-side (PHP) logging. All debug output now routes through the centralized `stackboost_log` utilities, respecting the global "Enable Diagnostic Log" setting and removing stray console/error logs.
+- **Module Layouts:**
+    - **Directory:** Restructured settings and management pages into logical card groups with clear headers.
+    - **Onboarding:** Updated the dashboard, staff, and settings pages to use the new card system.
+    - **After Ticket Survey:** Updated the tab structure to use the connected card layout.
+
 ## [1.3.9] - 2025-12-21
 
 ### Changed

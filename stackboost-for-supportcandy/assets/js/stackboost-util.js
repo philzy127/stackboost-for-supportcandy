@@ -4,6 +4,7 @@ jQuery(document).ready(function($) {
         if (typeof window.stackboost_log === 'function') {
             window.stackboost_log('[Util] ' + message, data);
         } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
+            // Fallback for when stackboost-admin-common.js isn't loaded (e.g. frontend)
             if (data) {
                 console.log('[StackBoost Util]', message, data);
             } else {

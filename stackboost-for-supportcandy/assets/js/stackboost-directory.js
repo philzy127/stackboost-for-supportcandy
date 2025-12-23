@@ -4,6 +4,7 @@ jQuery(document).ready(function($) {
         if (typeof window.stackboost_log === 'function') {
             window.stackboost_log('[Directory] ' + message, data);
         } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
+            // Fallback for when stackboost-admin-common.js isn't loaded (e.g. frontend)
             if (data) {
                 console.log('[StackBoost Directory]', message, data);
             } else {
@@ -14,7 +15,7 @@ jQuery(document).ready(function($) {
 
     var sbError = function(message, data) {
         if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Directory] ' + message, data);
+            window.stackboost_log('[Directory Error] ' + message, data);
         } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
              if (data) {
                 console.error('[StackBoost Directory]', message, data);

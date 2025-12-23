@@ -183,6 +183,77 @@ class WordPress extends Module {
 		add_settings_field( 'stackboost_queue_macro_test', __( 'Test Queue Counts', 'stackboost-for-supportcandy' ), [ $this, 'render_test_button_field' ], $page_slug, 'stackboost_queue_macro_section' );
 	}
 
+	/**
+	 * Render the administration page.
+	 */
+	public function render_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Get active theme class
+		$theme_class = 'sb-theme-clean-tech'; // Default
+		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+		}
+
+		// Prepare data for the select field (duplicated logic from register_settings, ideal for refactor but kept inline for safety)
+        $plugin_instance = Plugin::get_instance();
+        $custom_fields = $plugin_instance->get_supportcandy_columns();
+		$default_fields    = [
+			'category' => __( 'Category', 'stackboost-for-supportcandy' ),
+			'priority' => __( 'Priority', 'stackboost-for-supportcandy' ),
+			'status'   => __( 'Status', 'stackboost-for-supportcandy' ),
+		];
+		$all_type_fields = array_merge( $default_fields, $custom_fields );
+		asort( $all_type_fields );
+
+		?>
+		<!-- StackBoost Wrapper Start -->
+		<!-- Theme: <?php echo esc_html( $theme_class ); ?> -->
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
+			<h1><?php esc_html_e( 'Queue Macro', 'stackboost-for-supportcandy' ); ?></h1>
+			<?php settings_errors(); ?>
+
+			<form action="options.php" method="post">
+				<?php
+				settings_fields( 'stackboost_settings' );
+				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-queue-macro">';
+				?>
+
+				<div class="stackboost-dashboard-grid">
+					<!-- Card 1: Queue Configuration -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Queue Configuration', 'stackboost-for-supportcandy' ); ?></h2>
+						<p><?php esc_html_e( 'Configure how the queue position is calculated for the {{queue_count}} macro.', 'stackboost-for-supportcandy' ); ?></p>
+
+						<table class="form-table">
+							<tr>
+								<th><?php esc_html_e( 'Enable Feature', 'stackboost-for-supportcandy' ); ?></th>
+								<td><?php $this->render_checkbox_field( [ 'id' => 'enable_queue_macro', 'desc' => 'Adds a {{queue_count}} macro to show customers their queue position.' ] ); ?></td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'Ticket Type Field', 'stackboost-for-supportcandy' ); ?></th>
+								<td><?php $this->render_select_field( [ 'id' => 'queue_macro_type_field', 'choices' => $all_type_fields, 'desc' => 'The field that distinguishes your queues (e.g., category, priority).' ] ); ?></td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'Non-Closed Statuses', 'stackboost-for-supportcandy' ); ?></th>
+								<td><?php $this->render_statuses_dual_list_field( [ 'id' => 'queue_macro_statuses', 'desc' => 'Select which ticket statuses should count toward the queue.' ] ); ?></td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'Test Queue Counts', 'stackboost-for-supportcandy' ); ?></th>
+								<td><?php $this->render_test_button_field(); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+
+				<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
+			</form>
+		</div>
+		<?php
+	}
+
     /**
      * Render the dual list for statuses.
      * @param array $args
@@ -218,8 +289,8 @@ class WordPress extends Module {
                 </select>
             </div>
             <div class="dual-buttons">
-                <button type="button" class="button" id="stackboost_add_status">&rarr;</button>
-                <button type="button" class="button" id="stackboost_remove_status">&larr;</button>
+                <button type="button" class="button" id="stackboost_add_status"><span class="dashicons dashicons-arrow-right"></span></button>
+                <button type="button" class="button" id="stackboost_remove_status"><span class="dashicons dashicons-arrow-left"></span></button>
             </div>
             <div class="dual-list-box">
                 <h3><?php _e( 'Selected Statuses', 'stackboost-for-supportcandy' ); ?></h3>

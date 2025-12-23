@@ -8,12 +8,13 @@
 }
 
 .stackboost-card {
-    background: #fff;
-    border: 1px solid #ccd0d4;
+    background: var(--sb-card-bg, #fff);
+    border: var(--sb-card-border, 1px solid #ccd0d4);
     box-shadow: 0 1px 1px rgba(0,0,0,0.04);
-    border-radius: 4px; /* Standard WordPress border radius */
+    border-radius: var(--sb-radius, 4px);
     padding: 20px;
     box-sizing: border-box;
+    /* Added accent border logic in common.css via specific selector, keeping base robust here */
 }
 
 .stackboost-card h2 {
@@ -49,7 +50,7 @@
 }
 
 .stackboost-status-value {
-    color: #2271b1; /* WP Blue */
+    color: var(--sb-accent, #2271b1);
 }
 
 .stackboost-status-value.success {
@@ -69,6 +70,7 @@
     max-width: 100%;
     box-sizing: border-box;
     margin-bottom: 10px;
+    /* Styles are now handled by common dashboard rules, but we keep structure here */
 }
 
 /* Resources Card */
@@ -94,12 +96,12 @@
     border-width: 1px;
     border-style: solid;
     -webkit-appearance: none;
-    border-radius: 3px;
+    border-radius: var(--sb-radius, 3px);
     white-space: nowrap;
     box-sizing: border-box;
     /* Primary Button Styles */
-    background: #2271b1;
-    border-color: #2271b1;
+    background: var(--sb-accent, #2271b1);
+    border-color: var(--sb-accent, #2271b1);
     color: #fff;
     text-align: center;
     width: 100%; /* Full width button for resources */
@@ -107,7 +109,10 @@
 
 .stackboost-resources-btn:hover,
 .stackboost-resources-btn:focus {
-    background: #135e96;
-    border-color: #135e96;
+    /* Hard to variable-ize a darken effect without HSL.
+       For now, we can try to use a filter or keep static,
+       but keeping static blue hover on dynamic red button looks bad.
+       Let's use a brightness filter. */
+    filter: brightness(0.9);
     color: #fff;
 }

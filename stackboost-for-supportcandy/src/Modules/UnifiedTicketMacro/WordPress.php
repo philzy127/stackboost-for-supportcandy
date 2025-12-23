@@ -161,22 +161,45 @@ class WordPress {
 	 * Render the main settings page.
 	 */
 	public function render_settings_page() {
+        $theme_class = 'sb-theme-clean-tech';
+        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
 		?>
-		<div class="wrap">
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<form method="post" action="options.php">
 				<?php
 				// This will output the nonces and other fields for the 'stackboost_settings' group.
 				settings_fields( 'stackboost_settings' );
-
-				// This will render the sections and fields that were registered for this page.
-				do_settings_sections( 'stackboost-utm' );
-
 				// Add the hidden page slug field, which is critical for the central sanitizer.
 				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-utm">';
-
-				submit_button();
 				?>
+
+				<div class="stackboost-dashboard-grid">
+					<!-- Card 1: General Settings & Fields -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'General Settings & Fields', 'stackboost-for-supportcandy' ); ?></h2>
+						<table class="form-table">
+							<?php
+							do_settings_fields( 'stackboost-utm', 'stackboost_utm_main_section' );
+							do_settings_fields( 'stackboost-utm', 'stackboost_utm_fields_section' );
+							?>
+						</table>
+					</div>
+
+					<!-- Card 2: Rename Rules -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Rename Field Titles', 'stackboost-for-supportcandy' ); ?></h2>
+						<table class="form-table">
+							<?php
+							do_settings_fields( 'stackboost-utm', 'stackboost_utm_rename_section' );
+							?>
+						</table>
+					</div>
+				</div>
+
+				<?php submit_button(); ?>
 			</form>
 		</div>
 		<?php
@@ -291,7 +314,7 @@ class WordPress {
 						</select>
 						<span><?php esc_html_e( 'as', 'stackboost-for-supportcandy' ); ?></span>
 						<input type="text" name="stackboost_settings[utm_rename_rules][<?php echo (int) $index; ?>][name]" class="stackboost-utm-rule-name" value="<?php echo esc_attr( $rule['name'] ); ?>" />
-						<button type="button" class="button stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
+						<button type="button" class="stackboost-icon-btn stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
 					</div>
 					<?php
 				endforeach;
@@ -311,7 +334,7 @@ class WordPress {
 				</select>
 				<span><?php esc_html_e( 'as', 'stackboost-for-supportcandy' ); ?></span>
 				<input type="text" name="stackboost_settings[utm_rename_rules][__INDEX__][name]" class="stackboost-utm-rule-name" value="" />
-				<button type="button" class="button stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
+				<button type="button" class="stackboost-icon-btn stackboost-utm-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
 			</div>
 		</script>
 		<?php

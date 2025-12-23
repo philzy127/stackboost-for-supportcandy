@@ -1,0 +1,123 @@
+/*
+ * StackBoost Admin Themes
+ * Defines CSS variables for the Admin Themification Project.
+ */
+
+:root {
+    /* Default Fallbacks (Clean Tech) */
+    --sb-accent: #1a3d5c;
+    --sb-accent-secondary: #3b5f7d;
+    --sb-accent-dark: #122b40;
+    --sb-text-on-accent: #ffffff;
+    --sb-destructive: #d63638;
+    --sb-success: #008a20;
+
+    --sb-bg-main: #ffffff;
+    --sb-card-bg: #ffffff;
+    --sb-card-border: 1px solid #ccd0d4;
+    --sb-radius: 2px;
+    --sb-input-bg: #ffffff;
+    --sb-spacing: 8px;
+}
+
+/* Theme 1: WordPress Sync */
+.sb-theme-wordpress-sync {
+    --sb-accent: var(--wp-admin-theme-color, #2271b1);
+    --sb-accent-secondary: #72aee6; /* WP Blue Lighter */
+    --sb-accent-dark: #135e96; /* WP Blue Darker */
+    --sb-text-on-accent: #ffffff;
+    --sb-destructive: #d63638;
+    --sb-success: #008a20;
+
+    --sb-bg-main: #f0f0f1;
+    --sb-card-bg: #ffffff;
+    --sb-card-border: 1px solid #ccd0d4;
+    --sb-radius: 4px;
+    --sb-input-bg: #ffffff;
+    --sb-spacing: 8px;
+}
+
+/* Theme 2: SupportCandy Sync */
+/* Note: --sb-accent and --sb-bg-main are injected dynamically via PHP */
+.sb-theme-supportcandy-sync {
+    /* Fallbacks if PHP injection fails */
+    --sb-accent-secondary: #555;
+    --sb-accent-dark: #222;
+    --sb-text-on-accent: #ffffff;
+    --sb-destructive: #d63638;
+    --sb-success: #28a745;
+
+    --sb-card-bg: #ffffff;
+    --sb-card-border: 1px solid #ccd0d4;
+    --sb-radius: 4px;
+    --sb-input-bg: #ffffff;
+    --sb-spacing: 8px;
+}
+
+/* Theme 3: Cloud Dancer */
+.sb-theme-cloud-dancer {
+    --sb-accent: #722ed1; /* Electric Purple */
+    --sb-accent-secondary: #9b5ceb;
+    --sb-accent-dark: #521a9e;
+    --sb-text-on-accent: #ffffff;
+    --sb-destructive: #a61d24; /* Slightly darker red for contrast */
+    --sb-success: #158c38;
+
+    --sb-bg-main: #F0EEE9;
+    --sb-card-bg: #ffffff;
+    --sb-card-border: 1px solid #e0e0e0;
+    --sb-radius: 10px;
+    --sb-input-bg: #ffffff;
+    --sb-spacing: 12px;
+}
+
+/* Theme 4: Heroic */
+.sb-theme-heroic {
+    --sb-accent: #d63638; /* Superhero Red */
+    --sb-accent-secondary: #e66b6d;
+    --sb-accent-dark: #a02022;
+    --sb-text-on-accent: #ffffff;
+    --sb-destructive: #000000; /* Black for destructive in a red theme? Or stick to red? Sticking to Red for now. */
+    --sb-success: #28a745;
+
+    --sb-bg-main: #f6f7f7;
+    --sb-card-bg: #ffffff;
+    --sb-card-border: 1px solid #d63638;
+    --sb-radius: 4px;
+    --sb-input-bg: #ffffff;
+    --sb-spacing: 8px;
+}
+
+/* Theme 5: Clean Tech (Explicit) */
+.sb-theme-clean-tech {
+    --sb-accent: #1a3d5c; /* Professional Navy */
+    --sb-accent-secondary: #3b5f7d;
+    --sb-accent-dark: #122b40;
+    --sb-text-on-accent: #ffffff;
+    --sb-destructive: #d63638;
+    --sb-success: #008a20;
+
+    --sb-bg-main: #ffffff;
+    --sb-card-bg: #ffffff;
+    --sb-card-border: 1px solid #ccd0d4;
+    --sb-radius: 2px;
+    --sb-input-bg: #f9f9f9;
+    --sb-spacing: 6px;
+}
+
+/* Theme 6: Hudson Valley Eco */
+.sb-theme-hudson-valley-eco {
+    --sb-accent: #2d5a27; /* Forest Green */
+    --sb-accent-secondary: #568550;
+    --sb-accent-dark: #1e3d1a;
+    --sb-text-on-accent: #ffffff;
+    --sb-destructive: #c92c2c;
+    --sb-success: #2d5a27; /* Success matches accent */
+
+    --sb-bg-main: #e9edeb; /* Mist / Slate tint */
+    --sb-card-bg: #ffffff;
+    --sb-card-border: 1px solid #dce3df;
+    --sb-radius: 8px;
+    --sb-input-bg: #fdfdfd;
+    --sb-spacing: 10px;
+}

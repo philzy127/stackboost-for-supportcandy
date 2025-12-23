@@ -41,8 +41,79 @@ class WordPress extends Module {
 	 * Initialize hooks.
 	 */
 	public function init_hooks() {
+		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'init', [ $this, 'apply_date_time_formats' ] );
+		add_action( 'wp_ajax_stackboost_save_date_time_settings', [ $this, 'ajax_save_settings' ] );
+	}
+
+	/**
+	 * Register the isolated settings for this module.
+	 *
+	 * NOTE: This module uses a separate option group ('stackboost_date_time_settings')
+	 * instead of the central 'stackboost_settings' array. This is intentional.
+	 * The dynamic nature of the rules array proved fragile when merged into the
+	 * monolithic central setting via AJAX. Isolation guarantees data stability.
+	 */
+	public function register_settings() {
+		register_setting( 'stackboost_date_time_settings', 'stackboost_date_time_settings', [ $this, 'sanitize_settings' ] );
+	}
+
+	/**
+	 * Sanitize the settings.
+	 *
+	 * @param array $input
+	 * @return array
+	 */
+	public function sanitize_settings( $input ) {
+		$output = [];
+		$output['enable_date_time_formatting'] = ! empty( $input['enable_date_time_formatting'] ) ? 1 : 0;
+
+		if ( isset( $input['date_format_rules'] ) && is_array( $input['date_format_rules'] ) ) {
+			$sanitized_rules = [];
+			foreach ( $input['date_format_rules'] as $rule ) {
+				if ( ! is_array( $rule ) || empty( $rule['column'] ) ) {
+					continue;
+				}
+				$sanitized_rule                   = [];
+				$sanitized_rule['column']         = sanitize_text_field( $rule['column'] );
+				$sanitized_rule['format_type']    = in_array( $rule['format_type'], [ 'default', 'date_only', 'time_only', 'date_and_time', 'custom' ], true ) ? $rule['format_type'] : 'default';
+				$sanitized_rule['custom_format']  = sanitize_text_field( $rule['custom_format'] );
+				$sanitized_rule['use_long_date']    = ! empty( $rule['use_long_date'] ) ? 1 : 0;
+				$sanitized_rule['show_day_of_week'] = ! empty( $rule['show_day_of_week'] ) ? 1 : 0;
+				$sanitized_rules[]              = $sanitized_rule;
+			}
+			$output['date_format_rules'] = $sanitized_rules;
+		} else {
+			$output['date_format_rules'] = [];
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Custom AJAX handler to save these specific settings.
+	 */
+	public function ajax_save_settings() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		if ( ! isset( $_POST['stackboost_date_time_settings'] ) ) {
+			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$input = $_POST['stackboost_date_time_settings'];
+		$sanitized = $this->sanitize_settings( $input );
+
+		if ( update_option( 'stackboost_date_time_settings', $sanitized ) ) {
+			wp_send_json_success( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) );
+		} else {
+			// update_option returns false if value is unchanged. We still treat this as success for UX.
+			wp_send_json_success( __( 'Settings saved (no changes detected).', 'stackboost-for-supportcandy' ) );
+		}
 	}
 
 	/**
@@ -55,11 +126,21 @@ class WordPress extends Module {
 		// Pattern: stackboost_page_{page_slug}
 		$page_slug = 'stackboost-date-time';
 
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "DateTimeFormatting::enqueue_admin_scripts called. Hook: {$hook_suffix}", 'date_time_formatting' );
+		}
+
 		// Note: The main plugin uses 'toplevel_page_stackboost-for-supportcandy' for the main menu,
 		// and 'stackboost_page_stackboost-...' for submenus.
-		// We need to match the specific hook.
+		// However, relying on the hook suffix can be fragile if WordPress sanitizes it unexpectedly.
+		// A more robust check is to verify the 'page' query parameter directly.
 
-		if ( strpos( $hook_suffix, $page_slug ) === false ) {
+		$current_page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+
+		if ( $current_page !== $page_slug ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "DateTimeFormatting: Current page '{$current_page}' does not match slug '{$page_slug}'. Skipping enqueue.", 'date_time_formatting' );
+			}
 			return;
 		}
 

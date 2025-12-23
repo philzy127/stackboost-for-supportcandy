@@ -2,6 +2,8 @@
   "use strict";
 
   $(function () {
+    window.stackboost_log("[StackBoost] Date & Time Formatting script loaded.");
+
     /**
      * Handles the dynamic behavior of the date format rule builder.
      */
@@ -66,15 +68,35 @@
 
     // Initialize the rule builder if we are on the correct page.
     if ($("#stackboost-date-rules-container").length) {
+      window.stackboost_log("[StackBoost] Date & Time settings container found. Initializing...");
+
+      // Critical Dependency Check
+      if (typeof stackboost_admin_ajax === 'undefined') {
+          console.error("[StackBoost] CRITICAL ERROR: stackboost_admin_ajax is undefined. Nonce missing. Form save will fail.");
+          // We can try to alert the user, or just disable the form.
+          // For diagnostics, alert is annoying but effective.
+          // Let's rely on console for now unless we are sure it's failing silently.
+      } else {
+          window.stackboost_log("[StackBoost] stackboost_admin_ajax is defined. Nonce available.");
+      }
+
       initializeDateFormatRuleBuilder();
 
       // Intercept the form submission for AJAX saving
       $('form[action="options.php"]').on('submit', function (e) {
           e.preventDefault();
+          window.stackboost_log("[StackBoost] Form submission intercepted.");
 
           var $form = $(this);
           var $submitButton = $form.find('input[type="submit"], button[type="submit"]');
           var originalButtonText = $submitButton.val() || $submitButton.text();
+
+          // Check dependency again at submit time
+          if (typeof stackboost_admin_ajax === 'undefined' || !stackboost_admin_ajax.nonce) {
+              console.error("[StackBoost] Cannot save: stackboost_admin_ajax.nonce is missing.");
+              alert("Error: Security token missing. Please reload the page. If the issue persists, check the console.");
+              return;
+          }
 
           // Disable button and change text
           $submitButton.prop('disabled', true).val('Saving...');
@@ -84,18 +106,32 @@
 
           var formData = $form.serialize();
 
-          // Append action and nonce
-          formData += '&action=stackboost_save_settings';
+          // Append action and nonce for CUSTOM AJAX handler
+          formData += '&action=stackboost_save_date_time_settings';
           formData += '&nonce=' + stackboost_admin_ajax.nonce;
 
+          window.stackboost_log("[StackBoost] Serialized Form Data:", formData);
+          window.stackboost_log("[StackBoost] Sending AJAX request to:", stackboost_admin_ajax.ajax_url);
+
           $.post(stackboost_admin_ajax.ajax_url, formData, function (response) {
+              window.stackboost_log("[StackBoost] AJAX Response:", response);
               if (response.success) {
                   window.stackboost_show_toast(response.data, 'success');
               } else {
-                  stackboostAlert('Error: ' + (response.data || 'Unknown error'), 'Error');
+                  if (typeof stackboostAlert === 'function') {
+                      stackboostAlert('Error: ' + (response.data || 'Unknown error'), 'Error');
+                  } else {
+                      alert('Error: ' + (response.data || 'Unknown error'));
+                  }
               }
-          }).fail(function () {
-              stackboostAlert('An unexpected error occurred.', 'Error');
+          }).fail(function (xhr, status, error) {
+              console.error("[StackBoost] AJAX Fail:", status, error);
+              console.error(xhr.responseText);
+              if (typeof stackboostAlert === 'function') {
+                  stackboostAlert('An unexpected error occurred. Check console for details.', 'Error');
+              } else {
+                  alert('An unexpected error occurred. Check console for details.');
+              }
           }).always(function () {
               // Restore button state
               $submitButton.prop('disabled', false).val(originalButtonText);

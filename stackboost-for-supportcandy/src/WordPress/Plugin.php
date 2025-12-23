@@ -6,6 +6,7 @@ use StackBoost\ForSupportCandy\WordPress\Admin\Settings;
 use StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
 use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\TicketView;
+use StackBoost\ForSupportCandy\Modules\Appearance;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 
@@ -59,6 +60,11 @@ final class Plugin {
 		if ( stackboost_is_feature_active( 'qol_enhancements' ) ) {
 			$this->modules['qol_enhancements'] = QolEnhancements\WordPress::get_instance();
 		}
+
+		// Appearance Module (Always Active)
+        stackboost_log( 'Loading Appearance Module...', 'appearance' );
+		$this->modules['appearance'] = Appearance\Core::get_instance();
+        stackboost_log( 'Appearance Module Loaded.', 'appearance' );
 
 		// Ticket View is currently not feature-gated (Core functionality) but we can gate it if needed.
 		// For now, assuming it's part of the base package.
@@ -302,6 +308,27 @@ final class Plugin {
             'stackboost_page_stackboost-onboarding-dashboard',
 			'stackboost_page_stackboost-tools',
 			'stackboost_page_stackboost-date-time',
+			'stackboost_page_stackboost-appearance',
+            // Missing Pages added:
+            'stackboost_page_stackboost-ticket-view',
+            'stackboost_page_stackboost-after-hours',
+            'stackboost_page_stackboost-utm',
+            'stackboost_page_stackboost-ats',
+            'stackboost_page_stackboost-directory',
+            // Robust fallback for standard hook naming convention
+            'stackboost-for-supportcandy_page_stackboost-ticket-view',
+            'stackboost-for-supportcandy_page_stackboost-after-hours',
+            'stackboost-for-supportcandy_page_stackboost-utm',
+            'stackboost-for-supportcandy_page_stackboost-ats',
+            'stackboost-for-supportcandy_page_stackboost-directory',
+            'stackboost-for-supportcandy_page_stackboost-conditional-views',
+            'stackboost-for-supportcandy_page_stackboost-queue-macro',
+            'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard',
+            'stackboost-for-supportcandy_page_stackboost-tools',
+            'stackboost-for-supportcandy_page_stackboost-date-time',
+            'stackboost-for-supportcandy_page_stackboost-appearance',
+            // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
+            'stackboost_page_stackboost-date-time',
 		];
 
 		// Enqueue Frontend Features in Admin (Ticket List)
@@ -311,13 +338,15 @@ final class Plugin {
 		}
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
+            stackboost_log( "Common scripts (and nonce) enqueued for hook: " . $hook_suffix, 'core' );
+
 			// Enqueue General Dashboard Styles if on main page
 			if ( 'toplevel_page_stackboost-for-supportcandy' === $hook_suffix ) {
 				wp_enqueue_style(
 					'stackboost-admin-general',
 					STACKBOOST_PLUGIN_URL . 'assets/css/admin-general.css',
 					[],
-					STACKBOOST_VERSION
+					STACKBOOST_VERSION . '.1' // Cache bust
 				);
 			}
 
@@ -357,10 +386,17 @@ final class Plugin {
 			);
 
 			wp_enqueue_style(
+				'stackboost-admin-tabs',
+				STACKBOOST_PLUGIN_URL . 'assets/admin/css/admin-tabs.css',
+				[],
+				STACKBOOST_VERSION
+			);
+
+			wp_enqueue_style(
 				'stackboost-admin-common',
 				STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-admin-common.css',
 				[],
-				STACKBOOST_VERSION
+				STACKBOOST_VERSION . '.1' // Cache bust
 			);
 			wp_enqueue_script(
 				'stackboost-admin-common',

@@ -163,47 +163,52 @@ class TicketWidgetSettings {
 			$placement      = $widget_options['placement'] ?? 'before';
 			$target_widget  = $widget_options['target_widget'] ?? '';
 			?>
-			<table class="form-table">
-				<tr valign="top">
-					<th scope="row"><?php esc_html_e( 'Enable Widget', 'stackboost-for-supportcandy' ); ?></th>
-					<td>
-						<label>
-							<input type="checkbox" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[enabled]" value="1" <?php checked( $is_enabled, '1' ); ?>>
-							<?php esc_html_e( 'Enable the Company Directory widget on the ticket screen.', 'stackboost-for-supportcandy' ); ?>
-						</label>
-					</td>
-				</tr>
-				<tr valign="top">
-					<th scope="row"><label for="stackboost-widget-placement"><?php esc_html_e( 'Placement', 'stackboost-for-supportcandy' ); ?></label></th>
-					<td>
-						<select id="stackboost-widget-placement" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[placement]">
-							<option value="before" <?php selected( $placement, 'before' ); ?>><?php esc_html_e( 'Before', 'stackboost-for-supportcandy' ); ?></option>
-							<option value="after" <?php selected( $placement, 'after' ); ?>><?php esc_html_e( 'After', 'stackboost-for-supportcandy' ); ?></option>
-						</select>
-						<p class="description"><?php esc_html_e( 'Choose to display the widget before or after the target widget.', 'stackboost-for-supportcandy' ); ?></p>
-					</td>
-				</tr>
-				<tr valign="top">
-					<th scope="row"><label for="stackboost-target-widget"><?php esc_html_e( 'Target Widget', 'stackboost-for-supportcandy' ); ?></label></th>
-					<td>
-						<select id="stackboost-target-widget" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[target_widget]">
-							<?php
-							$sc_widgets = get_option( 'wpsc-ticket-widget', [] );
-							foreach ( $sc_widgets as $slug => $widget_config ) {
-								if ( ! empty( $widget_config['is_enable'] ) ) {
-									echo '<option value="' . esc_attr( $slug ) . '" ' . selected( $target_widget, $slug, false ) . '>' . esc_html( $widget_config['title'] ) . '</option>';
+			<div class="stackboost-card stackboost-card-connected">
+				<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Widget Configuration', 'stackboost-for-supportcandy' ); ?></h2>
+				<table class="form-table">
+					<tr valign="top">
+						<th scope="row"><?php esc_html_e( 'Enable Widget', 'stackboost-for-supportcandy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[enabled]" value="1" <?php checked( $is_enabled, '1' ); ?>>
+								<?php esc_html_e( 'Enable the Company Directory widget on the ticket screen.', 'stackboost-for-supportcandy' ); ?>
+							</label>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row"><label for="stackboost-widget-placement"><?php esc_html_e( 'Placement', 'stackboost-for-supportcandy' ); ?></label></th>
+						<td>
+							<select id="stackboost-widget-placement" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[placement]">
+								<option value="before" <?php selected( $placement, 'before' ); ?>><?php esc_html_e( 'Before', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="after" <?php selected( $placement, 'after' ); ?>><?php esc_html_e( 'After', 'stackboost-for-supportcandy' ); ?></option>
+							</select>
+							<p class="description"><?php esc_html_e( 'Choose to display the widget before or after the target widget.', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row"><label for="stackboost-target-widget"><?php esc_html_e( 'Target Widget', 'stackboost-for-supportcandy' ); ?></label></th>
+						<td>
+							<select id="stackboost-target-widget" name="<?php echo esc_attr( self::WIDGET_OPTION_NAME ); ?>[target_widget]">
+								<?php
+								$sc_widgets = get_option( 'wpsc-ticket-widget', [] );
+								foreach ( $sc_widgets as $slug => $widget_config ) {
+									if ( ! empty( $widget_config['is_enable'] ) ) {
+										echo '<option value="' . esc_attr( $slug ) . '" ' . selected( $target_widget, $slug, false ) . '>' . esc_html( $widget_config['title'] ) . '</option>';
+									}
 								}
-							}
-							?>
-						</select>
-						<p class="description"><?php esc_html_e( 'Select the SupportCandy widget to position against.', 'stackboost-for-supportcandy' ); ?></p>
-					</td>
-				</tr>
-			</table>
-			<hr>
-			<h2><?php esc_html_e( 'Widget Display Fields', 'stackboost-for-supportcandy' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'Select and order the directory fields to be displayed in the widget.', 'stackboost-for-supportcandy' ); ?></p>
-			<?php self::render_dual_list_field_selector( $widget_options ); ?>
+								?>
+							</select>
+							<p class="description"><?php esc_html_e( 'Select the SupportCandy widget to position against.', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="stackboost-card">
+				<h2><?php esc_html_e( 'Widget Display Fields', 'stackboost-for-supportcandy' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'Select and order the directory fields to be displayed in the widget.', 'stackboost-for-supportcandy' ); ?></p>
+				<?php self::render_dual_list_field_selector( $widget_options ); ?>
+			</div>
 			<?php submit_button(); ?>
 		</form>
 		<?php

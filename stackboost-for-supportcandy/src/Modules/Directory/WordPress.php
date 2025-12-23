@@ -397,8 +397,13 @@ class WordPress {
 		$tabs = array_merge($ordered_tabs, array_diff_key($tabs, $ordered_tabs));
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
+
+        $theme_class = 'sb-theme-clean-tech';
+        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
 		?>
-		<div class="wrap">
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1>
 				<?php esc_html_e( 'Company Directory', 'stackboost-for-supportcandy' ); ?>
 				<?php if ( $this->can_user_edit() ) : ?>
@@ -411,7 +416,7 @@ class WordPress {
 					<?php endif; ?>
 				<?php endif; ?>
 			</h1>
-			<h2 class="nav-tab-wrapper">
+			<h2 class="nav-tab-wrapper stackboost-tabs-connected">
 				<?php
 				foreach ( $tabs as $tab_id => $tab_name ) {
 					$tab_url = add_query_arg(
@@ -433,39 +438,45 @@ class WordPress {
 						$staff_list_table = new StaffListTable( $this->core->cpts->post_type );
 						$staff_list_table->prepare_items();
 						?>
-						<form method="post">
-							<?php
-							$staff_list_table->views();
-							$staff_list_table->search_box( 'search', 'search_id' );
-							$staff_list_table->display();
-							?>
-						</form>
+						<div class="stackboost-card stackboost-card-connected">
+							<form method="post">
+								<?php
+								$staff_list_table->views();
+								$staff_list_table->search_box( 'search', 'search_id' );
+								$staff_list_table->display();
+								?>
+							</form>
+						</div>
 						<?php
 						break;
 					case 'locations':
 						$locations_list_table = new LocationsListTable( $this->core->cpts->location_post_type );
 						$locations_list_table->prepare_items();
 						?>
-						<form method="post">
-							<?php
-							$locations_list_table->views();
-							$locations_list_table->search_box( 'search', 'search_id' );
-							$locations_list_table->display();
-							?>
-						</form>
+						<div class="stackboost-card stackboost-card-connected">
+							<form method="post">
+								<?php
+								$locations_list_table->views();
+								$locations_list_table->search_box( 'search', 'search_id' );
+								$locations_list_table->display();
+								?>
+							</form>
+						</div>
 						<?php
 						break;
 					case 'departments':
 						$departments_list_table = new DepartmentsListTable( $this->core->cpts->department_post_type );
 						$departments_list_table->prepare_items();
 						?>
-						<form method="post">
-							<?php
-							$departments_list_table->views();
-							$departments_list_table->search_box( 'search', 'search_id' );
-							$departments_list_table->display();
-							?>
-						</form>
+						<div class="stackboost-card stackboost-card-connected">
+							<form method="post">
+								<?php
+								$departments_list_table->views();
+								$departments_list_table->search_box( 'search', 'search_id' );
+								$departments_list_table->display();
+								?>
+							</form>
+						</div>
 						<?php
 						break;
 					case 'management':

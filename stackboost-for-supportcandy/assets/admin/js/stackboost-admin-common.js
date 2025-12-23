@@ -154,5 +154,98 @@
                 true // isDanger
             );
         });
+
+        /**
+         * Save Theme Preference
+         * @param {string} newTheme The CSS class name of the theme.
+         * @param {string} themeName The display name of the theme (for UI updates).
+         * @param {object} $btn Optional button element to show loading state.
+         */
+        function stackboost_save_theme(newTheme, themeName, $btn) {
+            var $dashboard = $('.stackboost-dashboard');
+            var $previewName = $('#stackboost-preview-theme-name');
+            var originalBtnText = $btn ? $btn.text() : '';
+
+            // 1. Live Preview: Remove old theme classes and add new one
+            $dashboard.removeClass(function (index, css) {
+                return (css.match(/(^|\s)sb-theme-\S+/g) || []).join(' ');
+            });
+            $dashboard.addClass(newTheme);
+
+            // Update preview text
+            if ($previewName.length && themeName) {
+                $previewName.text(themeName);
+            }
+
+            // Show loading state on button if provided
+            if ($btn) {
+                $btn.text('Saving...').prop('disabled', true);
+            }
+
+            // 2. AJAX Save
+            $.post(stackboost_admin_ajax.ajax_url, {
+                action: 'stackboost_save_theme_preference',
+                theme: newTheme,
+                nonce: stackboost_admin_ajax.nonce
+            }, function(response) {
+                if (response.success) {
+                    window.stackboost_show_toast('Theme Updated Successfully', 'success');
+                } else {
+                    window.stackboost_show_toast('Error saving theme: ' + (response.data || 'Unknown error'), 'error');
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                var errorMsg = 'Save Failed: ' + textStatus;
+                if (jqXHR.status) {
+                    errorMsg += ' (' + jqXHR.status + ')';
+                }
+                if (jqXHR.responseText) {
+                    console.log('Server Error Details:', jqXHR.responseText);
+                    // Optionally show a bit of the response if it's short
+                    if (jqXHR.responseText.length < 100) {
+                         errorMsg += ' - ' + jqXHR.responseText;
+                    }
+                }
+                alert(errorMsg); // Use alert for critical visibility
+                window.stackboost_show_toast(errorMsg, 'error');
+            }).always(function() {
+                if ($btn) {
+                    $btn.text(originalBtnText).prop('disabled', false);
+                }
+            });
+        }
+
+        // Appearance: Theme Switching (Live Preview Only - No Auto Save)
+        $('#stackboost_admin_theme').on('change', function() {
+            var newTheme = $(this).val();
+            var $dashboard = $('.stackboost-dashboard');
+
+            // Just update the class for preview
+            $dashboard.removeClass(function (index, css) {
+                return (css.match(/(^|\s)sb-theme-\S+/g) || []).join(' ');
+            });
+            $dashboard.addClass(newTheme);
+        });
+
+        // Appearance: Manual Save Button
+        // Using event delegation to ensure it works even if DOM manipulation happens
+        $(document).on('click', '#stackboost_save_theme_btn', function(e) {
+            e.preventDefault();
+
+            // Proof of Life Debugging
+            console.log('[StackBoost] Save Theme button clicked');
+
+            if (typeof stackboost_admin_ajax === 'undefined') {
+                alert('Error: StackBoost configuration script not loaded. Please verify the plugin is installed correctly.');
+                return;
+            }
+
+            var $select = $('#stackboost_admin_theme');
+            var newTheme = $select.val();
+
+            console.log('[StackBoost] Saving theme:', newTheme);
+
+            // Pass null for themeName since preview text element was removed
+            stackboost_save_theme(newTheme, null, $(this));
+        });
     });
 })(jQuery);

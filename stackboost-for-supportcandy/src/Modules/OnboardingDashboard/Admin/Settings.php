@@ -310,17 +310,17 @@ class Settings {
 		];
 
 		?>
-		<div class="wrap">
-			<h2><?php esc_html_e( 'Onboarding Settings', 'stackboost-for-supportcandy' ); ?></h2>
+		<div>
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( self::OPTION_GROUP );
 				?>
 
-				<!-- General Configuration -->
-				<h3><?php esc_html_e( 'General Configuration', 'stackboost-for-supportcandy' ); ?></h3>
-				<p><?php esc_html_e( 'Identify the critical fields required for the onboarding logic.', 'stackboost-for-supportcandy' ); ?></p>
-				<table class="form-table">
+				<!-- Card 1: General Configuration -->
+				<div class="stackboost-card stackboost-card-connected">
+					<h3 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'General Configuration', 'stackboost-for-supportcandy' ); ?></h3>
+					<p><?php esc_html_e( 'Identify the critical fields required for the onboarding logic.', 'stackboost-for-supportcandy' ); ?></p>
+					<table class="form-table">
 					<tr>
 						<th scope="row"><label for="stkb_req_type"><?php esc_html_e( 'Request Type Field', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
@@ -371,11 +371,13 @@ class Settings {
 						</td>
 					</tr>
 					<?php endforeach; ?>
-				</table>
+					</table>
+				</div>
 
-				<!-- Phone Configuration -->
-				<h3><?php esc_html_e( 'Phone Configuration', 'stackboost-for-supportcandy' ); ?></h3>
-				<table class="form-table">
+				<!-- Card 2: Phone Configuration -->
+				<div class="stackboost-card">
+					<h3 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Phone Configuration', 'stackboost-for-supportcandy' ); ?></h3>
+					<table class="form-table">
 					<tr>
 						<th scope="row"><label for="stkb_phone_mode"><?php esc_html_e( 'Do you have multiple phone fields?', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
@@ -481,14 +483,18 @@ class Settings {
 						</tr>
 					</table>
 				</div>
+				</div> <!-- End Phone Card -->
 
-				<!-- Staff Table Columns (Dual List) -->
-				<h3><?php esc_html_e( 'Staff Table Columns', 'stackboost-for-supportcandy' ); ?></h3>
-				<?php self::render_columns_selector( $sc_fields, $config['table_columns'] ); ?>
+				<!-- Card 3: Columns & Renaming -->
+				<div class="stackboost-card">
+					<h3 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Staff Table Columns', 'stackboost-for-supportcandy' ); ?></h3>
+					<?php self::render_columns_selector( $sc_fields, $config['table_columns'] ); ?>
 
-				<!-- Renaming Rules -->
-				<h3><?php esc_html_e( 'Column Renaming', 'stackboost-for-supportcandy' ); ?></h3>
-				<?php self::render_rename_rules( $sc_fields, $config['rename_rules'] ); ?>
+					<hr style="margin: 20px 0;">
+
+					<h3 style="margin-top: 0;"><?php esc_html_e( 'Column Renaming', 'stackboost-for-supportcandy' ); ?></h3>
+					<?php self::render_rename_rules( $sc_fields, $config['rename_rules'] ); ?>
+				</div>
 
 				<?php submit_button(); ?>
 			</form>
@@ -530,8 +536,8 @@ class Settings {
 		$config = self::get_config();
 
 		?>
-		<div class="wrap">
-			<h2><?php esc_html_e( 'Certificate Configuration', 'stackboost-for-supportcandy' ); ?></h2>
+		<div class="stackboost-card stackboost-card-connected">
+			<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Certificate Configuration', 'stackboost-for-supportcandy' ); ?></h2>
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( self::OPTION_GROUP );

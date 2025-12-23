@@ -83,14 +83,19 @@ class Settings {
 		$management_roles     = $options['management_roles'] ?? array( 'administrator' );
 		$listing_display_mode = $options['listing_display_mode'] ?? 'page';
 		$revisions_to_keep    = $options['revisions_to_keep'] ?? '';
+
+        $theme_class = 'sb-theme-clean-tech';
+        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+        }
 		?>
-		<div class="wrap">
+		<div class="stackboost-card stackboost-card-connected">
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( self::OPTION_GROUP );
 				do_settings_sections( self::OPTION_GROUP );
 				?>
-				<h2><?php esc_html_e( 'Display Settings', 'stackboost-for-supportcandy' ); ?></h2>
+				<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Display Settings', 'stackboost-for-supportcandy' ); ?></h2>
 				<table class="form-table">
 					<tr valign="top">
 						<th scope="row">

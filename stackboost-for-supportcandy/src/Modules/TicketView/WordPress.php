@@ -84,6 +84,12 @@ class WordPress extends Module {
 
 		$options = get_option( 'stackboost_settings', [] );
 
+		// Get active theme class for wrapper
+		$theme_class = 'sb-theme-clean-tech'; // Default
+		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+		}
+
 		// Determine View Type
 		$view_type = $options['ticket_details_view_type'] ?? 'standard';
 		if ( 'utm' === $view_type && ! stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
@@ -102,6 +108,9 @@ class WordPress extends Module {
 		if ( 'utm' === $view_type ) {
 			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
 				$utm_content = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->build_live_utm_html( $ticket );
+
+				// Apply Theme Wrapper
+				$details_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
 				$details_html .= '<div class="wpsc-it-widget stackboost-utm-details" style="margin-bottom: 10px;">';
 				$details_html .= '<div class="wpsc-widget-header">';
 				$details_html .= '<h2>' . __( 'Ticket Details', 'stackboost-for-supportcandy' ) . '</h2>';
@@ -109,6 +118,7 @@ class WordPress extends Module {
 				$details_html .= '</div>';
 				$details_html .= '<div class="wpsc-widget-body" style="display: block;">' . $utm_content . '</div>';
 				$details_html .= '</div>';
+				$details_html .= '</div>'; // End wrapper
 			} else {
 				$details_html .= '<p>' . __( 'UTM Module not available.', 'stackboost-for-supportcandy' ) . '</p>';
 			}
@@ -172,6 +182,7 @@ class WordPress extends Module {
 						}
 
 						// Wrap in WPSC Widget Structure for seamless look
+						$history_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
 						$history_html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
 						$history_html .= '<div class="wpsc-widget-header">';
 						$history_html .= '<h2>' . __( 'Description', 'stackboost-for-supportcandy' ) . '</h2>';
@@ -180,6 +191,7 @@ class WordPress extends Module {
 						$history_html .= '<div class="wpsc-widget-body stackboost-thread-body" style="display: block;">';
 						$history_html .= '<div>' . wp_kses_post( $body ) . '</div>';
 						$history_html .= '</div></div>';
+						$history_html .= '</div>'; // End wrapper
 
 					}
 				} elseif ( 'with_history' === $content_type ) {
@@ -187,6 +199,7 @@ class WordPress extends Module {
 					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling, $limit );
 
 					if ( ! empty( $threads_html ) ) {
+						$history_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
 						$history_html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
 						$history_html .= '<div class="wpsc-widget-header">';
 						$history_html .= '<h2>' . __( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h2>';
@@ -195,6 +208,7 @@ class WordPress extends Module {
 						$history_html .= '<div class="wpsc-widget-body" style="display: block;">';
 						$history_html .= $threads_html;
 						$history_html .= '</div></div>';
+						$history_html .= '</div>'; // End wrapper
 					}
 				}
 			}
@@ -273,6 +287,77 @@ class WordPress extends Module {
 	}
 
 	/**
+	 * Render the administration page.
+	 */
+	public function render_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Get active theme class
+		$theme_class = 'sb-theme-clean-tech'; // Default
+		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+		}
+
+		?>
+		<!-- StackBoost Wrapper Start -->
+		<!-- Theme: <?php echo esc_html( $theme_class ); ?> -->
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
+			<h1><?php esc_html_e( 'Ticket View', 'stackboost-for-supportcandy' ); ?></h1>
+			<?php settings_errors(); ?>
+
+			<form action="options.php" method="post">
+				<?php
+				settings_fields( 'stackboost_settings' );
+				// stackboost_settings[page_slug] added below manually
+				?>
+				<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-ticket-view">
+
+				<div class="stackboost-dashboard-grid">
+
+					<!-- Card 1: Ticket Details Card -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Ticket Details Card', 'stackboost-for-supportcandy' ); ?></h2>
+						<table class="form-table">
+							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_ticket_details_card_section' ); ?>
+						</table>
+					</div>
+
+					<!-- Card 2: Organization (General Cleanup) -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Organization', 'stackboost-for-supportcandy' ); ?></h2>
+						<table class="form-table">
+							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_general_cleanup_section' ); ?>
+						</table>
+					</div>
+
+					<!-- Card 3: Page Last Loaded -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Page Last Loaded Indicator', 'stackboost-for-supportcandy' ); ?></h2>
+						<table class="form-table">
+							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_page_last_loaded_section' ); ?>
+						</table>
+					</div>
+
+					<!-- Card 4: Ticket Type Hiding -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Hide Ticket Types from Non-Agents', 'stackboost-for-supportcandy' ); ?></h2>
+						<p><?php esc_html_e( 'This feature hides specified ticket categories from the dropdown menu for any user who is not an agent.', 'stackboost-for-supportcandy' ); ?></p>
+						<table class="form-table">
+							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_ticket_type_hiding_section' ); ?>
+						</table>
+					</div>
+
+				</div>
+
+				<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Register settings fields for this module.
 	 */
 	public function register_settings() {
@@ -340,14 +425,10 @@ class WordPress extends Module {
 			]
 		);
 
-		add_settings_section( 'stackboost_separator_1', '', [ $this, 'render_hr_separator' ], $page_slug );
-
 		// Section: General Cleanup
 		add_settings_section( 'stackboost_general_cleanup_section', __( 'General Cleanup', 'stackboost-for-supportcandy' ), null, $page_slug );
 		add_settings_field( 'stackboost_enable_hide_empty_columns', __( 'Hide Empty Columns', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_hide_empty_columns', 'desc' => 'Automatically hide any column in the ticket list that is completely empty.' ] );
 		add_settings_field( 'stackboost_enable_hide_priority_column', __( 'Hide Priority Column', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_hide_priority_column', 'desc' => 'Hides the "Priority" column if all visible tickets have a priority of "Low".' ] );
-
-		add_settings_section( 'stackboost_separator_general_cleanup_1', '', [ $this, 'render_hr_separator' ], $page_slug );
 
 		// Section: Page Last Loaded Indicator
 		add_settings_section( 'stackboost_page_last_loaded_section', __( 'Page Last Loaded Indicator', 'stackboost-for-supportcandy' ), null, $page_slug );
@@ -397,10 +478,8 @@ class WordPress extends Module {
 			]
 		);
 
-		add_settings_section( 'stackboost_separator_2', '', [ $this, 'render_hr_separator' ], $page_slug );
-
 		// Section: Ticket Type Hiding
-		add_settings_section( 'stackboost_ticket_type_hiding_section', __( 'Hide Ticket Types from Non-Agents', 'stackboost-for-supportcandy' ), [ $this, 'render_ticket_type_hiding_description' ], $page_slug );
+		add_settings_section( 'stackboost_ticket_type_hiding_section', __( 'Hide Ticket Types from Non-Agents', 'stackboost-for-supportcandy' ), null, $page_slug );
 		add_settings_field( 'stackboost_enable_ticket_type_hiding', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_type_hiding_section', [ 'id' => 'enable_ticket_type_hiding', 'desc' => 'Hide specific ticket types from non-agent users.' ] );
 
 		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
@@ -486,7 +565,7 @@ class WordPress extends Module {
 		echo '</select>';
 
 		if ( ! $is_pro_active ) {
-			echo ' <span title="' . esc_attr__( 'Upgrade to Pro or Business to enable this feature.', 'stackboost-for-supportcandy' ) . '" style="background-color: #2271b1; color: #fff; padding: 2px 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; border-radius: 4px; vertical-align: middle;">PRO</span>';
+			echo ' <span class="stackboost-badge-pro" title="' . esc_attr__( 'Upgrade to Pro or Business to enable this feature.', 'stackboost-for-supportcandy' ) . '">PRO</span>';
 		}
 
 		// Inline script to warn about UTM configuration AND toggle limit field
