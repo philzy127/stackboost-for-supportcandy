@@ -416,7 +416,7 @@ class WordPress {
 					<?php endif; ?>
 				<?php endif; ?>
 			</h1>
-			<h2 class="nav-tab-wrapper">
+			<h2 class="nav-tab-wrapper stackboost-tabs-connected">
 				<?php
 				foreach ( $tabs as $tab_id => $tab_name ) {
 					$tab_url = add_query_arg(
@@ -438,39 +438,45 @@ class WordPress {
 						$staff_list_table = new StaffListTable( $this->core->cpts->post_type );
 						$staff_list_table->prepare_items();
 						?>
-						<form method="post">
-							<?php
-							$staff_list_table->views();
-							$staff_list_table->search_box( 'search', 'search_id' );
-							$staff_list_table->display();
-							?>
-						</form>
+						<div class="stackboost-card stackboost-card-connected">
+							<form method="post">
+								<?php
+								$staff_list_table->views();
+								$staff_list_table->search_box( 'search', 'search_id' );
+								$staff_list_table->display();
+								?>
+							</form>
+						</div>
 						<?php
 						break;
 					case 'locations':
 						$locations_list_table = new LocationsListTable( $this->core->cpts->location_post_type );
 						$locations_list_table->prepare_items();
 						?>
-						<form method="post">
-							<?php
-							$locations_list_table->views();
-							$locations_list_table->search_box( 'search', 'search_id' );
-							$locations_list_table->display();
-							?>
-						</form>
+						<div class="stackboost-card stackboost-card-connected">
+							<form method="post">
+								<?php
+								$locations_list_table->views();
+								$locations_list_table->search_box( 'search', 'search_id' );
+								$locations_list_table->display();
+								?>
+							</form>
+						</div>
 						<?php
 						break;
 					case 'departments':
 						$departments_list_table = new DepartmentsListTable( $this->core->cpts->department_post_type );
 						$departments_list_table->prepare_items();
 						?>
-						<form method="post">
-							<?php
-							$departments_list_table->views();
-							$departments_list_table->search_box( 'search', 'search_id' );
-							$departments_list_table->display();
-							?>
-						</form>
+						<div class="stackboost-card stackboost-card-connected">
+							<form method="post">
+								<?php
+								$departments_list_table->views();
+								$departments_list_table->search_box( 'search', 'search_id' );
+								$departments_list_table->display();
+								?>
+							</form>
+						</div>
 						<?php
 						break;
 					case 'management':
