@@ -217,6 +217,14 @@ class WordPress extends Module {
         $use_sc_working_hours = ! empty( $options['use_sc_working_hours'] );
         $use_sc_holidays      = ! empty( $options['use_sc_holidays'] );
 
+        // Debug Logging for Logic Diagnosis
+        $timezone_string = wp_timezone_string();
+        $timezone = new DateTimeZone( $timezone_string );
+        $now      = new DateTime( 'now', $timezone );
+        $now_debug = $now->format('Y-m-d H:i:s');
+
+        stackboost_log( "AfterHours Check: Time={$now_debug}, TZ={$timezone_string}, SC_Hours=" . ($use_sc_working_hours ? 'ON' : 'OFF') . ", SC_Holidays=" . ($use_sc_holidays ? 'ON' : 'OFF'), 'after_hours' );
+
         $is_after_hours = false;
 
         // Logic branching based on toggle configurations
@@ -227,6 +235,7 @@ class WordPress extends Module {
             // If use_sc_holidays is false, we must manually check manual holiday list.
 
             $sc_status = $this->get_sc_status( time(), $use_sc_holidays );
+            stackboost_log( "AfterHours Check: SC Status returned '{$sc_status}'", 'after_hours' );
 
             if ( $sc_status === 'closed' ) {
                 $is_after_hours = true;
@@ -235,11 +244,9 @@ class WordPress extends Module {
                 // we must check if today is a MANUAL holiday (which SC ignored).
                 if ( ! $use_sc_holidays ) {
                     $manual_holidays = $this->core->parse_holidays( $options['holidays'] ?? '' );
-                    $timezone_string = wp_timezone_string();
 
-                    $timezone = new DateTimeZone( $timezone_string );
-                    $now      = new DateTime( 'now', $timezone );
                     if ( in_array( $now->format( 'Y-m-d' ), $manual_holidays, true ) ) {
+                        stackboost_log( "AfterHours Check: Manual Holiday Override Triggered", 'after_hours' );
                         $is_after_hours = true;
                     }
                 }
@@ -249,12 +256,18 @@ class WordPress extends Module {
             // Manual Schedule is Definitive source for schedule.
             // Construct settings for Core logic.
 
+            $start_hour = $options['after_hours_start'] ?? 17;
+            $end_hour = $options['before_hours_end'] ?? 8;
+            $include_weekends = ! empty( $options['include_all_weekends'] );
+
             $settings = [
-                'start_hour'       => $options['after_hours_start'] ?? 17,
-                'end_hour'         => $options['before_hours_end'] ?? 8,
-                'include_weekends' => ! empty( $options['include_all_weekends'] ),
+                'start_hour'       => $start_hour,
+                'end_hour'         => $end_hour,
+                'include_weekends' => $include_weekends,
                 'holidays'         => [], // Logic handled below
             ];
+
+            stackboost_log( "AfterHours Check: Manual Settings - Start={$start_hour}, End={$end_hour}, Weekends=" . ($include_weekends ? 'ON' : 'OFF'), 'after_hours' );
 
             // Determine holidays source
             if ( $use_sc_holidays ) {
@@ -266,8 +279,11 @@ class WordPress extends Module {
             }
 
             // Use Core Logic
-             if ( $this->core->is_after_hours( $settings, null, wp_timezone_string() ) ) {
+             if ( $this->core->is_after_hours( $settings, null, $timezone_string ) ) {
+                 stackboost_log( "AfterHours Check: Core Logic returned TRUE (After Hours)", 'after_hours' );
                  $is_after_hours = true;
+             } else {
+                 stackboost_log( "AfterHours Check: Core Logic returned FALSE (Open)", 'after_hours' );
              }
         }
 
