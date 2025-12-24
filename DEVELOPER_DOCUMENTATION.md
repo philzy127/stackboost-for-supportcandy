@@ -62,6 +62,19 @@ All settings are centralized through `src/WordPress/Admin/Settings.php`.
 
 ## Module Specifics
 
+### After-Hours Notice
+
+*   **Class:** `Modules\AfterHoursNotice\WordPress`
+*   **Logic:** `is_currently_after_hours()` determines the open/closed status.
+*   **SupportCandy Integration:**
+    *   Uses `WPSC_Working_Hour` and `WPSC_Wh_Exception` to check scheduling status.
+    *   Uses `WPSC_Holiday` to check for holidays.
+    *   All external calls are wrapped in `class_exists()` checks for safety.
+*   **Precedence:**
+    1.  SC Exceptions (Override all).
+    2.  Manual Holidays (Override open status if hybrid mode is active).
+    3.  SC Standard Schedule or Manual Schedule (depending on toggle).
+
 ### After Ticket Survey (ATS)
 
 *   **Tables:** `wp_stackboost_ats_questions` (contains question definitions).
