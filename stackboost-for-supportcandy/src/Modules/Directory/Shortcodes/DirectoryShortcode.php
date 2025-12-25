@@ -275,6 +275,14 @@ class DirectoryShortcode {
 												<?php echo esc_html( $employee->name ); ?>
 											<?php endif; ?>
 
+											<?php if ( $can_edit_entries && $employee->edit_post_link ) : ?>
+												<a href="<?php echo esc_url( $employee->edit_post_link ); ?>" title="<?php esc_attr_e( 'Edit this entry', 'stackboost-for-supportcandy' ); ?>" style="margin-left: 5px;">
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; cursor: pointer;">
+														<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+													</svg>
+												</a>
+											<?php endif; ?>
+
                                             <?php
                                             // Email Display Logic
                                             $show_email_text = in_array( 'email', $visible_columns, true );
@@ -298,14 +306,6 @@ class DirectoryShortcode {
                                                         <?php echo wp_kses( $copy_icon_svg, $allowed_html ); ?>
                                                     </span>
                                                 <?php endif; ?>
-											<?php endif; ?>
-
-											<?php if ( $can_edit_entries && $employee->edit_post_link ) : ?>
-												<a href="<?php echo esc_url( $employee->edit_post_link ); ?>" title="<?php esc_attr_e( 'Edit this entry', 'stackboost-for-supportcandy' ); ?>" style="margin-left: 5px;">
-													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; cursor: pointer;">
-														<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-													</svg>
-												</a>
 											<?php endif; ?>
 										</td>
 									<?php endif; ?>
