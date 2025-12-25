@@ -47,7 +47,7 @@ class DirectoryShortcode {
 			array(
                 'theme'                 => 'standard',
 				'showSearch'            => true,
-				'visibleColumns'        => array( 'photo', 'name', 'phone', 'department', 'title' ),
+				'visibleColumns'        => array( 'name', 'phone', 'department', 'title' ),
 				'itemsPerPage'          => 10,
 				'allowPageLengthChange' => true,
 				'linkBehavior'          => '', // Defaults to global setting if empty

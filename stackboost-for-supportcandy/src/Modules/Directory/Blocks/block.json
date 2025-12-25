@@ -2,7 +2,7 @@
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
     "name": "stackboost/directory",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "title": "StackBoost Directory",
     "category": "widgets",
     "icon": "groups",
@@ -27,7 +27,7 @@
         },
         "visibleColumns": {
             "type": "array",
-            "default": ["photo", "name", "phone", "department", "title"],
+            "default": ["name", "phone", "department", "title"],
             "items": {
                 "type": "string"
             }
