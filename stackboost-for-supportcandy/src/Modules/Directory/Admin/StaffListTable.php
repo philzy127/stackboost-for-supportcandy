@@ -117,7 +117,7 @@ class StaffListTable extends \WP_List_Table {
 						$output .= '<br>';
 					}
 					$formatted_mobile = $directory_service->format_phone_number_string( $mobile_phone );
-					$output .= '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . esc_html( $formatted_mobile );
+					$output .= '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555; transform: scale(1.4);" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . esc_html( $formatted_mobile );
 				}
 
 				return ! empty( $output ) ? $output : '&mdash;';

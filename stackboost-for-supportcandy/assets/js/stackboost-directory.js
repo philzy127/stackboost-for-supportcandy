@@ -87,12 +87,41 @@ jQuery(document).ready(function($) {
             var lengthChange = $table.data('length-change-enabled');
             if (lengthChange === undefined) lengthChange = true;
 
+            // Ensure custom pageLength is in the lengthMenu
+            var customPageLength = parseInt(pageLength, 10);
+            var lengthMenuValues = [10, 25, 50, -1];
+            var lengthMenuLabels = [10, 25, 50, "All"];
+
+            if (lengthMenuValues.indexOf(customPageLength) === -1 && customPageLength !== -1) {
+                // Add value and label
+                lengthMenuValues.push(customPageLength);
+                lengthMenuLabels.push(customPageLength);
+
+                // Sort both arrays based on values to keep them in order (keeping -1/"All" at end)
+                // Combine into objects for sorting
+                var combined = [];
+                for (var i = 0; i < lengthMenuValues.length; i++) {
+                    combined.push({ val: lengthMenuValues[i], label: lengthMenuLabels[i] });
+                }
+
+                combined.sort(function(a, b) {
+                    // Handle -1 (All) to always be last
+                    if (a.val === -1) return 1;
+                    if (b.val === -1) return -1;
+                    return a.val - b.val;
+                });
+
+                // Unpack
+                lengthMenuValues = combined.map(function(o) { return o.val; });
+                lengthMenuLabels = combined.map(function(o) { return o.label; });
+            }
+
             var opts = {
                 "dom": "lfrtip",
                 "searching": searching,
-                "pageLength": parseInt(pageLength, 10),
+                "pageLength": customPageLength,
                 "lengthChange": lengthChange,
-                "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+                "lengthMenu": [ lengthMenuValues, lengthMenuLabels ],
                 "responsive": responsive,
                 "language": {
                     "search": "Filter results:",
