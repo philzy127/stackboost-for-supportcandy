@@ -260,11 +260,14 @@ class WordPress {
 
 		// Determine if we need to load assets based on shortcodes.
 		$has_directory_shortcode = is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'stackboost_directory' );
+		$has_directory_block     = is_a( $post, 'WP_Post' ) && has_block( 'stackboost/directory', $post );
+		$has_directory_feature   = $has_directory_shortcode || $has_directory_block;
+
 		$has_ticket_shortcode    = is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'wpsc_ticket' );
 
 		// Enqueue Util Script (Shared functionality like Copy to Clipboard, Toast).
 		// Load if either the Directory or the Ticket Widget is present.
-		if ( $has_directory_shortcode || $has_ticket_shortcode ) {
+		if ( $has_directory_feature || $has_ticket_shortcode ) {
 			wp_enqueue_style(
 				'stackboost-util-style',
 				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
@@ -295,7 +298,7 @@ class WordPress {
 
 		// Enqueue Directory Assets (DataTables, Main Logic).
 		// Load ONLY if the directory shortcode is present.
-		if ( $has_directory_shortcode ) {
+		if ( $has_directory_feature ) {
 			wp_enqueue_style(
 				'stackboost-directory-datatables-style',
 				'https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css',

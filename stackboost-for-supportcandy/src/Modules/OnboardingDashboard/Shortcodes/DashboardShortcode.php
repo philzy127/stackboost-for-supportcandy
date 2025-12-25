@@ -21,9 +21,10 @@ class DashboardShortcode {
 	public static function enqueue_scripts() {
 		global $post;
 		$is_shortcode_page = ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'stackboost_onboarding_dashboard' ) );
+		$is_block_page     = ( is_a( $post, 'WP_Post' ) && has_block( 'stackboost/onboarding-dashboard', $post ) );
 		$is_completion_page = ( isset( $_GET['step_id'] ) && $_GET['step_id'] === 'completion' );
 
-		if ( $is_shortcode_page || $is_completion_page ) {
+		if ( $is_shortcode_page || $is_block_page || $is_completion_page ) {
 			wp_enqueue_style(
 				'stackboost-onboarding-dashboard',
 				\STACKBOOST_PLUGIN_URL . 'assets/css/onboarding-dashboard.css',

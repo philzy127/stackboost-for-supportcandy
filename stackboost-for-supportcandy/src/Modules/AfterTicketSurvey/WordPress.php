@@ -79,6 +79,9 @@ class WordPress extends Module {
 		// Frontend Shortcode
 		add_shortcode( 'stackboost_after_ticket_survey', [ $this->shortcode, 'render_shortcode' ] );
 
+		// Blocks
+		new Blocks\SurveyBlock( $this->shortcode );
+
 		// AJAX handlers
 		add_action( 'wp_ajax_stackboost_ats_update_report_heading', [ $this->ajax, 'update_report_heading' ] );
         add_action( 'wp_ajax_stackboost_ats_save_question', [ $this->ajax, 'save_question' ] );
@@ -96,7 +99,10 @@ class WordPress extends Module {
      */
     public function enqueue_frontend_assets() {
         global $post;
-        if ( is_a($post, 'WP_Post') && has_shortcode( $post->post_content, 'stackboost_after_ticket_survey' ) ) {
+        $has_shortcode = is_a($post, 'WP_Post') && has_shortcode( $post->post_content, 'stackboost_after_ticket_survey' );
+        $has_block     = is_a($post, 'WP_Post') && has_block( 'stackboost/after-ticket-survey', $post );
+
+        if ( $has_shortcode || $has_block ) {
             wp_enqueue_style( 'stackboost-ats-frontend', STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-ats-frontend.css', [], STACKBOOST_VERSION );
         }
     }

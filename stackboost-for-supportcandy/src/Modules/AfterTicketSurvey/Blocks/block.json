@@ -1,0 +1,15 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "stackboost/after-ticket-survey",
+    "version": "1.0.0",
+    "title": "After Ticket Survey",
+    "category": "widgets",
+    "icon": "clipboard",
+    "description": "Displays the After Ticket Survey form.",
+    "supports": {
+        "html": false
+    },
+    "textdomain": "stackboost-for-supportcandy",
+    "editorScript": "file:./index.js"
+}
