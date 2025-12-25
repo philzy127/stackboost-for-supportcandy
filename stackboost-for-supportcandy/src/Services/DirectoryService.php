@@ -262,7 +262,7 @@ class DirectoryService {
 
 		// Office Phone
 		if ( ! empty( $employee->office_phone ) ) {
-			$formatted_office_phone = $this->_format_phone_number_string( $employee->office_phone );
+			$formatted_office_phone = $this->format_phone_number_string( $employee->office_phone );
 			$office_tel_uri         = $this->_generate_tel_uri( $employee->office_phone, $employee->extension );
 
 			// Visible part wrapped in a link
@@ -294,7 +294,7 @@ class DirectoryService {
 
 		// Mobile Phone
 		if ( ! empty( $employee->mobile_phone ) ) {
-			$formatted_mobile_phone = $this->_format_phone_number_string( $employee->mobile_phone );
+			$formatted_mobile_phone = $this->format_phone_number_string( $employee->mobile_phone );
 			$mobile_tel_uri         = $this->_generate_tel_uri( $employee->mobile_phone, '' );
 
 			// Visible part wrapped in a link
@@ -347,7 +347,7 @@ class DirectoryService {
 	 * @param string $number Raw phone number.
 	 * @return string Formatted phone number.
 	 */
-	private function _format_phone_number_string( string $number ): string {
+	public function format_phone_number_string( string $number ): string {
 		// Only auto-format if it's a standard US 10-digit raw number.
 		if ( preg_match( '/^\d{10}$/', $number ) ) {
 			return '(' . substr( $number, 0, 3 ) . ') ' . substr( $number, 3, 3 ) . '-' . substr( $number, 6 );
