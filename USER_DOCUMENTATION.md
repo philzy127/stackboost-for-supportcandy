@@ -32,6 +32,12 @@ Manage your staff, locations, and departments.
 *   **Staff:** Add and edit staff members. You can link them to WordPress users for advanced integration.
 *   **Import:** Use the "Management" tab to import staff from a JSON file.
 *   **Contact Widget:** Configure a widget to show staff contact details directly on the SupportCandy ticket view.
+*   **Directory Block:** Display your staff directory on any page using the `StackBoost Directory` block.
+    *   **Visible Fields:** Toggle fields like Name, Phone, Email, Department, and Title.
+    *   **Email Display:** Optionally display the staff member's email address (with a convenient copy button) directly under their name.
+    *   **Photo Options:**
+        *   **Photo Shape:** Choose between Circle, Square, Portrait, or Landscape styles for staff photos.
+        *   **Gravatar Integration:** Enable "Prefer Gravatar" to prioritize Gravatar images, or "Fallback to Gravatar" to use them only when no custom photo is uploaded.
 
 ### Onboarding Dashboard
 

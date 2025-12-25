@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2] - 2025-12-24
+
+### Added
+- **Directory Block:**
+    - **Photo Shapes:** Added a "Photo Shape" option to the block and shortcode, allowing staff photos to be displayed as Circle, Square, Portrait, or Landscape.
+    - **Gravatar Integration:** Introduced "Prefer Gravatar" and "Fallback to Gravatar" toggles for granular control over photo display priority.
+    - **Email Display:** Added an optional "Email" field that displays the staff member's email address (with a copy-to-clipboard button) directly below their name.
+- **Editor Visuals:** The Directory Block now renders static mockups of the "Search" bar and "Items Per Page" controls within the Gutenberg editor, providing immediate visual feedback that these features are enabled.
+
+### Fixed
+- **Department Filters:** Resolved a bug where the "Filter by Department" list in the Directory Block settings would get stuck on "Loading departments..." by enabling REST API support for Directory Custom Post Types.
+- **React Deprecations:** Fixed deprecation warnings in the Block Editor console by updating `SelectControl`, `ToggleControl`, and other components with modern props (`__next40pxDefaultSize`, `__nextHasNoMarginBottom`).
+- **HTML Entities:** Fixed an issue where department names with special characters (e.g., "Finance & Stuff") were displaying as HTML entities in the block settings filter list.
+
 ## [1.4.1] - 2025-12-24
 
 ### Added
