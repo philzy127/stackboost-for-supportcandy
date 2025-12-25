@@ -123,6 +123,7 @@ class CustomPostTypes {
 			'publicly_queryable'  => true,
 			'capability_type'     => 'post',
 			'rewrite'             => array( 'slug' => 'staff' ),
+			'show_in_rest'        => true,
 		);
 		$result = register_post_type( $this->post_type, $args );
 		if (is_wp_error($result)) {
@@ -177,6 +178,7 @@ class CustomPostTypes {
 			'publicly_queryable'  => false,
 			'capability_type'     => 'post',
 			'rewrite'             => false,
+			'show_in_rest'        => true,
 		);
 		$result = register_post_type( $this->location_post_type, $args );
 		if (is_wp_error($result)) {
@@ -231,6 +233,7 @@ class CustomPostTypes {
 			'publicly_queryable'  => false,
 			'capability_type'     => 'post',
 			'rewrite'             => false,
+			'show_in_rest'        => true,
 		);
 		$result = register_post_type( $this->department_post_type, $args );
 		if (is_wp_error($result)) {
