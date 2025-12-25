@@ -46,6 +46,15 @@ class SurveyBlock {
 	 * @return string Rendered block HTML.
 	 */
 	public function render_block( $attributes, $content ) {
-		return $this->shortcode->render_shortcode();
+        $wrapper_attributes = get_block_wrapper_attributes();
+
+        // Pass attributes to the shortcode renderer
+        $shortcode_output = $this->shortcode->render_shortcode( $attributes );
+
+		return sprintf(
+            '<div %s>%s</div>',
+            $wrapper_attributes,
+            $shortcode_output
+        );
 	}
 }

@@ -10,6 +10,38 @@
     border: 1px solid #e2e8f0;
 }
 
+/* Grid Layout */
+.stackboost-ats-survey-container.stackboost-ats-layout-grid .stackboost-ats-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+}
+
+/* Submit button spans full width in grid */
+.stackboost-ats-survey-container.stackboost-ats-layout-grid .stackboost-ats-submit-button {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+    .stackboost-ats-survey-container.stackboost-ats-layout-grid .stackboost-ats-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Hide Labels */
+.stackboost-ats-survey-container.stackboost-ats-hide-labels .stackboost-ats-label {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    word-wrap: normal !important;
+}
+
 .stackboost-ats-main-title {
     display: none;
     font-size: 2.25rem;
@@ -40,6 +72,11 @@
     border-bottom: none;
 }
 
+/* Remove border in grid layout as it looks weird */
+.stackboost-ats-layout-grid .stackboost-ats-form-group {
+    border-bottom: none;
+}
+
 .stackboost-ats-label {
     display: block;
     color: #4a5568;
@@ -59,6 +96,7 @@
     border-radius: 6px;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box; /* Ensure padding doesn't break grid */
 }
 
 .stackboost-ats-input:focus {
@@ -66,16 +104,10 @@
     box-shadow: 0 0 0 2px rgba(130, 0, 36, 0.5);
 }
 
+/* Adjusted widths for cleaner look in both layouts */
 .stackboost-ats-short-text,
 .stackboost-ats-dropdown {
-    max-width: 50%;
-}
-
-@media (max-width: 640px) {
-    .stackboost-ats-short-text,
-    .stackboost-ats-dropdown {
-        max-width: 100%;
-    }
+    max-width: 100%;
 }
 
 .stackboost-ats-rating-options {

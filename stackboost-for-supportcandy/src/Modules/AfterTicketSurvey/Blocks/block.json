@@ -8,7 +8,47 @@
     "icon": "clipboard",
     "description": "Displays the After Ticket Survey form.",
     "supports": {
-        "html": false
+        "html": false,
+        "color": {
+            "background": true,
+            "text": true,
+            "link": true
+        },
+        "typography": {
+            "fontSize": true
+        },
+        "spacing": {
+            "margin": true,
+            "padding": true
+        },
+        "borders": {
+            "radius": true,
+            "style": true,
+            "width": true,
+            "color": true
+        }
+    },
+    "attributes": {
+        "introText": {
+            "type": "string",
+            "default": "Your feedback is important to us. Please take a moment to complete this survey."
+        },
+        "successMessage": {
+            "type": "string",
+            "default": "Thank you for completing our survey! Your feedback is invaluable and helps us improve our services."
+        },
+        "submitButtonText": {
+            "type": "string",
+            "default": "Submit Survey"
+        },
+        "hideLabels": {
+            "type": "boolean",
+            "default": false
+        },
+        "layout": {
+            "type": "string",
+            "default": "list"
+        }
     },
     "textdomain": "stackboost-for-supportcandy",
     "editorScript": "file:./index.js",
