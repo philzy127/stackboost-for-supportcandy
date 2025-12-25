@@ -635,6 +635,7 @@
     color: #555;
 }
 
+/* User Customization: Scale Mobile Icon */
 span.dashicons.dashicons-smartphone {
-	transform:scale(1.4);
+	transform: scale(1.4);
 }
