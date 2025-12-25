@@ -275,13 +275,31 @@ class DirectoryShortcode {
 												<?php echo esc_html( $employee->name ); ?>
 											<?php endif; ?>
 
+                                            <?php
+                                            // Email Display Logic
+                                            $show_email_text = in_array( 'email', $visible_columns, true );
+                                            ?>
+
 											<?php if ( ! empty( $employee->email ) ) : ?>
-												<span class="stackboost-copy-email-icon"
-													  data-email="<?php echo esc_attr( $employee->email ); ?>"
-													  title="<?php esc_attr_e( 'Click to copy email', 'stackboost-for-supportcandy' ); ?>">
-													<?php echo wp_kses( $copy_icon_svg, $allowed_html ); ?>
-												</span>
+                                                <?php if ( $show_email_text ) : ?>
+                                                    <div class="stackboost-directory-email-wrapper" style="font-size: 0.9em; margin-top: 3px;">
+                                                        <a href="mailto:<?php echo esc_attr( $employee->email ); ?>"><?php echo esc_html( $employee->email ); ?></a>
+                                                        <span class="stackboost-copy-email-icon"
+                                                              data-email="<?php echo esc_attr( $employee->email ); ?>"
+                                                              title="<?php esc_attr_e( 'Click to copy email', 'stackboost-for-supportcandy' ); ?>"
+                                                              style="margin-left: 5px;">
+                                                            <?php echo wp_kses( $copy_icon_svg, $allowed_html ); ?>
+                                                        </span>
+                                                    </div>
+                                                <?php else : ?>
+                                                    <span class="stackboost-copy-email-icon"
+                                                          data-email="<?php echo esc_attr( $employee->email ); ?>"
+                                                          title="<?php esc_attr_e( 'Click to copy email', 'stackboost-for-supportcandy' ); ?>">
+                                                        <?php echo wp_kses( $copy_icon_svg, $allowed_html ); ?>
+                                                    </span>
+                                                <?php endif; ?>
 											<?php endif; ?>
+
 											<?php if ( $can_edit_entries && $employee->edit_post_link ) : ?>
 												<a href="<?php echo esc_url( $employee->edit_post_link ); ?>" title="<?php esc_attr_e( 'Edit this entry', 'stackboost-for-supportcandy' ); ?>" style="margin-left: 5px;">
 													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; cursor: pointer;">

@@ -99,6 +99,11 @@
                         disabled: true // Name should probably always be visible
                     } ),
                     el( CheckboxControl, {
+                        label: __( 'Email', 'stackboost-for-supportcandy' ),
+                        checked: attributes.visibleColumns.indexOf( 'email' ) !== -1,
+                        onChange: function() { toggleColumn( 'email' ); }
+                    } ),
+                    el( CheckboxControl, {
                         label: __( 'Phone', 'stackboost-for-supportcandy' ),
                         checked: attributes.visibleColumns.indexOf( 'phone' ) !== -1,
                         onChange: function() { toggleColumn( 'phone' ); }
