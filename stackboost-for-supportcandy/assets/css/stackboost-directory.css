@@ -495,3 +495,89 @@
         margin-bottom: 3px; /* Space between label and value */
     }
 }
+
+/* --- Modern Grid Layout --- */
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    border: none;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable thead {
+    display: none; /* Hide header in grid view */
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable tbody {
+    display: contents; /* Allow rows to be grid items */
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable tr {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+    align-items: center;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable td {
+    display: block;
+    border: none;
+    padding: 5px 0;
+    width: 100%;
+}
+
+/* Avatar Styling */
+.stackboost-directory-avatar {
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    margin-bottom: 10px;
+    border: 2px solid #eee;
+}
+
+/* Modern Card Typography */
+.stackboost-staff-directory-container.stackboost-theme-modern .sb-col-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern .sb-col-title {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    font-style: italic;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern .sb-col-dept {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern .sb-col-phone {
+    font-size: 0.9em;
+    margin-top: auto; /* Push to bottom */
+}
+
+/* Standard Table Avatar Adjustment */
+.stackboost-theme-standard .stackboost-directory-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    vertical-align: middle;
+}

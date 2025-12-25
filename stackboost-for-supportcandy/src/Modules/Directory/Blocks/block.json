@@ -2,7 +2,7 @@
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
     "name": "stackboost/directory",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "title": "StackBoost Directory",
     "category": "widgets",
     "icon": "groups",
@@ -15,5 +15,41 @@
     "style": [
         "stackboost-directory-datatables-style",
         "stackboost-directory-style"
-    ]
+    ],
+    "attributes": {
+        "theme": {
+            "type": "string",
+            "default": "standard"
+        },
+        "showSearch": {
+            "type": "boolean",
+            "default": true
+        },
+        "visibleColumns": {
+            "type": "array",
+            "default": ["photo", "name", "phone", "department", "title"],
+            "items": {
+                "type": "string"
+            }
+        },
+        "itemsPerPage": {
+            "type": "number",
+            "default": 10
+        },
+        "allowPageLengthChange": {
+            "type": "boolean",
+            "default": true
+        },
+        "linkBehavior": {
+            "type": "string",
+            "default": "modal"
+        },
+        "departmentFilter": {
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        }
+    }
 }

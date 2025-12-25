@@ -122,6 +122,29 @@ class DirectoryService {
 		$employee_data->thumbnail_url       = get_the_post_thumbnail_url( $profile_id, 'medium' );
 		$employee_data->full_photo_url      = get_the_post_thumbnail_url( $profile_id, 'full' );
 		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
+
+		// Photo Fallback Logic
+		if ( empty( $employee_data->thumbnail_url ) ) {
+			if ( ! empty( $employee_data->email ) ) {
+				// 1. Gravatar (returns a default if not found, but we can check args)
+				$gravatar = get_avatar_url( $employee_data->email, [ 'default' => '404' ] );
+				// check if gravatar returned a 404 (meaning no custom gravatar)
+                // Actually get_avatar_url returns the 404 URL, so we can't easily check validity without a request.
+                // Standard WP behavior is to just use it.
+                // However, user requested: Gravatar -> Filler.
+                // Use default='mp' (Mystery Person) or 'blank' as "Filler" if we want WP native filler.
+                // Or use our own custom filler.
+
+                // Let's use WP's robust get_avatar_url.
+				$employee_data->thumbnail_url = get_avatar_url( $employee_data->email, [ 'size' => 150 ] );
+                $employee_data->full_photo_url = get_avatar_url( $employee_data->email, [ 'size' => 300 ] );
+			} else {
+                // 2. Filler (No email, no photo)
+                $employee_data->thumbnail_url = \STACKBOOST_PLUGIN_URL . 'assets/images/avatar-placeholder.png';
+                $employee_data->full_photo_url = \STACKBOOST_PLUGIN_URL . 'assets/images/avatar-placeholder.png';
+            }
+		}
+
 		$employee_data->job_title           = get_post_meta( $profile_id, '_stackboost_staff_job_title', true );
 		$employee_data->department_program  = get_post_meta( $profile_id, '_department_program', true );
 		$employee_data->office_phone        = get_post_meta( $profile_id, '_office_phone', true );
