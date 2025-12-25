@@ -176,7 +176,7 @@ jQuery(document).ready(function($) {
                 sbLog('Responsive DataTables initialized.');
             } catch (e) {
                 // We keep this warn as it's useful even in non-debug mode for developers inspecting console
-                console.warn('[StackBoost Directory] Responsive DataTables init failed (likely hidden). Retrying standard config.');
+                sbLog('Responsive DataTables init failed (likely hidden). Retrying standard config.');
                 // Attempt 2: Non-responsive fallback
                 try {
                      if ($.fn.DataTable.isDataTable('#stackboostStaffDirectoryTable')) {
