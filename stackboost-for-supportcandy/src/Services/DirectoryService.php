@@ -348,9 +348,12 @@ class DirectoryService {
 	 * @return string Formatted phone number.
 	 */
 	public function format_phone_number_string( string $number ): string {
+		// Strip all non-numeric characters to get the raw digits.
+		$clean_number = preg_replace( '/\D/', '', $number );
+
 		// Only auto-format if it's a standard US 10-digit raw number.
-		if ( preg_match( '/^\d{10}$/', $number ) ) {
-			return '(' . substr( $number, 0, 3 ) . ') ' . substr( $number, 3, 3 ) . '-' . substr( $number, 6 );
+		if ( 10 === strlen( $clean_number ) ) {
+			return '(' . substr( $clean_number, 0, 3 ) . ') ' . substr( $clean_number, 3, 3 ) . '-' . substr( $clean_number, 6 );
 		}
 
 		// Otherwise, return the user's input as-is (e.g. international formats).
