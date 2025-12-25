@@ -20,6 +20,13 @@ class DashboardBlock {
 	 * Register the block.
 	 */
 	public function register_block() {
+		wp_register_style(
+			'stackboost-onboarding-dashboard',
+			\STACKBOOST_PLUGIN_URL . 'assets/css/onboarding-dashboard.css',
+			[],
+			\STACKBOOST_VERSION
+		);
+
 		register_block_type( __DIR__, array(
 			'render_callback' => array( $this, 'render_block' ),
 		) );

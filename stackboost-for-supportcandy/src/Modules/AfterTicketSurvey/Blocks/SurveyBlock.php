@@ -26,6 +26,13 @@ class SurveyBlock {
 	 * Register the block.
 	 */
 	public function register_block() {
+		wp_register_style(
+			'stackboost-ats-frontend',
+			\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-ats-frontend.css',
+			[],
+			\STACKBOOST_VERSION
+		);
+
 		register_block_type( __DIR__, array(
 			'render_callback' => array( $this, 'render_block' ),
 		) );

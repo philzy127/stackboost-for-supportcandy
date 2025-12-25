@@ -305,12 +305,17 @@ class WordPress {
 				array(),
 				'1.11.5'
 			);
-			wp_enqueue_style(
-				'stackboost-directory-style',
-				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
-				array( 'stackboost-util-style' ), // Depend on util style
-				\STACKBOOST_VERSION
-			);
+			// CSS is now loaded via block.json for blocks, but we still need it for shortcodes.
+			// WordPress handles deduplication, so safe to keep or rely on block logic.
+			// However, since we want to be explicit for shortcodes:
+            if ( ! has_block( 'stackboost/directory', $post ) ) {
+                wp_enqueue_style(
+                    'stackboost-directory-style',
+                    \STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
+                    array( 'stackboost-util-style' ), // Depend on util style
+                    \STACKBOOST_VERSION
+                );
+            }
 
 			wp_enqueue_script(
 				'stackboost-directory-datatables',

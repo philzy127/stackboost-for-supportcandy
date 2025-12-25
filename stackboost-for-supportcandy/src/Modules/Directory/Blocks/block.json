@@ -11,5 +11,9 @@
         "html": false
     },
     "textdomain": "stackboost-for-supportcandy",
-    "editorScript": "file:./index.js"
+    "editorScript": "file:./index.js",
+    "style": [
+        "stackboost-directory-datatables-style",
+        "stackboost-directory-style"
+    ]
 }

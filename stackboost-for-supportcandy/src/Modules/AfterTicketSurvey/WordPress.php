@@ -103,7 +103,10 @@ class WordPress extends Module {
         $has_block     = is_a($post, 'WP_Post') && has_block( 'stackboost/after-ticket-survey', $post );
 
         if ( $has_shortcode || $has_block ) {
-            wp_enqueue_style( 'stackboost-ats-frontend', STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-ats-frontend.css', [], STACKBOOST_VERSION );
+             // Only enqueue manually if it's NOT a block page (block handles CSS via metadata)
+            if ( ! $has_block ) {
+                wp_enqueue_style( 'stackboost-ats-frontend', STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-ats-frontend.css', [], STACKBOOST_VERSION );
+            }
         }
     }
 
