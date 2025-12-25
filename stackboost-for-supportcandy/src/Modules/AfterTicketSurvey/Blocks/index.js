@@ -23,6 +23,40 @@
             var blockProps = useBlockProps();
 
             return el( Fragment, {},
+                el( InspectorControls, { group: 'styles' },
+                    el( PanelColorSettings, {
+                        title: 'Button Colors',
+                        initialOpen: false,
+                        colorSettings: [
+                            {
+                                value: attributes.submitButtonBackgroundColor,
+                                onChange: function( value ) { setAttributes( { submitButtonBackgroundColor: value } ); },
+                                label: 'Background Color',
+                            },
+                            {
+                                value: attributes.submitButtonTextColor,
+                                onChange: function( value ) { setAttributes( { submitButtonTextColor: value } ); },
+                                label: 'Text Color',
+                            },
+                        ],
+                    } ),
+                    el( PanelColorSettings, {
+                        title: 'Input Field Colors',
+                        initialOpen: false,
+                        colorSettings: [
+                            {
+                                value: attributes.inputBackgroundColor,
+                                onChange: function( value ) { setAttributes( { inputBackgroundColor: value } ); },
+                                label: 'Background Color',
+                            },
+                            {
+                                value: attributes.inputTextColor,
+                                onChange: function( value ) { setAttributes( { inputTextColor: value } ); },
+                                label: 'Text Color',
+                            },
+                        ],
+                    } )
+                ),
                 el( InspectorControls, {},
                     el( PanelBody, { title: 'Content Settings', initialOpen: true },
                         el( TextControl, {
@@ -66,22 +100,6 @@
                         } ),
                         el( 'p', { className: 'components-base-control__help' }, 'If set, users will be redirected to this URL after submission instead of seeing the success message.' )
                     ),
-                    el( PanelColorSettings, {
-                        title: 'Button Colors',
-                        initialOpen: false,
-                        colorSettings: [
-                            {
-                                value: attributes.submitButtonBackgroundColor,
-                                onChange: function( value ) { setAttributes( { submitButtonBackgroundColor: value } ); },
-                                label: 'Background Color',
-                            },
-                            {
-                                value: attributes.submitButtonTextColor,
-                                onChange: function( value ) { setAttributes( { submitButtonTextColor: value } ); },
-                                label: 'Text Color',
-                            },
-                        ],
-                    } ),
                     el( PanelBody, { title: 'Display Settings', initialOpen: true },
                         el( SelectControl, {
                             label: 'Layout',

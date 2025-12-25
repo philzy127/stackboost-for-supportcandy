@@ -48,7 +48,9 @@ class Shortcode {
             'redirectUrl' => '',
             'layout' => 'list',
             'submitButtonBackgroundColor' => '',
-            'submitButtonTextColor' => ''
+            'submitButtonTextColor' => '',
+            'inputBackgroundColor' => '',
+            'inputTextColor' => ''
         ], $atts );
 
 		ob_start();
@@ -160,17 +162,28 @@ class Shortcode {
             $container_classes .= ' stackboost-ats-layout-grid';
         }
 
-        // Button Styles
-        $button_style = '';
+        // Construct CSS Variables Style Block
+        $css_vars = [];
         if ( ! empty( $atts['submitButtonBackgroundColor'] ) ) {
-            $button_style .= 'background-color: ' . esc_attr( $atts['submitButtonBackgroundColor'] ) . ' !important;';
+            $css_vars[] = '--ats-btn-bg: ' . esc_attr( $atts['submitButtonBackgroundColor'] ) . ';';
         }
         if ( ! empty( $atts['submitButtonTextColor'] ) ) {
-            $button_style .= 'color: ' . esc_attr( $atts['submitButtonTextColor'] ) . ' !important;';
+            $css_vars[] = '--ats-btn-text: ' . esc_attr( $atts['submitButtonTextColor'] ) . ';';
+        }
+        if ( ! empty( $atts['inputBackgroundColor'] ) ) {
+            $css_vars[] = '--ats-input-bg: ' . esc_attr( $atts['inputBackgroundColor'] ) . ';';
+        }
+        if ( ! empty( $atts['inputTextColor'] ) ) {
+            $css_vars[] = '--ats-input-text: ' . esc_attr( $atts['inputTextColor'] ) . ';';
+        }
+
+        $style_attr = '';
+        if ( ! empty( $css_vars ) ) {
+            $style_attr = 'style="' . implode( ' ', $css_vars ) . '"';
         }
 
 		?>
-		<div class="<?php echo esc_attr( $container_classes ); ?>">
+		<div class="<?php echo esc_attr( $container_classes ); ?>" <?php echo $style_attr; ?>>
             <?php if ( ! empty( $atts['formTitle'] ) ) : ?>
                 <h2 class="stackboost-ats-main-title"><?php echo esc_html( $atts['formTitle'] ); ?></h2>
             <?php endif; ?>
@@ -190,7 +203,7 @@ class Shortcode {
 						<?php $this->render_question_field( $q, $options, $prefill_ticket_id, $prefill_tech_name ); ?>
 					</div>
 				<?php endforeach; ?>
-				<button type="submit" name="stackboost_ats_submit_survey" class="stackboost-ats-submit-button" style="<?php echo esc_attr( $button_style ); ?>"><?php echo esc_html( $atts['submitButtonText'] ); ?></button>
+				<button type="submit" name="stackboost_ats_submit_survey" class="stackboost-ats-submit-button"><?php echo esc_html( $atts['submitButtonText'] ); ?></button>
 			</form>
 		</div>
 		<?php

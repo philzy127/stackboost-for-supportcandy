@@ -58,6 +58,12 @@
         },
         "submitButtonTextColor": {
             "type": "string"
+        },
+        "inputBackgroundColor": {
+            "type": "string"
+        },
+        "inputTextColor": {
+            "type": "string"
         }
     },
     "textdomain": "stackboost-for-supportcandy",
