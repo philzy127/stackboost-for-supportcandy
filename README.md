@@ -6,7 +6,7 @@ A comprehensive enhancement suite for the SupportCandy WordPress plugin. This pl
 
 ### Core (Lite)
 *   **Quality of Life Enhancements:** Various UI tweaks to improve the SupportCandy experience.
-*   **After-Hours Notice:** Display a warning to users when they submit tickets outside of business hours.
+*   **After-Hours Notice:** Display a warning to users when they submit tickets outside of business hours. Supports integration with SupportCandy's Working Hours and Holidays.
 *   **Date & Time Formatting:** Customize how dates and times are displayed in tickets.
 
 ### Pro

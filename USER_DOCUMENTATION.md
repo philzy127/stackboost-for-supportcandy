@@ -67,6 +67,20 @@ Enhance the ticket list with a quick-preview popup.
 *   **Interactive:** You can expand and collapse sections (like "Conversation History") within the card.
 *   **Pro Features:** Advanced layouts (Unified Ticket Macro view) are marked with a **PRO** badge in the settings and require an active Pro or Business license.
 
+### After-Hours Notice
+
+Display a custom warning message on the ticket submission form when your business is closed.
+
+*   **Configuration:** You can now choose to inherit your schedule from SupportCandy or set it manually.
+    *   **Use SupportCandy Working Hours:** When enabled, the plugin checks SupportCandy's "Working Hours" and "Exceptions" settings. Exceptions always take precedence.
+    *   **Use SupportCandy Holiday Schedule:** When enabled, the plugin checks SupportCandy's "Holiday" list.
+    *   **Hybrid Mode:** You can mix these settings. For example, if you use SupportCandy's Working Hours but have **manual holidays** entered in the text box below, the system will use the SupportCandy schedule *unless* today is listed in your manual holiday list, in which case it will show the closed notice.
+*   **Manual Settings:**
+    *   **After Hours Start:** The hour (0-23) when your business closes.
+    *   **Before Hours End:** The hour (0-23) when your business opens.
+    *   **Holidays:** A list of dates (one per line, MM-DD-YYYY or YYYY-MM-DD) when your business is closed all day.
+*   **Important:** The system uses your **WordPress Timezone** setting (Settings > General). Ensure this matches your local time, or the notice may appear at the wrong time.
+
 ## Support
 
 If you encounter issues, please check the **Diagnostics** page to see if any errors are being logged. You can download the log file and send it to our support team for assistance.

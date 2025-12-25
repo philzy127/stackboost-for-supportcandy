@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] - 2025-12-24
+
+### Added
+- **SupportCandy Schedule Integration:** The After-Hours Notice module can now optionally inherit its working hours and holiday schedule directly from SupportCandy's settings.
+- **Hybrid Scheduling:** Added support for hybrid configurations, allowing administrators to use SupportCandy's schedule while applying additional manual holiday overrides from StackBoost.
+- **Settings Toggles:** Added "Use SupportCandy Working Hours" and "Use SupportCandy Holiday Schedule" toggles to the After-Hours Notice settings, with dynamic UI controls.
+
+### Changed
+- **Logic Refactor:** Centralized the "After Hours" determination logic (`is_currently_after_hours`) to handle multiple scheduling sources and conflict resolution robustly.
+- **Timezone Handling:** Improved timezone handling for recurring holidays to strictly respect the WordPress site configuration instead of the server's default timezone.
+
 ## [1.4.0] - 2025-12-22
 
 ### Added

@@ -641,7 +641,7 @@ class Settings {
 				'page_last_loaded_format'
 			],
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
-			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
+			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
@@ -682,6 +682,8 @@ class Settings {
 					case 'enable_queue_macro':
 					case 'enable_after_hours_notice':
 					case 'after_hours_in_email':
+					case 'use_sc_working_hours':
+					case 'use_sc_holidays':
 					case 'include_all_weekends':
 					case 'utm_enabled':
 					case 'utm_use_sc_order':
@@ -783,7 +785,7 @@ class Settings {
 				}
 			} else {
 				// Handle unchecked checkboxes, which are not present in the form submission.
-				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled') {
+				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled') {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
 					$saved_settings[$key] = [];
