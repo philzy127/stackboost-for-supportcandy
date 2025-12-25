@@ -29,6 +29,10 @@
         }
     },
     "attributes": {
+        "formTitle": {
+            "type": "string",
+            "default": ""
+        },
         "introText": {
             "type": "string",
             "default": "Your feedback is important to us. Please take a moment to complete this survey."
@@ -41,9 +45,9 @@
             "type": "string",
             "default": "Submit Survey"
         },
-        "hideLabels": {
-            "type": "boolean",
-            "default": false
+        "redirectUrl": {
+            "type": "string",
+            "default": ""
         },
         "layout": {
             "type": "string",

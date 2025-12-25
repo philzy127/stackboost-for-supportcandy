@@ -6,7 +6,6 @@
     var PanelBody = wp.components.PanelBody;
     var TextControl = wp.components.TextControl;
     var TextareaControl = wp.components.TextareaControl;
-    var ToggleControl = wp.components.ToggleControl;
     var SelectControl = wp.components.SelectControl;
     var __ = wp.i18n.__;
     var el = wp.element.createElement;
@@ -24,22 +23,34 @@
             return el( Fragment, {},
                 el( InspectorControls, {},
                     el( PanelBody, { title: 'Content Settings', initialOpen: true },
+                        el( TextControl, {
+                            label: 'Form Title',
+                            value: attributes.formTitle,
+                            onChange: function( value ) { setAttributes( { formTitle: value } ); },
+                            help: 'Optional title displayed at the top of the form.'
+                        } ),
                         el( TextareaControl, {
                             label: 'Intro Text',
                             value: attributes.introText,
                             onChange: function( value ) { setAttributes( { introText: value } ); },
                             help: 'Text displayed above the survey form.'
                         } ),
-                        el( TextareaControl, {
-                            label: 'Success Message',
-                            value: attributes.successMessage,
-                            onChange: function( value ) { setAttributes( { successMessage: value } ); },
-                            help: 'Message displayed after successful submission.'
-                        } ),
                         el( TextControl, {
                             label: 'Submit Button Text',
                             value: attributes.submitButtonText,
                             onChange: function( value ) { setAttributes( { submitButtonText: value } ); }
+                        } ),
+                        el( TextareaControl, {
+                            label: 'Success Message',
+                            value: attributes.successMessage,
+                            onChange: function( value ) { setAttributes( { successMessage: value } ); },
+                            help: 'Message displayed after successful submission. Ignored if Redirect URL is set.'
+                        } ),
+                        el( TextControl, {
+                            label: 'Redirect URL (Optional)',
+                            value: attributes.redirectUrl,
+                            onChange: function( value ) { setAttributes( { redirectUrl: value } ); },
+                            help: 'If set, users will be redirected to this URL after submission instead of seeing the success message.'
                         } )
                     ),
                     el( PanelBody, { title: 'Display Settings', initialOpen: true },
@@ -51,11 +62,6 @@
                                 { label: 'Grid (2 Columns)', value: 'grid' }
                             ],
                             onChange: function( value ) { setAttributes( { layout: value } ); }
-                        } ),
-                        el( ToggleControl, {
-                            label: 'Hide Field Labels',
-                            checked: attributes.hideLabels,
-                            onChange: function( value ) { setAttributes( { hideLabels: value } ); }
                         } )
                     )
                 ),

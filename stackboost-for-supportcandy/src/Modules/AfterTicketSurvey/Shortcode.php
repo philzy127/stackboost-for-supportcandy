@@ -41,10 +41,11 @@ class Shortcode {
 	 */
 	public function render_shortcode( $atts = [] ): string {
         $atts = shortcode_atts( [
+            'formTitle' => '',
             'introText' => 'Your feedback is important to us. Please take a moment to complete this survey.',
             'successMessage' => 'Thank you for completing our survey! Your feedback is invaluable and helps us improve our services.',
             'submitButtonText' => 'Submit Survey',
-            'hideLabels' => false,
+            'redirectUrl' => '',
             'layout' => 'list'
         ], $atts );
 
@@ -121,6 +122,13 @@ class Shortcode {
 			}
 		}
 
+        // Handle Redirect or Success Message
+        if ( ! empty( $atts['redirectUrl'] ) ) {
+            $url = esc_url_raw( $atts['redirectUrl'] );
+            echo "<script>window.location.href = '{$url}';</script>";
+            return;
+        }
+
 		echo '<div class="stackboost-ats-success-message">' . esc_html( $atts['successMessage'] ) . '</div>';
 	}
 
@@ -149,12 +157,12 @@ class Shortcode {
         if ( 'grid' === $atts['layout'] ) {
             $container_classes .= ' stackboost-ats-layout-grid';
         }
-        if ( $atts['hideLabels'] ) {
-            $container_classes .= ' stackboost-ats-hide-labels';
-        }
 
 		?>
 		<div class="<?php echo esc_attr( $container_classes ); ?>">
+            <?php if ( ! empty( $atts['formTitle'] ) ) : ?>
+                <h2 class="stackboost-ats-main-title"><?php echo esc_html( $atts['formTitle'] ); ?></h2>
+            <?php endif; ?>
 			<?php if ( ! empty( $atts['introText'] ) ) : ?>
                 <p class="stackboost-ats-intro"><?php echo nl2br( esc_html( $atts['introText'] ) ); ?></p>
             <?php endif; ?>
