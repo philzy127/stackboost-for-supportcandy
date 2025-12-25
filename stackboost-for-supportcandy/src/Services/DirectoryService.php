@@ -300,7 +300,7 @@ class DirectoryService {
 			// Visible part wrapped in a link
 			$mobile_link = '<a href="' . esc_url( $mobile_tel_uri ) . '">' . $formatted_mobile_phone . '</a>';
 
-			$mobile_line = '<span class="dashicons dashicons-smartphone" style="display: inline-block; font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555; transform: scale(1.4);" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $mobile_link;
+			$mobile_line = '<span class="dashicons dashicons-smartphone" style="font-size: 22px; width: 22px; height: 22px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $mobile_link;
 
 			// Add copy button (mobile usually has no extension)
 			$mobile_copy_text = $formatted_mobile_phone;
