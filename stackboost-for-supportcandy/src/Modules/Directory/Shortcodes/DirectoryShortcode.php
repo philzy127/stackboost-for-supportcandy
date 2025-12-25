@@ -52,6 +52,9 @@ class DirectoryShortcode {
 				'allowPageLengthChange' => true,
 				'linkBehavior'          => '', // Defaults to global setting if empty
 				'departmentFilter'      => array(),
+                'preferGravatar'        => false,
+                'enableGravatarFallback'=> false,
+                'photoShape'            => 'circle',
 			),
 			$atts,
 			'stackboost_directory'
@@ -65,6 +68,9 @@ class DirectoryShortcode {
 		$visible_columns         = is_array( $atts['visibleColumns'] ) ? $atts['visibleColumns'] : explode( ',', $atts['visibleColumns'] );
 		$department_filter       = is_array( $atts['departmentFilter'] ) ? $atts['departmentFilter'] : ( ! empty( $atts['departmentFilter'] ) ? explode( ',', $atts['departmentFilter'] ) : array() );
 		$link_behavior           = sanitize_key( $atts['linkBehavior'] );
+        $prefer_gravatar         = filter_var( $atts['preferGravatar'], FILTER_VALIDATE_BOOLEAN );
+        $enable_gravatar_fallback = filter_var( $atts['enableGravatarFallback'], FILTER_VALIDATE_BOOLEAN );
+        $photo_shape             = in_array( $atts['photoShape'], [ 'circle', 'square', 'portrait', 'landscape' ], true ) ? $atts['photoShape'] : 'circle';
 
 		// Normalize columns (trim whitespace)
 		$visible_columns = array_map( 'trim', $visible_columns );
@@ -101,6 +107,34 @@ class DirectoryShortcode {
 		ob_start();
 		?>
 		<div class="stackboost-staff-directory-container stackboost-theme-<?php echo esc_attr( $theme ); ?>">
+            <?php if ( defined( 'REST_REQUEST' ) && REST_REQUEST && wp_is_json_request() ) : ?>
+                <!-- Editor Preview Controls (Visual Only) -->
+                 <div class="stackboost-directory-editor-controls" style="display: flex; justify-content: space-between; margin-bottom: 10px; opacity: 0.6; pointer-events: none;">
+                    <?php if ( $allow_page_length_change ) : ?>
+                        <div class="dataTables_length">
+                            <label>
+                                <?php esc_html_e( 'Show', 'stackboost-for-supportcandy' ); ?>
+                                <select name="stackboostStaffDirectoryTable_length" aria-controls="stackboostStaffDirectoryTable" style="margin: 0 5px;">
+                                    <option value="<?php echo esc_attr( $items_per_page ); ?>"><?php echo esc_html( $items_per_page ); ?></option>
+                                </select>
+                                <?php esc_html_e( 'entries', 'stackboost-for-supportcandy' ); ?>
+                            </label>
+                        </div>
+                    <?php else: ?>
+                        <div></div>
+                    <?php endif; ?>
+
+                    <?php if ( $show_search ) : ?>
+                        <div class="dataTables_filter">
+                            <label>
+                                <?php esc_html_e( 'Search:', 'stackboost-for-supportcandy' ); ?>
+                                <input type="search" placeholder="" aria-controls="stackboostStaffDirectoryTable" style="margin-left: 5px; border: 1px solid #ddd; padding: 2px 5px;">
+                            </label>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
 			<div id="stackboost-full-directory-table-wrapper">
 				<?php if ( ! empty( $employees ) ) : ?>
 					<table id="stackboostStaffDirectoryTable"
@@ -182,11 +216,43 @@ class DirectoryShortcode {
 								$formatted_phone_output  = $directory_service->get_formatted_phone_numbers_html( $employee );
 								$copy_icon_svg           = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; margin-left: 5px; cursor: pointer;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
 
-                                // Prepare Photo HTML
-                                $photo_html = '';
-                                if ( ! empty( $employee->thumbnail_url ) ) {
-                                    $photo_html = sprintf( '<img src="%s" class="stackboost-directory-avatar" alt="%s">', esc_url( $employee->thumbnail_url ), esc_attr( $employee->name ) );
+                                // Determine Photo URL based on preferences
+                                $display_photo_url = '';
+                                $custom_photo = $employee->custom_photo_url;
+                                $gravatar_url = $employee->gravatar_url;
+                                $placeholder_url = $employee->placeholder_url;
+
+                                if ( $prefer_gravatar ) {
+                                    if ( ! empty( $gravatar_url ) ) {
+                                        $display_photo_url = $gravatar_url;
+                                    } elseif ( ! empty( $custom_photo ) ) {
+                                        $display_photo_url = $custom_photo;
+                                    } elseif ( $enable_gravatar_fallback && ! empty( $gravatar_url ) ) {
+                                         // Should have been caught by first if, but rigorous check
+                                         $display_photo_url = $gravatar_url;
+                                    } else {
+                                        $display_photo_url = $placeholder_url;
+                                    }
+                                } else {
+                                    // Prefer Custom
+                                    if ( ! empty( $custom_photo ) ) {
+                                        $display_photo_url = $custom_photo;
+                                    } elseif ( $enable_gravatar_fallback && ! empty( $gravatar_url ) ) {
+                                        $display_photo_url = $gravatar_url;
+                                    } else {
+                                        $display_photo_url = $placeholder_url;
+                                    }
                                 }
+
+                                // If absolutely nothing resolved (should be placeholder at least), fallback
+                                if ( empty( $display_photo_url ) ) {
+                                    $display_photo_url = $placeholder_url;
+                                }
+
+                                // Prepare Photo HTML with Shape Class
+                                $photo_class = 'stackboost-directory-avatar sb-shape-' . esc_attr( $photo_shape );
+                                $photo_html = sprintf( '<img src="%s" class="%s" alt="%s">', esc_url( $display_photo_url ), esc_attr( $photo_class ), esc_attr( $employee->name ) );
+
                                 ?>
 								<tr>
                                     <?php if ( in_array( 'photo', $visible_columns, true ) ) : ?>
@@ -209,19 +275,37 @@ class DirectoryShortcode {
 												<?php echo esc_html( $employee->name ); ?>
 											<?php endif; ?>
 
-											<?php if ( ! empty( $employee->email ) ) : ?>
-												<span class="stackboost-copy-email-icon"
-													  data-email="<?php echo esc_attr( $employee->email ); ?>"
-													  title="<?php esc_attr_e( 'Click to copy email', 'stackboost-for-supportcandy' ); ?>">
-													<?php echo wp_kses( $copy_icon_svg, $allowed_html ); ?>
-												</span>
-											<?php endif; ?>
 											<?php if ( $can_edit_entries && $employee->edit_post_link ) : ?>
 												<a href="<?php echo esc_url( $employee->edit_post_link ); ?>" title="<?php esc_attr_e( 'Edit this entry', 'stackboost-for-supportcandy' ); ?>" style="margin-left: 5px;">
 													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; cursor: pointer;">
 														<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
 													</svg>
 												</a>
+											<?php endif; ?>
+
+                                            <?php
+                                            // Email Display Logic
+                                            $show_email_text = in_array( 'email', $visible_columns, true );
+                                            ?>
+
+											<?php if ( ! empty( $employee->email ) ) : ?>
+                                                <?php if ( $show_email_text ) : ?>
+                                                    <div class="stackboost-directory-email-wrapper" style="font-size: 0.9em; margin-top: 3px;">
+                                                        <a href="mailto:<?php echo esc_attr( $employee->email ); ?>"><?php echo esc_html( $employee->email ); ?></a>
+                                                        <span class="stackboost-copy-email-icon"
+                                                              data-email="<?php echo esc_attr( $employee->email ); ?>"
+                                                              title="<?php esc_attr_e( 'Click to copy email', 'stackboost-for-supportcandy' ); ?>"
+                                                              style="margin-left: 5px;">
+                                                            <?php echo wp_kses( $copy_icon_svg, $allowed_html ); ?>
+                                                        </span>
+                                                    </div>
+                                                <?php else : ?>
+                                                    <span class="stackboost-copy-email-icon"
+                                                          data-email="<?php echo esc_attr( $employee->email ); ?>"
+                                                          title="<?php esc_attr_e( 'Click to copy email', 'stackboost-for-supportcandy' ); ?>">
+                                                        <?php echo wp_kses( $copy_icon_svg, $allowed_html ); ?>
+                                                    </span>
+                                                <?php endif; ?>
 											<?php endif; ?>
 										</td>
 									<?php endif; ?>

@@ -2,6 +2,8 @@
 
 A comprehensive enhancement suite for the SupportCandy WordPress plugin. This plugin adds modular features like a Company Directory, Onboarding Dashboard, After-Ticket Surveys, and advanced automation macros.
 
+**Current Version:** 1.4.2
+
 ## Features
 
 ### Core (Lite)
@@ -17,6 +19,7 @@ A comprehensive enhancement suite for the SupportCandy WordPress plugin. This pl
 
 ### Business
 *   **Company Directory:** Manage staff, locations, and departments. Includes a searchable frontend directory and a backend contact widget for tickets.
+    *   **New:** Enhanced Directory Block with Gravatar integration, custom photo shapes, and email display options.
 *   **Onboarding Dashboard:** A complete workflow for managing employee onboarding steps, tracking progress, and generating completion certificates.
 
 ## Licensing

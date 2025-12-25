@@ -123,25 +123,28 @@ class DirectoryService {
 		$employee_data->full_photo_url      = get_the_post_thumbnail_url( $profile_id, 'full' );
 		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
 
-		// Photo Fallback Logic
-		if ( empty( $employee_data->thumbnail_url ) ) {
-			if ( ! empty( $employee_data->email ) ) {
-				// 1. Gravatar (returns a default if not found, but we can check args)
-				$gravatar = get_avatar_url( $employee_data->email, [ 'default' => '404' ] );
-				// check if gravatar returned a 404 (meaning no custom gravatar)
-                // Actually get_avatar_url returns the 404 URL, so we can't easily check validity without a request.
-                // Standard WP behavior is to just use it.
-                // However, user requested: Gravatar -> Filler.
-                // Use default='mp' (Mystery Person) or 'blank' as "Filler" if we want WP native filler.
-                // Or use our own custom filler.
+		// Store raw custom photo URLs for granular control in Shortcode/Block
+		$employee_data->custom_photo_url = $employee_data->thumbnail_url;
+		$employee_data->custom_full_photo_url = $employee_data->full_photo_url;
 
-                // Let's use WP's robust get_avatar_url.
-				$employee_data->thumbnail_url = get_avatar_url( $employee_data->email, [ 'size' => 150 ] );
+		// Always compute Gravatar URL if email exists
+		$employee_data->gravatar_url = '';
+		if ( ! empty( $employee_data->email ) ) {
+			$employee_data->gravatar_url = get_avatar_url( $employee_data->email, [ 'size' => 150 ] );
+		}
+
+        // Placeholder URL
+        $employee_data->placeholder_url = \STACKBOOST_PLUGIN_URL . 'assets/images/avatar-placeholder.png';
+
+		// Default Photo Fallback Logic (Legacy behavior: Custom -> Gravatar -> Placeholder)
+        // This ensures existing consumers (like Widget, Modal) still work without modification.
+		if ( empty( $employee_data->thumbnail_url ) ) {
+			if ( ! empty( $employee_data->gravatar_url ) ) {
+				$employee_data->thumbnail_url = $employee_data->gravatar_url;
                 $employee_data->full_photo_url = get_avatar_url( $employee_data->email, [ 'size' => 300 ] );
 			} else {
-                // 2. Filler (No email, no photo)
-                $employee_data->thumbnail_url = \STACKBOOST_PLUGIN_URL . 'assets/images/avatar-placeholder.png';
-                $employee_data->full_photo_url = \STACKBOOST_PLUGIN_URL . 'assets/images/avatar-placeholder.png';
+                $employee_data->thumbnail_url = $employee_data->placeholder_url;
+                $employee_data->full_photo_url = $employee_data->placeholder_url;
             }
 		}
 
@@ -259,7 +262,7 @@ class DirectoryService {
 
 		// Office Phone
 		if ( ! empty( $employee->office_phone ) ) {
-			$formatted_office_phone = $this->_format_phone_number_string( $employee->office_phone );
+			$formatted_office_phone = $this->format_phone_number_string( $employee->office_phone );
 			$office_tel_uri         = $this->_generate_tel_uri( $employee->office_phone, $employee->extension );
 
 			// Visible part wrapped in a link
@@ -291,7 +294,7 @@ class DirectoryService {
 
 		// Mobile Phone
 		if ( ! empty( $employee->mobile_phone ) ) {
-			$formatted_mobile_phone = $this->_format_phone_number_string( $employee->mobile_phone );
+			$formatted_mobile_phone = $this->format_phone_number_string( $employee->mobile_phone );
 			$mobile_tel_uri         = $this->_generate_tel_uri( $employee->mobile_phone, '' );
 
 			// Visible part wrapped in a link
@@ -344,10 +347,13 @@ class DirectoryService {
 	 * @param string $number Raw phone number.
 	 * @return string Formatted phone number.
 	 */
-	private function _format_phone_number_string( string $number ): string {
+	public function format_phone_number_string( string $number ): string {
+		// Strip all non-numeric characters to get the raw digits.
+		$clean_number = preg_replace( '/\D/', '', $number );
+
 		// Only auto-format if it's a standard US 10-digit raw number.
-		if ( preg_match( '/^\d{10}$/', $number ) ) {
-			return '(' . substr( $number, 0, 3 ) . ') ' . substr( $number, 3, 3 ) . '-' . substr( $number, 6 );
+		if ( 10 === strlen( $clean_number ) ) {
+			return '(' . substr( $clean_number, 0, 3 ) . ') ' . substr( $clean_number, 3, 3 ) . '-' . substr( $clean_number, 6 );
 		}
 
 		// Otherwise, return the user's input as-is (e.g. international formats).

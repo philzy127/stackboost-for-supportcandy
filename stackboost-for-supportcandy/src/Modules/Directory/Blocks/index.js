@@ -44,6 +44,13 @@
              setAttributes( { departmentFilter: newDepts } );
         };
 
+        // Helper to decode HTML entities
+        var decodeHTML = function(html) {
+            var txt = document.createElement("textarea");
+            txt.innerHTML = html;
+            return txt.value;
+        };
+
 
         return el( 'div', blockProps,
             el( InspectorControls, {},
@@ -55,51 +62,96 @@
                             { label: __( 'Standard Table', 'stackboost-for-supportcandy' ), value: 'standard' },
                             { label: __( 'Modern Cards', 'stackboost-for-supportcandy' ), value: 'modern' }
                         ],
-                        onChange: function( val ) { setAttributes( { theme: val } ); }
+                        onChange: function( val ) { setAttributes( { theme: val } ); },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
                     } ),
                     el( ToggleControl, {
                         label: __( 'Show Search Bar', 'stackboost-for-supportcandy' ),
                         checked: attributes.showSearch,
-                        onChange: function( val ) { setAttributes( { showSearch: val } ); }
+                        onChange: function( val ) { setAttributes( { showSearch: val } ); },
+                        __nextHasNoMarginBottom: true
+                    } ),
+                    el( 'p', { className: 'components-base-control__label' }, __( 'Photo Options', 'stackboost-for-supportcandy' ) ),
+                    el( SelectControl, {
+                        label: __( 'Photo Shape', 'stackboost-for-supportcandy' ),
+                        value: attributes.photoShape,
+                        options: [
+                            { label: __( 'Circle', 'stackboost-for-supportcandy' ), value: 'circle' },
+                            { label: __( 'Square', 'stackboost-for-supportcandy' ), value: 'square' },
+                            { label: __( 'Portrait', 'stackboost-for-supportcandy' ), value: 'portrait' },
+                            { label: __( 'Landscape', 'stackboost-for-supportcandy' ), value: 'landscape' }
+                        ],
+                        onChange: function( val ) { setAttributes( { photoShape: val } ); },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
+                    } ),
+                    el( ToggleControl, {
+                        label: __( 'Prefer Gravatar', 'stackboost-for-supportcandy' ),
+                        help: __( 'If enabled, always try to show Gravatar first.', 'stackboost-for-supportcandy' ),
+                        checked: attributes.preferGravatar,
+                        onChange: function( val ) { setAttributes( { preferGravatar: val } ); },
+                        __nextHasNoMarginBottom: true
+                    } ),
+                    el( ToggleControl, {
+                        label: __( 'Fallback to Gravatar', 'stackboost-for-supportcandy' ),
+                        help: __( 'If no custom photo is found, try Gravatar.', 'stackboost-for-supportcandy' ),
+                        checked: attributes.enableGravatarFallback,
+                        onChange: function( val ) { setAttributes( { enableGravatarFallback: val } ); },
+                        __nextHasNoMarginBottom: true
                     } ),
                     el( 'p', { className: 'components-base-control__label' }, __( 'Visible Fields', 'stackboost-for-supportcandy' ) ),
                     el( CheckboxControl, {
                         label: __( 'Photo', 'stackboost-for-supportcandy' ),
                         checked: attributes.visibleColumns.indexOf( 'photo' ) !== -1,
-                        onChange: function() { toggleColumn( 'photo' ); }
+                        onChange: function() { toggleColumn( 'photo' ); },
+                        __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Name', 'stackboost-for-supportcandy' ),
                         checked: attributes.visibleColumns.indexOf( 'name' ) !== -1,
                         onChange: function() { toggleColumn( 'name' ); },
-                        disabled: true // Name should probably always be visible
+                        disabled: true, // Name should probably always be visible
+                        __nextHasNoMarginBottom: true
+                    } ),
+                    el( CheckboxControl, {
+                        label: __( 'Email', 'stackboost-for-supportcandy' ),
+                        checked: attributes.visibleColumns.indexOf( 'email' ) !== -1,
+                        onChange: function() { toggleColumn( 'email' ); },
+                        __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Phone', 'stackboost-for-supportcandy' ),
                         checked: attributes.visibleColumns.indexOf( 'phone' ) !== -1,
-                        onChange: function() { toggleColumn( 'phone' ); }
+                        onChange: function() { toggleColumn( 'phone' ); },
+                        __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Department', 'stackboost-for-supportcandy' ),
                         checked: attributes.visibleColumns.indexOf( 'department' ) !== -1,
-                        onChange: function() { toggleColumn( 'department' ); }
+                        onChange: function() { toggleColumn( 'department' ); },
+                        __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Title', 'stackboost-for-supportcandy' ),
                         checked: attributes.visibleColumns.indexOf( 'title' ) !== -1,
-                        onChange: function() { toggleColumn( 'title' ); }
+                        onChange: function() { toggleColumn( 'title' ); },
+                        __nextHasNoMarginBottom: true
                     } ),
                     el( RangeControl, {
                         label: __( 'Items Per Page', 'stackboost-for-supportcandy' ),
                         value: attributes.itemsPerPage,
                         onChange: function( val ) { setAttributes( { itemsPerPage: val } ); },
                         min: 1,
-                        max: 100
+                        max: 100,
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
                     } ),
                     el( ToggleControl, {
                         label: __( 'Allow User to Change Page Length', 'stackboost-for-supportcandy' ),
                         checked: attributes.allowPageLengthChange,
-                        onChange: function( val ) { setAttributes( { allowPageLengthChange: val } ); }
+                        onChange: function( val ) { setAttributes( { allowPageLengthChange: val } ); },
+                        __nextHasNoMarginBottom: true
                     } ),
                     el( SelectControl, {
                         label: __( 'Link Behavior', 'stackboost-for-supportcandy' ),
@@ -109,18 +161,22 @@
                             { label: __( 'Link to Page', 'stackboost-for-supportcandy' ), value: 'page' },
                             { label: __( 'No Link', 'stackboost-for-supportcandy' ), value: 'none' }
                         ],
-                        onChange: function( val ) { setAttributes( { linkBehavior: val } ); }
+                        onChange: function( val ) { setAttributes( { linkBehavior: val } ); },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
                     } )
                 ),
                 el( PanelBody, { title: __( 'Filters', 'stackboost-for-supportcandy' ), initialOpen: false },
                     ( ! departments ) ? el( 'p', {}, __( 'Loading departments...', 'stackboost-for-supportcandy' ) ) :
                     ( departments.length === 0 ) ? el( 'p', {}, __( 'No departments found.', 'stackboost-for-supportcandy' ) ) :
                     departments.map( function( dept ) {
+                        var decodedTitle = decodeHTML( dept.title.rendered );
                         return el( CheckboxControl, {
                             key: dept.id,
-                            label: dept.title.rendered,
-                            checked: attributes.departmentFilter.indexOf( dept.title.rendered ) !== -1,
-                            onChange: function() { toggleDepartment( dept.title.rendered ); }
+                            label: decodedTitle,
+                            checked: attributes.departmentFilter.indexOf( decodedTitle ) !== -1,
+                            onChange: function() { toggleDepartment( decodedTitle ); },
+                            __nextHasNoMarginBottom: true
                         } );
                     } )
                 )

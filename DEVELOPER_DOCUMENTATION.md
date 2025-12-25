@@ -62,6 +62,19 @@ All settings are centralized through `src/WordPress/Admin/Settings.php`.
 
 ## Module Specifics
 
+### Directory Module
+
+*   **Service:** `StackBoost\ForSupportCandy\Services\DirectoryService`
+    *   **Singleton:** `DirectoryService::get_instance()`
+    *   **Photo Logic:** The `retrieve_employee_data()` method exposes several photo-related properties:
+        *   `thumbnail_url`: The resolved "display" photo URL (used by legacy widgets/code). Follows the "Implied Fallback" logic (Custom -> Gravatar -> Placeholder).
+        *   `custom_photo_url`: The raw URL of the uploaded featured image (or empty).
+        *   `gravatar_url`: The resolved Gravatar URL (always populated if email exists).
+        *   `placeholder_url`: The URL to the local placeholder image.
+*   **Block/Shortcode:** `Modules\Directory\Shortcodes\DirectoryShortcode`
+    *   Uses the raw properties from the Service to implement granular display logic based on `preferGravatar` and `enableGravatarFallback` attributes.
+*   **Custom Post Types:** Defined in `Modules\Directory\Data\CustomPostTypes`. All CPTs (`sb_staff_dir`, `sb_department`, `sb_location`) have `'show_in_rest' => true` to support Gutenberg Block Editor data fetching.
+
 ### After-Hours Notice
 
 *   **Class:** `Modules\AfterHoursNotice\WordPress`

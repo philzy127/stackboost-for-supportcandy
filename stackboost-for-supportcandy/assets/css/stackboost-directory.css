@@ -581,3 +581,61 @@
     border-radius: 50%;
     vertical-align: middle;
 }
+
+/* --- Photo Shape Styles --- */
+/* Circle (Default) */
+.stackboost-directory-avatar.sb-shape-circle {
+    border-radius: 50%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+}
+
+/* Square */
+.stackboost-directory-avatar.sb-shape-square {
+    border-radius: 0;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+}
+
+/* Portrait */
+.stackboost-directory-avatar.sb-shape-portrait {
+    border-radius: 0;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+}
+
+/* Landscape */
+.stackboost-directory-avatar.sb-shape-landscape {
+    border-radius: 0;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+}
+
+/* Override Modern Theme fixed styles if necessary */
+.stackboost-staff-directory-container.stackboost-theme-modern .stackboost-directory-avatar {
+    /* Reset fixed width/height to allow shape aspect ratio to control, but keep width constrained */
+    width: 80px;
+    height: auto; /* Allow height to adjust based on aspect ratio */
+}
+
+/* Ensure Standard Theme table avatars also respect shape */
+.stackboost-theme-standard .stackboost-directory-avatar {
+    width: 40px; /* Keep small width */
+    height: auto; /* Allow height to adjust */
+}
+
+/* Editor Mockup Styles */
+.stackboost-directory-editor-controls {
+    background: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-size: 13px;
+    color: #555;
+}
+
+/* User Customization: Scale Mobile Icon */
+span.dashicons.dashicons-smartphone {
+	transform: scale(1.4);
+}

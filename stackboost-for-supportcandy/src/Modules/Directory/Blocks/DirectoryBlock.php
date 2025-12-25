@@ -41,7 +41,7 @@ class DirectoryBlock {
 		wp_register_style(
 			'stackboost-directory-style',
 			\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
-			array( 'stackboost-util-style' ), // Depend on util style
+			array( 'stackboost-util-style', 'dashicons' ), // Depend on util style and dashicons
 			\STACKBOOST_VERSION
 		);
 
