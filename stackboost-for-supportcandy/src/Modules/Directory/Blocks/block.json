@@ -50,6 +50,18 @@
             "items": {
                 "type": "string"
             }
+        },
+        "preferGravatar": {
+            "type": "boolean",
+            "default": false
+        },
+        "enableGravatarFallback": {
+            "type": "boolean",
+            "default": false
+        },
+        "photoShape": {
+            "type": "string",
+            "default": "circle"
         }
     }
 }

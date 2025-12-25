@@ -62,6 +62,30 @@
                         checked: attributes.showSearch,
                         onChange: function( val ) { setAttributes( { showSearch: val } ); }
                     } ),
+                    el( 'p', { className: 'components-base-control__label' }, __( 'Photo Options', 'stackboost-for-supportcandy' ) ),
+                    el( SelectControl, {
+                        label: __( 'Photo Shape', 'stackboost-for-supportcandy' ),
+                        value: attributes.photoShape,
+                        options: [
+                            { label: __( 'Circle', 'stackboost-for-supportcandy' ), value: 'circle' },
+                            { label: __( 'Square', 'stackboost-for-supportcandy' ), value: 'square' },
+                            { label: __( 'Portrait', 'stackboost-for-supportcandy' ), value: 'portrait' },
+                            { label: __( 'Landscape', 'stackboost-for-supportcandy' ), value: 'landscape' }
+                        ],
+                        onChange: function( val ) { setAttributes( { photoShape: val } ); }
+                    } ),
+                    el( ToggleControl, {
+                        label: __( 'Prefer Gravatar', 'stackboost-for-supportcandy' ),
+                        help: __( 'If enabled, always try to show Gravatar first.', 'stackboost-for-supportcandy' ),
+                        checked: attributes.preferGravatar,
+                        onChange: function( val ) { setAttributes( { preferGravatar: val } ); }
+                    } ),
+                    el( ToggleControl, {
+                        label: __( 'Fallback to Gravatar', 'stackboost-for-supportcandy' ),
+                        help: __( 'If no custom photo is found, try Gravatar.', 'stackboost-for-supportcandy' ),
+                        checked: attributes.enableGravatarFallback,
+                        onChange: function( val ) { setAttributes( { enableGravatarFallback: val } ); }
+                    } ),
                     el( 'p', { className: 'components-base-control__label' }, __( 'Visible Fields', 'stackboost-for-supportcandy' ) ),
                     el( CheckboxControl, {
                         label: __( 'Photo', 'stackboost-for-supportcandy' ),
