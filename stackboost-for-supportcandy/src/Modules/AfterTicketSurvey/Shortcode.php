@@ -46,7 +46,9 @@ class Shortcode {
             'successMessage' => 'Thank you for completing our survey! Your feedback is invaluable and helps us improve our services.',
             'submitButtonText' => 'Submit Survey',
             'redirectUrl' => '',
-            'layout' => 'list'
+            'layout' => 'list',
+            'submitButtonBackgroundColor' => '',
+            'submitButtonTextColor' => ''
         ], $atts );
 
 		ob_start();
@@ -158,6 +160,15 @@ class Shortcode {
             $container_classes .= ' stackboost-ats-layout-grid';
         }
 
+        // Button Styles
+        $button_style = '';
+        if ( ! empty( $atts['submitButtonBackgroundColor'] ) ) {
+            $button_style .= 'background-color: ' . esc_attr( $atts['submitButtonBackgroundColor'] ) . ' !important;';
+        }
+        if ( ! empty( $atts['submitButtonTextColor'] ) ) {
+            $button_style .= 'color: ' . esc_attr( $atts['submitButtonTextColor'] ) . ' !important;';
+        }
+
 		?>
 		<div class="<?php echo esc_attr( $container_classes ); ?>">
             <?php if ( ! empty( $atts['formTitle'] ) ) : ?>
@@ -179,7 +190,7 @@ class Shortcode {
 						<?php $this->render_question_field( $q, $options, $prefill_ticket_id, $prefill_tech_name ); ?>
 					</div>
 				<?php endforeach; ?>
-				<button type="submit" name="stackboost_ats_submit_survey" class="stackboost-ats-submit-button"><?php echo esc_html( $atts['submitButtonText'] ); ?></button>
+				<button type="submit" name="stackboost_ats_submit_survey" class="stackboost-ats-submit-button" style="<?php echo esc_attr( $button_style ); ?>"><?php echo esc_html( $atts['submitButtonText'] ); ?></button>
 			</form>
 		</div>
 		<?php

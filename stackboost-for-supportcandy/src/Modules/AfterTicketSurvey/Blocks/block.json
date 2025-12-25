@@ -52,6 +52,12 @@
         "layout": {
             "type": "string",
             "default": "list"
+        },
+        "submitButtonBackgroundColor": {
+            "type": "string"
+        },
+        "submitButtonTextColor": {
+            "type": "string"
         }
     },
     "textdomain": "stackboost-for-supportcandy",

@@ -1,7 +1,7 @@
 /* stackboost-ats-frontend.css */
 
 .stackboost-ats-survey-container {
-    background-color: #ffffff;
+    /* Background color is now handled by the block wrapper or inherits */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     max-width: 900px;
@@ -31,13 +31,13 @@
 .stackboost-ats-main-title {
     font-size: 2.25rem;
     font-weight: 800;
-    color: #1a202c;
+    /* Color now inherits from block wrapper */
     margin-bottom: 32px;
     text-align: center;
 }
 
 .stackboost-ats-intro {
-    color: #4a5568;
+    /* Color now inherits from block wrapper */
     margin-bottom: 40px;
     text-align: center;
 }
@@ -64,7 +64,7 @@
 
 .stackboost-ats-label {
     display: block;
-    color: #4a5568;
+    /* Color now inherits from block wrapper */
     font-size: 1rem;
     font-weight: 600;
     margin-bottom: 12px;
@@ -130,7 +130,7 @@
 
 .stackboost-ats-radio-text {
     margin-left: 8px;
-    color: #4a5568;
+    /* Color now inherits from block wrapper */
 }
 
 .stackboost-ats-rating-guide {
@@ -141,8 +141,9 @@
 
 .stackboost-ats-submit-button {
     width: 100%;
-    background-color: #820024 !important;
-    color: #ffffff !important;
+    /* Default button colors, can be overridden by inline styles */
+    background-color: #820024;
+    color: #ffffff;
     font-weight: 700;
     padding: 12px 16px;
     border-radius: 6px;
