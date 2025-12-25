@@ -44,6 +44,13 @@
              setAttributes( { departmentFilter: newDepts } );
         };
 
+        // Helper to decode HTML entities
+        var decodeHTML = function(html) {
+            var txt = document.createElement("textarea");
+            txt.innerHTML = html;
+            return txt.value;
+        };
+
 
         return el( 'div', blockProps,
             el( InspectorControls, {},
@@ -145,11 +152,12 @@
                     ( ! departments ) ? el( 'p', {}, __( 'Loading departments...', 'stackboost-for-supportcandy' ) ) :
                     ( departments.length === 0 ) ? el( 'p', {}, __( 'No departments found.', 'stackboost-for-supportcandy' ) ) :
                     departments.map( function( dept ) {
+                        var decodedTitle = decodeHTML( dept.title.rendered );
                         return el( CheckboxControl, {
                             key: dept.id,
-                            label: dept.title.rendered,
-                            checked: attributes.departmentFilter.indexOf( dept.title.rendered ) !== -1,
-                            onChange: function() { toggleDepartment( dept.title.rendered ); }
+                            label: decodedTitle,
+                            checked: attributes.departmentFilter.indexOf( decodedTitle ) !== -1,
+                            onChange: function() { toggleDepartment( decodedTitle ); }
                         } );
                     } )
                 )
