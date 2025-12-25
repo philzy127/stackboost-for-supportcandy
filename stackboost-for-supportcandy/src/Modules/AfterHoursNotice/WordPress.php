@@ -273,9 +273,11 @@ class WordPress extends Module {
             if ( $use_sc_holidays ) {
                 // Fetch SC holidays and pass to settings
                  $settings['holidays'] = $this->get_sc_holidays();
+                 stackboost_log( "AfterHours Check: Using SC Holidays. List: " . implode(', ', $settings['holidays']), 'after_hours' );
             } else {
                 // Use manual list
                 $settings['holidays'] = $this->core->parse_holidays( $options['holidays'] ?? '' );
+                stackboost_log( "AfterHours Check: Using Manual Holidays. List: " . implode(', ', $settings['holidays']), 'after_hours' );
             }
 
             // Use Core Logic
