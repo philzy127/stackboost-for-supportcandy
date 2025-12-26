@@ -42,27 +42,6 @@
                     // Blurb
                     el('p', { className: 'stackboost-fp-text' },
                         "Consider this spot 'Free Parking.' This module runs on autopilot, so there are no settings to manage right now. However, we have officially claimed this real estate for our roadmapped enhancements. We are looking forward to building on this board with expanded options that go beyond the current functionality."
-                    ),
-                    // Button (Decorative)
-                    el('button', { className: 'stackboost-fp-button', type: 'button' },
-                        el('span', {}, 'Collect Jackpot'),
-                        // Arrow Icon (SVG)
-                        el('svg', {
-                            className: 'material-symbols-outlined',
-                            style: { width: '20px', height: '20px', fill: 'currentColor' },
-                            viewBox: '0 0 24 24'
-                        },
-                            el('path', { d: 'M16.01 11H4v2h12.01v3L20 12l-3.99-4z' })
-                        )
-                    )
-                ),
-                // Footer
-                el('div', { className: 'stackboost-fp-footer' },
-                    el('span', {},
-                        el('svg', { style: { width: '14px', height: '14px', fill: 'currentColor' }, viewBox: '0 0 24 24' },
-                            el('path', { d: 'M13 13v8h8v-8h-8zM3 21h8v-8H3v8zM3 3v8h8V3H3zm13.66-1.31L11 7.34 16.66 13l5.66-5.66-5.66-5.65z' })
-                        ),
-                        ' WordPress Block Preview'
                     )
                 )
             );

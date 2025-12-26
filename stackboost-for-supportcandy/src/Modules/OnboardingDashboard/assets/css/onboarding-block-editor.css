@@ -20,14 +20,6 @@
     box-shadow: 0 8px 40px rgba(234, 42, 51, 0.15);
 }
 
-/* Dark Mode Support (Basic) */
-@media (prefers-color-scheme: dark) {
-    .stackboost-free-parking-card {
-        background-color: #1e1e1e;
-        border-color: #374151; /* border-gray-700 */
-    }
-}
-
 /* Top Accent Bar */
 .stackboost-fp-bar {
     height: 0.5rem; /* h-2 */
@@ -100,12 +92,6 @@
     margin-top: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-    .stackboost-fp-title {
-        color: #ffffff;
-    }
-}
-
 /* Divider */
 .stackboost-fp-divider {
     margin-bottom: 1.25rem; /* mb-5 */
@@ -115,69 +101,11 @@
     background-color: #e5e7eb; /* bg-gray-200 */
 }
 
-@media (prefers-color-scheme: dark) {
-    .stackboost-fp-divider {
-        background-color: #374151; /* bg-gray-700 */
-    }
-}
-
 /* Blurb Text */
 .stackboost-fp-text {
-    margin-bottom: 2rem; /* mb-8 */
+    margin-bottom: 0; /* Remove bottom margin as button is gone */
     font-size: 1rem; /* text-base */
     font-weight: 500;
     line-height: 1.625; /* leading-relaxed */
     color: #4b5563; /* text-gray-600 */
-}
-
-@media (prefers-color-scheme: dark) {
-    .stackboost-fp-text {
-        color: #d1d5db; /* text-gray-300 */
-    }
-}
-
-/* Button */
-.stackboost-fp-button {
-    display: flex;
-    height: 3rem; /* h-12 */
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: 0.5rem; /* rounded-lg */
-    background-color: #ea2a33; /* bg-primary */
-    padding: 0 1.5rem;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #ffffff;
-    border: none;
-    cursor: default; /* Not actually clickable/actionable per autopilot text */
-    transition: all 0.2s;
-}
-
-/* Since the text says "runs on autopilot", the button might be decorative.
-   The original HTML had "Collect Jackpot". I will keep the style. */
-
-/* Footer / Context Label */
-.stackboost-fp-footer {
-    margin-top: 1rem;
-    display: flex;
-    justify-content: center;
-    opacity: 0.4;
-    transition: opacity 0.3s;
-}
-
-.stackboost-fp-footer:hover {
-    opacity: 1;
-}
-
-.stackboost-fp-footer span {
-    font-size: 0.75rem; /* text-xs */
-    font-family: monospace;
-    text-transform: uppercase;
-    letter-spacing: 0.1em; /* tracking-widest */
-    color: #6b7280; /* text-gray-500 */
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
 }
