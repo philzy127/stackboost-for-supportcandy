@@ -309,7 +309,6 @@
                     } ),
                     el( 'hr', {} ),
                     el( 'p', {}, __( 'Or Filter by Department:', 'stackboost-for-supportcandy' ) ),
-                    attributes.specificUsers.length > 0 && el( 'p', { style: { fontStyle: 'italic', color: '#666', marginBottom: '10px' } }, __( 'Department filters are disabled because Specific Users are selected.', 'stackboost-for-supportcandy' ) ),
                     ( ! departments ) ? el( 'p', {}, __( 'Loading departments...', 'stackboost-for-supportcandy' ) ) :
                     ( departments.length === 0 ) ? el( 'p', {}, __( 'No departments found.', 'stackboost-for-supportcandy' ) ) :
                     departments.map( function( dept ) {
@@ -319,7 +318,6 @@
                             label: decodedTitle,
                             checked: attributes.departmentFilter.indexOf( decodedTitle ) !== -1,
                             onChange: function() { toggleDepartment( decodedTitle ); },
-                            disabled: attributes.specificUsers.length > 0, // Disable if specific users selected
                             __nextHasNoMarginBottom: true
                         } );
                     } )

@@ -101,32 +101,55 @@ class DirectoryShortcode {
 
 		// Fetch Employees
 		$directory_service = DirectoryService::get_instance();
+        $employees = [];
 
-        // Logic: If specific users are selected, fetch ONLY them (regardless of 'active' status flag, to allow flexibility).
-        // Otherwise, fetch all 'active' employees and apply department filters.
+        // 1. Fetch Specific Users (if any)
+        // These are fetched regardless of "active" flag to allow flexibility, but checked for privacy.
         if ( ! empty( $specific_user_ids ) ) {
-            $employees = [];
             foreach ( $specific_user_ids as $id ) {
                 $employee = $directory_service->retrieve_employee_data( $id );
-
                 // Check for Privacy
                 $is_private = get_post_meta( $id, '_private', true ) === 'Yes';
-
                 if ( $employee && ! $is_private ) {
                     $employees[] = $employee;
                 }
             }
-        } else {
-            $employees = $directory_service->get_all_active_employees_for_shortcode();
+        }
 
-            // Filter Employees by Department (if set)
+        // 2. Fetch Department Users (if departments selected)
+        // Or if NO specific users and NO departments, fetch ALL (default behavior).
+        $fetch_general_list = ! empty( $department_filter ) || empty( $specific_user_ids );
+
+        if ( $fetch_general_list ) {
+            $general_employees = $directory_service->get_all_active_employees_for_shortcode();
+
+            // Filter by Department if set
             if ( ! empty( $department_filter ) ) {
-                $employees = array_filter( $employees, function( $employee ) use ( $department_filter ) {
-                    // Department is stored as a string name in employee object
+                $general_employees = array_filter( $general_employees, function( $employee ) use ( $department_filter ) {
                     return in_array( $employee->department_program, $department_filter, true );
                 } );
             }
+
+            // Merge and Deduplicate
+            // Add general employees to main list if not already present
+            foreach ( $general_employees as $gen_emp ) {
+                $exists = false;
+                foreach ( $employees as $existing_emp ) {
+                    if ( $existing_emp->id === $gen_emp->id ) {
+                        $exists = true;
+                        break;
+                    }
+                }
+                if ( ! $exists ) {
+                    $employees[] = $gen_emp;
+                }
+            }
         }
+
+        // Sort by Name
+        usort( $employees, function($a, $b) {
+            return strcasecmp( $a->name, $b->name );
+        });
 
 		$directory_wordpress = \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance();
 		$can_edit_entries    = $directory_wordpress->can_user_edit();
