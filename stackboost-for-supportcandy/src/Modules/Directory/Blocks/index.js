@@ -8,9 +8,114 @@
     var RangeControl = wp.components.RangeControl;
     var SelectControl = wp.components.SelectControl;
     var CheckboxControl = wp.components.CheckboxControl;
+    var TextControl = wp.components.TextControl;
+    var Button = wp.components.Button;
+    var Spinner = wp.components.Spinner;
     var __ = wp.i18n.__;
     var el = wp.element.createElement;
     var withSelect = wp.data.withSelect;
+    var useState = wp.element.useState;
+    var useEffect = wp.element.useEffect;
+    var useDebounce = wp.compose.useDebounce;
+
+    // Specific User Search Component
+    var UserSearchControl = function( props ) {
+        var specificUsers = props.specificUsers; // Array of { id, value }
+        var setAttributes = props.setAttributes;
+
+        var [ searchTerm, setSearchTerm ] = useState( '' );
+        var [ suggestions, setSuggestions ] = useState( [] );
+        var [ isLoading, setIsLoading ] = useState( false );
+
+        // Debounced search function
+        var debouncedSearch = useDebounce( function( term ) {
+            if ( ! term ) {
+                setSuggestions( [] );
+                setIsLoading( false );
+                return;
+            }
+
+            setIsLoading( true );
+
+            wp.data.resolveSelect( 'core' ).getEntityRecords( 'postType', 'sb_staff_dir', {
+                search: term,
+                per_page: 10,
+                status: 'publish',
+                _fields: ['id', 'title'] // Optimize fetch
+            } )
+            .then( function( records ) {
+                if ( records ) {
+                    // Map records to { id, value } format
+                    var results = records.map( function( record ) {
+                        return {
+                            id: record.id,
+                            value: record.title.rendered
+                        };
+                    } );
+                    setSuggestions( results );
+                } else {
+                    setSuggestions( [] );
+                }
+                setIsLoading( false );
+            } )
+            .catch( function() {
+                setSuggestions( [] );
+                setIsLoading( false );
+            } );
+        }, 500 );
+
+        // Trigger search on input change
+        useEffect( function() {
+            debouncedSearch( searchTerm );
+        }, [ searchTerm ] );
+
+        var addUser = function( user ) {
+            // Check for duplicates
+            var exists = specificUsers.some( function( u ) { return u.id === user.id; } );
+            if ( ! exists ) {
+                var newUsers = specificUsers.concat( [ user ] );
+                setAttributes( { specificUsers: newUsers } );
+            }
+            setSearchTerm( '' );
+            setSuggestions( [] );
+        };
+
+        var removeUser = function( userId ) {
+            var newUsers = specificUsers.filter( function( u ) { return u.id !== userId; } );
+            setAttributes( { specificUsers: newUsers } );
+        };
+
+        return el( 'div', { className: 'stackboost-user-search-control' },
+            el( TextControl, {
+                label: __( 'Search Specific Users', 'stackboost-for-supportcandy' ),
+                value: searchTerm,
+                onChange: function( val ) { setSearchTerm( val ); },
+                placeholder: __( 'Type name to search...', 'stackboost-for-supportcandy' )
+            } ),
+            isLoading && el( Spinner ),
+            ! isLoading && searchTerm && suggestions.length === 0 && el( 'p', { style: { fontStyle: 'italic', color: '#666' } }, __( 'No results found.', 'stackboost-for-supportcandy' ) ),
+            suggestions.length > 0 && el( 'ul', { className: 'stackboost-user-search-results', style: { border: '1px solid #ddd', maxHeight: '150px', overflowY: 'auto', padding: '0', margin: '0 0 10px 0', listStyle: 'none' } },
+                suggestions.map( function( user ) {
+                    return el( 'li', { key: user.id, style: { padding: '5px', cursor: 'pointer', borderBottom: '1px solid #eee' }, onClick: function() { addUser( user ); } }, user.value );
+                } )
+            ),
+            el( 'div', { className: 'stackboost-selected-users-list' },
+                specificUsers.length > 0 && el( 'p', { style: { fontWeight: 'bold', marginBottom: '5px' } }, __( 'Selected Users:', 'stackboost-for-supportcandy' ) ),
+                specificUsers.map( function( user ) {
+                    return el( 'div', { key: user.id, style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f0f0f0', padding: '5px', marginBottom: '5px', borderRadius: '4px' } },
+                        el( 'span', {}, user.value ),
+                        el( Button, {
+                            icon: 'dismiss',
+                            label: __( 'Remove', 'stackboost-for-supportcandy' ),
+                            isSmall: true,
+                            onClick: function() { removeUser( user.id ); },
+                            style: { minWidth: '24px', height: '24px', padding: 0 }
+                        } )
+                    );
+                } )
+            )
+        );
+    };
 
     // Edit Component
     var DirectoryEdit = function( props ) {
@@ -118,6 +223,7 @@
                         label: __( 'Email', 'stackboost-for-supportcandy' ),
                         checked: attributes.visibleColumns.indexOf( 'email' ) !== -1,
                         onChange: function() { toggleColumn( 'email' ); },
+                        help: __( 'Displayed below the name.', 'stackboost-for-supportcandy' ),
                         __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
@@ -126,6 +232,21 @@
                         onChange: function() { toggleColumn( 'phone' ); },
                         __nextHasNoMarginBottom: true
                     } ),
+                    // Phone granular options - only show if Phone is checked
+                    attributes.visibleColumns.indexOf( 'phone' ) !== -1 && el( 'div', { style: { marginLeft: '20px', marginBottom: '10px' } },
+                        el( ToggleControl, {
+                            label: __( 'Show Office Phone', 'stackboost-for-supportcandy' ),
+                            checked: attributes.showOfficePhone,
+                            onChange: function( val ) { setAttributes( { showOfficePhone: val } ); },
+                            __nextHasNoMarginBottom: true
+                        } ),
+                        el( ToggleControl, {
+                            label: __( 'Show Mobile Phone', 'stackboost-for-supportcandy' ),
+                            checked: attributes.showMobilePhone,
+                            onChange: function( val ) { setAttributes( { showMobilePhone: val } ); },
+                            __nextHasNoMarginBottom: true
+                        } )
+                    ),
                     el( CheckboxControl, {
                         label: __( 'Department', 'stackboost-for-supportcandy' ),
                         checked: attributes.visibleColumns.indexOf( 'department' ) !== -1,
@@ -136,6 +257,18 @@
                         label: __( 'Title', 'stackboost-for-supportcandy' ),
                         checked: attributes.visibleColumns.indexOf( 'title' ) !== -1,
                         onChange: function() { toggleColumn( 'title' ); },
+                        __nextHasNoMarginBottom: true
+                    } ),
+                    el( CheckboxControl, {
+                        label: __( 'Location', 'stackboost-for-supportcandy' ),
+                        checked: attributes.visibleColumns.indexOf( 'location' ) !== -1,
+                        onChange: function() { toggleColumn( 'location' ); },
+                        __nextHasNoMarginBottom: true
+                    } ),
+                    el( CheckboxControl, {
+                        label: __( 'Room Number', 'stackboost-for-supportcandy' ),
+                        checked: attributes.visibleColumns.indexOf( 'room_number' ) !== -1,
+                        onChange: function() { toggleColumn( 'room_number' ); },
                         __nextHasNoMarginBottom: true
                     } ),
                     el( RangeControl, {
@@ -167,6 +300,13 @@
                     } )
                 ),
                 el( PanelBody, { title: __( 'Filters', 'stackboost-for-supportcandy' ), initialOpen: false },
+                    el( 'p', {}, __( 'Specific Users Override:', 'stackboost-for-supportcandy' ) ),
+                    el( UserSearchControl, {
+                        specificUsers: attributes.specificUsers,
+                        setAttributes: setAttributes
+                    } ),
+                    el( 'hr', {} ),
+                    el( 'p', {}, __( 'Or Filter by Department:', 'stackboost-for-supportcandy' ) ),
                     ( ! departments ) ? el( 'p', {}, __( 'Loading departments...', 'stackboost-for-supportcandy' ) ) :
                     ( departments.length === 0 ) ? el( 'p', {}, __( 'No departments found.', 'stackboost-for-supportcandy' ) ) :
                     departments.map( function( dept ) {
@@ -176,6 +316,8 @@
                             label: decodedTitle,
                             checked: attributes.departmentFilter.indexOf( decodedTitle ) !== -1,
                             onChange: function() { toggleDepartment( decodedTitle ); },
+                            disabled: attributes.specificUsers.length > 0, // Disable if specific users selected
+                            help: attributes.specificUsers.length > 0 ? __( 'Disabled because Specific Users are selected.', 'stackboost-for-supportcandy' ) : null,
                             __nextHasNoMarginBottom: true
                         } );
                     } )
@@ -191,7 +333,7 @@
     // HOC to fetch departments
     var DirectoryEditWithData = withSelect( function( select ) {
         return {
-            departments: select( 'core' ).getEntityRecords( 'postType', 'sb_department', { per_page: -1 } )
+            departments: select( 'core' ).getEntityRecords( 'postType', 'sb_department', { per_page: -1, status: 'publish' } )
         };
     } )( DirectoryEdit );
 

@@ -55,6 +55,9 @@ class DirectoryShortcode {
                 'preferGravatar'        => false,
                 'enableGravatarFallback'=> false,
                 'photoShape'            => 'circle',
+                'specificUsers'         => array(), // Array of objects { id, value } or just IDs
+                'showOfficePhone'       => true,
+                'showMobilePhone'       => true,
 			),
 			$atts,
 			'stackboost_directory'
@@ -72,6 +75,27 @@ class DirectoryShortcode {
         $enable_gravatar_fallback = filter_var( $atts['enableGravatarFallback'], FILTER_VALIDATE_BOOLEAN );
         $photo_shape             = in_array( $atts['photoShape'], [ 'circle', 'square', 'portrait', 'landscape' ], true ) ? $atts['photoShape'] : 'circle';
 
+        $show_office_phone       = filter_var( $atts['showOfficePhone'], FILTER_VALIDATE_BOOLEAN );
+        $show_mobile_phone       = filter_var( $atts['showMobilePhone'], FILTER_VALIDATE_BOOLEAN );
+
+        // Sanitize Specific Users
+        // Ideally comes as array of objects from block, but might be array of IDs or comma-separated string if used manually in shortcode
+        $specific_users = $atts['specificUsers'];
+        $specific_user_ids = [];
+        if ( ! empty( $specific_users ) ) {
+            if ( is_string( $specific_users ) ) {
+                $specific_user_ids = array_map( 'absint', explode( ',', $specific_users ) );
+            } elseif ( is_array( $specific_users ) ) {
+                foreach ( $specific_users as $user ) {
+                    if ( is_array( $user ) && isset( $user['id'] ) ) {
+                        $specific_user_ids[] = absint( $user['id'] );
+                    } elseif ( is_numeric( $user ) ) {
+                        $specific_user_ids[] = absint( $user );
+                    }
+                }
+            }
+        }
+
 		// Normalize columns (trim whitespace)
 		$visible_columns = array_map( 'trim', $visible_columns );
 
@@ -79,8 +103,21 @@ class DirectoryShortcode {
 		$directory_service = DirectoryService::get_instance();
 		$employees         = $directory_service->get_all_active_employees_for_shortcode();
 
-		// Filter Employees by Department (if set)
-		if ( ! empty( $department_filter ) ) {
+        // Filter: Specific Users (Overrides Department Filter if present)
+        if ( ! empty( $specific_user_ids ) ) {
+            $filtered_employees = [];
+            // Preserve order of selection
+            foreach ( $specific_user_ids as $id ) {
+                foreach ( $employees as $employee ) {
+                    if ( $employee->id == $id ) {
+                        $filtered_employees[] = $employee;
+                        break;
+                    }
+                }
+            }
+            $employees = $filtered_employees;
+        } elseif ( ! empty( $department_filter ) ) {
+            // Filter Employees by Department (if set and no specific users)
 			$employees = array_filter( $employees, function( $employee ) use ( $department_filter ) {
 				// Department is stored as a string name in employee object
 				return in_array( $employee->department_program, $department_filter, true );
@@ -162,6 +199,12 @@ class DirectoryShortcode {
 								<?php if ( in_array( 'title', $visible_columns, true ) ) : ?>
 									<th class="sb-col-title"><?php esc_html_e( 'Title', 'stackboost-for-supportcandy' ); ?></th>
 								<?php endif; ?>
+                                <?php if ( in_array( 'location', $visible_columns, true ) ) : ?>
+                                    <th class="sb-col-location"><?php esc_html_e( 'Location', 'stackboost-for-supportcandy' ); ?></th>
+                                <?php endif; ?>
+                                <?php if ( in_array( 'room_number', $visible_columns, true ) ) : ?>
+                                    <th class="sb-col-room"><?php esc_html_e( 'Room #', 'stackboost-for-supportcandy' ); ?></th>
+                                <?php endif; ?>
 							</tr>
 						</thead>
 						<tbody>
@@ -212,9 +255,80 @@ class DirectoryShortcode {
 							);
 
 							foreach ( $employees as $employee ) :
-								$searchable_phone_string = preg_replace( '/\D/', '', $employee->office_phone . $employee->extension . $employee->mobile_phone );
-								$formatted_phone_output  = $directory_service->get_formatted_phone_numbers_html( $employee );
-								$copy_icon_svg           = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; margin-left: 5px; cursor: pointer;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+                                // Prepare Phone Output based on granular settings
+								$searchable_phone_string = '';
+                                $html_lines = [];
+
+                                // We can reuse logic from Service but need to apply filters.
+                                // It's cleaner to use the Service method if we could filter inside it, but Service is unaware of Shortcode atts.
+                                // We will replicate the logic here or wrap the service output.
+                                // Actually, standardizing this logic is better. Let's assume we modify the output or re-generate it.
+                                // Service::get_formatted_phone_numbers_html generates both if present.
+                                // We can rebuild it here to respect flags.
+
+                                $copy_icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; margin-left: 5px; cursor: pointer;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+
+                                if ( $show_office_phone && ! empty( $employee->office_phone ) ) {
+                                    $searchable_phone_string .= preg_replace( '/\D/', '', $employee->office_phone . $employee->extension );
+
+                                    $formatted_office_phone = $directory_service->format_phone_number_string( $employee->office_phone );
+                                    // Manually build URI as helper is private.
+                                    // Actually we can duplicate the simple URI logic or make it public.
+                                    // For now, simple duplication is safe.
+                                    $clean_number = preg_replace( '/[^0-9+]/', '', $employee->office_phone );
+                                    $office_tel_uri = 'tel:' . $clean_number;
+                                    if ( ! empty( $employee->extension ) ) {
+                                        $clean_extension = preg_replace( '/[^0-9]/', '', $employee->extension );
+                                        $office_tel_uri .= ';ext=' . $clean_extension;
+                                    }
+
+                                    $office_link = '<a href="' . esc_url( $office_tel_uri ) . '">' . $formatted_office_phone . '</a>';
+                                    $office_line = '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . $office_link;
+                                    if ( ! empty( $employee->extension ) ) {
+                                        $office_line .= ' <span style="color: #777; font-size: 0.9em;">' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . esc_html( $employee->extension ) . '</span>';
+                                    }
+
+                                    // Copy text
+                                    $office_copy_text = $formatted_office_phone;
+                                    if ( ! empty( $employee->extension ) ) {
+                                        $office_copy_text .= ' ' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . $employee->extension;
+                                    }
+                                    $office_line .= sprintf(
+                                        ' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="%s" data-copy-text="%s" title="%s">%s</span>',
+                                        esc_attr( $employee->office_phone ),
+                                        esc_attr( $employee->extension ),
+                                        esc_attr( $office_copy_text ),
+                                        esc_attr__( 'Click to copy phone', 'stackboost-for-supportcandy' ),
+                                        $copy_icon_svg
+                                    );
+
+                                    $html_lines[] = $office_line;
+                                }
+
+                                if ( $show_mobile_phone && ! empty( $employee->mobile_phone ) ) {
+                                    $searchable_phone_string .= preg_replace( '/\D/', '', $employee->mobile_phone );
+
+                                    $formatted_mobile_phone = $directory_service->format_phone_number_string( $employee->mobile_phone );
+                                    $clean_number = preg_replace( '/[^0-9+]/', '', $employee->mobile_phone );
+                                    $mobile_tel_uri = 'tel:' . $clean_number;
+
+                                    $mobile_link = '<a href="' . esc_url( $mobile_tel_uri ) . '">' . $formatted_mobile_phone . '</a>';
+                                    $mobile_line = '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $mobile_link;
+
+                                    $mobile_copy_text = $formatted_mobile_phone;
+                                    $mobile_line .= sprintf(
+                                        ' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="" data-copy-text="%s" title="%s">%s</span>',
+                                        esc_attr( $employee->mobile_phone ),
+                                        esc_attr( $mobile_copy_text ),
+                                        esc_attr__( 'Click to copy phone', 'stackboost-for-supportcandy' ),
+                                        $copy_icon_svg
+                                    );
+
+                                    $html_lines[] = $mobile_line;
+                                }
+
+								$formatted_phone_output  = implode( '<br>', $html_lines );
+
 
                                 // Determine Photo URL based on preferences
                                 $display_photo_url = '';
@@ -321,6 +435,14 @@ class DirectoryShortcode {
 									<?php if ( in_array( 'title', $visible_columns, true ) ) : ?>
 										<td class="sb-col-title"><?php echo esc_html( $employee->job_title ); ?></td>
 									<?php endif; ?>
+
+                                    <?php if ( in_array( 'location', $visible_columns, true ) ) : ?>
+                                        <td class="sb-col-location"><?php echo esc_html( $employee->location_name ); ?></td>
+                                    <?php endif; ?>
+
+                                    <?php if ( in_array( 'room_number', $visible_columns, true ) ) : ?>
+                                        <td class="sb-col-room"><?php echo esc_html( $employee->room_number ); ?></td>
+                                    <?php endif; ?>
 								</tr>
 							<?php endforeach; ?>
 						</tbody>
