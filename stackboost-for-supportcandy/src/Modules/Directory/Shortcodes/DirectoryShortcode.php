@@ -206,7 +206,13 @@ class DirectoryShortcode {
                                 <?php if ( in_array( 'location', $visible_columns, true ) ) : ?>
                                     <th class="sb-col-location"><?php esc_html_e( 'Location', 'stackboost-for-supportcandy' ); ?></th>
                                 <?php endif; ?>
-                                <?php if ( in_array( 'room_number', $visible_columns, true ) ) : ?>
+                                <?php
+                                // Only show Room # header if it's not merged into Location
+                                $show_location_column = in_array( 'location', $visible_columns, true );
+                                $show_room_column = in_array( 'room_number', $visible_columns, true );
+                                $show_separate_room_column_header = $show_room_column && ! $show_location_column;
+
+                                if ( $show_separate_room_column_header ) : ?>
                                     <th class="sb-col-room"><?php esc_html_e( 'Room #', 'stackboost-for-supportcandy' ); ?></th>
                                 <?php endif; ?>
 							</tr>
@@ -261,24 +267,16 @@ class DirectoryShortcode {
 							foreach ( $employees as $employee ) :
                                 // Prepare Phone Output based on granular settings
 								$searchable_phone_string = '';
-                                $html_lines = [];
-
-                                // We can reuse logic from Service but need to apply filters.
-                                // It's cleaner to use the Service method if we could filter inside it, but Service is unaware of Shortcode atts.
-                                // We will replicate the logic here or wrap the service output.
-                                // Actually, standardizing this logic is better. Let's assume we modify the output or re-generate it.
-                                // Service::get_formatted_phone_numbers_html generates both if present.
-                                // We can rebuild it here to respect flags.
+                                $office_phone_html = '';
+                                $mobile_phone_html = '';
 
                                 $copy_icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px" style="vertical-align: middle; margin-left: 5px; cursor: pointer;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
 
+                                // Generate Office Phone HTML
                                 if ( $show_office_phone && ! empty( $employee->office_phone ) ) {
                                     $searchable_phone_string .= preg_replace( '/\D/', '', $employee->office_phone . $employee->extension );
 
                                     $formatted_office_phone = $directory_service->format_phone_number_string( $employee->office_phone );
-                                    // Manually build URI as helper is private.
-                                    // Actually we can duplicate the simple URI logic or make it public.
-                                    // For now, simple duplication is safe.
                                     $clean_number = preg_replace( '/[^0-9+]/', '', $employee->office_phone );
                                     $office_tel_uri = 'tel:' . $clean_number;
                                     if ( ! empty( $employee->extension ) ) {
@@ -287,9 +285,9 @@ class DirectoryShortcode {
                                     }
 
                                     $office_link = '<a href="' . esc_url( $office_tel_uri ) . '">' . $formatted_office_phone . '</a>';
-                                    $office_line = '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . $office_link;
+                                    $office_phone_html = '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . $office_link;
                                     if ( ! empty( $employee->extension ) ) {
-                                        $office_line .= ' <span style="color: #777; font-size: 0.9em;">' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . esc_html( $employee->extension ) . '</span>';
+                                        $office_phone_html .= ' <span style="color: #777; font-size: 0.9em;">' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . esc_html( $employee->extension ) . '</span>';
                                     }
 
                                     // Copy text
@@ -297,7 +295,7 @@ class DirectoryShortcode {
                                     if ( ! empty( $employee->extension ) ) {
                                         $office_copy_text .= ' ' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . $employee->extension;
                                     }
-                                    $office_line .= sprintf(
+                                    $office_phone_html .= sprintf(
                                         ' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="%s" data-copy-text="%s" title="%s">%s</span>',
                                         esc_attr( $employee->office_phone ),
                                         esc_attr( $employee->extension ),
@@ -305,10 +303,9 @@ class DirectoryShortcode {
                                         esc_attr__( 'Click to copy phone', 'stackboost-for-supportcandy' ),
                                         $copy_icon_svg
                                     );
-
-                                    $html_lines[] = $office_line;
                                 }
 
+                                // Generate Mobile Phone HTML
                                 if ( $show_mobile_phone && ! empty( $employee->mobile_phone ) ) {
                                     $searchable_phone_string .= preg_replace( '/\D/', '', $employee->mobile_phone );
 
@@ -317,22 +314,26 @@ class DirectoryShortcode {
                                     $mobile_tel_uri = 'tel:' . $clean_number;
 
                                     $mobile_link = '<a href="' . esc_url( $mobile_tel_uri ) . '">' . $formatted_mobile_phone . '</a>';
-                                    $mobile_line = '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $mobile_link;
+                                    $mobile_phone_html = '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . $mobile_link;
 
                                     $mobile_copy_text = $formatted_mobile_phone;
-                                    $mobile_line .= sprintf(
+                                    $mobile_phone_html .= sprintf(
                                         ' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="" data-copy-text="%s" title="%s">%s</span>',
                                         esc_attr( $employee->mobile_phone ),
                                         esc_attr( $mobile_copy_text ),
                                         esc_attr__( 'Click to copy phone', 'stackboost-for-supportcandy' ),
                                         $copy_icon_svg
                                     );
-
-                                    $html_lines[] = $mobile_line;
                                 }
 
-								$formatted_phone_output  = implode( '<br>', $html_lines );
+                                // Determine where to show Room Number
+                                $show_location_column = in_array( 'location', $visible_columns, true );
+                                $show_room_column = in_array( 'room_number', $visible_columns, true );
 
+                                // Logic: If Location and Room Number are both visible, merge Room Number into Location column.
+                                // If only Room Number is visible, show it in its own column.
+                                $room_in_location = $show_location_column && $show_room_column && ! empty( $employee->room_number );
+                                $show_separate_room_column = $show_room_column && ! $show_location_column;
 
                                 // Determine Photo URL based on preferences
                                 $display_photo_url = '';
@@ -429,7 +430,24 @@ class DirectoryShortcode {
 									<?php endif; ?>
 
 									<?php if ( in_array( 'phone', $visible_columns, true ) ) : ?>
-										<td class="sb-col-phone" data-search="<?php echo esc_attr( $searchable_phone_string ); ?>"><?php echo ! empty( $formatted_phone_output ) ? wp_kses( $formatted_phone_output, $allowed_html ) : '&mdash;'; ?></td>
+										<td class="sb-col-phone" data-search="<?php echo esc_attr( $searchable_phone_string ); ?>">
+                                            <?php
+                                            // Render both phones if they have content
+                                            if ( ! empty( $office_phone_html ) ) {
+                                                echo wp_kses( $office_phone_html, $allowed_html );
+                                                if ( ! empty( $mobile_phone_html ) ) {
+                                                    echo '<br>';
+                                                }
+                                            }
+                                            if ( ! empty( $mobile_phone_html ) ) {
+                                                echo wp_kses( $mobile_phone_html, $allowed_html );
+                                            }
+                                            // Fallback for empty cell
+                                            if ( empty( $office_phone_html ) && empty( $mobile_phone_html ) ) {
+                                                echo '&mdash;';
+                                            }
+                                            ?>
+                                        </td>
 									<?php endif; ?>
 
 									<?php if ( in_array( 'department', $visible_columns, true ) ) : ?>
@@ -441,10 +459,17 @@ class DirectoryShortcode {
 									<?php endif; ?>
 
                                     <?php if ( in_array( 'location', $visible_columns, true ) ) : ?>
-                                        <td class="sb-col-location"><?php echo esc_html( $employee->location_name ); ?></td>
+                                        <td class="sb-col-location">
+                                            <?php
+                                            echo esc_html( $employee->location_name );
+                                            if ( $room_in_location ) {
+                                                echo '<br>' . esc_html( $employee->room_number );
+                                            }
+                                            ?>
+                                        </td>
                                     <?php endif; ?>
 
-                                    <?php if ( in_array( 'room_number', $visible_columns, true ) ) : ?>
+                                    <?php if ( $show_separate_room_column ) : ?>
                                         <td class="sb-col-room"><?php echo esc_html( $employee->room_number ); ?></td>
                                     <?php endif; ?>
 								</tr>
