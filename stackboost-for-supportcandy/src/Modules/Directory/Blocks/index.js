@@ -62,7 +62,7 @@
                 setSuggestions( [] );
                 setIsLoading( false );
             } );
-        }, 500 )[0];
+        }, 500 );
 
         // Trigger search on input change
         useEffect( function() {
@@ -90,7 +90,9 @@
                 label: __( 'Search Specific Users', 'stackboost-for-supportcandy' ),
                 value: searchTerm,
                 onChange: function( val ) { setSearchTerm( val ); },
-                placeholder: __( 'Type name to search...', 'stackboost-for-supportcandy' )
+                placeholder: __( 'Type name to search...', 'stackboost-for-supportcandy' ),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
             } ),
             isLoading && el( Spinner ),
             ! isLoading && searchTerm && suggestions.length === 0 && el( 'p', { style: { fontStyle: 'italic', color: '#666' } }, __( 'No results found.', 'stackboost-for-supportcandy' ) ),
