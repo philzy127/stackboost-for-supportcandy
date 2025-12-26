@@ -1,0 +1,183 @@
+/**
+ * Onboarding Dashboard Block - Editor Styles
+ * "Free Parking" / Coming Soon Card
+ */
+
+/* Main Card Container */
+.stackboost-free-parking-card {
+    background-color: #ffffff;
+    border-radius: 0.75rem; /* rounded-xl */
+    border: 1px solid #f3f4f6; /* border-gray-100 */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    margin: 1rem 0;
+    transition: all 0.3s ease;
+    max-width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.stackboost-free-parking-card:hover {
+    box-shadow: 0 8px 40px rgba(234, 42, 51, 0.15);
+}
+
+/* Dark Mode Support (Basic) */
+@media (prefers-color-scheme: dark) {
+    .stackboost-free-parking-card {
+        background-color: #1e1e1e;
+        border-color: #374151; /* border-gray-700 */
+    }
+}
+
+/* Top Accent Bar */
+.stackboost-fp-bar {
+    height: 0.5rem; /* h-2 */
+    width: 100%;
+    background-color: #ea2a33; /* bg-primary */
+}
+
+/* Content Area */
+.stackboost-fp-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 2rem; /* py-10 px-8 */
+    text-align: center;
+}
+
+/* Icon Container */
+.stackboost-fp-icon-container {
+    position: relative;
+    margin-bottom: 1.5rem; /* mb-6 */
+    height: 6rem; /* h-24 */
+    width: 6rem; /* w-24 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px; /* rounded-full */
+    background-color: rgba(234, 42, 51, 0.05); /* bg-primary/5 */
+    box-shadow: 0 0 0 1px rgba(234, 42, 51, 0.2); /* ring-1 ring-primary/20 */
+}
+
+/* Icon SVG */
+.stackboost-fp-icon {
+    width: 3.75rem; /* text-6xl approx */
+    height: 3.75rem;
+    fill: #ea2a33; /* text-primary */
+    transform: rotate(-6deg);
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));
+}
+
+/* Decorative Dots */
+.stackboost-fp-dot-1 {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    height: 0.5rem;
+    width: 0.5rem;
+    border-radius: 9999px;
+    background-color: rgba(234, 42, 51, 0.4);
+}
+
+.stackboost-fp-dot-2 {
+    position: absolute;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    height: 0.375rem;
+    width: 0.375rem;
+    border-radius: 9999px;
+    background-color: rgba(234, 42, 51, 0.3);
+}
+
+/* Headline */
+.stackboost-fp-title {
+    margin-bottom: 0.75rem; /* mb-3 */
+    font-size: 1.875rem; /* text-3xl */
+    line-height: 2.25rem;
+    font-weight: 900; /* font-black */
+    text-transform: uppercase;
+    letter-spacing: -0.025em; /* tracking-tight */
+    color: #181111;
+    margin-top: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    .stackboost-fp-title {
+        color: #ffffff;
+    }
+}
+
+/* Divider */
+.stackboost-fp-divider {
+    margin-bottom: 1.25rem; /* mb-5 */
+    height: 0.25rem; /* h-1 */
+    width: 3rem; /* w-12 */
+    border-radius: 9999px;
+    background-color: #e5e7eb; /* bg-gray-200 */
+}
+
+@media (prefers-color-scheme: dark) {
+    .stackboost-fp-divider {
+        background-color: #374151; /* bg-gray-700 */
+    }
+}
+
+/* Blurb Text */
+.stackboost-fp-text {
+    margin-bottom: 2rem; /* mb-8 */
+    font-size: 1rem; /* text-base */
+    font-weight: 500;
+    line-height: 1.625; /* leading-relaxed */
+    color: #4b5563; /* text-gray-600 */
+}
+
+@media (prefers-color-scheme: dark) {
+    .stackboost-fp-text {
+        color: #d1d5db; /* text-gray-300 */
+    }
+}
+
+/* Button */
+.stackboost-fp-button {
+    display: flex;
+    height: 3rem; /* h-12 */
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem; /* rounded-lg */
+    background-color: #ea2a33; /* bg-primary */
+    padding: 0 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    border: none;
+    cursor: default; /* Not actually clickable/actionable per autopilot text */
+    transition: all 0.2s;
+}
+
+/* Since the text says "runs on autopilot", the button might be decorative.
+   The original HTML had "Collect Jackpot". I will keep the style. */
+
+/* Footer / Context Label */
+.stackboost-fp-footer {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    opacity: 0.4;
+    transition: opacity 0.3s;
+}
+
+.stackboost-fp-footer:hover {
+    opacity: 1;
+}
+
+.stackboost-fp-footer span {
+    font-size: 0.75rem; /* text-xs */
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em; /* tracking-widest */
+    color: #6b7280; /* text-gray-500 */
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
