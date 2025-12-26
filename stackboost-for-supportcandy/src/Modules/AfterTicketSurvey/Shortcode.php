@@ -50,7 +50,9 @@ class Shortcode {
             'submitButtonBackgroundColor' => '',
             'submitButtonTextColor' => '',
             'inputBackgroundColor' => '',
-            'inputTextColor' => ''
+            'inputTextColor' => '',
+            'formTitleColor' => '',
+            'introTextColor' => ''
         ], $atts );
 
 		ob_start();
@@ -175,6 +177,12 @@ class Shortcode {
         }
         if ( ! empty( $atts['inputTextColor'] ) ) {
             $css_vars[] = '--ats-input-text: ' . esc_attr( $atts['inputTextColor'] ) . ';';
+        }
+        if ( ! empty( $atts['formTitleColor'] ) ) {
+            $css_vars[] = '--ats-title-color: ' . esc_attr( $atts['formTitleColor'] ) . ';';
+        }
+        if ( ! empty( $atts['introTextColor'] ) ) {
+            $css_vars[] = '--ats-intro-color: ' . esc_attr( $atts['introTextColor'] ) . ';';
         }
 
         $style_attr = '';

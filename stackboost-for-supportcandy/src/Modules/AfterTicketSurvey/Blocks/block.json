@@ -64,6 +64,12 @@
         },
         "inputTextColor": {
             "type": "string"
+        },
+        "formTitleColor": {
+            "type": "string"
+        },
+        "introTextColor": {
+            "type": "string"
         }
     },
     "textdomain": "stackboost-for-supportcandy",

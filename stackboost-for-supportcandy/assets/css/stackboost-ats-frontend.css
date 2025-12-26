@@ -51,13 +51,13 @@
     font-weight: 800;
     margin-bottom: 32px;
     text-align: center;
-    color: inherit; /* Inherit from block wrapper */
+    color: var(--ats-title-color, inherit);
 }
 
 .stackboost-ats-intro {
     margin-bottom: 40px;
     text-align: center;
-    color: inherit; /* Inherit from block wrapper */
+    color: var(--ats-intro-color, inherit);
 }
 
 .stackboost-ats-form {
@@ -92,8 +92,15 @@
     color: #ef4444;
 }
 
-/* Input Fields using CSS Variables */
-.stackboost-ats-input {
+/* Input Fields using CSS Variables
+   We target all potential input types within the container to be robust for future fields.
+*/
+.stackboost-ats-input,
+.stackboost-ats-survey-container input[type="text"],
+.stackboost-ats-survey-container input[type="number"],
+.stackboost-ats-survey-container input[type="email"],
+.stackboost-ats-survey-container textarea,
+.stackboost-ats-survey-container select {
     width: 100%;
     padding: 10px 16px;
     border: 1px solid #cbd5e0;
@@ -107,7 +114,18 @@
     color: var(--ats-input-text, #1a202c);
 }
 
-.stackboost-ats-input:focus {
+/* Force colors on readonly/disabled inputs if they are being used for pre-filled data */
+.stackboost-ats-survey-container input:read-only,
+.stackboost-ats-survey-container textarea:read-only,
+.stackboost-ats-survey-container select:disabled {
+    background-color: var(--ats-input-bg, #ffffff) !important;
+    color: var(--ats-input-text, #1a202c) !important;
+}
+
+.stackboost-ats-input:focus,
+.stackboost-ats-survey-container input:focus,
+.stackboost-ats-survey-container textarea:focus,
+.stackboost-ats-survey-container select:focus {
     border-color: #820024;
     box-shadow: 0 0 0 2px rgba(130, 0, 36, 0.5);
 }

@@ -25,6 +25,22 @@
             return el( Fragment, {},
                 el( InspectorControls, { group: 'styles' },
                     el( PanelColorSettings, {
+                        title: 'Text Colors',
+                        initialOpen: true,
+                        colorSettings: [
+                            {
+                                value: attributes.formTitleColor,
+                                onChange: function( value ) { setAttributes( { formTitleColor: value } ); },
+                                label: 'Form Title Color',
+                            },
+                            {
+                                value: attributes.introTextColor,
+                                onChange: function( value ) { setAttributes( { introTextColor: value } ); },
+                                label: 'Intro Text Color',
+                            },
+                        ],
+                    } ),
+                    el( PanelColorSettings, {
                         title: 'Button Colors',
                         initialOpen: false,
                         colorSettings: [
