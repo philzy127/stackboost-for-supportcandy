@@ -101,28 +101,32 @@ class DirectoryShortcode {
 
 		// Fetch Employees
 		$directory_service = DirectoryService::get_instance();
-		$employees         = $directory_service->get_all_active_employees_for_shortcode();
 
-        // Filter: Specific Users (Overrides Department Filter if present)
+        // Logic: If specific users are selected, fetch ONLY them (regardless of 'active' status flag, to allow flexibility).
+        // Otherwise, fetch all 'active' employees and apply department filters.
         if ( ! empty( $specific_user_ids ) ) {
-            $filtered_employees = [];
-            // Preserve order of selection
+            $employees = [];
             foreach ( $specific_user_ids as $id ) {
-                foreach ( $employees as $employee ) {
-                    if ( $employee->id == $id ) {
-                        $filtered_employees[] = $employee;
-                        break;
-                    }
+                $employee = $directory_service->retrieve_employee_data( $id );
+
+                // Check for Privacy
+                $is_private = get_post_meta( $id, '_private', true ) === 'Yes';
+
+                if ( $employee && ! $is_private ) {
+                    $employees[] = $employee;
                 }
             }
-            $employees = $filtered_employees;
-        } elseif ( ! empty( $department_filter ) ) {
-            // Filter Employees by Department (if set and no specific users)
-			$employees = array_filter( $employees, function( $employee ) use ( $department_filter ) {
-				// Department is stored as a string name in employee object
-				return in_array( $employee->department_program, $department_filter, true );
-			} );
-		}
+        } else {
+            $employees = $directory_service->get_all_active_employees_for_shortcode();
+
+            // Filter Employees by Department (if set)
+            if ( ! empty( $department_filter ) ) {
+                $employees = array_filter( $employees, function( $employee ) use ( $department_filter ) {
+                    // Department is stored as a string name in employee object
+                    return in_array( $employee->department_program, $department_filter, true );
+                } );
+            }
+        }
 
 		$directory_wordpress = \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance();
 		$can_edit_entries    = $directory_wordpress->can_user_edit();
