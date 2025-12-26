@@ -33,15 +33,9 @@ class DirectoryBlock {
 	public function register_block() {
 		// Register Styles for Block Editor & Frontend
 		wp_register_style(
-			'stackboost-directory-datatables-style',
-			'https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css',
-			array(),
-			'1.11.5'
-		);
-		wp_register_style(
 			'stackboost-directory-style',
 			\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
-			array( 'stackboost-util-style', 'dashicons' ), // Depend on util style and dashicons
+			array( 'stackboost-util-style', 'dashicons', 'stackboost-datatables-css' ), // Depend on util style, dashicons, and central datatables
 			\STACKBOOST_VERSION
 		);
 

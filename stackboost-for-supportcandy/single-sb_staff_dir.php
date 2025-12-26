@@ -38,7 +38,7 @@ get_header(); ?>
                                 the_post_thumbnail( 'medium' ); // Display the featured image (staff photo)
                             } else {
                                 // Placeholder image if no photo is set
-                                echo '<img src="' . esc_url( 'https://placehold.co/300x300/e0e0e0/555555?text=No+Photo' ) . '" alt="No staff photo available" />';
+                                echo '<img src="' . esc_url( STACKBOOST_PLUGIN_URL . 'assets/images/placeholder.png' ) . '" alt="No staff photo available" />';
                             }
                             ?>
                         </div>

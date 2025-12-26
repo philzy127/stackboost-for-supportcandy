@@ -299,12 +299,6 @@ class WordPress {
 		// Enqueue Directory Assets (DataTables, Main Logic).
 		// Load ONLY if the directory shortcode is present.
 		if ( $has_directory_feature ) {
-			wp_enqueue_style(
-				'stackboost-directory-datatables-style',
-				'https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css',
-				array(),
-				'1.11.5'
-			);
 			// CSS is now loaded via block.json for blocks, but we still need it for shortcodes.
 			// WordPress handles deduplication, so safe to keep or rely on block logic.
 			// However, since we want to be explicit for shortcodes:
@@ -312,22 +306,18 @@ class WordPress {
                 wp_enqueue_style(
                     'stackboost-directory-style',
                     \STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
-                    array( 'stackboost-util-style' ), // Depend on util style
+                    array( 'stackboost-util-style', 'stackboost-datatables-css' ), // Depend on util style
                     \STACKBOOST_VERSION
                 );
             }
 
-			wp_enqueue_script(
-				'stackboost-directory-datatables',
-				'https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js',
-				array( 'jquery' ),
-				'1.11.5',
-				true
-			);
+			// Ensure DataTables CSS is loaded (global handle)
+			wp_enqueue_style( 'stackboost-datatables-css' );
+
 			wp_enqueue_script(
 				'stackboost-directory-js',
 				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-directory.js',
-				array( 'jquery', 'stackboost-directory-datatables', 'stackboost-util-js' ), // Depend on util js
+				array( 'jquery', 'stackboost-datatables-js', 'stackboost-util-js' ), // Depend on util js
 				\STACKBOOST_VERSION,
 				true
 			);
