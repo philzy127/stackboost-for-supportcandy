@@ -27,8 +27,17 @@ class DashboardBlock {
 			\STACKBOOST_VERSION
 		);
 
+		// Register Editor-Specific Styles for the "Free Parking" card
+		wp_register_style(
+			'stackboost-onboarding-block-editor',
+			\STACKBOOST_PLUGIN_URL . 'src/Modules/OnboardingDashboard/assets/css/onboarding-block-editor.css',
+			[],
+			\STACKBOOST_VERSION
+		);
+
 		register_block_type( __DIR__, array(
 			'render_callback' => array( $this, 'render_block' ),
+			'editor_style'    => 'stackboost-onboarding-block-editor', // Enqueue in editor
 		) );
 	}
 
