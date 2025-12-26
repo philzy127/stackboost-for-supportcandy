@@ -141,7 +141,7 @@ final class Plugin {
 		// DataTables CSS
 		wp_register_style(
 			'stackboost-datatables-css',
-			STACKBOOST_PLUGIN_URL . 'assets/css/datatables.min.css',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/datatables/datatables.min.css',
 			[],
 			'2.3.6'
 		);
@@ -149,7 +149,7 @@ final class Plugin {
 		// DataTables JS
 		wp_register_script(
 			'stackboost-datatables-js',
-			STACKBOOST_PLUGIN_URL . 'assets/js/datatables.min.js',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/datatables/datatables.min.js',
 			[ 'jquery' ],
 			'2.3.6',
 			true
@@ -158,14 +158,14 @@ final class Plugin {
 		// Tippy.js (Tooltip Library)
 		wp_register_script(
 			'stackboost-popper',
-			STACKBOOST_PLUGIN_URL . 'assets/js/popper.min.js',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/popper/popper.min.js',
 			[],
 			'2.0',
 			true
 		);
 		wp_register_script(
 			'stackboost-tippy',
-			STACKBOOST_PLUGIN_URL . 'assets/js/tippy.min.js',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/tippy/tippy.min.js',
 			[ 'stackboost-popper' ],
 			'6.0',
 			true
@@ -174,7 +174,7 @@ final class Plugin {
 		// jQuery UI CSS
 		wp_register_style(
 			'stackboost-jquery-ui',
-			STACKBOOST_PLUGIN_URL . 'assets/css/jquery-ui.min.css',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/jquery-ui/jquery-ui.min.css',
 			[],
 			'1.12.1'
 		);

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.3] - 2025-12-26
+
+### Added
+- **GDPR Compliance:**
+    - **Local Asset Bundling:** All external third-party assets (DataTables, Tippy.js, Popper.js, jQuery UI CSS, and placeholder images) are now bundled locally within the plugin.
+    - **No-CDN Policy:** Removed all references to external CDNs (Unpkg, Cloudflare, Google APIs, Placehold.co) to prevent unauthorized IP leakage.
+- **DataTables 2.3.6:** Upgraded and standardized the DataTables library to version 2.3.6 across all modules.
+- **Frontend Logging:** Introduced a standardized `window.stackboostLog()` utility for frontend scripts. This wrapper respects the global "Enable Diagnostic Log" setting, preventing debug noise in production while routing logs to the backend file when in an admin context.
+
+### Changed
+- **Asset Registration:** Centralized the registration of shared assets (DataTables, Tippy, Popper) in `src/WordPress/Plugin.php`. Modules now depend on these global handles (`stackboost-datatables-js`, `stackboost-tippy`) instead of managing their own dependencies.
+- **Directory Module:** Updated the Directory Block and Shortcode to use the new centralized local assets.
+- **Block Configuration:** Audited Block Editor configurations for the After Ticket Survey, Onboarding Dashboard, and Directory modules to ensure compatibility with modern WordPress standards.
+
 ## [1.4.2] - 2025-12-24
 
 ### Added
