@@ -13,7 +13,7 @@
     "textdomain": "stackboost-for-supportcandy",
     "editorScript": "file:./index.js",
     "style": [
-        "stackboost-directory-datatables-style",
+        "stackboost-datatables-css",
         "stackboost-directory-style"
     ],
     "attributes": {

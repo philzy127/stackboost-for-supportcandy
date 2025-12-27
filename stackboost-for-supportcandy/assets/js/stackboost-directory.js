@@ -1,27 +1,14 @@
 jQuery(document).ready(function($) {
-    // Helper function for conditional logging
+    // Helper function for conditional logging using standardized wrapper
     var sbLog = function(message, data) {
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Directory] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-            // Fallback for when stackboost-admin-common.js isn't loaded (e.g. frontend)
-            if (data) {
-                console.log('[StackBoost Directory]', message, data);
-            } else {
-                console.log('[StackBoost Directory]', message);
-            }
+        if (typeof window.stackboostLog === 'function') {
+            window.stackboostLog('[Directory] ' + message, data, 'log');
         }
     };
 
     var sbError = function(message, data) {
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Directory Error] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-             if (data) {
-                console.error('[StackBoost Directory]', message, data);
-            } else {
-                console.error('[StackBoost Directory]', message);
-            }
+        if (typeof window.stackboostLog === 'function') {
+            window.stackboostLog('[Directory Error] ' + message, data, 'error');
         }
     };
 

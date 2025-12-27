@@ -1,31 +1,38 @@
 jQuery(document).ready(function($) {
     // Helper function for conditional logging
-    window.sbUtilLog = function(message, data) {
+    window.stackboostLog = function(message, data, level = 'log') {
+        // 1. Check for Backend Logger (Admin context)
         if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Util] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-            // Fallback for when stackboost-admin-common.js isn't loaded (e.g. frontend)
+            // Map context to standard backend logger format
+            var logPrefix = '[Frontend] ';
+            window.stackboost_log(logPrefix + message, data);
+            return;
+        }
+
+        // 2. Frontend Logging (Console fallback, guarded by debug flag)
+        // Check for debug flag in localized objects
+        var isDebug = false;
+        if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
+            isDebug = true;
+        } else if (typeof stackboost_admin_ajax !== 'undefined' && stackboost_admin_ajax.debug_enabled) {
+            isDebug = true;
+        }
+
+        if (isDebug) {
+            var prefix = '[StackBoost] ';
             if (data) {
-                console.log('[StackBoost Util]', message, data);
+                console[level](prefix + message, data);
             } else {
-                console.log('[StackBoost Util]', message);
+                console[level](prefix + message);
             }
         }
     };
 
-    window.sbUtilError = function(message, data) {
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Util Error] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-             if (data) {
-                console.error('[StackBoost Util]', message, data);
-            } else {
-                console.error('[StackBoost Util]', message);
-            }
-        }
-    };
+    // Legacy aliases for backward compatibility during refactor
+    window.sbUtilLog = function(m, d) { window.stackboostLog(m, d, 'log'); };
+    window.sbUtilError = function(m, d) { window.stackboostLog(m, d, 'error'); };
 
-    sbUtilLog('Utility script loaded.');
+    window.stackboostLog('Utility script loaded.');
 
     // --- Modal System Implementation (Standard) ---
     if ($('#stackboost-modal-overlay').length === 0) {

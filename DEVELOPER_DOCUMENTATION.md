@@ -44,6 +44,16 @@ The plugin features a centralized, granular logging system for diagnostics.
 stackboost_log( 'Starting import process...', 'directory-import' );
 ```
 
+### Frontend Logging Standardization
+
+For client-side JavaScript, native `console.log` calls are strictly prohibited in production code. All frontend logging must use the `window.stackboostLog()` wrapper.
+
+*   **Signature:** `window.stackboostLog( message, data = null, level = 'log' )`
+*   **Features:**
+    1.  **Routing:** If the script is running in an admin context (where `window.stackboost_log` is available via `stackboost-admin-common.js`), the log is routed to the server-side log file with a `[Frontend]` prefix.
+    2.  **Debug Guard:** If running on the public frontend, the log is only printed to the browser console if the global debug flag (`stackboostPublicAjax.debug_enabled`) is true.
+*   **Aliases:** `sbUtilLog(message, data)` (alias for level='log') and `sbUtilError(message, data)` (alias for level='error').
+
 ### Modal System
 
 The plugin includes a centralized modal system to replace native browser `alert()` and `confirm()` dialogs.
@@ -59,6 +69,19 @@ All settings are centralized through `src/WordPress/Admin/Settings.php`.
 *   **Registration:** Settings are registered via `register_settings` in the `Settings` class.
 *   **Sanitization:** A central `sanitize_settings` method handles validation for all fields, using a whitelist approach keyed by the admin page slug.
 *   **Menu Management:** The `get_menu_config()` method in `Settings.php` is the single source of truth for the admin menu structure.
+
+### Asset Management (GDPR Compliance)
+
+The plugin adheres to a strict **No-CDN Policy** to ensure GDPR compliance. All external assets (scripts, styles, fonts, images) must be bundled locally.
+
+*   **Central Registration:** `src/WordPress/Plugin.php` contains a `register_global_assets()` method hooked to `init`. This method registers shared local libraries (e.g., DataTables, Tippy.js, Popper.js) with unique handles (e.g., `stackboost-datatables-js`, `stackboost-tippy`).
+*   **Usage:** Modules must enqueue these shared handles instead of registering their own or linking to CDNs.
+*   **Bundled Assets:**
+    *   `assets/libraries/datatables/` (v2.3.6)
+    *   `assets/libraries/tippy/` (v6.0)
+    *   `assets/libraries/popper/` (v2.0)
+    *   `assets/libraries/jquery-ui/` (v1.12.1 Smoothness)
+    *   `assets/images/placeholder.png` (Replaces placehold.co)
 
 ## Module Specifics
 

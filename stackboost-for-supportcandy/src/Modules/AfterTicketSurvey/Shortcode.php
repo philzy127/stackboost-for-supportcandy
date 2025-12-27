@@ -286,7 +286,7 @@ class Shortcode {
             $input_value = ''; // Reset invalid value
             $best_match_value = '';
             stackboost_log( "Invalid pre-fill value for field ID {$question['id']} ignored.", 'ats' );
-            echo "<script>if(typeof console !== 'undefined') { console.warn('[StackBoost ATS] Invalid pre-fill value for field ID {$question['id']} ignored.'); }</script>";
+            echo "<script>if(typeof window.stackboostLog === 'function') { window.stackboostLog('Invalid pre-fill value for field ID {$question['id']} ignored.', null, 'warn'); }</script>";
         }
 
         // Determine Read-Only State

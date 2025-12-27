@@ -175,20 +175,8 @@ class WordPress {
 			// Enqueue scripts for the Management tab.
 			if ( 'management' === $active_tab ) {
 				// Enqueue Util Script (Shared functionality like Modals).
-				wp_enqueue_style(
-					'stackboost-util-style',
-					\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
-					array(),
-					\STACKBOOST_VERSION
-				);
-
-				wp_enqueue_script(
-					'stackboost-util-js',
-					\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
-					array( 'jquery' ),
-					\STACKBOOST_VERSION,
-					true
-				);
+				wp_enqueue_style( 'stackboost-util' );
+				wp_enqueue_script( 'stackboost-util' );
 
 				// Enqueue scripts for import.
 				wp_enqueue_script(
@@ -243,7 +231,7 @@ class WordPress {
 				wp_enqueue_script(
 					'stackboost-json-import-export',
 					\STACKBOOST_PLUGIN_URL . 'assets/js/json-import-export.js',
-					array( 'jquery', 'stackboost-management-ajax', 'stackboost-util-js' ), // Depend on management-ajax for localized object and util for modals
+					array( 'jquery', 'stackboost-management-ajax', 'stackboost-util' ), // Depend on management-ajax for localized object and util for modals
 					\STACKBOOST_VERSION,
 					true
 				);
@@ -268,27 +256,15 @@ class WordPress {
 		// Enqueue Util Script (Shared functionality like Copy to Clipboard, Toast).
 		// Load if either the Directory or the Ticket Widget is present.
 		if ( $has_directory_feature || $has_ticket_shortcode ) {
-			wp_enqueue_style(
-				'stackboost-util-style',
-				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
-				array(),
-				\STACKBOOST_VERSION
-			);
-
-			wp_enqueue_script(
-				'stackboost-util-js',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
-				array( 'jquery' ),
-				\STACKBOOST_VERSION,
-				true
-			);
+			wp_enqueue_style( 'stackboost-util' );
+			wp_enqueue_script( 'stackboost-util' );
 
 			// Check for debug mode from global settings
 			$settings      = get_option( 'stackboost_settings', [] );
 			$debug_enabled = isset( $settings['diagnostic_log_enabled'] ) && '1' === $settings['diagnostic_log_enabled'];
 
 			wp_localize_script(
-				'stackboost-util-js',
+				'stackboost-util',
 				'stackboostPublicAjax',
 				array(
 					'debug_enabled' => $debug_enabled,
@@ -299,12 +275,6 @@ class WordPress {
 		// Enqueue Directory Assets (DataTables, Main Logic).
 		// Load ONLY if the directory shortcode is present.
 		if ( $has_directory_feature ) {
-			wp_enqueue_style(
-				'stackboost-directory-datatables-style',
-				'https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css',
-				array(),
-				'1.11.5'
-			);
 			// CSS is now loaded via block.json for blocks, but we still need it for shortcodes.
 			// WordPress handles deduplication, so safe to keep or rely on block logic.
 			// However, since we want to be explicit for shortcodes:
@@ -312,22 +282,18 @@ class WordPress {
                 wp_enqueue_style(
                     'stackboost-directory-style',
                     \STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
-                    array( 'stackboost-util-style' ), // Depend on util style
+                    array( 'stackboost-util', 'stackboost-datatables-css' ), // Depend on util style
                     \STACKBOOST_VERSION
                 );
             }
 
-			wp_enqueue_script(
-				'stackboost-directory-datatables',
-				'https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js',
-				array( 'jquery' ),
-				'1.11.5',
-				true
-			);
+			// Ensure DataTables CSS is loaded (global handle)
+			wp_enqueue_style( 'stackboost-datatables-css' );
+
 			wp_enqueue_script(
 				'stackboost-directory-js',
 				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-directory.js',
-				array( 'jquery', 'stackboost-directory-datatables', 'stackboost-util-js' ), // Depend on util js
+				array( 'jquery', 'stackboost-datatables-js', 'stackboost-util' ), // Depend on util js
 				\STACKBOOST_VERSION,
 				true
 			);
