@@ -1136,7 +1136,7 @@ class Settings {
 			// --- Pool A: Pro Features ---
 			'unified_ticket_macro' => [
 				'hook'  => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
-				'copy'  => __( 'Insert a dynamic, customizable table of ticket details—such as status, priority, and custom fields—directly into your email notifications. This ensures your team and customers always have the context they need at a glance.', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Revolutionize your email setup. This single macro automatically generates a dynamic table of all your ticket data, smartly hiding empty fields. It’s a game changer—users have reduced their notification templates from 58 down to just 6!', 'stackboost-for-supportcandy' ),
 				'url'   => $base_pro_url,
 				'icon'  => 'dashicons-editor-expand',
 				'class' => 'stackboost-upsell-pro',
@@ -1144,7 +1144,7 @@ class Settings {
 			],
 			'after_ticket_survey' => [
 				'hook'  => __( 'Automated Feedback', 'stackboost-for-supportcandy' ),
-				'copy'  => __( 'Gather valuable insights by automatically sending a feedback survey when a ticket is resolved. Understanding customer satisfaction is key to improving your support workflow.', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Go beyond simple star ratings. Deploy fully customizable, multi-question surveys that track deep satisfaction metrics. Gather detailed feedback on agent performance and resolution quality to drive real support improvements.', 'stackboost-for-supportcandy' ),
 				'url'   => $base_pro_url,
 				'icon'  => 'dashicons-feedback',
 				'class' => 'stackboost-upsell-pro',
@@ -1152,7 +1152,7 @@ class Settings {
 			],
 			'queue_macros' => [
 				'hook'  => __( 'Customer Transparency', 'stackboost-for-supportcandy' ),
-				'copy'  => __( 'Automatically inform customers of their position in the support queue. This transparency manages expectations and reduces follow-up requests by letting them know exactly where they stand.', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Set expectations from the very first email. Automatically show customers their exact position in line instantly upon ticket creation. This transparency lets them know you\'re busy but organized, stopping "did you get this?" follow-ups before they happen.', 'stackboost-for-supportcandy' ),
 				'url'   => $base_pro_url,
 				'icon'  => 'dashicons-list-view',
 				'class' => 'stackboost-upsell-pro',
@@ -1162,7 +1162,7 @@ class Settings {
 			// --- Pool B: Business Features ---
 			'staff_directory_mapping' => [
 				'hook'  => __( 'Map Your Organization', 'stackboost-for-supportcandy' ),
-				'copy'  => __( 'Organize your support structure by mapping tickets to specific office locations and departments. This ensures every issue is routed to the right physical or operational team member.', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Build your internal company directory directly within WordPress. Centralize staff contact info, locations, and departments—laying the foundation for a complete intranet while enriching your ticketing system with vital employee data.', 'stackboost-for-supportcandy' ),
 				'url'   => $base_biz_url,
 				'icon'  => 'dashicons-location',
 				'class' => 'stackboost-upsell-biz',
@@ -1170,7 +1170,7 @@ class Settings {
 			],
 			'staff_directory_widget' => [
 				'hook'  => __( 'Visual Contact Cards', 'stackboost-for-supportcandy' ),
-				'copy'  => __( 'Enhance the agent experience with a dedicated contact widget in the ticket view. This provides instant access to staff details, reducing the time spent searching for internal contact information.', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Enhance the agent experience with a visual contact widget right in the ticket view. Featuring staff photos for a personal touch and universal click-to-dial, it gives agents instant access to their colleagues via mobile, Teams, or Slack without ever leaving the ticket.', 'stackboost-for-supportcandy' ),
 				'url'   => $base_biz_url,
 				'icon'  => 'dashicons-id-alt',
 				'class' => 'stackboost-upsell-biz',
@@ -1178,7 +1178,7 @@ class Settings {
 			],
 			'onboarding_dashboard' => [
 				'hook'  => __( 'Track Agent Setup', 'stackboost-for-supportcandy' ),
-				'copy'  => __( 'Visualize and manage the entire agent onboarding process with a dedicated dashboard. Track progress step-by-step to ensure new team members are set up for success.', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Master your instructor-led orientation process. Use this dedicated dashboard to visualize every trainee\'s progress in real-time. Ensure no step is missed and every new hire gets the consistent, high-quality start they deserve.', 'stackboost-for-supportcandy' ),
 				'url'   => $base_biz_url,
 				'icon'  => 'dashicons-chart-area',
 				'class' => 'stackboost-upsell-biz',
@@ -1186,7 +1186,7 @@ class Settings {
 			],
 			'onboarding_compliance' => [
 				'hook'  => __( 'Automate Documentation', 'stackboost-for-supportcandy' ),
-				'copy'  => __( 'Streamline compliance by automatically attaching completion certificates and required documentation to the employee\'s ticket once onboarding is finished.', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Ensure full compliance with zero effort. The moment an agent completes their onboarding checklist, the system automatically generates a PDF certificate and attaches it to the ticket, creating a permanent, audit-ready record of their training.', 'stackboost-for-supportcandy' ),
 				'url'   => $base_biz_url,
 				'icon'  => 'dashicons-awards',
 				'class' => 'stackboost-upsell-biz',
