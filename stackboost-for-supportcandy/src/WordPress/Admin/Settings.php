@@ -281,24 +281,132 @@ class Settings {
 
 				<?php
 				// Feature Spotlight (Upsell Logic)
-				$upsell_key = $this->get_upsell_card_key();
-				if ( $upsell_key ) {
-					$upsell_data = $this->get_upsell_content()[ $upsell_key ];
+				$upsell_pool = $this->get_upsell_pool();
+				if ( ! empty( $upsell_pool ) ) {
+					// Encode pool for JS
+					$upsell_json = wp_json_encode( $upsell_pool );
+					// Determine start index from transient to maintain rotation logic
+					// We map the key back to index, or default to random/0
+					$transient_key = 'stackboost_upsell_rotation_v1';
+					$cached_key    = get_transient( $transient_key ); // The key string, e.g., 'queue_macros'
+					$start_index   = 0;
+
+					// If transient exists, find its index in the current pool
+					if ( $cached_key ) {
+						$content_map = array_keys( $this->get_upsell_content() );
+						$pool_keys   = [];
+						// Reconstruct keys for the pool to find index
+						foreach( $this->get_upsell_content() as $k => $v ) {
+							foreach( $upsell_pool as $p_index => $p_data ) {
+								if ( $p_data['hook'] === $v['hook'] ) { // Match by unique hook since pool is values-only
+									if ( $k === $cached_key ) {
+										$start_index = $p_index;
+										break 2;
+									}
+								}
+							}
+						}
+					} else {
+						// Random start if no transient
+						$start_index = array_rand( $upsell_pool );
+						// Set transient for consistency (though less critical with carousel)
+						// We need to find the key for this index to save it.
+						// For simplicity in carousel mode, we might skip saving transient or just let it be.
+					}
+
 					?>
-					<div class="stackboost-feature-spotlight <?php echo esc_attr( $upsell_data['class'] ); ?>">
-						<div class="stackboost-spotlight-icon">
-							<span class="dashicons <?php echo esc_attr( $upsell_data['icon'] ); ?>"></span>
+					<div id="stackboost-spotlight-widget" class="stackboost-feature-spotlight" style="display:none;">
+						<div class="stackboost-spotlight-nav prev">
+							<span class="dashicons dashicons-arrow-left-alt2"></span>
 						</div>
-						<div class="stackboost-spotlight-content">
-							<h2><?php echo esc_html( $upsell_data['hook'] ); ?></h2>
-							<p><?php echo esc_html( $upsell_data['copy'] ); ?></p>
+
+						<div class="stackboost-spotlight-inner">
+							<div class="stackboost-spotlight-icon">
+								<span class="dashicons" id="sb-spot-icon"></span>
+							</div>
+							<div class="stackboost-spotlight-content">
+								<h2 id="sb-spot-title"></h2>
+								<p id="sb-spot-copy"></p>
+							</div>
+							<div class="stackboost-spotlight-action">
+								<a href="#" target="_blank" class="button button-primary" id="sb-spot-link">
+									<?php esc_html_e( 'Learn More', 'stackboost-for-supportcandy' ); ?>
+								</a>
+							</div>
 						</div>
-						<div class="stackboost-spotlight-action">
-							<a href="<?php echo esc_url( $upsell_data['url'] ); ?>" target="_blank" class="button button-primary">
-								<?php esc_html_e( 'Learn More', 'stackboost-for-supportcandy' ); ?>
-							</a>
+
+						<div class="stackboost-spotlight-nav next">
+							<span class="dashicons dashicons-arrow-right-alt2"></span>
 						</div>
 					</div>
+
+					<script>
+					(function($) {
+						$(document).ready(function() {
+							var pool = <?php echo $upsell_json; ?>;
+							var currentIndex = <?php echo (int) $start_index; ?>;
+							var $widget = $('#stackboost-spotlight-widget');
+							var timer = null;
+							var intervalTime = 6000; // 6 seconds
+
+							function renderCard(index) {
+								if (index < 0) index = pool.length - 1;
+								if (index >= pool.length) index = 0;
+								currentIndex = index;
+
+								var card = pool[currentIndex];
+
+								// Update content
+								$('#sb-spot-icon').attr('class', 'dashicons ' + card.icon);
+								$('#sb-spot-title').text(card.hook);
+								$('#sb-spot-copy').text(card.copy);
+								$('#sb-spot-link').attr('href', card.url);
+
+								// Update border class (remove old, add new)
+								$widget.removeClass('stackboost-upsell-pro stackboost-upsell-biz').addClass(card.class);
+
+								$widget.show();
+							}
+
+							function nextCard() {
+								renderCard(currentIndex + 1);
+							}
+
+							function prevCard() {
+								renderCard(currentIndex - 1);
+							}
+
+							function startTimer() {
+								if (timer) clearInterval(timer);
+								timer = setInterval(nextCard, intervalTime);
+							}
+
+							function stopTimer() {
+								if (timer) clearInterval(timer);
+							}
+
+							// Controls
+							$widget.find('.next').on('click', function() {
+								nextCard();
+								startTimer(); // Reset timer on interaction
+							});
+
+							$widget.find('.prev').on('click', function() {
+								prevCard();
+								startTimer();
+							});
+
+							// Hover pause
+							$widget.on('mouseenter', stopTimer).on('mouseleave', startTimer);
+
+							// Init
+							if (pool.length > 0) {
+								renderCard(currentIndex);
+								startTimer();
+							}
+						});
+					})(jQuery);
+					</script>
 					<?php
 				}
 				?>
@@ -1027,8 +1135,8 @@ class Settings {
 		return [
 			// --- Pool A: Pro Features ---
 			'unified_ticket_macro' => [
-				'hook'  => __( 'One-Click Resolution', 'stackboost-for-supportcandy' ),
-				'copy'  => __( 'Close, tag, and assign tickets in a single click.', 'stackboost-for-supportcandy' ),
+				'hook'  => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Embeds a customizable HTML table of ticket fields (e.g. Status, Priority) into your emails using the {{stackboost_unified_ticket}} placeholder.', 'stackboost-for-supportcandy' ),
 				'url'   => $base_pro_url,
 				'icon'  => 'dashicons-editor-expand',
 				'class' => 'stackboost-upsell-pro',
@@ -1088,33 +1196,24 @@ class Settings {
 	}
 
 	/**
-	 * Determine which Feature Spotlight card to show.
+	 * Get the list of Feature Spotlight cards available for the current user.
 	 *
 	 * Logic:
-	 * - Business Users: Show nothing (return null).
+	 * - Business Users: Show nothing (return empty).
 	 * - Pro Users: Show only Business features (Pool B).
 	 * - Lite Users: Show all features (Pool A + B).
-	 * - Uses a 12-hour transient to prevent flickering.
 	 *
-	 * @return string|null The key of the card to display, or null if none.
+	 * @return array The list of available card data objects.
 	 */
-	private function get_upsell_card_key(): ?string {
+	private function get_upsell_pool(): array {
 		$current_tier = get_option( 'stackboost_license_tier', 'lite' );
 
 		// 1. Business Users: The Pinnacle (No Upsell)
 		if ( 'business' === $current_tier ) {
-			return null;
+			return [];
 		}
 
-		// 2. Check Transient
-		$transient_key = 'stackboost_upsell_rotation_v1';
-		$cached_card   = get_transient( $transient_key );
-
-		if ( false !== $cached_card ) {
-			return $cached_card;
-		}
-
-		// 3. Define Pools
+		// 2. Define Pools
 		$content = $this->get_upsell_content();
 		$pool    = [];
 
@@ -1122,23 +1221,15 @@ class Settings {
 			if ( 'pro' === $current_tier ) {
 				// Pro Users: Only show Business features
 				if ( 'business' === $data['pool'] ) {
-					$pool[] = $key;
+					$pool[] = $data;
 				}
 			} else {
 				// Lite Users: Show everything
-				$pool[] = $key;
+				$pool[] = $data;
 			}
 		}
 
-		if ( empty( $pool ) ) {
-			return null;
-		}
-
-		// 4. Select Random Card & Set Transient
-		$selected_key = $pool[ array_rand( $pool ) ];
-		set_transient( $transient_key, $selected_key, 12 * HOUR_IN_SECONDS );
-
-		return $selected_key;
+		return array_values( $pool ); // Re-index array
 	}
 
     /**

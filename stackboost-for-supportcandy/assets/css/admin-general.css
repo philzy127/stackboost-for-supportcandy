@@ -130,6 +130,8 @@
     box-sizing: border-box;
     /* Default border override based on tier class */
     border-left-width: 5px;
+    position: relative;
+    justify-content: space-between;
 }
 
 .stackboost-feature-spotlight.stackboost-upsell-pro {
@@ -138,6 +140,36 @@
 
 .stackboost-feature-spotlight.stackboost-upsell-biz {
     border-left-color: #f1c40f; /* Gold */
+}
+
+/* Inner container for content to separate it from Nav buttons */
+.stackboost-spotlight-inner {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    margin: 0 20px;
+}
+
+.stackboost-spotlight-nav {
+    cursor: pointer;
+    color: #a7aaad;
+    padding: 10px;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stackboost-spotlight-nav:hover {
+    background-color: #f0f0f1;
+    color: #2271b1;
+}
+
+.stackboost-spotlight-nav .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
 }
 
 .stackboost-spotlight-icon {
@@ -186,13 +218,34 @@
 /* Responsive adjustments */
 @media screen and (max-width: 782px) {
     .stackboost-feature-spotlight {
-        flex-direction: column;
+        flex-direction: column; /* Stack Navs vertical or hide them on mobile? Let's keep them horizontal but wrap content */
         text-align: center;
+        padding: 10px;
+    }
+
+    .stackboost-spotlight-inner {
+        flex-direction: column;
+        margin: 10px 0;
+        width: 100%;
+    }
+
+    .stackboost-spotlight-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .stackboost-spotlight-nav.prev {
+        left: 0;
+    }
+
+    .stackboost-spotlight-nav.next {
+        right: 0;
     }
 
     .stackboost-spotlight-icon {
         margin-right: 0;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
 
     .stackboost-spotlight-action {
