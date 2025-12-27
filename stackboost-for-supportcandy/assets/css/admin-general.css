@@ -124,8 +124,10 @@
     background: #fff;
     border: 1px solid #ccd0d4;
     border-radius: var(--sb-radius, 4px);
-    padding: 20px;
-    margin-top: 20px;
+    padding: 20px 60px; /* Horizontal padding for arrows */
+    margin: 20px auto; /* Centered with top margin */
+    max-width: 800px; /* ~2/3 width on typical displays */
+    min-height: 180px; /* Lock vertical height to prevent jumping */
     box-shadow: 0 1px 1px rgba(0,0,0,0.04);
     box-sizing: border-box;
     /* Default border override based on tier class */
@@ -147,10 +149,13 @@
     display: flex;
     align-items: center;
     flex: 1;
-    margin: 0 20px;
+    /* Removed margin to allow padding of parent to handle spacing */
 }
 
 .stackboost-spotlight-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
     color: #a7aaad;
     padding: 10px;
@@ -159,6 +164,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
+}
+
+.stackboost-spotlight-nav.prev {
+    left: 10px;
+}
+
+.stackboost-spotlight-nav.next {
+    right: 10px;
 }
 
 .stackboost-spotlight-nav:hover {
@@ -199,7 +213,7 @@
 }
 
 .stackboost-spotlight-content h2 {
-    margin: 0 0 5px 0;
+    margin: 0 0 10px 0;
     font-size: 1.2em;
     color: #1d2327;
 }
@@ -208,6 +222,7 @@
     margin: 0;
     font-size: 14px;
     color: #50575e;
+    line-height: 1.5;
 }
 
 .stackboost-spotlight-action {
@@ -218,29 +233,22 @@
 /* Responsive adjustments */
 @media screen and (max-width: 782px) {
     .stackboost-feature-spotlight {
-        flex-direction: column; /* Stack Navs vertical or hide them on mobile? Let's keep them horizontal but wrap content */
+        flex-direction: column;
         text-align: center;
-        padding: 10px;
+        padding: 40px 20px 20px; /* Top padding for arrows if we move them, or just use flex */
+        min-height: auto; /* Allow auto height on mobile */
     }
 
     .stackboost-spotlight-inner {
         flex-direction: column;
-        margin: 10px 0;
         width: 100%;
     }
 
+    /* On mobile, move arrows to top corners or keep sides?
+       Sides might overlap content. Let's keep them centered vertically but smaller.
+    */
     .stackboost-spotlight-nav {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-
-    .stackboost-spotlight-nav.prev {
-        left: 0;
-    }
-
-    .stackboost-spotlight-nav.next {
-        right: 0;
+        /* Keep absolute positioning */
     }
 
     .stackboost-spotlight-icon {
