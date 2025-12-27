@@ -199,7 +199,17 @@
                         checked: attributes.preferGravatar,
                         onChange: function( val ) {
                             if ( val === true ) {
-                                if ( window.confirm( __( 'Warning: Enabling Gravatars will expose visitor IP addresses to Automattic/Gravatar.com. This may violate GDPR/privacy policies. Do you strictly consent to this external connection?', 'stackboost-for-supportcandy' ) ) ) {
+                                if ( typeof window.stackboostConfirm === 'function' ) {
+                                    window.stackboostConfirm(
+                                        __( 'Warning: Enabling Gravatars will expose visitor IP addresses to Automattic/Gravatar.com. This may violate GDPR/privacy policies. Do you strictly consent to this external connection?', 'stackboost-for-supportcandy' ),
+                                        __( 'GDPR / Privacy Warning', 'stackboost-for-supportcandy' ),
+                                        function() { setAttributes( { preferGravatar: true } ); },
+                                        function() { /* Cancelled, do nothing */ },
+                                        __( 'I Consent', 'stackboost-for-supportcandy' ),
+                                        __( 'Cancel', 'stackboost-for-supportcandy' ),
+                                        true // isDanger
+                                    );
+                                } else if ( window.confirm( __( 'Warning: Enabling Gravatars will expose visitor IP addresses to Automattic/Gravatar.com. This may violate GDPR/privacy policies. Do you strictly consent to this external connection?', 'stackboost-for-supportcandy' ) ) ) {
                                     setAttributes( { preferGravatar: val } );
                                 }
                             } else {
@@ -214,7 +224,17 @@
                         checked: attributes.enableGravatarFallback,
                         onChange: function( val ) {
                             if ( val === true ) {
-                                if ( window.confirm( __( 'Warning: Enabling Gravatars will expose visitor IP addresses to Automattic/Gravatar.com. This may violate GDPR/privacy policies. Do you strictly consent to this external connection?', 'stackboost-for-supportcandy' ) ) ) {
+                                if ( typeof window.stackboostConfirm === 'function' ) {
+                                    window.stackboostConfirm(
+                                        __( 'Warning: Enabling Gravatars will expose visitor IP addresses to Automattic/Gravatar.com. This may violate GDPR/privacy policies. Do you strictly consent to this external connection?', 'stackboost-for-supportcandy' ),
+                                        __( 'GDPR / Privacy Warning', 'stackboost-for-supportcandy' ),
+                                        function() { setAttributes( { enableGravatarFallback: true } ); },
+                                        function() { /* Cancelled, do nothing */ },
+                                        __( 'I Consent', 'stackboost-for-supportcandy' ),
+                                        __( 'Cancel', 'stackboost-for-supportcandy' ),
+                                        true // isDanger
+                                    );
+                                } else if ( window.confirm( __( 'Warning: Enabling Gravatars will expose visitor IP addresses to Automattic/Gravatar.com. This may violate GDPR/privacy policies. Do you strictly consent to this external connection?', 'stackboost-for-supportcandy' ) ) ) {
                                     setAttributes( { enableGravatarFallback: val } );
                                 }
                             } else {
