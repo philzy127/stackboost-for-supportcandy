@@ -12,6 +12,10 @@ After activating the plugin, you will see a new **StackBoost** menu in your Word
 
 The **General Settings** page provides an overview of the plugin status and allows you to configure global options.
 
+*   **Feature Spotlight:** A new dynamic widget on the dashboard highlights key features available in your plan (or upgrades you might be missing). Use the carousel arrows to browse through the features and click "Learn More" to see details.
+    *   **Context Aware:** The widget automatically adjusts based on your license tier (Lite, Pro, Business) to show you the most relevant tools.
+    *   **Auto-Rotation:** The spotlight automatically cycles through features every 60 seconds, but you can pause it by hovering over the card.
+
 ### Diagnostics
 
 The **Diagnostics** page (formerly "Tools") gives you control over the system's health and debugging features.
