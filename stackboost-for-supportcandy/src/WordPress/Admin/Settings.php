@@ -347,7 +347,7 @@ class Settings {
 							var currentIndex = <?php echo (int) $start_index; ?>;
 							var $widget = $('#stackboost-spotlight-widget');
 							var timer = null;
-							var intervalTime = 6000; // 6 seconds
+							var intervalTime = 60000; // 60 seconds
 
 							function renderCard(index) {
 								if (index < 0) index = pool.length - 1;
