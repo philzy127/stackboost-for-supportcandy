@@ -2,7 +2,7 @@
 
 A comprehensive enhancement suite for the SupportCandy WordPress plugin. This plugin adds modular features like a Company Directory, Onboarding Dashboard, After-Ticket Surveys, and advanced automation macros.
 
-**Current Version:** 1.4.2
+**Current Version:** 1.5.0
 
 ## Features
 

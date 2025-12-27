@@ -2,10 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2025-12-28
+
+### Added
+- **Privacy & GDPR Compliance:**
+    - **Consent Gates:** Implemented a new consent system for the Directory Block. Administrators must now explicitly confirm that they understand the privacy implications (IP leakage to Automattic) before enabling Gravatars.
+    - **Zero External Leakage:** The PDF generation engine (DOMPDF) has been locked down to strictly disable remote file fetching, preventing any accidental data leakage to external servers.
+    - **Data Erasure Hooks:** Integrated with the native WordPress "Erase Personal Data" tool. Processing an erasure request for an email address will now locate the corresponding Staff Directory profile and safely move it to the Trash.
+    - **Data Export Hooks:** Integrated with the native WordPress "Export Personal Data" tool to include full Staff Directory profiles in the generated report.
+
+### Changed
+- **Logging Improvements:** Replaced remaining `console.error` calls in admin scripts with the centralized `stackboostLog` utility to ensure all errors are captured in the diagnostic log.
+- **Documentation:** Updated user manuals to include a dedicated "Privacy & GDPR Compliance" section detailing the new data rights features.
+
 ## [1.4.3] - 2025-12-26
 
 ### Added
-- **GDPR Compliance:**
+- **GDPR Compliance (Assets):**
     - **Local Asset Bundling:** All external third-party assets (DataTables, Tippy.js, Popper.js, jQuery UI CSS, and placeholder images) are now bundled locally within the plugin.
     - **No-CDN Policy:** Removed all references to external CDNs (Unpkg, Cloudflare, Google APIs, Placehold.co) to prevent unauthorized IP leakage.
 - **DataTables 2.3.6:** Upgraded and standardized the DataTables library to version 2.3.6 across all modules.

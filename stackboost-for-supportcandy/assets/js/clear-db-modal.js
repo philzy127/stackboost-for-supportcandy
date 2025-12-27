@@ -60,7 +60,9 @@ jQuery(document).ready(function($) {
             },
             error: function(xhr, status, error) {
                 messageDiv.html('<p style="color: red;">' + stackboostClearDbAjax.errorMessage + ' ' + error + '</p>');
-                console.error('AJAX Error:', xhr.responseText);
+                if (typeof window.stackboostLog === 'function') {
+                    window.stackboostLog('AJAX Error: ' + xhr.responseText, null, 'error');
+                }
             }
         });
     });

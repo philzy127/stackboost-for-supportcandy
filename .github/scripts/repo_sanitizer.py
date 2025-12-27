@@ -149,6 +149,11 @@ def sanitize_plugin_file(filepath):
         regex = r"(\s*if\s*\(\s*stackboost_is_feature_active\s*\(\s*'" + key + r"'\s*\)\s*\)\s*\{(?:[^{}]*|\{[^{}]*\})*\})"
         content = re.sub(regex, '', content, flags=re.MULTILINE | re.DOTALL)
 
+    # 3. Remove DataTables Registration (Not used in Lite)
+    # Match the block starting with // DataTables CSS up to the end of the JS registration
+    datatables_pattern = r"\s*// DataTables CSS.*?wp_register_script\(\s*'stackboost-datatables-js'.*?\);\s*"
+    content = re.sub(datatables_pattern, '', content, flags=re.DOTALL)
+
     with open(filepath, 'w') as f:
         f.write(content)
 
