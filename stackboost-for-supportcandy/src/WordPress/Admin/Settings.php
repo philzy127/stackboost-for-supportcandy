@@ -833,7 +833,26 @@ class Settings {
 			'enable_log_appearance'        => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ),
 		];
 
+		// Map logging keys to feature slugs for Pro/Business features only.
+		// Core and Lite features are not gated.
+		$feature_map = [
+			'enable_log_conditional_views' => 'conditional_views',
+			'enable_log_queue_macro'       => 'queue_macro',
+			'enable_log_utm'               => 'unified_ticket_macro',
+			'enable_log_ats'               => 'after_ticket_survey',
+			'enable_log_directory'         => 'staff_directory',
+			'enable_log_onboarding'        => 'onboarding_dashboard',
+		];
+
 		foreach ( $modules as $key => $label ) {
+			// If this module is mapped to a feature slug, check if that feature is active.
+			if ( array_key_exists( $key, $feature_map ) ) {
+				if ( ! stackboost_is_feature_active( $feature_map[ $key ] ) ) {
+					// Feature is inactive: Skip rendering (forces disable on save via sanitization).
+					continue;
+				}
+			}
+
 			$is_enabled = ! empty( $options[ $key ] );
 			?>
 			<label style="display: block; margin-bottom: 5px;">
