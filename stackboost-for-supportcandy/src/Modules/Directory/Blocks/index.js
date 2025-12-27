@@ -197,14 +197,30 @@
                         label: __( 'Prefer Gravatar', 'stackboost-for-supportcandy' ),
                         help: __( 'If enabled, always try to show Gravatar first.', 'stackboost-for-supportcandy' ),
                         checked: attributes.preferGravatar,
-                        onChange: function( val ) { setAttributes( { preferGravatar: val } ); },
+                        onChange: function( val ) {
+                            if ( val === true ) {
+                                if ( window.confirm( __( 'Warning: Enabling Gravatars will expose visitor IP addresses to Automattic/Gravatar.com. This may violate GDPR/privacy policies. Do you strictly consent to this external connection?', 'stackboost-for-supportcandy' ) ) ) {
+                                    setAttributes( { preferGravatar: val } );
+                                }
+                            } else {
+                                setAttributes( { preferGravatar: val } );
+                            }
+                        },
                         __nextHasNoMarginBottom: true
                     } ),
                     el( ToggleControl, {
                         label: __( 'Fallback to Gravatar', 'stackboost-for-supportcandy' ),
                         help: __( 'If no custom photo is found, try Gravatar.', 'stackboost-for-supportcandy' ),
                         checked: attributes.enableGravatarFallback,
-                        onChange: function( val ) { setAttributes( { enableGravatarFallback: val } ); },
+                        onChange: function( val ) {
+                            if ( val === true ) {
+                                if ( window.confirm( __( 'Warning: Enabling Gravatars will expose visitor IP addresses to Automattic/Gravatar.com. This may violate GDPR/privacy policies. Do you strictly consent to this external connection?', 'stackboost-for-supportcandy' ) ) ) {
+                                    setAttributes( { enableGravatarFallback: val } );
+                                }
+                            } else {
+                                setAttributes( { enableGravatarFallback: val } );
+                            }
+                        },
                         __nextHasNoMarginBottom: true
                     } ),
                     el( 'p', { className: 'components-base-control__label' }, __( 'Visible Fields', 'stackboost-for-supportcandy' ) ),

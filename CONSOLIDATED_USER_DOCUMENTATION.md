@@ -272,3 +272,25 @@ Located at **StackBoost > Queue Macro**.
 *   **Macro:** `{{stackboost_queue_count}}`
 *   **Function:** Inserts the number of tickets that match the "Selected" statuses defined above.
 *   **Usage:** Useful for auto-response emails: "There are currently {{stackboost_queue_count}} tickets ahead of you."
+
+---
+
+## 11. Privacy & GDPR Compliance
+
+StackBoost is designed with strict data privacy principles ("Zero External Leakage") to ensure compliance with GDPR and other privacy regulations.
+
+### Zero External Leakage
+*   **No CDNs:** The plugin does not load scripts or styles from external CDNs (like Google Fonts or jQuery CDN). All assets are bundled locally.
+*   **PDF Generation:** The internal PDF engine (DOMPDF) is configured to **strictly block** any remote resource requests. Images in PDFs must be local server files.
+
+### Gravatar Consent Gate
+By default, the plugin uses local placeholders for staff photos.
+*   **Enable Gravatars:** If you wish to use Gravatars (which requires sending user email hashes to Automattic), you can enable this in the **Company Directory** block settings or shortcode.
+*   **Warning:** The system will present a mandatory consent warning requiring you to acknowledge the privacy implications (IP address exposure to a third party) before enabling this feature.
+
+### Data Rights (Export & Erasure)
+StackBoost integrates with WordPress's native privacy tools found under **Tools > Export Personal Data** and **Tools > Erase Personal Data**.
+
+*   **Export:** When an administrator exports data for a user email address, StackBoost will include the full Staff Directory profile (Name, Title, Phones, etc.) in the report.
+*   **Erasure:** When an administrator processes an erasure request for an email address, StackBoost will locate the corresponding Staff Directory entry and **move it to the Trash**.
+    *   *Note:* The item is moved to Trash rather than permanently deleted immediately, providing a safety net against accidental deletion. An administrator can then permanently delete it from the Trash.

@@ -79,6 +79,10 @@ class WordPress {
 
 		// Filter for redirecting after post update.
 		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
+
+		// GDPR Hooks.
+		add_filter( 'wp_privacy_personal_data_exporters', array( $this, 'register_gdpr_exporters' ) );
+		add_filter( 'wp_privacy_personal_data_erasers', array( $this, 'register_gdpr_erasers' ) );
 	}
 
 	/**
@@ -1113,5 +1117,159 @@ class WordPress {
 			stackboost_log( $log_message, 'directory-error' );
 			return $location; // Return the original location to prevent a redirect loop.
 		}
+	}
+
+	/**
+	 * Register GDPR Data Exporters.
+	 *
+	 * @param array $exporters Existing exporters.
+	 * @return array
+	 */
+	public function register_gdpr_exporters( $exporters ) {
+		$exporters['stackboost-directory'] = array(
+			'exporter_friendly_name' => __( 'StackBoost Directory', 'stackboost-for-supportcandy' ),
+			'callback'               => array( $this, 'gdpr_exporter_callback' ),
+		);
+		return $exporters;
+	}
+
+	/**
+	 * Register GDPR Data Erasers.
+	 *
+	 * @param array $erasers Existing erasers.
+	 * @return array
+	 */
+	public function register_gdpr_erasers( $erasers ) {
+		$erasers['stackboost-directory'] = array(
+			'eraser_friendly_name' => __( 'StackBoost Directory', 'stackboost-for-supportcandy' ),
+			'callback'             => array( $this, 'gdpr_eraser_callback' ),
+		);
+		return $erasers;
+	}
+
+	/**
+	 * GDPR Exporter Callback.
+	 *
+	 * @param string $email_address The email address to export.
+	 * @param int    $page          Pagination page number.
+	 * @return array
+	 */
+	public function gdpr_exporter_callback( $email_address, $page = 1 ) {
+		$number = 500; // Limit per batch.
+		$page   = (int) $page;
+
+		$export_items = array();
+		$args         = array(
+			'post_type'      => $this->core->cpts->post_type,
+			'posts_per_page' => $number,
+			'paged'          => $page,
+			'meta_query'     => array(
+				array(
+					'key'     => '_stackboost_email_address',
+					'value'   => $email_address,
+					'compare' => '=',
+				),
+			),
+		);
+
+		$query = new \WP_Query( $args );
+
+		if ( $query->have_posts() ) {
+			foreach ( $query->posts as $post ) {
+				$item_id = $post->ID;
+				$data    = array(
+					array(
+						'name'  => __( 'Name', 'stackboost-for-supportcandy' ),
+						'value' => $post->post_title,
+					),
+					array(
+						'name'  => __( 'Job Title', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_job_title', true ),
+					),
+					array(
+						'name'  => __( 'Office Phone', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_office_phone', true ),
+					),
+					array(
+						'name'  => __( 'Mobile Phone', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_mobile_phone', true ),
+					),
+					array(
+						'name'  => __( 'Extension', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_extension', true ),
+					),
+					array(
+						'name'  => __( 'Room Number', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_room_number', true ),
+					),
+				);
+
+				$export_items[] = array(
+					'group_id'    => 'stackboost-directory-staff',
+					'group_label' => __( 'Directory Staff Profile', 'stackboost-for-supportcandy' ),
+					'item_id'     => 'staff-' . $item_id,
+					'data'        => $data,
+				);
+			}
+		}
+
+		$done = count( $export_items ) < $number;
+		return array(
+			'data' => $export_items,
+			'done' => $done,
+		);
+	}
+
+	/**
+	 * GDPR Eraser Callback.
+	 *
+	 * @param string $email_address The email address to erase.
+	 * @param int    $page          Pagination page number.
+	 * @return array
+	 */
+	public function gdpr_eraser_callback( $email_address, $page = 1 ) {
+		$number = 500;
+		$page   = (int) $page;
+
+		$items_removed  = false;
+		$items_retained = false;
+		$messages       = array();
+
+		$args = array(
+			'post_type'      => $this->core->cpts->post_type,
+			'posts_per_page' => $number,
+			'paged'          => $page,
+			'meta_query'     => array(
+				array(
+					'key'     => '_stackboost_email_address',
+					'value'   => $email_address,
+					'compare' => '=',
+				),
+			),
+		);
+
+		$query = new \WP_Query( $args );
+
+		if ( $query->have_posts() ) {
+			foreach ( $query->posts as $post ) {
+				// Move to trash instead of permanent delete for safety, as agreed.
+				$deleted = wp_trash_post( $post->ID );
+
+				if ( $deleted ) {
+					$items_removed = true;
+				} else {
+					$items_retained = true;
+					$messages[]     = sprintf( __( 'Staff profile (ID %d) could not be removed.', 'stackboost-for-supportcandy' ), $post->ID );
+				}
+			}
+		}
+
+		$done = count( $query->posts ) < $number;
+		return array(
+			'items_removed'  => $items_removed,
+			'items_retained' => $items_retained,
+			'messages'       => $messages,
+			'done'           => $done,
+		);
 	}
 }

@@ -58,7 +58,8 @@ class PdfService {
 			$dompdf_options = new Options();
 			$dompdf_options->set( 'defaultFont', 'Helvetica' );
 			$dompdf_options->set( 'isHtml5ParserEnabled', true );
-			$dompdf_options->set( 'isRemoteEnabled', true );
+			// Strict GDPR compliance: Disable remote resources to prevent leakage.
+			$dompdf_options->set( 'isRemoteEnabled', false );
 
 			// Allow override/addition of options
 			if ( isset( $options['dompdf_options'] ) && is_array( $options['dompdf_options'] ) ) {
