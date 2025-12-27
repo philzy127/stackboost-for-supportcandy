@@ -1,27 +1,21 @@
 jQuery(document).ready(function($) {
     // Helper function for conditional logging
     var sbLog = function(message, data) {
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Directory] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-            // Fallback for when stackboost-admin-common.js isn't loaded (e.g. frontend)
-            if (data) {
-                console.log('[StackBoost Directory]', message, data);
-            } else {
-                console.log('[StackBoost Directory]', message);
-            }
+        if (typeof window.sbUtilLog === 'function') {
+            window.sbUtilLog(message, data, 'directory');
+        } else {
+            // Fallback if util script missing
+            if (data) console.log('[StackBoost Directory]', message, data);
+            else console.log('[StackBoost Directory]', message);
         }
     };
 
     var sbError = function(message, data) {
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Directory Error] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-             if (data) {
-                console.error('[StackBoost Directory]', message, data);
-            } else {
-                console.error('[StackBoost Directory]', message);
-            }
+        if (typeof window.sbUtilError === 'function') {
+            window.sbUtilError(message, data, 'directory-error');
+        } else {
+             if (data) console.error('[StackBoost Directory]', message, data);
+             else console.error('[StackBoost Directory]', message);
         }
     };
 

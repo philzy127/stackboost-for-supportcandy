@@ -1,27 +1,82 @@
 jQuery(document).ready(function($) {
     // Helper function for conditional logging
-    window.sbUtilLog = function(message, data) {
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Util] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-            // Fallback for when stackboost-admin-common.js isn't loaded (e.g. frontend)
-            if (data) {
-                console.log('[StackBoost Util]', message, data);
-            } else {
-                console.log('[StackBoost Util]', message);
+    window.sbUtilLog = function(message, data, context = 'general') {
+        var masterSwitch = false;
+        var moduleSwitch = false;
+
+        // Map context to setting key
+        var settingKey = 'enable_log_' + context;
+        if (context === 'general') settingKey = 'enable_log_general';
+
+        // Check backend settings depending on where we are (admin vs frontend)
+        if (typeof stackboost_admin_ajax !== 'undefined') {
+            // Admin Context
+            masterSwitch = stackboost_admin_ajax.debug_enabled;
+            if (stackboost_admin_ajax.log_settings && stackboost_admin_ajax.log_settings[settingKey]) {
+                moduleSwitch = true;
+            } else if (context === 'general' && masterSwitch) {
+                // Allow general logs if just master switch is on and general toggle wasn't found/checked
+                // But typically general logs are controlled by enable_log_general
+                // If log_settings exists, we respect it. If it doesn't exist (legacy/cache issue), fall back to master.
+                 if (stackboost_admin_ajax.log_settings && stackboost_admin_ajax.log_settings['enable_log_general']) {
+                     moduleSwitch = true;
+                 }
             }
+        } else if (typeof stackboost_settings !== 'undefined') { // Frontend Context (stackboost-frontend.js localized)
+             masterSwitch = stackboost_settings.debug_enabled;
+             if (stackboost_settings.log_settings && stackboost_settings.log_settings[settingKey]) {
+                 moduleSwitch = true;
+             }
+        } else if (typeof stackboostPublicAjax !== 'undefined') { // Legacy fallback
+            masterSwitch = stackboostPublicAjax.debug_enabled;
+            // No granular settings here typically, so if master is on, allow it (legacy behavior)
+            moduleSwitch = true;
+        }
+
+        // Final decision: Master switch must be ON, AND Module switch must be ON.
+        if (!masterSwitch || !moduleSwitch) {
+            return;
+        }
+
+        // Server-side logging (if function exists)
+        if (typeof window.stackboost_log === 'function') {
+            window.stackboost_log('[Util][' + context + '] ' + message, data);
+        }
+
+        // Console Logging
+        if (data) {
+            console.log('[StackBoost][' + context + ']', message, data);
+        } else {
+            console.log('[StackBoost][' + context + ']', message);
         }
     };
 
-    window.sbUtilError = function(message, data) {
+    window.sbUtilError = function(message, data, context = 'error') {
+        // Reuse logic? Or keep simple error logging active if master debug is on?
+        // Let's reuse the logic but allow 'error' context to map to general log for now or dedicated error log.
+        // We'll map 'error' to 'enable_log_general' for simplicity unless specified otherwise.
+
+        // However, errors are critical. If master switch is on, we probably want to see them.
+        // Let's just check master switch for errors to be safe.
+        var masterSwitch = false;
+         if (typeof stackboost_admin_ajax !== 'undefined') {
+            masterSwitch = stackboost_admin_ajax.debug_enabled;
+        } else if (typeof stackboost_settings !== 'undefined') {
+             masterSwitch = stackboost_settings.debug_enabled;
+        } else if (typeof stackboostPublicAjax !== 'undefined') {
+            masterSwitch = stackboostPublicAjax.debug_enabled;
+        }
+
+        if (!masterSwitch) return;
+
         if (typeof window.stackboost_log === 'function') {
             window.stackboost_log('[Util Error] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-             if (data) {
-                console.error('[StackBoost Util]', message, data);
-            } else {
-                console.error('[StackBoost Util]', message);
-            }
+        }
+
+        if (data) {
+            console.error('[StackBoost Util]', message, data);
+        } else {
+            console.error('[StackBoost Util]', message);
         }
     };
 

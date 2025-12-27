@@ -409,6 +409,25 @@ final class Plugin {
 			$options = get_option( 'stackboost_settings', [] );
 			$debug_enabled = isset( $options['diagnostic_log_enabled'] ) ? (bool) $options['diagnostic_log_enabled'] : false;
 
+			// Prepare granular logging settings
+			$log_settings = [];
+			$log_keys = [
+				'enable_log_general',
+				'enable_log_ticket_view',
+				'enable_log_date_time',
+				'enable_log_after_hours',
+				'enable_log_conditional_views',
+				'enable_log_queue_macro',
+				'enable_log_utm',
+				'enable_log_ats',
+				'enable_log_directory',
+				'enable_log_onboarding',
+				'enable_log_appearance',
+			];
+			foreach ( $log_keys as $key ) {
+				$log_settings[ $key ] = ! empty( $options[ $key ] );
+			}
+
 			wp_localize_script(
 				'stackboost-admin-common',
 				'stackboost_admin_ajax',
@@ -418,6 +437,7 @@ final class Plugin {
 					'i18n_select_option' => __( '-- Select Option --', 'stackboost-for-supportcandy' ),
 					'i18n_loading'       => __( 'Loading...', 'stackboost-for-supportcandy' ),
 					'debug_enabled'      => $debug_enabled,
+					'log_settings'       => $log_settings,
 				]
 			);
 		}
