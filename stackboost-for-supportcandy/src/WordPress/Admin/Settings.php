@@ -279,6 +279,30 @@ class Settings {
                     </div>
                 </div>
 
+				<?php
+				// Feature Spotlight (Upsell Logic)
+				$upsell_key = $this->get_upsell_card_key();
+				if ( $upsell_key ) {
+					$upsell_data = $this->get_upsell_content()[ $upsell_key ];
+					?>
+					<div class="stackboost-feature-spotlight <?php echo esc_attr( $upsell_data['class'] ); ?>">
+						<div class="stackboost-spotlight-icon">
+							<span class="dashicons <?php echo esc_attr( $upsell_data['icon'] ); ?>"></span>
+						</div>
+						<div class="stackboost-spotlight-content">
+							<h2><?php echo esc_html( $upsell_data['hook'] ); ?></h2>
+							<p><?php echo esc_html( $upsell_data['copy'] ); ?></p>
+						</div>
+						<div class="stackboost-spotlight-action">
+							<a href="<?php echo esc_url( $upsell_data['url'] ); ?>" target="_blank" class="button button-primary">
+								<?php esc_html_e( 'Learn More', 'stackboost-for-supportcandy' ); ?>
+							</a>
+						</div>
+					</div>
+					<?php
+				}
+				?>
+
 			<?php elseif ( 'stackboost-tools' === $page_slug ) : ?>
 				<form action="options.php" method="post">
 					<?php
@@ -989,6 +1013,132 @@ class Settings {
 		update_option( 'stackboost_settings', $sanitized_settings );
 
 		wp_send_json_success( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) );
+	}
+
+	/**
+	 * Get the content definitions for the Feature Spotlight.
+	 *
+	 * @return array
+	 */
+	private function get_upsell_content(): array {
+		$base_pro_url = 'https://stackboost.net/stackboost-for-supportcandy-pro/?utm_source=plugin_settings';
+		$base_biz_url = 'https://stackboost.net/stackboost-for-supportcandy-business/?utm_source=plugin_settings';
+
+		return [
+			// --- Pool A: Pro Features ---
+			'unified_ticket_macro' => [
+				'hook'  => __( 'One-Click Resolution', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Close, tag, and assign tickets in a single click.', 'stackboost-for-supportcandy' ),
+				'url'   => $base_pro_url,
+				'icon'  => 'dashicons-editor-expand',
+				'class' => 'stackboost-upsell-pro',
+				'pool'  => 'pro',
+			],
+			'after_ticket_survey' => [
+				'hook'  => __( 'Automated Feedback', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Automatically collect user feedback when a ticket is resolved.', 'stackboost-for-supportcandy' ),
+				'url'   => $base_pro_url,
+				'icon'  => 'dashicons-feedback',
+				'class' => 'stackboost-upsell-pro',
+				'pool'  => 'pro',
+			],
+			'queue_macros' => [
+				'hook'  => __( 'Customer Transparency', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Show customers their position in line with the {{queue_count}} email macro.', 'stackboost-for-supportcandy' ),
+				'url'   => $base_pro_url,
+				'icon'  => 'dashicons-list-view',
+				'class' => 'stackboost-upsell-pro',
+				'pool'  => 'pro',
+			],
+
+			// --- Pool B: Business Features ---
+			'staff_directory_mapping' => [
+				'hook'  => __( 'Map Your Organization', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Connect tickets to specific office locations and departments.', 'stackboost-for-supportcandy' ),
+				'url'   => $base_biz_url,
+				'icon'  => 'dashicons-location',
+				'class' => 'stackboost-upsell-biz',
+				'pool'  => 'business',
+			],
+			'staff_directory_widget' => [
+				'hook'  => __( 'Visual Contact Cards', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Display a dedicated contact widget for your staff inside the ticket view.', 'stackboost-for-supportcandy' ),
+				'url'   => $base_biz_url,
+				'icon'  => 'dashicons-id-alt',
+				'class' => 'stackboost-upsell-biz',
+				'pool'  => 'business',
+			],
+			'onboarding_dashboard' => [
+				'hook'  => __( 'Track Agent Setup', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Visual dashboard to monitor new agent onboarding progress.', 'stackboost-for-supportcandy' ),
+				'url'   => $base_biz_url,
+				'icon'  => 'dashicons-chart-area',
+				'class' => 'stackboost-upsell-biz',
+				'pool'  => 'business',
+			],
+			'onboarding_compliance' => [
+				'hook'  => __( 'Automate Documentation', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Automatically file completion certificates and compliance docs with the ticket.', 'stackboost-for-supportcandy' ),
+				'url'   => $base_biz_url,
+				'icon'  => 'dashicons-awards',
+				'class' => 'stackboost-upsell-biz',
+				'pool'  => 'business',
+			],
+		];
+	}
+
+	/**
+	 * Determine which Feature Spotlight card to show.
+	 *
+	 * Logic:
+	 * - Business Users: Show nothing (return null).
+	 * - Pro Users: Show only Business features (Pool B).
+	 * - Lite Users: Show all features (Pool A + B).
+	 * - Uses a 12-hour transient to prevent flickering.
+	 *
+	 * @return string|null The key of the card to display, or null if none.
+	 */
+	private function get_upsell_card_key(): ?string {
+		$current_tier = get_option( 'stackboost_license_tier', 'lite' );
+
+		// 1. Business Users: The Pinnacle (No Upsell)
+		if ( 'business' === $current_tier ) {
+			return null;
+		}
+
+		// 2. Check Transient
+		$transient_key = 'stackboost_upsell_rotation_v1';
+		$cached_card   = get_transient( $transient_key );
+
+		if ( false !== $cached_card ) {
+			return $cached_card;
+		}
+
+		// 3. Define Pools
+		$content = $this->get_upsell_content();
+		$pool    = [];
+
+		foreach ( $content as $key => $data ) {
+			if ( 'pro' === $current_tier ) {
+				// Pro Users: Only show Business features
+				if ( 'business' === $data['pool'] ) {
+					$pool[] = $key;
+				}
+			} else {
+				// Lite Users: Show everything
+				$pool[] = $key;
+			}
+		}
+
+		if ( empty( $pool ) ) {
+			return null;
+		}
+
+		// 4. Select Random Card & Set Transient
+		$selected_key = $pool[ array_rand( $pool ) ];
+		set_transient( $transient_key, $selected_key, 12 * HOUR_IN_SECONDS );
+
+		return $selected_key;
 	}
 
     /**

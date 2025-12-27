@@ -116,3 +116,93 @@
     filter: brightness(0.9);
     color: #fff;
 }
+
+/* Feature Spotlight (Upsell Widget) */
+.stackboost-feature-spotlight {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: var(--sb-radius, 4px);
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+    box-sizing: border-box;
+    /* Default border override based on tier class */
+    border-left-width: 5px;
+}
+
+.stackboost-feature-spotlight.stackboost-upsell-pro {
+    border-left-color: #6c5ce7; /* Purple */
+}
+
+.stackboost-feature-spotlight.stackboost-upsell-biz {
+    border-left-color: #f1c40f; /* Gold */
+}
+
+.stackboost-spotlight-icon {
+    flex: 0 0 60px;
+    margin-right: 20px;
+    text-align: center;
+}
+
+.stackboost-spotlight-icon .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #50575e;
+}
+
+/* Icon color inheritance from border */
+.stackboost-upsell-pro .stackboost-spotlight-icon .dashicons {
+    color: #6c5ce7;
+}
+
+.stackboost-upsell-biz .stackboost-spotlight-icon .dashicons {
+    color: #f1c40f;
+}
+
+.stackboost-spotlight-content {
+    flex: 1;
+}
+
+.stackboost-spotlight-content h2 {
+    margin: 0 0 5px 0;
+    font-size: 1.2em;
+    color: #1d2327;
+}
+
+.stackboost-spotlight-content p {
+    margin: 0;
+    font-size: 14px;
+    color: #50575e;
+}
+
+.stackboost-spotlight-action {
+    flex: 0 0 auto;
+    margin-left: 20px;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 782px) {
+    .stackboost-feature-spotlight {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .stackboost-spotlight-icon {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+
+    .stackboost-spotlight-action {
+        margin-left: 0;
+        margin-top: 15px;
+        width: 100%;
+    }
+
+    .stackboost-spotlight-action .button {
+        width: 100%;
+        text-align: center;
+    }
+}
