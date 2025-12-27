@@ -14,13 +14,13 @@ A comprehensive enhancement suite for the SupportCandy WordPress plugin. This pl
 ### Pro
 *   **Conditional Views:** Show or hide ticket columns based on the active view.
 *   **Queue Macro:** Display the customer's position in the support queue dynamically.
-*   **After Ticket Survey (ATS):** Collect customer satisfaction feedback with a customizable survey system.
+*   **After Ticket Survey (ATS):** Collect customer satisfaction feedback with a customizable survey system. Includes a dedicated Gutenberg Block.
 *   **Unified Ticket Macro (UTM):** Generate consistent, formatted HTML summaries of ticket data for email notifications.
 
 ### Business
-*   **Company Directory:** Manage staff, locations, and departments. Includes a searchable frontend directory and a backend contact widget for tickets.
+*   **Company Directory:** Manage staff, locations, and departments. Includes a searchable frontend directory (Block & Shortcode) and a backend contact widget for tickets.
     *   **New:** Enhanced Directory Block with Gravatar integration, custom photo shapes, and email display options.
-*   **Onboarding Dashboard:** A complete workflow for managing employee onboarding steps, tracking progress, and generating completion certificates.
+*   **Onboarding Dashboard:** A complete workflow for managing employee onboarding steps, tracking progress, and generating completion certificates. Includes a Gutenberg Block for easy page integration.
 
 ## Licensing
 

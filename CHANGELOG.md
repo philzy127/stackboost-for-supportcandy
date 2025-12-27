@@ -21,6 +21,9 @@ All notable changes to this project will be documented in this file.
 - **GDPR Compliance (Assets):**
     - **Local Asset Bundling:** All external third-party assets (DataTables, Tippy.js, Popper.js, jQuery UI CSS, and placeholder images) are now bundled locally within the plugin.
     - **No-CDN Policy:** Removed all references to external CDNs (Unpkg, Cloudflare, Google APIs, Placehold.co) to prevent unauthorized IP leakage.
+- **WordPress Native Blocks:**
+    - **After Ticket Survey:** Introduced a dedicated block for embedding the feedback survey on any page, featuring color customization controls for buttons, inputs, and text.
+    - **Onboarding Dashboard:** Introduced a block for displaying the onboarding checklist and staff table, ensuring seamless integration with the Block Editor.
 - **DataTables 2.3.6:** Upgraded and standardized the DataTables library to version 2.3.6 across all modules.
 - **Frontend Logging:** Introduced a standardized `window.stackboostLog()` utility for frontend scripts. This wrapper respects the global "Enable Diagnostic Log" setting, preventing debug noise in production while routing logs to the backend file when in an admin context.
 
