@@ -7,6 +7,7 @@ use StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
 use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\TicketView;
 use StackBoost\ForSupportCandy\Modules\Appearance;
+use StackBoost\ForSupportCandy\Modules\ChatBubbles;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 
@@ -104,6 +105,13 @@ final class Plugin {
 			$class = 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\WordPress';
 			if ( class_exists( $class ) ) {
 				$this->modules['unified_ticket_macro'] = $class::get_instance();
+			}
+		}
+
+		if ( stackboost_is_feature_active( 'chat_bubbles' ) ) {
+			$class = 'StackBoost\ForSupportCandy\Modules\ChatBubbles\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['chat_bubbles'] = $class::get_instance();
 			}
 		}
 
@@ -356,6 +364,7 @@ final class Plugin {
 			'stackboost_page_stackboost-date-time',
 			'stackboost_page_stackboost-appearance',
             // Missing Pages added:
+			'stackboost_page_stackboost-chat-bubbles',
             'stackboost_page_stackboost-ticket-view',
             'stackboost_page_stackboost-after-hours',
             'stackboost_page_stackboost-utm',
@@ -373,6 +382,7 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-tools',
             'stackboost-for-supportcandy_page_stackboost-date-time',
             'stackboost-for-supportcandy_page_stackboost-appearance',
+            'stackboost-for-supportcandy_page_stackboost-chat-bubbles',
             // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
             'stackboost_page_stackboost-date-time',
 		];

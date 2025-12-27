@@ -67,6 +67,18 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketView\WordPress::get_instance(), 'render_page' ],
 		];
 
+		// 2.1 Chat Bubbles - Pro
+		if ( stackboost_is_feature_active( 'chat_bubbles' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\ChatBubbles\WordPress' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-chat-bubbles',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\ChatBubbles\WordPress::get_instance(), 'render_page' ],
+			];
+		}
+
 		// 3. Date & Time Formatting (New Module) - Lite
 		if ( stackboost_is_feature_active( 'date_time_formatting' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page' ) ) {
 			$menu_config[] = [
@@ -792,6 +804,7 @@ class Settings {
 				'enable_log_appearance', // Added Appearance Logging
 			],
 			// 'stackboost-date-time' removed - uses isolated option group via custom AJAX
+			'stackboost-chat-bubbles' => \StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings::get_settings_keys(),
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
@@ -1155,6 +1168,14 @@ class Settings {
 				'copy'  => __( 'Set expectations from the very first email. Automatically show customers their exact position in line instantly upon ticket creation. This transparency lets them know you\'re busy but organized, stopping "did you get this?" follow-ups before they happen.', 'stackboost-for-supportcandy' ),
 				'url'   => $base_pro_url,
 				'icon'  => 'dashicons-list-view',
+				'class' => 'stackboost-upsell-pro',
+				'pool'  => 'pro',
+			],
+			'chat_bubbles' => [
+				'hook'  => __( 'Modern Chat Interface', 'stackboost-for-supportcandy' ),
+				'copy'  => __( 'Transform your ticket view into a modern, conversational interface. With customizable chat bubbles, tails, and colors, your agents will feel like they are using a top-tier messaging app, not a legacy helpdesk.', 'stackboost-for-supportcandy' ),
+				'url'   => $base_pro_url,
+				'icon'  => 'dashicons-format-chat',
 				'class' => 'stackboost-upsell-pro',
 				'pool'  => 'pro',
 			],
