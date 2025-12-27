@@ -178,6 +178,21 @@ final class Plugin {
 			[],
 			'1.12.1'
 		);
+
+		// StackBoost Util (Shared JS/CSS)
+		wp_register_script(
+			'stackboost-util',
+			STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
+			[ 'jquery' ],
+			STACKBOOST_VERSION,
+			true
+		);
+		wp_register_style(
+			'stackboost-util',
+			STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
+			[],
+			STACKBOOST_VERSION
+		);
 	}
 
 	/**
@@ -262,7 +277,7 @@ final class Plugin {
 		wp_register_script(
 			'stackboost-frontend',
 			STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-frontend.js',
-			[ 'jquery', 'stackboost-tippy' ],
+			[ 'jquery', 'stackboost-tippy', 'stackboost-util' ],
 			STACKBOOST_VERSION,
 			true
 		);
@@ -402,19 +417,8 @@ final class Plugin {
             }
 
 			// Enqueue shared utilities (Modals, etc.)
-			wp_enqueue_style(
-				'stackboost-util',
-				STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
-				[],
-				STACKBOOST_VERSION
-			);
-			wp_enqueue_script(
-				'stackboost-util',
-				STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
-				[ 'jquery' ],
-				STACKBOOST_VERSION,
-				true
-			);
+			wp_enqueue_style( 'stackboost-util' );
+			wp_enqueue_script( 'stackboost-util' );
 
 			wp_enqueue_style(
 				'stackboost-admin-tabs',
