@@ -237,7 +237,8 @@ class Core {
 				// Let's rely on the hex conversion for now as the picker defaults to hex.
 			}
 
-			$shadow_css = "box-shadow: 0 2px {$blur} {$spread} {$shadow_color} !important;";
+			// Switched to drop-shadow per user request. Note: drop-shadow does not support spread.
+			$shadow_css = "filter: drop-shadow(0 2px {$blur} {$shadow_color}) !important;";
 		}
 
 		foreach ( $types as $type ) {
@@ -381,6 +382,47 @@ class Core {
 	}
 
 	/**
+	 * Helper to get StackBoost Theme Colors (Mirroring admin-themes.css).
+	 * This ensures colors work on the frontend without enqueueing the full admin CSS.
+	 */
+	private function get_stackboost_theme_colors( $slug ) {
+		$themes = [
+			'sb-theme-wordpress-sync' => [
+				'accent' => '#2271b1', // Fallback, variable not available on frontend
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#f0f0f1',
+			],
+			'sb-theme-supportcandy-sync' => [
+				'accent' => '#2271b1', // Fallback
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#f6f7f7',
+			],
+			'sb-theme-cloud-dancer' => [
+				'accent' => '#722ed1',
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#F0EEE9',
+			],
+			'sb-theme-heroic' => [
+				'accent' => '#d63638',
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#f6f7f7',
+			],
+			'sb-theme-clean-tech' => [
+				'accent' => '#1a3d5c',
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#ffffff',
+			],
+			'sb-theme-hudson-valley-eco' => [
+				'accent' => '#2d5a27',
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#e9edeb',
+			],
+		];
+
+		return $themes[ $slug ] ?? $themes['sb-theme-clean-tech'];
+	}
+
+	/**
 	 * Get styles for a specific type based on settings/theme.
 	 */
 	private function get_styles_for_type( $type ): array {
@@ -411,10 +453,14 @@ class Core {
 		switch ( $theme ) {
 			case 'stackboost':
 				// StackBoost Theme
+				// Retrieve Active Theme Colors explicitly for frontend compatibility
+				$active_theme_slug = $options['admin_theme'] ?? 'sb-theme-clean-tech';
+				$theme_colors = $this->get_stackboost_theme_colors( $active_theme_slug );
+
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => 'var(--sb-accent, #2271b1)',
-						'text_color'  => '#ffffff',
+						'bg_color'    => $theme_colors['accent'],
+						'text_color'  => $theme_colors['text_on_accent'],
 						'alignment'   => 'right',
 						'radius'      => '15',
 					]);
@@ -427,8 +473,8 @@ class Core {
 					]);
 				} else {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => 'var(--sb-bg-main, #f0f0f1)',
-						'text_color'  => '#3c434a',
+						'bg_color'    => $theme_colors['bg_main'],
+						'text_color'  => '#3c434a', // Dark text on main bg
 						'alignment'   => 'left',
 						'radius'      => '15',
 					]);
