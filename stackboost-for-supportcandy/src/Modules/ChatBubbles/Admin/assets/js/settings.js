@@ -18,22 +18,17 @@
             var target = $(this).data('target');
             $('.sb-chat-config-section').hide();
             $('#sb-chat-config-' + target).fadeIn();
-
-            // Note: We don't need to update preview here because preview shows ALL bubbles.
-            // But we might want to highlight the bubble being edited? (Optional enhancement)
         });
 
         // 3. Toggle Custom Fields based on Theme Selection
         // Use event delegation for dynamic elements or just class selector
-        $(document).on('change', '.sb-chat-theme-selector', function() {
+        $(document).on('change', '#sb_chat_global_theme_selector', function() {
             var val = $(this).val();
-            var type = $(this).data('type');
-            var $customFields = $('#sb_chat_custom_fields_' + type);
-
+            // All custom fields sections
             if (val === 'custom') {
-                $customFields.fadeIn();
+                $('.sb-chat-custom-fields').fadeIn();
             } else {
-                $customFields.hide();
+                $('.sb-chat-custom-fields').hide();
             }
             updatePreview();
         });
@@ -44,21 +39,23 @@
         });
 
         function updatePreview() {
+            // Get Global Settings
+            var theme = $('#sb_chat_global_theme_selector').val();
+            var tailStyle = $('#chat_bubbles_tail').val();
+            var borderWidth = $('#chat_bubbles_border_width').val();
+            var borderColor = $('#chat_bubbles_border_color').val();
+
             // Iterate over all 3 types to update the 3 bubbles
             ['agent', 'customer', 'note'].forEach(function(type) {
-                updateBubble(type);
+                updateBubble(type, theme, tailStyle, borderWidth, borderColor);
             });
         }
 
-        function updateBubble(type) {
-            // Find inputs for this type
-            // Prefix: stackboost_settings[chat_bubbles_{type}_{field}]
+        function updateBubble(type, theme, tailStyle, borderWidth, borderColor) {
+            var $preview = $('#preview-bubble-' + type);
             var prefixName = 'stackboost_settings[chat_bubbles_' + type + '_';
 
-            var theme = $('select[name="' + prefixName + 'theme]"]').val();
-            var $preview = $('#preview-bubble-' + type);
-
-            // Default Values
+            // Default Values (Must match Core.php logic)
             var styles = {
                 bg: '#f1f1f1',
                 text: '#333333',
@@ -67,66 +64,36 @@
                 align: 'left',
                 width: '85',
                 radius: '15',
-                tail: 'none'
+                tail: tailStyle, // Global tail by default
+                bold: false,
+                italic: false,
+                underline: false
             };
 
             // Apply Theme Logic
-            // Note: Keep in sync with Core.php logic!
+            // Note: Note types default to center/85% in themes.
             if (theme === 'stackboost') {
                 if (type === 'agent') {
                     styles.bg = '#2271b1';
                     styles.text = '#ffffff';
                     styles.align = 'right';
+                    styles.radius = '15';
+                } else if (type === 'note') {
+                    styles.bg = '#fff8e5';
+                    styles.text = '#333333';
+                    styles.align = 'center';
+                    styles.radius = '5';
                 } else {
                     styles.bg = '#f0f0f1';
                     styles.text = '#3c434a';
                     styles.align = 'left';
+                    styles.radius = '15';
                 }
-                styles.font = '-apple-system, BlinkMacSystemFont, sans-serif';
-                styles.radius = '15';
-                styles.tail = 'round';
-
-            } else if (theme === 'ios') {
-                if (type === 'agent') {
-                    styles.bg = '#007aff';
-                    styles.text = '#ffffff';
-                    styles.align = 'right';
-                } else {
-                    styles.bg = '#e5e5ea';
-                    styles.text = '#000000';
-                    styles.align = 'left';
-                }
-                styles.radius = '20';
-                styles.tail = 'round';
-                styles.width = '75';
-
-            } else if (theme === 'android') {
-                if (type === 'agent') {
-                    styles.bg = '#d9fdd3';
-                    styles.text = '#111b21';
-                    styles.align = 'right';
-                } else {
-                    styles.bg = '#ffffff';
-                    styles.text = '#111b21';
-                    styles.align = 'left';
-                }
-                styles.radius = '8';
-                styles.tail = 'sharp';
-                styles.width = '80';
-
-            } else if (theme === 'modern') {
-                if (type === 'agent') {
-                    styles.bg = '#000000';
-                    styles.text = '#ffffff';
-                    styles.align = 'right';
-                } else {
-                    styles.bg = '#f2f2f2';
-                    styles.text = '#000000';
-                    styles.align = 'left';
-                }
-                styles.radius = '0';
-                styles.tail = 'none';
-                styles.width = '60';
+                styles.font = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
+                styles.tail = 'round'; // Theme default, but global might override?
+                // Core logic: $styles['tail'] = $tail; (Global overrides theme default if set)
+                // But global setting IS the setting.
+                styles.tail = tailStyle;
 
             } else if (theme === 'supportcandy') {
                 var scPrimary = (typeof stackboostChatBubbles !== 'undefined' && stackboostChatBubbles.scPrimaryColor)
@@ -137,16 +104,91 @@
                     styles.bg = scPrimary;
                     styles.text = '#ffffff';
                     styles.align = 'right';
+                    styles.radius = '5';
+                } else if (type === 'note') {
+                    styles.bg = '#fdfdfd';
+                    styles.text = '#333333';
+                    styles.align = 'center';
+                    styles.radius = '0';
                 } else {
                     styles.bg = '#e5e5e5';
                     styles.text = '#333333';
                     styles.align = 'left';
+                    styles.radius = '5';
                 }
-                styles.radius = '5';
-                styles.tail = 'none';
-                styles.width = '85';
+                styles.tail = tailStyle;
+
+            } else if (theme === 'ios') {
+                if (type === 'agent') {
+                    styles.bg = '#007aff';
+                    styles.text = '#ffffff';
+                    styles.align = 'right';
+                    styles.width = '75';
+                    styles.radius = '20';
+                } else if (type === 'note') {
+                    styles.bg = '#fffae6';
+                    styles.text = '#333333';
+                    styles.align = 'center';
+                    styles.width = '85';
+                    styles.radius = '10';
+                } else {
+                    styles.bg = '#e5e5ea';
+                    styles.text = '#000000';
+                    styles.align = 'left';
+                    styles.width = '75';
+                    styles.radius = '20';
+                }
+                styles.font = '-apple-system, BlinkMacSystemFont, sans-serif';
+                styles.tail = tailStyle;
+
+            } else if (theme === 'android') {
+                if (type === 'agent') {
+                    styles.bg = '#d9fdd3';
+                    styles.text = '#111b21';
+                    styles.align = 'right';
+                    styles.width = '80';
+                    styles.radius = '8';
+                } else if (type === 'note') {
+                    styles.bg = '#fffbcc';
+                    styles.text = '#333333';
+                    styles.align = 'center';
+                    styles.width = '85';
+                    styles.radius = '5';
+                } else {
+                    styles.bg = '#ffffff';
+                    styles.text = '#111b21';
+                    styles.align = 'left';
+                    styles.width = '80';
+                    styles.radius = '8';
+                }
+                styles.font = 'Roboto, sans-serif';
+                styles.tail = tailStyle;
+
+            } else if (theme === 'modern') {
+                if (type === 'agent') {
+                    styles.bg = '#000000';
+                    styles.text = '#ffffff';
+                    styles.align = 'right';
+                    styles.width = '60';
+                    styles.radius = '0';
+                } else if (type === 'note') {
+                    styles.bg = '#f9f9f9';
+                    styles.text = '#555555';
+                    styles.align = 'center';
+                    styles.width = '85';
+                    styles.radius = '0';
+                } else {
+                    styles.bg = '#f2f2f2';
+                    styles.text = '#000000';
+                    styles.align = 'left';
+                    styles.width = '60';
+                    styles.radius = '0';
+                }
+                styles.font = 'Helvetica, Arial, sans-serif';
+                styles.tail = tailStyle;
 
             } else if (theme === 'custom') {
+                // Custom overrides everything
                 styles.bg = $('input[name="' + prefixName + 'bg_color]"]').val();
                 styles.text = $('input[name="' + prefixName + 'text_color]"]').val();
                 styles.font = $('select[name="' + prefixName + 'font_family]"]').val();
@@ -154,10 +196,16 @@
                 styles.align = $('select[name="' + prefixName + 'alignment]"]').val();
                 styles.width = $('input[name="' + prefixName + 'width]"]').val();
                 styles.radius = $('input[name="' + prefixName + 'radius]"]').val();
-                styles.tail = $('select[name="' + prefixName + 'tail]"]').val();
+
+                // Font Styles
+                styles.bold = $('input[name="' + prefixName + 'font_bold]"]').is(':checked');
+                styles.italic = $('input[name="' + prefixName + 'font_italic]"]').is(':checked');
+                styles.underline = $('input[name="' + prefixName + 'font_underline]"]').is(':checked');
+
+                styles.tail = tailStyle; // Global Tail applies to custom too
             }
 
-            // Apply CSS
+            // Apply Base CSS
             var cssMap = {
                 'background-color': styles.bg,
                 'color': styles.text,
@@ -165,14 +213,21 @@
                 'width': styles.width + '%',
                 'font-family': styles.font,
                 'padding': '15px',
-                // Reset margins for flex/grid context?
-                // Preview context uses flexbox/grid layout so align-self or margin-auto works.
+                'font-weight': styles.bold ? 'bold' : 'normal',
+                'font-style': styles.italic ? 'italic' : 'normal',
+                'text-decoration': styles.underline ? 'underline' : 'none'
             };
 
             if (styles.fontSize) {
                 cssMap['font-size'] = styles.fontSize + 'px';
             } else {
                 cssMap['font-size'] = '';
+            }
+
+            if (borderWidth && borderWidth > 0) {
+                cssMap['border'] = borderWidth + 'px solid ' + borderColor;
+            } else {
+                cssMap['border'] = 'none';
             }
 
             $preview.css(cssMap);
@@ -184,6 +239,12 @@
                     'margin-right': '0',
                     'align-self': 'flex-end'
                 });
+            } else if (styles.align === 'center') {
+                $preview.css({
+                    'margin-left': 'auto',
+                    'margin-right': 'auto',
+                    'align-self': 'center'
+                });
             } else {
                 $preview.css({
                     'margin-right': 'auto',
@@ -192,15 +253,11 @@
                 });
             }
 
-            // Special handling for Note (Centering usually)
-            // But if user sets 'Right' for Note, we respect it.
-            // Core default for Note? Usually centered or full width.
-            // Our JS default is 'Left'.
-
             // Tail Logic
             $preview.find('.preview-tail').remove();
 
-            if (styles.tail !== 'none') {
+            // Tail only if enabled, not note, and not center aligned
+            if (styles.tail !== 'none' && type !== 'note' && styles.align !== 'center') {
                 $preview.css('position', 'relative');
                 var $tail = $('<div class="preview-tail"></div>');
                 var tailColor = styles.bg;
@@ -209,8 +266,14 @@
                     'position': 'absolute',
                     'width': '0',
                     'height': '0',
-                    'border-style': 'solid'
+                    'border-style': 'solid',
+                    'z-index': 1
                 });
+
+                // Border logic for tail is tricky in JS preview without creating multiple elements.
+                // We'll simplify for preview and just use background color.
+                // If the user wants to see the border on the tail, it requires 2 pseudo elements.
+                // We can append a second div for the border if needed.
 
                 if (styles.align === 'right') {
                     $tail.css({ 'right': '-8px', 'bottom': '0', 'left': 'auto' });
@@ -222,6 +285,7 @@
                             'bottom': '10px'
                         });
                     } else {
+                        // Round approximation
                         $tail.css({
                             'border-width': '15px 0 0 15px',
                             'border-color': 'transparent transparent transparent ' + tailColor,
@@ -238,6 +302,7 @@
                             'bottom': '10px'
                         });
                     } else {
+                        // Round approximation
                         $tail.css({
                             'border-width': '15px 15px 0 0',
                             'border-color': 'transparent ' + tailColor + ' transparent transparent',
@@ -250,14 +315,7 @@
         }
 
         // Initialize UI
-        // Trigger change on all theme selectors to set initial field visibility
-        $('.sb-chat-theme-selector').each(function() {
-            var val = $(this).val();
-            var type = $(this).data('type');
-            if(val !== 'custom') {
-                $('#sb_chat_custom_fields_' + type).hide();
-            }
-        });
+        $('#sb_chat_global_theme_selector').trigger('change');
 
         // Initial Preview
         updatePreview();

@@ -42,17 +42,27 @@ class Settings {
 
 						<!-- JS Tabs Header -->
 						<div class="sb-chat-tabs">
-							<div class="sb-chat-tab active" data-target="agent"><?php esc_html_e( 'Agent Reply', 'stackboost-for-supportcandy' ); ?></div>
-							<div class="sb-chat-tab" data-target="customer"><?php esc_html_e( 'Customer Reply', 'stackboost-for-supportcandy' ); ?></div>
-							<div class="sb-chat-tab" data-target="note"><?php esc_html_e( 'Internal Note', 'stackboost-for-supportcandy' ); ?></div>
+							<div class="sb-chat-tab active" data-target="general"><?php esc_html_e( 'Settings', 'stackboost-for-supportcandy' ); ?></div>
+							<div class="sb-chat-tab" data-target="agent"><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></div>
+							<div class="sb-chat-tab" data-target="customer"><?php esc_html_e( 'Customer', 'stackboost-for-supportcandy' ); ?></div>
+							<div class="sb-chat-tab" data-target="note"><?php esc_html_e( 'Private Note', 'stackboost-for-supportcandy' ); ?></div>
 						</div>
 
 						<!-- Config Content Area -->
 						<div class="sb-chat-config-content" style="padding: 0 20px 20px 20px;">
+
+							<!-- General Settings Tab -->
+							<div id="sb-chat-config-general" class="sb-chat-config-section">
+								<table class="form-table">
+									<?php self::render_general_fields(); ?>
+								</table>
+							</div>
+
+							<!-- Type Specific Tabs -->
 							<?php foreach ( ['agent', 'customer', 'note'] as $type ) : ?>
-								<div id="sb-chat-config-<?php echo esc_attr( $type ); ?>" class="sb-chat-config-section" style="<?php echo $type !== 'agent' ? 'display:none;' : ''; ?>">
+								<div id="sb-chat-config-<?php echo esc_attr( $type ); ?>" class="sb-chat-config-section" style="display:none;">
 									<table class="form-table">
-										<?php self::render_fields( $type ); ?>
+										<?php self::render_type_fields( $type ); ?>
 									</table>
 								</div>
 							<?php endforeach; ?>
@@ -113,21 +123,29 @@ class Settings {
 	}
 
 	/**
-	 * Render fields for a specific tab.
+	 * Render General Settings Fields.
 	 */
-	public static function render_fields( $type ) {
+	public static function render_general_fields() {
 		$options = get_option( 'stackboost_settings', [] );
-		$prefix  = "chat_bubbles_{$type}_"; // e.g. chat_bubbles_agent_
 
-		// 1. Theme Preset
-		$theme_key = "{$prefix}theme";
-		$theme_val = $options[ $theme_key ] ?? 'custom';
+		// Enable
+		?>
+		<tr valign="top">
+			<th scope="row"><?php esc_html_e( 'Enable Chat Bubbles', 'stackboost-for-supportcandy' ); ?></th>
+			<td>
+				<input type="checkbox" name="stackboost_settings[chat_bubbles_enable]" id="chat_bubbles_enable" value="1" <?php checked( $options['chat_bubbles_enable'] ?? 0, 1 ); ?> />
+				<p class="description"><?php esc_html_e( 'Turn this feature on/off globally.', 'stackboost-for-supportcandy' ); ?></p>
+			</td>
+		</tr>
 
+		<?php
+		// Theme Preset
+		$theme_val = $options['chat_bubbles_theme'] ?? 'custom';
 		?>
 		<tr valign="top">
 			<th scope="row"><?php esc_html_e( 'Theme Preset', 'stackboost-for-supportcandy' ); ?></th>
 			<td>
-				<select name="stackboost_settings[<?php echo esc_attr( $theme_key ); ?>]" class="sb-chat-theme-selector regular-text" data-type="<?php echo esc_attr( $type ); ?>">
+				<select name="stackboost_settings[chat_bubbles_theme]" id="sb_chat_global_theme_selector" class="regular-text">
 					<option value="custom" <?php selected( $theme_val, 'custom' ); ?>><?php esc_html_e( 'Custom', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="stackboost" <?php selected( $theme_val, 'stackboost' ); ?>><?php esc_html_e( 'StackBoost Theme', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="supportcandy" <?php selected( $theme_val, 'supportcandy' ); ?>><?php esc_html_e( 'SupportCandy Theme', 'stackboost-for-supportcandy' ); ?></option>
@@ -135,11 +153,52 @@ class Settings {
 					<option value="android" <?php selected( $theme_val, 'android' ); ?>><?php esc_html_e( 'WhatsApp (Android)', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="modern" <?php selected( $theme_val, 'modern' ); ?>><?php esc_html_e( 'Minimal / Modern', 'stackboost-for-supportcandy' ); ?></option>
 				</select>
+				<p class="description"><?php esc_html_e( 'Applies a base style to all bubbles. Choose "Custom" to unlock type-specific settings.', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
 
-		<!-- Custom Fields Wrapper (Toggled by JS) -->
-		<tbody class="sb-chat-custom-fields" id="sb_chat_custom_fields_<?php echo esc_attr( $type ); ?>" style="<?php echo $theme_val !== 'custom' ? 'display:none;' : ''; ?>">
+		<?php
+		// Tail Style (Global)
+		$tail_val = $options['chat_bubbles_tail'] ?? 'none';
+		?>
+		<tr valign="top">
+			<th scope="row"><?php esc_html_e( 'Tail Style', 'stackboost-for-supportcandy' ); ?></th>
+			<td>
+				<select name="stackboost_settings[chat_bubbles_tail]" id="chat_bubbles_tail" class="regular-text">
+					<option value="none" <?php selected( $tail_val, 'none' ); ?>><?php esc_html_e( 'None (Box)', 'stackboost-for-supportcandy' ); ?></option>
+					<option value="round" <?php selected( $tail_val, 'round' ); ?>><?php esc_html_e( 'Rounded Tail', 'stackboost-for-supportcandy' ); ?></option>
+					<option value="sharp" <?php selected( $tail_val, 'sharp' ); ?>><?php esc_html_e( 'Sharp Triangle', 'stackboost-for-supportcandy' ); ?></option>
+				</select>
+				<p class="description"><?php esc_html_e( 'Choose a tail style for replies. (Does not apply to internal notes).', 'stackboost-for-supportcandy' ); ?></p>
+			</td>
+		</tr>
+
+		<!-- Border Settings -->
+		<tr valign="top">
+			<th scope="row"><?php esc_html_e( 'Border Width', 'stackboost-for-supportcandy' ); ?></th>
+			<td>
+				<input type="number" name="stackboost_settings[chat_bubbles_border_width]" id="chat_bubbles_border_width" min="0" max="10" value="<?php echo esc_attr( $options['chat_bubbles_border_width'] ?? '0' ); ?>" class="small-text" /> px
+			</td>
+		</tr>
+		<tr valign="top">
+			<th scope="row"><?php esc_html_e( 'Border Color', 'stackboost-for-supportcandy' ); ?></th>
+			<td>
+				<input type="text" name="stackboost_settings[chat_bubbles_border_color]" id="chat_bubbles_border_color" value="<?php echo esc_attr( $options['chat_bubbles_border_color'] ?? '#cccccc' ); ?>" class="my-color-field" data-default-color="#cccccc" />
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Render fields for a specific type tab (Agent/Customer/Note).
+	 */
+	public static function render_type_fields( $type ) {
+		$options = get_option( 'stackboost_settings', [] );
+		$prefix  = "chat_bubbles_{$type}_"; // e.g. chat_bubbles_agent_
+
+		?>
+		<!-- Custom Fields Wrapper -->
+		<tbody class="sb-chat-custom-fields" id="sb_chat_custom_fields_<?php echo esc_attr( $type ); ?>">
 
 			<!-- Background Color -->
 			<tr valign="top">
@@ -188,6 +247,22 @@ class Settings {
 				</td>
 			</tr>
 
+			<!-- Font Styles -->
+			<tr valign="top">
+				<th scope="row"><?php esc_html_e( 'Font Style', 'stackboost-for-supportcandy' ); ?></th>
+				<td>
+					<label style="margin-right: 10px;">
+						<input type="checkbox" name="stackboost_settings[<?php echo esc_attr( $prefix . 'font_bold' ); ?>]" value="1" <?php checked( $options[$prefix . 'font_bold'] ?? 0, 1 ); ?> /> <?php esc_html_e( 'Bold', 'stackboost-for-supportcandy' ); ?>
+					</label>
+					<label style="margin-right: 10px;">
+						<input type="checkbox" name="stackboost_settings[<?php echo esc_attr( $prefix . 'font_italic' ); ?>]" value="1" <?php checked( $options[$prefix . 'font_italic'] ?? 0, 1 ); ?> /> <?php esc_html_e( 'Italic', 'stackboost-for-supportcandy' ); ?>
+					</label>
+					<label>
+						<input type="checkbox" name="stackboost_settings[<?php echo esc_attr( $prefix . 'font_underline' ); ?>]" value="1" <?php checked( $options[$prefix . 'font_underline'] ?? 0, 1 ); ?> /> <?php esc_html_e( 'Underline', 'stackboost-for-supportcandy' ); ?>
+					</label>
+				</td>
+			</tr>
+
 			<!-- Alignment -->
 			<tr valign="top">
 				<th scope="row"><?php esc_html_e( 'Alignment', 'stackboost-for-supportcandy' ); ?></th>
@@ -195,6 +270,7 @@ class Settings {
 					<select name="stackboost_settings[<?php echo esc_attr( $prefix . 'alignment' ); ?>]" class="regular-text">
 						<option value="left" <?php selected( $options[ $prefix . 'alignment' ] ?? 'left', 'left' ); ?>><?php esc_html_e( 'Left', 'stackboost-for-supportcandy' ); ?></option>
 						<option value="right" <?php selected( $options[ $prefix . 'alignment' ] ?? 'left', 'right' ); ?>><?php esc_html_e( 'Right', 'stackboost-for-supportcandy' ); ?></option>
+						<option value="center" <?php selected( $options[ $prefix . 'alignment' ] ?? 'left', 'center' ); ?>><?php esc_html_e( 'Center', 'stackboost-for-supportcandy' ); ?></option>
 					</select>
 				</td>
 			</tr>
@@ -203,7 +279,7 @@ class Settings {
 			<tr valign="top">
 				<th scope="row"><?php esc_html_e( 'Max Width', 'stackboost-for-supportcandy' ); ?></th>
 				<td>
-					<input type="range" name="stackboost_settings[<?php echo esc_attr( $prefix . 'width' ); ?>]" min="20" max="100" step="5" value="<?php echo esc_attr( $options[ $prefix . 'width' ] ?? '85' ); ?>" oninput="this.nextElementSibling.value = this.value">
+					<input type="range" name="stackboost_settings[<?php echo esc_attr( $prefix . 'width' ); ?>]" min="0" max="100" step="5" value="<?php echo esc_attr( $options[ $prefix . 'width' ] ?? '85' ); ?>" oninput="this.nextElementSibling.value = this.value">
 					<output><?php echo esc_html( $options[ $prefix . 'width' ] ?? '85' ); ?></output>%
 				</td>
 			</tr>
@@ -216,39 +292,33 @@ class Settings {
 				</td>
 			</tr>
 
-			<!-- Tail Style -->
-			<tr valign="top">
-				<th scope="row"><?php esc_html_e( 'Tail Style', 'stackboost-for-supportcandy' ); ?></th>
-				<td>
-					<select name="stackboost_settings[<?php echo esc_attr( $prefix . 'tail' ); ?>]" class="regular-text">
-						<option value="none" <?php selected( $options[ $prefix . 'tail' ] ?? 'none', 'none' ); ?>><?php esc_html_e( 'None (Box)', 'stackboost-for-supportcandy' ); ?></option>
-						<option value="round" <?php selected( $options[ $prefix . 'tail' ] ?? 'none', 'round' ); ?>><?php esc_html_e( 'Rounded Tail', 'stackboost-for-supportcandy' ); ?></option>
-						<option value="sharp" <?php selected( $options[ $prefix . 'tail' ] ?? 'none', 'sharp' ); ?>><?php esc_html_e( 'Sharp Triangle', 'stackboost-for-supportcandy' ); ?></option>
-					</select>
-				</td>
-			</tr>
-
 		</tbody>
 		<?php
 	}
 
 	/**
-	 * Sanitize Settings (Helper for centralized sanitizer).
-	 * This returns the keys expected for this page.
+	 * Sanitize Settings keys.
 	 */
 	public static function get_settings_keys() {
-		$keys = [];
+		$keys = [
+			'chat_bubbles_enable',
+			'chat_bubbles_theme',
+			'chat_bubbles_tail',
+			'chat_bubbles_border_width',
+			'chat_bubbles_border_color',
+		];
 		foreach ( ['agent', 'customer', 'note'] as $type ) {
 			$prefix = "chat_bubbles_{$type}_";
-			$keys[] = "{$prefix}theme";
 			$keys[] = "{$prefix}bg_color";
 			$keys[] = "{$prefix}text_color";
 			$keys[] = "{$prefix}font_family";
-			$keys[] = "{$prefix}font_size"; // Added font size key
+			$keys[] = "{$prefix}font_size";
+			$keys[] = "{$prefix}font_bold";
+			$keys[] = "{$prefix}font_italic";
+			$keys[] = "{$prefix}font_underline";
 			$keys[] = "{$prefix}alignment";
 			$keys[] = "{$prefix}width";
 			$keys[] = "{$prefix}radius";
-			$keys[] = "{$prefix}tail";
 		}
 		return $keys;
 	}

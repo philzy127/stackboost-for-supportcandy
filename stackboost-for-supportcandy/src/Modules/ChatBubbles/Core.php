@@ -60,6 +60,12 @@ class Core {
 			return;
 		}
 
+		// Check global enable switch
+		$options = get_option( 'stackboost_settings', [] );
+		if ( empty( $options['chat_bubbles_enable'] ) ) {
+			return;
+		}
+
 		$css = $this->generate_css();
 		wp_add_inline_style( 'supportcandy-admin-style', $css );
 	}
@@ -72,6 +78,12 @@ class Core {
 	 * @return object The modified Email Notification object.
 	 */
 	public function process_email_content( $en ) {
+		// Check global enable switch
+		$options = get_option( 'stackboost_settings', [] );
+		if ( empty( $options['chat_bubbles_enable'] ) ) {
+			return $en;
+		}
+
 		// Only proceed if we have a valid thread object
 		if ( ! isset( $en->thread ) || ! is_object( $en->thread ) ) {
 			return $en;
@@ -119,8 +131,27 @@ class Core {
 
 		if ( $styles['alignment'] === 'right' ) {
 			$inline_css .= " margin-left: auto; margin-right: 0;";
+		} elseif ( $styles['alignment'] === 'center' ) {
+			$inline_css .= " margin: 0 auto;";
 		} else {
 			$inline_css .= " margin-right: auto; margin-left: 0;";
+		}
+
+		// Font Styles for Email
+		if ( ! empty( $styles['font_bold'] ) ) {
+			$inline_css .= " font-weight: bold;";
+		}
+		if ( ! empty( $styles['font_italic'] ) ) {
+			$inline_css .= " font-style: italic;";
+		}
+		if ( ! empty( $styles['font_underline'] ) ) {
+			$inline_css .= " text-decoration: underline;";
+		}
+
+		// Borders for Email
+		if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
+			$border_color = $styles['border_color'] ?: $styles['bg_color'];
+			$inline_css .= sprintf( " border: %dpx solid %s;", $styles['border_width'], $border_color );
 		}
 
 		// Get the content we want to wrap
@@ -183,14 +214,33 @@ class Core {
 				$css .= "font-family: {$font} !important;";
 			}
 
-			// Font Size (New)
+			// Font Size
 			if ( ! empty( $styles['font_size'] ) ) {
 				$css .= "font-size: {$styles['font_size']}px !important;";
+			}
+
+			// Font Styles
+			if ( ! empty( $styles['font_bold'] ) ) {
+				$css .= "font-weight: bold !important;";
+			}
+			if ( ! empty( $styles['font_italic'] ) ) {
+				$css .= "font-style: italic !important;";
+			}
+			if ( ! empty( $styles['font_underline'] ) ) {
+				$css .= "text-decoration: underline !important;";
+			}
+
+			// Border
+			if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
+				$border_color = $styles['border_color'] ?: '#cccccc';
+				$css .= "border: {$styles['border_width']}px solid {$border_color} !important;";
 			}
 
 			// Alignment
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
+			} elseif ( $styles['alignment'] === 'center' ) {
+				$css .= "margin: 0 auto !important;";
 			} else {
 				$css .= "margin-right: auto !important; margin-left: 0 !important;";
 			}
@@ -201,26 +251,66 @@ class Core {
 			$css .= "}";
 
 			// Tail Logic (Pseudo-elements)
-			if ( $styles['tail'] !== 'none' ) {
+			// Only apply tail if enabled globally, NOT a note, and NOT center aligned
+			if ( $styles['tail'] !== 'none' && $type !== 'note' && $styles['alignment'] !== 'center' ) {
 				$tail_color = $styles['bg_color'];
-				$css .= "{$selector} { position: relative !important; }";
-				$css .= "{$selector}::after { content: ''; position: absolute; width: 0; height: 0; border-style: solid; }";
+				// If border exists, we need to try to match it, but CSS triangles don't support borders easily.
+				// A common hack is to use a second pseudo element for the border, offset slightly.
+				// For now, we will just use the background color. If users want borders + tails, it might look slightly off without SVG.
+				// However, the user requirement "tail has to have that border too" implies we should try.
+
+				$css .= "{$selector} { position: relative !important; overflow: visible !important;}";
+				$css .= "{$selector}::after { content: ''; position: absolute; width: 0; height: 0; border-style: solid; z-index: 1; }";
+
+				// Border Tail Logic (::before as border)
+				if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
+					$border_color = $styles['border_color'] ?: '#cccccc';
+					$css .= "{$selector}::before { content: ''; position: absolute; width: 0; height: 0; border-style: solid; z-index: 0; }";
+				}
 
 				if ( $styles['alignment'] === 'right' ) {
 					// Right Tail
+					$right_pos = -10;
+					$bottom_pos = 10;
+
 					if ( $styles['tail'] === 'sharp' ) {
+						// Sharp Triangle
 						$css .= "{$selector}::after { border-width: 10px 0 10px 15px; border-color: transparent transparent transparent {$tail_color}; right: -10px; bottom: 10px; }";
+
+						if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
+							// Adjust positions for border width
+							$offset = $styles['border_width'];
+							$css .= "{$selector}::before { border-width: " . (10+$offset) . "px 0 " . (10+$offset) . "px " . (15+$offset) . "px; border-color: transparent transparent transparent {$border_color}; right: -" . (10+$offset) . "px; bottom: " . (10-$offset) . "px; }";
+						}
+
 					} else {
-						// Roundish Tail (Simplified)
+						// Rounded Tail (Using Mask/Radial Gradient is cleaner, but harder to inject via inline CSS string)
+						// Let's use the 'skew' method which approximates a chat bubble tail
 						$css .= "{$selector}::after { border-width: 15px 0 0 15px; border-color: transparent transparent transparent {$tail_color}; right: -8px; bottom: 0; transform: skewX(-10deg); }";
+
+						if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
+							$offset = $styles['border_width']; // Rough approximation
+							$css .= "{$selector}::before { border-width: " . (15+$offset) . "px 0 0 " . (15+$offset) . "px; border-color: transparent transparent transparent {$border_color}; right: -" . (8+$offset) . "px; bottom: -" . $offset . "px; transform: skewX(-10deg); }";
+						}
 					}
 				} else {
 					// Left Tail
 					if ( $styles['tail'] === 'sharp' ) {
 						$css .= "{$selector}::after { border-width: 10px 15px 10px 0; border-color: transparent {$tail_color} transparent transparent; left: -10px; bottom: 10px; }";
+
+						if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
+							$offset = $styles['border_width'];
+							$css .= "{$selector}::before { border-width: " . (10+$offset) . "px " . (15+$offset) . "px " . (10+$offset) . "px 0; border-color: transparent {$border_color} transparent transparent; left: -" . (10+$offset) . "px; bottom: " . (10-$offset) . "px; }";
+						}
+
 					} else {
-						// Roundish Tail
+						// Rounded Tail
 						$css .= "{$selector}::after { border-width: 15px 15px 0 0; border-color: transparent {$tail_color} transparent transparent; left: -8px; bottom: 0; transform: skewX(10deg); }";
+
+						if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
+							$offset = $styles['border_width'];
+							$css .= "{$selector}::before { border-width: " . (15+$offset) . "px " . (15+$offset) . "px 0 0; border-color: transparent {$border_color} transparent transparent; left: -" . (8+$offset) . "px; bottom: -" . $offset . "px; transform: skewX(10deg); }";
+						}
 					}
 				}
 			}
@@ -242,11 +332,14 @@ class Core {
 	private function get_styles_for_type( $type ): array {
 		$options = get_option( 'stackboost_settings', [] );
 
-		// Key prefix based on type
+		// Prefix for local overrides
 		$prefix = "chat_bubbles_{$type}_";
 
-		// Theme Preset
-		$theme = $options["{$prefix}theme"] ?? 'custom'; // Default to custom if not set
+		// Global Settings
+		$theme = $options['chat_bubbles_theme'] ?? 'custom';
+		$tail  = $options['chat_bubbles_tail'] ?? 'none';
+		$border_width = isset( $options['chat_bubbles_border_width'] ) ? $options['chat_bubbles_border_width'] : 0;
+		$border_color = isset( $options['chat_bubbles_border_color'] ) ? $options['chat_bubbles_border_color'] : '#cccccc';
 
 		// Default Styles
 		$defaults = [
@@ -257,158 +350,160 @@ class Core {
 			'alignment'   => 'left',
 			'width'       => '85',
 			'radius'      => '15',
-			'tail'        => 'none'
+			'font_bold'   => 0,
+			'font_italic' => 0,
+			'font_underline' => 0,
 		];
-
-		// Define allowed values for strict sanitization
-		$allowed_alignments = ['left', 'right'];
-		$allowed_tails = ['none', 'round', 'sharp'];
 
 		$styles = [];
 
-		// Apply Preset Logic
+		// Theme Logic
+		// Note: Note types now default to Center/85% in themes as requested.
 		switch ( $theme ) {
 			case 'stackboost':
-				// StackBoost Theme (Blue/Dark)
 				if ( $type === 'agent' ) {
-					$styles = [
-						'bg_color'    => '#2271b1', // WP Blue
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#2271b1',
 						'text_color'  => '#ffffff',
-						'font_family' => '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
-						'font_size'   => '',
 						'alignment'   => 'right',
-						'width'       => '85',
 						'radius'      => '15',
-						'tail'        => 'round'
-					];
+					]);
+				} elseif ( $type === 'note' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#fff8e5',
+						'text_color'  => '#333333',
+						'alignment'   => 'center',
+						'radius'      => '5',
+					]);
 				} else {
-					$styles = [
-						'bg_color'    => '#f0f0f1', // WP Grey
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f0f0f1',
 						'text_color'  => '#3c434a',
-						'font_family' => '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
-						'font_size'   => '',
 						'alignment'   => 'left',
-						'width'       => '85',
 						'radius'      => '15',
-						'tail'        => 'round'
-					];
+					]);
 				}
+				$styles['font_family'] = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
 				break;
 
 			case 'supportcandy':
-				// SupportCandy Colors
 				$wpsc_settings = get_option( 'wpsc_appearance_settings', [] );
 				$primary = $wpsc_settings['primary_color'] ?? '#2271b1';
 
 				if ( $type === 'agent' ) {
-					$styles = [
+					$styles = array_merge( $defaults, [
 						'bg_color'    => $primary,
 						'text_color'  => '#ffffff',
-						'font_family' => '',
-						'font_size'   => '',
 						'alignment'   => 'right',
-						'width'       => '85',
 						'radius'      => '5',
-						'tail'        => 'none'
-					];
+					]);
+				} elseif ( $type === 'note' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#fdfdfd',
+						'text_color'  => '#333333',
+						'alignment'   => 'center',
+						'radius'      => '0',
+					]);
 				} else {
-					$styles = [
+					$styles = array_merge( $defaults, [
 						'bg_color'    => '#e5e5e5',
 						'text_color'  => '#333333',
-						'font_family' => '',
-						'font_size'   => '',
 						'alignment'   => 'left',
-						'width'       => '85',
 						'radius'      => '5',
-						'tail'        => 'none'
-					];
+					]);
 				}
 				break;
 
 			case 'ios':
-				// iMessage Style
 				if ( $type === 'agent' ) {
-					$styles = [
-						'bg_color'    => '#007aff', // iOS Blue
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#007aff',
 						'text_color'  => '#ffffff',
-						'font_family' => '-apple-system, BlinkMacSystemFont, sans-serif',
-						'font_size'   => '',
 						'alignment'   => 'right',
 						'width'       => '75',
 						'radius'      => '20',
-						'tail'        => 'round'
-					];
+					]);
+				} elseif ( $type === 'note' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#fffae6',
+						'text_color'  => '#333333',
+						'alignment'   => 'center',
+						'width'       => '85',
+						'radius'      => '10',
+					]);
 				} else {
-					$styles = [
-						'bg_color'    => '#e5e5ea', // iOS Grey
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#e5e5ea',
 						'text_color'  => '#000000',
-						'font_family' => '-apple-system, BlinkMacSystemFont, sans-serif',
-						'font_size'   => '',
 						'alignment'   => 'left',
 						'width'       => '75',
 						'radius'      => '20',
-						'tail'        => 'round'
-					];
+					]);
 				}
+				$styles['font_family'] = '-apple-system, BlinkMacSystemFont, sans-serif';
 				break;
 
 			case 'android':
-				// WhatsApp / Android Style
 				if ( $type === 'agent' ) {
-					$styles = [
-						'bg_color'    => '#d9fdd3', // WhatsApp Green
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#d9fdd3',
 						'text_color'  => '#111b21',
-						'font_family' => 'Roboto, sans-serif',
-						'font_size'   => '',
 						'alignment'   => 'right',
 						'width'       => '80',
 						'radius'      => '8',
-						'tail'        => 'sharp'
-					];
+					]);
+				} elseif ( $type === 'note' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#fffbcc',
+						'text_color'  => '#333333',
+						'alignment'   => 'center',
+						'width'       => '85',
+						'radius'      => '5',
+					]);
 				} else {
-					$styles = [
+					$styles = array_merge( $defaults, [
 						'bg_color'    => '#ffffff',
 						'text_color'  => '#111b21',
-						'font_family' => 'Roboto, sans-serif',
-						'font_size'   => '',
 						'alignment'   => 'left',
 						'width'       => '80',
 						'radius'      => '8',
-						'tail'        => 'sharp'
-					];
+					]);
 				}
+				$styles['font_family'] = 'Roboto, sans-serif';
 				break;
 
 			case 'modern':
-				// Minimal Modern
 				if ( $type === 'agent' ) {
-					$styles = [
+					$styles = array_merge( $defaults, [
 						'bg_color'    => '#000000',
 						'text_color'  => '#ffffff',
-						'font_family' => 'Helvetica, Arial, sans-serif',
-						'font_size'   => '',
 						'alignment'   => 'right',
 						'width'       => '60',
 						'radius'      => '0',
-						'tail'        => 'none'
-					];
+					]);
+				} elseif ( $type === 'note' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f9f9f9',
+						'text_color'  => '#555555',
+						'alignment'   => 'center',
+						'width'       => '85',
+						'radius'      => '0',
+					]);
 				} else {
-					$styles = [
+					$styles = array_merge( $defaults, [
 						'bg_color'    => '#f2f2f2',
 						'text_color'  => '#000000',
-						'font_family' => 'Helvetica, Arial, sans-serif',
-						'font_size'   => '',
 						'alignment'   => 'left',
 						'width'       => '60',
 						'radius'      => '0',
-						'tail'        => 'none'
-					];
+					]);
 				}
+				$styles['font_family'] = 'Helvetica, Arial, sans-serif';
 				break;
 
 			case 'custom':
 			default:
-				// Load from user settings with fallbacks
+				// Load from user settings
 				$styles = [
 					'bg_color'    => $options["{$prefix}bg_color"] ?? $defaults['bg_color'],
 					'text_color'  => $options["{$prefix}text_color"] ?? $defaults['text_color'],
@@ -417,32 +512,45 @@ class Core {
 					'alignment'   => $options["{$prefix}alignment"] ?? $defaults['alignment'],
 					'width'       => $options["{$prefix}width"] ?? $defaults['width'],
 					'radius'      => $options["{$prefix}radius"] ?? $defaults['radius'],
-					'tail'        => $options["{$prefix}tail"] ?? $defaults['tail'],
+
+					// Font Styles (Checkboxes)
+					'font_bold'      => ! empty( $options["{$prefix}font_bold"] ) ? 1 : 0,
+					'font_italic'    => ! empty( $options["{$prefix}font_italic"] ) ? 1 : 0,
+					'font_underline' => ! empty( $options["{$prefix}font_underline"] ) ? 1 : 0,
 				];
 				break;
 		}
 
-		// STRICT SANITIZATION BEFORE RETURN
-		// This ensures values used in CSS generation are safe regardless of origin
+		// Apply Global Tail setting (unless custom overrides? No, user said tail belongs on settings tab)
+		// But note: Core logic above uses this. 'custom' theme might have had local tail, but now we use global.
+		// However, if theme is NOT custom, we might want to respect the theme's inherent tail style?
+		// User said: "Tail selection belongs on the Settings Tab as the theme selector... it applies to both agent and customer replies."
+		// This implies the Global Setting overrides everything, OR acts as the configuration for "Custom".
+		// But if I choose "iOS" theme, I expect rounded tails. If I choose "Modern", I expect none.
+		// Let's assume Global Tail Setting applies when Theme is Custom OR acts as an override?
+		// "The theme Preset should be in the new Settings Tab... Choosing a theme applies to all three... Tail selection belongs on the Settings Tab...".
+		// If a Theme is selected, it should probably dictate the tail unless the user explicitly changes it?
+		// But the UI shows them side-by-side.
+		// Best approach: If Theme is Custom, use Global Tail. If Theme is Preset, use Preset Tail.
+		// BUT the user moved the selector to the main tab alongside Theme. This suggests they want to mix and match?
+		// Let's allow the Global Tail selector to override the theme default if set to something other than 'theme_default'?
+		// Current selector options are None, Round, Sharp.
+		// Let's use the Global Tail setting as the source of truth for ALL themes, to give user control.
 
-		// 1. Colors
+		$styles['tail'] = $tail;
+
+		// Apply Global Border
+		$styles['border_width'] = absint( $border_width );
+		$styles['border_color'] = sanitize_hex_color( $border_color );
+
+		// SANITIZATION
 		$styles['bg_color'] = sanitize_hex_color($styles['bg_color']) ?: $defaults['bg_color'];
 		$styles['text_color'] = sanitize_hex_color($styles['text_color']) ?: $defaults['text_color'];
-
-		// 2. Integers (Size, Width, Radius)
 		$styles['width'] = absint($styles['width']);
-		if ($styles['width'] < 20 || $styles['width'] > 100) $styles['width'] = 85;
-
+		if ($styles['width'] < 0 || $styles['width'] > 100) $styles['width'] = 85;
 		$styles['radius'] = absint($styles['radius']);
 		if ($styles['radius'] > 100) $styles['radius'] = 100;
-
-		$styles['font_size'] = absint($styles['font_size']); // 0 is acceptable (empty)
-
-		// 3. Enums
-		if (!in_array($styles['alignment'], $allowed_alignments)) $styles['alignment'] = 'left';
-		if (!in_array($styles['tail'], $allowed_tails)) $styles['tail'] = 'none';
-
-		// 4. Text (Font Family)
+		$styles['font_size'] = absint($styles['font_size']);
 		$styles['font_family'] = sanitize_text_field($styles['font_family']);
 
 		return $styles;
