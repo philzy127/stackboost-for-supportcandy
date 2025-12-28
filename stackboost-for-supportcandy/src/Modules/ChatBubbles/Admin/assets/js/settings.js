@@ -8,7 +8,23 @@
             }
         });
 
-        // 2. Toggle Custom Fields based on Theme Selection
+        // 2. Tab Switching Logic
+        $('.sb-chat-tab').on('click', function() {
+            // UI Update
+            $('.sb-chat-tab').removeClass('active');
+            $(this).addClass('active');
+
+            // Show/Hide Section
+            var target = $(this).data('target');
+            $('.sb-chat-config-section').hide();
+            $('#sb-chat-config-' + target).fadeIn();
+
+            // Note: We don't need to update preview here because preview shows ALL bubbles.
+            // But we might want to highlight the bubble being edited? (Optional enhancement)
+        });
+
+        // 3. Toggle Custom Fields based on Theme Selection
+        // Use event delegation for dynamic elements or just class selector
         $(document).on('change', '.sb-chat-theme-selector', function() {
             var val = $(this).val();
             var type = $(this).data('type');
@@ -22,48 +38,25 @@
             updatePreview();
         });
 
-        // 3. Tab Switching
-        // When clicking a tab, hide other tab contents and show current
-        $('.nav-tab-wrapper a').on('click', function(e) {
-            e.preventDefault();
-
-            // Remove active class from all tabs
-            $('.nav-tab-wrapper a').removeClass('nav-tab-active');
-            // Add active class to clicked tab
-            $(this).addClass('nav-tab-active');
-
-            // Get target tab
-            var url = new URL($(this).attr('href'), window.location.origin);
-            var targetTab = url.searchParams.get('tab');
-
-            // Update hidden input
-            $('input[name="active_tab"]').val(targetTab);
-
-            // Toggle visibility
-            $('div[id^="tab-content-"]').hide();
-            $('#tab-content-' + targetTab).show();
-
-            // Update URL (optional, for bookmarking/reload)
-            window.history.pushState(null, '', $(this).attr('href'));
-
-            updatePreview();
-        });
-
         // 4. Live Preview Logic
         $('form input, form select').on('change input', function() {
             updatePreview();
         });
 
         function updatePreview() {
-            // Determine active tab to preview
-            var activeTab = $('input[name="active_tab"]').val() || 'agent';
+            // Iterate over all 3 types to update the 3 bubbles
+            ['agent', 'customer', 'note'].forEach(function(type) {
+                updateBubble(type);
+            });
+        }
 
-            // Find inputs for the active tab
-            // Prefix: stackboost_settings[chat_bubbles_{activeTab}_{field}]
-            var prefixName = 'stackboost_settings[chat_bubbles_' + activeTab + '_';
+        function updateBubble(type) {
+            // Find inputs for this type
+            // Prefix: stackboost_settings[chat_bubbles_{type}_{field}]
+            var prefixName = 'stackboost_settings[chat_bubbles_' + type + '_';
 
             var theme = $('select[name="' + prefixName + 'theme]"]').val();
-            var $preview = $('#stackboost-chat-preview-bubble');
+            var $preview = $('#preview-bubble-' + type);
 
             // Default Values
             var styles = {
@@ -78,8 +71,9 @@
             };
 
             // Apply Theme Logic
+            // Note: Keep in sync with Core.php logic!
             if (theme === 'stackboost') {
-                if (activeTab === 'agent') {
+                if (type === 'agent') {
                     styles.bg = '#2271b1';
                     styles.text = '#ffffff';
                     styles.align = 'right';
@@ -93,7 +87,7 @@
                 styles.tail = 'round';
 
             } else if (theme === 'ios') {
-                if (activeTab === 'agent') {
+                if (type === 'agent') {
                     styles.bg = '#007aff';
                     styles.text = '#ffffff';
                     styles.align = 'right';
@@ -107,7 +101,7 @@
                 styles.width = '75';
 
             } else if (theme === 'android') {
-                if (activeTab === 'agent') {
+                if (type === 'agent') {
                     styles.bg = '#d9fdd3';
                     styles.text = '#111b21';
                     styles.align = 'right';
@@ -121,7 +115,7 @@
                 styles.width = '80';
 
             } else if (theme === 'modern') {
-                if (activeTab === 'agent') {
+                if (type === 'agent') {
                     styles.bg = '#000000';
                     styles.text = '#ffffff';
                     styles.align = 'right';
@@ -135,12 +129,11 @@
                 styles.width = '60';
 
             } else if (theme === 'supportcandy') {
-                // Use dynamic SC color passed from PHP, or default blue
                 var scPrimary = (typeof stackboostChatBubbles !== 'undefined' && stackboostChatBubbles.scPrimaryColor)
                     ? stackboostChatBubbles.scPrimaryColor
                     : '#2271b1';
 
-                if (activeTab === 'agent') {
+                if (type === 'agent') {
                     styles.bg = scPrimary;
                     styles.text = '#ffffff';
                     styles.align = 'right';
@@ -164,30 +157,45 @@
                 styles.tail = $('select[name="' + prefixName + 'tail]"]').val();
             }
 
-            // Apply Styles to Preview Element
+            // Apply CSS
             var cssMap = {
                 'background-color': styles.bg,
                 'color': styles.text,
                 'border-radius': styles.radius + 'px',
                 'width': styles.width + '%',
                 'font-family': styles.font,
-                'padding': '15px'
+                'padding': '15px',
+                // Reset margins for flex/grid context?
+                // Preview context uses flexbox/grid layout so align-self or margin-auto works.
             };
 
             if (styles.fontSize) {
                 cssMap['font-size'] = styles.fontSize + 'px';
             } else {
-                cssMap['font-size'] = ''; // Reset
+                cssMap['font-size'] = '';
             }
 
             $preview.css(cssMap);
 
-            // Alignment
+            // Alignment (Flexbox self-alignment)
             if (styles.align === 'right') {
-                $preview.css({ 'margin-left': 'auto', 'margin-right': '0' });
+                $preview.css({
+                    'margin-left': 'auto',
+                    'margin-right': '0',
+                    'align-self': 'flex-end'
+                });
             } else {
-                $preview.css({ 'margin-right': 'auto', 'margin-left': '0' });
+                $preview.css({
+                    'margin-right': 'auto',
+                    'margin-left': '0',
+                    'align-self': 'flex-start'
+                });
             }
+
+            // Special handling for Note (Centering usually)
+            // But if user sets 'Right' for Note, we respect it.
+            // Core default for Note? Usually centered or full width.
+            // Our JS default is 'Left'.
 
             // Tail Logic
             $preview.find('.preview-tail').remove();
@@ -205,7 +213,7 @@
                 });
 
                 if (styles.align === 'right') {
-                    $tail.css({ 'right': '-8px', 'bottom': '0' });
+                    $tail.css({ 'right': '-8px', 'bottom': '0', 'left': 'auto' });
                     if (styles.tail === 'sharp') {
                         $tail.css({
                             'border-width': '10px 0 10px 15px',
@@ -221,7 +229,7 @@
                         });
                     }
                 } else {
-                    $tail.css({ 'left': '-8px', 'bottom': '0' });
+                    $tail.css({ 'left': '-8px', 'bottom': '0', 'right': 'auto' });
                     if (styles.tail === 'sharp') {
                         $tail.css({
                             'border-width': '10px 15px 10px 0',
@@ -242,8 +250,14 @@
         }
 
         // Initialize UI
-        // Hide non-active tabs initially handled by PHP, but ensure custom fields are toggled
-        $('.sb-chat-theme-selector').trigger('change');
+        // Trigger change on all theme selectors to set initial field visibility
+        $('.sb-chat-theme-selector').each(function() {
+            var val = $(this).val();
+            var type = $(this).data('type');
+            if(val !== 'custom') {
+                $('#sb_chat_custom_fields_' + type).hide();
+            }
+        });
 
         // Initial Preview
         updatePreview();

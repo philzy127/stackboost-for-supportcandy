@@ -21,59 +21,89 @@ class Settings {
 			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
 		}
 
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'agent';
 		?>
 		<!-- StackBoost Wrapper Start -->
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php esc_html_e( 'Chat Bubbles', 'stackboost-for-supportcandy' ); ?></h1>
 			<?php settings_errors(); ?>
 
-			<h2 class="nav-tab-wrapper">
-				<a href="?page=stackboost-chat-bubbles&tab=agent" class="nav-tab <?php echo $active_tab == 'agent' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Agent Replies', 'stackboost-for-supportcandy' ); ?></a>
-				<a href="?page=stackboost-chat-bubbles&tab=customer" class="nav-tab <?php echo $active_tab == 'customer' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Customer Replies', 'stackboost-for-supportcandy' ); ?></a>
-				<a href="?page=stackboost-chat-bubbles&tab=note" class="nav-tab <?php echo $active_tab == 'note' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Internal Notes', 'stackboost-for-supportcandy' ); ?></a>
-			</h2>
-
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'stackboost_settings' );
-				// stackboost_settings[page_slug] added below
+				// stackboost_settings[page_slug]
 				?>
 				<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-chat-bubbles">
-				<input type="hidden" name="active_tab" value="<?php echo esc_attr( $active_tab ); ?>">
 
-				<div class="stackboost-dashboard-grid" style="margin-top: 20px;">
-					<!-- Config Card -->
-					<div class="stackboost-card">
-						<h2><?php esc_html_e( 'Bubble Configuration', 'stackboost-for-supportcandy' ); ?></h2>
-						<p><?php esc_html_e( 'Customize the appearance of chat bubbles for each user type.', 'stackboost-for-supportcandy' ); ?></p>
+				<!-- Two Column Layout -->
+				<div class="stackboost-chat-bubbles-layout" style="margin-top: 20px;">
 
-						<!-- Loop through all tabs to render fields, but hide inactive ones -->
-						<?php foreach ( ['agent', 'customer', 'note'] as $type ) : ?>
-							<div id="tab-content-<?php echo esc_attr( $type ); ?>" style="<?php echo $active_tab !== $type ? 'display:none;' : ''; ?>">
-								<table class="form-table">
-									<?php self::render_fields( $type ); ?>
-								</table>
-							</div>
-						<?php endforeach; ?>
+					<!-- Column 1: Configuration -->
+					<div class="stackboost-chat-config-column stackboost-card" style="padding: 0;">
+
+						<!-- JS Tabs Header -->
+						<div class="sb-chat-tabs">
+							<div class="sb-chat-tab active" data-target="agent"><?php esc_html_e( 'Agent Reply', 'stackboost-for-supportcandy' ); ?></div>
+							<div class="sb-chat-tab" data-target="customer"><?php esc_html_e( 'Customer Reply', 'stackboost-for-supportcandy' ); ?></div>
+							<div class="sb-chat-tab" data-target="note"><?php esc_html_e( 'Internal Note', 'stackboost-for-supportcandy' ); ?></div>
+						</div>
+
+						<!-- Config Content Area -->
+						<div class="sb-chat-config-content" style="padding: 0 20px 20px 20px;">
+							<?php foreach ( ['agent', 'customer', 'note'] as $type ) : ?>
+								<div id="sb-chat-config-<?php echo esc_attr( $type ); ?>" class="sb-chat-config-section" style="<?php echo $type !== 'agent' ? 'display:none;' : ''; ?>">
+									<table class="form-table">
+										<?php self::render_fields( $type ); ?>
+									</table>
+								</div>
+							<?php endforeach; ?>
+						</div>
 					</div>
 
-					<!-- Preview Card (Static HTML representation) -->
-					<div class="stackboost-card">
-						<h2><?php esc_html_e( 'Live Preview', 'stackboost-for-supportcandy' ); ?></h2>
-						<div class="stackboost-chat-preview-container" style="background: #fff; border: 1px solid #ddd; padding: 20px; min-height: 200px; display: flex; flex-direction: column;">
-							<!-- Placeholder for JS to inject preview -->
-							<div id="stackboost-chat-preview-bubble" style="padding: 15px; max-width: 85%;">
-								<div class="preview-header" style="margin-bottom: 5px; font-size: 12px; opacity: 0.7;">
-									<strong><?php esc_html_e( 'User Name', 'stackboost-for-supportcandy' ); ?></strong>
-									<span>10:30 AM</span>
+					<!-- Column 2: Unified Preview -->
+					<div class="stackboost-chat-preview-column">
+						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'Live Preview', 'stackboost-for-supportcandy' ); ?></h2>
+							<p class="description"><?php esc_html_e( 'This visualizes a sample conversation thread.', 'stackboost-for-supportcandy' ); ?></p>
+
+							<div class="stackboost-chat-preview-container">
+
+								<!-- 1. Customer Bubble -->
+								<div id="preview-bubble-customer" class="sb-preview-bubble customer">
+									<div class="sb-preview-header">
+										<strong><?php esc_html_e( 'John Doe (Customer)', 'stackboost-for-supportcandy' ); ?></strong>
+										<span>10:30 AM</span>
+									</div>
+									<div class="preview-text">
+										<?php esc_html_e( 'Hi, I need help with my account. I cannot log in.', 'stackboost-for-supportcandy' ); ?>
+									</div>
 								</div>
-								<div class="preview-text">
-									<?php esc_html_e( 'This is a preview of how your chat bubble will look. The design updates in real-time as you change the settings.', 'stackboost-for-supportcandy' ); ?>
+
+								<!-- 2. Note Bubble -->
+								<div id="preview-bubble-note" class="sb-preview-bubble note">
+									<div class="sb-preview-header">
+										<strong><?php esc_html_e( 'Agent (Private Note)', 'stackboost-for-supportcandy' ); ?></strong>
+										<span>10:32 AM</span>
+									</div>
+									<div class="preview-text">
+										<?php esc_html_e( 'Checked logs. Failed login attempts from unknown IP.', 'stackboost-for-supportcandy' ); ?>
+									</div>
 								</div>
+
+								<!-- 3. Agent Bubble -->
+								<div id="preview-bubble-agent" class="sb-preview-bubble agent">
+									<div class="sb-preview-header">
+										<strong><?php esc_html_e( 'Support Agent', 'stackboost-for-supportcandy' ); ?></strong>
+										<span>10:35 AM</span>
+									</div>
+									<div class="preview-text">
+										<?php esc_html_e( 'Hello John, I can reset that for you right now.', 'stackboost-for-supportcandy' ); ?>
+									</div>
+								</div>
+
 							</div>
 						</div>
 					</div>
+
 				</div>
 
 				<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
@@ -105,7 +135,6 @@ class Settings {
 					<option value="android" <?php selected( $theme_val, 'android' ); ?>><?php esc_html_e( 'WhatsApp (Android)', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="modern" <?php selected( $theme_val, 'modern' ); ?>><?php esc_html_e( 'Minimal / Modern', 'stackboost-for-supportcandy' ); ?></option>
 				</select>
-				<p class="description"><?php esc_html_e( 'Select a preset style or choose "Custom" to unlock all options below.', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
 
@@ -114,7 +143,7 @@ class Settings {
 
 			<!-- Background Color -->
 			<tr valign="top">
-				<th scope="row"><?php esc_html_e( 'Background Color', 'stackboost-for-supportcandy' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Background', 'stackboost-for-supportcandy' ); ?></th>
 				<td>
 					<input type="text" name="stackboost_settings[<?php echo esc_attr( $prefix . 'bg_color' ); ?>]" value="<?php echo esc_attr( $options[ $prefix . 'bg_color' ] ?? '#f1f1f1' ); ?>" class="my-color-field" data-default-color="#f1f1f1" />
 				</td>
@@ -153,7 +182,7 @@ class Settings {
 
 			<!-- Font Size -->
 			<tr valign="top">
-				<th scope="row"><?php esc_html_e( 'Font Size (px)', 'stackboost-for-supportcandy' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Font Size', 'stackboost-for-supportcandy' ); ?></th>
 				<td>
 					<input type="number" name="stackboost_settings[<?php echo esc_attr( $prefix . 'font_size' ); ?>]" min="10" max="30" value="<?php echo esc_attr( $options[ $prefix . 'font_size' ] ?? '' ); ?>" class="small-text" placeholder="Default"> px
 				</td>
@@ -172,7 +201,7 @@ class Settings {
 
 			<!-- Width (Slider) -->
 			<tr valign="top">
-				<th scope="row"><?php esc_html_e( 'Max Width (%)', 'stackboost-for-supportcandy' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Max Width', 'stackboost-for-supportcandy' ); ?></th>
 				<td>
 					<input type="range" name="stackboost_settings[<?php echo esc_attr( $prefix . 'width' ); ?>]" min="20" max="100" step="5" value="<?php echo esc_attr( $options[ $prefix . 'width' ] ?? '85' ); ?>" oninput="this.nextElementSibling.value = this.value">
 					<output><?php echo esc_html( $options[ $prefix . 'width' ] ?? '85' ); ?></output>%
@@ -181,7 +210,7 @@ class Settings {
 
 			<!-- Corner Radius -->
 			<tr valign="top">
-				<th scope="row"><?php esc_html_e( 'Corner Radius (px)', 'stackboost-for-supportcandy' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Radius', 'stackboost-for-supportcandy' ); ?></th>
 				<td>
 					<input type="number" name="stackboost_settings[<?php echo esc_attr( $prefix . 'radius' ); ?>]" min="0" max="50" value="<?php echo esc_attr( $options[ $prefix . 'radius' ] ?? '15' ); ?>" class="small-text"> px
 				</td>

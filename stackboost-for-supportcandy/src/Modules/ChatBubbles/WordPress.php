@@ -73,6 +73,14 @@ class WordPress extends Module {
 			);
 			wp_enqueue_style( 'wp-color-picker' );
 
+			// Enqueue CSS for layout
+			wp_enqueue_style(
+				'stackboost-chat-bubbles-admin-css',
+				STACKBOOST_PLUGIN_URL . 'src/Modules/ChatBubbles/Admin/assets/css/chat-bubbles.css',
+				[],
+				STACKBOOST_VERSION
+			);
+
 			// Pass SupportCandy primary color to JS
 			$wpsc_settings = get_option( 'wpsc_appearance_settings', [] );
 			$primary_color = $wpsc_settings['primary_color'] ?? '#2271b1';
