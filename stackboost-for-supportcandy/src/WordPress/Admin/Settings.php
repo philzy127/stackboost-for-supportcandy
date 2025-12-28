@@ -67,18 +67,6 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketView\WordPress::get_instance(), 'render_page' ],
 		];
 
-		// 2.1 Chat Bubbles - Pro
-		if ( stackboost_is_feature_active( 'chat_bubbles' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\ChatBubbles\WordPress' ) ) {
-			$menu_config[] = [
-				'slug'        => 'stackboost-chat-bubbles',
-				'parent'      => 'stackboost-for-supportcandy',
-				'page_title'  => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
-				'menu_title'  => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
-				'callback'    => [ \StackBoost\ForSupportCandy\Modules\ChatBubbles\WordPress::get_instance(), 'render_page' ],
-			];
-		}
-
 		// 3. Date & Time Formatting (New Module) - Lite
 		if ( stackboost_is_feature_active( 'date_time_formatting' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page' ) ) {
 			$menu_config[] = [
@@ -103,6 +91,18 @@ class Settings {
 				'menu_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'capability'  => 'manage_options',
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\AfterHoursNotice\WordPress::get_instance(), 'render_page' ],
+			];
+		}
+
+		// 4.1 Chat Bubbles - Pro
+		if ( stackboost_is_feature_active( 'chat_bubbles' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\ChatBubbles\WordPress' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-chat-bubbles',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\ChatBubbles\WordPress::get_instance(), 'render_page' ],
 			];
 		}
 

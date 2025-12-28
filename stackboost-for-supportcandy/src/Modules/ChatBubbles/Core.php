@@ -148,12 +148,6 @@ class Core {
 			$inline_css .= " text-decoration: underline;";
 		}
 
-		// Borders for Email
-		if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
-			$border_color = $styles['border_color'] ?: $styles['bg_color'];
-			$inline_css .= sprintf( " border: %dpx solid %s;", $styles['border_width'], $border_color );
-		}
-
 		// Get the content we want to wrap
 		// Since we can't easily find the replaced macro in the body,
 		// and SupportCandy doesn't provide a filter for the macro output directly (except generic default),
@@ -230,12 +224,6 @@ class Core {
 				$css .= "text-decoration: underline !important;";
 			}
 
-			// Border
-			if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
-				$border_color = $styles['border_color'] ?: '#cccccc';
-				$css .= "border: {$styles['border_width']}px solid {$border_color} !important;";
-			}
-
 			// Alignment
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
@@ -252,65 +240,29 @@ class Core {
 
 			// Tail Logic (Pseudo-elements)
 			// Only apply tail if enabled globally, NOT a note, and NOT center aligned
+			// If theme is NOT custom, logic is handled in get_styles_for_type via 'tail' key from preset.
 			if ( $styles['tail'] !== 'none' && $type !== 'note' && $styles['alignment'] !== 'center' ) {
 				$tail_color = $styles['bg_color'];
-				// If border exists, we need to try to match it, but CSS triangles don't support borders easily.
-				// A common hack is to use a second pseudo element for the border, offset slightly.
-				// For now, we will just use the background color. If users want borders + tails, it might look slightly off without SVG.
-				// However, the user requirement "tail has to have that border too" implies we should try.
 
 				$css .= "{$selector} { position: relative !important; overflow: visible !important;}";
 				$css .= "{$selector}::after { content: ''; position: absolute; width: 0; height: 0; border-style: solid; z-index: 1; }";
 
-				// Border Tail Logic (::before as border)
-				if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
-					$border_color = $styles['border_color'] ?: '#cccccc';
-					$css .= "{$selector}::before { content: ''; position: absolute; width: 0; height: 0; border-style: solid; z-index: 0; }";
-				}
-
 				if ( $styles['alignment'] === 'right' ) {
 					// Right Tail
-					$right_pos = -10;
-					$bottom_pos = 10;
-
 					if ( $styles['tail'] === 'sharp' ) {
 						// Sharp Triangle
 						$css .= "{$selector}::after { border-width: 10px 0 10px 15px; border-color: transparent transparent transparent {$tail_color}; right: -10px; bottom: 10px; }";
-
-						if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
-							// Adjust positions for border width
-							$offset = $styles['border_width'];
-							$css .= "{$selector}::before { border-width: " . (10+$offset) . "px 0 " . (10+$offset) . "px " . (15+$offset) . "px; border-color: transparent transparent transparent {$border_color}; right: -" . (10+$offset) . "px; bottom: " . (10-$offset) . "px; }";
-						}
-
 					} else {
-						// Rounded Tail (Using Mask/Radial Gradient is cleaner, but harder to inject via inline CSS string)
-						// Let's use the 'skew' method which approximates a chat bubble tail
+						// Rounded Tail (Skew approximation)
 						$css .= "{$selector}::after { border-width: 15px 0 0 15px; border-color: transparent transparent transparent {$tail_color}; right: -8px; bottom: 0; transform: skewX(-10deg); }";
-
-						if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
-							$offset = $styles['border_width']; // Rough approximation
-							$css .= "{$selector}::before { border-width: " . (15+$offset) . "px 0 0 " . (15+$offset) . "px; border-color: transparent transparent transparent {$border_color}; right: -" . (8+$offset) . "px; bottom: -" . $offset . "px; transform: skewX(-10deg); }";
-						}
 					}
 				} else {
 					// Left Tail
 					if ( $styles['tail'] === 'sharp' ) {
 						$css .= "{$selector}::after { border-width: 10px 15px 10px 0; border-color: transparent {$tail_color} transparent transparent; left: -10px; bottom: 10px; }";
-
-						if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
-							$offset = $styles['border_width'];
-							$css .= "{$selector}::before { border-width: " . (10+$offset) . "px " . (15+$offset) . "px " . (10+$offset) . "px 0; border-color: transparent {$border_color} transparent transparent; left: -" . (10+$offset) . "px; bottom: " . (10-$offset) . "px; }";
-						}
-
 					} else {
 						// Rounded Tail
 						$css .= "{$selector}::after { border-width: 15px 15px 0 0; border-color: transparent {$tail_color} transparent transparent; left: -8px; bottom: 0; transform: skewX(10deg); }";
-
-						if ( ! empty( $styles['border_width'] ) && $styles['border_width'] > 0 ) {
-							$offset = $styles['border_width'];
-							$css .= "{$selector}::before { border-width: " . (15+$offset) . "px " . (15+$offset) . "px 0 0; border-color: transparent {$border_color} transparent transparent; left: -" . (8+$offset) . "px; bottom: -" . $offset . "px; transform: skewX(10deg); }";
-						}
 					}
 				}
 			}
@@ -336,10 +288,20 @@ class Core {
 		$prefix = "chat_bubbles_{$type}_";
 
 		// Global Settings
-		$theme = $options['chat_bubbles_theme'] ?? 'custom';
-		$tail  = $options['chat_bubbles_tail'] ?? 'none';
-		$border_width = isset( $options['chat_bubbles_border_width'] ) ? $options['chat_bubbles_border_width'] : 0;
-		$border_color = isset( $options['chat_bubbles_border_color'] ) ? $options['chat_bubbles_border_color'] : '#cccccc';
+		$theme = $options['chat_bubbles_theme'] ?? 'default';
+		// Note: Tail is now handled by preset unless Custom/Default/Classic?
+		// User: "Tail selection belongs on the Settings Tab as the theme selector... it applies to both agent and customer replies."
+		// So we always respect global tail, unless the Theme specifically forbids it (like Modern)?
+		// The updated logic says "remove the tails for now unless they are theme specific".
+		// This means for Custom/Default, we might NOT show a tail unless we add a setting back.
+		// BUT the user also said "Tail selection belongs on the Settings Tab".
+		// Contradiction? "Remove the tails for now unless they are theme specific" vs "Tail selection belongs on Settings Tab".
+		// Interpretation: Remove the visual 'Tail Style' DROPDOWN from the UI (done in Settings.php), but apply theme-specific tails in logic.
+		// Wait, user said: "Tail selection belongs on the Settings Tab as the theme selector...".
+		// Then said: "Let's remove the tails for now unless they are theme specific."
+		// This likely means: Remove the manual control. Let the Theme decide.
+
+		$tail = 'none'; // Default to none if theme doesn't specify
 
 		// Default Styles
 		$defaults = [
@@ -358,12 +320,15 @@ class Core {
 		$styles = [];
 
 		// Theme Logic
-		// Note: Note types now default to Center/85% in themes as requested.
 		switch ( $theme ) {
 			case 'stackboost':
+				// StackBoost Theme (Dynamic from Appearance)
+				// We use CSS variables because we can't easily read JS/CSS state in PHP.
+				// This works for Admin View. For Email, it will fall back to Defaults (white/grey) or we try to map common ones.
+				// We'll use the variables.
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#2271b1',
+						'bg_color'    => 'var(--sb-accent, #2271b1)', // Dynamic variable
 						'text_color'  => '#ffffff',
 						'alignment'   => 'right',
 						'radius'      => '15',
@@ -377,22 +342,61 @@ class Core {
 					]);
 				} else {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#f0f0f1',
+						'bg_color'    => 'var(--sb-bg-main, #f0f0f1)', // Dynamic variable (approx)
 						'text_color'  => '#3c434a',
 						'alignment'   => 'left',
 						'radius'      => '15',
 					]);
 				}
 				$styles['font_family'] = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
+				$tail = 'round';
 				break;
 
 			case 'supportcandy':
-				$wpsc_settings = get_option( 'wpsc_appearance_settings', [] );
-				$primary = $wpsc_settings['primary_color'] ?? '#2271b1';
+				// SupportCandy (Dynamic from SC Options)
+				$sc_settings = get_option( 'wpsc-ap-individual-ticket', [] );
+
+				// Fallbacks
+				$reply_primary = $sc_settings['reply-primary-color'] ?? '#2c3e50';
+				$reply_secondary = $sc_settings['reply-secondary-color'] ?? '#777777';
+				$note_primary = $sc_settings['note-primary-color'] ?? '#8e6600';
+				$note_secondary = $sc_settings['note-secondary-color'] ?? '#8e8d45';
 
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => $primary,
+						'bg_color'    => $reply_primary,
+						'text_color'  => '#ffffff',
+						'alignment'   => 'right',
+						'radius'      => '5',
+					]);
+				} elseif ( $type === 'note' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#fdfdfd', // SC doesn't have a bg color for note body usually, just border?
+						// SC settings have 'note-primary' (border/title).
+						'bg_color'    => $note_primary, // Using primary for bubble BG? Might be too dark.
+						// Let's stick to a safe light yellow or use white with border color.
+						// Since we removed borders, let's use a lighter shade or white.
+						'bg_color'    => '#fffbcc',
+						'text_color'  => '#333333',
+						'alignment'   => 'center',
+						'radius'      => '0',
+					]);
+				} else {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#e5e5e5',
+						'text_color'  => '#333333',
+						'alignment'   => 'left',
+						'radius'      => '5',
+					]);
+				}
+				$tail = 'none';
+				break;
+
+			case 'classic':
+				// Previous "SupportCandy" blue/grey hardcoded theme
+				if ( $type === 'agent' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#2271b1',
 						'text_color'  => '#ffffff',
 						'alignment'   => 'right',
 						'radius'      => '5',
@@ -412,6 +416,7 @@ class Core {
 						'radius'      => '5',
 					]);
 				}
+				$tail = 'none';
 				break;
 
 			case 'ios':
@@ -441,6 +446,7 @@ class Core {
 					]);
 				}
 				$styles['font_family'] = '-apple-system, BlinkMacSystemFont, sans-serif';
+				$tail = 'round';
 				break;
 
 			case 'android':
@@ -470,6 +476,7 @@ class Core {
 					]);
 				}
 				$styles['font_family'] = 'Roboto, sans-serif';
+				$tail = 'sharp';
 				break;
 
 			case 'modern':
@@ -499,49 +506,60 @@ class Core {
 					]);
 				}
 				$styles['font_family'] = 'Helvetica, Arial, sans-serif';
+				$tail = 'none';
 				break;
 
 			case 'custom':
+			case 'default': // Default mimics Custom/StackBoost logic but without dynamic vars? Or just blue/grey defaults.
 			default:
-				// Load from user settings
-				$styles = [
-					'bg_color'    => $options["{$prefix}bg_color"] ?? $defaults['bg_color'],
-					'text_color'  => $options["{$prefix}text_color"] ?? $defaults['text_color'],
-					'font_family' => $options["{$prefix}font_family"] ?? $defaults['font_family'],
-					'font_size'   => $options["{$prefix}font_size"] ?? $defaults['font_size'],
-					'alignment'   => $options["{$prefix}alignment"] ?? $defaults['alignment'],
-					'width'       => $options["{$prefix}width"] ?? $defaults['width'],
-					'radius'      => $options["{$prefix}radius"] ?? $defaults['radius'],
+				// Load from user settings if Custom, else use Defaults for "Default" theme
+				if ( $theme === 'custom' ) {
+					$styles = [
+						'bg_color'    => $options["{$prefix}bg_color"] ?? $defaults['bg_color'],
+						'text_color'  => $options["{$prefix}text_color"] ?? $defaults['text_color'],
+						'font_family' => $options["{$prefix}font_family"] ?? $defaults['font_family'],
+						'font_size'   => $options["{$prefix}font_size"] ?? $defaults['font_size'],
+						'alignment'   => $options["{$prefix}alignment"] ?? $defaults['alignment'],
+						'width'       => $options["{$prefix}width"] ?? $defaults['width'],
+						'radius'      => $options["{$prefix}radius"] ?? $defaults['radius'],
 
-					// Font Styles (Checkboxes)
-					'font_bold'      => ! empty( $options["{$prefix}font_bold"] ) ? 1 : 0,
-					'font_italic'    => ! empty( $options["{$prefix}font_italic"] ) ? 1 : 0,
-					'font_underline' => ! empty( $options["{$prefix}font_underline"] ) ? 1 : 0,
-				];
+						// Font Styles (Checkboxes)
+						'font_bold'      => ! empty( $options["{$prefix}font_bold"] ) ? 1 : 0,
+						'font_italic'    => ! empty( $options["{$prefix}font_italic"] ) ? 1 : 0,
+						'font_underline' => ! empty( $options["{$prefix}font_underline"] ) ? 1 : 0,
+					];
+				} else {
+					// Default Theme (Blue/Grey Standard)
+					if ( $type === 'agent' ) {
+						$styles = array_merge( $defaults, [
+							'bg_color'    => '#2271b1',
+							'text_color'  => '#ffffff',
+							'alignment'   => 'right',
+							'radius'      => '15',
+						]);
+					} elseif ( $type === 'note' ) {
+						$styles = array_merge( $defaults, [
+							'bg_color'    => '#fff8e5',
+							'text_color'  => '#333333',
+							'alignment'   => 'center',
+							'radius'      => '5',
+						]);
+					} else {
+						$styles = array_merge( $defaults, [
+							'bg_color'    => '#f0f0f1',
+							'text_color'  => '#3c434a',
+							'alignment'   => 'left',
+							'radius'      => '15',
+						]);
+					}
+					$styles['font_family'] = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
+					$tail = 'round';
+				}
 				break;
 		}
 
-		// Apply Global Tail setting (unless custom overrides? No, user said tail belongs on settings tab)
-		// But note: Core logic above uses this. 'custom' theme might have had local tail, but now we use global.
-		// However, if theme is NOT custom, we might want to respect the theme's inherent tail style?
-		// User said: "Tail selection belongs on the Settings Tab as the theme selector... it applies to both agent and customer replies."
-		// This implies the Global Setting overrides everything, OR acts as the configuration for "Custom".
-		// But if I choose "iOS" theme, I expect rounded tails. If I choose "Modern", I expect none.
-		// Let's assume Global Tail Setting applies when Theme is Custom OR acts as an override?
-		// "The theme Preset should be in the new Settings Tab... Choosing a theme applies to all three... Tail selection belongs on the Settings Tab...".
-		// If a Theme is selected, it should probably dictate the tail unless the user explicitly changes it?
-		// But the UI shows them side-by-side.
-		// Best approach: If Theme is Custom, use Global Tail. If Theme is Preset, use Preset Tail.
-		// BUT the user moved the selector to the main tab alongside Theme. This suggests they want to mix and match?
-		// Let's allow the Global Tail selector to override the theme default if set to something other than 'theme_default'?
-		// Current selector options are None, Round, Sharp.
-		// Let's use the Global Tail setting as the source of truth for ALL themes, to give user control.
-
+		// Apply Tail Logic (Theme Specific)
 		$styles['tail'] = $tail;
-
-		// Apply Global Border
-		$styles['border_width'] = absint( $border_width );
-		$styles['border_color'] = sanitize_hex_color( $border_color );
 
 		// SANITIZATION
 		$styles['bg_color'] = sanitize_hex_color($styles['bg_color']) ?: $defaults['bg_color'];
