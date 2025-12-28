@@ -48,9 +48,19 @@ class WordPress extends Module {
 		// Initialize the Core logic if module is loaded
 		if ( is_admin() ) {
 			add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
+		} else {
+			// Frontend Enqueue
+			add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_scripts' ] );
 		}
 
 		Core::get_instance();
+	}
+
+	/**
+	 * Enqueue Frontend Scripts.
+	 */
+	public function enqueue_frontend_scripts() {
+		Core::get_instance()->enqueue_ticket_styles( 'frontend' );
 	}
 
 	/**

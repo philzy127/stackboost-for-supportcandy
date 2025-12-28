@@ -50,18 +50,42 @@ class Core {
 
 	/**
 	 * Enqueue Ticket View Styles.
+	 * Now supports both Admin and Frontend contexts.
+	 *
+	 * @param string|null $hook_suffix The hook suffix for admin pages, or 'frontend' string if called manually for frontend.
 	 */
-	public function enqueue_ticket_styles( $hook_suffix ) {
+	public function enqueue_ticket_styles( $hook_suffix = null ) {
+		// Determine context
+		$is_frontend = ( $hook_suffix === 'frontend' );
+
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_suffix, 'chat_bubbles' );
+			$hook_label = $is_frontend ? 'frontend' : ( $hook_suffix ?? 'unknown' );
+			stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_label, 'chat_bubbles' );
 		}
 
-		// Only load on Ticket View or Ticket List (if quick view exists)
-		if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
-			return;
+		// Context Check: Admin vs Frontend
+		$handle = '';
+		if ( ! $is_frontend ) {
+			// Admin Check
+			if ( ! is_string( $hook_suffix ) ) {
+				return;
+			}
+			// Only load on Ticket View or Ticket List
+			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
+				return;
+			}
+			$handle = 'wpsc-admin';
+		} else {
+			// Frontend Check
+			// We register a dummy handle to attach our inline styles to, ensuring they load anywhere
+			// SupportCandy might be present (shortcodes, widgets, etc).
+			$handle = 'stackboost-chat-bubbles-frontend';
+			wp_register_style( $handle, false );
+			wp_enqueue_style( $handle );
 		}
 
 		// Check ticket specific enable switch
+		// Note: We use the same 'chat_bubbles_enable_ticket' setting for both Admin and Frontend uniformity.
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_ticket'] ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
@@ -71,10 +95,10 @@ class Core {
 		}
 
 		$css = $this->generate_css();
-		wp_add_inline_style( 'wpsc-admin', $css );
+		wp_add_inline_style( $handle, $css );
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Styles enqueued successfully.', 'chat_bubbles' );
+			stackboost_log( 'ChatBubbles: Styles enqueued successfully for context: ' . ( $is_frontend ? 'Frontend' : 'Admin' ), 'chat_bubbles' );
 		}
 	}
 

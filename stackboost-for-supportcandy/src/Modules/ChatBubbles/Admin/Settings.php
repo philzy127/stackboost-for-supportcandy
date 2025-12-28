@@ -140,7 +140,7 @@ class Settings {
 			<th scope="row"><?php esc_html_e( 'Enable on Ticket View', 'stackboost-for-supportcandy' ); ?></th>
 			<td>
 				<input type="checkbox" name="stackboost_settings[chat_bubbles_enable_ticket]" id="chat_bubbles_enable_ticket" value="1" <?php checked( $options['chat_bubbles_enable_ticket'] ?? 0, 1 ); ?> />
-				<p class="description"><?php esc_html_e( 'Show chat bubbles on the Admin Ticket Details page.', 'stackboost-for-supportcandy' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Show chat bubbles on Ticket Views (Admin & Frontend).', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
 
