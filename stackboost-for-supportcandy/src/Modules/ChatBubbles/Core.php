@@ -109,7 +109,13 @@ class Core {
 		// Generate Inline CSS for Email (Simpler than Ticket View)
 		// We use a div wrapper with inline styles.
 		// Outlook fallback: No border-radius, simple background.
-		$inline_css = "background-color: {$styles['bg_color']}; color: {$styles['text_color']}; padding: 15px; margin-bottom: 10px; border-radius: {$styles['radius']}px; width: {$styles['width']}%;";
+		$inline_css = sprintf(
+			"background-color: %s; color: %s; padding: 15px; margin-bottom: 10px; border-radius: %dpx; width: %d%%;",
+			$styles['bg_color'],
+			$styles['text_color'],
+			$styles['radius'],
+			$styles['width']
+		);
 
 		if ( $styles['alignment'] === 'right' ) {
 			$inline_css .= " margin-left: auto; margin-right: 0;";
@@ -131,10 +137,10 @@ class Core {
 		$replace_html = '<div style="' . esc_attr( $inline_css ) . '">' . $search_html . '</div>';
 
 		// Perform the replacement
-		// Use str_replace directly. Since $search_html comes from the same method called by the macro, it should match.
-		// However, macro replacement might have trimmed it or processed it?
-		// WPSC_Macros::replace just calls get_printable_string(), so it should be exact.
-		$en->body = str_replace( $search_html, $replace_html, $en->body );
+		// Use preg_replace with limit 1 to ensure we only replace the main body if it appears multiple times (unlikely but safe)
+		// We need to escape special regex chars in the search string
+		$pattern = '/' . preg_quote( $search_html, '/' ) . '/';
+		$en->body = preg_replace( $pattern, $replace_html, $en->body, 1 );
 
 		return $en;
 	}
@@ -171,7 +177,15 @@ class Core {
 
 			// Font Family
 			if ( ! empty( $styles['font_family'] ) ) {
-				$css .= "font-family: {$styles['font_family']} !important;";
+				// Basic sanitization to prevent breaking out of CSS
+				$font = sanitize_text_field( $styles['font_family'] );
+				$font = str_replace( [';', '}', '{'], '', $font );
+				$css .= "font-family: {$font} !important;";
+			}
+
+			// Font Size (New)
+			if ( ! empty( $styles['font_size'] ) ) {
+				$css .= "font-size: {$styles['font_size']}px !important;";
 			}
 
 			// Alignment
@@ -239,151 +253,198 @@ class Core {
 			'bg_color'    => '#f1f1f1',
 			'text_color'  => '#333333',
 			'font_family' => '',
+			'font_size'   => '',
 			'alignment'   => 'left',
 			'width'       => '85',
 			'radius'      => '15',
 			'tail'        => 'none'
 		];
 
+		// Define allowed values for strict sanitization
+		$allowed_alignments = ['left', 'right'];
+		$allowed_tails = ['none', 'round', 'sharp'];
+
+		$styles = [];
+
 		// Apply Preset Logic
 		switch ( $theme ) {
 			case 'stackboost':
 				// StackBoost Theme (Blue/Dark)
 				if ( $type === 'agent' ) {
-					return [
+					$styles = [
 						'bg_color'    => '#2271b1', // WP Blue
 						'text_color'  => '#ffffff',
 						'font_family' => '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
+						'font_size'   => '',
 						'alignment'   => 'right',
 						'width'       => '85',
 						'radius'      => '15',
 						'tail'        => 'round'
 					];
 				} else {
-					return [
+					$styles = [
 						'bg_color'    => '#f0f0f1', // WP Grey
 						'text_color'  => '#3c434a',
 						'font_family' => '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
+						'font_size'   => '',
 						'alignment'   => 'left',
 						'width'       => '85',
 						'radius'      => '15',
 						'tail'        => 'round'
 					];
 				}
+				break;
 
 			case 'supportcandy':
-				// SupportCandy (Classic) - We actually just return empty to let SC CSS handle it?
-				// User wants "SupportCandy Colors".
-				// We can try to fetch them.
+				// SupportCandy Colors
 				$wpsc_settings = get_option( 'wpsc_appearance_settings', [] );
 				$primary = $wpsc_settings['primary_color'] ?? '#2271b1';
 
 				if ( $type === 'agent' ) {
-					return [
+					$styles = [
 						'bg_color'    => $primary,
 						'text_color'  => '#ffffff',
 						'font_family' => '',
+						'font_size'   => '',
 						'alignment'   => 'right',
 						'width'       => '85',
 						'radius'      => '5',
 						'tail'        => 'none'
 					];
 				} else {
-					return [
+					$styles = [
 						'bg_color'    => '#e5e5e5',
 						'text_color'  => '#333333',
 						'font_family' => '',
+						'font_size'   => '',
 						'alignment'   => 'left',
 						'width'       => '85',
 						'radius'      => '5',
 						'tail'        => 'none'
 					];
 				}
+				break;
 
 			case 'ios':
 				// iMessage Style
 				if ( $type === 'agent' ) {
-					return [
+					$styles = [
 						'bg_color'    => '#007aff', // iOS Blue
 						'text_color'  => '#ffffff',
 						'font_family' => '-apple-system, BlinkMacSystemFont, sans-serif',
+						'font_size'   => '',
 						'alignment'   => 'right',
 						'width'       => '75',
 						'radius'      => '20',
 						'tail'        => 'round'
 					];
 				} else {
-					return [
+					$styles = [
 						'bg_color'    => '#e5e5ea', // iOS Grey
 						'text_color'  => '#000000',
 						'font_family' => '-apple-system, BlinkMacSystemFont, sans-serif',
+						'font_size'   => '',
 						'alignment'   => 'left',
 						'width'       => '75',
 						'radius'      => '20',
 						'tail'        => 'round'
 					];
 				}
+				break;
 
 			case 'android':
 				// WhatsApp / Android Style
 				if ( $type === 'agent' ) {
-					return [
+					$styles = [
 						'bg_color'    => '#d9fdd3', // WhatsApp Green
 						'text_color'  => '#111b21',
 						'font_family' => 'Roboto, sans-serif',
+						'font_size'   => '',
 						'alignment'   => 'right',
 						'width'       => '80',
 						'radius'      => '8',
 						'tail'        => 'sharp'
 					];
 				} else {
-					return [
+					$styles = [
 						'bg_color'    => '#ffffff',
 						'text_color'  => '#111b21',
 						'font_family' => 'Roboto, sans-serif',
+						'font_size'   => '',
 						'alignment'   => 'left',
 						'width'       => '80',
 						'radius'      => '8',
 						'tail'        => 'sharp'
 					];
 				}
+				break;
 
 			case 'modern':
 				// Minimal Modern
 				if ( $type === 'agent' ) {
-					return [
+					$styles = [
 						'bg_color'    => '#000000',
 						'text_color'  => '#ffffff',
 						'font_family' => 'Helvetica, Arial, sans-serif',
+						'font_size'   => '',
 						'alignment'   => 'right',
 						'width'       => '60',
 						'radius'      => '0',
 						'tail'        => 'none'
 					];
 				} else {
-					return [
+					$styles = [
 						'bg_color'    => '#f2f2f2',
 						'text_color'  => '#000000',
 						'font_family' => 'Helvetica, Arial, sans-serif',
+						'font_size'   => '',
 						'alignment'   => 'left',
 						'width'       => '60',
 						'radius'      => '0',
 						'tail'        => 'none'
 					];
 				}
+				break;
 
 			case 'custom':
 			default:
-				// Load from user settings
-				return [
+				// Load from user settings with fallbacks
+				$styles = [
 					'bg_color'    => $options["{$prefix}bg_color"] ?? $defaults['bg_color'],
 					'text_color'  => $options["{$prefix}text_color"] ?? $defaults['text_color'],
 					'font_family' => $options["{$prefix}font_family"] ?? $defaults['font_family'],
+					'font_size'   => $options["{$prefix}font_size"] ?? $defaults['font_size'],
 					'alignment'   => $options["{$prefix}alignment"] ?? $defaults['alignment'],
 					'width'       => $options["{$prefix}width"] ?? $defaults['width'],
 					'radius'      => $options["{$prefix}radius"] ?? $defaults['radius'],
 					'tail'        => $options["{$prefix}tail"] ?? $defaults['tail'],
 				];
+				break;
 		}
+
+		// STRICT SANITIZATION BEFORE RETURN
+		// This ensures values used in CSS generation are safe regardless of origin
+
+		// 1. Colors
+		$styles['bg_color'] = sanitize_hex_color($styles['bg_color']) ?: $defaults['bg_color'];
+		$styles['text_color'] = sanitize_hex_color($styles['text_color']) ?: $defaults['text_color'];
+
+		// 2. Integers (Size, Width, Radius)
+		$styles['width'] = absint($styles['width']);
+		if ($styles['width'] < 20 || $styles['width'] > 100) $styles['width'] = 85;
+
+		$styles['radius'] = absint($styles['radius']);
+		if ($styles['radius'] > 100) $styles['radius'] = 100;
+
+		$styles['font_size'] = absint($styles['font_size']); // 0 is acceptable (empty)
+
+		// 3. Enums
+		if (!in_array($styles['alignment'], $allowed_alignments)) $styles['alignment'] = 'left';
+		if (!in_array($styles['tail'], $allowed_tails)) $styles['tail'] = 'none';
+
+		// 4. Text (Font Family)
+		$styles['font_family'] = sanitize_text_field($styles['font_family']);
+
+		return $styles;
 	}
 }

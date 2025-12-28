@@ -46,14 +46,16 @@ class Settings {
 					<!-- Config Card -->
 					<div class="stackboost-card">
 						<h2><?php esc_html_e( 'Bubble Configuration', 'stackboost-for-supportcandy' ); ?></h2>
-						<p><?php esc_html_e( 'Customize the appearance of chat bubbles for this user type.', 'stackboost-for-supportcandy' ); ?></p>
+						<p><?php esc_html_e( 'Customize the appearance of chat bubbles for each user type.', 'stackboost-for-supportcandy' ); ?></p>
 
-						<table class="form-table">
-							<?php
-							// Dynamically render fields based on active tab
-							self::render_fields( $active_tab );
-							?>
-						</table>
+						<!-- Loop through all tabs to render fields, but hide inactive ones -->
+						<?php foreach ( ['agent', 'customer', 'note'] as $type ) : ?>
+							<div id="tab-content-<?php echo esc_attr( $type ); ?>" style="<?php echo $active_tab !== $type ? 'display:none;' : ''; ?>">
+								<table class="form-table">
+									<?php self::render_fields( $type ); ?>
+								</table>
+							</div>
+						<?php endforeach; ?>
 					</div>
 
 					<!-- Preview Card (Static HTML representation) -->
@@ -95,7 +97,7 @@ class Settings {
 		<tr valign="top">
 			<th scope="row"><?php esc_html_e( 'Theme Preset', 'stackboost-for-supportcandy' ); ?></th>
 			<td>
-				<select name="stackboost_settings[<?php echo esc_attr( $theme_key ); ?>]" id="sb_chat_theme_selector" class="regular-text">
+				<select name="stackboost_settings[<?php echo esc_attr( $theme_key ); ?>]" class="sb-chat-theme-selector regular-text" data-type="<?php echo esc_attr( $type ); ?>">
 					<option value="custom" <?php selected( $theme_val, 'custom' ); ?>><?php esc_html_e( 'Custom', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="stackboost" <?php selected( $theme_val, 'stackboost' ); ?>><?php esc_html_e( 'StackBoost Theme', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="supportcandy" <?php selected( $theme_val, 'supportcandy' ); ?>><?php esc_html_e( 'SupportCandy Theme', 'stackboost-for-supportcandy' ); ?></option>
@@ -108,7 +110,7 @@ class Settings {
 		</tr>
 
 		<!-- Custom Fields Wrapper (Toggled by JS) -->
-		<tbody id="sb_chat_custom_fields" style="<?php echo $theme_val !== 'custom' ? 'display:none;' : ''; ?>">
+		<tbody class="sb-chat-custom-fields" id="sb_chat_custom_fields_<?php echo esc_attr( $type ); ?>" style="<?php echo $theme_val !== 'custom' ? 'display:none;' : ''; ?>">
 
 			<!-- Background Color -->
 			<tr valign="top">
@@ -146,6 +148,14 @@ class Settings {
 						}
 						?>
 					</select>
+				</td>
+			</tr>
+
+			<!-- Font Size -->
+			<tr valign="top">
+				<th scope="row"><?php esc_html_e( 'Font Size (px)', 'stackboost-for-supportcandy' ); ?></th>
+				<td>
+					<input type="number" name="stackboost_settings[<?php echo esc_attr( $prefix . 'font_size' ); ?>]" min="10" max="30" value="<?php echo esc_attr( $options[ $prefix . 'font_size' ] ?? '' ); ?>" class="small-text" placeholder="Default"> px
 				</td>
 			</tr>
 
@@ -205,6 +215,7 @@ class Settings {
 			$keys[] = "{$prefix}bg_color";
 			$keys[] = "{$prefix}text_color";
 			$keys[] = "{$prefix}font_family";
+			$keys[] = "{$prefix}font_size"; // Added font size key
 			$keys[] = "{$prefix}alignment";
 			$keys[] = "{$prefix}width";
 			$keys[] = "{$prefix}radius";

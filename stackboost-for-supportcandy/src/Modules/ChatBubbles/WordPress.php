@@ -72,6 +72,14 @@ class WordPress extends Module {
 				true
 			);
 			wp_enqueue_style( 'wp-color-picker' );
+
+			// Pass SupportCandy primary color to JS
+			$wpsc_settings = get_option( 'wpsc_appearance_settings', [] );
+			$primary_color = $wpsc_settings['primary_color'] ?? '#2271b1';
+
+			wp_localize_script( 'stackboost-chat-bubbles-admin', 'stackboostChatBubbles', [
+				'scPrimaryColor' => $primary_color,
+			] );
 		}
 	}
 
@@ -80,6 +88,6 @@ class WordPress extends Module {
 	 */
 	public function render_page() {
 		// Delegate to Admin Settings class
-		Admin\Settings::render_page();
+		\StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings::render_page();
 	}
 }
