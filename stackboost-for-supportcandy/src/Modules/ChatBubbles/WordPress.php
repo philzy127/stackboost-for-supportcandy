@@ -41,6 +41,10 @@ class WordPress extends Module {
 	 * Initialize hooks.
 	 */
 	public function init_hooks() {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'ChatBubbles WP Adapter Init Hooks.', 'chat_bubbles' );
+		}
+
 		// Initialize the Core logic if module is loaded
 		if ( is_admin() ) {
 			add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );

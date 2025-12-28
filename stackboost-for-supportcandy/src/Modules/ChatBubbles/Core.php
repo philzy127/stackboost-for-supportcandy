@@ -28,6 +28,9 @@ class Core {
 	 * Constructor.
 	 */
 	private function __construct() {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'ChatBubbles Core Initialized.', 'chat_bubbles' );
+		}
 		// Initialize the WordPress adapter
 		$this->init_hooks();
 	}
@@ -49,6 +52,10 @@ class Core {
 	 * Enqueue Ticket View Styles.
 	 */
 	public function enqueue_ticket_styles( $hook_suffix ) {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_suffix, 'chat_bubbles' );
+		}
+
 		// Only load on Ticket View or Ticket List (if quick view exists)
 		if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
 			return;
@@ -57,6 +64,9 @@ class Core {
 		// Check ticket specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_ticket'] ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( 'ChatBubbles: Disabled via settings.', 'chat_bubbles' );
+			}
 			return;
 		}
 
@@ -64,7 +74,7 @@ class Core {
 		wp_add_inline_style( 'wpsc-admin', $css );
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Styles enqueued. Hook: ' . $hook_suffix, 'chat_bubbles' );
+			stackboost_log( 'ChatBubbles: Styles enqueued successfully.', 'chat_bubbles' );
 		}
 	}
 
@@ -213,15 +223,16 @@ class Core {
 			}
 
 			// Increased specificity to override SupportCandy default styles
-			// Using ID selector + class hierarchy for maximum specificity
+			// Using .wpsc-it-container (CLASS) + class hierarchy.
+			// Fixed bug where #wpsc-it-container (ID) was used incorrectly.
 
 			$selector = '';
 			if ( $type === 'agent' ) {
-				$selector = '#wpsc-it-container .wpsc-thread.reply.agent .thread-body, #wpsc-it-container .wpsc-thread.report.agent .thread-body';
+				$selector = '.wpsc-it-container .wpsc-thread.reply.agent .thread-body, .wpsc-it-container .wpsc-thread.report.agent .thread-body';
 			} elseif ( $type === 'customer' ) {
-				$selector = '#wpsc-it-container .wpsc-thread.reply.customer .thread-body, #wpsc-it-container .wpsc-thread.report.customer .thread-body';
+				$selector = '.wpsc-it-container .wpsc-thread.reply.customer .thread-body, .wpsc-it-container .wpsc-thread.report.customer .thread-body';
 			} elseif ( $type === 'note' ) {
-				$selector = '#wpsc-it-container .wpsc-thread.note .thread-body';
+				$selector = '.wpsc-it-container .wpsc-thread.note .thread-body';
 			}
 
 			// Build CSS Rule
