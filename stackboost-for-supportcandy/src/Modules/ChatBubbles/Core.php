@@ -62,6 +62,10 @@ class Core {
 
 		$css = $this->generate_css();
 		wp_add_inline_style( 'supportcandy-admin-style', $css );
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'ChatBubbles: Styles enqueued.', 'chat_bubbles' );
+		}
 	}
 
 	/**
@@ -142,6 +146,11 @@ class Core {
 			$inline_css .= " text-decoration: underline;";
 		}
 
+		// Border Styles for Email
+		if ( ! empty( $styles['border_style'] ) && $styles['border_style'] !== 'none' ) {
+			$inline_css .= sprintf( " border: %s %dpx %s;", $styles['border_style'], $styles['border_width'], $styles['border_color'] );
+		}
+
 		// Get the content we want to wrap
 		$search_html = $en->thread->get_printable_string();
 
@@ -152,6 +161,10 @@ class Core {
 		$pattern = '/' . preg_quote( $search_html, '/' ) . '/';
 		$en->body = preg_replace( $pattern, $replace_html, $en->body, 1 );
 
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'ChatBubbles: Email processed for thread type ' . $user_type, 'chat_bubbles' );
+		}
+
 		return $en;
 	}
 
@@ -159,8 +172,39 @@ class Core {
 	 * Generate CSS for Admin View.
 	 */
 	public function generate_css(): string {
+		$options = get_option( 'stackboost_settings', [] );
 		$types = [ 'agent', 'customer', 'note' ];
 		$css   = '';
+
+		// Global Drop Shadow
+		$shadow_css = '';
+		if ( ! empty( $options['chat_bubbles_shadow_enable'] ) ) {
+			$shadow_color = $options['chat_bubbles_shadow_color'] ?? '#000000';
+			$shadow_depth = $options['chat_bubbles_shadow_depth'] ?? 'small';
+
+			$blur = '5px';
+			$spread = '0px';
+			$opacity = '0.2';
+
+			if ( $shadow_depth === 'medium' ) {
+				$blur = '10px';
+				$opacity = '0.3';
+			} elseif ( $shadow_depth === 'large' ) {
+				$blur = '20px';
+				$spread = '5px';
+				$opacity = '0.4';
+			}
+
+			// If shadow color is hex, we can't easily add opacity without converting to rgba.
+			// Assuming user picker handles alpha or we just use box-shadow solid if hex?
+			// The color picker has data-alpha-enabled="true", so it returns rgba() usually if opacity is set.
+			// But for "Depth" presets, we usually want to control the alpha of the shadow myself or let user pick full color?
+			// User picker is better. "Color, depth etc".
+			// If user picks solid black, it will be harsh.
+			// Let's assume the user picks the color they want.
+
+			$shadow_css = "box-shadow: 0 2px {$blur} {$spread} {$shadow_color} !important;";
+		}
 
 		foreach ( $types as $type ) {
 			$styles = $this->get_styles_for_type( $type );
@@ -169,25 +213,15 @@ class Core {
 			}
 
 			// Increased specificity to override SupportCandy default styles
-			// Previous selector: .wpsc-thread.reply.agent .thread-body
-			// New selector: #wpsc-ticket-thread-list .wpsc-thread-item.wpsc-thread-reply.wpsc-thread-agent .wpsc-thread-body
-			// NOTE: SC classes vary slightly by version. Need to be careful.
-			// Standard SC: .wpsc-thread .thread-body.
-			// .wpsc-thread is often a child of #wpsc_ticket_thread_list (or similar ID).
-			// Let's inspect known SC structure:
-			// <div id="wpsc-ticket-thread-list">
-			//    <div class="wpsc-thread reply agent ...">
-			//       <div class="thread-body">...</div>
-
-			// To be safe and specific, we will use ID + multiple classes.
+			// New selector based on DOM analysis: .wpsc-it-thread-section-container .wpsc-thread...
 
 			$selector = '';
 			if ( $type === 'agent' ) {
-				$selector = '#wpsc-ticket-thread-list .wpsc-thread.reply.agent .thread-body, #wpsc-ticket-thread-list .wpsc-thread.report.agent .thread-body';
+				$selector = '.wpsc-it-thread-section-container .wpsc-thread.reply.agent .thread-body, .wpsc-it-thread-section-container .wpsc-thread.report.agent .thread-body';
 			} elseif ( $type === 'customer' ) {
-				$selector = '#wpsc-ticket-thread-list .wpsc-thread.reply.customer .thread-body, #wpsc-ticket-thread-list .wpsc-thread.report.customer .thread-body';
+				$selector = '.wpsc-it-thread-section-container .wpsc-thread.reply.customer .thread-body, .wpsc-it-thread-section-container .wpsc-thread.report.customer .thread-body';
 			} elseif ( $type === 'note' ) {
-				$selector = '#wpsc-ticket-thread-list .wpsc-thread.note .thread-body';
+				$selector = '.wpsc-it-thread-section-container .wpsc-thread.note .thread-body';
 			}
 
 			// Build CSS Rule
@@ -232,8 +266,17 @@ class Core {
 			// Padding (Standardize)
 			$css .= "padding: 15px !important;";
 
-			// Remove Default Border if any
-			$css .= "border: none !important;";
+			// Borders
+			if ( ! empty( $styles['border_style'] ) && $styles['border_style'] !== 'none' ) {
+				$css .= "border: {$styles['border_width']}px {$styles['border_style']} {$styles['border_color']} !important;";
+			} else {
+				$css .= "border: none !important;";
+			}
+
+			// Shadow
+			if ( $shadow_css ) {
+				$css .= $shadow_css;
+			}
 
 			$css .= "}";
 
@@ -242,8 +285,6 @@ class Core {
 
 			// Header layout adjustment
 			$css .= "{$selector} .thread-header { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
-
-			// Remove tails for now (per user request) - Logic removed.
 		}
 
 		return $css;
@@ -269,6 +310,9 @@ class Core {
 			'font_bold'   => 0,
 			'font_italic' => 0,
 			'font_underline' => 0,
+			'border_style' => 'none',
+			'border_width' => '1',
+			'border_color' => '#cccccc',
 		];
 
 		$styles = [];
@@ -307,8 +351,9 @@ class Core {
 				$sc_settings = get_option( 'wpsc-ap-individual-ticket', [] );
 				$reply_primary = $sc_settings['reply-primary-color'] ?? '#2c3e50';
 				$note_primary = $sc_settings['note-primary-color'] ?? '#fffbcc';
-
-				// Ensure hex format for PHP usage if needed, but SC stores hex.
+				// Third Color: Reply & Close Button Color for Customer
+				$reply_close_bg = $sc_settings['reply-close-bg-color'] ?? '#e5e5e5';
+				$reply_close_text = $sc_settings['reply-close-text-color'] ?? '#333333';
 
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
@@ -326,8 +371,8 @@ class Core {
 					]);
 				} else {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#e5e5e5',
-						'text_color'  => '#333333',
+						'bg_color'    => $reply_close_bg,
+						'text_color'  => $reply_close_text,
 						'alignment'   => 'left',
 						'radius'      => '5',
 					]);
@@ -466,6 +511,9 @@ class Core {
 						'font_bold'      => ! empty( $options["{$prefix}font_bold"] ) ? 1 : 0,
 						'font_italic'    => ! empty( $options["{$prefix}font_italic"] ) ? 1 : 0,
 						'font_underline' => ! empty( $options["{$prefix}font_underline"] ) ? 1 : 0,
+						'border_style'   => $options["{$prefix}border_style"] ?? 'none',
+						'border_width'   => $options["{$prefix}border_width"] ?? '1',
+						'border_color'   => $options["{$prefix}border_color"] ?? '#cccccc',
 					];
 				} else {
 					// Default Theme (Blue/Grey)
@@ -513,6 +561,9 @@ class Core {
 		if ($styles['radius'] > 100) $styles['radius'] = 100;
 		$styles['font_size'] = absint($styles['font_size']);
 		$styles['font_family'] = sanitize_text_field($styles['font_family']);
+		$styles['border_width'] = absint($styles['border_width']);
+		$styles['border_color'] = sanitize_hex_color($styles['border_color']) ?: '#cccccc';
+		$styles['border_style'] = in_array($styles['border_style'], ['none', 'solid', 'dashed', 'dotted']) ? $styles['border_style'] : 'none';
 
 		return $styles;
 	}

@@ -77,11 +77,12 @@ class WordPress extends Module {
 
 			// 1. SupportCandy Colors
 			// Check 'wpsc-ap-individual-ticket' option for reply-primary-color (Reply Header BG)
-			// Wait, SC settings key is tricky.
-			// In `Core.php`, I used `wpsc-ap-individual-ticket` and `reply-primary-color`.
-			// Let's stick to that.
 			$sc_settings = get_option( 'wpsc-ap-individual-ticket', [] );
 			$sc_primary  = $sc_settings['reply-primary-color'] ?? '#2271b1';
+			$sc_note     = $sc_settings['note-primary-color'] ?? '#fffbcc';
+			// Third Color: Reply & Close Button Color for Customer
+			$sc_reply_close_bg = $sc_settings['reply-close-bg-color'] ?? '#e5e5e5';
+			$sc_reply_close_text = $sc_settings['reply-close-text-color'] ?? '#333333';
 
 			// 2. StackBoost Theme Colors (from Appearance module if active)
 			$sb_theme = [
@@ -113,8 +114,11 @@ class WordPress extends Module {
 			}
 
 			wp_localize_script( 'stackboost-chat-bubbles-admin', 'stackboostChatBubbles', [
-				'scPrimaryColor' => $sc_primary,
-				'sbTheme'        => $sb_theme,
+				'scPrimaryColor'   => $sc_primary,
+				'scNoteColor'      => $sc_note,
+				'scReplyCloseBg'   => $sc_reply_close_bg,
+				'scReplyCloseText' => $sc_reply_close_text,
+				'sbTheme'          => $sb_theme,
 			] );
 		}
 	}

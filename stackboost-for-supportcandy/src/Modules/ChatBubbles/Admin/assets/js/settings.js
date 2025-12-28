@@ -44,6 +44,9 @@
             $('#chat_bubbles_enable_ticket').prop('checked', false);
             $('#chat_bubbles_enable_email').prop('checked', false);
             $('#sb_chat_global_theme_selector').val('default').trigger('change');
+            $('#chat_bubbles_shadow_enable').prop('checked', false);
+            $('input[name="stackboost_settings[chat_bubbles_shadow_color]"]').val('#000000').trigger('change');
+            $('select[name="stackboost_settings[chat_bubbles_shadow_depth]"]').val('small');
 
             // Reset Type fields via loop
             ['agent', 'customer', 'note'].forEach(function(type) {
@@ -72,6 +75,10 @@
             $('select[name="' + prefixName + 'alignment]"]').val('left');
             $('input[name="' + prefixName + 'width]"]').val('85');
             $('input[name="' + prefixName + 'radius]"]').val('15');
+            // Reset Borders
+            $('select[name="' + prefixName + 'border_style]"]').val('none');
+            $('input[name="' + prefixName + 'border_width]"]').val('1');
+            $('input[name="' + prefixName + 'border_color]"]').val('#cccccc').trigger('change');
         }
 
         // 5. Live Preview Logic
@@ -79,24 +86,66 @@
             updatePreview();
         });
 
+        // Helper: Calculate luminance
+        function getLuminance(hex) {
+            // Remove hash
+            hex = hex.replace('#', '');
+
+            // Convert to RGB
+            var r = parseInt(hex.substring(0, 2), 16) / 255;
+            var g = parseInt(hex.substring(2, 4), 16) / 255;
+            var b = parseInt(hex.substring(4, 6), 16) / 255;
+
+            // Adjust for Gamma
+            var a = [r, g, b].map(function (v) {
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+        }
+
         function updatePreview() {
             // Get Global Settings
             var theme = $('#sb_chat_global_theme_selector').val();
             // Default Theme is now 'default'
             if (!theme) theme = 'default';
 
-            var containerBg = '#f0f0f1'; // Default light
+            var bubbleBgColors = [];
 
             // Iterate over all 3 types to update the 3 bubbles
             ['agent', 'customer', 'note'].forEach(function(type) {
-                updateBubble(type, theme);
+                var bg = updateBubble(type, theme);
+                if (bg) bubbleBgColors.push(bg);
             });
 
-            // Update container background if Android (Droid) or iOS (Fruit) for better contrast
+            // Smart Background Logic
+            // If theme is specifically android or modern, we respect that first.
+            // Otherwise we check contrast.
+            var containerBg = '#f0f0f1'; // Default light
+
             if (theme === 'android') {
-                containerBg = '#ece5dd'; // Droid Wallpaper
+                containerBg = '#ece5dd';
             } else if (theme === 'modern') {
                 containerBg = '#ffffff';
+            } else {
+                // Check average luminance of bubbles
+                // Only consider hex colors for calculation (skip vars for now)
+                var validColors = bubbleBgColors.filter(function(c) { return c && c.indexOf('#') === 0; });
+
+                if (validColors.length > 0) {
+                    var totalLum = 0;
+                    validColors.forEach(function(c) { totalLum += getLuminance(c); });
+                    var avgLum = totalLum / validColors.length;
+
+                    // If bubbles are very light (avgLum > 0.8), make bg dark if default bg is light
+                    // Actually, if bubbles are light (e.g. white/light grey), light bg is bad.
+                    // If bubbles are dark, light bg is good.
+
+                    // Simple logic: if bubbles are "too close" to #f0f0f1 (Lum ~0.89), switch to dark.
+                    // Let's say if avgLum > 0.8, switch to dark mode preview #333.
+                    if (avgLum > 0.8) {
+                        containerBg = '#333333';
+                    }
+                }
             }
             $('.stackboost-chat-preview-container').css('background', containerBg);
         }
@@ -116,7 +165,10 @@
                 radius: '15',
                 bold: false,
                 italic: false,
-                underline: false
+                underline: false,
+                borderStyle: 'none',
+                borderWidth: '1',
+                borderColor: '#cccccc'
             };
 
             // Apply Theme Logic
@@ -149,6 +201,16 @@
                 var scPrimary = (typeof stackboostChatBubbles !== 'undefined' && stackboostChatBubbles.scPrimaryColor)
                     ? stackboostChatBubbles.scPrimaryColor
                     : '#2271b1';
+                var scNote = (typeof stackboostChatBubbles !== 'undefined' && stackboostChatBubbles.scNoteColor)
+                    ? stackboostChatBubbles.scNoteColor
+                    : '#fffbcc';
+                // Use Reply & Close color for Customer (3rd color)
+                var scCustBg = (typeof stackboostChatBubbles !== 'undefined' && stackboostChatBubbles.scReplyCloseBg)
+                    ? stackboostChatBubbles.scReplyCloseBg
+                    : '#e5e5e5';
+                var scCustText = (typeof stackboostChatBubbles !== 'undefined' && stackboostChatBubbles.scReplyCloseText)
+                    ? stackboostChatBubbles.scReplyCloseText
+                    : '#333333';
 
                 if (type === 'agent') {
                     styles.bg = scPrimary;
@@ -156,13 +218,13 @@
                     styles.align = 'right';
                     styles.radius = '5';
                 } else if (type === 'note') {
-                    styles.bg = '#fffbcc';
+                    styles.bg = scNote;
                     styles.text = '#333333';
                     styles.align = 'center';
                     styles.radius = '0';
                 } else {
-                    styles.bg = '#e5e5e5';
-                    styles.text = '#333333';
+                    styles.bg = scCustBg;
+                    styles.text = scCustText;
                     styles.align = 'left';
                     styles.radius = '5';
                 }
@@ -287,6 +349,11 @@
                 styles.bold = $('input[name="' + prefixName + 'font_bold]"]').is(':checked');
                 styles.italic = $('input[name="' + prefixName + 'font_italic]"]').is(':checked');
                 styles.underline = $('input[name="' + prefixName + 'font_underline]"]').is(':checked');
+
+                // Borders
+                styles.borderStyle = $('select[name="' + prefixName + 'border_style]"]').val();
+                styles.borderWidth = $('input[name="' + prefixName + 'border_width]"]').val();
+                styles.borderColor = $('input[name="' + prefixName + 'border_color]"]').val();
             }
 
             // Apply Base CSS
@@ -299,14 +366,34 @@
                 'padding': '15px',
                 'font-weight': styles.bold ? 'bold' : 'normal',
                 'font-style': styles.italic ? 'italic' : 'normal',
-                'text-decoration': styles.underline ? 'underline' : 'none',
-                'border': 'none' // Remove borders
+                'text-decoration': styles.underline ? 'underline' : 'none'
             };
+
+            // Border Logic
+            if (styles.borderStyle && styles.borderStyle !== 'none') {
+                cssMap['border'] = styles.borderWidth + 'px ' + styles.borderStyle + ' ' + styles.borderColor;
+            } else {
+                cssMap['border'] = 'none';
+            }
 
             if (styles.fontSize) {
                 cssMap['font-size'] = styles.fontSize + 'px';
             } else {
                 cssMap['font-size'] = '';
+            }
+
+            // Drop Shadow Logic (Global)
+            var shadowEnable = $('#chat_bubbles_shadow_enable').is(':checked');
+            if (shadowEnable) {
+                var shadowColor = $('input[name="stackboost_settings[chat_bubbles_shadow_color]"]').val();
+                var shadowDepth = $('select[name="stackboost_settings[chat_bubbles_shadow_depth]"]').val();
+                var blur = '5px', spread = '0px'; // small
+                if (shadowDepth === 'medium') { blur = '10px'; }
+                if (shadowDepth === 'large') { blur = '20px'; spread = '5px'; }
+
+                cssMap['box-shadow'] = '0 2px ' + blur + ' ' + spread + ' ' + shadowColor;
+            } else {
+                cssMap['box-shadow'] = 'none';
             }
 
             $preview.css(cssMap);
@@ -334,6 +421,8 @@
 
             // Remove Tails Logic (per user request)
             $preview.find('.preview-tail').remove();
+
+            return styles.bg; // Return bg for smart background calculation
         }
 
         // Initialize UI

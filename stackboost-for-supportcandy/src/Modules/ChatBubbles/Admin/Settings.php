@@ -168,12 +168,31 @@ class Settings {
 					<option value="stackboost" <?php selected( $theme_val, 'stackboost' ); ?>><?php esc_html_e( 'StackBoost Theme', 'stackboost-for-supportcandy' ); ?> &#x21ba;</option>
 					<option value="supportcandy" <?php selected( $theme_val, 'supportcandy' ); ?>><?php esc_html_e( 'SupportCandy Theme', 'stackboost-for-supportcandy' ); ?> &#x21ba;</option>
 					<option value="classic" <?php selected( $theme_val, 'classic' ); ?>><?php esc_html_e( 'Classic', 'stackboost-for-supportcandy' ); ?></option>
-					<option value="ios" <?php selected( $theme_val, 'ios' ); ?>><?php esc_html_e( 'Fruit (Blue/Green)', 'stackboost-for-supportcandy' ); ?></option>
-					<option value="android" <?php selected( $theme_val, 'android' ); ?>><?php esc_html_e( 'Droid (Green/White)', 'stackboost-for-supportcandy' ); ?></option>
+					<option value="ios" <?php selected( $theme_val, 'ios' ); ?>><?php esc_html_e( 'Fruit', 'stackboost-for-supportcandy' ); ?></option>
+					<option value="android" <?php selected( $theme_val, 'android' ); ?>><?php esc_html_e( 'Droid', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="modern" <?php selected( $theme_val, 'modern' ); ?>><?php esc_html_e( 'Minimal / Modern', 'stackboost-for-supportcandy' ); ?></option>
 				</select>
 				<p class="description"><?php esc_html_e( 'Applies a base style to all bubbles. "Custom" unlocks detailed tabs.', 'stackboost-for-supportcandy' ); ?></p>
 				<p class="description"><span style="font-size: 14px;">&#x21ba;</span> <?php esc_html_e( 'Indicates settings are synced from another module.', 'stackboost-for-supportcandy' ); ?></p>
+			</td>
+		</tr>
+
+		<!-- Drop Shadow (Global) -->
+		<tr valign="top">
+			<th scope="row"><?php esc_html_e( 'Drop Shadow', 'stackboost-for-supportcandy' ); ?></th>
+			<td>
+				<label style="margin-right: 15px;">
+					<input type="checkbox" name="stackboost_settings[chat_bubbles_shadow_enable]" id="chat_bubbles_shadow_enable" value="1" <?php checked( $options['chat_bubbles_shadow_enable'] ?? 0, 1 ); ?> /> <?php esc_html_e( 'Enable', 'stackboost-for-supportcandy' ); ?>
+				</label>
+				<label style="margin-right: 5px;"><?php esc_html_e( 'Color:', 'stackboost-for-supportcandy' ); ?></label>
+				<input type="text" name="stackboost_settings[chat_bubbles_shadow_color]" value="<?php echo esc_attr( $options['chat_bubbles_shadow_color'] ?? '#000000' ); ?>" class="my-color-field" data-default-color="#000000" data-alpha-enabled="true" />
+				<label style="margin-left: 15px; margin-right: 5px;"><?php esc_html_e( 'Depth:', 'stackboost-for-supportcandy' ); ?></label>
+				<select name="stackboost_settings[chat_bubbles_shadow_depth]">
+					<option value="small" <?php selected( $options['chat_bubbles_shadow_depth'] ?? 'small', 'small' ); ?>><?php esc_html_e( 'Small', 'stackboost-for-supportcandy' ); ?></option>
+					<option value="medium" <?php selected( $options['chat_bubbles_shadow_depth'] ?? 'small', 'medium' ); ?>><?php esc_html_e( 'Medium', 'stackboost-for-supportcandy' ); ?></option>
+					<option value="large" <?php selected( $options['chat_bubbles_shadow_depth'] ?? 'small', 'large' ); ?>><?php esc_html_e( 'Large', 'stackboost-for-supportcandy' ); ?></option>
+				</select>
+				<p class="description"><?php esc_html_e( 'Adds a drop shadow to all bubbles.', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
 		<?php
@@ -282,6 +301,22 @@ class Settings {
 				</td>
 			</tr>
 
+			<!-- Borders -->
+			<tr valign="top">
+				<th scope="row"><?php esc_html_e( 'Border', 'stackboost-for-supportcandy' ); ?></th>
+				<td>
+					<select name="stackboost_settings[<?php echo esc_attr( $prefix . 'border_style' ); ?>]" style="margin-right: 5px;">
+						<option value="none" <?php selected( $options[ $prefix . 'border_style' ] ?? 'none', 'none' ); ?>><?php esc_html_e( 'None', 'stackboost-for-supportcandy' ); ?></option>
+						<option value="solid" <?php selected( $options[ $prefix . 'border_style' ] ?? 'none', 'solid' ); ?>><?php esc_html_e( 'Solid', 'stackboost-for-supportcandy' ); ?></option>
+						<option value="dashed" <?php selected( $options[ $prefix . 'border_style' ] ?? 'none', 'dashed' ); ?>><?php esc_html_e( 'Dashed', 'stackboost-for-supportcandy' ); ?></option>
+						<option value="dotted" <?php selected( $options[ $prefix . 'border_style' ] ?? 'none', 'dotted' ); ?>><?php esc_html_e( 'Dotted', 'stackboost-for-supportcandy' ); ?></option>
+					</select>
+					<input type="number" name="stackboost_settings[<?php echo esc_attr( $prefix . 'border_width' ); ?>]" min="1" max="10" value="<?php echo esc_attr( $options[ $prefix . 'border_width' ] ?? '1' ); ?>" class="small-text" placeholder="px"> px
+					<span style="margin-left: 5px;">Color:</span>
+					<input type="text" name="stackboost_settings[<?php echo esc_attr( $prefix . 'border_color' ); ?>]" value="<?php echo esc_attr( $options[ $prefix . 'border_color' ] ?? '#cccccc' ); ?>" class="my-color-field" data-default-color="#cccccc" />
+				</td>
+			</tr>
+
 		</tbody>
 		<?php
 	}
@@ -294,6 +329,9 @@ class Settings {
 			'chat_bubbles_enable_ticket',
 			'chat_bubbles_enable_email',
 			'chat_bubbles_theme',
+			'chat_bubbles_shadow_enable',
+			'chat_bubbles_shadow_color',
+			'chat_bubbles_shadow_depth',
 		];
 		foreach ( ['agent', 'customer', 'note'] as $type ) {
 			$prefix = "chat_bubbles_{$type}_";
@@ -307,6 +345,9 @@ class Settings {
 			$keys[] = "{$prefix}alignment";
 			$keys[] = "{$prefix}width";
 			$keys[] = "{$prefix}radius";
+			$keys[] = "{$prefix}border_style";
+			$keys[] = "{$prefix}border_width";
+			$keys[] = "{$prefix}border_color";
 		}
 		return $keys;
 	}
