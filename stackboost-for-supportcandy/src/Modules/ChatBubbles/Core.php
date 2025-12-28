@@ -214,11 +214,11 @@ class Core {
 		$shadow_css = '';
 		if ( ! empty( $options['chat_bubbles_shadow_enable'] ) ) {
 			$shadow_color = $options['chat_bubbles_shadow_color'] ?? '#000000';
+			$shadow_distance = isset( $options['chat_bubbles_shadow_distance'] ) ? intval( $options['chat_bubbles_shadow_distance'] ) : 2;
 			$shadow_blur  = isset( $options['chat_bubbles_shadow_blur'] ) ? intval( $options['chat_bubbles_shadow_blur'] ) : 5;
+			$shadow_spread = isset( $options['chat_bubbles_shadow_spread'] ) ? intval( $options['chat_bubbles_shadow_spread'] ) : 0;
 			$opacity_pct  = $options['chat_bubbles_shadow_opacity'] ?? '40';
 			$opacity_val  = intval( $opacity_pct ) / 100;
-
-			$blur = "{$shadow_blur}px";
 
 			// Convert Hex to RGBA for Opacity Control
 			if ( strpos( $shadow_color, '#' ) === 0 && strlen( $shadow_color ) === 7 ) {
@@ -229,8 +229,8 @@ class Core {
 				// Let's rely on the hex conversion for now as the picker defaults to hex.
 			}
 
-			// Switched to drop-shadow per user request. Note: drop-shadow does not support spread.
-			$shadow_css = "filter: drop-shadow(0 2px {$blur} {$shadow_color}) !important;";
+			// Switched back to box-shadow to support spread radius as explicitly requested
+			$shadow_css = "box-shadow: {$shadow_distance}px {$shadow_distance}px {$shadow_blur}px {$shadow_spread}px {$shadow_color} !important;";
 		}
 
 		foreach ( $types as $type ) {

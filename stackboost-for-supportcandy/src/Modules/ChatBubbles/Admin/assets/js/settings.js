@@ -423,7 +423,9 @@
             var shadowEnable = $('#chat_bubbles_shadow_enable').is(':checked');
             if (shadowEnable) {
                 var shadowColor = $('input[name="stackboost_settings[chat_bubbles_shadow_color]"]').val();
+                var shadowDistance = $('input[name="stackboost_settings[chat_bubbles_shadow_distance]"]').val();
                 var shadowBlur = $('input[name="stackboost_settings[chat_bubbles_shadow_blur]"]').val();
+                var shadowSpread = $('input[name="stackboost_settings[chat_bubbles_shadow_spread]"]').val();
                 var shadowOpacity = $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val();
 
                 // Convert Opacity (0-100) to decimal
@@ -438,9 +440,9 @@
                     shadowColor = 'rgba(' + r + ',' + g + ',' + b + ',' + opacityVal + ')';
                 }
 
-                var blur = shadowBlur + 'px';
-                cssMap['filter'] = 'drop-shadow(0 2px ' + blur + ' ' + shadowColor + ')';
-                cssMap['box-shadow'] = 'none'; // clear old
+                // Use box-shadow to support spread radius
+                cssMap['box-shadow'] = shadowDistance + 'px ' + shadowDistance + 'px ' + shadowBlur + 'px ' + shadowSpread + 'px ' + shadowColor;
+                cssMap['filter'] = 'none'; // clear drop-shadow if present
             } else {
                 cssMap['filter'] = 'none';
                 cssMap['box-shadow'] = 'none';

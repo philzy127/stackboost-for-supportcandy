@@ -188,13 +188,31 @@ class Settings {
 				</label>
 				<label style="margin-right: 5px;"><?php esc_html_e( 'Color:', 'stackboost-for-supportcandy' ); ?></label>
 				<input type="text" name="stackboost_settings[chat_bubbles_shadow_color]" value="<?php echo esc_attr( $options['chat_bubbles_shadow_color'] ?? '#000000' ); ?>" class="my-color-field" data-default-color="#000000" data-alpha-enabled="true" />
-				<label style="margin-left: 15px; margin-right: 5px;"><?php esc_html_e( 'Blur:', 'stackboost-for-supportcandy' ); ?></label>
+				<br/>
+
+				<!-- Distance -->
+				<label style="margin-right: 5px; width: 60px; display:inline-block;"><?php esc_html_e( 'Distance:', 'stackboost-for-supportcandy' ); ?></label>
+				<input type="range" name="stackboost_settings[chat_bubbles_shadow_distance]" min="0" max="20" step="1" value="<?php echo esc_attr( $options['chat_bubbles_shadow_distance'] ?? '2' ); ?>" oninput="this.nextElementSibling.value = this.value">
+				<output><?php echo esc_html( $options['chat_bubbles_shadow_distance'] ?? '2' ); ?></output>px
+				<br/>
+
+				<!-- Blur -->
+				<label style="margin-right: 5px; width: 60px; display:inline-block;"><?php esc_html_e( 'Blur:', 'stackboost-for-supportcandy' ); ?></label>
 				<input type="range" name="stackboost_settings[chat_bubbles_shadow_blur]" min="0" max="50" step="1" value="<?php echo esc_attr( $options['chat_bubbles_shadow_blur'] ?? '5' ); ?>" oninput="this.nextElementSibling.value = this.value">
 				<output><?php echo esc_html( $options['chat_bubbles_shadow_blur'] ?? '5' ); ?></output>px
 				<br/>
-				<label style="margin-right: 5px;"><?php esc_html_e( 'Opacity:', 'stackboost-for-supportcandy' ); ?></label>
+
+				<!-- Spread -->
+				<label style="margin-right: 5px; width: 60px; display:inline-block;"><?php esc_html_e( 'Spread:', 'stackboost-for-supportcandy' ); ?></label>
+				<input type="range" name="stackboost_settings[chat_bubbles_shadow_spread]" min="-20" max="20" step="1" value="<?php echo esc_attr( $options['chat_bubbles_shadow_spread'] ?? '0' ); ?>" oninput="this.nextElementSibling.value = this.value">
+				<output><?php echo esc_html( $options['chat_bubbles_shadow_spread'] ?? '0' ); ?></output>px
+				<br/>
+
+				<!-- Opacity -->
+				<label style="margin-right: 5px; width: 60px; display:inline-block;"><?php esc_html_e( 'Opacity:', 'stackboost-for-supportcandy' ); ?></label>
 				<input type="range" name="stackboost_settings[chat_bubbles_shadow_opacity]" min="0" max="100" step="5" value="<?php echo esc_attr( $options['chat_bubbles_shadow_opacity'] ?? '40' ); ?>" oninput="this.nextElementSibling.value = this.value">
 				<output><?php echo esc_html( $options['chat_bubbles_shadow_opacity'] ?? '40' ); ?></output>%
+
 				<p class="description"><?php esc_html_e( 'Adds a drop shadow to all bubbles.', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
@@ -353,7 +371,9 @@ class Settings {
 			'chat_bubbles_theme',
 			'chat_bubbles_shadow_enable',
 			'chat_bubbles_shadow_color',
+			'chat_bubbles_shadow_distance',
 			'chat_bubbles_shadow_blur',
+			'chat_bubbles_shadow_spread',
 			'chat_bubbles_shadow_opacity',
 			'chat_bubbles_image_box',
 		];
