@@ -98,34 +98,16 @@ class WordPress extends Module {
 			$sc_reply_close_bg = $sc_settings['reply-close-bg-color'] ?? '#e5e5e5';
 			$sc_reply_close_text = $sc_settings['reply-close-text-color'] ?? '#333333';
 
-			// 2. StackBoost Theme Colors (from Appearance module if active)
-			$sb_theme = [
-				'primary'    => '#2271b1',
-				'background' => '#f0f0f1',
-				'text'       => '#3c434a'
-			];
+			// 2. StackBoost Theme Colors (Source of Truth from Core)
+			$options = get_option( 'stackboost_settings', [] );
+			$active_theme = $options['admin_theme'] ?? 'sb-theme-clean-tech';
+			$theme_colors = Core::get_instance()->get_stackboost_theme_colors( $active_theme );
 
-			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
-				// We need to fetch the actual CSS variables or calculated colors.
-				// The Appearance module stores settings in `stackboost_settings` under `appearance_theme` etc.
-				// But simpler: The user likely wants to see the colors that match the *current admin interface* if they are using a StackBoost theme.
-				// But if they are configuring this on a light theme but the frontend uses a dark theme...
-				// For now, let's look at `stackboost_settings['appearance_accent_color']`.
-				$options = get_option( 'stackboost_settings', [] );
-				if ( ! empty( $options['appearance_accent_color'] ) ) {
-					$sb_theme['primary'] = $options['appearance_accent_color'];
-				}
-				// Backgrounds are harder because they are CSS vars in the theme file.
-				// We can try to guess based on `appearance_theme` key (e.g. 'dark', 'midnight').
-				$active_theme = $options['appearance_theme'] ?? 'default';
-				if ( $active_theme === 'dark' ) {
-					$sb_theme['background'] = '#2b2d2f'; // Example dark bg
-					$sb_theme['text'] = '#f0f0f1';
-				} elseif ( $active_theme === 'midnight' ) {
-					$sb_theme['background'] = '#1e1e1e';
-					$sb_theme['text'] = '#d4d4d4';
-				}
-			}
+			$sb_theme = [
+				'primary'    => $theme_colors['accent'],
+				'background' => $theme_colors['bg_main'],
+				'text'       => '#3c434a', // Matching Core hardcoded fallback for customer text
+			];
 
 			wp_localize_script( 'stackboost-chat-bubbles-admin', 'stackboostChatBubbles', [
 				'scPrimaryColor'   => $sc_primary,

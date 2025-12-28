@@ -385,7 +385,7 @@ class Core {
 	 * Helper to get StackBoost Theme Colors (Mirroring admin-themes.css).
 	 * This ensures colors work on the frontend without enqueueing the full admin CSS.
 	 */
-	private function get_stackboost_theme_colors( $slug ) {
+	public function get_stackboost_theme_colors( $slug ) {
 		$themes = [
 			'sb-theme-wordpress-sync' => [
 				'accent' => '#2271b1', // Fallback, variable not available on frontend
