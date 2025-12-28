@@ -85,6 +85,7 @@ function stackboost_log( $message, $context = 'general' ) {
         'conditional_views'    => 'enable_log_conditional_views',
         'queue_macro'          => 'enable_log_queue_macro',
         'appearance'           => 'enable_log_appearance',
+        'chat_bubbles'         => 'enable_log_chat_bubbles',
 
         // Directory (handles multiple contexts)
         'directory-import'     => 'enable_log_directory',
