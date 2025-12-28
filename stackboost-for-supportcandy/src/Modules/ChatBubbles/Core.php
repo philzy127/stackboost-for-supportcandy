@@ -214,19 +214,11 @@ class Core {
 		$shadow_css = '';
 		if ( ! empty( $options['chat_bubbles_shadow_enable'] ) ) {
 			$shadow_color = $options['chat_bubbles_shadow_color'] ?? '#000000';
-			$shadow_depth = $options['chat_bubbles_shadow_depth'] ?? 'small';
+			$shadow_blur  = isset( $options['chat_bubbles_shadow_blur'] ) ? intval( $options['chat_bubbles_shadow_blur'] ) : 5;
 			$opacity_pct  = $options['chat_bubbles_shadow_opacity'] ?? '40';
 			$opacity_val  = intval( $opacity_pct ) / 100;
 
-			$blur = '5px';
-			$spread = '0px';
-
-			if ( $shadow_depth === 'medium' ) {
-				$blur = '10px';
-			} elseif ( $shadow_depth === 'large' ) {
-				$blur = '20px';
-				$spread = '5px';
-			}
+			$blur = "{$shadow_blur}px";
 
 			// Convert Hex to RGBA for Opacity Control
 			if ( strpos( $shadow_color, '#' ) === 0 && strlen( $shadow_color ) === 7 ) {
@@ -376,6 +368,16 @@ class Core {
 			}
 			$header_selector_str = implode(', ', $header_selectors);
 			$css .= "{$header_selector_str} { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
+
+			// Image Bounding Box (Global setting affecting all types)
+			if ( ! empty( $options['chat_bubbles_image_box'] ) ) {
+				$img_selectors = [];
+				foreach ($selector_parts as $part) {
+					$img_selectors[] = trim($part) . ' img';
+				}
+				$img_selector_str = implode(', ', $img_selectors);
+				$css .= "{$img_selector_str} { border: 1px solid rgba(0,0,0,0.2) !important; padding: 3px !important; background: rgba(255,255,255,0.5) !important; border-radius: 3px !important; }";
+			}
 		}
 
 		return $css;
@@ -463,6 +465,7 @@ class Core {
 						'text_color'  => $theme_colors['text_on_accent'],
 						'alignment'   => 'right',
 						'radius'      => '15',
+						'padding'     => '15',
 					]);
 				} elseif ( $type === 'note' ) {
 					$styles = array_merge( $defaults, [
@@ -470,6 +473,7 @@ class Core {
 						'text_color'  => '#333333',
 						'alignment'   => 'center',
 						'radius'      => '5',
+						'padding'     => '10',
 					]);
 				} else {
 					$styles = array_merge( $defaults, [
@@ -477,6 +481,7 @@ class Core {
 						'text_color'  => '#3c434a', // Dark text on main bg
 						'alignment'   => 'left',
 						'radius'      => '15',
+						'padding'     => '15',
 					]);
 				}
 				$styles['font_family'] = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
@@ -695,6 +700,7 @@ class Core {
 		if ($styles['width'] < 0 || $styles['width'] > 100) $styles['width'] = 85;
 		$styles['radius'] = absint($styles['radius']);
 		if ($styles['radius'] > 100) $styles['radius'] = 100;
+		$styles['padding'] = absint($styles['padding']);
 		$styles['font_size'] = absint($styles['font_size']);
 		$styles['font_family'] = sanitize_text_field($styles['font_family']);
 		$styles['border_width'] = absint($styles['border_width']);
