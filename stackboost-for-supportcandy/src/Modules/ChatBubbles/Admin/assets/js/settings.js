@@ -158,7 +158,7 @@
             // Smart Background Logic
             // If theme is specifically android or modern, we respect that first.
             // Otherwise we check contrast.
-            var containerBg = '#f0f0f1'; // Default light
+            var containerBg = '#ffffff'; // Default to White for better visibility
 
             if (theme === 'android') {
                 containerBg = '#ece5dd';
@@ -174,13 +174,8 @@
                     validColors.forEach(function(c) { totalLum += getLuminance(c); });
                     var avgLum = totalLum / validColors.length;
 
-                    // If bubbles are very light (avgLum > 0.8), make bg dark if default bg is light
-                    // Actually, if bubbles are light (e.g. white/light grey), light bg is bad.
-                    // If bubbles are dark, light bg is good.
-
-                    // Simple logic: if bubbles are "too close" to #f0f0f1 (Lum ~0.89), switch to dark.
-                    // Let's say if avgLum > 0.8, switch to dark mode preview #333.
-                    if (avgLum > 0.8) {
+                    // If bubbles are very light (avgLum > 0.85), switch to Dark Mode #333 to ensure visibility
+                    if (avgLum > 0.85) {
                         containerBg = '#333333';
                     }
                 }

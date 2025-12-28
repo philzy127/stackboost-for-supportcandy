@@ -213,15 +213,15 @@ class Core {
 			}
 
 			// Increased specificity to override SupportCandy default styles
-			// New selector based on DOM analysis: .wpsc-it-thread-section-container .wpsc-thread...
+			// Using ID selector + class hierarchy for maximum specificity
 
 			$selector = '';
 			if ( $type === 'agent' ) {
-				$selector = '.wpsc-it-thread-section-container .wpsc-thread.reply.agent .thread-body, .wpsc-it-thread-section-container .wpsc-thread.report.agent .thread-body';
+				$selector = '#wpsc-it-container .wpsc-thread.reply.agent .thread-body, #wpsc-it-container .wpsc-thread.report.agent .thread-body';
 			} elseif ( $type === 'customer' ) {
-				$selector = '.wpsc-it-thread-section-container .wpsc-thread.reply.customer .thread-body, .wpsc-it-thread-section-container .wpsc-thread.report.customer .thread-body';
+				$selector = '#wpsc-it-container .wpsc-thread.reply.customer .thread-body, #wpsc-it-container .wpsc-thread.report.customer .thread-body';
 			} elseif ( $type === 'note' ) {
-				$selector = '.wpsc-it-thread-section-container .wpsc-thread.note .thread-body';
+				$selector = '#wpsc-it-container .wpsc-thread.note .thread-body';
 			}
 
 			// Build CSS Rule
