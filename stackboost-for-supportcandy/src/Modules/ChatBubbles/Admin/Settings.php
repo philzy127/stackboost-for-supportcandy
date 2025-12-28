@@ -43,9 +43,9 @@ class Settings {
 						<!-- JS Tabs Header -->
 						<div class="sb-chat-tabs">
 							<div class="sb-chat-tab active" data-target="general"><?php esc_html_e( 'Settings', 'stackboost-for-supportcandy' ); ?></div>
-							<div class="sb-chat-tab type-tab" data-target="agent"><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></div>
 							<div class="sb-chat-tab type-tab" data-target="customer"><?php esc_html_e( 'Customer', 'stackboost-for-supportcandy' ); ?></div>
 							<div class="sb-chat-tab type-tab" data-target="note"><?php esc_html_e( 'Private Note', 'stackboost-for-supportcandy' ); ?></div>
+							<div class="sb-chat-tab type-tab" data-target="agent"><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></div>
 						</div>
 
 						<!-- Config Content Area -->
@@ -62,7 +62,7 @@ class Settings {
 							</div>
 
 							<!-- Type Specific Tabs -->
-							<?php foreach ( ['agent', 'customer', 'note'] as $type ) : ?>
+							<?php foreach ( ['customer', 'note', 'agent'] as $type ) : ?>
 								<div id="sb-chat-config-<?php echo esc_attr( $type ); ?>" class="sb-chat-config-section" style="display:none;">
 									<table class="form-table">
 										<?php self::render_type_fields( $type ); ?>
