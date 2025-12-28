@@ -805,7 +805,7 @@ class Settings {
 				'enable_log_chat_bubbles', // Added Chat Bubbles Logging
 			],
 			// 'stackboost-date-time' removed - uses isolated option group via custom AJAX
-			'stackboost-chat-bubbles' => \StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings::get_settings_keys(),
+			'stackboost-chat-bubbles' => class_exists( 'StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings' ) ? \StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings::get_settings_keys() : [],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
