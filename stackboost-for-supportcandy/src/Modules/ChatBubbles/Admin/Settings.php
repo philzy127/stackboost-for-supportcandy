@@ -192,6 +192,10 @@ class Settings {
 					<option value="medium" <?php selected( $options['chat_bubbles_shadow_depth'] ?? 'small', 'medium' ); ?>><?php esc_html_e( 'Medium', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="large" <?php selected( $options['chat_bubbles_shadow_depth'] ?? 'small', 'large' ); ?>><?php esc_html_e( 'Large', 'stackboost-for-supportcandy' ); ?></option>
 				</select>
+				<br/>
+				<label style="margin-right: 5px;"><?php esc_html_e( 'Opacity:', 'stackboost-for-supportcandy' ); ?></label>
+				<input type="range" name="stackboost_settings[chat_bubbles_shadow_opacity]" min="0" max="100" step="5" value="<?php echo esc_attr( $options['chat_bubbles_shadow_opacity'] ?? '40' ); ?>" oninput="this.nextElementSibling.value = this.value">
+				<output><?php echo esc_html( $options['chat_bubbles_shadow_opacity'] ?? '40' ); ?></output>%
 				<p class="description"><?php esc_html_e( 'Adds a drop shadow to all bubbles.', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
@@ -332,6 +336,7 @@ class Settings {
 			'chat_bubbles_shadow_enable',
 			'chat_bubbles_shadow_color',
 			'chat_bubbles_shadow_depth',
+			'chat_bubbles_shadow_opacity',
 		];
 		foreach ( ['agent', 'customer', 'note'] as $type ) {
 			$prefix = "chat_bubbles_{$type}_";

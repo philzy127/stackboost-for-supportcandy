@@ -802,6 +802,7 @@ class Settings {
 				'enable_log_directory',
 				'enable_log_onboarding',
 				'enable_log_appearance', // Added Appearance Logging
+				'enable_log_chat_bubbles', // Added Chat Bubbles Logging
 			],
 			// 'stackboost-date-time' removed - uses isolated option group via custom AJAX
 			'stackboost-chat-bubbles' => \StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings::get_settings_keys(),
@@ -846,6 +847,7 @@ class Settings {
 					case 'enable_log_directory':
 					case 'enable_log_onboarding':
 					case 'enable_log_appearance':
+					case 'enable_log_chat_bubbles':
 						$saved_settings[$key] = intval($value);
 						break;
 
@@ -976,6 +978,7 @@ class Settings {
 			'enable_log_directory'         => __( 'Company Directory', 'stackboost-for-supportcandy' ),
 			'enable_log_onboarding'        => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
 			'enable_log_appearance'        => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ),
+			'enable_log_chat_bubbles'      => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
 		];
 
 		foreach ( $modules as $key => $label ) {

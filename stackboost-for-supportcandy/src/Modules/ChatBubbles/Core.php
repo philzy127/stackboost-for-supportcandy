@@ -61,10 +61,10 @@ class Core {
 		}
 
 		$css = $this->generate_css();
-		wp_add_inline_style( 'supportcandy-admin-style', $css );
+		wp_add_inline_style( 'wpsc-admin', $css );
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Styles enqueued.', 'chat_bubbles' );
+			stackboost_log( 'ChatBubbles: Styles enqueued. Hook: ' . $hook_suffix, 'chat_bubbles' );
 		}
 	}
 
@@ -181,27 +181,27 @@ class Core {
 		if ( ! empty( $options['chat_bubbles_shadow_enable'] ) ) {
 			$shadow_color = $options['chat_bubbles_shadow_color'] ?? '#000000';
 			$shadow_depth = $options['chat_bubbles_shadow_depth'] ?? 'small';
+			$opacity_pct  = $options['chat_bubbles_shadow_opacity'] ?? '40';
+			$opacity_val  = intval( $opacity_pct ) / 100;
 
 			$blur = '5px';
 			$spread = '0px';
-			$opacity = '0.2';
 
 			if ( $shadow_depth === 'medium' ) {
 				$blur = '10px';
-				$opacity = '0.3';
 			} elseif ( $shadow_depth === 'large' ) {
 				$blur = '20px';
 				$spread = '5px';
-				$opacity = '0.4';
 			}
 
-			// If shadow color is hex, we can't easily add opacity without converting to rgba.
-			// Assuming user picker handles alpha or we just use box-shadow solid if hex?
-			// The color picker has data-alpha-enabled="true", so it returns rgba() usually if opacity is set.
-			// But for "Depth" presets, we usually want to control the alpha of the shadow myself or let user pick full color?
-			// User picker is better. "Color, depth etc".
-			// If user picks solid black, it will be harsh.
-			// Let's assume the user picks the color they want.
+			// Convert Hex to RGBA for Opacity Control
+			if ( strpos( $shadow_color, '#' ) === 0 && strlen( $shadow_color ) === 7 ) {
+				list( $r, $g, $b ) = sscanf( $shadow_color, "#%02x%02x%02x" );
+				$shadow_color = "rgba({$r}, {$g}, {$b}, {$opacity_val})";
+			} elseif ( strpos( $shadow_color, 'rgba' ) !== false ) {
+				// If already rgba, we respect user input, maybe override alpha?
+				// Let's rely on the hex conversion for now as the picker defaults to hex.
+			}
 
 			$shadow_css = "box-shadow: 0 2px {$blur} {$spread} {$shadow_color} !important;";
 		}
@@ -406,10 +406,10 @@ class Core {
 				break;
 
 			case 'ios':
-				// Fruit
+				// Fruit: Agent=Blue, Customer=Green
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#007aff',
+						'bg_color'    => '#007aff', // Blue (iMessage)
 						'text_color'  => '#ffffff',
 						'alignment'   => 'right',
 						'width'       => '75',
@@ -417,7 +417,7 @@ class Core {
 					]);
 				} elseif ( $type === 'note' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#fffae6',
+						'bg_color'    => '#fffbcc', // Standard yellow note
 						'text_color'  => '#333333',
 						'alignment'   => 'center',
 						'width'       => '85',
@@ -425,8 +425,8 @@ class Core {
 					]);
 				} else {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#e5e5ea',
-						'text_color'  => '#000000',
+						'bg_color'    => '#34c759', // Green (SMS/RCS)
+						'text_color'  => '#ffffff',
 						'alignment'   => 'left',
 						'width'       => '75',
 						'radius'      => '20',

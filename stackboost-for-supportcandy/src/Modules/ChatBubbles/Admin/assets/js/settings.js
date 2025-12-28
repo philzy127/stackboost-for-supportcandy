@@ -39,7 +39,28 @@
 
         // 4. Reset Logic
         $('#sb_chat_reset_all').on('click', function() {
-            if(!confirm('Are you sure you want to reset all Chat Bubble settings to defaults?')) return;
+            var btn = $(this);
+            // Use stackboostConfirm if available, else native confirm
+            if (typeof window.stackboostConfirm === 'function') {
+                window.stackboostConfirm(
+                    'Are you sure you want to reset all Chat Bubble settings to defaults?',
+                    'Confirm Reset',
+                    function() {
+                        performGlobalReset();
+                    },
+                    null,
+                    'Yes, Reset',
+                    'Cancel',
+                    true
+                );
+            } else {
+                if(confirm('Are you sure you want to reset all Chat Bubble settings to defaults?')) {
+                    performGlobalReset();
+                }
+            }
+        });
+
+        function performGlobalReset() {
             // Reset Global fields
             $('#chat_bubbles_enable_ticket').prop('checked', false);
             $('#chat_bubbles_enable_email').prop('checked', false);
@@ -47,19 +68,36 @@
             $('#chat_bubbles_shadow_enable').prop('checked', false);
             $('input[name="stackboost_settings[chat_bubbles_shadow_color]"]').val('#000000').trigger('change');
             $('select[name="stackboost_settings[chat_bubbles_shadow_depth]"]').val('small');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val('40').trigger('input'); // Reset opacity
 
             // Reset Type fields via loop
             ['agent', 'customer', 'note'].forEach(function(type) {
                 resetSection(type);
             });
             updatePreview();
-        });
+        }
 
         $('.sb-chat-reset-type').on('click', function() {
             var type = $(this).data('type');
-            if(!confirm('Reset settings for ' + type + '?')) return;
-            resetSection(type);
-            updatePreview();
+            if (typeof window.stackboostConfirm === 'function') {
+                window.stackboostConfirm(
+                    'Reset settings for ' + type + '?',
+                    'Confirm Reset',
+                    function() {
+                        resetSection(type);
+                        updatePreview();
+                    },
+                    null,
+                    'Yes, Reset',
+                    'Cancel',
+                    true
+                );
+            } else {
+                if(confirm('Reset settings for ' + type + '?')) {
+                    resetSection(type);
+                    updatePreview();
+                }
+            }
         });
 
         function resetSection(type) {
@@ -268,7 +306,7 @@
                 styles.font = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
 
             } else if (theme === 'ios') {
-                // Now "Fruit"
+                // Fruit: Blue (Agent) vs Green (Customer)
                 if (type === 'agent') {
                     styles.bg = '#007aff';
                     styles.text = '#ffffff';
@@ -276,14 +314,14 @@
                     styles.width = '75';
                     styles.radius = '20';
                 } else if (type === 'note') {
-                    styles.bg = '#fffae6';
+                    styles.bg = '#fffbcc';
                     styles.text = '#333333';
                     styles.align = 'center';
                     styles.width = '85';
                     styles.radius = '10';
                 } else {
-                    styles.bg = '#e5e5ea';
-                    styles.text = '#000000';
+                    styles.bg = '#34c759';
+                    styles.text = '#ffffff';
                     styles.align = 'left';
                     styles.width = '75';
                     styles.radius = '20';
@@ -387,6 +425,20 @@
             if (shadowEnable) {
                 var shadowColor = $('input[name="stackboost_settings[chat_bubbles_shadow_color]"]').val();
                 var shadowDepth = $('select[name="stackboost_settings[chat_bubbles_shadow_depth]"]').val();
+                var shadowOpacity = $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val();
+
+                // Convert Opacity (0-100) to decimal
+                var opacityVal = parseInt(shadowOpacity) / 100;
+
+                // Helper to convert Hex to RGBA
+                var r=0, g=0, b=0;
+                if (shadowColor.length === 7) {
+                    r = parseInt(shadowColor.substring(1,3), 16);
+                    g = parseInt(shadowColor.substring(3,5), 16);
+                    b = parseInt(shadowColor.substring(5,7), 16);
+                    shadowColor = 'rgba(' + r + ',' + g + ',' + b + ',' + opacityVal + ')';
+                }
+
                 var blur = '5px', spread = '0px'; // small
                 if (shadowDepth === 'medium') { blur = '10px'; }
                 if (shadowDepth === 'large') { blur = '20px'; spread = '5px'; }
