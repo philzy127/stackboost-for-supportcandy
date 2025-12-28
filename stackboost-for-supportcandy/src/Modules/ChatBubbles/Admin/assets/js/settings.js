@@ -41,9 +41,9 @@
         $('#sb_chat_reset_all').on('click', function() {
             if(!confirm('Are you sure you want to reset all Chat Bubble settings to defaults?')) return;
             // Reset Global fields
-            $('#chat_bubbles_enable').prop('checked', false);
+            $('#chat_bubbles_enable_ticket').prop('checked', false);
+            $('#chat_bubbles_enable_email').prop('checked', false);
             $('#sb_chat_global_theme_selector').val('default').trigger('change');
-            $('#chat_bubbles_tail').val('none');
 
             // Reset Type fields via loop
             ['agent', 'customer', 'note'].forEach(function(type) {
@@ -85,15 +85,23 @@
             // Default Theme is now 'default'
             if (!theme) theme = 'default';
 
-            var tailStyle = $('#chat_bubbles_tail').val();
+            var containerBg = '#f0f0f1'; // Default light
 
             // Iterate over all 3 types to update the 3 bubbles
             ['agent', 'customer', 'note'].forEach(function(type) {
-                updateBubble(type, theme, tailStyle);
+                updateBubble(type, theme);
             });
+
+            // Update container background if Android (Droid) or iOS (Fruit) for better contrast
+            if (theme === 'android') {
+                containerBg = '#ece5dd'; // Droid Wallpaper
+            } else if (theme === 'modern') {
+                containerBg = '#ffffff';
+            }
+            $('.stackboost-chat-preview-container').css('background', containerBg);
         }
 
-        function updateBubble(type, theme, tailStyle) {
+        function updateBubble(type, theme) {
             var $preview = $('#preview-bubble-' + type);
             var prefixName = 'stackboost_settings[chat_bubbles_' + type + '_';
 
@@ -106,7 +114,6 @@
                 align: 'left',
                 width: '85',
                 radius: '15',
-                tail: tailStyle,
                 bold: false,
                 italic: false,
                 underline: false
@@ -115,8 +122,13 @@
             // Apply Theme Logic
             // Note: Note types default to center/85% in themes.
             if (theme === 'stackboost') {
+                // StackBoost: Syncs with Appearance module. Values passed via localized script.
+                var sbColors = (typeof stackboostChatBubbles !== 'undefined' && stackboostChatBubbles.sbTheme)
+                    ? stackboostChatBubbles.sbTheme
+                    : { primary: '#2271b1', background: '#f0f0f1', text: '#3c434a' };
+
                 if (type === 'agent') {
-                    styles.bg = 'var(--sb-accent, #2271b1)'; // Use var for preview
+                    styles.bg = sbColors.primary; // Accent
                     styles.text = '#ffffff';
                     styles.align = 'right';
                     styles.radius = '15';
@@ -126,13 +138,12 @@
                     styles.align = 'center';
                     styles.radius = '5';
                 } else {
-                    styles.bg = 'var(--sb-bg-main, #f0f0f1)';
-                    styles.text = '#3c434a';
+                    styles.bg = sbColors.background; // Main BG or Surface
+                    styles.text = sbColors.text;
                     styles.align = 'left';
                     styles.radius = '15';
                 }
                 styles.font = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
-                styles.tail = 'round'; // Default for SB
 
             } else if (theme === 'supportcandy') {
                 var scPrimary = (typeof stackboostChatBubbles !== 'undefined' && stackboostChatBubbles.scPrimaryColor)
@@ -155,7 +166,6 @@
                     styles.align = 'left';
                     styles.radius = '5';
                 }
-                styles.tail = 'none';
 
             } else if (theme === 'classic') {
                 if (type === 'agent') {
@@ -174,7 +184,6 @@
                     styles.align = 'left';
                     styles.radius = '5';
                 }
-                styles.tail = 'none';
 
             } else if (theme === 'default') {
                 // Blue/Grey standard
@@ -189,15 +198,15 @@
                     styles.align = 'center';
                     styles.radius = '5';
                 } else {
-                    styles.bg = '#f0f0f1';
+                    styles.bg = '#e6e6e6';
                     styles.text = '#3c434a';
                     styles.align = 'left';
                     styles.radius = '15';
                 }
                 styles.font = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
-                styles.tail = 'round';
 
             } else if (theme === 'ios') {
+                // Now "Fruit"
                 if (type === 'agent') {
                     styles.bg = '#007aff';
                     styles.text = '#ffffff';
@@ -218,9 +227,9 @@
                     styles.radius = '20';
                 }
                 styles.font = '-apple-system, BlinkMacSystemFont, sans-serif';
-                styles.tail = 'round';
 
             } else if (theme === 'android') {
+                // Now "Droid"
                 if (type === 'agent') {
                     styles.bg = '#d9fdd3';
                     styles.text = '#111b21';
@@ -241,7 +250,6 @@
                     styles.radius = '8';
                 }
                 styles.font = 'Roboto, sans-serif';
-                styles.tail = 'sharp';
 
             } else if (theme === 'modern') {
                 if (type === 'agent') {
@@ -264,7 +272,6 @@
                     styles.radius = '0';
                 }
                 styles.font = 'Helvetica, Arial, sans-serif';
-                styles.tail = 'none';
 
             } else if (theme === 'custom') {
                 // Custom overrides everything
@@ -280,9 +287,6 @@
                 styles.bold = $('input[name="' + prefixName + 'font_bold]"]').is(':checked');
                 styles.italic = $('input[name="' + prefixName + 'font_italic]"]').is(':checked');
                 styles.underline = $('input[name="' + prefixName + 'font_underline]"]').is(':checked');
-
-                // For custom, use Global Tail
-                styles.tail = tailStyle;
             }
 
             // Apply Base CSS
@@ -328,61 +332,8 @@
                 });
             }
 
-            // Tail Logic
+            // Remove Tails Logic (per user request)
             $preview.find('.preview-tail').remove();
-
-            // Tail only if enabled, not note, and not center aligned
-            if (styles.tail !== 'none' && type !== 'note' && styles.align !== 'center') {
-                $preview.css('position', 'relative');
-                var $tail = $('<div class="preview-tail"></div>');
-                // Use computed background color for tail to handle vars
-                var tailColor = $preview.css('background-color');
-
-                $tail.css({
-                    'position': 'absolute',
-                    'width': '0',
-                    'height': '0',
-                    'border-style': 'solid',
-                    'z-index': 1
-                });
-
-                if (styles.align === 'right') {
-                    $tail.css({ 'right': '-8px', 'bottom': '0', 'left': 'auto' });
-                    if (styles.tail === 'sharp') {
-                        $tail.css({
-                            'border-width': '10px 0 10px 15px',
-                            'border-color': 'transparent transparent transparent ' + tailColor,
-                            'right': '-10px',
-                            'bottom': '10px'
-                        });
-                    } else {
-                        // Round approximation
-                        $tail.css({
-                            'border-width': '15px 0 0 15px',
-                            'border-color': 'transparent transparent transparent ' + tailColor,
-                            'transform': 'skewX(-10deg)'
-                        });
-                    }
-                } else {
-                    $tail.css({ 'left': '-8px', 'bottom': '0', 'right': 'auto' });
-                    if (styles.tail === 'sharp') {
-                        $tail.css({
-                            'border-width': '10px 15px 10px 0',
-                            'border-color': 'transparent ' + tailColor + ' transparent transparent',
-                            'left': '-10px',
-                            'bottom': '10px'
-                        });
-                    } else {
-                        // Round approximation
-                        $tail.css({
-                            'border-width': '15px 15px 0 0',
-                            'border-color': 'transparent ' + tailColor + ' transparent transparent',
-                            'transform': 'skewX(10deg)'
-                        });
-                    }
-                }
-                $preview.append($tail);
-            }
         }
 
         // Initialize UI

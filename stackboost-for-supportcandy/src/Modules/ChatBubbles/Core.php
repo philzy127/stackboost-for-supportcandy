@@ -50,19 +50,13 @@ class Core {
 	 */
 	public function enqueue_ticket_styles( $hook_suffix ) {
 		// Only load on Ticket View or Ticket List (if quick view exists)
-		// For now, let's target the ticket view page specifically
-		// The hook suffix for ticket view is typically 'supportcandy_page_wpsc-tickets'
-		// or if viewing a single ticket, it relies on the URL parameters within that page.
-		// But wait, SupportCandy loads individual tickets via AJAX on the ticket list page too!
-		// So we must load styles on the main ticket page.
-
 		if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
 			return;
 		}
 
-		// Check global enable switch
+		// Check ticket specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
-		if ( empty( $options['chat_bubbles_enable'] ) ) {
+		if ( empty( $options['chat_bubbles_enable_ticket'] ) ) {
 			return;
 		}
 
@@ -78,9 +72,9 @@ class Core {
 	 * @return object The modified Email Notification object.
 	 */
 	public function process_email_content( $en ) {
-		// Check global enable switch
+		// Check email specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
-		if ( empty( $options['chat_bubbles_enable'] ) ) {
+		if ( empty( $options['chat_bubbles_enable_email'] ) ) {
 			return $en;
 		}
 
@@ -149,21 +143,12 @@ class Core {
 		}
 
 		// Get the content we want to wrap
-		// Since we can't easily find the replaced macro in the body,
-		// and SupportCandy doesn't provide a filter for the macro output directly (except generic default),
-		// We have to use a search-and-replace strategy on the body using the known thread content.
-
-		// Get the printable string exactly as SupportCandy generates it
 		$search_html = $en->thread->get_printable_string();
 
 		// Create the wrapper
-		// Note: We use a table for better Outlook compatibility if needed, but a div is safer for the text content itself.
-		// Let's use a div.
 		$replace_html = '<div style="' . esc_attr( $inline_css ) . '">' . $search_html . '</div>';
 
 		// Perform the replacement
-		// Use preg_replace with limit 1 to ensure we only replace the main body if it appears multiple times (unlikely but safe)
-		// We need to escape special regex chars in the search string
 		$pattern = '/' . preg_quote( $search_html, '/' ) . '/';
 		$en->body = preg_replace( $pattern, $replace_html, $en->body, 1 );
 
@@ -183,14 +168,26 @@ class Core {
 				continue;
 			}
 
-			// Map type to SC classes
+			// Increased specificity to override SupportCandy default styles
+			// Previous selector: .wpsc-thread.reply.agent .thread-body
+			// New selector: #wpsc-ticket-thread-list .wpsc-thread-item.wpsc-thread-reply.wpsc-thread-agent .wpsc-thread-body
+			// NOTE: SC classes vary slightly by version. Need to be careful.
+			// Standard SC: .wpsc-thread .thread-body.
+			// .wpsc-thread is often a child of #wpsc_ticket_thread_list (or similar ID).
+			// Let's inspect known SC structure:
+			// <div id="wpsc-ticket-thread-list">
+			//    <div class="wpsc-thread reply agent ...">
+			//       <div class="thread-body">...</div>
+
+			// To be safe and specific, we will use ID + multiple classes.
+
 			$selector = '';
 			if ( $type === 'agent' ) {
-				$selector = '.wpsc-thread.reply.agent .thread-body, .wpsc-thread.report.agent .thread-body';
+				$selector = '#wpsc-ticket-thread-list .wpsc-thread.reply.agent .thread-body, #wpsc-ticket-thread-list .wpsc-thread.report.agent .thread-body';
 			} elseif ( $type === 'customer' ) {
-				$selector = '.wpsc-thread.reply.customer .thread-body, .wpsc-thread.report.customer .thread-body';
+				$selector = '#wpsc-ticket-thread-list .wpsc-thread.reply.customer .thread-body, #wpsc-ticket-thread-list .wpsc-thread.report.customer .thread-body';
 			} elseif ( $type === 'note' ) {
-				$selector = '.wpsc-thread.note .thread-body';
+				$selector = '#wpsc-ticket-thread-list .wpsc-thread.note .thread-body';
 			}
 
 			// Build CSS Rule
@@ -202,7 +199,6 @@ class Core {
 
 			// Font Family
 			if ( ! empty( $styles['font_family'] ) ) {
-				// Basic sanitization to prevent breaking out of CSS
 				$font = sanitize_text_field( $styles['font_family'] );
 				$font = str_replace( [';', '}', '{'], '', $font );
 				$css .= "font-family: {$font} !important;";
@@ -236,43 +232,18 @@ class Core {
 			// Padding (Standardize)
 			$css .= "padding: 15px !important;";
 
+			// Remove Default Border if any
+			$css .= "border: none !important;";
+
 			$css .= "}";
-
-			// Tail Logic (Pseudo-elements)
-			// Only apply tail if enabled globally, NOT a note, and NOT center aligned
-			// If theme is NOT custom, logic is handled in get_styles_for_type via 'tail' key from preset.
-			if ( $styles['tail'] !== 'none' && $type !== 'note' && $styles['alignment'] !== 'center' ) {
-				$tail_color = $styles['bg_color'];
-
-				$css .= "{$selector} { position: relative !important; overflow: visible !important;}";
-				$css .= "{$selector}::after { content: ''; position: absolute; width: 0; height: 0; border-style: solid; z-index: 1; }";
-
-				if ( $styles['alignment'] === 'right' ) {
-					// Right Tail
-					if ( $styles['tail'] === 'sharp' ) {
-						// Sharp Triangle
-						$css .= "{$selector}::after { border-width: 10px 0 10px 15px; border-color: transparent transparent transparent {$tail_color}; right: -10px; bottom: 10px; }";
-					} else {
-						// Rounded Tail (Skew approximation)
-						$css .= "{$selector}::after { border-width: 15px 0 0 15px; border-color: transparent transparent transparent {$tail_color}; right: -8px; bottom: 0; transform: skewX(-10deg); }";
-					}
-				} else {
-					// Left Tail
-					if ( $styles['tail'] === 'sharp' ) {
-						$css .= "{$selector}::after { border-width: 10px 15px 10px 0; border-color: transparent {$tail_color} transparent transparent; left: -10px; bottom: 10px; }";
-					} else {
-						// Rounded Tail
-						$css .= "{$selector}::after { border-width: 15px 15px 0 0; border-color: transparent {$tail_color} transparent transparent; left: -8px; bottom: 0; transform: skewX(10deg); }";
-					}
-				}
-			}
 
 			// Text Color inside (links, etc)
 			$css .= "{$selector} .thread-text, {$selector} .thread-header h2, {$selector} .thread-header span { color: {$styles['text_color']} !important; }";
 
-			// Ensure header layout doesn't break
-			// We might need to adjust header margin
+			// Header layout adjustment
 			$css .= "{$selector} .thread-header { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
+
+			// Remove tails for now (per user request) - Logic removed.
 		}
 
 		return $css;
@@ -283,25 +254,8 @@ class Core {
 	 */
 	private function get_styles_for_type( $type ): array {
 		$options = get_option( 'stackboost_settings', [] );
-
-		// Prefix for local overrides
 		$prefix = "chat_bubbles_{$type}_";
-
-		// Global Settings
 		$theme = $options['chat_bubbles_theme'] ?? 'default';
-		// Note: Tail is now handled by preset unless Custom/Default/Classic?
-		// User: "Tail selection belongs on the Settings Tab as the theme selector... it applies to both agent and customer replies."
-		// So we always respect global tail, unless the Theme specifically forbids it (like Modern)?
-		// The updated logic says "remove the tails for now unless they are theme specific".
-		// This means for Custom/Default, we might NOT show a tail unless we add a setting back.
-		// BUT the user also said "Tail selection belongs on the Settings Tab".
-		// Contradiction? "Remove the tails for now unless they are theme specific" vs "Tail selection belongs on Settings Tab".
-		// Interpretation: Remove the visual 'Tail Style' DROPDOWN from the UI (done in Settings.php), but apply theme-specific tails in logic.
-		// Wait, user said: "Tail selection belongs on the Settings Tab as the theme selector...".
-		// Then said: "Let's remove the tails for now unless they are theme specific."
-		// This likely means: Remove the manual control. Let the Theme decide.
-
-		$tail = 'none'; // Default to none if theme doesn't specify
 
 		// Default Styles
 		$defaults = [
@@ -322,13 +276,10 @@ class Core {
 		// Theme Logic
 		switch ( $theme ) {
 			case 'stackboost':
-				// StackBoost Theme (Dynamic from Appearance)
-				// We use CSS variables because we can't easily read JS/CSS state in PHP.
-				// This works for Admin View. For Email, it will fall back to Defaults (white/grey) or we try to map common ones.
-				// We'll use the variables.
+				// StackBoost Theme
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => 'var(--sb-accent, #2271b1)', // Dynamic variable
+						'bg_color'    => 'var(--sb-accent, #2271b1)',
 						'text_color'  => '#ffffff',
 						'alignment'   => 'right',
 						'radius'      => '15',
@@ -342,25 +293,22 @@ class Core {
 					]);
 				} else {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => 'var(--sb-bg-main, #f0f0f1)', // Dynamic variable (approx)
+						'bg_color'    => 'var(--sb-bg-main, #f0f0f1)',
 						'text_color'  => '#3c434a',
 						'alignment'   => 'left',
 						'radius'      => '15',
 					]);
 				}
 				$styles['font_family'] = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
-				$tail = 'round';
 				break;
 
 			case 'supportcandy':
-				// SupportCandy (Dynamic from SC Options)
+				// SupportCandy
 				$sc_settings = get_option( 'wpsc-ap-individual-ticket', [] );
-
-				// Fallbacks
 				$reply_primary = $sc_settings['reply-primary-color'] ?? '#2c3e50';
-				$reply_secondary = $sc_settings['reply-secondary-color'] ?? '#777777';
-				$note_primary = $sc_settings['note-primary-color'] ?? '#8e6600';
-				$note_secondary = $sc_settings['note-secondary-color'] ?? '#8e8d45';
+				$note_primary = $sc_settings['note-primary-color'] ?? '#fffbcc';
+
+				// Ensure hex format for PHP usage if needed, but SC stores hex.
 
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
@@ -371,12 +319,7 @@ class Core {
 					]);
 				} elseif ( $type === 'note' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#fdfdfd', // SC doesn't have a bg color for note body usually, just border?
-						// SC settings have 'note-primary' (border/title).
-						'bg_color'    => $note_primary, // Using primary for bubble BG? Might be too dark.
-						// Let's stick to a safe light yellow or use white with border color.
-						// Since we removed borders, let's use a lighter shade or white.
-						'bg_color'    => '#fffbcc',
+						'bg_color'    => $note_primary,
 						'text_color'  => '#333333',
 						'alignment'   => 'center',
 						'radius'      => '0',
@@ -389,11 +332,10 @@ class Core {
 						'radius'      => '5',
 					]);
 				}
-				$tail = 'none';
 				break;
 
 			case 'classic':
-				// Previous "SupportCandy" blue/grey hardcoded theme
+				// Classic
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#2271b1',
@@ -416,10 +358,10 @@ class Core {
 						'radius'      => '5',
 					]);
 				}
-				$tail = 'none';
 				break;
 
 			case 'ios':
+				// Fruit
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#007aff',
@@ -446,10 +388,10 @@ class Core {
 					]);
 				}
 				$styles['font_family'] = '-apple-system, BlinkMacSystemFont, sans-serif';
-				$tail = 'round';
 				break;
 
 			case 'android':
+				// Droid
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#d9fdd3',
@@ -476,10 +418,10 @@ class Core {
 					]);
 				}
 				$styles['font_family'] = 'Roboto, sans-serif';
-				$tail = 'sharp';
 				break;
 
 			case 'modern':
+				// Modern
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#000000',
@@ -506,13 +448,12 @@ class Core {
 					]);
 				}
 				$styles['font_family'] = 'Helvetica, Arial, sans-serif';
-				$tail = 'none';
 				break;
 
 			case 'custom':
-			case 'default': // Default mimics Custom/StackBoost logic but without dynamic vars? Or just blue/grey defaults.
+			case 'default':
 			default:
-				// Load from user settings if Custom, else use Defaults for "Default" theme
+				// Load from user settings if Custom, else use Defaults
 				if ( $theme === 'custom' ) {
 					$styles = [
 						'bg_color'    => $options["{$prefix}bg_color"] ?? $defaults['bg_color'],
@@ -522,14 +463,12 @@ class Core {
 						'alignment'   => $options["{$prefix}alignment"] ?? $defaults['alignment'],
 						'width'       => $options["{$prefix}width"] ?? $defaults['width'],
 						'radius'      => $options["{$prefix}radius"] ?? $defaults['radius'],
-
-						// Font Styles (Checkboxes)
 						'font_bold'      => ! empty( $options["{$prefix}font_bold"] ) ? 1 : 0,
 						'font_italic'    => ! empty( $options["{$prefix}font_italic"] ) ? 1 : 0,
 						'font_underline' => ! empty( $options["{$prefix}font_underline"] ) ? 1 : 0,
 					];
 				} else {
-					// Default Theme (Blue/Grey Standard)
+					// Default Theme (Blue/Grey)
 					if ( $type === 'agent' ) {
 						$styles = array_merge( $defaults, [
 							'bg_color'    => '#2271b1',
@@ -546,23 +485,27 @@ class Core {
 						]);
 					} else {
 						$styles = array_merge( $defaults, [
-							'bg_color'    => '#f0f0f1',
+							'bg_color'    => '#e6e6e6', // Darker than bg for contrast
 							'text_color'  => '#3c434a',
 							'alignment'   => 'left',
 							'radius'      => '15',
 						]);
 					}
 					$styles['font_family'] = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
-					$tail = 'round';
 				}
 				break;
 		}
 
-		// Apply Tail Logic (Theme Specific)
-		$styles['tail'] = $tail;
-
 		// SANITIZATION
-		$styles['bg_color'] = sanitize_hex_color($styles['bg_color']) ?: $defaults['bg_color'];
+		// Allow CSS variables (starting with var(--) ) to bypass hex sanitization.
+		// Note: We check the value BEFORE attempting sanitize_hex_color which would clear it.
+		if ( strpos( $styles['bg_color'], 'var(' ) === 0 ) {
+			// Basic sanitization for CSS var syntax
+			$styles['bg_color'] = sanitize_text_field( $styles['bg_color'] );
+		} else {
+			$styles['bg_color'] = sanitize_hex_color( $styles['bg_color'] ) ?: $defaults['bg_color'];
+		}
+
 		$styles['text_color'] = sanitize_hex_color($styles['text_color']) ?: $defaults['text_color'];
 		$styles['width'] = absint($styles['width']);
 		if ($styles['width'] < 0 || $styles['width'] > 100) $styles['width'] = 85;

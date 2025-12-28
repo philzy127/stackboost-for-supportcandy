@@ -42,16 +42,9 @@ class WordPress extends Module {
 	 */
 	public function init_hooks() {
 		// Initialize the Core logic if module is loaded
-		// Note: Settings registration is handled centrally, but we might need admin scripts
 		if ( is_admin() ) {
 			add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		}
-
-		// Core Logic Initialization
-		// We only run core logic if license is valid?
-		// Module class usually handles is_active check before init_hooks is called in Plugin.php?
-		// No, Plugin.php checks is_feature_active before calling init_hooks.
-		// So we are safe to init core.
 
 		Core::get_instance();
 	}
@@ -61,7 +54,6 @@ class WordPress extends Module {
 	 */
 	public function enqueue_admin_scripts( $hook_suffix ) {
 		// Hook suffix for our page: stackboost-chat-bubbles
-		// Or generic stackboost page check
 		if ( strpos( $hook_suffix, 'stackboost-chat-bubbles' ) !== false ) {
 			// Enqueue specific JS for the conditional fields
 			wp_enqueue_script(
@@ -81,12 +73,48 @@ class WordPress extends Module {
 				STACKBOOST_VERSION
 			);
 
-			// Pass SupportCandy primary color to JS
-			$wpsc_settings = get_option( 'wpsc_appearance_settings', [] );
-			$primary_color = $wpsc_settings['primary_color'] ?? '#2271b1';
+			// Localize Data for JS Preview
+
+			// 1. SupportCandy Colors
+			// Check 'wpsc-ap-individual-ticket' option for reply-primary-color (Reply Header BG)
+			// Wait, SC settings key is tricky.
+			// In `Core.php`, I used `wpsc-ap-individual-ticket` and `reply-primary-color`.
+			// Let's stick to that.
+			$sc_settings = get_option( 'wpsc-ap-individual-ticket', [] );
+			$sc_primary  = $sc_settings['reply-primary-color'] ?? '#2271b1';
+
+			// 2. StackBoost Theme Colors (from Appearance module if active)
+			$sb_theme = [
+				'primary'    => '#2271b1',
+				'background' => '#f0f0f1',
+				'text'       => '#3c434a'
+			];
+
+			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+				// We need to fetch the actual CSS variables or calculated colors.
+				// The Appearance module stores settings in `stackboost_settings` under `appearance_theme` etc.
+				// But simpler: The user likely wants to see the colors that match the *current admin interface* if they are using a StackBoost theme.
+				// But if they are configuring this on a light theme but the frontend uses a dark theme...
+				// For now, let's look at `stackboost_settings['appearance_accent_color']`.
+				$options = get_option( 'stackboost_settings', [] );
+				if ( ! empty( $options['appearance_accent_color'] ) ) {
+					$sb_theme['primary'] = $options['appearance_accent_color'];
+				}
+				// Backgrounds are harder because they are CSS vars in the theme file.
+				// We can try to guess based on `appearance_theme` key (e.g. 'dark', 'midnight').
+				$active_theme = $options['appearance_theme'] ?? 'default';
+				if ( $active_theme === 'dark' ) {
+					$sb_theme['background'] = '#2b2d2f'; // Example dark bg
+					$sb_theme['text'] = '#f0f0f1';
+				} elseif ( $active_theme === 'midnight' ) {
+					$sb_theme['background'] = '#1e1e1e';
+					$sb_theme['text'] = '#d4d4d4';
+				}
+			}
 
 			wp_localize_script( 'stackboost-chat-bubbles-admin', 'stackboostChatBubbles', [
-				'scPrimaryColor' => $primary_color,
+				'scPrimaryColor' => $sc_primary,
+				'sbTheme'        => $sb_theme,
 			] );
 		}
 	}

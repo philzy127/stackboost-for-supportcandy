@@ -43,7 +43,6 @@ class Settings {
 						<!-- JS Tabs Header -->
 						<div class="sb-chat-tabs">
 							<div class="sb-chat-tab active" data-target="general"><?php esc_html_e( 'Settings', 'stackboost-for-supportcandy' ); ?></div>
-							<!-- These tabs will be hidden via JS if a Preset is selected -->
 							<div class="sb-chat-tab type-tab" data-target="agent"><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></div>
 							<div class="sb-chat-tab type-tab" data-target="customer"><?php esc_html_e( 'Customer', 'stackboost-for-supportcandy' ); ?></div>
 							<div class="sb-chat-tab type-tab" data-target="note"><?php esc_html_e( 'Private Note', 'stackboost-for-supportcandy' ); ?></div>
@@ -135,20 +134,30 @@ class Settings {
 	public static function render_general_fields() {
 		$options = get_option( 'stackboost_settings', [] );
 
-		// Enable
+		// Ticket Enable
 		?>
 		<tr valign="top">
-			<th scope="row"><?php esc_html_e( 'Enable Chat Bubbles', 'stackboost-for-supportcandy' ); ?></th>
+			<th scope="row"><?php esc_html_e( 'Enable on Ticket View', 'stackboost-for-supportcandy' ); ?></th>
 			<td>
-				<input type="checkbox" name="stackboost_settings[chat_bubbles_enable]" id="chat_bubbles_enable" value="1" <?php checked( $options['chat_bubbles_enable'] ?? 0, 1 ); ?> />
-				<p class="description"><?php esc_html_e( 'Turn this feature on/off globally.', 'stackboost-for-supportcandy' ); ?></p>
+				<input type="checkbox" name="stackboost_settings[chat_bubbles_enable_ticket]" id="chat_bubbles_enable_ticket" value="1" <?php checked( $options['chat_bubbles_enable_ticket'] ?? 0, 1 ); ?> />
+				<p class="description"><?php esc_html_e( 'Show chat bubbles on the Admin Ticket Details page.', 'stackboost-for-supportcandy' ); ?></p>
+			</td>
+		</tr>
+
+		<?php
+		// Email Enable
+		?>
+		<tr valign="top">
+			<th scope="row"><?php esc_html_e( 'Enable on Emails', 'stackboost-for-supportcandy' ); ?></th>
+			<td>
+				<input type="checkbox" name="stackboost_settings[chat_bubbles_enable_email]" id="chat_bubbles_enable_email" value="1" <?php checked( $options['chat_bubbles_enable_email'] ?? 0, 1 ); ?> />
+				<p class="description"><?php esc_html_e( 'Apply chat styling to email notifications (Best Effort).', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
 
 		<?php
 		// Theme Preset
 		$theme_val = $options['chat_bubbles_theme'] ?? 'default';
-		// Defaulting to 'default' (was stackboost) as requested
 		?>
 		<tr valign="top">
 			<th scope="row"><?php esc_html_e( 'Theme Preset', 'stackboost-for-supportcandy' ); ?></th>
@@ -156,14 +165,15 @@ class Settings {
 				<select name="stackboost_settings[chat_bubbles_theme]" id="sb_chat_global_theme_selector" class="regular-text">
 					<option value="custom" <?php selected( $theme_val, 'custom' ); ?>><?php esc_html_e( 'Custom', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="default" <?php selected( $theme_val, 'default' ); ?>><?php esc_html_e( 'Default (Blue/Grey)', 'stackboost-for-supportcandy' ); ?></option>
-					<option value="stackboost" <?php selected( $theme_val, 'stackboost' ); ?>><?php esc_html_e( 'StackBoost (Syncs with Appearance)', 'stackboost-for-supportcandy' ); ?></option>
-					<option value="supportcandy" <?php selected( $theme_val, 'supportcandy' ); ?>><?php esc_html_e( 'SupportCandy (Syncs with SC Settings)', 'stackboost-for-supportcandy' ); ?></option>
-					<option value="classic" <?php selected( $theme_val, 'classic' ); ?>><?php esc_html_e( 'Classic (Legacy SC)', 'stackboost-for-supportcandy' ); ?></option>
-					<option value="ios" <?php selected( $theme_val, 'ios' ); ?>><?php esc_html_e( 'iMessage (iOS)', 'stackboost-for-supportcandy' ); ?></option>
-					<option value="android" <?php selected( $theme_val, 'android' ); ?>><?php esc_html_e( 'WhatsApp (Android)', 'stackboost-for-supportcandy' ); ?></option>
+					<option value="stackboost" <?php selected( $theme_val, 'stackboost' ); ?>><?php esc_html_e( 'StackBoost Theme', 'stackboost-for-supportcandy' ); ?> &#x21ba;</option>
+					<option value="supportcandy" <?php selected( $theme_val, 'supportcandy' ); ?>><?php esc_html_e( 'SupportCandy Theme', 'stackboost-for-supportcandy' ); ?> &#x21ba;</option>
+					<option value="classic" <?php selected( $theme_val, 'classic' ); ?>><?php esc_html_e( 'Classic', 'stackboost-for-supportcandy' ); ?></option>
+					<option value="ios" <?php selected( $theme_val, 'ios' ); ?>><?php esc_html_e( 'Fruit (Blue/Green)', 'stackboost-for-supportcandy' ); ?></option>
+					<option value="android" <?php selected( $theme_val, 'android' ); ?>><?php esc_html_e( 'Droid (Green/White)', 'stackboost-for-supportcandy' ); ?></option>
 					<option value="modern" <?php selected( $theme_val, 'modern' ); ?>><?php esc_html_e( 'Minimal / Modern', 'stackboost-for-supportcandy' ); ?></option>
 				</select>
-				<p class="description"><?php esc_html_e( 'Applies a base style to all bubbles. "Custom" unlocks detailed tabs. "StackBoost" and "SupportCandy" sync with your other settings.', 'stackboost-for-supportcandy' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Applies a base style to all bubbles. "Custom" unlocks detailed tabs.', 'stackboost-for-supportcandy' ); ?></p>
+				<p class="description"><span style="font-size: 14px;">&#x21ba;</span> <?php esc_html_e( 'Indicates settings are synced from another module.', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
 		<?php
@@ -281,7 +291,8 @@ class Settings {
 	 */
 	public static function get_settings_keys() {
 		$keys = [
-			'chat_bubbles_enable',
+			'chat_bubbles_enable_ticket',
+			'chat_bubbles_enable_email',
 			'chat_bubbles_theme',
 		];
 		foreach ( ['agent', 'customer', 'note'] as $type ) {
