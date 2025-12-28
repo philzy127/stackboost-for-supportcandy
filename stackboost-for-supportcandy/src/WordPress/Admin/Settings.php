@@ -971,6 +971,7 @@ class Settings {
 			'enable_log_ticket_view'       => __( 'Ticket View', 'stackboost-for-supportcandy' ),
 			'enable_log_date_time'         => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
 			'enable_log_after_hours'       => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+			'enable_log_chat_bubbles'      => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
 			'enable_log_conditional_views' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 			'enable_log_queue_macro'       => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
 			'enable_log_utm'               => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
@@ -978,7 +979,6 @@ class Settings {
 			'enable_log_directory'         => __( 'Company Directory', 'stackboost-for-supportcandy' ),
 			'enable_log_onboarding'        => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
 			'enable_log_appearance'        => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ),
-			'enable_log_chat_bubbles'      => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
 		];
 
 		foreach ( $modules as $key => $label ) {

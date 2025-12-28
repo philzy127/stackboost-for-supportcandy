@@ -250,14 +250,23 @@ class Core {
 			// Using .wpsc-it-container (CLASS) + class hierarchy.
 			// Fixed bug where #wpsc-it-container (ID) was used incorrectly.
 
-			$selector = '';
-			if ( $type === 'agent' ) {
-				$selector = '.wpsc-it-container .wpsc-thread.reply.agent .thread-body, .wpsc-it-container .wpsc-thread.report.agent .thread-body';
-			} elseif ( $type === 'customer' ) {
-				$selector = '.wpsc-it-container .wpsc-thread.reply.customer .thread-body, .wpsc-it-container .wpsc-thread.report.customer .thread-body';
-			} elseif ( $type === 'note' ) {
-				$selector = '.wpsc-it-container .wpsc-thread.note .thread-body';
+			// Support both Admin (.wpsc-it-container) and Frontend (.wpsc-shortcode-container, .wpsc-container) contexts
+			// Note: .wpsc-container is used in newer SC versions for frontend shortcodes.
+			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container'];
+
+			$selectors = [];
+			foreach ($roots as $root) {
+				if ( $type === 'agent' ) {
+					$selectors[] = "{$root} .wpsc-thread.reply.agent .thread-body";
+					$selectors[] = "{$root} .wpsc-thread.report.agent .thread-body";
+				} elseif ( $type === 'customer' ) {
+					$selectors[] = "{$root} .wpsc-thread.reply.customer .thread-body";
+					$selectors[] = "{$root} .wpsc-thread.report.customer .thread-body";
+				} elseif ( $type === 'note' ) {
+					$selectors[] = "{$root} .wpsc-thread.note .thread-body";
+				}
 			}
+			$selector = implode(', ', $selectors);
 
 			// Build CSS Rule
 			$css .= "{$selector} {";
@@ -265,6 +274,10 @@ class Core {
 			$css .= "color: {$styles['text_color']} !important;";
 			$css .= "border-radius: {$styles['radius']}px !important;";
 			$css .= "width: {$styles['width']}% !important;";
+			$css .= "max-width: {$styles['width']}% !important;";
+
+			// Override flex behavior to ensure width is respected (Fix for frontend flex-grow issue)
+			$css .= "flex-grow: 0 !important;";
 
 			// Font Family
 			if ( ! empty( $styles['font_family'] ) ) {
@@ -290,6 +303,7 @@ class Core {
 			}
 
 			// Alignment
+			// Note: Since .thread-body is a flex child, margin auto works to push it.
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
 			} elseif ( $styles['alignment'] === 'center' ) {
