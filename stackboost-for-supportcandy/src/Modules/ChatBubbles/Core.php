@@ -329,11 +329,52 @@ class Core {
 
 			$css .= "}";
 
+			// Hide Avatar (Relative to the thread container)
+			// $selector targets .thread-body inside the thread container. We need to go up one level to the thread container
+			// to find the .thread-avatar sibling, OR target the .thread-avatar relative to the same parent.
+			// The selector logic above builds paths like: ".wpsc-it-container .wpsc-thread.reply.agent .thread-body".
+			// The avatar is at: ".wpsc-it-container .wpsc-thread.reply.agent .thread-avatar".
+			// So we need to strip ".thread-body" from the selector parts and append ".thread-avatar".
+
+			$avatar_selectors = [];
+			$selector_parts = explode(', ', $selector);
+
+			foreach ($selector_parts as $part) {
+				$part = trim($part);
+				if ( substr($part, -12) === '.thread-body' ) {
+					$base = substr($part, 0, -12);
+					$avatar_selectors[] = $base . ' .thread-avatar';
+				}
+			}
+
+			if ( ! empty( $avatar_selectors ) ) {
+				$avatar_str = implode(', ', $avatar_selectors);
+				$css .= "{$avatar_str} { display: none !important; }";
+			}
+
 			// Text Color inside (links, etc)
-			$css .= "{$selector} .thread-text, {$selector} .thread-header h2, {$selector} .thread-header span { color: {$styles['text_color']} !important; }";
+			// Updated to target specific user-info elements and links which often override colors
+			$color_selectors = [];
+			// Helper to create sub-selectors for the list of root selectors
+			// Added .user-name specifically
+			$sub_elements = ['.thread-text', '.user-info h2', '.user-info h2.user-name', '.user-info span', 'a', '.thread-header h2', '.thread-header span'];
+
+			foreach ($selector_parts as $part) {
+				foreach ($sub_elements as $el) {
+					$color_selectors[] = trim($part) . ' ' . $el;
+				}
+			}
+			$color_selector_str = implode(', ', $color_selectors);
+
+			$css .= "{$color_selector_str} { color: {$styles['text_color']} !important; }";
 
 			// Header layout adjustment
-			$css .= "{$selector} .thread-header { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
+			$header_selectors = [];
+			foreach ($selector_parts as $part) {
+				$header_selectors[] = trim($part) . ' .thread-header';
+			}
+			$header_selector_str = implode(', ', $header_selectors);
+			$css .= "{$header_selector_str} { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
 		}
 
 		return $css;
