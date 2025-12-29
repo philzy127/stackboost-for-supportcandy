@@ -113,6 +113,8 @@
             $('select[name="' + prefixName + 'alignment]"]').val('left');
             $('input[name="' + prefixName + 'width]"]').val('85');
             $('input[name="' + prefixName + 'radius]"]').val('15');
+            // Reset Padding
+            $('input[name="' + prefixName + 'padding]"]').val('15');
             // Reset Borders
             $('select[name="' + prefixName + 'border_style]"]').val('none');
             $('input[name="' + prefixName + 'border_width]"]').val('1');
@@ -196,6 +198,7 @@
                 align: 'left',
                 width: '85',
                 radius: '15',
+                padding: '15',
                 bold: false,
                 italic: false,
                 underline: false,
@@ -377,6 +380,7 @@
                 styles.align = $('select[name="' + prefixName + 'alignment]"]').val();
                 styles.width = $('input[name="' + prefixName + 'width]"]').val();
                 styles.radius = $('input[name="' + prefixName + 'radius]"]').val();
+                styles.padding = $('input[name="' + prefixName + 'padding]"]').val();
 
                 // Font Styles
                 styles.bold = $('input[name="' + prefixName + 'font_bold]"]').is(':checked');
@@ -396,7 +400,7 @@
                 'border-radius': styles.radius + 'px',
                 'width': styles.width + '%',
                 'font-family': styles.font,
-                'padding': '15px',
+                'padding': styles.padding + 'px',
                 'font-weight': styles.bold ? 'bold' : 'normal',
                 'font-style': styles.italic ? 'italic' : 'normal',
                 'text-decoration': styles.underline ? 'underline' : 'none'
@@ -419,7 +423,9 @@
             var shadowEnable = $('#chat_bubbles_shadow_enable').is(':checked');
             if (shadowEnable) {
                 var shadowColor = $('input[name="stackboost_settings[chat_bubbles_shadow_color]"]').val();
-                var shadowDepth = $('select[name="stackboost_settings[chat_bubbles_shadow_depth]"]').val();
+                var shadowDistance = $('input[name="stackboost_settings[chat_bubbles_shadow_distance]"]').val();
+                var shadowBlur = $('input[name="stackboost_settings[chat_bubbles_shadow_blur]"]').val();
+                var shadowSpread = $('input[name="stackboost_settings[chat_bubbles_shadow_spread]"]').val();
                 var shadowOpacity = $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val();
 
                 // Convert Opacity (0-100) to decimal
@@ -434,13 +440,31 @@
                     shadowColor = 'rgba(' + r + ',' + g + ',' + b + ',' + opacityVal + ')';
                 }
 
-                var blur = '5px', spread = '0px'; // small
-                if (shadowDepth === 'medium') { blur = '10px'; }
-                if (shadowDepth === 'large') { blur = '20px'; spread = '5px'; }
-
-                cssMap['box-shadow'] = '0 2px ' + blur + ' ' + spread + ' ' + shadowColor;
+                // Use box-shadow to support spread radius
+                cssMap['box-shadow'] = shadowDistance + 'px ' + shadowDistance + 'px ' + shadowBlur + 'px ' + shadowSpread + 'px ' + shadowColor;
+                cssMap['filter'] = 'none'; // clear drop-shadow if present
             } else {
+                cssMap['filter'] = 'none';
                 cssMap['box-shadow'] = 'none';
+            }
+
+            // Image Styling Logic (Global)
+            var imageBox = $('#chat_bubbles_image_box').is(':checked');
+            var $img = $preview.find('img');
+            if (imageBox) {
+                $img.css({
+                    'border': '1px solid rgba(0,0,0,0.2)',
+                    'padding': '3px',
+                    'background': 'rgba(255,255,255,0.5)',
+                    'border-radius': '3px'
+                });
+            } else {
+                $img.css({
+                    'border': 'none',
+                    'padding': '0',
+                    'background': 'transparent',
+                    'border-radius': '0'
+                });
             }
 
             $preview.css(cssMap);

@@ -848,6 +848,10 @@ class Settings {
 					case 'enable_log_onboarding':
 					case 'enable_log_appearance':
 					case 'enable_log_chat_bubbles':
+					case 'chat_bubbles_enable_ticket':
+					case 'chat_bubbles_enable_email':
+					case 'chat_bubbles_shadow_enable':
+					case 'chat_bubbles_image_box':
 						$saved_settings[$key] = intval($value);
 						break;
 
@@ -932,7 +936,7 @@ class Settings {
 				}
 			} else {
 				// Handle unchecked checkboxes, which are not present in the form submission.
-				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled') {
+				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled') {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
 					$saved_settings[$key] = [];
@@ -971,6 +975,7 @@ class Settings {
 			'enable_log_ticket_view'       => __( 'Ticket View', 'stackboost-for-supportcandy' ),
 			'enable_log_date_time'         => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
 			'enable_log_after_hours'       => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
+			'enable_log_chat_bubbles'      => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
 			'enable_log_conditional_views' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 			'enable_log_queue_macro'       => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
 			'enable_log_utm'               => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
@@ -978,7 +983,6 @@ class Settings {
 			'enable_log_directory'         => __( 'Company Directory', 'stackboost-for-supportcandy' ),
 			'enable_log_onboarding'        => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
 			'enable_log_appearance'        => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ),
-			'enable_log_chat_bubbles'      => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
 		];
 
 		foreach ( $modules as $key => $label ) {

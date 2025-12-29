@@ -43,9 +43,9 @@ class Settings {
 						<!-- JS Tabs Header -->
 						<div class="sb-chat-tabs">
 							<div class="sb-chat-tab active" data-target="general"><?php esc_html_e( 'Settings', 'stackboost-for-supportcandy' ); ?></div>
-							<div class="sb-chat-tab type-tab" data-target="agent"><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></div>
 							<div class="sb-chat-tab type-tab" data-target="customer"><?php esc_html_e( 'Customer', 'stackboost-for-supportcandy' ); ?></div>
 							<div class="sb-chat-tab type-tab" data-target="note"><?php esc_html_e( 'Private Note', 'stackboost-for-supportcandy' ); ?></div>
+							<div class="sb-chat-tab type-tab" data-target="agent"><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></div>
 						</div>
 
 						<!-- Config Content Area -->
@@ -62,7 +62,7 @@ class Settings {
 							</div>
 
 							<!-- Type Specific Tabs -->
-							<?php foreach ( ['agent', 'customer', 'note'] as $type ) : ?>
+							<?php foreach ( ['customer', 'note', 'agent'] as $type ) : ?>
 								<div id="sb-chat-config-<?php echo esc_attr( $type ); ?>" class="sb-chat-config-section" style="display:none;">
 									<table class="form-table">
 										<?php self::render_type_fields( $type ); ?>
@@ -113,6 +113,8 @@ class Settings {
 									</div>
 									<div class="preview-text">
 										<?php esc_html_e( 'Hello John, I can reset that for you right now.', 'stackboost-for-supportcandy' ); ?>
+										<br/>
+										<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTAgNTAiIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjY2MiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM1NTUiPkltYWdlPC90ZXh0Pjwvc3ZnPg==" alt="Placeholder" style="max-width:100%; height:auto; margin-top:5px;" class="sb-chat-preview-img" />
 									</div>
 								</div>
 
@@ -140,7 +142,7 @@ class Settings {
 			<th scope="row"><?php esc_html_e( 'Enable on Ticket View', 'stackboost-for-supportcandy' ); ?></th>
 			<td>
 				<input type="checkbox" name="stackboost_settings[chat_bubbles_enable_ticket]" id="chat_bubbles_enable_ticket" value="1" <?php checked( $options['chat_bubbles_enable_ticket'] ?? 0, 1 ); ?> />
-				<p class="description"><?php esc_html_e( 'Show chat bubbles on the Admin Ticket Details page.', 'stackboost-for-supportcandy' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Show chat bubbles on Ticket Views (Admin & Frontend).', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
 
@@ -186,17 +188,43 @@ class Settings {
 				</label>
 				<label style="margin-right: 5px;"><?php esc_html_e( 'Color:', 'stackboost-for-supportcandy' ); ?></label>
 				<input type="text" name="stackboost_settings[chat_bubbles_shadow_color]" value="<?php echo esc_attr( $options['chat_bubbles_shadow_color'] ?? '#000000' ); ?>" class="my-color-field" data-default-color="#000000" data-alpha-enabled="true" />
-				<label style="margin-left: 15px; margin-right: 5px;"><?php esc_html_e( 'Depth:', 'stackboost-for-supportcandy' ); ?></label>
-				<select name="stackboost_settings[chat_bubbles_shadow_depth]">
-					<option value="small" <?php selected( $options['chat_bubbles_shadow_depth'] ?? 'small', 'small' ); ?>><?php esc_html_e( 'Small', 'stackboost-for-supportcandy' ); ?></option>
-					<option value="medium" <?php selected( $options['chat_bubbles_shadow_depth'] ?? 'small', 'medium' ); ?>><?php esc_html_e( 'Medium', 'stackboost-for-supportcandy' ); ?></option>
-					<option value="large" <?php selected( $options['chat_bubbles_shadow_depth'] ?? 'small', 'large' ); ?>><?php esc_html_e( 'Large', 'stackboost-for-supportcandy' ); ?></option>
-				</select>
 				<br/>
-				<label style="margin-right: 5px;"><?php esc_html_e( 'Opacity:', 'stackboost-for-supportcandy' ); ?></label>
+
+				<!-- Distance -->
+				<label style="margin-right: 5px; width: 60px; display:inline-block;"><?php esc_html_e( 'Distance:', 'stackboost-for-supportcandy' ); ?></label>
+				<input type="range" name="stackboost_settings[chat_bubbles_shadow_distance]" min="0" max="20" step="1" value="<?php echo esc_attr( $options['chat_bubbles_shadow_distance'] ?? '2' ); ?>" oninput="this.nextElementSibling.value = this.value">
+				<output><?php echo esc_html( $options['chat_bubbles_shadow_distance'] ?? '2' ); ?></output>px
+				<br/>
+
+				<!-- Blur -->
+				<label style="margin-right: 5px; width: 60px; display:inline-block;"><?php esc_html_e( 'Blur:', 'stackboost-for-supportcandy' ); ?></label>
+				<input type="range" name="stackboost_settings[chat_bubbles_shadow_blur]" min="0" max="50" step="1" value="<?php echo esc_attr( $options['chat_bubbles_shadow_blur'] ?? '5' ); ?>" oninput="this.nextElementSibling.value = this.value">
+				<output><?php echo esc_html( $options['chat_bubbles_shadow_blur'] ?? '5' ); ?></output>px
+				<br/>
+
+				<!-- Spread -->
+				<label style="margin-right: 5px; width: 60px; display:inline-block;"><?php esc_html_e( 'Spread:', 'stackboost-for-supportcandy' ); ?></label>
+				<input type="range" name="stackboost_settings[chat_bubbles_shadow_spread]" min="-20" max="20" step="1" value="<?php echo esc_attr( $options['chat_bubbles_shadow_spread'] ?? '0' ); ?>" oninput="this.nextElementSibling.value = this.value">
+				<output><?php echo esc_html( $options['chat_bubbles_shadow_spread'] ?? '0' ); ?></output>px
+				<br/>
+
+				<!-- Opacity -->
+				<label style="margin-right: 5px; width: 60px; display:inline-block;"><?php esc_html_e( 'Opacity:', 'stackboost-for-supportcandy' ); ?></label>
 				<input type="range" name="stackboost_settings[chat_bubbles_shadow_opacity]" min="0" max="100" step="5" value="<?php echo esc_attr( $options['chat_bubbles_shadow_opacity'] ?? '40' ); ?>" oninput="this.nextElementSibling.value = this.value">
 				<output><?php echo esc_html( $options['chat_bubbles_shadow_opacity'] ?? '40' ); ?></output>%
+
 				<p class="description"><?php esc_html_e( 'Adds a drop shadow to all bubbles.', 'stackboost-for-supportcandy' ); ?></p>
+			</td>
+		</tr>
+
+		<!-- Image Styling -->
+		<tr valign="top">
+			<th scope="row"><?php esc_html_e( 'Image Styling', 'stackboost-for-supportcandy' ); ?></th>
+			<td>
+				<label>
+					<input type="checkbox" name="stackboost_settings[chat_bubbles_image_box]" id="chat_bubbles_image_box" value="1" <?php checked( $options['chat_bubbles_image_box'] ?? 0, 1 ); ?> /> <?php esc_html_e( 'Add Bounding Box to Images', 'stackboost-for-supportcandy' ); ?>
+				</label>
+				<p class="description"><?php esc_html_e( 'Adds a border and padding around images to separate them from the bubble background.', 'stackboost-for-supportcandy' ); ?></p>
 			</td>
 		</tr>
 		<?php
@@ -305,6 +333,14 @@ class Settings {
 				</td>
 			</tr>
 
+			<!-- Padding -->
+			<tr valign="top">
+				<th scope="row"><?php esc_html_e( 'Padding', 'stackboost-for-supportcandy' ); ?></th>
+				<td>
+					<input type="number" name="stackboost_settings[<?php echo esc_attr( $prefix . 'padding' ); ?>]" min="0" max="50" value="<?php echo esc_attr( $options[ $prefix . 'padding' ] ?? '15' ); ?>" class="small-text"> px
+				</td>
+			</tr>
+
 			<!-- Borders -->
 			<tr valign="top">
 				<th scope="row"><?php esc_html_e( 'Border', 'stackboost-for-supportcandy' ); ?></th>
@@ -335,8 +371,11 @@ class Settings {
 			'chat_bubbles_theme',
 			'chat_bubbles_shadow_enable',
 			'chat_bubbles_shadow_color',
-			'chat_bubbles_shadow_depth',
+			'chat_bubbles_shadow_distance',
+			'chat_bubbles_shadow_blur',
+			'chat_bubbles_shadow_spread',
 			'chat_bubbles_shadow_opacity',
+			'chat_bubbles_image_box',
 		];
 		foreach ( ['agent', 'customer', 'note'] as $type ) {
 			$prefix = "chat_bubbles_{$type}_";
@@ -350,6 +389,7 @@ class Settings {
 			$keys[] = "{$prefix}alignment";
 			$keys[] = "{$prefix}width";
 			$keys[] = "{$prefix}radius";
+			$keys[] = "{$prefix}padding";
 			$keys[] = "{$prefix}border_style";
 			$keys[] = "{$prefix}border_width";
 			$keys[] = "{$prefix}border_color";

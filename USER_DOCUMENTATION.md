@@ -68,6 +68,18 @@ Collect feedback from your users.
 *   **Settings:** Configure color schemes and behavior.
 *   **Integration:** The survey link is automatically added to closed ticket emails if configured.
 
+### Chat Bubbles
+
+Modernize your ticket threads with a clean, conversational interface.
+
+*   **Unified Design:** The chat bubbles automatically adapt to look great on both your Admin Dashboard and the Frontend Ticket View seen by customers.
+*   **Theme Sync:** Bubbles automatically inherit colors from your selected StackBoost Admin Theme (e.g., Clean Tech, Heroic) for a seamless brand experience.
+*   **Customization:**
+    *   **Shadows:** Fine-tune the drop shadow with controls for Distance, Blur, and Spread to create depth.
+    *   **Padding:** Adjust the internal spacing of bubbles to be as compact or spacious as you like.
+    *   **Images:** Enable "Bounding Boxes" to add a subtle border and background around images, making screenshots pop against colored bubbles.
+    *   **Avatars:** To keep the conversation clean, avatars are hidden for standard replies but remain visible for important system events (like status changes).
+
 ### Ticket View
 
 Enhance the ticket list with a quick-preview popup.

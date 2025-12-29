@@ -50,18 +50,42 @@ class Core {
 
 	/**
 	 * Enqueue Ticket View Styles.
+	 * Now supports both Admin and Frontend contexts.
+	 *
+	 * @param string|null $hook_suffix The hook suffix for admin pages, or 'frontend' string if called manually for frontend.
 	 */
-	public function enqueue_ticket_styles( $hook_suffix ) {
+	public function enqueue_ticket_styles( $hook_suffix = null ) {
+		// Determine context
+		$is_frontend = ( $hook_suffix === 'frontend' );
+
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_suffix, 'chat_bubbles' );
+			$hook_label = $is_frontend ? 'frontend' : ( $hook_suffix ?? 'unknown' );
+			stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_label, 'chat_bubbles' );
 		}
 
-		// Only load on Ticket View or Ticket List (if quick view exists)
-		if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
-			return;
+		// Context Check: Admin vs Frontend
+		$handle = '';
+		if ( ! $is_frontend ) {
+			// Admin Check
+			if ( ! is_string( $hook_suffix ) ) {
+				return;
+			}
+			// Only load on Ticket View or Ticket List
+			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
+				return;
+			}
+			$handle = 'wpsc-admin';
+		} else {
+			// Frontend Check
+			// We register a dummy handle to attach our inline styles to, ensuring they load anywhere
+			// SupportCandy might be present (shortcodes, widgets, etc).
+			$handle = 'stackboost-chat-bubbles-frontend';
+			wp_register_style( $handle, false );
+			wp_enqueue_style( $handle );
 		}
 
 		// Check ticket specific enable switch
+		// Note: We use the same 'chat_bubbles_enable_ticket' setting for both Admin and Frontend uniformity.
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_ticket'] ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
@@ -71,10 +95,10 @@ class Core {
 		}
 
 		$css = $this->generate_css();
-		wp_add_inline_style( 'wpsc-admin', $css );
+		wp_add_inline_style( $handle, $css );
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Styles enqueued successfully.', 'chat_bubbles' );
+			stackboost_log( 'ChatBubbles: Styles enqueued successfully for context: ' . ( $is_frontend ? 'Frontend' : 'Admin' ), 'chat_bubbles' );
 		}
 	}
 
@@ -190,19 +214,11 @@ class Core {
 		$shadow_css = '';
 		if ( ! empty( $options['chat_bubbles_shadow_enable'] ) ) {
 			$shadow_color = $options['chat_bubbles_shadow_color'] ?? '#000000';
-			$shadow_depth = $options['chat_bubbles_shadow_depth'] ?? 'small';
+			$shadow_distance = isset( $options['chat_bubbles_shadow_distance'] ) ? intval( $options['chat_bubbles_shadow_distance'] ) : 2;
+			$shadow_blur  = isset( $options['chat_bubbles_shadow_blur'] ) ? intval( $options['chat_bubbles_shadow_blur'] ) : 5;
+			$shadow_spread = isset( $options['chat_bubbles_shadow_spread'] ) ? intval( $options['chat_bubbles_shadow_spread'] ) : 0;
 			$opacity_pct  = $options['chat_bubbles_shadow_opacity'] ?? '40';
 			$opacity_val  = intval( $opacity_pct ) / 100;
-
-			$blur = '5px';
-			$spread = '0px';
-
-			if ( $shadow_depth === 'medium' ) {
-				$blur = '10px';
-			} elseif ( $shadow_depth === 'large' ) {
-				$blur = '20px';
-				$spread = '5px';
-			}
 
 			// Convert Hex to RGBA for Opacity Control
 			if ( strpos( $shadow_color, '#' ) === 0 && strlen( $shadow_color ) === 7 ) {
@@ -213,7 +229,8 @@ class Core {
 				// Let's rely on the hex conversion for now as the picker defaults to hex.
 			}
 
-			$shadow_css = "box-shadow: 0 2px {$blur} {$spread} {$shadow_color} !important;";
+			// Switched back to box-shadow to support spread radius as explicitly requested
+			$shadow_css = "box-shadow: {$shadow_distance}px {$shadow_distance}px {$shadow_blur}px {$shadow_spread}px {$shadow_color} !important;";
 		}
 
 		foreach ( $types as $type ) {
@@ -226,14 +243,23 @@ class Core {
 			// Using .wpsc-it-container (CLASS) + class hierarchy.
 			// Fixed bug where #wpsc-it-container (ID) was used incorrectly.
 
-			$selector = '';
-			if ( $type === 'agent' ) {
-				$selector = '.wpsc-it-container .wpsc-thread.reply.agent .thread-body, .wpsc-it-container .wpsc-thread.report.agent .thread-body';
-			} elseif ( $type === 'customer' ) {
-				$selector = '.wpsc-it-container .wpsc-thread.reply.customer .thread-body, .wpsc-it-container .wpsc-thread.report.customer .thread-body';
-			} elseif ( $type === 'note' ) {
-				$selector = '.wpsc-it-container .wpsc-thread.note .thread-body';
+			// Support both Admin (.wpsc-it-container) and Frontend (.wpsc-shortcode-container, .wpsc-container) contexts
+			// Note: .wpsc-container is used in newer SC versions for frontend shortcodes.
+			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container'];
+
+			$selectors = [];
+			foreach ($roots as $root) {
+				if ( $type === 'agent' ) {
+					$selectors[] = "{$root} .wpsc-thread.reply.agent .thread-body";
+					$selectors[] = "{$root} .wpsc-thread.report.agent .thread-body";
+				} elseif ( $type === 'customer' ) {
+					$selectors[] = "{$root} .wpsc-thread.reply.customer .thread-body";
+					$selectors[] = "{$root} .wpsc-thread.report.customer .thread-body";
+				} elseif ( $type === 'note' ) {
+					$selectors[] = "{$root} .wpsc-thread.note .thread-body";
+				}
 			}
+			$selector = implode(', ', $selectors);
 
 			// Build CSS Rule
 			$css .= "{$selector} {";
@@ -241,6 +267,10 @@ class Core {
 			$css .= "color: {$styles['text_color']} !important;";
 			$css .= "border-radius: {$styles['radius']}px !important;";
 			$css .= "width: {$styles['width']}% !important;";
+			$css .= "max-width: {$styles['width']}% !important;";
+
+			// Override flex behavior to ensure width is respected (Fix for frontend flex-grow issue)
+			$css .= "flex-grow: 0 !important;";
 
 			// Font Family
 			if ( ! empty( $styles['font_family'] ) ) {
@@ -266,6 +296,7 @@ class Core {
 			}
 
 			// Alignment
+			// Note: Since .thread-body is a flex child, margin auto works to push it.
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
 			} elseif ( $styles['alignment'] === 'center' ) {
@@ -291,14 +322,106 @@ class Core {
 
 			$css .= "}";
 
+			// Hide Avatar (Relative to the thread container)
+			// $selector targets .thread-body inside the thread container. We need to go up one level to the thread container
+			// to find the .thread-avatar sibling, OR target the .thread-avatar relative to the same parent.
+			// The selector logic above builds paths like: ".wpsc-it-container .wpsc-thread.reply.agent .thread-body".
+			// The avatar is at: ".wpsc-it-container .wpsc-thread.reply.agent .thread-avatar".
+			// So we need to strip ".thread-body" from the selector parts and append ".thread-avatar".
+
+			$avatar_selectors = [];
+			$selector_parts = explode(', ', $selector);
+
+			foreach ($selector_parts as $part) {
+				$part = trim($part);
+				if ( substr($part, -12) === '.thread-body' ) {
+					$base = substr($part, 0, -12);
+					$avatar_selectors[] = $base . ' .thread-avatar';
+				}
+			}
+
+			if ( ! empty( $avatar_selectors ) ) {
+				$avatar_str = implode(', ', $avatar_selectors);
+				$css .= "{$avatar_str} { display: none !important; }";
+			}
+
 			// Text Color inside (links, etc)
-			$css .= "{$selector} .thread-text, {$selector} .thread-header h2, {$selector} .thread-header span { color: {$styles['text_color']} !important; }";
+			// Updated to target specific user-info elements and links which often override colors
+			$color_selectors = [];
+			// Helper to create sub-selectors for the list of root selectors
+			// Added .user-name specifically
+			$sub_elements = ['.thread-text', '.user-info h2', '.user-info h2.user-name', '.user-info span', 'a', '.thread-header h2', '.thread-header span'];
+
+			foreach ($selector_parts as $part) {
+				foreach ($sub_elements as $el) {
+					$color_selectors[] = trim($part) . ' ' . $el;
+				}
+			}
+			$color_selector_str = implode(', ', $color_selectors);
+
+			$css .= "{$color_selector_str} { color: {$styles['text_color']} !important; }";
 
 			// Header layout adjustment
-			$css .= "{$selector} .thread-header { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
+			$header_selectors = [];
+			foreach ($selector_parts as $part) {
+				$header_selectors[] = trim($part) . ' .thread-header';
+			}
+			$header_selector_str = implode(', ', $header_selectors);
+			$css .= "{$header_selector_str} { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
+
+			// Image Bounding Box (Global setting affecting all types)
+			if ( ! empty( $options['chat_bubbles_image_box'] ) ) {
+				$img_selectors = [];
+				foreach ($selector_parts as $part) {
+					$img_selectors[] = trim($part) . ' img';
+				}
+				$img_selector_str = implode(', ', $img_selectors);
+				$css .= "{$img_selector_str} { border: 1px solid rgba(0,0,0,0.2) !important; padding: 3px !important; background: rgba(255,255,255,0.5) !important; border-radius: 3px !important; }";
+			}
 		}
 
 		return $css;
+	}
+
+	/**
+	 * Helper to get StackBoost Theme Colors (Mirroring admin-themes.css).
+	 * This ensures colors work on the frontend without enqueueing the full admin CSS.
+	 */
+	public function get_stackboost_theme_colors( $slug ) {
+		$themes = [
+			'sb-theme-wordpress-sync' => [
+				'accent' => '#2271b1', // Fallback, variable not available on frontend
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#f0f0f1',
+			],
+			'sb-theme-supportcandy-sync' => [
+				'accent' => '#2271b1', // Fallback
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#f6f7f7',
+			],
+			'sb-theme-cloud-dancer' => [
+				'accent' => '#722ed1',
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#F0EEE9',
+			],
+			'sb-theme-heroic' => [
+				'accent' => '#d63638',
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#f6f7f7',
+			],
+			'sb-theme-clean-tech' => [
+				'accent' => '#1a3d5c',
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#ffffff',
+			],
+			'sb-theme-hudson-valley-eco' => [
+				'accent' => '#2d5a27',
+				'text_on_accent' => '#ffffff',
+				'bg_main' => '#e9edeb',
+			],
+		];
+
+		return $themes[ $slug ] ?? $themes['sb-theme-clean-tech'];
 	}
 
 	/**
@@ -332,12 +455,17 @@ class Core {
 		switch ( $theme ) {
 			case 'stackboost':
 				// StackBoost Theme
+				// Retrieve Active Theme Colors explicitly for frontend compatibility
+				$active_theme_slug = $options['admin_theme'] ?? 'sb-theme-clean-tech';
+				$theme_colors = $this->get_stackboost_theme_colors( $active_theme_slug );
+
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => 'var(--sb-accent, #2271b1)',
-						'text_color'  => '#ffffff',
+						'bg_color'    => $theme_colors['accent'],
+						'text_color'  => $theme_colors['text_on_accent'],
 						'alignment'   => 'right',
 						'radius'      => '15',
+						'padding'     => '15',
 					]);
 				} elseif ( $type === 'note' ) {
 					$styles = array_merge( $defaults, [
@@ -345,13 +473,15 @@ class Core {
 						'text_color'  => '#333333',
 						'alignment'   => 'center',
 						'radius'      => '5',
+						'padding'     => '10',
 					]);
 				} else {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => 'var(--sb-bg-main, #f0f0f1)',
-						'text_color'  => '#3c434a',
+						'bg_color'    => $theme_colors['bg_main'],
+						'text_color'  => '#3c434a', // Dark text on main bg
 						'alignment'   => 'left',
 						'radius'      => '15',
+						'padding'     => '15',
 					]);
 				}
 				$styles['font_family'] = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
@@ -570,6 +700,7 @@ class Core {
 		if ($styles['width'] < 0 || $styles['width'] > 100) $styles['width'] = 85;
 		$styles['radius'] = absint($styles['radius']);
 		if ($styles['radius'] > 100) $styles['radius'] = 100;
+		$styles['padding'] = absint($styles['padding']);
 		$styles['font_size'] = absint($styles['font_size']);
 		$styles['font_family'] = sanitize_text_field($styles['font_family']);
 		$styles['border_width'] = absint($styles['border_width']);

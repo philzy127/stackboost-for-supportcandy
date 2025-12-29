@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1] - 2025-10-13
+### Added
+- **Chat Bubbles:** A complete module for styling SupportCandy ticket threads as modern chat bubbles.
+    - **Uniformity:** Identical rendering on Admin Dashboard and Frontend Ticket Views.
+    - **Theme Sync:** Automatically inherits colors from the active StackBoost Admin Theme.
+    - **Visual Controls:** Granular settings for Padding, Image Bounding Boxes, and Shadows (Distance, Blur, Spread).
+    - **Avatar Logic:** Intelligent hiding of user avatars for chat messages while preserving them for system events.
+
 ## [1.2.4] - 2024-05-22
 ### Added
 - **Feature Spotlight:** Added a context-aware "Feature Spotlight" widget to the main settings dashboard.
