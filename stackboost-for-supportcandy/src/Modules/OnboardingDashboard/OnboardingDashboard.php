@@ -51,6 +51,9 @@ class OnboardingDashboard {
 		// Load Shortcodes
 		Shortcodes\DashboardShortcode::init();
 
+		// Load Blocks
+		new Blocks\DashboardBlock();
+
 		// Load AJAX Handlers
 		Ajax\CertificateHandler::init();
 	}

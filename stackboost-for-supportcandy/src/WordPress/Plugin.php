@@ -7,6 +7,7 @@ use StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
 use StackBoost\ForSupportCandy\Modules\QolEnhancements;
 use StackBoost\ForSupportCandy\Modules\TicketView;
 use StackBoost\ForSupportCandy\Modules\Appearance;
+use StackBoost\ForSupportCandy\Modules\ChatBubbles;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 
@@ -107,6 +108,13 @@ final class Plugin {
 			}
 		}
 
+		if ( stackboost_is_feature_active( 'chat_bubbles' ) ) {
+			$class = 'StackBoost\ForSupportCandy\Modules\ChatBubbles\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['chat_bubbles'] = $class::get_instance();
+			}
+		}
+
 		// Business Features
 		if ( stackboost_is_feature_active( 'staff_directory' ) ) {
 			$class = 'StackBoost\ForSupportCandy\Modules\Directory\WordPress';
@@ -127,10 +135,72 @@ final class Plugin {
 	 * Initialize WordPress hooks that are central to the plugin.
 	 */
 	private function init_hooks() {
+		add_action( 'init', [ $this, 'register_global_assets' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_and_localize_frontend_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_menu' ], 999 );
 		add_filter( 'all_plugins', [ $this, 'filter_plugin_name' ] );
+	}
+
+	/**
+	 * Register global assets (scripts/styles) that are available to all modules.
+	 */
+	public function register_global_assets() {
+		// DataTables CSS
+		wp_register_style(
+			'stackboost-datatables-css',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/datatables/datatables.min.css',
+			[],
+			'2.3.6'
+		);
+
+		// DataTables JS
+		wp_register_script(
+			'stackboost-datatables-js',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/datatables/datatables.min.js',
+			[ 'jquery' ],
+			'2.3.6',
+			true
+		);
+
+		// Tippy.js (Tooltip Library)
+		wp_register_script(
+			'stackboost-popper',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/popper/popper.min.js',
+			[],
+			'2.0',
+			true
+		);
+		wp_register_script(
+			'stackboost-tippy',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/tippy/tippy.min.js',
+			[ 'stackboost-popper' ],
+			'6.0',
+			true
+		);
+
+		// jQuery UI CSS
+		wp_register_style(
+			'stackboost-jquery-ui',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/jquery-ui/jquery-ui.min.css',
+			[],
+			'1.12.1'
+		);
+
+		// StackBoost Util (Shared JS/CSS)
+		wp_register_script(
+			'stackboost-util',
+			STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
+			[ 'jquery' ],
+			STACKBOOST_VERSION,
+			true
+		);
+		wp_register_style(
+			'stackboost-util',
+			STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
+			[],
+			STACKBOOST_VERSION
+		);
 	}
 
 	/**
@@ -212,26 +282,10 @@ final class Plugin {
 	 * This method now centralizes localization to prevent conflicts.
 	 */
 	public function enqueue_and_localize_frontend_scripts() {
-		// Enqueue Tippy.js and its dependency, Popper.js from CDN
-		wp_enqueue_script(
-			'popper-js',
-			'https://unpkg.com/@popperjs/core@2',
-			[],
-			'2', // Version number
-			true // In footer
-		);
-		wp_enqueue_script(
-			'tippy-js',
-			'https://unpkg.com/tippy.js@6',
-			['popper-js'], // Dependency
-			'6', // Version number
-			true // In footer
-		);
-
 		wp_register_script(
 			'stackboost-frontend',
 			STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-frontend.js',
-			[ 'jquery', 'tippy-js' ],
+			[ 'jquery', 'stackboost-tippy', 'stackboost-util' ],
 			STACKBOOST_VERSION,
 			true
 		);
@@ -310,6 +364,7 @@ final class Plugin {
 			'stackboost_page_stackboost-date-time',
 			'stackboost_page_stackboost-appearance',
             // Missing Pages added:
+			'stackboost_page_stackboost-chat-bubbles',
             'stackboost_page_stackboost-ticket-view',
             'stackboost_page_stackboost-after-hours',
             'stackboost_page_stackboost-utm',
@@ -327,6 +382,7 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-tools',
             'stackboost-for-supportcandy_page_stackboost-date-time',
             'stackboost-for-supportcandy_page_stackboost-appearance',
+            'stackboost-for-supportcandy_page_stackboost-chat-bubbles',
             // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
             'stackboost_page_stackboost-date-time',
 		];
@@ -371,19 +427,8 @@ final class Plugin {
             }
 
 			// Enqueue shared utilities (Modals, etc.)
-			wp_enqueue_style(
-				'stackboost-util',
-				STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
-				[],
-				STACKBOOST_VERSION
-			);
-			wp_enqueue_script(
-				'stackboost-util',
-				STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
-				[ 'jquery' ],
-				STACKBOOST_VERSION,
-				true
-			);
+			wp_enqueue_style( 'stackboost-util' );
+			wp_enqueue_script( 'stackboost-util' );
 
 			wp_enqueue_style(
 				'stackboost-admin-tabs',
@@ -427,7 +472,7 @@ final class Plugin {
 			$screen = get_current_screen();
 			if ( $screen && 'sb_staff_dir' === $screen->post_type ) {
 				wp_enqueue_script( 'jquery-ui-datepicker' );
-				wp_enqueue_style( 'jquery-ui-style', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css', true);
+				wp_enqueue_style( 'stackboost-jquery-ui' );
 			}
 		}
 

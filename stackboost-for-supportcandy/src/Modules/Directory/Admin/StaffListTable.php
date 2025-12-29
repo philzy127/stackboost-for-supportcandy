@@ -102,10 +102,13 @@ class StaffListTable extends \WP_List_Table {
 				$extension    = get_post_meta( $item->ID, '_extension', true );
 				$mobile_phone = get_post_meta( $item->ID, '_mobile_phone', true );
 
+				$directory_service = \StackBoost\ForSupportCandy\Services\DirectoryService::get_instance();
+
 				if ( ! empty( $office_phone ) ) {
-					$output .= '<strong>' . esc_html__( 'Office', 'stackboost-for-supportcandy' ) . ':</strong> ' . esc_html( $office_phone );
+					$formatted_office = $directory_service->format_phone_number_string( $office_phone );
+					$output .= '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . esc_html( $formatted_office );
 					if ( ! empty( $extension ) ) {
-						$output .= ' ext. ' . esc_html( $extension );
+						$output .= ' <span style="color: #777; font-size: 0.9em;">' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . esc_html( $extension ) . '</span>';
 					}
 				}
 
@@ -113,7 +116,8 @@ class StaffListTable extends \WP_List_Table {
 					if ( ! empty( $output ) ) {
 						$output .= '<br>';
 					}
-					$output .= '<strong>' . esc_html__( 'Mobile', 'stackboost-for-supportcandy' ) . ':</strong> ' . esc_html( $mobile_phone );
+					$formatted_mobile = $directory_service->format_phone_number_string( $mobile_phone );
+					$output .= '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . esc_html( $formatted_mobile );
 				}
 
 				return ! empty( $output ) ? $output : '&mdash;';

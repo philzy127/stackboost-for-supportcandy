@@ -38,6 +38,7 @@ rm -rf "$REPO_DIR/src/Modules/QueueMacro"
 rm -rf "$REPO_DIR/src/Modules/UnifiedTicketMacro"
 rm -rf "$REPO_DIR/src/Modules/AfterTicketSurvey"
 rm -rf "$REPO_DIR/includes/libraries/dompdf"
+rm -rf "$REPO_DIR/assets/libraries/datatables"
 
 # Remove License and PDF Service files
 rm -f "$REPO_DIR/src/Services/LicenseManager.php"

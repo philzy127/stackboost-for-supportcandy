@@ -191,6 +191,38 @@
 				}
 			}
 
+			// Helper to check for meaningful content
+			function hasMeaningfulContent(html) {
+				if (!html) return false;
+				const temp = document.createElement('div');
+				temp.innerHTML = html;
+
+				// 1. Try to find specific thread bodies first
+				const threadBodies = temp.querySelectorAll('.stackboost-thread-body');
+				if (threadBodies.length > 0) {
+					// Iterate through all threads. If ANY thread has meaningful content, return true.
+					for (let i = 0; i < threadBodies.length; i++) {
+						const text = threadBodies[i].textContent.trim().toLowerCase();
+						if (text.length > 0 && text !== 'not applicable' && text !== 'n/a') {
+							return true;
+						}
+					}
+					// If we looped through all threads and found nothing meaningful, return false.
+					return false;
+				}
+
+				// 2. Fallback: Check inside the widget body if it exists
+				const widgetBody = temp.querySelector('.wpsc-widget-body');
+				const target = widgetBody ? widgetBody : temp;
+				const text = target.textContent.trim().toLowerCase();
+				return text.length > 0 && text !== 'not applicable' && text !== 'n/a';
+			}
+
+			// Clean up extra content if it's "Not Applicable"
+			if (!hasMeaningfulContent(extraContentHtml)) {
+				extraContentHtml = '';
+			}
+
 			// Combine
 			// We check the content size logic later in onShow
 			const finalHtml = `<div class="stackboost-ticket-card-container" style="width: 350px; min-width: 350px !important;">
@@ -272,8 +304,15 @@
 						const threshold = windowHeight * 0.85;
 
 						const $container = $(instance.popper).find('.stackboost-ticket-card-container');
+					const $historySection = $container.find('.stackboost-card-history');
+
+					// If history is empty, hide the container to prevent empty spacing
+					if ($historySection.html().trim() === '') {
+						$historySection.hide();
+					}
+
 						const hasDetails = $container.find('.stackboost-card-details').html().trim().length > 10;
-						const hasHistory = $container.find('.stackboost-card-history').html().trim().length > 10;
+					const hasHistory = $historySection.is(':visible') && $historySection.html().trim().length > 10;
 
 						// Only switch to horizontal if we have both sections AND it's too tall
 						if (hasDetails && hasHistory && contentHeight > threshold) {
@@ -292,6 +331,9 @@
 								'width': '50%'
 							});
 
+						// Remove margins from inner widgets for cleaner layout
+						$container.find('.wpsc-it-widget, .stackboost-dashboard').css('margin', '0');
+
 							// Force Tippy to update position with new dimensions
 							instance.setProps({ maxWidth: 'none' }); // Ensure no constraint
 						}
@@ -305,7 +347,26 @@
 				}
 			});
 
+			// Add mousedown listener to prevent text selection on Shift+RightClick
+			row.addEventListener('mousedown', (e) => {
+				// If Shift is pressed and it's a right-click (button 2)
+				if (e.shiftKey && e.button === 2) {
+					// Prevent the default browser behavior (which triggers text selection)
+					e.preventDefault();
+				}
+			});
+
+			// Close the card when clicking the row (which opens the ticket)
+			row.addEventListener('click', () => {
+				tippyInstance.hide();
+			});
+
 			row.addEventListener('contextmenu', (e) => {
+				// Allow native context menu if Shift key is pressed
+				if (e.shiftKey) {
+					return;
+				}
+
 				e.preventDefault();
 
 				// Set the reference to a virtual element at the cursor position

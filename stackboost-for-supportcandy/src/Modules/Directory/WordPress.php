@@ -79,6 +79,10 @@ class WordPress {
 
 		// Filter for redirecting after post update.
 		add_filter( 'redirect_post_location', array( $this, 'redirect_after_staff_update' ), 10, 2 );
+
+		// GDPR Hooks.
+		add_filter( 'wp_privacy_personal_data_exporters', array( $this, 'register_gdpr_exporters' ) );
+		add_filter( 'wp_privacy_personal_data_erasers', array( $this, 'register_gdpr_erasers' ) );
 	}
 
 	/**
@@ -175,20 +179,8 @@ class WordPress {
 			// Enqueue scripts for the Management tab.
 			if ( 'management' === $active_tab ) {
 				// Enqueue Util Script (Shared functionality like Modals).
-				wp_enqueue_style(
-					'stackboost-util-style',
-					\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
-					array(),
-					\STACKBOOST_VERSION
-				);
-
-				wp_enqueue_script(
-					'stackboost-util-js',
-					\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
-					array( 'jquery' ),
-					\STACKBOOST_VERSION,
-					true
-				);
+				wp_enqueue_style( 'stackboost-util' );
+				wp_enqueue_script( 'stackboost-util' );
 
 				// Enqueue scripts for import.
 				wp_enqueue_script(
@@ -243,7 +235,7 @@ class WordPress {
 				wp_enqueue_script(
 					'stackboost-json-import-export',
 					\STACKBOOST_PLUGIN_URL . 'assets/js/json-import-export.js',
-					array( 'jquery', 'stackboost-management-ajax', 'stackboost-util-js' ), // Depend on management-ajax for localized object and util for modals
+					array( 'jquery', 'stackboost-management-ajax', 'stackboost-util' ), // Depend on management-ajax for localized object and util for modals
 					\STACKBOOST_VERSION,
 					true
 				);
@@ -260,32 +252,23 @@ class WordPress {
 
 		// Determine if we need to load assets based on shortcodes.
 		$has_directory_shortcode = is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'stackboost_directory' );
+		$has_directory_block     = is_a( $post, 'WP_Post' ) && has_block( 'stackboost/directory', $post );
+		$has_directory_feature   = $has_directory_shortcode || $has_directory_block;
+
 		$has_ticket_shortcode    = is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'wpsc_ticket' );
 
 		// Enqueue Util Script (Shared functionality like Copy to Clipboard, Toast).
 		// Load if either the Directory or the Ticket Widget is present.
-		if ( $has_directory_shortcode || $has_ticket_shortcode ) {
-			wp_enqueue_style(
-				'stackboost-util-style',
-				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-util.css',
-				array(),
-				\STACKBOOST_VERSION
-			);
-
-			wp_enqueue_script(
-				'stackboost-util-js',
-				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-util.js',
-				array( 'jquery' ),
-				\STACKBOOST_VERSION,
-				true
-			);
+		if ( $has_directory_feature || $has_ticket_shortcode ) {
+			wp_enqueue_style( 'stackboost-util' );
+			wp_enqueue_script( 'stackboost-util' );
 
 			// Check for debug mode from global settings
 			$settings      = get_option( 'stackboost_settings', [] );
 			$debug_enabled = isset( $settings['diagnostic_log_enabled'] ) && '1' === $settings['diagnostic_log_enabled'];
 
 			wp_localize_script(
-				'stackboost-util-js',
+				'stackboost-util',
 				'stackboostPublicAjax',
 				array(
 					'debug_enabled' => $debug_enabled,
@@ -295,31 +278,26 @@ class WordPress {
 
 		// Enqueue Directory Assets (DataTables, Main Logic).
 		// Load ONLY if the directory shortcode is present.
-		if ( $has_directory_shortcode ) {
-			wp_enqueue_style(
-				'stackboost-directory-datatables-style',
-				'https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css',
-				array(),
-				'1.11.5'
-			);
-			wp_enqueue_style(
-				'stackboost-directory-style',
-				\STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
-				array( 'stackboost-util-style' ), // Depend on util style
-				\STACKBOOST_VERSION
-			);
+		if ( $has_directory_feature ) {
+			// CSS is now loaded via block.json for blocks, but we still need it for shortcodes.
+			// WordPress handles deduplication, so safe to keep or rely on block logic.
+			// However, since we want to be explicit for shortcodes:
+            if ( ! has_block( 'stackboost/directory', $post ) ) {
+                wp_enqueue_style(
+                    'stackboost-directory-style',
+                    \STACKBOOST_PLUGIN_URL . 'assets/css/stackboost-directory.css',
+                    array( 'stackboost-util', 'stackboost-datatables-css' ), // Depend on util style
+                    \STACKBOOST_VERSION
+                );
+            }
 
-			wp_enqueue_script(
-				'stackboost-directory-datatables',
-				'https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js',
-				array( 'jquery' ),
-				'1.11.5',
-				true
-			);
+			// Ensure DataTables CSS is loaded (global handle)
+			wp_enqueue_style( 'stackboost-datatables-css' );
+
 			wp_enqueue_script(
 				'stackboost-directory-js',
 				\STACKBOOST_PLUGIN_URL . 'assets/js/stackboost-directory.js',
-				array( 'jquery', 'stackboost-directory-datatables', 'stackboost-util-js' ), // Depend on util js
+				array( 'jquery', 'stackboost-datatables-js', 'stackboost-util' ), // Depend on util js
 				\STACKBOOST_VERSION,
 				true
 			);
@@ -1139,5 +1117,159 @@ class WordPress {
 			stackboost_log( $log_message, 'directory-error' );
 			return $location; // Return the original location to prevent a redirect loop.
 		}
+	}
+
+	/**
+	 * Register GDPR Data Exporters.
+	 *
+	 * @param array $exporters Existing exporters.
+	 * @return array
+	 */
+	public function register_gdpr_exporters( $exporters ) {
+		$exporters['stackboost-directory'] = array(
+			'exporter_friendly_name' => __( 'StackBoost Directory', 'stackboost-for-supportcandy' ),
+			'callback'               => array( $this, 'gdpr_exporter_callback' ),
+		);
+		return $exporters;
+	}
+
+	/**
+	 * Register GDPR Data Erasers.
+	 *
+	 * @param array $erasers Existing erasers.
+	 * @return array
+	 */
+	public function register_gdpr_erasers( $erasers ) {
+		$erasers['stackboost-directory'] = array(
+			'eraser_friendly_name' => __( 'StackBoost Directory', 'stackboost-for-supportcandy' ),
+			'callback'             => array( $this, 'gdpr_eraser_callback' ),
+		);
+		return $erasers;
+	}
+
+	/**
+	 * GDPR Exporter Callback.
+	 *
+	 * @param string $email_address The email address to export.
+	 * @param int    $page          Pagination page number.
+	 * @return array
+	 */
+	public function gdpr_exporter_callback( $email_address, $page = 1 ) {
+		$number = 500; // Limit per batch.
+		$page   = (int) $page;
+
+		$export_items = array();
+		$args         = array(
+			'post_type'      => $this->core->cpts->post_type,
+			'posts_per_page' => $number,
+			'paged'          => $page,
+			'meta_query'     => array(
+				array(
+					'key'     => '_stackboost_email_address',
+					'value'   => $email_address,
+					'compare' => '=',
+				),
+			),
+		);
+
+		$query = new \WP_Query( $args );
+
+		if ( $query->have_posts() ) {
+			foreach ( $query->posts as $post ) {
+				$item_id = $post->ID;
+				$data    = array(
+					array(
+						'name'  => __( 'Name', 'stackboost-for-supportcandy' ),
+						'value' => $post->post_title,
+					),
+					array(
+						'name'  => __( 'Job Title', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_job_title', true ),
+					),
+					array(
+						'name'  => __( 'Office Phone', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_office_phone', true ),
+					),
+					array(
+						'name'  => __( 'Mobile Phone', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_mobile_phone', true ),
+					),
+					array(
+						'name'  => __( 'Extension', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_extension', true ),
+					),
+					array(
+						'name'  => __( 'Room Number', 'stackboost-for-supportcandy' ),
+						'value' => get_post_meta( $item_id, '_stackboost_room_number', true ),
+					),
+				);
+
+				$export_items[] = array(
+					'group_id'    => 'stackboost-directory-staff',
+					'group_label' => __( 'Directory Staff Profile', 'stackboost-for-supportcandy' ),
+					'item_id'     => 'staff-' . $item_id,
+					'data'        => $data,
+				);
+			}
+		}
+
+		$done = count( $export_items ) < $number;
+		return array(
+			'data' => $export_items,
+			'done' => $done,
+		);
+	}
+
+	/**
+	 * GDPR Eraser Callback.
+	 *
+	 * @param string $email_address The email address to erase.
+	 * @param int    $page          Pagination page number.
+	 * @return array
+	 */
+	public function gdpr_eraser_callback( $email_address, $page = 1 ) {
+		$number = 500;
+		$page   = (int) $page;
+
+		$items_removed  = false;
+		$items_retained = false;
+		$messages       = array();
+
+		$args = array(
+			'post_type'      => $this->core->cpts->post_type,
+			'posts_per_page' => $number,
+			'paged'          => $page,
+			'meta_query'     => array(
+				array(
+					'key'     => '_stackboost_email_address',
+					'value'   => $email_address,
+					'compare' => '=',
+				),
+			),
+		);
+
+		$query = new \WP_Query( $args );
+
+		if ( $query->have_posts() ) {
+			foreach ( $query->posts as $post ) {
+				// Move to trash instead of permanent delete for safety, as agreed.
+				$deleted = wp_trash_post( $post->ID );
+
+				if ( $deleted ) {
+					$items_removed = true;
+				} else {
+					$items_retained = true;
+					$messages[]     = sprintf( __( 'Staff profile (ID %d) could not be removed.', 'stackboost-for-supportcandy' ), $post->ID );
+				}
+			}
+		}
+
+		$done = count( $query->posts ) < $number;
+		return array(
+			'items_removed'  => $items_removed,
+			'items_retained' => $items_retained,
+			'messages'       => $messages,
+			'done'           => $done,
+		);
 	}
 }

@@ -11,6 +11,7 @@ namespace StackBoost\ForSupportCandy\Modules\Directory;
 use StackBoost\ForSupportCandy\Modules\Directory\Data\CustomPostTypes;
 use StackBoost\ForSupportCandy\Modules\Directory\Data\MetaBoxes;
 use StackBoost\ForSupportCandy\Modules\Directory\Shortcodes\DirectoryShortcode;
+use StackBoost\ForSupportCandy\Modules\Directory\Blocks\DirectoryBlock;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -35,5 +36,6 @@ class Core {
 		$this->cpts = new CustomPostTypes();
 		new MetaBoxes( $this->cpts );
 		new DirectoryShortcode( $this->cpts );
+		new DirectoryBlock( $this->cpts );
 	}
 }

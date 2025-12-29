@@ -1,0 +1,82 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "stackboost/directory",
+    "version": "1.5.0",
+    "title": "StackBoost Directory",
+    "category": "widgets",
+    "icon": "groups",
+    "description": "Displays the Company Directory.",
+    "supports": {
+        "html": false
+    },
+    "textdomain": "stackboost-for-supportcandy",
+    "editorScript": "file:./index.js",
+    "style": [
+        "stackboost-datatables-css",
+        "stackboost-directory-style"
+    ],
+    "attributes": {
+        "theme": {
+            "type": "string",
+            "default": "standard"
+        },
+        "showSearch": {
+            "type": "boolean",
+            "default": true
+        },
+        "visibleColumns": {
+            "type": "array",
+            "default": ["name", "phone", "department", "title"],
+            "items": {
+                "type": "string"
+            }
+        },
+        "itemsPerPage": {
+            "type": "number",
+            "default": 10
+        },
+        "allowPageLengthChange": {
+            "type": "boolean",
+            "default": true
+        },
+        "linkBehavior": {
+            "type": "string",
+            "default": "modal"
+        },
+        "departmentFilter": {
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "preferGravatar": {
+            "type": "boolean",
+            "default": false
+        },
+        "enableGravatarFallback": {
+            "type": "boolean",
+            "default": false
+        },
+        "photoShape": {
+            "type": "string",
+            "default": "circle"
+        },
+        "specificUsers": {
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "object"
+            }
+        },
+        "showOfficePhone": {
+            "type": "boolean",
+            "default": true
+        },
+        "showMobilePhone": {
+            "type": "boolean",
+            "default": true
+        }
+    }
+}

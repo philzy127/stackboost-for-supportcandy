@@ -34,23 +34,42 @@ class Shortcode {
 
 	/**
 	 * Main shortcode rendering logic.
+     *
+     * @param array $atts Shortcode attributes.
 	 *
 	 * @return string The HTML content for the shortcode.
 	 */
-	public function render_shortcode(): string {
+	public function render_shortcode( $atts = [] ): string {
+        $atts = shortcode_atts( [
+            'formTitle' => '',
+            'introText' => 'Your feedback is important to us. Please take a moment to complete this survey.',
+            'successMessage' => 'Thank you for completing our survey! Your feedback is invaluable and helps us improve our services.',
+            'submitButtonText' => 'Submit Survey',
+            'redirectUrl' => '',
+            'layout' => 'list',
+            'submitButtonBackgroundColor' => '',
+            'submitButtonTextColor' => '',
+            'inputBackgroundColor' => '',
+            'inputTextColor' => '',
+            'formTitleColor' => '',
+            'introTextColor' => ''
+        ], $atts );
+
 		ob_start();
 		if ( ! is_admin() && isset( $_POST['stackboost_ats_submit_survey'] ) && isset( $_POST['stackboost_ats_survey_nonce'] ) && wp_verify_nonce( $_POST['stackboost_ats_survey_nonce'], 'stackboost_ats_survey_form_nonce' ) ) {
-			$this->handle_submission();
+			$this->handle_submission( $atts );
 		} else {
-			$this->display_form();
+			$this->display_form( $atts );
 		}
 		return ob_get_clean();
 	}
 
 	/**
 	 * Handles the processing of a survey submission.
+     *
+     * @param array $atts Attributes.
 	 */
-	private function handle_submission() {
+	private function handle_submission( $atts ) {
 		global $wpdb;
 		$user_id = get_current_user_id();
 
@@ -89,7 +108,7 @@ class Shortcode {
 			foreach ( $errors as $err ) {
 				echo '<div class="stackboost-ats-error-message">' . esc_html( $err ) . '</div>';
 			}
-			$this->display_form();
+			$this->display_form( $atts );
 			return;
 		}
 
@@ -109,13 +128,22 @@ class Shortcode {
 			}
 		}
 
-		echo '<div class="stackboost-ats-success-message">Thank you for completing our survey! Your feedback is invaluable and helps us improve our services.</div>';
+        // Handle Redirect or Success Message
+        if ( ! empty( $atts['redirectUrl'] ) ) {
+            $url = esc_url_raw( $atts['redirectUrl'] );
+            echo "<script>window.location.href = '{$url}';</script>";
+            return;
+        }
+
+		echo '<div class="stackboost-ats-success-message">' . esc_html( $atts['successMessage'] ) . '</div>';
 	}
 
 	/**
 	 * Displays the HTML for the survey form.
+     *
+     * @param array $atts Attributes.
 	 */
-	private function display_form() {
+	private function display_form( $atts ) {
 		global $wpdb;
 		$options = get_option( 'stackboost_settings', [] );
 
@@ -130,9 +158,46 @@ class Shortcode {
 		$prefill_ticket_id = isset( $_GET['ticket_id'] ) ? sanitize_text_field( $_GET['ticket_id'] ) : '';
 		$prefill_tech_name = isset( $_GET['tech'] ) ? sanitize_text_field( $_GET['tech'] ) : '';
 
+        // Layout classes
+        $container_classes = 'stackboost-ats-survey-container';
+        if ( 'grid' === $atts['layout'] ) {
+            $container_classes .= ' stackboost-ats-layout-grid';
+        }
+
+        // Construct CSS Variables Style Block
+        $css_vars = [];
+        if ( ! empty( $atts['submitButtonBackgroundColor'] ) ) {
+            $css_vars[] = '--ats-btn-bg: ' . esc_attr( $atts['submitButtonBackgroundColor'] ) . ';';
+        }
+        if ( ! empty( $atts['submitButtonTextColor'] ) ) {
+            $css_vars[] = '--ats-btn-text: ' . esc_attr( $atts['submitButtonTextColor'] ) . ';';
+        }
+        if ( ! empty( $atts['inputBackgroundColor'] ) ) {
+            $css_vars[] = '--ats-input-bg: ' . esc_attr( $atts['inputBackgroundColor'] ) . ';';
+        }
+        if ( ! empty( $atts['inputTextColor'] ) ) {
+            $css_vars[] = '--ats-input-text: ' . esc_attr( $atts['inputTextColor'] ) . ';';
+        }
+        if ( ! empty( $atts['formTitleColor'] ) ) {
+            $css_vars[] = '--ats-title-color: ' . esc_attr( $atts['formTitleColor'] ) . ';';
+        }
+        if ( ! empty( $atts['introTextColor'] ) ) {
+            $css_vars[] = '--ats-intro-color: ' . esc_attr( $atts['introTextColor'] ) . ';';
+        }
+
+        $style_attr = '';
+        if ( ! empty( $css_vars ) ) {
+            $style_attr = 'style="' . implode( ' ', $css_vars ) . '"';
+        }
+
 		?>
-		<div class="stackboost-ats-survey-container">
-			<p class="stackboost-ats-intro">Your feedback is important to us. Please take a moment to complete this survey.</p>
+		<div class="<?php echo esc_attr( $container_classes ); ?>" <?php echo $style_attr; ?>>
+            <?php if ( ! empty( $atts['formTitle'] ) ) : ?>
+                <h2 class="stackboost-ats-main-title"><?php echo esc_html( $atts['formTitle'] ); ?></h2>
+            <?php endif; ?>
+			<?php if ( ! empty( $atts['introText'] ) ) : ?>
+                <p class="stackboost-ats-intro"><?php echo nl2br( esc_html( $atts['introText'] ) ); ?></p>
+            <?php endif; ?>
 			<form method="post" class="stackboost-ats-form">
 				<?php wp_nonce_field( 'stackboost_ats_survey_form_nonce', 'stackboost_ats_survey_nonce' ); ?>
 				<?php foreach ( $questions as $q_num => $q ) : ?>
@@ -146,7 +211,7 @@ class Shortcode {
 						<?php $this->render_question_field( $q, $options, $prefill_ticket_id, $prefill_tech_name ); ?>
 					</div>
 				<?php endforeach; ?>
-				<button type="submit" name="stackboost_ats_submit_survey" class="stackboost-ats-submit-button">Submit Survey</button>
+				<button type="submit" name="stackboost_ats_submit_survey" class="stackboost-ats-submit-button"><?php echo esc_html( $atts['submitButtonText'] ); ?></button>
 			</form>
 		</div>
 		<?php
@@ -221,7 +286,7 @@ class Shortcode {
             $input_value = ''; // Reset invalid value
             $best_match_value = '';
             stackboost_log( "Invalid pre-fill value for field ID {$question['id']} ignored.", 'ats' );
-            echo "<script>if(typeof console !== 'undefined') { console.warn('[StackBoost ATS] Invalid pre-fill value for field ID {$question['id']} ignored.'); }</script>";
+            echo "<script>if(typeof window.stackboostLog === 'function') { window.stackboostLog('Invalid pre-fill value for field ID {$question['id']} ignored.', null, 'warn'); }</script>";
         }
 
         // Determine Read-Only State

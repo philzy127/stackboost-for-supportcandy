@@ -12,6 +12,10 @@ After activating the plugin, you will see a new **StackBoost** menu in your Word
 
 The **General Settings** page provides an overview of the plugin status and allows you to configure global options.
 
+*   **Feature Spotlight:** A new dynamic widget on the dashboard highlights key features available in your plan (or upgrades you might be missing). Use the carousel arrows to browse through the features and click "Learn More" to see details.
+    *   **Context Aware:** The widget automatically adjusts based on your license tier (Lite, Pro, Business) to show you the most relevant tools.
+    *   **Auto-Rotation:** The spotlight automatically cycles through features every 60 seconds, but you can pause it by hovering over the card.
+
 ### Diagnostics
 
 The **Diagnostics** page (formerly "Tools") gives you control over the system's health and debugging features.
@@ -32,6 +36,12 @@ Manage your staff, locations, and departments.
 *   **Staff:** Add and edit staff members. You can link them to WordPress users for advanced integration.
 *   **Import:** Use the "Management" tab to import staff from a JSON file.
 *   **Contact Widget:** Configure a widget to show staff contact details directly on the SupportCandy ticket view.
+*   **Directory Block:** Display your staff directory on any page using the `StackBoost Directory` block.
+    *   **Visible Fields:** Toggle fields like Name, Phone, Email, Department, and Title.
+    *   **Email Display:** Optionally display the staff member's email address (with a convenient copy button) directly under their name.
+    *   **Photo Options:**
+        *   **Photo Shape:** Choose between Circle, Square, Portrait, or Landscape styles for staff photos.
+        *   **Gravatar Integration:** Enable "Prefer Gravatar" to prioritize Gravatar images, or "Fallback to Gravatar" to use them only when no custom photo is uploaded.
 
 ### Onboarding Dashboard
 
@@ -57,6 +67,18 @@ Collect feedback from your users.
     *   **Read-only if Pre-filled:** A new option in the question settings allows you to lock a field if it is populated via a URL parameter (e.g., `?ticket_id=123`). This is useful for preventing users from changing critical data like ticket numbers or technician names. The field will remain uneditable but will still be submitted with the form.
 *   **Settings:** Configure color schemes and behavior.
 *   **Integration:** The survey link is automatically added to closed ticket emails if configured.
+
+### Chat Bubbles
+
+Modernize your ticket threads with a clean, conversational interface.
+
+*   **Unified Design:** The chat bubbles automatically adapt to look great on both your Admin Dashboard and the Frontend Ticket View seen by customers.
+*   **Theme Sync:** Bubbles automatically inherit colors from your selected StackBoost Admin Theme (e.g., Clean Tech, Heroic) for a seamless brand experience.
+*   **Customization:**
+    *   **Shadows:** Fine-tune the drop shadow with controls for Distance, Blur, and Spread to create depth.
+    *   **Padding:** Adjust the internal spacing of bubbles to be as compact or spacious as you like.
+    *   **Images:** Enable "Bounding Boxes" to add a subtle border and background around images, making screenshots pop against colored bubbles.
+    *   **Avatars:** To keep the conversation clean, avatars are hidden for standard replies but remain visible for important system events (like status changes).
 
 ### Ticket View
 

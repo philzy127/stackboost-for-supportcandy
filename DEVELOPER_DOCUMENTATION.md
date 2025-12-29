@@ -2,114 +2,62 @@
 
 ## Overview
 
-StackBoost for SupportCandy is a modular WordPress plugin designed to enhance the capabilities of the SupportCandy helpdesk plugin. It uses a modern, namespace-based architecture to provide features like a Company Directory, Onboarding Dashboard, Unified Ticket Macros, and more.
+StackBoost extends SupportCandy with modular features. Each feature is encapsulated in a dedicated module directory under `src/Modules/`.
 
 ## Architecture
 
-### Directory Structure
+*   **Plugin Root:** `stackboost-for-supportcandy/`
+*   **Source:** `src/`
+    *   **Core:** `Core/` (Base classes like `Module`, `Singleton`)
+    *   **Modules:** `Modules/` (Feature implementations)
+    *   **WordPress:** `WordPress/` (Admin pages, Settings, Plugin integration)
+*   **Assets:** `assets/` (CSS, JS, Images)
 
-The plugin is organized into the following directory structure:
+## Core Modules
 
-*   `bootstrap.php`: The entry point for the plugin, handling the autoloader and initialization.
-*   `includes/`: Helper functions and third-party libraries.
-*   `src/`: The core source code, following PSR-4 standards.
-    *   `Core/`: Abstract base classes and interfaces (e.g., `Module`).
-    *   `Modules/`: Self-contained feature modules (e.g., `Directory`, `OnboardingDashboard`).
-    *   `WordPress/`: WordPress integration classes (e.g., `Plugin`, `Admin/Settings`).
+### 1. Unified Ticket Macro (UTM)
+*   **Location:** `src/Modules/UnifiedTicketMacro/`
+*   **Purpose:** Replaces the `{{stackboost_unified_ticket}}` macro in emails with a dynamic HTML table.
+*   **Key Hooks:** `wpsc_replace_macros` (Email Body Replacement).
+*   **Logging:** Detailed hook logging is implemented in `WordPress.php` to trace ticket lifecycle events (`wpsc_create_new_ticket`, `wpsc_post_reply`, etc.).
 
-### Modules
+### 2. Feature Spotlight (Upsell Widget)
+*   **Location:** `src/WordPress/Admin/Settings.php`
+*   **Purpose:** Displays context-aware feature upsells on the main settings dashboard.
+*   **Logic:**
+    *   `get_upsell_content()`: Defines the content (Hook, Copy, URL, Icon) for 7 feature cards.
+    *   `get_upsell_pool()`: Returns an array of available cards based on the user's license tier (Lite, Pro, Business).
+    *   **Rendering:** Uses an inline jQuery script to implement a carousel with manual navigation and a 60-second auto-rotation timer.
+    *   **Note:** The widget logic reads a transient for start index compatibility but currently defaults to random start (`array_rand`) for better discovery in the carousel format.
 
-Each feature is encapsulated as a "Module". A typical module structure looks like this:
+### 3. Queue Macro
+*   **Location:** `src/Modules/QueueMacro/`
+*   **Purpose:** Calculates and displays a ticket's position in the support queue.
+*   **Key Logic:** `Core::calculate_queue_count` executes a SQL count query based on the configured "Type Field" (e.g., status, priority).
 
-*   `Core.php`: Contains the business logic, decoupled from WordPress as much as possible.
-*   `WordPress.php`: The WordPress adapter that handles hooks, filters, and settings registration.
-*   `Admin/`: Admin-specific classes (e.g., settings pages, list tables).
-*   `Data/`: Data access objects or custom post type definitions.
+### 4. Chat Bubbles
+*   **Location:** `src/Modules/ChatBubbles/`
+*   **Purpose:** Styles ticket threads as chat bubbles with theme synchronization.
+*   **Key Components:**
+    *   `Core::generate_css()`: Generates dynamic CSS targeting both Admin (`.wpsc-it-container`) and Frontend (`.wpsc-shortcode-container`, `#wpsc-container`) selectors.
+    *   `Core::get_stackboost_theme_colors()`: A helper that maps Admin Theme slugs to hex codes, allowing the frontend to replicate the admin theme without loading admin assets.
+    *   **Frontend Integration:** Uses `wp_enqueue_scripts` to register a virtual style handle (`stackboost-chat-bubbles-frontend`) and attach inline CSS.
 
-### Logging System
+## Logging Standards
 
-The plugin features a centralized, granular logging system for diagnostics.
+*   **Central Function:** `stackboost_log( $message, $context )` defined in `bootstrap.php`.
+*   **Policy:**
+    *   **NO** `console.log()` in production JS. Use `window.stackboostLog()` wrapper if available, or PHP-injected debug flags.
+    *   **NO** `error_log()` or `file_put_contents()` for debug data. Use `stackboost_log()`.
+    *   **Context:** Always provide a specific context string (e.g., `'module-utm'`, `'core'`, `'directory'`) to allow granular filtering in the admin panel.
 
-*   **Central Function:** `stackboost_log( $message, $context = 'general' )` defined in `bootstrap.php`.
-*   **Contexts:** Logs are categorized by context (e.g., `'module-utm'`, `'onboarding'`).
-*   **Configuration:**
-    *   **Master Switch (`diagnostic_log_enabled`):** Controls ALL console logging (client-side) and enables the system globally. If this is OFF, no logs (file or console) are generated.
-    *   **Module Toggles (`enable_log_module`):** Control FILE logging for specific contexts. If the Master Switch is ON but a module toggle is OFF, logs for that module will appear in the browser console (if implemented in JS) but NOT in the `debug.log` file.
-    *   The `stackboost_log` function automatically maps the `context` argument to the corresponding setting to determine if the log should be written to the file.
-*   **Log Location:** Logs are written to `wp-content/uploads/stackboost-logs/debug.log`.
+## Frontend Development
 
-**Usage Example:**
+*   **CSS:** Use BEM naming convention where possible. Prefix classes with `.stackboost-`.
+*   **JS:** Enqueue scripts via `admin_enqueue_scripts` hook. Use `wp_localize_script` to pass PHP data (nonces, settings).
 
-```php
-stackboost_log( 'Starting import process...', 'directory-import' );
-```
+## Release Process
 
-### Modal System
-
-The plugin includes a centralized modal system to replace native browser `alert()` and `confirm()` dialogs.
-
-*   **Helper Functions:** `stackboostAlert(message, title, callback)` and `stackboostConfirm(message, title, onConfirm, onCancel, confirmText, cancelText, isDanger)`.
-*   **Assets:** Defined in `assets/js/stackboost-util.js` and `assets/css/stackboost-util.css`.
-*   **Usage:** Enqueue `stackboost-util` script and style to use these functions.
-
-### Settings API
-
-All settings are centralized through `src/WordPress/Admin/Settings.php`.
-
-*   **Registration:** Settings are registered via `register_settings` in the `Settings` class.
-*   **Sanitization:** A central `sanitize_settings` method handles validation for all fields, using a whitelist approach keyed by the admin page slug.
-*   **Menu Management:** The `get_menu_config()` method in `Settings.php` is the single source of truth for the admin menu structure.
-
-## Module Specifics
-
-### After-Hours Notice
-
-*   **Class:** `Modules\AfterHoursNotice\WordPress`
-*   **Logic:** `is_currently_after_hours()` determines the open/closed status.
-*   **SupportCandy Integration:**
-    *   Uses `WPSC_Working_Hour` and `WPSC_Wh_Exception` to check scheduling status.
-    *   Uses `WPSC_Holiday` to check for holidays.
-    *   All external calls are wrapped in `class_exists()` checks for safety.
-*   **Precedence:**
-    1.  SC Exceptions (Override all).
-    2.  Manual Holidays (Override open status if hybrid mode is active).
-    3.  SC Standard Schedule or Manual Schedule (depending on toggle).
-
-### After Ticket Survey (ATS)
-
-*   **Tables:** `wp_stackboost_ats_questions` (contains question definitions).
-*   **Schema Update:** The `is_readonly_prefill` column (`tinyint(1)`) was added to the questions table in version 1.5. The `Install` class handles schema updates via `dbDelta` and includes self-healing logic in `check_db_version()`.
-*   **Validation:**
-    *   **Highlander Rule:** Implemented in `Ajax.php` (backend) and `stackboost-ats-manage-questions.js` (frontend) to strictly limit one 'ticket_number' question per form.
-    *   **Frontend Read-only:** `Shortcode.php` validates pre-filled values against question constraints (numeric for tickets, existing options for dropdowns) before rendering the field as read-only (`pointer-events: none`).
-
-### Ticket View
-
-*   **AJAX Endpoint:** `stackboost_get_ticket_details_card`
-*   **Response Structure:**
-    ```json
-    {
-        "success": true,
-        "data": {
-            "details": "HTML string for the standard fields table",
-            "history": "HTML string for the description and conversation history",
-            "effective_view_type": "standard|utm"
-        }
-    }
-    ```
-*   **Effective View Type:** The `effective_view_type` property is critical. It indicates the *actual* view type rendered by the backend. The frontend MUST use this value to determine behavior (e.g., whether to scrape standard fields or rely on the backend content) rather than relying solely on the local settings, as the backend may force a fallback (e.g., due to license status).
-
-## Deployment
-
-### Versioning
-
-The plugin follows Semantic Versioning. The version is defined in:
-1.  `stackboost-for-supportcandy.php` (Plugin Header)
-2.  `STACKBOOST_VERSION` constant in `stackboost-for-supportcandy.php`
-
-### Release Process
-
-1.  Update the `CHANGELOG.md` with new features and fixes.
-2.  Increment the version number in `stackboost-for-supportcandy.php`.
-3.  Commit changes with a standard message (e.g., `Bump version to 1.3.2`).
-4.  Tag the release in git.
+1.  **Version Bump:** Update `STACKBOOST_VERSION` constant in `Plugin.php` and the file header.
+2.  **Changelog:** Update `CHANGELOG.md`.
+3.  **Build:** Run the build script (if applicable) to generate the `.zip` package.

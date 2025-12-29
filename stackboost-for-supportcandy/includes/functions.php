@@ -27,6 +27,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
         'queue_macro',
         'after_ticket_survey',
         'unified_ticket_macro',
+        'chat_bubbles',
     ];
 
     $features_business = [

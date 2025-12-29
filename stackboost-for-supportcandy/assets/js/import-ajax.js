@@ -57,7 +57,9 @@ jQuery(document).ready(function($) {
             error: function(xhr, status, error) {
                 progressDiv.hide();
                 messageDiv.html('<p style="color: red;">' + stackboostImportAjax.error_message + ' ' + error + '</p>');
-                console.error('AJAX Error:', xhr.responseText);
+                if (typeof window.stackboostLog === 'function') {
+                    window.stackboostLog('AJAX Error: ' + xhr.responseText, null, 'error');
+                }
             }
         });
     });

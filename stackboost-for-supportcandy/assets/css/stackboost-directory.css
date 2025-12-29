@@ -495,3 +495,147 @@
         margin-bottom: 3px; /* Space between label and value */
     }
 }
+
+/* --- Modern Grid Layout --- */
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    border: none;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable thead {
+    display: none; /* Hide header in grid view */
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable tbody {
+    display: contents; /* Allow rows to be grid items */
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable tr {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+    align-items: center;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern #stackboostStaffDirectoryTable td {
+    display: block;
+    border: none;
+    padding: 5px 0;
+    width: 100%;
+}
+
+/* Avatar Styling */
+.stackboost-directory-avatar {
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    margin-bottom: 10px;
+    border: 2px solid #eee;
+}
+
+/* Modern Card Typography */
+.stackboost-staff-directory-container.stackboost-theme-modern .sb-col-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern .sb-col-title {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    font-style: italic;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern .sb-col-dept {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.stackboost-staff-directory-container.stackboost-theme-modern .sb-col-phone {
+    font-size: 0.9em;
+    margin-top: auto; /* Push to bottom */
+}
+
+/* Standard Table Avatar Adjustment */
+.stackboost-theme-standard .stackboost-directory-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
+/* --- Photo Shape Styles --- */
+/* Circle (Default) */
+.stackboost-directory-avatar.sb-shape-circle {
+    border-radius: 50%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+}
+
+/* Square */
+.stackboost-directory-avatar.sb-shape-square {
+    border-radius: 0;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+}
+
+/* Portrait */
+.stackboost-directory-avatar.sb-shape-portrait {
+    border-radius: 0;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+}
+
+/* Landscape */
+.stackboost-directory-avatar.sb-shape-landscape {
+    border-radius: 0;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+}
+
+/* Override Modern Theme fixed styles if necessary */
+.stackboost-staff-directory-container.stackboost-theme-modern .stackboost-directory-avatar {
+    /* Reset fixed width/height to allow shape aspect ratio to control, but keep width constrained */
+    width: 80px;
+    height: auto; /* Allow height to adjust based on aspect ratio */
+}
+
+/* Ensure Standard Theme table avatars also respect shape */
+.stackboost-theme-standard .stackboost-directory-avatar {
+    width: 40px; /* Keep small width */
+    height: auto; /* Allow height to adjust */
+}
+
+/* Editor Mockup Styles */
+.stackboost-directory-editor-controls {
+    background: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-size: 13px;
+    color: #555;
+}
+
+/* User Customization: Scale Mobile Icon */
+span.dashicons.dashicons-smartphone {
+	transform: scale(1.4);
+}

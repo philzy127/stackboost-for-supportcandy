@@ -1,27 +1,14 @@
 jQuery(document).ready(function($) {
-    // Helper function for conditional logging
+    // Helper function for conditional logging using standardized wrapper
     var sbLog = function(message, data) {
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Directory] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-            // Fallback for when stackboost-admin-common.js isn't loaded (e.g. frontend)
-            if (data) {
-                console.log('[StackBoost Directory]', message, data);
-            } else {
-                console.log('[StackBoost Directory]', message);
-            }
+        if (typeof window.stackboostLog === 'function') {
+            window.stackboostLog('[Directory] ' + message, data, 'log');
         }
     };
 
     var sbError = function(message, data) {
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log('[Directory Error] ' + message, data);
-        } else if (typeof stackboostPublicAjax !== 'undefined' && stackboostPublicAjax.debug_enabled) {
-             if (data) {
-                console.error('[StackBoost Directory]', message, data);
-            } else {
-                console.error('[StackBoost Directory]', message);
-            }
+        if (typeof window.stackboostLog === 'function') {
+            window.stackboostLog('[Directory Error] ' + message, data, 'error');
         }
     };
 
@@ -48,38 +35,80 @@ jQuery(document).ready(function($) {
                 var termDigits = term.replace(/\D/g, '');
 
                 // Iterate columns (Name=0, Phone=1, Dept=2, Title=3)
-                // Return true if ANY column matches
+                // Note: Column indices can shift if columns are hidden!
+                // We must map visual indices to data types or iterate all.
 
-                // Phone Column (Index 1) - Special "Numbers Only" Logic
-                var phoneData = data[1] || '';
-                var phoneDigits = phoneData.replace(/\D/g, '');
-                if (termDigits.length > 0 && phoneDigits.includes(termDigits)) {
-                    return true;
-                }
+                // Let's iterate all data columns available
+                var found = false;
 
-                // Other Columns - Standard Logic
-                // We check 0, 2, 3 against the standard term
-                // Strip HTML from data just in case
-                var otherIndices = [0, 2, 3];
-                for (var i = 0; i < otherIndices.length; i++) {
-                    var idx = otherIndices[i];
-                    var colData = (data[idx] || '').replace(/<[^>]+>/g, "").toLowerCase();
-                    if (colData.includes(termLower)) {
-                        return true;
+                data.forEach(function(colData, idx) {
+                    if (found) return;
+
+                    var rawData = (colData || '').replace(/<[^>]+>/g, "").toLowerCase();
+                    var rawDigits = rawData.replace(/\D/g, '');
+
+                    // Simple text check
+                    if (rawData.includes(termLower)) {
+                        found = true;
                     }
-                }
 
-                return false;
+                    // Digits check (for phone numbers mainly)
+                    if (termDigits.length > 0 && rawDigits.includes(termDigits)) {
+                        found = true;
+                    }
+                });
+
+                return found;
             }
         );
 
         // Define common options to avoid duplication
         var getDtOptions = function(responsive) {
+            // Read configuration from data attributes
+            var searching = $table.data('search-enabled');
+            if (searching === undefined) searching = true; // Default true if not set
+
+            var pageLength = $table.data('page-length');
+            if (pageLength === undefined) pageLength = 25;
+
+            var lengthChange = $table.data('length-change-enabled');
+            if (lengthChange === undefined) lengthChange = true;
+
+            // Ensure custom pageLength is in the lengthMenu
+            var customPageLength = parseInt(pageLength, 10);
+            var lengthMenuValues = [10, 25, 50, -1];
+            var lengthMenuLabels = [10, 25, 50, "All"];
+
+            if (lengthMenuValues.indexOf(customPageLength) === -1 && customPageLength !== -1) {
+                // Add value and label
+                lengthMenuValues.push(customPageLength);
+                lengthMenuLabels.push(customPageLength);
+
+                // Sort both arrays based on values to keep them in order (keeping -1/"All" at end)
+                // Combine into objects for sorting
+                var combined = [];
+                for (var i = 0; i < lengthMenuValues.length; i++) {
+                    combined.push({ val: lengthMenuValues[i], label: lengthMenuLabels[i] });
+                }
+
+                combined.sort(function(a, b) {
+                    // Handle -1 (All) to always be last
+                    if (a.val === -1) return 1;
+                    if (b.val === -1) return -1;
+                    return a.val - b.val;
+                });
+
+                // Unpack
+                lengthMenuValues = combined.map(function(o) { return o.val; });
+                lengthMenuLabels = combined.map(function(o) { return o.label; });
+            }
+
             var opts = {
                 "dom": "lfrtip",
-                "searching": true,
-                "pageLength": 25,
-                "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+                "searching": searching,
+                "pageLength": customPageLength,
+                "lengthChange": lengthChange,
+                "lengthMenu": [ lengthMenuValues, lengthMenuLabels ],
                 "responsive": responsive,
                 "language": {
                     "search": "Filter results:",
@@ -87,12 +116,17 @@ jQuery(document).ready(function($) {
                 },
                 "columnDefs": [
                     {
-                        "targets": 1, // The 'Phone' column
+                        "targets": "_all", // Apply to all columns that might have data-search
                         "render": function ( data, type, row, meta ) {
                             if ( type === 'filter' ) {
                                 var cellNode = meta.settings.aoData[meta.row].anCells[meta.col];
-                                var dataSearch = $(cellNode).data('search');
-                                return data + ' ' + dataSearch;
+                                // Check if cellNode exists (it might not if responsive hidden)
+                                if (cellNode) {
+                                    var dataSearch = $(cellNode).data('search');
+                                    if (dataSearch) {
+                                        return data + ' ' + dataSearch;
+                                    }
+                                }
                             }
                             return data;
                         }
@@ -102,13 +136,15 @@ jQuery(document).ready(function($) {
                     var api = this.api();
                     var $searchInput = $(api.table().container()).find('.dataTables_filter input');
 
-                    // Unbind default DataTables search event to prevent it from filtering out our custom matches
-                    $searchInput.unbind();
+                    if ($searchInput.length > 0) {
+                        // Unbind default DataTables search event to prevent it from filtering out our custom matches
+                        $searchInput.unbind();
 
-                    // Bind custom event to trigger redraw (which calls ext.search)
-                    $searchInput.bind('keyup change input', function() {
-                        api.draw();
-                    });
+                        // Bind custom event to trigger redraw (which calls ext.search)
+                        $searchInput.bind('keyup change input', function() {
+                            api.draw();
+                        });
+                    }
                 }
             };
 
@@ -127,7 +163,7 @@ jQuery(document).ready(function($) {
                 sbLog('Responsive DataTables initialized.');
             } catch (e) {
                 // We keep this warn as it's useful even in non-debug mode for developers inspecting console
-                console.warn('[StackBoost Directory] Responsive DataTables init failed (likely hidden). Retrying standard config.');
+                sbLog('Responsive DataTables init failed (likely hidden). Retrying standard config.');
                 // Attempt 2: Non-responsive fallback
                 try {
                      if ($.fn.DataTable.isDataTable('#stackboostStaffDirectoryTable')) {

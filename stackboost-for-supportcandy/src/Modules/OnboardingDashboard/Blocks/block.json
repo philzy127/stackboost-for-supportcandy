@@ -1,0 +1,16 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "stackboost/onboarding-dashboard",
+    "version": "1.5.0",
+    "title": "Onboarding Dashboard",
+    "category": "widgets",
+    "icon": "welcome-learn-more",
+    "description": "Displays the Onboarding Dashboard.",
+    "supports": {
+        "html": false
+    },
+    "textdomain": "stackboost-for-supportcandy",
+    "editorScript": "file:./index.js",
+    "style": "stackboost-onboarding-dashboard"
+}

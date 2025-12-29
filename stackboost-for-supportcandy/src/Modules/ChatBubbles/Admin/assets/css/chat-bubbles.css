@@ -1,0 +1,96 @@
+
+/* Chat Bubbles Layout */
+.stackboost-chat-bubbles-layout {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.stackboost-chat-config-column,
+.stackboost-chat-preview-column {
+    flex: 1;
+    min-width: 300px;
+}
+
+/* Internal Tabs */
+.sb-chat-tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 15px;
+    background: #fff;
+}
+
+.sb-chat-tab {
+    padding: 10px 15px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    margin-bottom: -1px;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.2s ease;
+}
+
+.sb-chat-tab:hover {
+    color: #2271b1;
+    background: #f6f7f7;
+}
+
+.sb-chat-tab.active {
+    background: #fff;
+    border-color: #ddd;
+    border-bottom-color: #fff;
+    color: #1d2327;
+}
+
+/* Preview Area */
+.stackboost-chat-preview-container {
+    background: #f0f0f1; /* Light grey BG for contrast */
+    border: 1px solid #ccd0d4;
+    padding: 20px;
+    border-radius: 4px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.sb-preview-bubble {
+    padding: 15px;
+    position: relative;
+    max-width: 85%;
+    transition: all 0.2s ease;
+}
+
+.sb-preview-header {
+    margin-bottom: 5px;
+    font-size: 11px;
+    opacity: 0.7;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Specific Preview Mock Data */
+.sb-preview-bubble.customer {
+    /* Default fallback styles if JS fails */
+    background: #e5e5e5;
+    align-self: flex-start;
+    margin-right: auto;
+}
+
+.sb-preview-bubble.agent {
+    background: #2271b1;
+    color: #fff;
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.sb-preview-bubble.note {
+    background: #fff8e5;
+    border: 1px solid #f0c33c;
+    color: #333;
+    align-self: center;
+    margin: 0 auto;
+    max-width: 90%;
+    font-style: italic;
+}
