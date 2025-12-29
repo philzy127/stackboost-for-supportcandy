@@ -338,6 +338,11 @@
 				}
 			});
 
+			// Close the card when clicking the row (which opens the ticket)
+			row.addEventListener('click', () => {
+				tippyInstance.hide();
+			});
+
 			row.addEventListener('contextmenu', (e) => {
 				// Allow native context menu if Shift key is pressed
 				if (e.shiftKey) {
