@@ -46,6 +46,9 @@ class Core {
 		// We use `wpsc_en_before_sending` to intercept all emails just before they go out.
 		// This gives us access to the fully constructed body and the thread object.
 		add_filter( 'wpsc_en_before_sending', [ $this, 'process_email_content' ] );
+
+		// Hook to replace ticket history macros with styled content
+		add_filter( 'wpsc_replace_macros', [ $this, 'replace_history_macro' ], 10, 3 );
 	}
 
 	/**
@@ -103,6 +106,98 @@ class Core {
 	}
 
 	/**
+	 * Replaces {ticket_history} macro with styled bubbles.
+	 *
+	 * @param string       $str    The full email body string.
+	 * @param \WPSC_Ticket $ticket The ticket object.
+	 * @param string       $macro  The macro being replaced (without braces).
+	 * @return string The modified body string.
+	 */
+	public function replace_history_macro( $str, $ticket, $macro ) {
+		// Only target history macros
+		if ( ! in_array( $macro, [ 'ticket_history', 'ticket_threads' ] ) ) {
+			return $str;
+		}
+
+		// Check email specific enable switch
+		$options = get_option( 'stackboost_settings', [] );
+		if ( empty( $options['chat_bubbles_enable_email'] ) ) {
+			return $str;
+		}
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "ChatBubbles: Replacing macro {{$macro}} for ticket #{$ticket->id}", 'chat_bubbles' );
+		}
+
+		// Fetch threads (Report and Reply)
+		// Assuming we want to show the conversation.
+		// get_threads( $page_no, $items_per_page, $types, $orderby, $order )
+		// Fetch all (0 limit), DESC order (newest first)
+		$types = [ 'report', 'reply' ];
+		$threads = $ticket->get_threads( 1, 0, $types, 'date_created', 'DESC' );
+
+		$placeholder = '{' . $macro . '}';
+
+		if ( empty( $threads ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: No threads found for history.", 'chat_bubbles' );
+			}
+			// Replace with empty string to remove raw macro
+			return str_replace( $placeholder, '', $str );
+		}
+
+		$html = '';
+		$date_format = get_option( 'date_format' );
+		$time_format = get_option( 'time_format' );
+
+		foreach ( $threads as $thread ) {
+			$user_type  = $this->get_thread_user_type( $thread );
+			$inline_css = $this->get_email_inline_styles( $user_type );
+
+			// Author Name
+			$author_name = __( 'Unknown', 'stackboost-for-supportcandy' );
+			if ( isset( $thread->customer ) && is_object( $thread->customer ) ) {
+				$author_name = $thread->customer->name;
+			}
+
+			// Date
+			$date_str = '';
+			if ( isset( $thread->date_created ) && is_object( $thread->date_created ) ) {
+				$date_obj = clone $thread->date_created;
+				$date_obj->setTimezone( wp_timezone() );
+				$date_str = $date_obj->format( $date_format . ' ' . $time_format );
+			}
+
+			// Build Header (Author - Date)
+			$html .= '<div style="margin-bottom: 5px; font-size: 12px; color: #777;">';
+			$html .= '<strong>' . esc_html( $author_name ) . '</strong>';
+			if ( $date_str ) {
+				$html .= ' - ' . esc_html( $date_str );
+			}
+			$html .= '</div>';
+
+			if ( empty( $inline_css ) ) {
+				// Fallback to plain if no styles
+				$html .= '<div style="margin-bottom: 20px;">' . $thread->get_printable_string() . '</div>';
+				continue;
+			}
+
+			// Get content
+			$search_html = $thread->get_printable_string();
+
+			// Wrap in bubble
+			$html .= '<div style="' . esc_attr( $inline_css ) . '">' . $search_html . '</div>';
+			// Add a spacer div since we are building a list
+			$html .= '<div style="height: 15px;"></div>';
+		}
+
+		// Replace the macro
+		$str = str_replace( $placeholder, $html, $str );
+
+		return $str;
+	}
+
+	/**
 	 * Process Email Content.
 	 * Wraps the new message content in a styled bubble container.
 	 *
@@ -126,63 +221,13 @@ class Core {
 			return $en;
 		}
 
-		// Generate the style for this thread type
-		$thread_type = $en->thread->type;
-		$user_type   = 'agent'; // Default
+		// Determine user type
+		$user_type = $this->get_thread_user_type( $en->thread );
 
-		if ( $thread_type === 'report' || $thread_type === 'reply' ) {
-			// Determine if customer or agent
-			$is_agent = false;
-			if ( isset( $en->thread->customer ) ) {
-				$user = get_user_by( 'email', $en->thread->customer->email );
-				if ( $user && $user->has_cap( 'wpsc_agent' ) ) {
-					$is_agent = true;
-				}
-			}
-			$user_type = $is_agent ? 'agent' : 'customer';
-		} elseif ( $thread_type === 'note' ) {
-			$user_type = 'note';
-		}
-
-		// Get Styles
-		$styles = $this->get_styles_for_type( $user_type );
-		if ( empty( $styles ) ) {
+		// Get Inline CSS
+		$inline_css = $this->get_email_inline_styles( $user_type );
+		if ( empty( $inline_css ) ) {
 			return $en;
-		}
-
-		// Generate Inline CSS for Email (Simpler than Ticket View)
-		// We use a div wrapper with inline styles.
-		// Outlook fallback: No border-radius, simple background.
-		$inline_css = sprintf(
-			"background-color: %s; color: %s; padding: 15px; margin-bottom: 10px; border-radius: %dpx; width: %d%%;",
-			$styles['bg_color'],
-			$styles['text_color'],
-			$styles['radius'],
-			$styles['width']
-		);
-
-		if ( $styles['alignment'] === 'right' ) {
-			$inline_css .= " margin-left: auto; margin-right: 0;";
-		} elseif ( $styles['alignment'] === 'center' ) {
-			$inline_css .= " margin: 0 auto;";
-		} else {
-			$inline_css .= " margin-right: auto; margin-left: 0;";
-		}
-
-		// Font Styles for Email
-		if ( ! empty( $styles['font_bold'] ) ) {
-			$inline_css .= " font-weight: bold;";
-		}
-		if ( ! empty( $styles['font_italic'] ) ) {
-			$inline_css .= " font-style: italic;";
-		}
-		if ( ! empty( $styles['font_underline'] ) ) {
-			$inline_css .= " text-decoration: underline;";
-		}
-
-		// Border Styles for Email
-		if ( ! empty( $styles['border_style'] ) && $styles['border_style'] !== 'none' ) {
-			$inline_css .= sprintf( " border: %s %dpx %s;", $styles['border_style'], $styles['border_width'], $styles['border_color'] );
 		}
 
 		// Get the content we want to wrap
@@ -200,6 +245,87 @@ class Core {
 		}
 
 		return $en;
+	}
+
+	/**
+	 * Determine User Type for a Thread.
+	 */
+	private function get_thread_user_type( $thread ): string {
+		if ( $thread->type === 'note' ) {
+			return 'note';
+		}
+
+		$is_agent = false;
+
+		// Attempt to identify if author is agent
+		if ( isset( $thread->customer ) && is_object( $thread->customer ) ) {
+			$email = $thread->customer->email;
+			$user = get_user_by( 'email', $email );
+
+			if ( $user ) {
+				// Check for Agent capability
+				if ( $user->has_cap( 'wpsc_agent' ) ) {
+					$is_agent = true;
+				}
+
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ChatBubbles: User Check for {$email} -> Agent: " . ( $is_agent ? 'Yes' : 'No' ) . " (Roles: " . implode(',', $user->roles) . ")", 'chat_bubbles' );
+				}
+			} else {
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ChatBubbles: User Check for {$email} -> No WP User found.", 'chat_bubbles' );
+				}
+			}
+		}
+
+		return $is_agent ? 'agent' : 'customer';
+	}
+
+	/**
+	 * Helper to generate inline CSS string for emails.
+	 *
+	 * @param string $user_type The user type ('agent', 'customer', 'note').
+	 * @return string The inline CSS string.
+	 */
+	public function get_email_inline_styles( string $user_type ): string {
+		$styles = $this->get_styles_for_type( $user_type );
+		if ( empty( $styles ) ) {
+			return '';
+		}
+
+		$inline_css = sprintf(
+			"background-color: %s; color: %s; padding: 15px; margin-bottom: 10px; border-radius: %dpx; width: %d%%;",
+			$styles['bg_color'],
+			$styles['text_color'],
+			$styles['radius'],
+			$styles['width']
+		);
+
+		if ( $styles['alignment'] === 'right' ) {
+			$inline_css .= " margin-left: auto; margin-right: 0;";
+		} elseif ( $styles['alignment'] === 'center' ) {
+			$inline_css .= " margin: 0 auto;";
+		} else {
+			$inline_css .= " margin-right: auto; margin-left: 0;";
+		}
+
+		// Font Styles
+		if ( ! empty( $styles['font_bold'] ) ) {
+			$inline_css .= " font-weight: bold;";
+		}
+		if ( ! empty( $styles['font_italic'] ) ) {
+			$inline_css .= " font-style: italic;";
+		}
+		if ( ! empty( $styles['font_underline'] ) ) {
+			$inline_css .= " text-decoration: underline;";
+		}
+
+		// Border Styles
+		if ( ! empty( $styles['border_style'] ) && $styles['border_style'] !== 'none' ) {
+			$inline_css .= sprintf( " border: %s %dpx %s;", $styles['border_style'], $styles['border_width'], $styles['border_color'] );
+		}
+
+		return $inline_css;
 	}
 
 	/**
@@ -431,6 +557,11 @@ class Core {
 		$options = get_option( 'stackboost_settings', [] );
 		$prefix = "chat_bubbles_{$type}_";
 		$theme = $options['chat_bubbles_theme'] ?? 'default';
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			// Log theme selection to debug "wrong theme" issues
+			stackboost_log( "ChatBubbles: get_styles_for_type({$type}) - Theme: {$theme}", 'chat_bubbles' );
+		}
 
 		// Default Styles
 		$defaults = [
