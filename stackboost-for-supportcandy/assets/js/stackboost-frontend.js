@@ -329,6 +329,15 @@
 				}
 			});
 
+			// Add mousedown listener to prevent text selection on Shift+RightClick
+			row.addEventListener('mousedown', (e) => {
+				// If Shift is pressed and it's a right-click (button 2)
+				if (e.shiftKey && e.button === 2) {
+					// Prevent the default browser behavior (which triggers text selection)
+					e.preventDefault();
+				}
+			});
+
 			row.addEventListener('contextmenu', (e) => {
 				// Allow native context menu if Shift key is pressed
 				if (e.shiftKey) {
