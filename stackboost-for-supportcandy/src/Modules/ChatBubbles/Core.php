@@ -116,13 +116,19 @@ class Core {
 	 * @return string The modified body string.
 	 */
 	public function replace_history_macro( $str, $ticket, $macro ) {
+		// Log EVERY macro passing through to debug why history isn't firing
+		if ( function_exists( 'stackboost_log' ) ) {
+			// We use a lighter log level if possible, or just a prefix to identify it easily
+			stackboost_log( "DEBUG: Macro check: '{$macro}' (Ticket ID: {$ticket->id})", 'chat_bubbles' );
+		}
+
 		// Only target history macros
 		if ( ! in_array( $macro, [ 'ticket_history', 'ticket_threads' ] ) ) {
 			return $str;
 		}
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: replace_history_macro called for macro '{$macro}' (Ticket ID: {$ticket->id})", 'chat_bubbles' );
+			stackboost_log( "ChatBubbles: replace_history_macro MATCHED for macro '{$macro}'", 'chat_bubbles' );
 		}
 
 		// Check email specific enable switch
