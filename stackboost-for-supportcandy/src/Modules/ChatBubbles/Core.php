@@ -49,7 +49,8 @@ class Core {
 		add_filter( 'wpsc_en_before_sending', [ $this, 'process_email_content' ] );
 
 		// Hook to replace ticket history macros with styled content
-		add_filter( 'wpsc_replace_macros', [ $this, 'replace_history_macro' ], 10, 3 );
+		// Priority 1 to attempt to run BEFORE SupportCandy core replacement
+		add_filter( 'wpsc_replace_macros', [ $this, 'replace_history_macro' ], 1, 3 );
 	}
 
 	/**
@@ -110,7 +111,7 @@ class Core {
 	/**
 	 * Replaces {ticket_history} macro with styled bubbles.
 	 *
-	 * @param string       $str    The full email body string.
+	 * @param string       $str    The full email body string (or replacement value).
 	 * @param \WPSC_Ticket $ticket The ticket object.
 	 * @param string       $macro  The macro being replaced (without braces).
 	 * @return string The modified body string.
@@ -140,6 +141,23 @@ class Core {
 			return $str;
 		}
 
+		// Generate the bubble history HTML
+		$html = $this->generate_history_html( $ticket );
+
+		// If we are in the filter, $str is likely the original text or empty.
+		// We want to return OUR html.
+		// NOTE: If $str is the FULL BODY, we replace. If $str is the REPLACEMENT VALUE, we just return it.
+		// Based on standard WP filters for macros, it usually expects the replacement value.
+		// However, to be safe against `wpsc_replace_macros` behavior (which might pass the full string?),
+		// we should just return the HTML because we matched the specific macro key.
+
+		return $html;
+	}
+
+	/**
+	 * Generates the HTML for the ticket history bubbles.
+	 */
+	private function generate_history_html( $ticket ) {
 		// Fetch threads (Report and Reply)
 		// Assuming we want to show the conversation.
 		// get_threads( $page_no, $items_per_page, $types, $orderby, $order )
@@ -151,14 +169,11 @@ class Core {
 			stackboost_log( "ChatBubbles: Found " . count( $threads ) . " threads for history.", 'chat_bubbles' );
 		}
 
-		$placeholder = '{' . $macro . '}';
-
 		if ( empty( $threads ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: No threads found. Removing macro placeholder.", 'chat_bubbles' );
+				stackboost_log( "ChatBubbles: No threads found. Returning empty string.", 'chat_bubbles' );
 			}
-			// Replace with empty string to remove raw macro
-			return str_replace( $placeholder, '', $str );
+			return '';
 		}
 
 		$html = '';
@@ -213,14 +228,11 @@ class Core {
 			$html .= '<div style="height: 15px;"></div>';
 		}
 
-		// Replace the macro
-		$str = str_replace( $placeholder, $html, $str );
-
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: History macro replacement complete. Length: " . strlen( $html ), 'chat_bubbles' );
+			stackboost_log( "ChatBubbles: History HTML generated. Length: " . strlen( $html ), 'chat_bubbles' );
 		}
 
-		return $str;
+		return $html;
 	}
 
 	/**
@@ -256,7 +268,54 @@ class Core {
 			stackboost_log( "ChatBubbles: Processing Thread ID: {$en->thread->id}, Type: {$en->thread->type}", 'chat_bubbles' );
 		}
 
-		// Only process reply and note types
+		// Fallback History Replacement: Check if {ticket_history} or {ticket_threads} is in the body
+		// This handles the case where the filter hook didn't fire.
+		$has_history = strpos( $en->body, '{ticket_history}' ) !== false;
+		$has_threads = strpos( $en->body, '{ticket_threads}' ) !== false;
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "ChatBubbles: Checking body for history macros. {ticket_history}: " . ($has_history ? 'YES' : 'NO') . ", {ticket_threads}: " . ($has_threads ? 'YES' : 'NO'), 'chat_bubbles' );
+			// Log a snippet to see what the body looks like
+			stackboost_log( "ChatBubbles: Body Snippet: " . substr( strip_tags( $en->body ), 0, 200 ) . "...", 'chat_bubbles' );
+		}
+
+		if ( $has_history || $has_threads ) {
+			// Generate History
+			// We need the parent ticket. The thread object usually has a `ticket_id` property or relation.
+			// Let's try to find the ticket object.
+			$ticket = null;
+			if ( isset( $en->thread->ticket ) ) {
+				$ticket = $en->thread->ticket;
+			} elseif ( isset( $en->ticket ) ) {
+				$ticket = $en->ticket;
+			} elseif ( isset( $en->thread->ticket_id ) ) {
+				// Load ticket manually if we have ID
+				// Assuming standard SC logic class exists
+				if ( class_exists( 'WPSC_Ticket' ) ) {
+					$ticket = new \WPSC_Ticket( $en->thread->ticket_id );
+				}
+			}
+
+			if ( $ticket ) {
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ChatBubbles: Found Ticket Object. Attempting manual history replacement.", 'chat_bubbles' );
+				}
+				$history_html = $this->generate_history_html( $ticket );
+
+				if ( $has_history ) {
+					$en->body = str_replace( '{ticket_history}', $history_html, $en->body );
+				}
+				if ( $has_threads ) {
+					$en->body = str_replace( '{ticket_threads}', $history_html, $en->body );
+				}
+			} else {
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ChatBubbles: Could not resolve Ticket object. Skipping manual history replacement.", 'chat_bubbles' );
+				}
+			}
+		}
+
+		// Only process reply and note types for the CURRENT message wrapping
 		if ( ! in_array( $en->thread->type, [ 'reply', 'note', 'report' ] ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
 				stackboost_log( "ChatBubbles: Thread type '{$en->thread->type}' not supported. Skipping.", 'chat_bubbles' );
