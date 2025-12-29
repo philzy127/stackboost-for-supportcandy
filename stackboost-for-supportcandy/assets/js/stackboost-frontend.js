@@ -196,10 +196,24 @@
 				if (!html) return false;
 				const temp = document.createElement('div');
 				temp.innerHTML = html;
-				// Check inside the widget body if it exists, otherwise check the whole content
-				// This prevents the Header text (e.g. "Conversation History") from counting as content
-				const body = temp.querySelector('.wpsc-widget-body');
-				const target = body ? body : temp;
+
+				// 1. Try to find specific thread bodies first
+				const threadBodies = temp.querySelectorAll('.stackboost-thread-body');
+				if (threadBodies.length > 0) {
+					// Iterate through all threads. If ANY thread has meaningful content, return true.
+					for (let i = 0; i < threadBodies.length; i++) {
+						const text = threadBodies[i].textContent.trim().toLowerCase();
+						if (text.length > 0 && text !== 'not applicable' && text !== 'n/a') {
+							return true;
+						}
+					}
+					// If we looped through all threads and found nothing meaningful, return false.
+					return false;
+				}
+
+				// 2. Fallback: Check inside the widget body if it exists
+				const widgetBody = temp.querySelector('.wpsc-widget-body');
+				const target = widgetBody ? widgetBody : temp;
 				const text = target.textContent.trim().toLowerCase();
 				return text.length > 0 && text !== 'not applicable' && text !== 'n/a';
 			}
