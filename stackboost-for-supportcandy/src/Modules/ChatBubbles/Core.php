@@ -123,8 +123,20 @@ class Core {
 			stackboost_log( "DEBUG: Macro check: '{$macro}' (Ticket ID: {$ticket->id})", 'chat_bubbles' );
 		}
 
+		// Define supported macros
+		$supported_macros = [
+			'ticket_history',
+			'ticket_threads',
+			'ticket_history_all',
+			'ticket_history_with_notes',
+			'ticket_history_with_logs',
+			'ticket_history_all_with_notes',
+			'ticket_history_all_with_logs',
+			'ticket_history_all_with_notes_and_logs',
+		];
+
 		// Only target history macros
-		if ( ! in_array( $macro, [ 'ticket_history', 'ticket_threads' ] ) ) {
+		if ( ! in_array( $macro, $supported_macros ) ) {
 			return $str;
 		}
 
@@ -141,32 +153,46 @@ class Core {
 			return $str;
 		}
 
+		// Determine what to include based on macro name
+		$include_notes = ( strpos( $macro, 'notes' ) !== false );
+		$include_logs  = ( strpos( $macro, 'logs' ) !== false );
+
 		// Generate the bubble history HTML
-		$html = $this->generate_history_html( $ticket );
+		$html = $this->generate_history_html( $ticket, $include_notes, $include_logs );
 
 		// If we are in the filter, $str is likely the original text or empty.
 		// We want to return OUR html.
-		// NOTE: If $str is the FULL BODY, we replace. If $str is the REPLACEMENT VALUE, we just return it.
-		// Based on standard WP filters for macros, it usually expects the replacement value.
-		// However, to be safe against `wpsc_replace_macros` behavior (which might pass the full string?),
-		// we should just return the HTML because we matched the specific macro key.
-
 		return $html;
 	}
 
 	/**
 	 * Generates the HTML for the ticket history bubbles.
+	 *
+	 * @param \WPSC_Ticket $ticket The ticket object.
+	 * @param bool $include_notes Whether to include private notes.
+	 * @param bool $include_logs Whether to include log entries (system status changes).
+	 * @return string The generated HTML.
 	 */
-	private function generate_history_html( $ticket ) {
-		// Fetch threads (Report and Reply)
-		// Assuming we want to show the conversation.
+	private function generate_history_html( $ticket, $include_notes = false, $include_logs = false ) {
+		// Define which thread types to fetch
+		// Public always gets 'report' and 'reply'.
+		$types = [ 'report', 'reply' ];
+
+		if ( $include_notes ) {
+			$types[] = 'note';
+		}
+
+		if ( $include_logs ) {
+			$types[] = 'log';
+		}
+
+		// Fetch threads using SupportCandy's method:
 		// get_threads( $page_no, $items_per_page, $types, $orderby, $order )
 		// Fetch all (0 limit), DESC order (newest first)
-		$types = [ 'report', 'reply' ];
 		$threads = $ticket->get_threads( 1, 0, $types, 'date_created', 'DESC' );
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: Found " . count( $threads ) . " threads for history.", 'chat_bubbles' );
+			stackboost_log( "ChatBubbles: Found " . count( $threads ) . " threads for history. (Types: " . implode( ',', $types ) . ")", 'chat_bubbles' );
 		}
 
 		if ( empty( $threads ) ) {
@@ -181,6 +207,27 @@ class Core {
 		$time_format = get_option( 'time_format' );
 
 		foreach ( $threads as $index => $thread ) {
+			// Handle 'log' types differently (System Notices)
+			if ( $thread->type === 'log' ) {
+				$log_html = '<div style="background-color: #f0f0f1; border-left: 3px solid #ccc; padding: 10px; margin-bottom: 15px; font-size: 13px; color: #555;">';
+				$log_html .= '<div style="font-weight: bold; margin-bottom: 5px;">' . __( 'System Log', 'stackboost-for-supportcandy' ) . '</div>';
+
+				$date_str = '';
+				if ( isset( $thread->date_created ) && is_object( $thread->date_created ) ) {
+					$date_obj = clone $thread->date_created;
+					$date_obj->setTimezone( wp_timezone() );
+					$date_str = $date_obj->format( $date_format . ' ' . $time_format );
+				}
+				$log_html .= '<div style="font-size: 11px; color: #777; margin-bottom: 5px;">' . esc_html( $date_str ) . '</div>';
+
+				$log_html .= '<div>' . wp_kses_post( $thread->body ) . '</div>';
+				$log_html .= '</div>';
+
+				$html .= $log_html;
+				continue;
+			}
+
+			// Handle Conversation (Chat Bubbles)
 			$user_type  = $this->get_thread_user_type( $thread );
 			$inline_css = $this->get_email_inline_styles( $user_type );
 
@@ -268,49 +315,46 @@ class Core {
 			stackboost_log( "ChatBubbles: Processing Thread ID: {$en->thread->id}, Type: {$en->thread->type}", 'chat_bubbles' );
 		}
 
-		// Fallback History Replacement: Check if {ticket_history} or {ticket_threads} is in the body
+		// Fallback History Replacement: Check if {ticket_history} or variants are in the body
 		// This handles the case where the filter hook didn't fire.
-		$has_history = strpos( $en->body, '{ticket_history}' ) !== false;
-		$has_threads = strpos( $en->body, '{ticket_threads}' ) !== false;
 
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: Checking body for history macros. {ticket_history}: " . ($has_history ? 'YES' : 'NO') . ", {ticket_threads}: " . ($has_threads ? 'YES' : 'NO'), 'chat_bubbles' );
-			// Log a snippet to see what the body looks like
-			stackboost_log( "ChatBubbles: Body Snippet: " . substr( strip_tags( $en->body ), 0, 200 ) . "...", 'chat_bubbles' );
+		// Define supported macros for fallback check
+		$supported_macros = [
+			'ticket_history',
+			'ticket_threads',
+			'ticket_history_all',
+			'ticket_history_with_notes',
+			'ticket_history_with_logs',
+			'ticket_history_all_with_notes',
+			'ticket_history_all_with_logs',
+			'ticket_history_all_with_notes_and_logs',
+		];
+
+		// Generate ticket object for fallback
+		$ticket = null;
+		if ( isset( $en->thread->ticket ) ) {
+			$ticket = $en->thread->ticket;
+		} elseif ( isset( $en->ticket ) ) {
+			$ticket = $en->ticket;
+		} elseif ( isset( $en->thread->ticket_id ) ) {
+			if ( class_exists( 'WPSC_Ticket' ) ) {
+				$ticket = new \WPSC_Ticket( $en->thread->ticket_id );
+			}
 		}
 
-		if ( $has_history || $has_threads ) {
-			// Generate History
-			// We need the parent ticket. The thread object usually has a `ticket_id` property or relation.
-			// Let's try to find the ticket object.
-			$ticket = null;
-			if ( isset( $en->thread->ticket ) ) {
-				$ticket = $en->thread->ticket;
-			} elseif ( isset( $en->ticket ) ) {
-				$ticket = $en->ticket;
-			} elseif ( isset( $en->thread->ticket_id ) ) {
-				// Load ticket manually if we have ID
-				// Assuming standard SC logic class exists
-				if ( class_exists( 'WPSC_Ticket' ) ) {
-					$ticket = new \WPSC_Ticket( $en->thread->ticket_id );
-				}
-			}
+		if ( $ticket ) {
+			foreach ( $supported_macros as $macro ) {
+				$placeholder = '{' . $macro . '}';
+				if ( strpos( $en->body, $placeholder ) !== false ) {
+					if ( function_exists( 'stackboost_log' ) ) {
+						stackboost_log( "ChatBubbles: Found unreplaced macro '{$macro}'. Attempting manual fallback.", 'chat_bubbles' );
+					}
 
-			if ( $ticket ) {
-				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: Found Ticket Object. Attempting manual history replacement.", 'chat_bubbles' );
-				}
-				$history_html = $this->generate_history_html( $ticket );
+					$include_notes = ( strpos( $macro, 'notes' ) !== false );
+					$include_logs  = ( strpos( $macro, 'logs' ) !== false );
 
-				if ( $has_history ) {
-					$en->body = str_replace( '{ticket_history}', $history_html, $en->body );
-				}
-				if ( $has_threads ) {
-					$en->body = str_replace( '{ticket_threads}', $history_html, $en->body );
-				}
-			} else {
-				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: Could not resolve Ticket object. Skipping manual history replacement.", 'chat_bubbles' );
+					$history_html = $this->generate_history_html( $ticket, $include_notes, $include_logs );
+					$en->body = str_replace( $placeholder, $history_html, $en->body );
 				}
 			}
 		}
