@@ -28,9 +28,10 @@ class Core {
 	 * Constructor.
 	 */
 	private function __construct() {
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Core Initialized.', 'chat_bubbles' );
-		}
+		// Reduced noise: Core init is implied by WP Adapter init.
+		// if ( function_exists( 'stackboost_log' ) ) {
+		// 	stackboost_log( 'ChatBubbles: Core Initialized.', 'chat_bubbles' );
+		// }
 		// Initialize the WordPress adapter
 		$this->init_hooks();
 	}
@@ -39,9 +40,6 @@ class Core {
 	 * Initialize hooks.
 	 */
 	public function init_hooks() {
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Hooks Initialized.', 'chat_bubbles' );
-		}
 		// Enqueue CSS for Ticket View
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_ticket_styles' ] );
 
@@ -64,11 +62,6 @@ class Core {
 		// Determine context
 		$is_frontend = ( $hook_suffix === 'frontend' );
 
-		if ( function_exists( 'stackboost_log' ) ) {
-			$hook_label = $is_frontend ? 'frontend' : ( $hook_suffix ?? 'unknown' );
-			stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_label, 'chat_bubbles' );
-		}
-
 		// Context Check: Admin vs Frontend
 		$handle = '';
 		if ( ! $is_frontend ) {
@@ -78,7 +71,7 @@ class Core {
 			}
 			// Only load on Ticket View or Ticket List
 			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
-				return;
+				return; // Exit silent if not a ticket page
 			}
 			$handle = 'wpsc-admin';
 		} else {
@@ -88,6 +81,12 @@ class Core {
 			$handle = 'stackboost-chat-bubbles-frontend';
 			wp_register_style( $handle, false );
 			wp_enqueue_style( $handle );
+		}
+
+		// Only log if we passed the checks and are actually about to work
+		if ( function_exists( 'stackboost_log' ) ) {
+			$hook_label = $is_frontend ? 'frontend' : ( $hook_suffix ?? 'unknown' );
+			stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_label, 'chat_bubbles' );
 		}
 
 		// Check ticket specific enable switch
