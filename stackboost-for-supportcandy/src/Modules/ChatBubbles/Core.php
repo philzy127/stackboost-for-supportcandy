@@ -29,7 +29,7 @@ class Core {
 	 */
 	private function __construct() {
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles Core Initialized.', 'chat_bubbles' );
+			stackboost_log( 'ChatBubbles: Core Initialized.', 'chat_bubbles' );
 		}
 		// Initialize the WordPress adapter
 		$this->init_hooks();
@@ -39,6 +39,9 @@ class Core {
 	 * Initialize hooks.
 	 */
 	public function init_hooks() {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'ChatBubbles: Hooks Initialized.', 'chat_bubbles' );
+		}
 		// Enqueue CSS for Ticket View
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_ticket_styles' ] );
 
@@ -92,7 +95,7 @@ class Core {
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_ticket'] ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( 'ChatBubbles: Disabled via settings.', 'chat_bubbles' );
+				stackboost_log( 'ChatBubbles: Disabled via settings (Ticket View).', 'chat_bubbles' );
 			}
 			return;
 		}
@@ -119,14 +122,17 @@ class Core {
 			return $str;
 		}
 
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "ChatBubbles: replace_history_macro called for macro '{$macro}' (Ticket ID: {$ticket->id})", 'chat_bubbles' );
+		}
+
 		// Check email specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_email'] ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: Email feature disabled in settings. Skipping history replacement.", 'chat_bubbles' );
+			}
 			return $str;
-		}
-
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: Replacing macro {{$macro}} for ticket #{$ticket->id}", 'chat_bubbles' );
 		}
 
 		// Fetch threads (Report and Reply)
@@ -136,11 +142,15 @@ class Core {
 		$types = [ 'report', 'reply' ];
 		$threads = $ticket->get_threads( 1, 0, $types, 'date_created', 'DESC' );
 
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "ChatBubbles: Found " . count( $threads ) . " threads for history.", 'chat_bubbles' );
+		}
+
 		$placeholder = '{' . $macro . '}';
 
 		if ( empty( $threads ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: No threads found for history.", 'chat_bubbles' );
+				stackboost_log( "ChatBubbles: No threads found. Removing macro placeholder.", 'chat_bubbles' );
 			}
 			// Replace with empty string to remove raw macro
 			return str_replace( $placeholder, '', $str );
@@ -150,9 +160,13 @@ class Core {
 		$date_format = get_option( 'date_format' );
 		$time_format = get_option( 'time_format' );
 
-		foreach ( $threads as $thread ) {
+		foreach ( $threads as $index => $thread ) {
 			$user_type  = $this->get_thread_user_type( $thread );
 			$inline_css = $this->get_email_inline_styles( $user_type );
+
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: Processing thread #{$thread->id} (Type: {$thread->type}, User: {$user_type})", 'chat_bubbles' );
+			}
 
 			// Author Name
 			$author_name = __( 'Unknown', 'stackboost-for-supportcandy' );
@@ -178,6 +192,9 @@ class Core {
 
 			if ( empty( $inline_css ) ) {
 				// Fallback to plain if no styles
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ChatBubbles: No inline styles generated for thread #{$thread->id}. Using plain fallback.", 'chat_bubbles' );
+				}
 				$html .= '<div style="margin-bottom: 20px;">' . $thread->get_printable_string() . '</div>';
 				continue;
 			}
@@ -194,6 +211,10 @@ class Core {
 		// Replace the macro
 		$str = str_replace( $placeholder, $html, $str );
 
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "ChatBubbles: History macro replacement complete. Length: " . strlen( $html ), 'chat_bubbles' );
+		}
+
 		return $str;
 	}
 
@@ -205,28 +226,51 @@ class Core {
 	 * @return object The modified Email Notification object.
 	 */
 	public function process_email_content( $en ) {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "ChatBubbles: process_email_content called.", 'chat_bubbles' );
+		}
+
 		// Check email specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_email'] ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: Email feature disabled in settings. Skipping.", 'chat_bubbles' );
+			}
 			return $en;
 		}
 
 		// Only proceed if we have a valid thread object
 		if ( ! isset( $en->thread ) || ! is_object( $en->thread ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: No valid thread object in email notification. Skipping.", 'chat_bubbles' );
+			}
 			return $en;
+		}
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "ChatBubbles: Processing Thread ID: {$en->thread->id}, Type: {$en->thread->type}", 'chat_bubbles' );
 		}
 
 		// Only process reply and note types
 		if ( ! in_array( $en->thread->type, [ 'reply', 'note', 'report' ] ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: Thread type '{$en->thread->type}' not supported. Skipping.", 'chat_bubbles' );
+			}
 			return $en;
 		}
 
 		// Determine user type
 		$user_type = $this->get_thread_user_type( $en->thread );
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "ChatBubbles: Resolved User Type: {$user_type}", 'chat_bubbles' );
+		}
 
 		// Get Inline CSS
 		$inline_css = $this->get_email_inline_styles( $user_type );
 		if ( empty( $inline_css ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: No inline styles generated. Skipping.", 'chat_bubbles' );
+			}
 			return $en;
 		}
 
@@ -238,10 +282,19 @@ class Core {
 
 		// Perform the replacement
 		$pattern = '/' . preg_quote( $search_html, '/' ) . '/';
-		$en->body = preg_replace( $pattern, $replace_html, $en->body, 1 );
+		$result = preg_replace( $pattern, $replace_html, $en->body, 1, $count );
 
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Email processed for thread type ' . $user_type, 'chat_bubbles' );
+		if ( $count > 0 ) {
+			$en->body = $result;
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: Successfully wrapped email content (Length: " . strlen( $replace_html ) . ")", 'chat_bubbles' );
+			}
+		} else {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: Failed to find/replace content in email body. Regex pattern: {$pattern}", 'chat_bubbles' );
+				// Log a snippet of the body to see why it might have failed
+				stackboost_log( "ChatBubbles: Body Snippet (start): " . substr( strip_tags( $en->body ), 0, 100 ), 'chat_bubbles' );
+			}
 		}
 
 		return $en;
@@ -276,6 +329,10 @@ class Core {
 					stackboost_log( "ChatBubbles: User Check for {$email} -> No WP User found.", 'chat_bubbles' );
 				}
 			}
+		} else {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: User Check -> No customer object in thread.", 'chat_bubbles' );
+			}
 		}
 
 		return $is_agent ? 'agent' : 'customer';
@@ -290,6 +347,9 @@ class Core {
 	public function get_email_inline_styles( string $user_type ): string {
 		$styles = $this->get_styles_for_type( $user_type );
 		if ( empty( $styles ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: get_styles_for_type returned empty for {$user_type}", 'chat_bubbles' );
+			}
 			return '';
 		}
 
