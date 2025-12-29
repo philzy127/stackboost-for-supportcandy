@@ -315,47 +315,60 @@ class Core {
 			stackboost_log( "ChatBubbles: Processing Thread ID: {$en->thread->id}, Type: {$en->thread->type}", 'chat_bubbles' );
 		}
 
-		// Fallback History Replacement: Check if {ticket_history} or variants are in the body
-		// This handles the case where the filter hook didn't fire.
+		// Fallback History Replacement: Robust Regex Search
+		// This handles cases where the hook didn't fire or syntax varies ({...} vs {{...}}).
 
-		// Define supported macros for fallback check
-		$supported_macros = [
-			'ticket_history',
-			'ticket_threads',
-			'ticket_history_all',
-			'ticket_history_with_notes',
-			'ticket_history_with_logs',
-			'ticket_history_all_with_notes',
-			'ticket_history_all_with_logs',
-			'ticket_history_all_with_notes_and_logs',
-		];
-
-		// Generate ticket object for fallback
-		$ticket = null;
-		if ( isset( $en->thread->ticket ) ) {
-			$ticket = $en->thread->ticket;
-		} elseif ( isset( $en->ticket ) ) {
-			$ticket = $en->ticket;
-		} elseif ( isset( $en->thread->ticket_id ) ) {
-			if ( class_exists( 'WPSC_Ticket' ) ) {
-				$ticket = new \WPSC_Ticket( $en->thread->ticket_id );
-			}
+		// Dump body for debugging (as requested)
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "ChatBubbles: Email Body Content: " . $en->body, 'chat_bubbles' );
 		}
 
-		if ( $ticket ) {
-			foreach ( $supported_macros as $macro ) {
-				$placeholder = '{' . $macro . '}';
-				if ( strpos( $en->body, $placeholder ) !== false ) {
+		// Find all occurrences of {ticket_history...} or {{ticket_history...}}
+		// Matches: {{ticket_history_all}} or {ticket_history} etc.
+		if ( preg_match_all( '/\{\{?(ticket_history(?:_[a-z_]+)?)\}?}/', $en->body, $matches, PREG_SET_ORDER ) ) {
+
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: Found " . count( $matches ) . " potential history macros in body.", 'chat_bubbles' );
+			}
+
+			// Generate ticket object for fallback
+			$ticket = null;
+			if ( isset( $en->thread->ticket ) ) {
+				$ticket = $en->thread->ticket;
+			} elseif ( isset( $en->ticket ) ) {
+				$ticket = $en->ticket;
+			} elseif ( isset( $en->thread->ticket_id ) ) {
+				if ( class_exists( 'WPSC_Ticket' ) ) {
+					$ticket = new \WPSC_Ticket( $en->thread->ticket_id );
+				}
+			}
+
+			if ( $ticket ) {
+				foreach ( $matches as $match ) {
+					$full_match = $match[0]; // e.g. {{ticket_history_all}}
+					$macro_name = $match[1]; // e.g. ticket_history_all
+
 					if ( function_exists( 'stackboost_log' ) ) {
-						stackboost_log( "ChatBubbles: Found unreplaced macro '{$macro}'. Attempting manual fallback.", 'chat_bubbles' );
+						stackboost_log( "ChatBubbles: Replacing macro '$full_match' (Name: '$macro_name')", 'chat_bubbles' );
 					}
 
-					$include_notes = ( strpos( $macro, 'notes' ) !== false );
-					$include_logs  = ( strpos( $macro, 'logs' ) !== false );
+					$include_notes = ( strpos( $macro_name, 'notes' ) !== false );
+					$include_logs  = ( strpos( $macro_name, 'logs' ) !== false );
 
 					$history_html = $this->generate_history_html( $ticket, $include_notes, $include_logs );
-					$en->body = str_replace( $placeholder, $history_html, $en->body );
+
+					// Replace ONLY this specific occurrence to avoid greedy replacement issues
+					// Use str_replace for safety if there are duplicates, it replaces all identical ones which is fine.
+					$en->body = str_replace( $full_match, $history_html, $en->body );
 				}
+			} else {
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ChatBubbles: Could not resolve Ticket object. Cannot replace history macros.", 'chat_bubbles' );
+				}
+			}
+		} else {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: No history macros found in body via Regex search.", 'chat_bubbles' );
 			}
 		}
 
