@@ -2,7 +2,7 @@
 /**
  * Plugin Name: StackBoost - For SupportCandy
  * Description: A collection of enhancements for the SupportCandy plugin, rebranded and refactored.
- * Version: 1.5.0
+ * Version: 1.5.1
  * Author: StackBoost
  * Author URI: https://stackboost.net
  * Text Domain: stackboost-for-supportcandy
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'STACKBOOST_VERSION', '1.5.0' );
+define( 'STACKBOOST_VERSION', '1.5.1' );
 define( 'STACKBOOST_PLUGIN_FILE', __FILE__ );
 define( 'STACKBOOST_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'STACKBOOST_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

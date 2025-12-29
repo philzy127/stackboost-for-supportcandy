@@ -35,6 +35,14 @@ StackBoost extends SupportCandy with modular features. Each feature is encapsula
 *   **Purpose:** Calculates and displays a ticket's position in the support queue.
 *   **Key Logic:** `Core::calculate_queue_count` executes a SQL count query based on the configured "Type Field" (e.g., status, priority).
 
+### 4. Chat Bubbles
+*   **Location:** `src/Modules/ChatBubbles/`
+*   **Purpose:** Styles ticket threads as chat bubbles with theme synchronization.
+*   **Key Components:**
+    *   `Core::generate_css()`: Generates dynamic CSS targeting both Admin (`.wpsc-it-container`) and Frontend (`.wpsc-shortcode-container`, `#wpsc-container`) selectors.
+    *   `Core::get_stackboost_theme_colors()`: A helper that maps Admin Theme slugs to hex codes, allowing the frontend to replicate the admin theme without loading admin assets.
+    *   **Frontend Integration:** Uses `wp_enqueue_scripts` to register a virtual style handle (`stackboost-chat-bubbles-frontend`) and attach inline CSS.
+
 ## Logging Standards
 
 *   **Central Function:** `stackboost_log( $message, $context )` defined in `bootstrap.php`.
