@@ -196,7 +196,11 @@
 				if (!html) return false;
 				const temp = document.createElement('div');
 				temp.innerHTML = html;
-				const text = temp.textContent.trim().toLowerCase();
+				// Check inside the widget body if it exists, otherwise check the whole content
+				// This prevents the Header text (e.g. "Conversation History") from counting as content
+				const body = temp.querySelector('.wpsc-widget-body');
+				const target = body ? body : temp;
+				const text = target.textContent.trim().toLowerCase();
 				return text.length > 0 && text !== 'not applicable' && text !== 'n/a';
 			}
 
