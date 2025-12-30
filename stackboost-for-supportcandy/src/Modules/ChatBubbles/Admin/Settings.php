@@ -158,6 +158,17 @@ class Settings {
 		</tr>
 
 		<?php
+		// Bubble Current Message
+		?>
+		<tr valign="top">
+			<th scope="row"><?php esc_html_e( 'Bubble Current Message', 'stackboost-for-supportcandy' ); ?></th>
+			<td>
+				<input type="checkbox" name="stackboost_settings[chat_bubbles_enable_email_current_message]" id="chat_bubbles_enable_email_current_message" value="1" <?php checked( $options['chat_bubbles_enable_email_current_message'] ?? 0, 1 ); ?> />
+				<p class="description"><?php esc_html_e( 'Wrap {{last_reply}}, {{last_note}}, and {{ticket_description}} in a chat bubble.', 'stackboost-for-supportcandy' ); ?></p>
+			</td>
+		</tr>
+
+		<?php
 		// Theme Preset
 		$theme_val = $options['chat_bubbles_theme'] ?? 'default';
 		?>
@@ -368,6 +379,7 @@ class Settings {
 		$keys = [
 			'chat_bubbles_enable_ticket',
 			'chat_bubbles_enable_email',
+			'chat_bubbles_enable_email_current_message',
 			'chat_bubbles_theme',
 			'chat_bubbles_shadow_enable',
 			'chat_bubbles_shadow_color',

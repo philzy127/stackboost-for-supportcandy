@@ -141,27 +141,35 @@ class Core {
 				}
 
 				// 1. Inject History Markers
-				if ( preg_match( $history_pattern, $modified_text ) ) {
+				// Re-doing History Injection with Idempotency Regex
+				$safe_history_pattern = '/(?<!<!--SB_HISTORY_START-->)(\{\{?(ticket_history(?:_[a-z_]+)?)\}?})(?!<!--SB_HISTORY_END-->)/';
+				if ( preg_match( $safe_history_pattern, $original_text ) ) {
 					$modified_text = preg_replace_callback(
-						$history_pattern,
+						$safe_history_pattern,
 						function( $matches ) {
-							return '<!--SB_HISTORY_START-->' . $matches[0] . '<!--SB_HISTORY_END-->';
+							return '<!--SB_HISTORY_START-->' . $matches[1] . '<!--SB_HISTORY_END-->';
 						},
 						$modified_text
 					);
-					$changed = true;
+					if ( $modified_text !== $original_text ) {
+						$changed = true;
+					}
 				}
 
-				// 2. Inject Current Message Markers
-				if ( preg_match( $current_pattern, $modified_text ) ) {
-					$modified_text = preg_replace_callback(
-						$current_pattern,
-						function( $matches ) {
-							return '<!--SB_CURRENT_START-->' . $matches[0] . '<!--SB_CURRENT_END-->';
-						},
-						$modified_text
-					);
-					$changed = true;
+				// 2. Inject Current Message Markers (If Enabled)
+				if ( ! empty( $options['chat_bubbles_enable_email_current_message'] ) ) {
+					$safe_current_pattern = '/(?<!<!--SB_CURRENT_START-->)(\{\{?(last_reply|last_note|ticket_description)\}?})(?!<!--SB_CURRENT_END-->)/';
+
+					if ( preg_match( $safe_current_pattern, $modified_text ) ) {
+						$modified_text = preg_replace_callback(
+							$safe_current_pattern,
+							function( $matches ) {
+								return '<!--SB_CURRENT_START-->' . $matches[1] . '<!--SB_CURRENT_END-->';
+							},
+							$modified_text
+						);
+						$changed = true;
+					}
 				}
 
 				if ( $changed ) {
@@ -334,15 +342,35 @@ class Core {
 				$html .= '<div style="' . esc_attr( $inline_css ) . '">';
 
 				// Header Info
-				// We need Name and Date. We have $en->thread and $ticket.
+				// Correctly determine name based on user type
 				$name = '';
 				$date_str = '';
 
-				if ( isset( $en->thread->customer ) && is_object( $en->thread->customer ) ) {
-					$name = $en->thread->customer->name;
-				} elseif ( isset( $ticket->customer ) && is_object( $ticket->customer ) ) {
-					// Fallback if thread customer is missing (unlikely for reply/note)
-					$name = $ticket->customer->name;
+				if ( $user_type === 'customer' ) {
+					if ( isset( $en->thread->customer ) && is_object( $en->thread->customer ) ) {
+						$name = $en->thread->customer->name;
+					} elseif ( isset( $ticket->customer ) && is_object( $ticket->customer ) ) {
+						$name = $ticket->customer->name;
+					}
+				} else {
+					// Agent or Note (usually Agent)
+					// Try to find agent info in thread
+					if ( isset( $en->thread->agent ) && is_object( $en->thread->agent ) ) {
+						$name = $en->thread->agent->name; // SupportCandy agent object typically has a name property
+					} elseif ( isset( $en->thread->created_by ) ) {
+						// SupportCandy stores creator ID in created_by usually.
+						// If created_by is available, we can try to fetch the user.
+						$user_id = $en->thread->created_by;
+						$user_info = get_userdata( $user_id );
+						if ( $user_info ) {
+							$name = $user_info->display_name;
+						}
+					}
+
+					// Fallback if name is still empty (e.g. system note?)
+					if ( empty( $name ) ) {
+						$name = __( 'Support Agent', 'stackboost-for-supportcandy' );
+					}
 				}
 
 				if ( isset( $en->thread->date ) ) {
