@@ -48,9 +48,25 @@ class Core {
 		// This gives us access to the fully constructed body and the thread object.
 		add_filter( 'wpsc_en_before_sending', [ $this, 'process_email_content' ] );
 
-		// Hook to replace ticket history macros with styled content
-		// Priority 1 to attempt to run BEFORE SupportCandy core replacement
-		add_filter( 'wpsc_replace_macros', [ $this, 'replace_history_macro' ], 1, 3 );
+		// Hook into SupportCandy Option retrieval to inject markers around history macros
+		$email_options = [
+			'wpsc-en-create-ticket',
+			'wpsc-en-reply-ticket',
+			'wpsc-en-close-ticket', // Legacy/Status Change
+			'wpsc-en-change-ticket-status',
+			'wpsc-en-assign-agent',
+			'wpsc-en-add-private-note',
+			'wpsc-en-change-agentonly-fields',
+			'wpsc-en-change-ticket-category',
+			'wpsc-en-change-ticket-fields',
+			'wpsc-en-change-ticket-priority',
+			'wpsc-en-change-ticket-subject',
+			'wpsc-en-delete-ticket'
+		];
+
+		foreach ( $email_options as $opt ) {
+			add_filter( "option_{$opt}", [ $this, 'inject_history_markers' ] );
+		}
 	}
 
 	/**
@@ -109,177 +125,45 @@ class Core {
 	}
 
 	/**
-	 * Replaces {ticket_history} macro with styled bubbles.
+	 * Inject markers around history macros in email templates.
 	 *
-	 * @param string       $str    The full email body string (or replacement value).
-	 * @param \WPSC_Ticket $ticket The ticket object.
-	 * @param string       $macro  The macro being replaced (without braces).
-	 * @return string The modified body string.
+	 * @param mixed $value The option value.
+	 * @return mixed The modified option value.
 	 */
-	public function replace_history_macro( $str, $ticket, $macro ) {
-		// Log EVERY macro passing through to debug why history isn't firing
-		if ( function_exists( 'stackboost_log' ) ) {
-			// We use a lighter log level if possible, or just a prefix to identify it easily
-			stackboost_log( "DEBUG: Macro check: '{$macro}' (Ticket ID: {$ticket->id})", 'chat_bubbles' );
-		}
-
-		// Define supported macros
-		$supported_macros = [
-			'ticket_history',
-			'ticket_threads',
-			'ticket_history_all',
-			'ticket_history_with_notes',
-			'ticket_history_with_logs',
-			'ticket_history_all_with_notes',
-			'ticket_history_all_with_logs',
-			'ticket_history_all_with_notes_and_logs',
-		];
-
-		// Only target history macros
-		if ( ! in_array( $macro, $supported_macros ) ) {
-			return $str;
-		}
-
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: replace_history_macro MATCHED for macro '{$macro}'", 'chat_bubbles' );
-		}
-
+	public function inject_history_markers( $value ) {
 		// Check email specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_email'] ) ) {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: Email feature disabled in settings. Skipping history replacement.", 'chat_bubbles' );
-			}
-			return $str;
+			return $value;
 		}
 
-		// Determine what to include based on macro name
-		$include_notes = ( strpos( $macro, 'notes' ) !== false );
-		$include_logs  = ( strpos( $macro, 'logs' ) !== false );
-
-		// Generate the bubble history HTML
-		$html = $this->generate_history_html( $ticket, $include_notes, $include_logs );
-
-		// If we are in the filter, $str is likely the original text or empty.
-		// We want to return OUR html.
-		return $html;
-	}
-
-	/**
-	 * Generates the HTML for the ticket history bubbles.
-	 *
-	 * @param \WPSC_Ticket $ticket The ticket object.
-	 * @param bool $include_notes Whether to include private notes.
-	 * @param bool $include_logs Whether to include log entries (system status changes).
-	 * @return string The generated HTML.
-	 */
-	private function generate_history_html( $ticket, $include_notes = false, $include_logs = false ) {
-		// Define which thread types to fetch
-		// Public always gets 'report' and 'reply'.
-		$types = [ 'report', 'reply' ];
-
-		if ( $include_notes ) {
-			$types[] = 'note';
+		if ( ! is_array( $value ) || ! isset( $value['notifications'] ) ) {
+			return $value;
 		}
 
-		if ( $include_logs ) {
-			$types[] = 'log';
+		// Regex to find history macros: {ticket_history...} or {{ticket_history...}}
+		$pattern = '/(\{\{?(ticket_history(?:_[a-z_]+)?)\}?})/';
+
+		foreach ( $value['notifications'] as $k => $notification ) {
+			if ( isset( $notification['body']['text'] ) ) {
+				// We wrap the macro in HTML comments.
+				// NOTE: We must ensure we don't double-wrap if this runs multiple times in a request.
+				// However, get_option usually caches, so filter runs on retrieval.
+				// Safe wrap: Check if already wrapped? No, simple replacement is safer for now.
+				// We rely on the marker format being unique.
+
+				// Using a callback to wrap only if not already wrapped is safer but complex.
+				// Let's just wrap. If it's double wrapped, our extractor regex handles greedy matching between START/END.
+
+				$value['notifications'][$k]['body']['text'] = preg_replace(
+					$pattern,
+					'<!--SB_HISTORY_START-->$1<!--SB_HISTORY_END-->',
+					$notification['body']['text']
+				);
+			}
 		}
 
-		// Fetch threads using SupportCandy's method:
-		// get_threads( $page_no, $items_per_page, $types, $orderby, $order )
-		// Fetch all (0 limit), DESC order (newest first)
-		$threads = $ticket->get_threads( 1, 0, $types, 'date_created', 'DESC' );
-
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: Found " . count( $threads ) . " threads for history. (Types: " . implode( ',', $types ) . ")", 'chat_bubbles' );
-		}
-
-		if ( empty( $threads ) ) {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: No threads found. Returning empty string.", 'chat_bubbles' );
-			}
-			return '';
-		}
-
-		$html = '';
-		$date_format = get_option( 'date_format' );
-		$time_format = get_option( 'time_format' );
-
-		foreach ( $threads as $index => $thread ) {
-			// Handle 'log' types differently (System Notices)
-			if ( $thread->type === 'log' ) {
-				$log_html = '<div style="background-color: #f0f0f1; border-left: 3px solid #ccc; padding: 10px; margin-bottom: 15px; font-size: 13px; color: #555;">';
-				$log_html .= '<div style="font-weight: bold; margin-bottom: 5px;">' . __( 'System Log', 'stackboost-for-supportcandy' ) . '</div>';
-
-				$date_str = '';
-				if ( isset( $thread->date_created ) && is_object( $thread->date_created ) ) {
-					$date_obj = clone $thread->date_created;
-					$date_obj->setTimezone( wp_timezone() );
-					$date_str = $date_obj->format( $date_format . ' ' . $time_format );
-				}
-				$log_html .= '<div style="font-size: 11px; color: #777; margin-bottom: 5px;">' . esc_html( $date_str ) . '</div>';
-
-				$log_html .= '<div>' . wp_kses_post( $thread->body ) . '</div>';
-				$log_html .= '</div>';
-
-				$html .= $log_html;
-				continue;
-			}
-
-			// Handle Conversation (Chat Bubbles)
-			$user_type  = $this->get_thread_user_type( $thread );
-			$inline_css = $this->get_email_inline_styles( $user_type );
-
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: Processing thread #{$thread->id} (Type: {$thread->type}, User: {$user_type})", 'chat_bubbles' );
-			}
-
-			// Author Name
-			$author_name = __( 'Unknown', 'stackboost-for-supportcandy' );
-			if ( isset( $thread->customer ) && is_object( $thread->customer ) ) {
-				$author_name = $thread->customer->name;
-			}
-
-			// Date
-			$date_str = '';
-			if ( isset( $thread->date_created ) && is_object( $thread->date_created ) ) {
-				$date_obj = clone $thread->date_created;
-				$date_obj->setTimezone( wp_timezone() );
-				$date_str = $date_obj->format( $date_format . ' ' . $time_format );
-			}
-
-			// Build Header (Author - Date)
-			$html .= '<div style="margin-bottom: 5px; font-size: 12px; color: #777;">';
-			$html .= '<strong>' . esc_html( $author_name ) . '</strong>';
-			if ( $date_str ) {
-				$html .= ' - ' . esc_html( $date_str );
-			}
-			$html .= '</div>';
-
-			if ( empty( $inline_css ) ) {
-				// Fallback to plain if no styles
-				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: No inline styles generated for thread #{$thread->id}. Using plain fallback.", 'chat_bubbles' );
-				}
-				$html .= '<div style="margin-bottom: 20px;">' . $thread->get_printable_string() . '</div>';
-				continue;
-			}
-
-			// Get content
-			$search_html = $thread->get_printable_string();
-
-			// Wrap in bubble
-			$html .= '<div style="' . esc_attr( $inline_css ) . '">' . $search_html . '</div>';
-			// Add a spacer div since we are building a list
-			$html .= '<div style="height: 15px;"></div>';
-		}
-
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: History HTML generated. Length: " . strlen( $html ), 'chat_bubbles' );
-		}
-
-		return $html;
+		return $value;
 	}
 
 	/**
@@ -315,62 +199,104 @@ class Core {
 			stackboost_log( "ChatBubbles: Processing Thread ID: {$en->thread->id}, Type: {$en->thread->type}", 'chat_bubbles' );
 		}
 
-		// Fallback History Replacement: Robust Regex Search
-		// This handles cases where the hook didn't fire or syntax varies ({...} vs {{...}}).
+		// -------------------------------------------------------------------------
+		// STEP 1: Process History (Post-Process HTML via Markers)
+		// We look for <!--SB_HISTORY_START-->...<!--SB_HISTORY_END-->
+		// -------------------------------------------------------------------------
 
-		// Dump body for debugging (as requested)
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: Email Body Content: " . $en->body, 'chat_bubbles' );
+		$ticket = null;
+		if ( isset( $en->thread->ticket ) ) {
+			$ticket = $en->thread->ticket;
+		} elseif ( isset( $en->ticket ) ) {
+			$ticket = $en->ticket;
+		} elseif ( isset( $en->thread->ticket_id ) && class_exists( 'WPSC_Ticket' ) ) {
+			$ticket = new \WPSC_Ticket( $en->thread->ticket_id );
 		}
 
-		// Find all occurrences of {ticket_history...} or {{ticket_history...}}
-		// Matches: {{ticket_history_all}} or {ticket_history} etc.
-		if ( preg_match_all( '/\{\{?(ticket_history(?:_[a-z_]+)?)\}?}/', $en->body, $matches, PREG_SET_ORDER ) ) {
+		if ( $ticket ) {
+			// Find the block between markers
+			// Use #s modifier for dot-matches-newline
+			$marker_pattern = '/<!--SB_HISTORY_START-->(.*?)<!--SB_HISTORY_END-->/s';
 
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: Found " . count( $matches ) . " potential history macros in body.", 'chat_bubbles' );
-			}
+			if ( preg_match( $marker_pattern, $en->body, $block_matches ) ) {
 
-			// Generate ticket object for fallback
-			$ticket = null;
-			if ( isset( $en->thread->ticket ) ) {
-				$ticket = $en->thread->ticket;
-			} elseif ( isset( $en->ticket ) ) {
-				$ticket = $en->ticket;
-			} elseif ( isset( $en->thread->ticket_id ) ) {
-				if ( class_exists( 'WPSC_Ticket' ) ) {
-					$ticket = new \WPSC_Ticket( $en->thread->ticket_id );
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ChatBubbles: Found history marker block.", 'chat_bubbles' );
 				}
-			}
 
-			if ( $ticket ) {
-				foreach ( $matches as $match ) {
-					$full_match = $match[0]; // e.g. {{ticket_history_all}}
-					$macro_name = $match[1]; // e.g. ticket_history_all
+				$history_block = $block_matches[1];
 
-					if ( function_exists( 'stackboost_log' ) ) {
-						stackboost_log( "ChatBubbles: Replacing macro '$full_match' (Name: '$macro_name')", 'chat_bubbles' );
+				// Now parse the ugly HTML INSIDE this block
+				$inner_pattern = '#<strong>\s*(.*?)\s*<small>\s*<i>\s*(.*?)\s*</i>\s*</small>\s*</strong>\s*<div style="font-size:10px;">\s*(.*?)\s*</div>\s*(.*?)(?=<br><hr><br>|$)#si';
+
+				$new_history_html = preg_replace_callback( $inner_pattern, function( $matches ) use ( $ticket ) {
+					$name = trim( strip_tags( $matches[1] ) );
+					$action = trim( strip_tags( $matches[2] ) ); // reported, replied, added a note
+					$date_str = trim( $matches[3] );
+					$content = $matches[4]; // Preserve HTML content
+
+					// Determine User Type based on Name/Action
+					$user_type = 'agent'; // Default
+
+					if ( stripos( $action, 'note' ) !== false ) {
+						$user_type = 'note';
+					} elseif ( $ticket && isset( $ticket->customer ) && $name === $ticket->customer->name ) {
+						$user_type = 'customer';
 					}
 
-					$include_notes = ( strpos( $macro_name, 'notes' ) !== false );
-					$include_logs  = ( strpos( $macro_name, 'logs' ) !== false );
+					// Get Styling
+					$inline_css = $this->get_email_inline_styles( $user_type );
 
-					$history_html = $this->generate_history_html( $ticket, $include_notes, $include_logs );
+					if ( empty( $inline_css ) ) {
+						return $matches[0];
+					}
 
-					// Replace ONLY this specific occurrence to avoid greedy replacement issues
-					// Use str_replace for safety if there are duplicates, it replaces all identical ones which is fine.
-					$en->body = str_replace( $full_match, $history_html, $en->body );
+					// Build Bubble HTML
+					$html = '<div style="margin-bottom: 20px;">'; // Wrapper for spacing
+
+					// Header
+					$html .= '<div style="margin-bottom: 5px; font-size: 12px; color: #777;">';
+					$html .= '<strong>' . esc_html( $name ) . '</strong>';
+					if ( $date_str ) {
+						$html .= ' - ' . esc_html( $date_str );
+					}
+					$html .= '</div>';
+
+					// Bubble Body
+					$html .= '<div style="' . esc_attr( $inline_css ) . '">';
+					$html .= $content;
+					$html .= '</div>';
+
+					$html .= '</div>';
+
+					return $html;
+
+				}, $history_block );
+
+				// Replace the entire marker block with the processed HTML
+				// Remove delimiters inside our processed block if any remain (though we process segments)
+				// Actually, preg_replace_callback runs on the string. The <br><hr><br> are delimiters.
+				// The regex `(?=<br><hr><br>|$)` looks ahead but doesn't consume the delimiter?
+				// Actually, we want to consume and remove the delimiter to control spacing ourselves.
+				// Let's clean up the result.
+				$new_history_html = str_replace( '<br><hr><br>', '', $new_history_html );
+
+				$en->body = str_replace( $block_matches[0], $new_history_html, $en->body );
+
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ChatBubbles: Replaced history block with styled bubbles.", 'chat_bubbles' );
 				}
+
 			} else {
 				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: Could not resolve Ticket object. Cannot replace history macros.", 'chat_bubbles' );
+					stackboost_log( "ChatBubbles: No history markers found in body.", 'chat_bubbles' );
 				}
 			}
-		} else {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: No history macros found in body via Regex search.", 'chat_bubbles' );
-			}
 		}
+
+		// -------------------------------------------------------------------------
+		// STEP 2: Process Current Reply (Existing Logic)
+		// -------------------------------------------------------------------------
 
 		// Only process reply and note types for the CURRENT message wrapping
 		if ( ! in_array( $en->thread->type, [ 'reply', 'note', 'report' ] ) ) {
@@ -402,21 +328,26 @@ class Core {
 		$replace_html = '<div style="' . esc_attr( $inline_css ) . '">' . $search_html . '</div>';
 
 		// Perform the replacement
-		$pattern = '/' . preg_quote( $search_html, '/' ) . '/';
-		$result = preg_replace( $pattern, $replace_html, $en->body, 1, $count );
+		// Check to prevent double wrapping if the current reply was somehow inside the history block (unlikely but safe)
+		if ( strpos( $en->body, $replace_html ) !== false ) {
+             if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: Current reply appears already wrapped. Skipping double wrap.", 'chat_bubbles' );
+			}
+        } else {
+            $pattern = '/' . preg_quote( $search_html, '/' ) . '/';
+            $result = preg_replace( $pattern, $replace_html, $en->body, 1, $count );
 
-		if ( $count > 0 ) {
-			$en->body = $result;
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: Successfully wrapped email content (Length: " . strlen( $replace_html ) . ")", 'chat_bubbles' );
-			}
-		} else {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: Failed to find/replace content in email body. Regex pattern: {$pattern}", 'chat_bubbles' );
-				// Log a snippet of the body to see why it might have failed
-				stackboost_log( "ChatBubbles: Body Snippet (start): " . substr( strip_tags( $en->body ), 0, 100 ), 'chat_bubbles' );
-			}
-		}
+            if ( $count > 0 ) {
+                $en->body = $result;
+                if ( function_exists( 'stackboost_log' ) ) {
+                    stackboost_log( "ChatBubbles: Successfully wrapped current reply (Length: " . strlen( $replace_html ) . ")", 'chat_bubbles' );
+                }
+            } else {
+                if ( function_exists( 'stackboost_log' ) ) {
+                    stackboost_log( "ChatBubbles: Failed to find/replace content in email body. Regex pattern: {$pattern}", 'chat_bubbles' );
+                }
+            }
+        }
 
 		return $en;
 	}
