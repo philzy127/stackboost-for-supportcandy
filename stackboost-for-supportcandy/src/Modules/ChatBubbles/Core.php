@@ -49,25 +49,8 @@ class Core {
 		add_filter( 'wpsc_en_before_sending', [ $this, 'process_email_content' ] );
 
 		// Hook into SupportCandy Option retrieval to inject markers around history macros
-		$email_options = [
-			'wpsc-en-create-ticket',
-			'wpsc-en-reply-ticket',
-			'wpsc-en-close-ticket', // Legacy/Status Change
-			'wpsc-en-change-ticket-status',
-			'wpsc-en-assign-agent',
-			'wpsc-en-add-private-note',
-			'wpsc-en-change-agentonly-fields',
-			'wpsc-en-change-ticket-category',
-			'wpsc-en-change-ticket-fields',
-			'wpsc-en-change-ticket-priority',
-			'wpsc-en-change-ticket-subject',
-			'wpsc-en-delete-ticket',
-			'wpsc-en-custom-notifications' // Added to catch custom automations
-		];
-
-		foreach ( $email_options as $opt ) {
-			add_filter( "option_{$opt}", [ $this, 'inject_history_markers' ] );
-		}
+		// Targeting the main templates option which holds all email templates
+		add_filter( 'option_wpsc-email-templates', [ $this, 'inject_history_markers' ] );
 	}
 
 	/**
@@ -121,63 +104,53 @@ class Core {
 	/**
 	 * Inject markers around history macros in email templates.
 	 *
-	 * @param mixed $value The option value.
+	 * @param mixed $value The option value (array of templates).
 	 * @return mixed The modified option value.
 	 */
 	public function inject_history_markers( $value ) {
-		// Identify which option is being filtered
-		$current_filter = current_filter();
-
-		// 1. Unconditional Log: Entry and Raw Value
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "DEBUG: inject_history_markers ENTERED for '{$current_filter}'", 'chat_bubbles' );
-			// Log the full structure so we can see exactly what the template looks like
-			// Using print_r with true to get string representation
-			stackboost_log( "DEBUG: RAW TEMPLATE VALUE for '{$current_filter}':\n" . print_r( $value, true ), 'chat_bubbles' );
-		}
-
 		// Check email specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_email'] ) ) {
 			return $value;
 		}
 
-		if ( ! is_array( $value ) || ! isset( $value['notifications'] ) ) {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "DEBUG: Value for '{$current_filter}' is NOT an array with 'notifications'. Skipping.", 'chat_bubbles' );
-			}
+		if ( ! is_array( $value ) ) {
 			return $value;
 		}
 
 		// Regex to find history macros: {ticket_history...} or {{ticket_history...}}
 		$pattern = '/(\{\{?(ticket_history(?:_[a-z_]+)?)\}?})/';
 
-		foreach ( $value['notifications'] as $k => $notification ) {
-			if ( isset( $notification['body']['text'] ) ) {
+		foreach ( $value as $key => $template ) {
+			if ( isset( $template['body']['text'] ) ) {
 
-				$original_text = $notification['body']['text'];
+				$original_text = $template['body']['text'];
+				$modified_text = $original_text;
 
-				// Perform replacement
-				$value['notifications'][$k]['body']['text'] = preg_replace_callback(
-					$pattern,
-					function( $matches ) use ( $k ) {
-						if ( function_exists( 'stackboost_log' ) ) {
-							stackboost_log( "DEBUG: MATCH FOUND in [{$k}]! Injecting markers around '{$matches[0]}'", 'chat_bubbles' );
-						}
-						return '<!--SB_HISTORY_START-->' . $matches[0] . '<!--SB_HISTORY_END-->';
-					},
-					$original_text
-				);
+				// Check if the pattern exists before modifying
+				if ( preg_match( $pattern, $original_text ) ) {
 
-				// Log if NO match was found
-				if ( $original_text === $value['notifications'][$k]['body']['text'] ) {
+					// Log raw template (Before)
 					if ( function_exists( 'stackboost_log' ) ) {
-						stackboost_log( "DEBUG: NO MATCH found for pattern '{$pattern}' in Notification [{$k}].", 'chat_bubbles' );
+						stackboost_log( "DEBUG: Template [{$key}] raw content (BEFORE INJECTION):\n" . $original_text, 'chat_bubbles' );
 					}
-				}
-			} else {
-				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "DEBUG: Notification [{$k}] has NO body text.", 'chat_bubbles' );
+
+					// Perform replacement
+					$modified_text = preg_replace_callback(
+						$pattern,
+						function( $matches ) {
+							return '<!--SB_HISTORY_START-->' . $matches[0] . '<!--SB_HISTORY_END-->';
+						},
+						$original_text
+					);
+
+					// Update the value
+					$value[ $key ]['body']['text'] = $modified_text;
+
+					// Log modified template (After)
+					if ( function_exists( 'stackboost_log' ) ) {
+						stackboost_log( "DEBUG: Template [{$key}] modified content (AFTER INJECTION):\n" . $modified_text, 'chat_bubbles' );
+					}
 				}
 			}
 		}
