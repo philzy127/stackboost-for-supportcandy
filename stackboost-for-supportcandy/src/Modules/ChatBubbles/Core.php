@@ -132,16 +132,11 @@ class Core {
 	 */
 	public function inject_history_markers( $value ) {
 		// Log that the filter was called to verify execution
-		// Use a static counter or check to avoid spamming if called repeatedly
-		// Actually, standard log is fine for debugging
-		/*
 		if ( function_exists( 'stackboost_log' ) ) {
-			// Only log if we have notifications to process
-			if ( is_array( $value ) && isset( $value['notifications'] ) ) {
-				// To reduce noise, only log if we FIND a macro
-			}
+			// Identify which option is being filtered by checking the current filter
+			$current_filter = current_filter();
+			stackboost_log( "ChatBubbles: inject_history_markers called for option '{$current_filter}'", 'chat_bubbles' );
 		}
-		*/
 
 		// Check email specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
@@ -150,6 +145,9 @@ class Core {
 		}
 
 		if ( ! is_array( $value ) || ! isset( $value['notifications'] ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ChatBubbles: Option value is not a notification array.", 'chat_bubbles' );
+			}
 			return $value;
 		}
 
@@ -158,6 +156,13 @@ class Core {
 
 		foreach ( $value['notifications'] as $k => $notification ) {
 			if ( isset( $notification['body']['text'] ) ) {
+
+				// Log the original body snippet to confirm we see the template
+				if ( function_exists( 'stackboost_log' ) ) {
+					$snippet = substr( strip_tags( $notification['body']['text'] ), 0, 100 );
+					stackboost_log( "ChatBubbles: Inspecting template body [$k]: $snippet", 'chat_bubbles' );
+				}
+
 				// Perform replacement
 				$value['notifications'][$k]['body']['text'] = preg_replace_callback(
 					$pattern,
