@@ -28,10 +28,6 @@ class Core {
 	 * Constructor.
 	 */
 	private function __construct() {
-		// Reduced noise: Core init is implied by WP Adapter init.
-		// if ( function_exists( 'stackboost_log' ) ) {
-		// 	stackboost_log( 'ChatBubbles: Core Initialized.', 'chat_bubbles' );
-		// }
 		// Initialize the WordPress adapter
 		$this->init_hooks();
 	}
@@ -102,26 +98,19 @@ class Core {
 
 		// Only log if we passed the checks and are actually about to work
 		if ( function_exists( 'stackboost_log' ) ) {
-			$hook_label = $is_frontend ? 'frontend' : ( $hook_suffix ?? 'unknown' );
-			stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_label, 'chat_bubbles' );
+			// $hook_label = $is_frontend ? 'frontend' : ( $hook_suffix ?? 'unknown' );
+			// stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_label, 'chat_bubbles' );
 		}
 
 		// Check ticket specific enable switch
 		// Note: We use the same 'chat_bubbles_enable_ticket' setting for both Admin and Frontend uniformity.
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_ticket'] ) ) {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( 'ChatBubbles: Disabled via settings (Ticket View).', 'chat_bubbles' );
-			}
 			return;
 		}
 
 		$css = $this->generate_css();
 		wp_add_inline_style( $handle, $css );
-
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Styles enqueued successfully for context: ' . ( $is_frontend ? 'Frontend' : 'Admin' ), 'chat_bubbles' );
-		}
 	}
 
 	/**
@@ -131,11 +120,12 @@ class Core {
 	 * @return mixed The modified option value.
 	 */
 	public function inject_history_markers( $value ) {
-		// Log that the filter was called to verify execution
+		// Identify which option is being filtered
+		$current_filter = current_filter();
+
+		// 1. Log that we are HERE and what we are filtering.
 		if ( function_exists( 'stackboost_log' ) ) {
-			// Identify which option is being filtered by checking the current filter
-			$current_filter = current_filter();
-			stackboost_log( "ChatBubbles: inject_history_markers called for option '{$current_filter}'", 'chat_bubbles' );
+			stackboost_log( "DEBUG: inject_history_markers triggered for '{$current_filter}'", 'chat_bubbles' );
 		}
 
 		// Check email specific enable switch
@@ -146,7 +136,7 @@ class Core {
 
 		if ( ! is_array( $value ) || ! isset( $value['notifications'] ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: Option value is not a notification array.", 'chat_bubbles' );
+				stackboost_log( "DEBUG: Value for '{$current_filter}' is NOT an array with 'notifications'. Type: " . gettype($value), 'chat_bubbles' );
 			}
 			return $value;
 		}
@@ -157,10 +147,11 @@ class Core {
 		foreach ( $value['notifications'] as $k => $notification ) {
 			if ( isset( $notification['body']['text'] ) ) {
 
-				// Log the original body snippet to confirm we see the template
+				$original_text = $notification['body']['text'];
+
+				// 2. Log the INPUT text we are inspecting.
 				if ( function_exists( 'stackboost_log' ) ) {
-					$snippet = substr( strip_tags( $notification['body']['text'] ), 0, 100 );
-					stackboost_log( "ChatBubbles: Inspecting template body [$k]: $snippet", 'chat_bubbles' );
+					stackboost_log( "DEBUG: Inspecting Notification [{$k}] Body Text:\n" . $original_text, 'chat_bubbles' );
 				}
 
 				// Perform replacement
@@ -168,12 +159,23 @@ class Core {
 					$pattern,
 					function( $matches ) use ( $k ) {
 						if ( function_exists( 'stackboost_log' ) ) {
-							stackboost_log( "ChatBubbles: Injecting marker for '{$matches[0]}' in notification index {$k}", 'chat_bubbles' );
+							stackboost_log( "DEBUG: MATCH FOUND in [{$k}]! Injecting markers around '{$matches[0]}'", 'chat_bubbles' );
 						}
 						return '<!--SB_HISTORY_START-->' . $matches[0] . '<!--SB_HISTORY_END-->';
 					},
-					$notification['body']['text']
+					$original_text
 				);
+
+				// 3. Log if NO match was found
+				if ( $original_text === $value['notifications'][$k]['body']['text'] ) {
+					if ( function_exists( 'stackboost_log' ) ) {
+						stackboost_log( "DEBUG: NO MATCH found for pattern '{$pattern}' in Notification [{$k}].", 'chat_bubbles' );
+					}
+				}
+			} else {
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "DEBUG: Notification [{$k}] has NO body text.", 'chat_bubbles' );
+				}
 			}
 		}
 
@@ -189,28 +191,37 @@ class Core {
 	 */
 	public function process_email_content( $en ) {
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: process_email_content called.", 'chat_bubbles' );
+			stackboost_log( "DEBUG: process_email_content called.", 'chat_bubbles' );
 		}
 
 		// Check email specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_email'] ) ) {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: Email feature disabled in settings. Skipping.", 'chat_bubbles' );
-			}
 			return $en;
 		}
 
 		// Only proceed if we have a valid thread object
 		if ( ! isset( $en->thread ) || ! is_object( $en->thread ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: No valid thread object in email notification. Skipping.", 'chat_bubbles' );
+				stackboost_log( "DEBUG: No valid thread object. Skipping.", 'chat_bubbles' );
 			}
 			return $en;
 		}
 
+		// -------------------------------------------------------------------------
+		// DIAGNOSTIC LOGGING: Log the RAW Body we received
+		// -------------------------------------------------------------------------
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: Processing Thread ID: {$en->thread->id}, Type: {$en->thread->type}", 'chat_bubbles' );
+			// Log the first 2000 chars to cover the header and likely the history block
+			$raw_snippet = substr( $en->body, 0, 2000 );
+			stackboost_log( "DEBUG: RAW EMAIL BODY RECEIVED (First 2000 chars):\n" . $raw_snippet, 'chat_bubbles' );
+
+			// Specifically search for our marker in the raw body
+			if ( strpos( $en->body, '<!--SB_HISTORY_START-->' ) !== false ) {
+				stackboost_log( "DEBUG: SUCCESS! Found '<!--SB_HISTORY_START-->' in email body.", 'chat_bubbles' );
+			} else {
+				stackboost_log( "DEBUG: FAILURE! Did NOT find '<!--SB_HISTORY_START-->' in email body.", 'chat_bubbles' );
+			}
 		}
 
 		// -------------------------------------------------------------------------
@@ -233,10 +244,6 @@ class Core {
 			$marker_pattern = '/<!--SB_HISTORY_START-->(.*?)<!--SB_HISTORY_END-->/s';
 
 			if ( preg_match( $marker_pattern, $en->body, $block_matches ) ) {
-
-				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: Found history marker block. Length: " . strlen( $block_matches[1] ), 'chat_bubbles' );
-				}
 
 				$history_block = $block_matches[1];
 
@@ -287,28 +294,14 @@ class Core {
 
 				}, $history_block );
 
-				// Replace the entire marker block with the processed HTML
-				// Remove delimiters inside our processed block if any remain (though we process segments)
-				// Actually, preg_replace_callback runs on the string. The <br><hr><br> are delimiters.
-				// The regex `(?=<br><hr><br>|$)` looks ahead but doesn't consume the delimiter?
-				// Actually, we want to consume and remove the delimiter to control spacing ourselves.
-				// Let's clean up the result.
 				$new_history_html = str_replace( '<br><hr><br>', '', $new_history_html );
 
 				$en->body = str_replace( $block_matches[0], $new_history_html, $en->body );
 
 				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: Replaced history block with styled bubbles.", 'chat_bubbles' );
+					stackboost_log( "DEBUG: Replaced history block with styled bubbles.", 'chat_bubbles' );
 				}
 
-			} else {
-				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: No history markers found in body.", 'chat_bubbles' );
-					// Log snippets to help debug
-					$body_len = strlen( $en->body );
-					$snippet = substr( strip_tags( $en->body ), 0, 300 );
-					stackboost_log( "ChatBubbles: Body Length: $body_len. Start: $snippet", 'chat_bubbles' );
-				}
 			}
 		}
 
@@ -318,24 +311,15 @@ class Core {
 
 		// Only process reply and note types for the CURRENT message wrapping
 		if ( ! in_array( $en->thread->type, [ 'reply', 'note', 'report' ] ) ) {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: Thread type '{$en->thread->type}' not supported. Skipping.", 'chat_bubbles' );
-			}
 			return $en;
 		}
 
 		// Determine user type
 		$user_type = $this->get_thread_user_type( $en->thread );
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "ChatBubbles: Resolved User Type: {$user_type}", 'chat_bubbles' );
-		}
 
 		// Get Inline CSS
 		$inline_css = $this->get_email_inline_styles( $user_type );
 		if ( empty( $inline_css ) ) {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: No inline styles generated. Skipping.", 'chat_bubbles' );
-			}
 			return $en;
 		}
 
@@ -348,9 +332,7 @@ class Core {
 		// Perform the replacement
 		// Check to prevent double wrapping if the current reply was somehow inside the history block (unlikely but safe)
 		if ( strpos( $en->body, $replace_html ) !== false ) {
-             if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: Current reply appears already wrapped. Skipping double wrap.", 'chat_bubbles' );
-			}
+             // Already wrapped
         } else {
             $pattern = '/' . preg_quote( $search_html, '/' ) . '/';
             $result = preg_replace( $pattern, $replace_html, $en->body, 1, $count );
@@ -358,11 +340,11 @@ class Core {
             if ( $count > 0 ) {
                 $en->body = $result;
                 if ( function_exists( 'stackboost_log' ) ) {
-                    stackboost_log( "ChatBubbles: Successfully wrapped current reply (Length: " . strlen( $replace_html ) . ")", 'chat_bubbles' );
+                    stackboost_log( "DEBUG: Successfully wrapped current reply.", 'chat_bubbles' );
                 }
             } else {
                 if ( function_exists( 'stackboost_log' ) ) {
-                    stackboost_log( "ChatBubbles: Failed to find/replace content in email body. Regex pattern: {$pattern}", 'chat_bubbles' );
+                    stackboost_log( "DEBUG: Failed to find/replace CURRENT REPLY in email body. Regex pattern: {$pattern}", 'chat_bubbles' );
                 }
             }
         }
@@ -390,18 +372,6 @@ class Core {
 				if ( $user->has_cap( 'wpsc_agent' ) ) {
 					$is_agent = true;
 				}
-
-				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: User Check for {$email} -> Agent: " . ( $is_agent ? 'Yes' : 'No' ) . " (Roles: " . implode(',', $user->roles) . ")", 'chat_bubbles' );
-				}
-			} else {
-				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: User Check for {$email} -> No WP User found.", 'chat_bubbles' );
-				}
-			}
-		} else {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: User Check -> No customer object in thread.", 'chat_bubbles' );
 			}
 		}
 
@@ -417,9 +387,6 @@ class Core {
 	public function get_email_inline_styles( string $user_type ): string {
 		$styles = $this->get_styles_for_type( $user_type );
 		if ( empty( $styles ) ) {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "ChatBubbles: get_styles_for_type returned empty for {$user_type}", 'chat_bubbles' );
-			}
 			return '';
 		}
 
@@ -480,9 +447,6 @@ class Core {
 			if ( strpos( $shadow_color, '#' ) === 0 && strlen( $shadow_color ) === 7 ) {
 				list( $r, $g, $b ) = sscanf( $shadow_color, "#%02x%02x%02x" );
 				$shadow_color = "rgba({$r}, {$g}, {$b}, {$opacity_val})";
-			} elseif ( strpos( $shadow_color, 'rgba' ) !== false ) {
-				// If already rgba, we respect user input, maybe override alpha?
-				// Let's rely on the hex conversion for now as the picker defaults to hex.
 			}
 
 			// Switched back to box-shadow to support spread radius as explicitly requested
@@ -495,12 +459,7 @@ class Core {
 				continue;
 			}
 
-			// Increased specificity to override SupportCandy default styles
-			// Using .wpsc-it-container (CLASS) + class hierarchy.
-			// Fixed bug where #wpsc-it-container (ID) was used incorrectly.
-
-			// Support both Admin (.wpsc-it-container) and Frontend (.wpsc-shortcode-container, .wpsc-container) contexts
-			// Note: .wpsc-container is used in newer SC versions for frontend shortcodes.
+			// Roots
 			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container'];
 
 			$selectors = [];
@@ -524,8 +483,6 @@ class Core {
 			$css .= "border-radius: {$styles['radius']}px !important;";
 			$css .= "width: {$styles['width']}% !important;";
 			$css .= "max-width: {$styles['width']}% !important;";
-
-			// Override flex behavior to ensure width is respected (Fix for frontend flex-grow issue)
 			$css .= "flex-grow: 0 !important;";
 
 			// Font Family
@@ -552,7 +509,6 @@ class Core {
 			}
 
 			// Alignment
-			// Note: Since .thread-body is a flex child, margin auto works to push it.
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
 			} elseif ( $styles['alignment'] === 'center' ) {
@@ -561,7 +517,6 @@ class Core {
 				$css .= "margin-right: auto !important; margin-left: 0 !important;";
 			}
 
-			// Padding (Standardize)
 			$css .= "padding: 15px !important;";
 
 			// Borders
@@ -578,13 +533,7 @@ class Core {
 
 			$css .= "}";
 
-			// Hide Avatar (Relative to the thread container)
-			// $selector targets .thread-body inside the thread container. We need to go up one level to the thread container
-			// to find the .thread-avatar sibling, OR target the .thread-avatar relative to the same parent.
-			// The selector logic above builds paths like: ".wpsc-it-container .wpsc-thread.reply.agent .thread-body".
-			// The avatar is at: ".wpsc-it-container .wpsc-thread.reply.agent .thread-avatar".
-			// So we need to strip ".thread-body" from the selector parts and append ".thread-avatar".
-
+			// Hide Avatar
 			$avatar_selectors = [];
 			$selector_parts = explode(', ', $selector);
 
@@ -601,11 +550,8 @@ class Core {
 				$css .= "{$avatar_str} { display: none !important; }";
 			}
 
-			// Text Color inside (links, etc)
-			// Updated to target specific user-info elements and links which often override colors
+			// Text Color inside
 			$color_selectors = [];
-			// Helper to create sub-selectors for the list of root selectors
-			// Added .user-name specifically
 			$sub_elements = ['.thread-text', '.user-info h2', '.user-info h2.user-name', '.user-info span', 'a', '.thread-header h2', '.thread-header span'];
 
 			foreach ($selector_parts as $part) {
@@ -625,7 +571,7 @@ class Core {
 			$header_selector_str = implode(', ', $header_selectors);
 			$css .= "{$header_selector_str} { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
 
-			// Image Bounding Box (Global setting affecting all types)
+			// Image Bounding Box
 			if ( ! empty( $options['chat_bubbles_image_box'] ) ) {
 				$img_selectors = [];
 				foreach ($selector_parts as $part) {
@@ -640,18 +586,17 @@ class Core {
 	}
 
 	/**
-	 * Helper to get StackBoost Theme Colors (Mirroring admin-themes.css).
-	 * This ensures colors work on the frontend without enqueueing the full admin CSS.
+	 * Helper to get StackBoost Theme Colors.
 	 */
 	public function get_stackboost_theme_colors( $slug ) {
 		$themes = [
 			'sb-theme-wordpress-sync' => [
-				'accent' => '#2271b1', // Fallback, variable not available on frontend
+				'accent' => '#2271b1',
 				'text_on_accent' => '#ffffff',
 				'bg_main' => '#f0f0f1',
 			],
 			'sb-theme-supportcandy-sync' => [
-				'accent' => '#2271b1', // Fallback
+				'accent' => '#2271b1',
 				'text_on_accent' => '#ffffff',
 				'bg_main' => '#f6f7f7',
 			],
@@ -688,11 +633,6 @@ class Core {
 		$prefix = "chat_bubbles_{$type}_";
 		$theme = $options['chat_bubbles_theme'] ?? 'default';
 
-		if ( function_exists( 'stackboost_log' ) ) {
-			// Log theme selection to debug "wrong theme" issues
-			stackboost_log( "ChatBubbles: get_styles_for_type({$type}) - Theme: {$theme}", 'chat_bubbles' );
-		}
-
 		// Default Styles
 		$defaults = [
 			'bg_color'    => '#f1f1f1',
@@ -715,8 +655,6 @@ class Core {
 		// Theme Logic
 		switch ( $theme ) {
 			case 'stackboost':
-				// StackBoost Theme
-				// Retrieve Active Theme Colors explicitly for frontend compatibility
 				$active_theme_slug = $options['admin_theme'] ?? 'sb-theme-clean-tech';
 				$theme_colors = $this->get_stackboost_theme_colors( $active_theme_slug );
 
@@ -739,7 +677,7 @@ class Core {
 				} else {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => $theme_colors['bg_main'],
-						'text_color'  => '#3c434a', // Dark text on main bg
+						'text_color'  => '#3c434a',
 						'alignment'   => 'left',
 						'radius'      => '15',
 						'padding'     => '15',
@@ -749,11 +687,9 @@ class Core {
 				break;
 
 			case 'supportcandy':
-				// SupportCandy
 				$sc_settings = get_option( 'wpsc-ap-individual-ticket', [] );
 				$reply_primary = $sc_settings['reply-primary-color'] ?? '#2c3e50';
 				$note_primary = $sc_settings['note-primary-color'] ?? '#fffbcc';
-				// Third Color: Reply & Close Button Color for Customer
 				$reply_close_bg = $sc_settings['reply-close-bg-color'] ?? '#e5e5e5';
 				$reply_close_text = $sc_settings['reply-close-text-color'] ?? '#333333';
 
@@ -782,7 +718,6 @@ class Core {
 				break;
 
 			case 'classic':
-				// Classic
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#2271b1',
@@ -808,10 +743,9 @@ class Core {
 				break;
 
 			case 'ios':
-				// Fruit: Agent=Blue, Customer=Green
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#007aff', // Blue (iMessage)
+						'bg_color'    => '#007aff',
 						'text_color'  => '#ffffff',
 						'alignment'   => 'right',
 						'width'       => '75',
@@ -819,7 +753,7 @@ class Core {
 					]);
 				} elseif ( $type === 'note' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#fffbcc', // Standard yellow note
+						'bg_color'    => '#fffbcc',
 						'text_color'  => '#333333',
 						'alignment'   => 'center',
 						'width'       => '85',
@@ -827,7 +761,7 @@ class Core {
 					]);
 				} else {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#34c759', // Green (SMS/RCS)
+						'bg_color'    => '#34c759',
 						'text_color'  => '#ffffff',
 						'alignment'   => 'left',
 						'width'       => '75',
@@ -838,7 +772,6 @@ class Core {
 				break;
 
 			case 'android':
-				// Droid
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#d9fdd3',
@@ -868,7 +801,6 @@ class Core {
 				break;
 
 			case 'modern':
-				// Modern
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#000000',
@@ -900,7 +832,6 @@ class Core {
 			case 'custom':
 			case 'default':
 			default:
-				// Load from user settings if Custom, else use Defaults
 				if ( $theme === 'custom' ) {
 					$styles = [
 						'bg_color'    => $options["{$prefix}bg_color"] ?? $defaults['bg_color'],
@@ -918,7 +849,6 @@ class Core {
 						'border_color'   => $options["{$prefix}border_color"] ?? '#cccccc',
 					];
 				} else {
-					// Default Theme (Blue/Grey)
 					if ( $type === 'agent' ) {
 						$styles = array_merge( $defaults, [
 							'bg_color'    => '#2271b1',
@@ -935,7 +865,7 @@ class Core {
 						]);
 					} else {
 						$styles = array_merge( $defaults, [
-							'bg_color'    => '#e6e6e6', // Darker than bg for contrast
+							'bg_color'    => '#e6e6e6',
 							'text_color'  => '#3c434a',
 							'alignment'   => 'left',
 							'radius'      => '15',
@@ -946,11 +876,7 @@ class Core {
 				break;
 		}
 
-		// SANITIZATION
-		// Allow CSS variables (starting with var(--) ) to bypass hex sanitization.
-		// Note: We check the value BEFORE attempting sanitize_hex_color which would clear it.
 		if ( strpos( $styles['bg_color'], 'var(' ) === 0 ) {
-			// Basic sanitization for CSS var syntax
 			$styles['bg_color'] = sanitize_text_field( $styles['bg_color'] );
 		} else {
 			$styles['bg_color'] = sanitize_hex_color( $styles['bg_color'] ) ?: $defaults['bg_color'];
