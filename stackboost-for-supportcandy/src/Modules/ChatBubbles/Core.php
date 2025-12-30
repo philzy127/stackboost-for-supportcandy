@@ -131,6 +131,18 @@ class Core {
 	 * @return mixed The modified option value.
 	 */
 	public function inject_history_markers( $value ) {
+		// Log that the filter was called to verify execution
+		// Use a static counter or check to avoid spamming if called repeatedly
+		// Actually, standard log is fine for debugging
+		/*
+		if ( function_exists( 'stackboost_log' ) ) {
+			// Only log if we have notifications to process
+			if ( is_array( $value ) && isset( $value['notifications'] ) ) {
+				// To reduce noise, only log if we FIND a macro
+			}
+		}
+		*/
+
 		// Check email specific enable switch
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_email'] ) ) {
@@ -146,18 +158,15 @@ class Core {
 
 		foreach ( $value['notifications'] as $k => $notification ) {
 			if ( isset( $notification['body']['text'] ) ) {
-				// We wrap the macro in HTML comments.
-				// NOTE: We must ensure we don't double-wrap if this runs multiple times in a request.
-				// However, get_option usually caches, so filter runs on retrieval.
-				// Safe wrap: Check if already wrapped? No, simple replacement is safer for now.
-				// We rely on the marker format being unique.
-
-				// Using a callback to wrap only if not already wrapped is safer but complex.
-				// Let's just wrap. If it's double wrapped, our extractor regex handles greedy matching between START/END.
-
-				$value['notifications'][$k]['body']['text'] = preg_replace(
+				// Perform replacement
+				$value['notifications'][$k]['body']['text'] = preg_replace_callback(
 					$pattern,
-					'<!--SB_HISTORY_START-->$1<!--SB_HISTORY_END-->',
+					function( $matches ) use ( $k ) {
+						if ( function_exists( 'stackboost_log' ) ) {
+							stackboost_log( "ChatBubbles: Injecting marker for '{$matches[0]}' in notification index {$k}", 'chat_bubbles' );
+						}
+						return '<!--SB_HISTORY_START-->' . $matches[0] . '<!--SB_HISTORY_END-->';
+					},
 					$notification['body']['text']
 				);
 			}
@@ -221,7 +230,7 @@ class Core {
 			if ( preg_match( $marker_pattern, $en->body, $block_matches ) ) {
 
 				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ChatBubbles: Found history marker block.", 'chat_bubbles' );
+					stackboost_log( "ChatBubbles: Found history marker block. Length: " . strlen( $block_matches[1] ), 'chat_bubbles' );
 				}
 
 				$history_block = $block_matches[1];
@@ -290,6 +299,10 @@ class Core {
 			} else {
 				if ( function_exists( 'stackboost_log' ) ) {
 					stackboost_log( "ChatBubbles: No history markers found in body.", 'chat_bubbles' );
+					// Log snippets to help debug
+					$body_len = strlen( $en->body );
+					$snippet = substr( strip_tags( $en->body ), 0, 300 );
+					stackboost_log( "ChatBubbles: Body Length: $body_len. Start: $snippet", 'chat_bubbles' );
 				}
 			}
 		}
