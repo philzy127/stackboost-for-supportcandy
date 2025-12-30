@@ -28,6 +28,10 @@ class Core {
 	 * Constructor.
 	 */
 	private function __construct() {
+		// Log initialization to confirm the module is loaded
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'ChatBubbles: Core Initialized.', 'chat_bubbles' );
+		}
 		// Initialize the WordPress adapter
 		$this->init_hooks();
 	}
@@ -57,7 +61,8 @@ class Core {
 			'wpsc-en-change-ticket-fields',
 			'wpsc-en-change-ticket-priority',
 			'wpsc-en-change-ticket-subject',
-			'wpsc-en-delete-ticket'
+			'wpsc-en-delete-ticket',
+			'wpsc-en-custom-notifications' // Added to catch custom automations
 		];
 
 		foreach ( $email_options as $opt ) {
@@ -123,9 +128,12 @@ class Core {
 		// Identify which option is being filtered
 		$current_filter = current_filter();
 
-		// 1. Log that we are HERE and what we are filtering.
+		// 1. Unconditional Log: Entry and Raw Value
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "DEBUG: inject_history_markers triggered for '{$current_filter}'", 'chat_bubbles' );
+			stackboost_log( "DEBUG: inject_history_markers ENTERED for '{$current_filter}'", 'chat_bubbles' );
+			// Log the full structure so we can see exactly what the template looks like
+			// Using print_r with true to get string representation
+			stackboost_log( "DEBUG: RAW TEMPLATE VALUE for '{$current_filter}':\n" . print_r( $value, true ), 'chat_bubbles' );
 		}
 
 		// Check email specific enable switch
@@ -136,7 +144,7 @@ class Core {
 
 		if ( ! is_array( $value ) || ! isset( $value['notifications'] ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( "DEBUG: Value for '{$current_filter}' is NOT an array with 'notifications'. Type: " . gettype($value), 'chat_bubbles' );
+				stackboost_log( "DEBUG: Value for '{$current_filter}' is NOT an array with 'notifications'. Skipping.", 'chat_bubbles' );
 			}
 			return $value;
 		}
@@ -148,11 +156,6 @@ class Core {
 			if ( isset( $notification['body']['text'] ) ) {
 
 				$original_text = $notification['body']['text'];
-
-				// 2. Log the INPUT text we are inspecting.
-				if ( function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "DEBUG: Inspecting Notification [{$k}] Body Text:\n" . $original_text, 'chat_bubbles' );
-				}
 
 				// Perform replacement
 				$value['notifications'][$k]['body']['text'] = preg_replace_callback(
@@ -166,7 +169,7 @@ class Core {
 					$original_text
 				);
 
-				// 3. Log if NO match was found
+				// Log if NO match was found
 				if ( $original_text === $value['notifications'][$k]['body']['text'] ) {
 					if ( function_exists( 'stackboost_log' ) ) {
 						stackboost_log( "DEBUG: NO MATCH found for pattern '{$pattern}' in Notification [{$k}].", 'chat_bubbles' );
