@@ -51,6 +51,25 @@ class Core {
 		// Hook into SupportCandy Option retrieval to inject markers around history macros
 		// Targeting the main templates option which holds all email templates
 		add_filter( 'option_wpsc-email-templates', [ $this, 'inject_bubble_markers' ] );
+
+		// Hook to add context class for Ticket Owner (to override Agent styling if Owner is an Agent)
+		add_filter( 'wpsc_it_thread_add_classes', [ $this, 'add_ticket_owner_class' ], 10, 2 );
+	}
+
+	/**
+	 * Add class to identify the ticket owner.
+	 *
+	 * @param string $classes The existing classes.
+	 * @param object $thread The thread object.
+	 * @return string The modified classes.
+	 */
+	public function add_ticket_owner_class( $classes, $thread ) {
+		// Strictly compare the Thread Author ID with the Ticket Customer ID.
+		// If they match, this thread was created by the Ticket Owner.
+		if ( isset( $thread->customer->id, $thread->ticket->customer->id ) && $thread->customer->id === $thread->ticket->customer->id ) {
+			$classes .= ' stkb-ticket-owner';
+		}
+		return $classes;
 	}
 
 	/**
@@ -540,11 +559,15 @@ class Core {
 			$selectors = [];
 			foreach ($roots as $root) {
 				if ( $type === 'agent' ) {
-					$selectors[] = "{$root} .wpsc-thread.reply.agent .thread-body";
-					$selectors[] = "{$root} .wpsc-thread.report.agent .thread-body";
+					// Target agents ONLY if they are NOT the ticket owner.
+					$selectors[] = "{$root} .wpsc-thread.reply.agent:not(.stkb-ticket-owner) .thread-body";
+					$selectors[] = "{$root} .wpsc-thread.report.agent:not(.stkb-ticket-owner) .thread-body";
 				} elseif ( $type === 'customer' ) {
+					// Target customers OR ticket owners who might have the agent class.
 					$selectors[] = "{$root} .wpsc-thread.reply.customer .thread-body";
 					$selectors[] = "{$root} .wpsc-thread.report.customer .thread-body";
+					$selectors[] = "{$root} .wpsc-thread.reply.stkb-ticket-owner .thread-body";
+					$selectors[] = "{$root} .wpsc-thread.report.stkb-ticket-owner .thread-body";
 				} elseif ( $type === 'note' ) {
 					$selectors[] = "{$root} .wpsc-thread.note .thread-body";
 				}
