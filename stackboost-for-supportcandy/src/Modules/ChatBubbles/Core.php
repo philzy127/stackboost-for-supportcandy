@@ -119,11 +119,13 @@ class Core {
 		}
 
 		// Regex to find history macros: {ticket_history...} or {{ticket_history...}}
-		$history_pattern = '/(\{\{?(ticket_history(?:_[a-z_]+)?)\}?})/';
+		// Now optionally matches surrounding <p> tags.
+		$history_pattern = '/(<p>\s*)?(\{\{?(ticket_history(?:_[a-z_]+)?)\}?})(\s*<\/p>)?/i';
 
 		// Regex to find current message macros: {last_reply}, {last_note}, {ticket_description}
+		// Now optionally matches surrounding <p> tags.
 		// Note: We include ticket_description because for a 'create ticket' event, that IS the message.
-		$current_pattern = '/(\{\{?(last_reply|last_note|ticket_description)\}?})/';
+		$current_pattern = '/(<p>\s*)?(\{\{?(last_reply|last_note|ticket_description)\}?})(\s*<\/p>)?/i';
 
 		foreach ( $value as $key => $template ) {
 			if ( isset( $template['body']['text'] ) ) {
@@ -142,33 +144,48 @@ class Core {
 
 				// 1. Inject History Markers
 				// Re-doing History Injection with Idempotency Regex
-				$safe_history_pattern = '/(?<!<!--SB_HISTORY_START-->)(\{\{?(ticket_history(?:_[a-z_]+)?)\}?})(?!<!--SB_HISTORY_END-->)/';
-				if ( preg_match( $safe_history_pattern, $original_text ) ) {
-					$modified_text = preg_replace_callback(
-						$safe_history_pattern,
-						function( $matches ) {
-							return '<!--SB_HISTORY_START-->' . $matches[1] . '<!--SB_HISTORY_END-->';
-						},
-						$modified_text
-					);
-					if ( $modified_text !== $original_text ) {
-						$changed = true;
+				// Assert NOT preceded by <!--SB_HISTORY_START--> to avoid double wrapping.
+				// We use $history_pattern which now includes optional P tags.
+				// Since we are replacing the WHOLE MATCH, we can just check if markers exist?
+				// A simpler idempotency check for this complex pattern:
+				// If the string contains marker+macro, skip?
+				// But we need to handle multiple occurrences? No, usually one history macro per email.
+
+				// Let's stick to the callback method for replacement, but check if we are already inside a marker block?
+				// Regex Lookbehind is fixed length in PHP < 8 (ish), so variable length <p> makes lookbehind hard.
+
+				// Strategy: Check if markers are already present in the string. If so, we assume injection happened.
+				// This is safest to avoid corruption.
+				if ( strpos( $modified_text, '<!--SB_HISTORY_START-->' ) === false ) {
+					if ( preg_match( $history_pattern, $modified_text ) ) {
+						$modified_text = preg_replace_callback(
+							$history_pattern,
+							function( $matches ) {
+								// Wrap the ENTIRE matched string (including P tags if found)
+								return '<!--SB_HISTORY_START-->' . $matches[0] . '<!--SB_HISTORY_END-->';
+							},
+							$modified_text
+						);
+						if ( $modified_text !== $original_text ) {
+							$changed = true;
+						}
 					}
 				}
 
 				// 2. Inject Current Message Markers (If Enabled)
 				if ( ! empty( $options['chat_bubbles_enable_email_current_message'] ) ) {
-					$safe_current_pattern = '/(?<!<!--SB_CURRENT_START-->)(\{\{?(last_reply|last_note|ticket_description)\}?})(?!<!--SB_CURRENT_END-->)/';
-
-					if ( preg_match( $safe_current_pattern, $modified_text ) ) {
-						$modified_text = preg_replace_callback(
-							$safe_current_pattern,
-							function( $matches ) {
-								return '<!--SB_CURRENT_START-->' . $matches[1] . '<!--SB_CURRENT_END-->';
-							},
-							$modified_text
-						);
-						$changed = true;
+					if ( strpos( $modified_text, '<!--SB_CURRENT_START-->' ) === false ) {
+						if ( preg_match( $current_pattern, $modified_text ) ) {
+							$modified_text = preg_replace_callback(
+								$current_pattern,
+								function( $matches ) {
+									// Wrap the ENTIRE matched string (including P tags if found)
+									return '<!--SB_CURRENT_START-->' . $matches[0] . '<!--SB_CURRENT_END-->';
+								},
+								$modified_text
+							);
+							$changed = true;
+						}
 					}
 				}
 
