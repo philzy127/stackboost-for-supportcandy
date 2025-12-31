@@ -284,6 +284,31 @@ class WordPress extends Module {
 				] );
 			}
 		}
+
+		// Enqueue Ticket View Features (e.g., Hide Reply Close)
+		if ( $is_ticket_page_admin || $is_frontend ) {
+			wp_enqueue_script(
+				'stackboost-ticket-view',
+				STACKBOOST_PLUGIN_URL . 'src/Modules/TicketView/assets/js/ticket-view.js',
+				[ 'jquery', 'stackboost-util' ],
+				STACKBOOST_VERSION,
+				true
+			);
+
+			$is_agent = false;
+			if ( class_exists( '\WPSC_Current_User' ) && isset( \WPSC_Current_User::$current_user ) ) {
+				$is_agent = \WPSC_Current_User::$current_user->is_agent;
+			}
+
+			wp_localize_script( 'stackboost-ticket-view', 'stackboostTicketView', [
+				'features' => [
+					'hide_reply_close' => [
+						'enabled' => ! empty( $options['hide_reply_close_for_users'] ),
+					],
+				],
+				'is_agent' => $is_agent,
+			] );
+		}
 	}
 
 	/**
@@ -429,6 +454,7 @@ class WordPress extends Module {
 		add_settings_section( 'stackboost_general_cleanup_section', __( 'General Cleanup', 'stackboost-for-supportcandy' ), null, $page_slug );
 		add_settings_field( 'stackboost_enable_hide_empty_columns', __( 'Hide Empty Columns', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_hide_empty_columns', 'desc' => 'Automatically hide any column in the ticket list that is completely empty.' ] );
 		add_settings_field( 'stackboost_enable_hide_priority_column', __( 'Hide Priority Column', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_hide_priority_column', 'desc' => 'Hides the "Priority" column if all visible tickets have a priority of "Low".' ] );
+		add_settings_field( 'stackboost_hide_reply_close_for_users', __( 'Hide "Reply & Close" for Users', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'hide_reply_close_for_users', 'desc' => 'Hides the "Reply & Close" button for non-agent users on the ticket reply form.' ] );
 
 		// Section: Page Last Loaded Indicator
 		add_settings_section( 'stackboost_page_last_loaded_section', __( 'Page Last Loaded Indicator', 'stackboost-for-supportcandy' ), null, $page_slug );
