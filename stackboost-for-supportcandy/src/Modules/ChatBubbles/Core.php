@@ -119,13 +119,12 @@ class Core {
 		}
 
 		// Regex to find history macros: {ticket_history...} or {{ticket_history...}}
-		// Now optionally matches surrounding <p> tags.
-		$history_pattern = '/(<p>\s*)?(\{\{?(ticket_history(?:_[a-z_]+)?)\}?})(\s*<\/p>)?/i';
+		// Now optionally matches surrounding <p> tags with optional attributes.
+		$history_pattern = '/(<p\b[^>]*>\s*)?(\{\{?(ticket_history(?:_[a-z_]+)?)\}?})(\s*<\/p>)?/i';
 
 		// Regex to find current message macros: {last_reply}, {last_note}, {ticket_description}
-		// Now optionally matches surrounding <p> tags.
-		// Note: We include ticket_description because for a 'create ticket' event, that IS the message.
-		$current_pattern = '/(<p>\s*)?(\{\{?(last_reply|last_note|ticket_description)\}?})(\s*<\/p>)?/i';
+		// Now optionally matches surrounding <p> tags with optional attributes.
+		$current_pattern = '/(<p\b[^>]*>\s*)?(\{\{?(last_reply|last_note|ticket_description)\}?})(\s*<\/p>)?/i';
 
 		foreach ( $value as $key => $template ) {
 			if ( isset( $template['body']['text'] ) ) {
@@ -143,17 +142,6 @@ class Core {
 				}
 
 				// 1. Inject History Markers
-				// Re-doing History Injection with Idempotency Regex
-				// Assert NOT preceded by <!--SB_HISTORY_START--> to avoid double wrapping.
-				// We use $history_pattern which now includes optional P tags.
-				// Since we are replacing the WHOLE MATCH, we can just check if markers exist?
-				// A simpler idempotency check for this complex pattern:
-				// If the string contains marker+macro, skip?
-				// But we need to handle multiple occurrences? No, usually one history macro per email.
-
-				// Let's stick to the callback method for replacement, but check if we are already inside a marker block?
-				// Regex Lookbehind is fixed length in PHP < 8 (ish), so variable length <p> makes lookbehind hard.
-
 				// Strategy: Check if markers are already present in the string. If so, we assume injection happened.
 				// This is safest to avoid corruption.
 				if ( strpos( $modified_text, '<!--SB_HISTORY_START-->' ) === false ) {
@@ -161,6 +149,9 @@ class Core {
 						$modified_text = preg_replace_callback(
 							$history_pattern,
 							function( $matches ) {
+								if ( function_exists( 'stackboost_log' ) && ( !empty($matches[1]) || !empty($matches[3]) ) ) {
+									stackboost_log( "DEBUG: Captured wrapping <p> tags around HISTORY macro. Stripping them.", 'chat_bubbles' );
+								}
 								// Wrap the ENTIRE matched string (including P tags if found)
 								return '<!--SB_HISTORY_START-->' . $matches[0] . '<!--SB_HISTORY_END-->';
 							},
@@ -179,6 +170,9 @@ class Core {
 							$modified_text = preg_replace_callback(
 								$current_pattern,
 								function( $matches ) {
+									if ( function_exists( 'stackboost_log' ) && ( !empty($matches[1]) || !empty($matches[3]) ) ) {
+										stackboost_log( "DEBUG: Captured wrapping <p> tags around CURRENT MSG macro. Stripping them.", 'chat_bubbles' );
+									}
 									// Wrap the ENTIRE matched string (including P tags if found)
 									return '<!--SB_CURRENT_START-->' . $matches[0] . '<!--SB_CURRENT_END-->';
 								},
