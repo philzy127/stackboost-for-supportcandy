@@ -27,7 +27,7 @@ class Settings {
 			<h1><?php esc_html_e( 'Chat Bubbles', 'stackboost-for-supportcandy' ); ?></h1>
 			<?php settings_errors(); ?>
 
-			<form action="options.php" method="post" novalidate>
+			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'stackboost_settings' );
 				// stackboost_settings[page_slug]
@@ -307,7 +307,13 @@ class Settings {
 			<tr valign="top">
 				<th scope="row"><?php esc_html_e( 'Font Size', 'stackboost-for-supportcandy' ); ?></th>
 				<td>
-					<input type="number" name="stackboost_settings[<?php echo esc_attr( $prefix . 'font_size' ); ?>]" min="10" max="30" value="<?php echo esc_attr( $options[ $prefix . 'font_size' ] ?? '' ); ?>" class="small-text" placeholder="Default"> px
+					<?php
+					$font_size = $options[ $prefix . 'font_size' ] ?? '';
+					if ( $font_size && (int) $font_size < 10 ) {
+						$font_size = '';
+					}
+					?>
+					<input type="number" name="stackboost_settings[<?php echo esc_attr( $prefix . 'font_size' ); ?>]" min="10" max="30" value="<?php echo esc_attr( $font_size ); ?>" class="small-text" placeholder="Default"> px
 				</td>
 			</tr>
 
@@ -374,7 +380,13 @@ class Settings {
 						<option value="dashed" <?php selected( $options[ $prefix . 'border_style' ] ?? 'none', 'dashed' ); ?>><?php esc_html_e( 'Dashed', 'stackboost-for-supportcandy' ); ?></option>
 						<option value="dotted" <?php selected( $options[ $prefix . 'border_style' ] ?? 'none', 'dotted' ); ?>><?php esc_html_e( 'Dotted', 'stackboost-for-supportcandy' ); ?></option>
 					</select>
-					<input type="number" name="stackboost_settings[<?php echo esc_attr( $prefix . 'border_width' ); ?>]" min="1" max="10" value="<?php echo esc_attr( $options[ $prefix . 'border_width' ] ?? '1' ); ?>" class="small-text" placeholder="px"> px
+					<?php
+					$border_width = $options[ $prefix . 'border_width' ] ?? '1';
+					if ( (int) $border_width < 1 ) {
+						$border_width = '1';
+					}
+					?>
+					<input type="number" name="stackboost_settings[<?php echo esc_attr( $prefix . 'border_width' ); ?>]" min="1" max="10" value="<?php echo esc_attr( $border_width ); ?>" class="small-text" placeholder="px"> px
 					<span style="margin-left: 5px;">Color:</span>
 					<input type="text" name="stackboost_settings[<?php echo esc_attr( $prefix . 'border_color' ); ?>]" value="<?php echo esc_attr( $options[ $prefix . 'border_color' ] ?? '#cccccc' ); ?>" class="my-color-field" data-default-color="#cccccc" />
 				</td>
