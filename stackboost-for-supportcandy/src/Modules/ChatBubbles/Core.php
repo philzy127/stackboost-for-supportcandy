@@ -129,29 +129,30 @@ class Core {
 			// Roots
 			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container'];
 
-			$selectors = [];
+			$wrapper_selectors = [];
 			foreach ($roots as $root) {
 				// SIMPLIFIED LOGIC: Use native classes
 				if ( $type === 'agent' ) {
-					$selectors[] = "{$root} .wpsc-thread.agent .thread-body";
+					$wrapper_selectors[] = "{$root} .wpsc-thread.agent";
 				} elseif ( $type === 'customer' ) {
-					$selectors[] = "{$root} .wpsc-thread.customer .thread-body";
+					$wrapper_selectors[] = "{$root} .wpsc-thread.customer";
 				} elseif ( $type === 'note' ) {
-					$selectors[] = "{$root} .wpsc-thread.note .thread-body";
+					$wrapper_selectors[] = "{$root} .wpsc-thread.note";
 				} elseif ( $type === 'log' ) {
-					$selectors[] = "{$root} .wpsc-thread.log .thread-body";
+					$wrapper_selectors[] = "{$root} .wpsc-thread.log";
 				}
 			}
-			$selector = implode(', ', $selectors);
+			$wrapper_selector_str = implode(', ', $wrapper_selectors);
 
-			// Build CSS Rule
-			$css .= "{$selector} {";
+			// 1. Style the Wrapper (The Bubble)
+			$css .= "{$wrapper_selector_str} {";
 			$css .= "background-color: {$styles['bg_color']} !important;";
 			$css .= "color: {$styles['text_color']} !important;";
 			$css .= "border-radius: {$styles['radius']}px !important;";
 			$css .= "width: {$styles['width']}% !important;";
 			$css .= "max-width: {$styles['width']}% !important;";
-			$css .= "flex-grow: 0 !important;";
+			$css .= "display: flex !important;";
+			$css .= "align-items: flex-start !important;";
 
 			// Font Family
 			if ( ! empty( $styles['font_family'] ) ) {
@@ -176,13 +177,16 @@ class Core {
 				$css .= "text-decoration: underline !important;";
 			}
 
-			// Alignment
+			// Alignment & Direction
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
+				$css .= "flex-direction: row-reverse !important;"; // Avatar on right
 			} elseif ( $styles['alignment'] === 'center' ) {
 				$css .= "margin: 0 auto !important;";
+				$css .= "flex-direction: row !important;";
 			} else {
 				$css .= "margin-right: auto !important; margin-left: 0 !important;";
+				$css .= "flex-direction: row !important;";
 			}
 
 			$css .= "padding: 15px !important;";
@@ -201,33 +205,56 @@ class Core {
 
 			$css .= "}";
 
-			// Hide Avatar (Log does not usually have avatar, but good to be safe)
-			// Actually Logs DO have avatars (system icons), but we might want to hide them if bubbling
-			// Current logic hides ALL avatars for bubbled items.
-			// Only hide if the option to show them is NOT checked.
+			// 2. Reset Inner Body Styles
+			// We need to strip styles from the .thread-body because the wrapper now has them
+			$body_selectors = [];
+			foreach ($wrapper_selectors as $sel) {
+				$body_selectors[] = $sel . ' .thread-body';
+			}
+			$body_selector_str = implode(', ', $body_selectors);
+
+			$css .= "{$body_selector_str} {";
+			$css .= "background: transparent !important;";
+			$css .= "border: none !important;";
+			$css .= "box-shadow: none !important;";
+			$css .= "padding: 0 !important;";
+			$css .= "margin: 0 !important;";
+			$css .= "width: auto !important;";
+			$css .= "max-width: 100% !important;";
+			$css .= "flex: 1 !important;"; // Take remaining space
+			$css .= "}";
+
+			// 3. Avatar Handling
+			$avatar_selectors = [];
+			foreach ($wrapper_selectors as $sel) {
+				$avatar_selectors[] = $sel . ' .thread-avatar';
+			}
+			$avatar_selector_str = implode(', ', $avatar_selectors);
+
 			if ( empty( $options['chat_bubbles_show_avatars'] ) ) {
-				$avatar_selectors = [];
-				$selector_parts = explode(', ', $selector);
-
-				foreach ($selector_parts as $part) {
-					$part = trim($part);
-					if ( substr($part, -12) === '.thread-body' ) {
-						$base = substr($part, 0, -12);
-						$avatar_selectors[] = $base . ' .thread-avatar';
-					}
-				}
-
-				if ( ! empty( $avatar_selectors ) ) {
-					$avatar_str = implode(', ', $avatar_selectors);
-					$css .= "{$avatar_str} { display: none !important; }";
-				}
+				// Hide if option is disabled
+				$css .= "{$avatar_selector_str} { display: none !important; }";
+			} else {
+				// Show and Style if enabled
+				$css .= "{$avatar_selector_str} {";
+				$css .= "display: block !important;";
+				// Add margin to separate from body. Logic depends on alignment/direction.
+				// Since we use flex-direction: row-reverse for Right align, 'margin-right' on avatar (which is first in DOM)
+				// effectively puts space between it and the body in both visual orientations?
+				// Row: [Avatar] --margin-right--> [Body]
+				// Row-Reverse: [Body] <--margin-right-- [Avatar] (Visual Right)
+				// Wait, in Row-Reverse, margin-right on the first item (Avatar) pushes it away from the flex start (Right edge)? No.
+				// Let's stick to standard margins.
+				$css .= "margin: 0 15px !important;";
+				$css .= "align-self: flex-start !important;";
+				$css .= "}";
 			}
 
-			// Text Color inside
+			// 4. Text Color inside
 			$color_selectors = [];
 			$sub_elements = ['.thread-text', '.user-info h2', '.user-info h2.user-name', '.user-info span', 'a', '.thread-header h2', '.thread-header span', '.wpsc-log-diff'];
 
-			foreach ($selector_parts as $part) {
+			foreach ($wrapper_selectors as $part) {
 				foreach ($sub_elements as $el) {
 					$color_selectors[] = trim($part) . ' ' . $el;
 				}
@@ -236,18 +263,18 @@ class Core {
 
 			$css .= "{$color_selector_str} { color: {$styles['text_color']} !important; }";
 
-			// Header layout adjustment
+			// 5. Header layout adjustment
 			$header_selectors = [];
-			foreach ($selector_parts as $part) {
+			foreach ($wrapper_selectors as $part) {
 				$header_selectors[] = trim($part) . ' .thread-header';
 			}
 			$header_selector_str = implode(', ', $header_selectors);
 			$css .= "{$header_selector_str} { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
 
-			// Image Bounding Box
+			// 6. Image Bounding Box
 			if ( ! empty( $options['chat_bubbles_image_box'] ) ) {
 				$img_selectors = [];
-				foreach ($selector_parts as $part) {
+				foreach ($wrapper_selectors as $part) {
 					$img_selectors[] = trim($part) . ' img';
 				}
 				$img_selector_str = implode(', ', $img_selectors);
