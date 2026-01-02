@@ -121,7 +121,38 @@
             $('input[name="' + prefixName + 'border_color]"]').val('#cccccc').trigger('change');
         }
 
-        // 5. Live Preview Logic
+        // 5. Avatar GDPR Warning
+        $('#chat_bubbles_show_avatars').on('change', function(e) {
+            var $checkbox = $(this);
+            if ($checkbox.is(':checked')) {
+                if (typeof window.stackboostConfirm === 'function') {
+                    // Temporarily uncheck until confirmed? No, pattern is usually check -> confirm or revert.
+                    // But stackboostConfirm is non-blocking?
+                    // If it's our custom modal, it likely requires a callback.
+                    // To be safe, we uncheck it immediately, then re-check in the confirm callback.
+                    $checkbox.prop('checked', false);
+
+                    window.stackboostConfirm(
+                        'Enabling this option loads images from Gravatar and third-party servers, which exposes user IP addresses to those services.<br><br>Ensure your privacy policy complies with GDPR and other data privacy regulations before enabling.',
+                        'GDPR Warning',
+                        function() {
+                            // On Confirm
+                            $checkbox.prop('checked', true);
+                            updatePreview(); // Trigger preview update if needed
+                        },
+                        function() {
+                            // On Cancel
+                            $checkbox.prop('checked', false);
+                        },
+                        'I Understand, Enable',
+                        'Cancel',
+                        true // isDanger/Warning style
+                    );
+                }
+            }
+        });
+
+        // 6. Live Preview Logic
         $('form input, form select').on('change input', function() {
             updatePreview();
         });
