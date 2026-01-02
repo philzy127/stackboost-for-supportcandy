@@ -159,6 +159,22 @@ class Settings {
 		</tr>
 
 		<?php
+		// Show Avatars (GDPR Warning)
+		?>
+		<tr valign="top">
+			<th scope="row"><?php esc_html_e( 'Show User Avatars', 'stackboost-for-supportcandy' ); ?></th>
+			<td>
+				<input type="checkbox" name="stackboost_settings[chat_bubbles_show_avatars]" id="chat_bubbles_show_avatars" value="1" <?php checked( $options['chat_bubbles_show_avatars'] ?? 0, 1 ); ?> />
+				<p class="description">
+					<?php esc_html_e( 'Keep the default SupportCandy avatars visible next to bubbles.', 'stackboost-for-supportcandy' ); ?>
+					<br/>
+					<strong style="color: #d63638;"><?php esc_html_e( 'GDPR Warning:', 'stackboost-for-supportcandy' ); ?></strong>
+					<?php esc_html_e( 'This loads images from Gravatar/Third-party servers, potentially exposing user IP addresses. Ensure your privacy policy complies.', 'stackboost-for-supportcandy' ); ?>
+				</p>
+			</td>
+		</tr>
+
+		<?php
 		// Theme Preset
 		$theme_val = $options['chat_bubbles_theme'] ?? 'default';
 		?>
@@ -380,6 +396,7 @@ class Settings {
 	public static function get_settings_keys() {
 		$keys = [
 			'chat_bubbles_enable_ticket',
+			'chat_bubbles_show_avatars',
 			'chat_bubbles_theme',
 			'chat_bubbles_shadow_enable',
 			'chat_bubbles_shadow_color',

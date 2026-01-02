@@ -204,20 +204,23 @@ class Core {
 			// Hide Avatar (Log does not usually have avatar, but good to be safe)
 			// Actually Logs DO have avatars (system icons), but we might want to hide them if bubbling
 			// Current logic hides ALL avatars for bubbled items.
-			$avatar_selectors = [];
-			$selector_parts = explode(', ', $selector);
+			// Only hide if the option to show them is NOT checked.
+			if ( empty( $options['chat_bubbles_show_avatars'] ) ) {
+				$avatar_selectors = [];
+				$selector_parts = explode(', ', $selector);
 
-			foreach ($selector_parts as $part) {
-				$part = trim($part);
-				if ( substr($part, -12) === '.thread-body' ) {
-					$base = substr($part, 0, -12);
-					$avatar_selectors[] = $base . ' .thread-avatar';
+				foreach ($selector_parts as $part) {
+					$part = trim($part);
+					if ( substr($part, -12) === '.thread-body' ) {
+						$base = substr($part, 0, -12);
+						$avatar_selectors[] = $base . ' .thread-avatar';
+					}
 				}
-			}
 
-			if ( ! empty( $avatar_selectors ) ) {
-				$avatar_str = implode(', ', $avatar_selectors);
-				$css .= "{$avatar_str} { display: none !important; }";
+				if ( ! empty( $avatar_selectors ) ) {
+					$avatar_str = implode(', ', $avatar_selectors);
+					$css .= "{$avatar_str} { display: none !important; }";
+				}
 			}
 
 			// Text Color inside
