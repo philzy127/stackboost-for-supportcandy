@@ -178,14 +178,19 @@ class Core {
 			}
 
 			// Alignment & Direction
+			// Note: We deliberately set margin-bottom to ensure bubbles don't collapse on each other,
+			// especially for 'center' alignment where '0 auto' was nuking the bottom margin.
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
+				$css .= "margin-bottom: 20px !important;";
 				$css .= "flex-direction: row-reverse !important;"; // Avatar on right
 			} elseif ( $styles['alignment'] === 'center' ) {
-				$css .= "margin: 0 auto !important;";
+				$css .= "margin-left: auto !important; margin-right: auto !important;";
+				$css .= "margin-bottom: 20px !important;";
 				$css .= "flex-direction: row !important;";
 			} else {
 				$css .= "margin-right: auto !important; margin-left: 0 !important;";
+				$css .= "margin-bottom: 20px !important;";
 				$css .= "flex-direction: row !important;";
 			}
 
