@@ -186,19 +186,28 @@ class Core {
 				$css .= "flex-direction: row-reverse !important;"; // Avatar on right
 
 				// REVERSE HEADER LAYOUT FOR RIGHT ALIGNED
-				// 1. Reverse the Name/Action container
-				// Selector targets: Wrapper -> Body -> Header -> User Info -> Flex Div (Name+Action)
-				$css .= "{$wrapper_selector_str} .thread-header .user-info > div { flex-direction: row-reverse !important; justify-content: flex-start !important; }";
+				// We must loop through wrapper selectors to append descendants correctly
+				$header_flex_selectors = [];
+				$user_info_selectors = [];
+				$time_selectors = [];
 
-				// 2. Add spacing between swapped items (Name and Action)
-				// The action is now first (visually), so give it margin-left (or swap margins)
-				// Actually, usually they are adjacent. Let's ensure standard spacing works in reverse.
+				foreach ($wrapper_selectors as $sel) {
+					$header_flex_selectors[] = "{$sel} .thread-header .user-info > div";
+					$user_info_selectors[] = "{$sel} .thread-header .user-info";
+					$time_selectors[] = "{$sel} .thread-header .user-info .thread-time";
+				}
+				$header_flex_str = implode(', ', $header_flex_selectors);
+				$user_info_str = implode(', ', $user_info_selectors);
+				$time_str = implode(', ', $time_selectors);
+
+				// 1. Reverse the Name/Action container
+				$css .= "{$header_flex_str} { flex-direction: row-reverse !important; justify-content: flex-start !important; }";
 
 				// 3. Align the User Info text block to the right
-				$css .= "{$wrapper_selector_str} .thread-header .user-info { text-align: right !important; width: 100% !important; }";
+				$css .= "{$user_info_str} { text-align: right !important; width: 100% !important; }";
 
 				// 4. Align the timestamp to the right
-				$css .= "{$wrapper_selector_str} .thread-header .user-info .thread-time { text-align: right !important; display: block !important; }";
+				$css .= "{$time_str} { text-align: right !important; display: block !important; }";
 
 			} elseif ( $styles['alignment'] === 'center' ) {
 				$css .= "margin-left: auto !important; margin-right: auto !important;";
