@@ -309,7 +309,7 @@ class Settings {
 				<td>
 					<?php
 					$font_size = $options[ $prefix . 'font_size' ] ?? '';
-					if ( $font_size && (int) $font_size < 10 ) {
+					if ( $font_size !== '' && (int) $font_size < 10 ) {
 						$font_size = '';
 					}
 					?>
