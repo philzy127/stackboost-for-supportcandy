@@ -26,9 +26,9 @@
             var val = $(this).val();
             // Show/Hide Tab Navigation Items
             if (val === 'custom') {
-                $('.sb-chat-tab.type-tab').css('display', 'block'); // Show Agent/Customer/Note tabs
+                $('.sb-chat-tab.type-tab').css('display', 'block'); // Show Agent/Customer/Note/Log tabs
             } else {
-                $('.sb-chat-tab.type-tab').hide(); // Hide Agent/Customer/Note tabs
+                $('.sb-chat-tab.type-tab').hide(); // Hide Agent/Customer/Note/Log tabs
                 // Force switch to 'general' tab if a type tab was active
                 if ($('.sb-chat-tab.active').hasClass('type-tab')) {
                     $('.sb-chat-tab[data-target="general"]').click();
@@ -71,7 +71,7 @@
             $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val('40').trigger('input'); // Reset opacity
 
             // Reset Type fields via loop
-            ['agent', 'customer', 'note'].forEach(function(type) {
+            ['agent', 'customer', 'note', 'log'].forEach(function(type) {
                 resetSection(type);
             });
             updatePreview();
@@ -151,8 +151,8 @@
 
             var bubbleBgColors = [];
 
-            // Iterate over all 3 types to update the 3 bubbles
-            ['agent', 'customer', 'note'].forEach(function(type) {
+            // Iterate over all 4 types to update the 4 bubbles
+            ['agent', 'customer', 'note', 'log'].forEach(function(type) {
                 var bg = updateBubble(type, theme);
                 if (bg) bubbleBgColors.push(bg);
             });
@@ -225,6 +225,11 @@
                     styles.text = '#333333';
                     styles.align = 'center';
                     styles.radius = '5';
+                } else if (type === 'log') {
+                    styles.bg = '#f0f0f1';
+                    styles.text = '#666666';
+                    styles.align = 'center';
+                    styles.radius = '5';
                 } else {
                     styles.bg = sbColors.background; // Main BG or Surface
                     styles.text = sbColors.text;
@@ -258,6 +263,11 @@
                     styles.text = '#333333';
                     styles.align = 'center';
                     styles.radius = '0';
+                } else if (type === 'log') {
+                    styles.bg = '#f9f9f9';
+                    styles.text = '#666666';
+                    styles.align = 'center';
+                    styles.radius = '0';
                 } else {
                     styles.bg = scCustBg;
                     styles.text = scCustText;
@@ -274,6 +284,11 @@
                 } else if (type === 'note') {
                     styles.bg = '#fdfdfd';
                     styles.text = '#333333';
+                    styles.align = 'center';
+                    styles.radius = '0';
+                } else if (type === 'log') {
+                    styles.bg = '#f1f1f1';
+                    styles.text = '#666666';
                     styles.align = 'center';
                     styles.radius = '0';
                 } else {
@@ -293,6 +308,11 @@
                 } else if (type === 'note') {
                     styles.bg = '#fff8e5';
                     styles.text = '#333333';
+                    styles.align = 'center';
+                    styles.radius = '5';
+                } else if (type === 'log') {
+                    styles.bg = '#f0f0f1';
+                    styles.text = '#666666';
                     styles.align = 'center';
                     styles.radius = '5';
                 } else {
@@ -317,6 +337,12 @@
                     styles.align = 'center';
                     styles.width = '85';
                     styles.radius = '10';
+                } else if (type === 'log') {
+                    styles.bg = '#f2f2f7';
+                    styles.text = '#8e8e93';
+                    styles.align = 'center';
+                    styles.width = '90';
+                    styles.radius = '10';
                 } else {
                     styles.bg = '#34c759';
                     styles.text = '#ffffff';
@@ -340,6 +366,12 @@
                     styles.align = 'center';
                     styles.width = '85';
                     styles.radius = '5';
+                } else if (type === 'log') {
+                    styles.bg = '#f0f2f5';
+                    styles.text = '#54656f';
+                    styles.align = 'center';
+                    styles.width = '90';
+                    styles.radius = '5';
                 } else {
                     styles.bg = '#ffffff';
                     styles.text = '#111b21';
@@ -361,6 +393,12 @@
                     styles.text = '#555555';
                     styles.align = 'center';
                     styles.width = '85';
+                    styles.radius = '0';
+                } else if (type === 'log') {
+                    styles.bg = '#f2f2f2';
+                    styles.text = '#999999';
+                    styles.align = 'center';
+                    styles.width = '90';
                     styles.radius = '0';
                 } else {
                     styles.bg = '#f2f2f2';

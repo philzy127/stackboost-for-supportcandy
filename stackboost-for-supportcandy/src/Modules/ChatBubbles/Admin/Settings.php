@@ -46,6 +46,7 @@ class Settings {
 							<div class="sb-chat-tab type-tab" data-target="customer"><?php esc_html_e( 'Customer', 'stackboost-for-supportcandy' ); ?></div>
 							<div class="sb-chat-tab type-tab" data-target="note"><?php esc_html_e( 'Private Note', 'stackboost-for-supportcandy' ); ?></div>
 							<div class="sb-chat-tab type-tab" data-target="agent"><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></div>
+							<div class="sb-chat-tab type-tab" data-target="log"><?php esc_html_e( 'System Log', 'stackboost-for-supportcandy' ); ?></div>
 						</div>
 
 						<!-- Config Content Area -->
@@ -62,7 +63,7 @@ class Settings {
 							</div>
 
 							<!-- Type Specific Tabs -->
-							<?php foreach ( ['customer', 'note', 'agent'] as $type ) : ?>
+							<?php foreach ( ['customer', 'note', 'agent', 'log'] as $type ) : ?>
 								<div id="sb-chat-config-<?php echo esc_attr( $type ); ?>" class="sb-chat-config-section" style="display:none;">
 									<table class="form-table">
 										<?php self::render_type_fields( $type ); ?>
@@ -105,7 +106,18 @@ class Settings {
 									</div>
 								</div>
 
-								<!-- 3. Agent Bubble -->
+								<!-- 3. Log Bubble -->
+								<div id="preview-bubble-log" class="sb-preview-bubble log">
+									<div class="sb-preview-header">
+										<strong><?php esc_html_e( 'System Log', 'stackboost-for-supportcandy' ); ?></strong>
+										<span>10:33 AM</span>
+									</div>
+									<div class="preview-text">
+										<?php esc_html_e( 'Ticket Status changed from New to In Progress', 'stackboost-for-supportcandy' ); ?>
+									</div>
+								</div>
+
+								<!-- 4. Agent Bubble -->
 								<div id="preview-bubble-agent" class="sb-preview-bubble agent">
 									<div class="sb-preview-header">
 										<strong><?php esc_html_e( 'Support Agent', 'stackboost-for-supportcandy' ); ?></strong>
@@ -242,7 +254,7 @@ class Settings {
 	}
 
 	/**
-	 * Render fields for a specific type tab (Agent/Customer/Note).
+	 * Render fields for a specific type tab (Agent/Customer/Note/Log).
 	 */
 	public static function render_type_fields( $type ) {
 		$options = get_option( 'stackboost_settings', [] );
@@ -389,7 +401,7 @@ class Settings {
 			'chat_bubbles_shadow_opacity',
 			'chat_bubbles_image_box',
 		];
-		foreach ( ['agent', 'customer', 'note'] as $type ) {
+		foreach ( ['agent', 'customer', 'note', 'log'] as $type ) {
 			$prefix = "chat_bubbles_{$type}_";
 			$keys[] = "{$prefix}bg_color";
 			$keys[] = "{$prefix}text_color";

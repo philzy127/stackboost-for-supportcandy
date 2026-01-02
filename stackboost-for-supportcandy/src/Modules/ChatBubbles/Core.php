@@ -51,25 +51,6 @@ class Core {
 		// Hook into SupportCandy Option retrieval to inject markers around history macros
 		// Targeting the main templates option which holds all email templates
 		add_filter( 'option_wpsc-email-templates', [ $this, 'inject_bubble_markers' ] );
-
-		// Hook to add context class for Ticket Owner (to override Agent styling if Owner is an Agent)
-		add_filter( 'wpsc_it_thread_add_classes', [ $this, 'add_ticket_owner_class' ], 10, 2 );
-	}
-
-	/**
-	 * Add class to identify the ticket owner.
-	 *
-	 * @param string $classes The existing classes.
-	 * @param object $thread The thread object.
-	 * @return string The modified classes.
-	 */
-	public function add_ticket_owner_class( $classes, $thread ) {
-		// Strictly compare the Thread Author ID with the Ticket Customer ID.
-		// If they match, this thread was created by the Ticket Owner.
-		if ( isset( $thread->customer->id, $thread->ticket->customer->id ) && $thread->customer->id === $thread->ticket->customer->id ) {
-			$classes .= ' stkb-ticket-owner';
-		}
-		return $classes;
 	}
 
 	/**
@@ -292,10 +273,14 @@ class Core {
 					$content = $matches[4]; // Preserve HTML content
 
 					// Determine User Type based on Name/Action
+					// For email history, we don't have the nice classes, so we must infer.
 					$user_type = 'agent'; // Default
 
 					if ( stripos( $action, 'note' ) !== false ) {
 						$user_type = 'note';
+					} elseif ( stripos( $action, 'log' ) !== false || stripos( $action, 'status' ) !== false || stripos( $action, 'assignee' ) !== false ) {
+						// Rudimentary check for log entries in history if they appear
+						$user_type = 'log';
 					} elseif ( $ticket && isset( $ticket->customer ) && $name === $ticket->customer->name ) {
 						$user_type = 'customer';
 					}
@@ -347,7 +332,7 @@ class Core {
 		// -------------------------------------------------------------------------
 
 		// Only process reply and note types for the CURRENT message wrapping
-		if ( ! in_array( $en->thread->type, [ 'reply', 'note', 'report', 'create' ] ) ) { // Added 'create' just in case
+		if ( ! in_array( $en->thread->type, [ 'reply', 'note', 'report', 'create', 'log' ] ) ) { // Added 'create' just in case
 			return $en;
 		}
 
@@ -382,6 +367,8 @@ class Core {
 					} elseif ( isset( $ticket->customer ) && is_object( $ticket->customer ) ) {
 						$name = $ticket->customer->name;
 					}
+				} elseif ( $user_type === 'log' ) {
+					$name = __( 'System Log', 'stackboost-for-supportcandy' );
 				} else {
 					// Agent or Note (usually Agent)
 					// Try to find agent info in thread
@@ -453,6 +440,9 @@ class Core {
 		if ( $thread->type === 'note' ) {
 			return 'note';
 		}
+		if ( $thread->type === 'log' ) {
+			return 'log';
+		}
 
 		$is_agent = false;
 
@@ -475,7 +465,7 @@ class Core {
 	/**
 	 * Helper to generate inline CSS string for emails.
 	 *
-	 * @param string $user_type The user type ('agent', 'customer', 'note').
+	 * @param string $user_type The user type ('agent', 'customer', 'note', 'log').
 	 * @return string The inline CSS string.
 	 */
 	public function get_email_inline_styles( string $user_type ): string {
@@ -524,7 +514,7 @@ class Core {
 	 */
 	public function generate_css(): string {
 		$options = get_option( 'stackboost_settings', [] );
-		$types = [ 'agent', 'customer', 'note' ];
+		$types = [ 'agent', 'customer', 'note', 'log' ]; // Added log
 		$css   = '';
 
 		// Global Drop Shadow
@@ -558,18 +548,15 @@ class Core {
 
 			$selectors = [];
 			foreach ($roots as $root) {
+				// SIMPLIFIED LOGIC: Use native classes
 				if ( $type === 'agent' ) {
-					// Target agents ONLY if they are NOT the ticket owner.
-					$selectors[] = "{$root} .wpsc-thread.reply.agent:not(.stkb-ticket-owner) .thread-body";
-					$selectors[] = "{$root} .wpsc-thread.report.agent:not(.stkb-ticket-owner) .thread-body";
+					$selectors[] = "{$root} .wpsc-thread.agent .thread-body";
 				} elseif ( $type === 'customer' ) {
-					// Target customers OR ticket owners who might have the agent class.
-					$selectors[] = "{$root} .wpsc-thread.reply.customer .thread-body";
-					$selectors[] = "{$root} .wpsc-thread.report.customer .thread-body";
-					$selectors[] = "{$root} .wpsc-thread.reply.stkb-ticket-owner .thread-body";
-					$selectors[] = "{$root} .wpsc-thread.report.stkb-ticket-owner .thread-body";
+					$selectors[] = "{$root} .wpsc-thread.customer .thread-body";
 				} elseif ( $type === 'note' ) {
 					$selectors[] = "{$root} .wpsc-thread.note .thread-body";
+				} elseif ( $type === 'log' ) {
+					$selectors[] = "{$root} .wpsc-thread.log .thread-body";
 				}
 			}
 			$selector = implode(', ', $selectors);
@@ -631,7 +618,9 @@ class Core {
 
 			$css .= "}";
 
-			// Hide Avatar
+			// Hide Avatar (Log does not usually have avatar, but good to be safe)
+			// Actually Logs DO have avatars (system icons), but we might want to hide them if bubbling
+			// Current logic hides ALL avatars for bubbled items.
 			$avatar_selectors = [];
 			$selector_parts = explode(', ', $selector);
 
@@ -650,7 +639,7 @@ class Core {
 
 			// Text Color inside
 			$color_selectors = [];
-			$sub_elements = ['.thread-text', '.user-info h2', '.user-info h2.user-name', '.user-info span', 'a', '.thread-header h2', '.thread-header span'];
+			$sub_elements = ['.thread-text', '.user-info h2', '.user-info h2.user-name', '.user-info span', 'a', '.thread-header h2', '.thread-header span', '.wpsc-log-diff'];
 
 			foreach ($selector_parts as $part) {
 				foreach ($sub_elements as $el) {
@@ -772,6 +761,14 @@ class Core {
 						'radius'      => '5',
 						'padding'     => '10',
 					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f0f0f1',
+						'text_color'  => '#666666',
+						'alignment'   => 'center',
+						'radius'      => '5',
+						'padding'     => '10',
+					]);
 				} else {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => $theme_colors['bg_main'],
@@ -805,6 +802,13 @@ class Core {
 						'alignment'   => 'center',
 						'radius'      => '0',
 					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f9f9f9',
+						'text_color'  => '#666666',
+						'alignment'   => 'center',
+						'radius'      => '0',
+					]);
 				} else {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => $reply_close_bg,
@@ -827,6 +831,13 @@ class Core {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#fdfdfd',
 						'text_color'  => '#333333',
+						'alignment'   => 'center',
+						'radius'      => '0',
+					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f1f1f1',
+						'text_color'  => '#666666',
 						'alignment'   => 'center',
 						'radius'      => '0',
 					]);
@@ -855,6 +866,14 @@ class Core {
 						'text_color'  => '#333333',
 						'alignment'   => 'center',
 						'width'       => '85',
+						'radius'      => '10',
+					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f2f2f7',
+						'text_color'  => '#8e8e93',
+						'alignment'   => 'center',
+						'width'       => '90',
 						'radius'      => '10',
 					]);
 				} else {
@@ -886,6 +905,14 @@ class Core {
 						'width'       => '85',
 						'radius'      => '5',
 					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f0f2f5',
+						'text_color'  => '#54656f',
+						'alignment'   => 'center',
+						'width'       => '90',
+						'radius'      => '5',
+					]);
 				} else {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#ffffff',
@@ -913,6 +940,14 @@ class Core {
 						'text_color'  => '#555555',
 						'alignment'   => 'center',
 						'width'       => '85',
+						'radius'      => '0',
+					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f2f2f2',
+						'text_color'  => '#999999',
+						'alignment'   => 'center',
+						'width'       => '90',
 						'radius'      => '0',
 					]);
 				} else {
@@ -958,6 +993,13 @@ class Core {
 						$styles = array_merge( $defaults, [
 							'bg_color'    => '#fff8e5',
 							'text_color'  => '#333333',
+							'alignment'   => 'center',
+							'radius'      => '5',
+						]);
+					} elseif ( $type === 'log' ) {
+						$styles = array_merge( $defaults, [
+							'bg_color'    => '#f0f0f1',
+							'text_color'  => '#666666',
 							'alignment'   => 'center',
 							'radius'      => '5',
 						]);
