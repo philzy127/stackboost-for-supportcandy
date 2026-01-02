@@ -209,6 +209,15 @@ class Core {
 				// 4. Align the timestamp to the right
 				$css .= "{$time_str} { text-align: right !important; display: block !important; }";
 
+				// 5. Align content text to the right
+				// We need to target the .thread-text inside the wrapper
+				$text_selectors = [];
+				foreach ($wrapper_selectors as $sel) {
+					$text_selectors[] = "{$sel} .thread-text";
+				}
+				$text_str = implode(', ', $text_selectors);
+				$css .= "{$text_str} { text-align: right !important; }";
+
 			} elseif ( $styles['alignment'] === 'center' ) {
 				$css .= "margin-left: auto !important; margin-right: auto !important;";
 				$css .= "margin-bottom: 20px !important;";
