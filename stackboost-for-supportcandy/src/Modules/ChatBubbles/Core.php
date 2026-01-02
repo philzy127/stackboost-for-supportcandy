@@ -184,6 +184,22 @@ class Core {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
 				$css .= "margin-bottom: 20px !important;";
 				$css .= "flex-direction: row-reverse !important;"; // Avatar on right
+
+				// REVERSE HEADER LAYOUT FOR RIGHT ALIGNED
+				// 1. Reverse the Name/Action container
+				// Selector targets: Wrapper -> Body -> Header -> User Info -> Flex Div (Name+Action)
+				$css .= "{$wrapper_selector_str} .thread-header .user-info > div { flex-direction: row-reverse !important; justify-content: flex-start !important; }";
+
+				// 2. Add spacing between swapped items (Name and Action)
+				// The action is now first (visually), so give it margin-left (or swap margins)
+				// Actually, usually they are adjacent. Let's ensure standard spacing works in reverse.
+
+				// 3. Align the User Info text block to the right
+				$css .= "{$wrapper_selector_str} .thread-header .user-info { text-align: right !important; width: 100% !important; }";
+
+				// 4. Align the timestamp to the right
+				$css .= "{$wrapper_selector_str} .thread-header .user-info .thread-time { text-align: right !important; display: block !important; }";
+
 			} elseif ( $styles['alignment'] === 'center' ) {
 				$css .= "margin-left: auto !important; margin-right: auto !important;";
 				$css .= "margin-bottom: 20px !important;";
