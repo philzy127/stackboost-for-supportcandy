@@ -27,7 +27,7 @@ class Settings {
 			<h1><?php esc_html_e( 'Chat Bubbles', 'stackboost-for-supportcandy' ); ?></h1>
 			<?php settings_errors(); ?>
 
-			<form action="options.php" method="post">
+			<form action="options.php" method="post" novalidate>
 				<?php
 				settings_fields( 'stackboost_settings' );
 				// stackboost_settings[page_slug]
