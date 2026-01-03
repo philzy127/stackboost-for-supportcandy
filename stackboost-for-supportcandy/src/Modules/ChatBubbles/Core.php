@@ -210,10 +210,11 @@ class Core {
 				$css .= "{$time_str} { text-align: right !important; display: block !important; }";
 
 				// 5. Align content text to the right
-				// We need to target the .thread-text inside the wrapper
+				// We need to target the .thread-text inside the wrapper AND its children
 				$text_selectors = [];
 				foreach ($wrapper_selectors as $sel) {
 					$text_selectors[] = "{$sel} .thread-text";
+					$text_selectors[] = "{$sel} .thread-text *";
 				}
 				$text_str = implode(', ', $text_selectors);
 				$css .= "{$text_str} { text-align: right !important; }";
