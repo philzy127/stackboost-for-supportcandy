@@ -28,8 +28,9 @@ class Core {
 	 * Constructor.
 	 */
 	private function __construct() {
+		// Log initialization to confirm the module is loaded
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles Core Initialized.', 'chat_bubbles' );
+			stackboost_log( 'ChatBubbles: Core Initialized.', 'chat_bubbles' );
 		}
 		// Initialize the WordPress adapter
 		$this->init_hooks();
@@ -41,11 +42,6 @@ class Core {
 	public function init_hooks() {
 		// Enqueue CSS for Ticket View
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_ticket_styles' ] );
-
-		// Hook into Email Notifications to style the body
-		// We use `wpsc_en_before_sending` to intercept all emails just before they go out.
-		// This gives us access to the fully constructed body and the thread object.
-		add_filter( 'wpsc_en_before_sending', [ $this, 'process_email_content' ] );
 	}
 
 	/**
@@ -58,11 +54,6 @@ class Core {
 		// Determine context
 		$is_frontend = ( $hook_suffix === 'frontend' );
 
-		if ( function_exists( 'stackboost_log' ) ) {
-			$hook_label = $is_frontend ? 'frontend' : ( $hook_suffix ?? 'unknown' );
-			stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_label, 'chat_bubbles' );
-		}
-
 		// Context Check: Admin vs Frontend
 		$handle = '';
 		if ( ! $is_frontend ) {
@@ -70,10 +61,25 @@ class Core {
 			if ( ! is_string( $hook_suffix ) ) {
 				return;
 			}
-			// Only load on Ticket View or Ticket List
-			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
-				return;
+			// Only load on Ticket View, Ticket List, or Settings Page
+			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false && strpos( $hook_suffix, 'stackboost-chat-bubbles' ) === false ) {
+				return; // Exit silent if not a ticket page
 			}
+
+			// If we are on our settings page, SupportCandy does NOT load its own styles. We must do it manually.
+			if ( strpos( $hook_suffix, 'stackboost-chat-bubbles' ) !== false && defined( 'WPSC_PLUGIN_URL' ) && defined( 'WPSC_VERSION' ) ) {
+				// Determine RTL
+				$is_rtl = is_rtl();
+
+				// Enqueue Framework
+				$fw_css = $is_rtl ? 'framework/style-rtl.css' : 'framework/style.css';
+				wp_enqueue_style( 'wpsc-framework', WPSC_PLUGIN_URL . $fw_css, [], WPSC_VERSION );
+
+				// Enqueue Admin CSS
+				$admin_css = $is_rtl ? 'asset/css/admin-rtl.css' : 'asset/css/admin.css';
+				wp_enqueue_style( 'wpsc-admin', WPSC_PLUGIN_URL . $admin_css, ['wpsc-framework'], WPSC_VERSION );
+			}
+
 			$handle = 'wpsc-admin';
 		} else {
 			// Frontend Check
@@ -84,122 +90,21 @@ class Core {
 			wp_enqueue_style( $handle );
 		}
 
+		// Only log if we passed the checks and are actually about to work
+		if ( function_exists( 'stackboost_log' ) ) {
+			// $hook_label = $is_frontend ? 'frontend' : ( $hook_suffix ?? 'unknown' );
+			// stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_label, 'chat_bubbles' );
+		}
+
 		// Check ticket specific enable switch
 		// Note: We use the same 'chat_bubbles_enable_ticket' setting for both Admin and Frontend uniformity.
 		$options = get_option( 'stackboost_settings', [] );
 		if ( empty( $options['chat_bubbles_enable_ticket'] ) ) {
-			if ( function_exists( 'stackboost_log' ) ) {
-				stackboost_log( 'ChatBubbles: Disabled via settings.', 'chat_bubbles' );
-			}
 			return;
 		}
 
 		$css = $this->generate_css();
 		wp_add_inline_style( $handle, $css );
-
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Styles enqueued successfully for context: ' . ( $is_frontend ? 'Frontend' : 'Admin' ), 'chat_bubbles' );
-		}
-	}
-
-	/**
-	 * Process Email Content.
-	 * Wraps the new message content in a styled bubble container.
-	 *
-	 * @param object $en The Email Notification object.
-	 * @return object The modified Email Notification object.
-	 */
-	public function process_email_content( $en ) {
-		// Check email specific enable switch
-		$options = get_option( 'stackboost_settings', [] );
-		if ( empty( $options['chat_bubbles_enable_email'] ) ) {
-			return $en;
-		}
-
-		// Only proceed if we have a valid thread object
-		if ( ! isset( $en->thread ) || ! is_object( $en->thread ) ) {
-			return $en;
-		}
-
-		// Only process reply and note types
-		if ( ! in_array( $en->thread->type, [ 'reply', 'note', 'report' ] ) ) {
-			return $en;
-		}
-
-		// Generate the style for this thread type
-		$thread_type = $en->thread->type;
-		$user_type   = 'agent'; // Default
-
-		if ( $thread_type === 'report' || $thread_type === 'reply' ) {
-			// Determine if customer or agent
-			$is_agent = false;
-			if ( isset( $en->thread->customer ) ) {
-				$user = get_user_by( 'email', $en->thread->customer->email );
-				if ( $user && $user->has_cap( 'wpsc_agent' ) ) {
-					$is_agent = true;
-				}
-			}
-			$user_type = $is_agent ? 'agent' : 'customer';
-		} elseif ( $thread_type === 'note' ) {
-			$user_type = 'note';
-		}
-
-		// Get Styles
-		$styles = $this->get_styles_for_type( $user_type );
-		if ( empty( $styles ) ) {
-			return $en;
-		}
-
-		// Generate Inline CSS for Email (Simpler than Ticket View)
-		// We use a div wrapper with inline styles.
-		// Outlook fallback: No border-radius, simple background.
-		$inline_css = sprintf(
-			"background-color: %s; color: %s; padding: 15px; margin-bottom: 10px; border-radius: %dpx; width: %d%%;",
-			$styles['bg_color'],
-			$styles['text_color'],
-			$styles['radius'],
-			$styles['width']
-		);
-
-		if ( $styles['alignment'] === 'right' ) {
-			$inline_css .= " margin-left: auto; margin-right: 0;";
-		} elseif ( $styles['alignment'] === 'center' ) {
-			$inline_css .= " margin: 0 auto;";
-		} else {
-			$inline_css .= " margin-right: auto; margin-left: 0;";
-		}
-
-		// Font Styles for Email
-		if ( ! empty( $styles['font_bold'] ) ) {
-			$inline_css .= " font-weight: bold;";
-		}
-		if ( ! empty( $styles['font_italic'] ) ) {
-			$inline_css .= " font-style: italic;";
-		}
-		if ( ! empty( $styles['font_underline'] ) ) {
-			$inline_css .= " text-decoration: underline;";
-		}
-
-		// Border Styles for Email
-		if ( ! empty( $styles['border_style'] ) && $styles['border_style'] !== 'none' ) {
-			$inline_css .= sprintf( " border: %s %dpx %s;", $styles['border_style'], $styles['border_width'], $styles['border_color'] );
-		}
-
-		// Get the content we want to wrap
-		$search_html = $en->thread->get_printable_string();
-
-		// Create the wrapper
-		$replace_html = '<div style="' . esc_attr( $inline_css ) . '">' . $search_html . '</div>';
-
-		// Perform the replacement
-		$pattern = '/' . preg_quote( $search_html, '/' ) . '/';
-		$en->body = preg_replace( $pattern, $replace_html, $en->body, 1 );
-
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'ChatBubbles: Email processed for thread type ' . $user_type, 'chat_bubbles' );
-		}
-
-		return $en;
 	}
 
 	/**
@@ -207,7 +112,7 @@ class Core {
 	 */
 	public function generate_css(): string {
 		$options = get_option( 'stackboost_settings', [] );
-		$types = [ 'agent', 'customer', 'note' ];
+		$types = [ 'agent', 'customer', 'note', 'log' ]; // Added log
 		$css   = '';
 
 		// Global Drop Shadow
@@ -224,9 +129,6 @@ class Core {
 			if ( strpos( $shadow_color, '#' ) === 0 && strlen( $shadow_color ) === 7 ) {
 				list( $r, $g, $b ) = sscanf( $shadow_color, "#%02x%02x%02x" );
 				$shadow_color = "rgba({$r}, {$g}, {$b}, {$opacity_val})";
-			} elseif ( strpos( $shadow_color, 'rgba' ) !== false ) {
-				// If already rgba, we respect user input, maybe override alpha?
-				// Let's rely on the hex conversion for now as the picker defaults to hex.
 			}
 
 			// Switched back to box-shadow to support spread radius as explicitly requested
@@ -239,38 +141,33 @@ class Core {
 				continue;
 			}
 
-			// Increased specificity to override SupportCandy default styles
-			// Using .wpsc-it-container (CLASS) + class hierarchy.
-			// Fixed bug where #wpsc-it-container (ID) was used incorrectly.
+			// Roots
+			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container', '.stackboost-chat-preview-container'];
 
-			// Support both Admin (.wpsc-it-container) and Frontend (.wpsc-shortcode-container, .wpsc-container) contexts
-			// Note: .wpsc-container is used in newer SC versions for frontend shortcodes.
-			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container'];
-
-			$selectors = [];
+			$wrapper_selectors = [];
 			foreach ($roots as $root) {
+				// SIMPLIFIED LOGIC: Use native classes
 				if ( $type === 'agent' ) {
-					$selectors[] = "{$root} .wpsc-thread.reply.agent .thread-body";
-					$selectors[] = "{$root} .wpsc-thread.report.agent .thread-body";
+					$wrapper_selectors[] = "{$root} .wpsc-thread.agent";
 				} elseif ( $type === 'customer' ) {
-					$selectors[] = "{$root} .wpsc-thread.reply.customer .thread-body";
-					$selectors[] = "{$root} .wpsc-thread.report.customer .thread-body";
+					$wrapper_selectors[] = "{$root} .wpsc-thread.customer";
 				} elseif ( $type === 'note' ) {
-					$selectors[] = "{$root} .wpsc-thread.note .thread-body";
+					$wrapper_selectors[] = "{$root} .wpsc-thread.note";
+				} elseif ( $type === 'log' ) {
+					$wrapper_selectors[] = "{$root} .wpsc-thread.log";
 				}
 			}
-			$selector = implode(', ', $selectors);
+			$wrapper_selector_str = implode(', ', $wrapper_selectors);
 
-			// Build CSS Rule
-			$css .= "{$selector} {";
+			// 1. Style the Wrapper (The Bubble)
+			$css .= "{$wrapper_selector_str} {";
 			$css .= "background-color: {$styles['bg_color']} !important;";
 			$css .= "color: {$styles['text_color']} !important;";
 			$css .= "border-radius: {$styles['radius']}px !important;";
 			$css .= "width: {$styles['width']}% !important;";
 			$css .= "max-width: {$styles['width']}% !important;";
-
-			// Override flex behavior to ensure width is respected (Fix for frontend flex-grow issue)
-			$css .= "flex-grow: 0 !important;";
+			$css .= "display: flex !important;";
+			$css .= "align-items: flex-start !important;";
 
 			// Font Family
 			if ( ! empty( $styles['font_family'] ) ) {
@@ -295,17 +192,123 @@ class Core {
 				$css .= "text-decoration: underline !important;";
 			}
 
-			// Alignment
-			// Note: Since .thread-body is a flex child, margin auto works to push it.
+			// Alignment & Direction
+			// Note: We deliberately set margin-bottom to ensure bubbles don't collapse on each other,
+			// especially for 'center' alignment where '0 auto' was nuking the bottom margin.
+			$child_css = ''; // Collect child rules separately to avoid nesting syntax errors
+
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
+				$css .= "margin-bottom: 20px !important;";
+				$css .= "flex-direction: row-reverse !important;"; // Avatar on right
+
+				// REVERSE HEADER LAYOUT FOR RIGHT ALIGNED
+				// We must loop through wrapper selectors to append descendants correctly
+				$header_flex_selectors = [];
+				$user_info_selectors = [];
+				$time_selectors = [];
+
+				foreach ($wrapper_selectors as $sel) {
+					$header_flex_selectors[] = "{$sel} .thread-header .user-info > div";
+					$user_info_selectors[] = "{$sel} .thread-header .user-info";
+					$time_selectors[] = "{$sel} .thread-header .user-info .thread-time";
+				}
+				$header_flex_str = implode(', ', $header_flex_selectors);
+				$user_info_str = implode(', ', $user_info_selectors);
+				$time_str = implode(', ', $time_selectors);
+
+				// 1. Reverse the Name/Action container
+				$child_css .= "{$header_flex_str} { flex-direction: row-reverse !important; justify-content: flex-start !important; gap: 6px !important; }";
+
+				// 2. Reverse Header (Move Actions to Left)
+				$header_selectors = [];
+				foreach ($wrapper_selectors as $sel) {
+					$header_selectors[] = "{$sel} .thread-header";
+				}
+				$header_str = implode(', ', $header_selectors);
+				$child_css .= "{$header_str} { flex-direction: row-reverse !important; }";
+
+				// 3. Align the User Info text block to the right
+				$child_css .= "{$user_info_str} { text-align: right !important; width: 100% !important; }";
+
+				// 4. Align the timestamp to the right
+				$child_css .= "{$time_str} { text-align: right !important; display: block !important; }";
+
+				// 5. Align content text to the right
+				// Target container for width and alignment
+				$text_selectors = [];
+				foreach ($wrapper_selectors as $sel) {
+					$text_selectors[] = "{$sel} .thread-text";
+				}
+				$text_str = implode(', ', $text_selectors);
+				$child_css .= "{$text_str} { text-align: right !important; width: 100% !important; }";
+
+				// Target children for forced alignment (without forced width)
+				$text_child_selectors = [];
+				foreach ($wrapper_selectors as $sel) {
+					$text_child_selectors[] = "{$sel} .thread-text *";
+				}
+				$text_child_str = implode(', ', $text_child_selectors);
+				$child_css .= "{$text_child_str} { text-align: right !important; }";
+
+				// 6. Align Body Content Right (Attachments, Headers, etc)
+				// .thread-body needs align-items: flex-end to push flex children to the right side
+				$body_selectors_align = [];
+				foreach ($wrapper_selectors as $sel) {
+					$body_selectors_align[] = "{$sel} .thread-body";
+				}
+				$body_align_str = implode(', ', $body_selectors_align);
+				$child_css .= "{$body_align_str} { align-items: flex-end !important; text-align: right !important; }";
+
 			} elseif ( $styles['alignment'] === 'center' ) {
-				$css .= "margin: 0 auto !important;";
+				$css .= "margin-left: auto !important; margin-right: auto !important;";
+				$css .= "margin-bottom: 20px !important;";
+				$css .= "flex-direction: row !important;";
+
+				// Align Body Content Center
+				$body_selectors_align = [];
+				$header_selectors = [];
+				$text_selectors = [];
+				$text_child_selectors = [];
+				$user_info_selectors = [];
+				$header_flex_selectors = [];
+
+				foreach ($wrapper_selectors as $sel) {
+					$body_selectors_align[] = "{$sel} .thread-body";
+					$header_selectors[] = "{$sel} .thread-header";
+					$text_selectors[] = "{$sel} .thread-text";
+					$text_child_selectors[] = "{$sel} .thread-text *";
+					$user_info_selectors[] = "{$sel} .thread-header .user-info";
+					$header_flex_selectors[] = "{$sel} .thread-header .user-info > div";
+				}
+				$body_align_str = implode(', ', $body_selectors_align);
+				$header_str = implode(', ', $header_selectors);
+				$text_str = implode(', ', $text_selectors);
+				$text_child_str = implode(', ', $text_child_selectors);
+				$user_info_str = implode(', ', $user_info_selectors);
+				$header_flex_str = implode(', ', $header_flex_selectors);
+
+				$child_css .= "{$body_align_str} { align-items: center !important; text-align: center !important; }";
+				$child_css .= "{$header_str} { justify-content: center !important; }";
+				$child_css .= "{$text_str} { text-align: center !important; width: 100% !important; }";
+				$child_css .= "{$text_child_str} { text-align: center !important; }";
+				$child_css .= "{$user_info_str} { align-items: center !important; }";
+				$child_css .= "{$header_flex_str} { justify-content: center !important; }";
+
 			} else {
 				$css .= "margin-right: auto !important; margin-left: 0 !important;";
+				$css .= "margin-bottom: 20px !important;";
+				$css .= "flex-direction: row !important;";
+
+				// Align Body Content Left
+				$body_selectors_align = [];
+				foreach ($wrapper_selectors as $sel) {
+					$body_selectors_align[] = "{$sel} .thread-body";
+				}
+				$body_align_str = implode(', ', $body_selectors_align);
+				$child_css .= "{$body_align_str} { align-items: flex-start !important; text-align: left !important; }";
 			}
 
-			// Padding (Standardize)
 			$css .= "padding: 15px !important;";
 
 			// Borders
@@ -322,37 +325,61 @@ class Core {
 
 			$css .= "}";
 
-			// Hide Avatar (Relative to the thread container)
-			// $selector targets .thread-body inside the thread container. We need to go up one level to the thread container
-			// to find the .thread-avatar sibling, OR target the .thread-avatar relative to the same parent.
-			// The selector logic above builds paths like: ".wpsc-it-container .wpsc-thread.reply.agent .thread-body".
-			// The avatar is at: ".wpsc-it-container .wpsc-thread.reply.agent .thread-avatar".
-			// So we need to strip ".thread-body" from the selector parts and append ".thread-avatar".
+			// Append Child CSS rules (must be outside the wrapper block)
+			if ( ! empty( $child_css ) ) {
+				$css .= $child_css;
+			}
 
+			// 2. Reset Inner Body Styles
+			// We need to strip styles from the .thread-body because the wrapper now has them
+			$body_selectors = [];
+			foreach ($wrapper_selectors as $sel) {
+				$body_selectors[] = $sel . ' .thread-body';
+			}
+			$body_selector_str = implode(', ', $body_selectors);
+
+			$css .= "{$body_selector_str} {";
+			$css .= "background: transparent !important;";
+			$css .= "border: none !important;";
+			$css .= "box-shadow: none !important;";
+			$css .= "padding: 0 !important;";
+			$css .= "margin: 0 !important;";
+			$css .= "width: auto !important;";
+			$css .= "max-width: 100% !important;";
+			$css .= "flex: 1 !important;"; // Take remaining space
+			$css .= "}";
+
+			// 3. Avatar Handling
 			$avatar_selectors = [];
-			$selector_parts = explode(', ', $selector);
+			foreach ($wrapper_selectors as $sel) {
+				$avatar_selectors[] = $sel . ' .thread-avatar';
+			}
+			$avatar_selector_str = implode(', ', $avatar_selectors);
 
-			foreach ($selector_parts as $part) {
-				$part = trim($part);
-				if ( substr($part, -12) === '.thread-body' ) {
-					$base = substr($part, 0, -12);
-					$avatar_selectors[] = $base . ' .thread-avatar';
-				}
+			if ( empty( $options['chat_bubbles_show_avatars'] ) ) {
+				// Hide if option is disabled
+				$css .= "{$avatar_selector_str} { display: none !important; }";
+			} else {
+				// Show and Style if enabled
+				$css .= "{$avatar_selector_str} {";
+				$css .= "display: block !important;";
+				// Add margin to separate from body. Logic depends on alignment/direction.
+				// Since we use flex-direction: row-reverse for Right align, 'margin-right' on avatar (which is first in DOM)
+				// effectively puts space between it and the body in both visual orientations?
+				// Row: [Avatar] --margin-right--> [Body]
+				// Row-Reverse: [Body] <--margin-right-- [Avatar] (Visual Right)
+				// Wait, in Row-Reverse, margin-right on the first item (Avatar) pushes it away from the flex start (Right edge)? No.
+				// Let's stick to standard margins.
+				$css .= "margin: 0 15px !important;";
+				$css .= "align-self: flex-start !important;";
+				$css .= "}";
 			}
 
-			if ( ! empty( $avatar_selectors ) ) {
-				$avatar_str = implode(', ', $avatar_selectors);
-				$css .= "{$avatar_str} { display: none !important; }";
-			}
-
-			// Text Color inside (links, etc)
-			// Updated to target specific user-info elements and links which often override colors
+			// 4. Text Color inside
 			$color_selectors = [];
-			// Helper to create sub-selectors for the list of root selectors
-			// Added .user-name specifically
-			$sub_elements = ['.thread-text', '.user-info h2', '.user-info h2.user-name', '.user-info span', 'a', '.thread-header h2', '.thread-header span'];
+			$sub_elements = ['.thread-text', '.user-info h2', '.user-info h2.user-name', '.user-info span', 'a', '.thread-header h2', '.thread-header span', '.wpsc-log-diff'];
 
-			foreach ($selector_parts as $part) {
+			foreach ($wrapper_selectors as $part) {
 				foreach ($sub_elements as $el) {
 					$color_selectors[] = trim($part) . ' ' . $el;
 				}
@@ -361,22 +388,37 @@ class Core {
 
 			$css .= "{$color_selector_str} { color: {$styles['text_color']} !important; }";
 
-			// Header layout adjustment
+			// 5. Header layout adjustment
 			$header_selectors = [];
-			foreach ($selector_parts as $part) {
+			foreach ($wrapper_selectors as $part) {
 				$header_selectors[] = trim($part) . ' .thread-header';
 			}
 			$header_selector_str = implode(', ', $header_selectors);
 			$css .= "{$header_selector_str} { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
 
-			// Image Bounding Box (Global setting affecting all types)
+			// 6. Image Bounding Box
 			if ( ! empty( $options['chat_bubbles_image_box'] ) ) {
 				$img_selectors = [];
-				foreach ($selector_parts as $part) {
+				foreach ($wrapper_selectors as $part) {
 					$img_selectors[] = trim($part) . ' img';
 				}
 				$img_selector_str = implode(', ', $img_selectors);
 				$css .= "{$img_selector_str} { border: 1px solid rgba(0,0,0,0.2) !important; padding: 3px !important; background: rgba(255,255,255,0.5) !important; border-radius: 3px !important; }";
+			}
+
+			// 7. Log Diff Alignment (Specific fix for centered status changes)
+			$diff_selectors = [];
+			foreach ($wrapper_selectors as $part) {
+				$diff_selectors[] = trim($part) . ' .wpsc-log-diff';
+			}
+			$diff_selector_str = implode(', ', $diff_selectors);
+
+			if ( $styles['alignment'] === 'center' ) {
+				$css .= "{$diff_selector_str} { justify-content: center !important; }";
+			} elseif ( $styles['alignment'] === 'right' ) {
+				$css .= "{$diff_selector_str} { justify-content: flex-end !important; }";
+			} else {
+				$css .= "{$diff_selector_str} { justify-content: flex-start !important; }";
 			}
 		}
 
@@ -384,18 +426,17 @@ class Core {
 	}
 
 	/**
-	 * Helper to get StackBoost Theme Colors (Mirroring admin-themes.css).
-	 * This ensures colors work on the frontend without enqueueing the full admin CSS.
+	 * Helper to get StackBoost Theme Colors.
 	 */
 	public function get_stackboost_theme_colors( $slug ) {
 		$themes = [
 			'sb-theme-wordpress-sync' => [
-				'accent' => '#2271b1', // Fallback, variable not available on frontend
+				'accent' => '#2271b1',
 				'text_on_accent' => '#ffffff',
 				'bg_main' => '#f0f0f1',
 			],
 			'sb-theme-supportcandy-sync' => [
-				'accent' => '#2271b1', // Fallback
+				'accent' => '#2271b1',
 				'text_on_accent' => '#ffffff',
 				'bg_main' => '#f6f7f7',
 			],
@@ -454,8 +495,6 @@ class Core {
 		// Theme Logic
 		switch ( $theme ) {
 			case 'stackboost':
-				// StackBoost Theme
-				// Retrieve Active Theme Colors explicitly for frontend compatibility
 				$active_theme_slug = $options['admin_theme'] ?? 'sb-theme-clean-tech';
 				$theme_colors = $this->get_stackboost_theme_colors( $active_theme_slug );
 
@@ -475,10 +514,18 @@ class Core {
 						'radius'      => '5',
 						'padding'     => '10',
 					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f0f0f1',
+						'text_color'  => '#666666',
+						'alignment'   => 'center',
+						'radius'      => '5',
+						'padding'     => '10',
+					]);
 				} else {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => $theme_colors['bg_main'],
-						'text_color'  => '#3c434a', // Dark text on main bg
+						'text_color'  => '#3c434a',
 						'alignment'   => 'left',
 						'radius'      => '15',
 						'padding'     => '15',
@@ -488,11 +535,9 @@ class Core {
 				break;
 
 			case 'supportcandy':
-				// SupportCandy
 				$sc_settings = get_option( 'wpsc-ap-individual-ticket', [] );
 				$reply_primary = $sc_settings['reply-primary-color'] ?? '#2c3e50';
 				$note_primary = $sc_settings['note-primary-color'] ?? '#fffbcc';
-				// Third Color: Reply & Close Button Color for Customer
 				$reply_close_bg = $sc_settings['reply-close-bg-color'] ?? '#e5e5e5';
 				$reply_close_text = $sc_settings['reply-close-text-color'] ?? '#333333';
 
@@ -510,6 +555,13 @@ class Core {
 						'alignment'   => 'center',
 						'radius'      => '0',
 					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f9f9f9',
+						'text_color'  => '#666666',
+						'alignment'   => 'center',
+						'radius'      => '0',
+					]);
 				} else {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => $reply_close_bg,
@@ -521,7 +573,6 @@ class Core {
 				break;
 
 			case 'classic':
-				// Classic
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#2271b1',
@@ -536,6 +587,13 @@ class Core {
 						'alignment'   => 'center',
 						'radius'      => '0',
 					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f1f1f1',
+						'text_color'  => '#666666',
+						'alignment'   => 'center',
+						'radius'      => '0',
+					]);
 				} else {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#e5e5e5',
@@ -547,10 +605,9 @@ class Core {
 				break;
 
 			case 'ios':
-				// Fruit: Agent=Blue, Customer=Green
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#007aff', // Blue (iMessage)
+						'bg_color'    => '#007aff',
 						'text_color'  => '#ffffff',
 						'alignment'   => 'right',
 						'width'       => '75',
@@ -558,15 +615,23 @@ class Core {
 					]);
 				} elseif ( $type === 'note' ) {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#fffbcc', // Standard yellow note
+						'bg_color'    => '#fffbcc',
 						'text_color'  => '#333333',
 						'alignment'   => 'center',
 						'width'       => '85',
 						'radius'      => '10',
 					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f2f2f7',
+						'text_color'  => '#8e8e93',
+						'alignment'   => 'center',
+						'width'       => '90',
+						'radius'      => '10',
+					]);
 				} else {
 					$styles = array_merge( $defaults, [
-						'bg_color'    => '#34c759', // Green (SMS/RCS)
+						'bg_color'    => '#34c759',
 						'text_color'  => '#ffffff',
 						'alignment'   => 'left',
 						'width'       => '75',
@@ -577,7 +642,6 @@ class Core {
 				break;
 
 			case 'android':
-				// Droid
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#d9fdd3',
@@ -594,6 +658,14 @@ class Core {
 						'width'       => '85',
 						'radius'      => '5',
 					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f0f2f5',
+						'text_color'  => '#54656f',
+						'alignment'   => 'center',
+						'width'       => '90',
+						'radius'      => '5',
+					]);
 				} else {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#ffffff',
@@ -607,7 +679,6 @@ class Core {
 				break;
 
 			case 'modern':
-				// Modern
 				if ( $type === 'agent' ) {
 					$styles = array_merge( $defaults, [
 						'bg_color'    => '#000000',
@@ -622,6 +693,14 @@ class Core {
 						'text_color'  => '#555555',
 						'alignment'   => 'center',
 						'width'       => '85',
+						'radius'      => '0',
+					]);
+				} elseif ( $type === 'log' ) {
+					$styles = array_merge( $defaults, [
+						'bg_color'    => '#f2f2f2',
+						'text_color'  => '#999999',
+						'alignment'   => 'center',
+						'width'       => '90',
 						'radius'      => '0',
 					]);
 				} else {
@@ -639,7 +718,6 @@ class Core {
 			case 'custom':
 			case 'default':
 			default:
-				// Load from user settings if Custom, else use Defaults
 				if ( $theme === 'custom' ) {
 					$styles = [
 						'bg_color'    => $options["{$prefix}bg_color"] ?? $defaults['bg_color'],
@@ -657,7 +735,6 @@ class Core {
 						'border_color'   => $options["{$prefix}border_color"] ?? '#cccccc',
 					];
 				} else {
-					// Default Theme (Blue/Grey)
 					if ( $type === 'agent' ) {
 						$styles = array_merge( $defaults, [
 							'bg_color'    => '#2271b1',
@@ -672,9 +749,16 @@ class Core {
 							'alignment'   => 'center',
 							'radius'      => '5',
 						]);
+					} elseif ( $type === 'log' ) {
+						$styles = array_merge( $defaults, [
+							'bg_color'    => '#f0f0f1',
+							'text_color'  => '#666666',
+							'alignment'   => 'center',
+							'radius'      => '5',
+						]);
 					} else {
 						$styles = array_merge( $defaults, [
-							'bg_color'    => '#e6e6e6', // Darker than bg for contrast
+							'bg_color'    => '#e6e6e6',
 							'text_color'  => '#3c434a',
 							'alignment'   => 'left',
 							'radius'      => '15',
@@ -685,11 +769,7 @@ class Core {
 				break;
 		}
 
-		// SANITIZATION
-		// Allow CSS variables (starting with var(--) ) to bypass hex sanitization.
-		// Note: We check the value BEFORE attempting sanitize_hex_color which would clear it.
 		if ( strpos( $styles['bg_color'], 'var(' ) === 0 ) {
-			// Basic sanitization for CSS var syntax
 			$styles['bg_color'] = sanitize_text_field( $styles['bg_color'] );
 		} else {
 			$styles['bg_color'] = sanitize_hex_color( $styles['bg_color'] ) ?: $defaults['bg_color'];

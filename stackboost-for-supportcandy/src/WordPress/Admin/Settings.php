@@ -776,6 +776,7 @@ class Settings {
 				'ticket_details_image_handling',
 				'enable_hide_empty_columns',
 				'enable_hide_priority_column',
+				'hide_reply_close_for_users',
 				'enable_ticket_type_hiding',
 				'ticket_type_custom_field_name',
 				'ticket_types_to_hide',
@@ -823,6 +824,7 @@ class Settings {
 					case 'enable_ticket_details_card':
 					case 'enable_hide_empty_columns':
 					case 'enable_hide_priority_column':
+					case 'hide_reply_close_for_users':
 					case 'enable_ticket_type_hiding':
 					case 'enable_conditional_hiding':
 					case 'enable_queue_macro':

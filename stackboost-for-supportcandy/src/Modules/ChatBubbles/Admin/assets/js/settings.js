@@ -26,9 +26,9 @@
             var val = $(this).val();
             // Show/Hide Tab Navigation Items
             if (val === 'custom') {
-                $('.sb-chat-tab.type-tab').css('display', 'block'); // Show Agent/Customer/Note tabs
+                $('.sb-chat-tab.type-tab').css('display', 'block'); // Show Agent/Customer/Note/Log tabs
             } else {
-                $('.sb-chat-tab.type-tab').hide(); // Hide Agent/Customer/Note tabs
+                $('.sb-chat-tab.type-tab').hide(); // Hide Agent/Customer/Note/Log tabs
                 // Force switch to 'general' tab if a type tab was active
                 if ($('.sb-chat-tab.active').hasClass('type-tab')) {
                     $('.sb-chat-tab[data-target="general"]').click();
@@ -64,14 +64,20 @@
             // Reset Global fields
             $('#chat_bubbles_enable_ticket').prop('checked', false);
             $('#chat_bubbles_enable_email').prop('checked', false);
+            $('#chat_bubbles_show_avatars').prop('checked', false).trigger('change');
             $('#sb_chat_global_theme_selector').val('default').trigger('change');
             $('#chat_bubbles_shadow_enable').prop('checked', false);
+            $('#chat_bubbles_image_box').prop('checked', false);
+
+            // Drop Shadow fields
             $('input[name="stackboost_settings[chat_bubbles_shadow_color]"]').val('#000000').trigger('change');
-            $('select[name="stackboost_settings[chat_bubbles_shadow_depth]"]').val('small');
-            $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val('40').trigger('input'); // Reset opacity
+            $('input[name="stackboost_settings[chat_bubbles_shadow_distance]"]').val('2').trigger('input');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_blur]"]').val('5').trigger('input');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_spread]"]').val('0').trigger('input');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val('40').trigger('input');
 
             // Reset Type fields via loop
-            ['agent', 'customer', 'note'].forEach(function(type) {
+            ['agent', 'customer', 'note', 'log'].forEach(function(type) {
                 resetSection(type);
             });
             updatePreview();
@@ -121,7 +127,38 @@
             $('input[name="' + prefixName + 'border_color]"]').val('#cccccc').trigger('change');
         }
 
-        // 5. Live Preview Logic
+        // 5. Avatar GDPR Warning
+        $('#chat_bubbles_show_avatars').on('change', function(e) {
+            var $checkbox = $(this);
+            if ($checkbox.is(':checked')) {
+                if (typeof window.stackboostConfirm === 'function') {
+                    // Temporarily uncheck until confirmed? No, pattern is usually check -> confirm or revert.
+                    // But stackboostConfirm is non-blocking?
+                    // If it's our custom modal, it likely requires a callback.
+                    // To be safe, we uncheck it immediately, then re-check in the confirm callback.
+                    $checkbox.prop('checked', false);
+
+                    window.stackboostConfirm(
+                        'Enabling this option loads images from Gravatar and third-party servers, which exposes user IP addresses to those services.<br><br>Ensure your privacy policy complies with GDPR and other data privacy regulations before enabling.',
+                        'GDPR Warning',
+                        function() {
+                            // On Confirm
+                            $checkbox.prop('checked', true);
+                            updatePreview(); // Trigger preview update if needed
+                        },
+                        function() {
+                            // On Cancel
+                            $checkbox.prop('checked', false);
+                        },
+                        'I Understand, Enable',
+                        'Cancel',
+                        true // isDanger/Warning style
+                    );
+                }
+            }
+        });
+
+        // 6. Live Preview Logic
         $('form input, form select').on('change input', function() {
             updatePreview();
         });
@@ -151,8 +188,8 @@
 
             var bubbleBgColors = [];
 
-            // Iterate over all 3 types to update the 3 bubbles
-            ['agent', 'customer', 'note'].forEach(function(type) {
+            // Iterate over all 4 types to update the 4 bubbles
+            ['agent', 'customer', 'note', 'log'].forEach(function(type) {
                 var bg = updateBubble(type, theme);
                 if (bg) bubbleBgColors.push(bg);
             });
@@ -187,6 +224,8 @@
 
         function updateBubble(type, theme) {
             var $preview = $('#preview-bubble-' + type);
+            // Check for wrapper row
+            var $row = $preview.closest('.sb-preview-row');
             var prefixName = 'stackboost_settings[chat_bubbles_' + type + '_';
 
             // Default Values
@@ -225,6 +264,11 @@
                     styles.text = '#333333';
                     styles.align = 'center';
                     styles.radius = '5';
+                } else if (type === 'log') {
+                    styles.bg = '#f0f0f1';
+                    styles.text = '#666666';
+                    styles.align = 'center';
+                    styles.radius = '5';
                 } else {
                     styles.bg = sbColors.background; // Main BG or Surface
                     styles.text = sbColors.text;
@@ -258,6 +302,11 @@
                     styles.text = '#333333';
                     styles.align = 'center';
                     styles.radius = '0';
+                } else if (type === 'log') {
+                    styles.bg = '#f9f9f9';
+                    styles.text = '#666666';
+                    styles.align = 'center';
+                    styles.radius = '0';
                 } else {
                     styles.bg = scCustBg;
                     styles.text = scCustText;
@@ -274,6 +323,11 @@
                 } else if (type === 'note') {
                     styles.bg = '#fdfdfd';
                     styles.text = '#333333';
+                    styles.align = 'center';
+                    styles.radius = '0';
+                } else if (type === 'log') {
+                    styles.bg = '#f1f1f1';
+                    styles.text = '#666666';
                     styles.align = 'center';
                     styles.radius = '0';
                 } else {
@@ -293,6 +347,11 @@
                 } else if (type === 'note') {
                     styles.bg = '#fff8e5';
                     styles.text = '#333333';
+                    styles.align = 'center';
+                    styles.radius = '5';
+                } else if (type === 'log') {
+                    styles.bg = '#f0f0f1';
+                    styles.text = '#666666';
                     styles.align = 'center';
                     styles.radius = '5';
                 } else {
@@ -317,6 +376,12 @@
                     styles.align = 'center';
                     styles.width = '85';
                     styles.radius = '10';
+                } else if (type === 'log') {
+                    styles.bg = '#f2f2f7';
+                    styles.text = '#8e8e93';
+                    styles.align = 'center';
+                    styles.width = '90';
+                    styles.radius = '10';
                 } else {
                     styles.bg = '#34c759';
                     styles.text = '#ffffff';
@@ -340,6 +405,12 @@
                     styles.align = 'center';
                     styles.width = '85';
                     styles.radius = '5';
+                } else if (type === 'log') {
+                    styles.bg = '#f0f2f5';
+                    styles.text = '#54656f';
+                    styles.align = 'center';
+                    styles.width = '90';
+                    styles.radius = '5';
                 } else {
                     styles.bg = '#ffffff';
                     styles.text = '#111b21';
@@ -361,6 +432,12 @@
                     styles.text = '#555555';
                     styles.align = 'center';
                     styles.width = '85';
+                    styles.radius = '0';
+                } else if (type === 'log') {
+                    styles.bg = '#f2f2f2';
+                    styles.text = '#999999';
+                    styles.align = 'center';
+                    styles.width = '90';
                     styles.radius = '0';
                 } else {
                     styles.bg = '#f2f2f2';
@@ -403,7 +480,8 @@
                 'padding': styles.padding + 'px',
                 'font-weight': styles.bold ? 'bold' : 'normal',
                 'font-style': styles.italic ? 'italic' : 'normal',
-                'text-decoration': styles.underline ? 'underline' : 'none'
+                'text-decoration': styles.underline ? 'underline' : 'none',
+                'text-align': styles.align // Sync text alignment with bubble alignment
             };
 
             // Border Logic
@@ -469,25 +547,69 @@
 
             $preview.css(cssMap);
 
-            // Alignment (Flexbox self-alignment)
-            if (styles.align === 'right') {
+            // Alignment & Avatars
+            var $target = ($row.length > 0) ? $row : $preview;
+            var showAvatars = $('#chat_bubbles_show_avatars').is(':checked');
+            var hasAvatar = (type !== 'log'); // Logs usually don't have avatars
+            var $avatar = $row.find('.sb-avatar');
+
+            // Reset internal bubble alignment if wrapped
+            if ($row.length > 0) {
                 $preview.css({
+                    'margin-left': '0',
+                    'margin-right': '0',
+                    'align-self': 'auto'
+                });
+            }
+
+            if (styles.align === 'right') {
+                $target.css({
                     'margin-left': 'auto',
                     'margin-right': '0',
-                    'align-self': 'flex-end'
+                    'align-self': 'flex-end',
+                    'justify-content': 'flex-end'
                 });
+                // If wrapped, avatar order
+                if ($row.length > 0) {
+                    $preview.css('order', '1');
+                    $avatar.css('order', '2');
+                    $avatar.css('margin-left', '0');
+                    // Add small gap logic if needed, but flex gap handles it
+                }
+
             } else if (styles.align === 'center') {
-                $preview.css({
+                $target.css({
                     'margin-left': 'auto',
                     'margin-right': 'auto',
-                    'align-self': 'center'
+                    'align-self': 'center',
+                    'justify-content': 'center'
                 });
+                // Usually centered items don't have avatars, but if they do:
+                if ($row.length > 0) {
+                    $preview.css('order', '1');
+                    $avatar.css('order', '0'); // Left by default or hidden
+                }
+
             } else {
-                $preview.css({
+                $target.css({
                     'margin-right': 'auto',
                     'margin-left': '0',
-                    'align-self': 'flex-start'
+                    'align-self': 'flex-start',
+                    'justify-content': 'flex-start'
                 });
+                if ($row.length > 0) {
+                    $preview.css('order', '2');
+                    $avatar.css('order', '1');
+                }
+            }
+
+            // Avatar Visibility
+            if ($row.length > 0) {
+                if (showAvatars && hasAvatar) {
+                    $avatar.show();
+                } else {
+                    $avatar.hide();
+                }
             }
 
             // Remove Tails Logic (per user request)
