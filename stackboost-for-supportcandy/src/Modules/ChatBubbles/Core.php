@@ -226,14 +226,40 @@ class Core {
 				$text_child_str = implode(', ', $text_child_selectors);
 				$css .= "{$text_child_str} { text-align: right !important; }";
 
+				// 6. Align Body Content Right (Attachments, Headers, etc)
+				// .thread-body needs align-items: flex-end to push flex children to the right side
+				$body_selectors_align = [];
+				foreach ($wrapper_selectors as $sel) {
+					$body_selectors_align[] = "{$sel} .thread-body";
+				}
+				$body_align_str = implode(', ', $body_selectors_align);
+				$css .= "{$body_align_str} { align-items: flex-end !important; text-align: right !important; }";
+
 			} elseif ( $styles['alignment'] === 'center' ) {
 				$css .= "margin-left: auto !important; margin-right: auto !important;";
 				$css .= "margin-bottom: 20px !important;";
 				$css .= "flex-direction: row !important;";
+
+				// Align Body Content Center
+				$body_selectors_align = [];
+				foreach ($wrapper_selectors as $sel) {
+					$body_selectors_align[] = "{$sel} .thread-body";
+				}
+				$body_align_str = implode(', ', $body_selectors_align);
+				$css .= "{$body_align_str} { align-items: center !important; text-align: center !important; }";
+
 			} else {
 				$css .= "margin-right: auto !important; margin-left: 0 !important;";
 				$css .= "margin-bottom: 20px !important;";
 				$css .= "flex-direction: row !important;";
+
+				// Align Body Content Left
+				$body_selectors_align = [];
+				foreach ($wrapper_selectors as $sel) {
+					$body_selectors_align[] = "{$sel} .thread-body";
+				}
+				$body_align_str = implode(', ', $body_selectors_align);
+				$css .= "{$body_align_str} { align-items: flex-start !important; text-align: left !important; }";
 			}
 
 			$css .= "padding: 15px !important;";
