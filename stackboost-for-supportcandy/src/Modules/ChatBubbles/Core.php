@@ -180,6 +180,8 @@ class Core {
 			// Alignment & Direction
 			// Note: We deliberately set margin-bottom to ensure bubbles don't collapse on each other,
 			// especially for 'center' alignment where '0 auto' was nuking the bottom margin.
+			$child_css = ''; // Collect child rules separately to avoid nesting syntax errors
+
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
 				$css .= "margin-bottom: 20px !important;";
@@ -201,13 +203,13 @@ class Core {
 				$time_str = implode(', ', $time_selectors);
 
 				// 1. Reverse the Name/Action container
-				$css .= "{$header_flex_str} { flex-direction: row-reverse !important; justify-content: flex-start !important; }";
+				$child_css .= "{$header_flex_str} { flex-direction: row-reverse !important; justify-content: flex-start !important; }";
 
 				// 3. Align the User Info text block to the right
-				$css .= "{$user_info_str} { text-align: right !important; width: 100% !important; }";
+				$child_css .= "{$user_info_str} { text-align: right !important; width: 100% !important; }";
 
 				// 4. Align the timestamp to the right
-				$css .= "{$time_str} { text-align: right !important; display: block !important; }";
+				$child_css .= "{$time_str} { text-align: right !important; display: block !important; }";
 
 				// 5. Align content text to the right
 				// Target container for width and alignment
@@ -216,7 +218,7 @@ class Core {
 					$text_selectors[] = "{$sel} .thread-text";
 				}
 				$text_str = implode(', ', $text_selectors);
-				$css .= "{$text_str} { text-align: right !important; width: 100% !important; }";
+				$child_css .= "{$text_str} { text-align: right !important; width: 100% !important; }";
 
 				// Target children for forced alignment (without forced width)
 				$text_child_selectors = [];
@@ -224,7 +226,7 @@ class Core {
 					$text_child_selectors[] = "{$sel} .thread-text *";
 				}
 				$text_child_str = implode(', ', $text_child_selectors);
-				$css .= "{$text_child_str} { text-align: right !important; }";
+				$child_css .= "{$text_child_str} { text-align: right !important; }";
 
 				// 6. Align Body Content Right (Attachments, Headers, etc)
 				// .thread-body needs align-items: flex-end to push flex children to the right side
@@ -233,7 +235,7 @@ class Core {
 					$body_selectors_align[] = "{$sel} .thread-body";
 				}
 				$body_align_str = implode(', ', $body_selectors_align);
-				$css .= "{$body_align_str} { align-items: flex-end !important; text-align: right !important; }";
+				$child_css .= "{$body_align_str} { align-items: flex-end !important; text-align: right !important; }";
 
 			} elseif ( $styles['alignment'] === 'center' ) {
 				$css .= "margin-left: auto !important; margin-right: auto !important;";
@@ -246,7 +248,7 @@ class Core {
 					$body_selectors_align[] = "{$sel} .thread-body";
 				}
 				$body_align_str = implode(', ', $body_selectors_align);
-				$css .= "{$body_align_str} { align-items: center !important; text-align: center !important; }";
+				$child_css .= "{$body_align_str} { align-items: center !important; text-align: center !important; }";
 
 			} else {
 				$css .= "margin-right: auto !important; margin-left: 0 !important;";
@@ -259,7 +261,7 @@ class Core {
 					$body_selectors_align[] = "{$sel} .thread-body";
 				}
 				$body_align_str = implode(', ', $body_selectors_align);
-				$css .= "{$body_align_str} { align-items: flex-start !important; text-align: left !important; }";
+				$child_css .= "{$body_align_str} { align-items: flex-start !important; text-align: left !important; }";
 			}
 
 			$css .= "padding: 15px !important;";
@@ -277,6 +279,11 @@ class Core {
 			}
 
 			$css .= "}";
+
+			// Append Child CSS rules (must be outside the wrapper block)
+			if ( ! empty( $child_css ) ) {
+				$css .= $child_css;
+			}
 
 			// 2. Reset Inner Body Styles
 			// We need to strip styles from the .thread-body because the wrapper now has them
