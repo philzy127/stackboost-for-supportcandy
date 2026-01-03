@@ -203,7 +203,15 @@ class Core {
 				$time_str = implode(', ', $time_selectors);
 
 				// 1. Reverse the Name/Action container
-				$child_css .= "{$header_flex_str} { flex-direction: row-reverse !important; justify-content: flex-start !important; }";
+				$child_css .= "{$header_flex_str} { flex-direction: row-reverse !important; justify-content: flex-start !important; gap: 6px !important; }";
+
+				// 2. Reverse Header (Move Actions to Left)
+				$header_selectors = [];
+				foreach ($wrapper_selectors as $sel) {
+					$header_selectors[] = "{$sel} .thread-header";
+				}
+				$header_str = implode(', ', $header_selectors);
+				$child_css .= "{$header_str} { flex-direction: row-reverse !important; }";
 
 				// 3. Align the User Info text block to the right
 				$child_css .= "{$user_info_str} { text-align: right !important; width: 100% !important; }";
@@ -244,11 +252,33 @@ class Core {
 
 				// Align Body Content Center
 				$body_selectors_align = [];
+				$header_selectors = [];
+				$text_selectors = [];
+				$text_child_selectors = [];
+				$user_info_selectors = [];
+				$header_flex_selectors = [];
+
 				foreach ($wrapper_selectors as $sel) {
 					$body_selectors_align[] = "{$sel} .thread-body";
+					$header_selectors[] = "{$sel} .thread-header";
+					$text_selectors[] = "{$sel} .thread-text";
+					$text_child_selectors[] = "{$sel} .thread-text *";
+					$user_info_selectors[] = "{$sel} .thread-header .user-info";
+					$header_flex_selectors[] = "{$sel} .thread-header .user-info > div";
 				}
 				$body_align_str = implode(', ', $body_selectors_align);
+				$header_str = implode(', ', $header_selectors);
+				$text_str = implode(', ', $text_selectors);
+				$text_child_str = implode(', ', $text_child_selectors);
+				$user_info_str = implode(', ', $user_info_selectors);
+				$header_flex_str = implode(', ', $header_flex_selectors);
+
 				$child_css .= "{$body_align_str} { align-items: center !important; text-align: center !important; }";
+				$child_css .= "{$header_str} { justify-content: center !important; }";
+				$child_css .= "{$text_str} { text-align: center !important; width: 100% !important; }";
+				$child_css .= "{$text_child_str} { text-align: center !important; }";
+				$child_css .= "{$user_info_str} { align-items: center !important; }";
+				$child_css .= "{$header_flex_str} { justify-content: center !important; }";
 
 			} else {
 				$css .= "margin-right: auto !important; margin-left: 0 !important;";
