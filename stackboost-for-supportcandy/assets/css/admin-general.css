@@ -212,10 +212,42 @@
     flex: 1;
 }
 
-.stackboost-spotlight-content h2 {
-    margin: 0 0 10px 0;
+.stackboost-spotlight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.stackboost-spotlight-header h2 {
+    margin: 0;
     font-size: 1.2em;
     color: #1d2327;
+}
+
+.stackboost-spotlight-badge {
+    font-size: 0.8em;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    color: #fff;
+    white-space: nowrap;
+    margin-left: 10px;
+    /* Base style, overridden by specific gradients */
+}
+
+.stackboost-spotlight-badge.pro {
+    /* Silver Gradient */
+    background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
+    /* For better text readability on silver/dark gradient */
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+}
+
+.stackboost-spotlight-badge.business {
+    /* Gold Gradient */
+    background: linear-gradient(135deg, #f1c40f 0%, #d35400 100%);
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
 }
 
 .stackboost-spotlight-content p {

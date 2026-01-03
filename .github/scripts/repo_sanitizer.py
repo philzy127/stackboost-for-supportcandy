@@ -170,7 +170,7 @@ def sanitize_functions_file(filepath):
     content = re.sub(r'^\s*use\s+StackBoost\\ForSupportCandy\\Core\\License;\s*$', '', content, flags=re.MULTILINE)
 
     # Replace License::get_tier() call with hardcoded 'lite'
-    content = content.replace('$current_tier = License::get_tier();', "$current_tier = 'lite';")
+    content = content.replace('return License::get_tier();', "return 'lite';")
 
     with open(filepath, 'w') as f:
         f.write(content)

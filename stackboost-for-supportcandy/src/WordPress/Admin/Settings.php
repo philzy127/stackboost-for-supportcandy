@@ -337,7 +337,10 @@ class Settings {
 								<span class="dashicons" id="sb-spot-icon"></span>
 							</div>
 							<div class="stackboost-spotlight-content">
-								<h2 id="sb-spot-title"></h2>
+								<div class="stackboost-spotlight-header">
+									<h2 id="sb-spot-title"></h2>
+									<span id="sb-spot-badge" class="stackboost-spotlight-badge"></span>
+								</div>
 								<p id="sb-spot-copy"></p>
 							</div>
 							<div class="stackboost-spotlight-action">
@@ -373,6 +376,20 @@ class Settings {
 								$('#sb-spot-title').text(card.hook);
 								$('#sb-spot-copy').text(card.copy);
 								$('#sb-spot-link').attr('href', card.url);
+
+								// Update badge
+								var badgeText = '';
+								var badgeClass = 'stackboost-spotlight-badge';
+
+								if (card.pool === 'business') {
+									badgeText = '<?php echo esc_js( __( 'Business Feature Highlight', 'stackboost-for-supportcandy' ) ); ?>';
+									badgeClass += ' business';
+								} else {
+									badgeText = '<?php echo esc_js( __( 'Pro Feature Highlight', 'stackboost-for-supportcandy' ) ); ?>';
+									badgeClass += ' pro';
+								}
+
+								$('#sb-spot-badge').text(badgeText).attr('class', badgeClass);
 
 								// Update border class (remove old, add new)
 								$widget.removeClass('stackboost-upsell-pro stackboost-upsell-biz').addClass(card.class);
@@ -640,7 +657,7 @@ class Settings {
      */
     public function render_license_input() {
         $license_key = get_option( 'stackboost_license_key', '' );
-        $license_tier = get_option( 'stackboost_license_tier', 'lite' );
+        $license_tier = stackboost_get_license_tier();
         $is_active = ! empty( $license_key );
 
         ?>
@@ -1236,7 +1253,7 @@ class Settings {
 	 * @return array The list of available card data objects.
 	 */
 	private function get_upsell_pool(): array {
-		$current_tier = get_option( 'stackboost_license_tier', 'lite' );
+		$current_tier = stackboost_get_license_tier();
 
 		// 1. Business Users: The Pinnacle (No Upsell)
 		if ( 'business' === $current_tier ) {

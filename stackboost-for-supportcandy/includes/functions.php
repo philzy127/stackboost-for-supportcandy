@@ -3,6 +3,17 @@
 use StackBoost\ForSupportCandy\Core\License;
 
 /**
+ * Retrieves the current license tier.
+ *
+ * This wrapper allows for cleaner sanitization in the Lite build.
+ *
+ * @return string The current tier ('lite', 'pro', or 'business').
+ */
+function stackboost_get_license_tier(): string {
+    return License::get_tier();
+}
+
+/**
  * Checks if a specific feature is active based on the current license tier.
  *
  * This function acts as a central gatekeeper for all tiered features.
@@ -11,7 +22,7 @@ use StackBoost\ForSupportCandy\Core\License;
  * @return bool True if the feature is available, false otherwise.
  */
 function stackboost_is_feature_active( string $feature_slug ): bool {
-    $current_tier = License::get_tier();
+    $current_tier = stackboost_get_license_tier();
 
     // Define features exclusive to each tier.
     // Logic below will handle inheritance (Pro gets Lite features, etc.)
