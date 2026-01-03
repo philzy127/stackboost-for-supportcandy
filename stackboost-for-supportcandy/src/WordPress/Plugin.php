@@ -218,7 +218,7 @@ final class Plugin {
 		$plugin_basename = plugin_basename( STACKBOOST_PLUGIN_FILE );
 
 		if ( isset( $all_plugins[ $plugin_basename ] ) ) {
-			$tier = get_option( 'stackboost_license_tier', 'lite' );
+			$tier = stackboost_get_license_tier();
 
 			if ( 'pro' === $tier ) {
 				$all_plugins[ $plugin_basename ]['Name'] .= ' - Pro';

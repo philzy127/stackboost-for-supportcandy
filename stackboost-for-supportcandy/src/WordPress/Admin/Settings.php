@@ -640,7 +640,7 @@ class Settings {
      */
     public function render_license_input() {
         $license_key = get_option( 'stackboost_license_key', '' );
-        $license_tier = get_option( 'stackboost_license_tier', 'lite' );
+        $license_tier = stackboost_get_license_tier();
         $is_active = ! empty( $license_key );
 
         ?>
