@@ -64,11 +64,17 @@
             // Reset Global fields
             $('#chat_bubbles_enable_ticket').prop('checked', false);
             $('#chat_bubbles_enable_email').prop('checked', false);
+            $('#chat_bubbles_show_avatars').prop('checked', false);
+            $('#chat_bubbles_image_box').prop('checked', false);
             $('#sb_chat_global_theme_selector').val('default').trigger('change');
+
+            // Reset Shadow
             $('#chat_bubbles_shadow_enable').prop('checked', false);
             $('input[name="stackboost_settings[chat_bubbles_shadow_color]"]').val('#000000').trigger('change');
-            $('select[name="stackboost_settings[chat_bubbles_shadow_depth]"]').val('small');
-            $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val('40').trigger('input'); // Reset opacity
+            $('input[name="stackboost_settings[chat_bubbles_shadow_distance]"]').val('2').next('output').text('2');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_blur]"]').val('5').next('output').text('5');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_spread]"]').val('0').next('output').text('0');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val('40').next('output').text('40');
 
             // Reset Type fields via loop
             ['agent', 'customer', 'note', 'log'].forEach(function(type) {

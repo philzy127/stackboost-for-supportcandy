@@ -184,6 +184,7 @@ class Core {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
 				$css .= "margin-bottom: 20px !important;";
 				$css .= "flex-direction: row-reverse !important;"; // Avatar on right
+				$css .= "text-align: right !important;"; // Ensure text aligns right in wrapper
 
 				// REVERSE HEADER LAYOUT FOR RIGHT ALIGNED
 				// We must loop through wrapper selectors to append descendants correctly
@@ -192,6 +193,8 @@ class Core {
 				$time_selectors = [];
 
 				foreach ($wrapper_selectors as $sel) {
+					// Target the flex container inside user-info that holds Name and Time
+					// SupportCandy Structure: .thread-header > .user-info > div (flex) > [h2(name), span(time)]
 					$header_flex_selectors[] = "{$sel} .thread-header .user-info > div";
 					$user_info_selectors[] = "{$sel} .thread-header .user-info";
 					$time_selectors[] = "{$sel} .thread-header .user-info .thread-time";
@@ -200,14 +203,24 @@ class Core {
 				$user_info_str = implode(', ', $user_info_selectors);
 				$time_str = implode(', ', $time_selectors);
 
-				// 1. Reverse the Name/Action container
+				// 1. Reverse the Name/Action container so it becomes [Time] [Name]
+				// We use row-reverse. Since Time is usually last in DOM, it becomes first visually (Left).
 				$css .= "{$header_flex_str} { flex-direction: row-reverse !important; justify-content: flex-start !important; }";
 
 				// 3. Align the User Info text block to the right
 				$css .= "{$user_info_str} { text-align: right !important; width: 100% !important; }";
 
-				// 4. Align the timestamp to the right
-				$css .= "{$time_str} { text-align: right !important; display: block !important; }";
+				// 4. Handle Timestamp spacing
+				// In row-reverse, Time (last DOM) is on Left. Name (first DOM) is on Right.
+				// We want the whole group aligned to the Right.
+				// By default, flex-start in row-reverse means Right side.
+				// We need to push the Time to the far Left if we want spread, or keep it close if we want tight.
+				// The requirement says "Action, Name, Image".
+				// Image is handled by wrapper row-reverse.
+				// So we have [ [Time Name] Image ].
+				// Inside [Time Name], Time should be left of Name.
+				// If we want [Time ..... Name], we use margin-right: auto on Time (which is visually left).
+				$css .= "{$time_str} { margin-right: auto !important; margin-left: 0 !important; }";
 
 				// 5. Align content text to the right
 				// We need to target the .thread-text inside the wrapper
