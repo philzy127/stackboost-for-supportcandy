@@ -1236,7 +1236,7 @@ class Settings {
 	 * @return array The list of available card data objects.
 	 */
 	private function get_upsell_pool(): array {
-		$current_tier = get_option( 'stackboost_license_tier', 'lite' );
+		$current_tier = stackboost_get_license_tier();
 
 		// 1. Business Users: The Pinnacle (No Upsell)
 		if ( 'business' === $current_tier ) {
