@@ -210,14 +210,21 @@ class Core {
 				$css .= "{$time_str} { text-align: right !important; display: block !important; }";
 
 				// 5. Align content text to the right
-				// We need to target the .thread-text inside the wrapper AND its children
+				// Target container for width and alignment
 				$text_selectors = [];
 				foreach ($wrapper_selectors as $sel) {
 					$text_selectors[] = "{$sel} .thread-text";
-					$text_selectors[] = "{$sel} .thread-text *";
 				}
 				$text_str = implode(', ', $text_selectors);
-				$css .= "{$text_str} { text-align: right !important; }";
+				$css .= "{$text_str} { text-align: right !important; width: 100% !important; }";
+
+				// Target children for forced alignment (without forced width)
+				$text_child_selectors = [];
+				foreach ($wrapper_selectors as $sel) {
+					$text_child_selectors[] = "{$sel} .thread-text *";
+				}
+				$text_child_str = implode(', ', $text_child_selectors);
+				$css .= "{$text_child_str} { text-align: right !important; }";
 
 			} elseif ( $styles['alignment'] === 'center' ) {
 				$css .= "margin-left: auto !important; margin-right: auto !important;";
