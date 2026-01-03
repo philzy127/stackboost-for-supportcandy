@@ -65,6 +65,21 @@ class Core {
 			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false && strpos( $hook_suffix, 'stackboost-chat-bubbles' ) === false ) {
 				return; // Exit silent if not a ticket page
 			}
+
+			// If we are on our settings page, SupportCandy does NOT load its own styles. We must do it manually.
+			if ( strpos( $hook_suffix, 'stackboost-chat-bubbles' ) !== false && defined( 'WPSC_PLUGIN_URL' ) && defined( 'WPSC_VERSION' ) ) {
+				// Determine RTL
+				$is_rtl = is_rtl();
+
+				// Enqueue Framework
+				$fw_css = $is_rtl ? 'framework/style-rtl.css' : 'framework/style.css';
+				wp_enqueue_style( 'wpsc-framework', WPSC_PLUGIN_URL . $fw_css, [], WPSC_VERSION );
+
+				// Enqueue Admin CSS
+				$admin_css = $is_rtl ? 'asset/css/admin-rtl.css' : 'asset/css/admin.css';
+				wp_enqueue_style( 'wpsc-admin', WPSC_PLUGIN_URL . $admin_css, ['wpsc-framework'], WPSC_VERSION );
+			}
+
 			$handle = 'wpsc-admin';
 		} else {
 			// Frontend Check
