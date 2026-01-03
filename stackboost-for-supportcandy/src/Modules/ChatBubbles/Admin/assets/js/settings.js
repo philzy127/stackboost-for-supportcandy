@@ -150,6 +150,7 @@
                     );
                 }
             }
+            updatePreview();
         });
 
         // 6. Live Preview Logic
@@ -538,19 +539,32 @@
 
             $preview.css(cssMap);
 
-            // Alignment (Flexbox self-alignment)
+            // Handle Avatar Visibility
+            var showAvatars = $('#chat_bubbles_show_avatars').is(':checked');
+            if (showAvatars) {
+                $preview.find('.sb-preview-avatar').show();
+            } else {
+                $preview.find('.sb-preview-avatar').hide();
+            }
+
+            // Alignment (Flexbox self-alignment & Content Alignment)
+            $preview.removeClass('sb-right-aligned'); // Reset class
+
             if (styles.align === 'right') {
                 $preview.css({
                     'margin-left': 'auto',
                     'margin-right': '0',
                     'align-self': 'flex-end'
                 });
+                $preview.addClass('sb-right-aligned');
             } else if (styles.align === 'center') {
                 $preview.css({
                     'margin-left': 'auto',
                     'margin-right': 'auto',
                     'align-self': 'center'
                 });
+                // Center alignment doesn't strictly follow the right-align requirements,
+                // but we could apply 'text-align: center' if needed. For now sticking to default LTR header.
             } else {
                 $preview.css({
                     'margin-right': 'auto',
