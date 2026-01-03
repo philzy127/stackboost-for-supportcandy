@@ -61,8 +61,8 @@ class Core {
 			if ( ! is_string( $hook_suffix ) ) {
 				return;
 			}
-			// Only load on Ticket View or Ticket List
-			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
+			// Only load on Ticket View, Ticket List, or Settings Page
+			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false && strpos( $hook_suffix, 'stackboost-chat-bubbles' ) === false ) {
 				return; // Exit silent if not a ticket page
 			}
 			$handle = 'wpsc-admin';
@@ -127,7 +127,7 @@ class Core {
 			}
 
 			// Roots
-			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container'];
+			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container', '.stackboost-chat-preview-container'];
 
 			$wrapper_selectors = [];
 			foreach ($roots as $root) {
