@@ -64,11 +64,17 @@
             // Reset Global fields
             $('#chat_bubbles_enable_ticket').prop('checked', false);
             $('#chat_bubbles_enable_email').prop('checked', false);
+            $('#chat_bubbles_show_avatars').prop('checked', false).trigger('change');
             $('#sb_chat_global_theme_selector').val('default').trigger('change');
             $('#chat_bubbles_shadow_enable').prop('checked', false);
+            $('#chat_bubbles_image_box').prop('checked', false);
+
+            // Drop Shadow fields
             $('input[name="stackboost_settings[chat_bubbles_shadow_color]"]').val('#000000').trigger('change');
-            $('select[name="stackboost_settings[chat_bubbles_shadow_depth]"]').val('small');
-            $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val('40').trigger('input'); // Reset opacity
+            $('input[name="stackboost_settings[chat_bubbles_shadow_distance]"]').val('2').trigger('input');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_blur]"]').val('5').trigger('input');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_spread]"]').val('0').trigger('input');
+            $('input[name="stackboost_settings[chat_bubbles_shadow_opacity]"]').val('40').trigger('input');
 
             // Reset Type fields via loop
             ['agent', 'customer', 'note', 'log'].forEach(function(type) {
@@ -218,6 +224,8 @@
 
         function updateBubble(type, theme) {
             var $preview = $('#preview-bubble-' + type);
+            // Check for wrapper row
+            var $row = $preview.closest('.sb-preview-row');
             var prefixName = 'stackboost_settings[chat_bubbles_' + type + '_';
 
             // Default Values
@@ -538,25 +546,69 @@
 
             $preview.css(cssMap);
 
-            // Alignment (Flexbox self-alignment)
-            if (styles.align === 'right') {
+            // Alignment & Avatars
+            var $target = ($row.length > 0) ? $row : $preview;
+            var showAvatars = $('#chat_bubbles_show_avatars').is(':checked');
+            var hasAvatar = (type !== 'log'); // Logs usually don't have avatars
+            var $avatar = $row.find('.sb-avatar');
+
+            // Reset internal bubble alignment if wrapped
+            if ($row.length > 0) {
                 $preview.css({
+                    'margin-left': '0',
+                    'margin-right': '0',
+                    'align-self': 'auto'
+                });
+            }
+
+            if (styles.align === 'right') {
+                $target.css({
                     'margin-left': 'auto',
                     'margin-right': '0',
-                    'align-self': 'flex-end'
+                    'align-self': 'flex-end',
+                    'justify-content': 'flex-end'
                 });
+                // If wrapped, avatar order
+                if ($row.length > 0) {
+                    $preview.css('order', '1');
+                    $avatar.css('order', '2');
+                    $avatar.css('margin-left', '0');
+                    // Add small gap logic if needed, but flex gap handles it
+                }
+
             } else if (styles.align === 'center') {
-                $preview.css({
+                $target.css({
                     'margin-left': 'auto',
                     'margin-right': 'auto',
-                    'align-self': 'center'
+                    'align-self': 'center',
+                    'justify-content': 'center'
                 });
+                // Usually centered items don't have avatars, but if they do:
+                if ($row.length > 0) {
+                    $preview.css('order', '1');
+                    $avatar.css('order', '0'); // Left by default or hidden
+                }
+
             } else {
-                $preview.css({
+                $target.css({
                     'margin-right': 'auto',
                     'margin-left': '0',
-                    'align-self': 'flex-start'
+                    'align-self': 'flex-start',
+                    'justify-content': 'flex-start'
                 });
+                if ($row.length > 0) {
+                    $preview.css('order', '2');
+                    $avatar.css('order', '1');
+                }
+            }
+
+            // Avatar Visibility
+            if ($row.length > 0) {
+                if (showAvatars && hasAvatar) {
+                    $avatar.show();
+                } else {
+                    $avatar.hide();
+                }
             }
 
             // Remove Tails Logic (per user request)

@@ -85,48 +85,65 @@ class Settings {
 							<div class="stackboost-chat-preview-container" style="background: #f0f0f1;">
 
 								<!-- 1. Customer Bubble -->
-								<div id="preview-bubble-customer" class="sb-preview-bubble customer">
-									<div class="sb-preview-header">
-										<strong><?php esc_html_e( 'John Doe (Customer)', 'stackboost-for-supportcandy' ); ?></strong>
-										<span>10:30 AM</span>
+								<div id="preview-row-customer" class="sb-preview-row">
+									<div class="sb-avatar">
+										<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iI2NjYyIvPjxwYXRoIGQ9Ik0xMiAxMmMyLjIxIDAgNC0xLjc5IDQtNHMtMS43OS00LTQtNC00IDEuNzktNCA0IDEuNzkgNCA0IDR6bTAgMmMtMi42NyAwLTggMS4zNC04IDR2MmgxNnYtMmMwLTIuNjYtNS4zMy00LTgtNHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=" alt="Avatar" />
 									</div>
-									<div class="preview-text">
-										<?php esc_html_e( 'Hi, I need help with my account. I cannot log in.', 'stackboost-for-supportcandy' ); ?>
+									<div id="preview-bubble-customer" class="sb-preview-bubble customer">
+										<div class="sb-preview-header">
+											<strong><?php esc_html_e( 'John Doe (Customer)', 'stackboost-for-supportcandy' ); ?></strong>
+											<span>10:30 AM</span>
+										</div>
+										<div class="preview-text">
+											<?php esc_html_e( 'Hi, I need help with my account. I cannot log in.', 'stackboost-for-supportcandy' ); ?>
+										</div>
 									</div>
 								</div>
 
 								<!-- 2. Note Bubble -->
-								<div id="preview-bubble-note" class="sb-preview-bubble note">
-									<div class="sb-preview-header">
-										<strong><?php esc_html_e( 'Agent (Private Note)', 'stackboost-for-supportcandy' ); ?></strong>
-										<span>10:32 AM</span>
+								<div id="preview-row-note" class="sb-preview-row">
+									<div class="sb-avatar">
+										<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iI2NjYyIvPjxwYXRoIGQ9Ik0xMiAxMmMyLjIxIDAgNC0xLjc5IDQtNHMtMS43OS00LTQtNC00IDEuNzktNCA0IDEuNzkgNCA0IDR6bTAgMmMtMi42NyAwLTggMS4zNC04IDR2MmgxNnYtMmMwLTIuNjYtNS4zMy00LTgtNHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=" alt="Avatar" />
 									</div>
-									<div class="preview-text">
-										<?php esc_html_e( 'Checked logs. Failed login attempts from unknown IP.', 'stackboost-for-supportcandy' ); ?>
+									<div id="preview-bubble-note" class="sb-preview-bubble note">
+										<div class="sb-preview-header">
+											<strong><?php esc_html_e( 'Agent (Private Note)', 'stackboost-for-supportcandy' ); ?></strong>
+											<span>10:32 AM</span>
+										</div>
+										<div class="preview-text">
+											<?php esc_html_e( 'Checked logs. Failed login attempts from unknown IP.', 'stackboost-for-supportcandy' ); ?>
+										</div>
 									</div>
 								</div>
 
-								<!-- 3. Log Bubble -->
-								<div id="preview-bubble-log" class="sb-preview-bubble log">
-									<div class="sb-preview-header">
-										<strong><?php esc_html_e( 'System Log', 'stackboost-for-supportcandy' ); ?></strong>
-										<span>10:33 AM</span>
-									</div>
-									<div class="preview-text">
-										<?php esc_html_e( 'Ticket Status changed from New to In Progress', 'stackboost-for-supportcandy' ); ?>
+								<!-- 3. Log Bubble (No Avatar) -->
+								<div id="preview-row-log" class="sb-preview-row">
+									<div id="preview-bubble-log" class="sb-preview-bubble log">
+										<div class="sb-preview-header">
+											<strong><?php esc_html_e( 'System Log', 'stackboost-for-supportcandy' ); ?></strong>
+											<span>10:33 AM</span>
+										</div>
+										<div class="preview-text">
+											<?php esc_html_e( 'Ticket Status changed from New to In Progress', 'stackboost-for-supportcandy' ); ?>
+										</div>
 									</div>
 								</div>
 
 								<!-- 4. Agent Bubble -->
-								<div id="preview-bubble-agent" class="sb-preview-bubble agent">
-									<div class="sb-preview-header">
-										<strong><?php esc_html_e( 'Support Agent', 'stackboost-for-supportcandy' ); ?></strong>
-										<span>10:35 AM</span>
+								<div id="preview-row-agent" class="sb-preview-row">
+									<div class="sb-avatar">
+										<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iI2NjYyIvPjxwYXRoIGQ9Ik0xMiAxMmMyLjIxIDAgNC0xLjc5IDQtNHMtMS43OS00LTQtNC00IDEuNzktNCA0IDEuNzkgNCA0IDR6bTAgMmMtMi42NyAwLTggMS4zNC04IDR2MmgxNnYtMmMwLTIuNjYtNS4zMy00LTgtNHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=" alt="Avatar" />
 									</div>
-									<div class="preview-text">
-										<?php esc_html_e( 'Hello John, I can reset that for you right now.', 'stackboost-for-supportcandy' ); ?>
-										<br/>
-										<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTAgNTAiIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjY2MiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM1NTUiPkltYWdlPC90ZXh0Pjwvc3ZnPg==" alt="Placeholder" style="max-width:100%; height:auto; margin-top:5px;" class="sb-chat-preview-img" />
+									<div id="preview-bubble-agent" class="sb-preview-bubble agent">
+										<div class="sb-preview-header">
+											<strong><?php esc_html_e( 'Support Agent', 'stackboost-for-supportcandy' ); ?></strong>
+											<span>10:35 AM</span>
+										</div>
+										<div class="preview-text">
+											<?php esc_html_e( 'Hello John, I can reset that for you right now.', 'stackboost-for-supportcandy' ); ?>
+											<br/>
+											<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTAgNTAiIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjY2MiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM1NTUiPkltYWdlPC90ZXh0Pjwvc3ZnPg==" alt="Placeholder" style="max-width:100%; height:auto; margin-top:5px;" class="sb-chat-preview-img" />
+										</div>
 									</div>
 								</div>
 

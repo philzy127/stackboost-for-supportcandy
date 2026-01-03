@@ -94,3 +94,26 @@
     max-width: 90%;
     font-style: italic;
 }
+
+/* Avatars in Live Preview */
+.sb-preview-row {
+    display: flex;
+    align-items: flex-end; /* Align avatar to bottom of bubble */
+    gap: 10px;
+    width: 100%; /* Rows take full width to handle alignment */
+    margin-bottom: 10px;
+}
+
+.sb-avatar {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: none; /* Hidden by default, JS enables */
+}
+
+.sb-avatar img {
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
