@@ -405,6 +405,21 @@ class Core {
 				$img_selector_str = implode(', ', $img_selectors);
 				$css .= "{$img_selector_str} { border: 1px solid rgba(0,0,0,0.2) !important; padding: 3px !important; background: rgba(255,255,255,0.5) !important; border-radius: 3px !important; }";
 			}
+
+			// 7. Log Diff Alignment (Specific fix for centered status changes)
+			$diff_selectors = [];
+			foreach ($wrapper_selectors as $part) {
+				$diff_selectors[] = trim($part) . ' .wpsc-log-diff';
+			}
+			$diff_selector_str = implode(', ', $diff_selectors);
+
+			if ( $styles['alignment'] === 'center' ) {
+				$css .= "{$diff_selector_str} { justify-content: center !important; }";
+			} elseif ( $styles['alignment'] === 'right' ) {
+				$css .= "{$diff_selector_str} { justify-content: flex-end !important; }";
+			} else {
+				$css .= "{$diff_selector_str} { justify-content: flex-start !important; }";
+			}
 		}
 
 		return $css;
