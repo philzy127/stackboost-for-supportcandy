@@ -75,12 +75,6 @@ class Core {
 			wp_enqueue_style( $handle );
 		}
 
-		// Only log if we passed the checks and are actually about to work
-		if ( function_exists( 'stackboost_log' ) ) {
-			// $hook_label = $is_frontend ? 'frontend' : ( $hook_suffix ?? 'unknown' );
-			// stackboost_log( 'ChatBubbles: enqueue_ticket_styles called. Hook: ' . $hook_label, 'chat_bubbles' );
-		}
-
 		// Check ticket specific enable switch
 		// Note: We use the same 'chat_bubbles_enable_ticket' setting for both Admin and Frontend uniformity.
 		$options = get_option( 'stackboost_settings', [] );
@@ -152,7 +146,7 @@ class Core {
 			$css .= "width: {$styles['width']}% !important;";
 			$css .= "max-width: {$styles['width']}% !important;";
 			$css .= "display: flex !important;";
-			$css .= "align-items: flex-start !important;";
+			$css .= "flex-direction: column !important;"; // Ensure column layout for bubble content
 
 			// Font Family
 			if ( ! empty( $styles['font_family'] ) ) {
@@ -177,76 +171,87 @@ class Core {
 				$css .= "text-decoration: underline !important;";
 			}
 
-			// Alignment & Direction
-			// Note: We deliberately set margin-bottom to ensure bubbles don't collapse on each other,
-			// especially for 'center' alignment where '0 auto' was nuking the bottom margin.
+			// --- Alignment Logic using separate property sets ---
+			// We define standard properties for Left, Center, Right
+			// and apply them cleanly.
+
+			$align_css = "";
+			$thread_header_extra = "";
+			$user_info_extra = "";
+			$user_info_name_extra = "";
+			$user_info_time_extra = "";
+			$thread_text_extra = "";
+			$avatar_extra = "";
+
 			if ( $styles['alignment'] === 'right' ) {
-				$css .= "margin-left: auto !important; margin-right: 0 !important;";
-				$css .= "margin-bottom: 20px !important;";
-				$css .= "flex-direction: row-reverse !important;"; // Avatar on right
-				$css .= "text-align: right !important;"; // Ensure text aligns right in wrapper
+				// RIGHT ALIGNMENT
+				// Wrapper: align-self end (via margin-left auto)
+				$align_css .= "margin-left: auto !important; margin-right: 0 !important;";
+				$align_css .= "align-items: flex-end !important;"; // Align content inside bubble to right
+				$align_css .= "margin-bottom: 20px !important;";
 
-				// REVERSE HEADER LAYOUT FOR RIGHT ALIGNED
-				// We must loop through wrapper selectors to append descendants correctly
-				$header_flex_selectors = [];
-				$user_info_selectors = [];
-				$time_selectors = [];
-				$thread_header_selectors = [];
+				// Header Re-ordering for Right Align: [Time] [Name] [Avatar]
+				// DOM: [Avatar] [UserInfo: [Name] [Time]]
 
-				foreach ($wrapper_selectors as $sel) {
-					// Target the flex container inside user-info that holds Name and Time
-					// SupportCandy Structure: .thread-header > .user-info (flex) > [div(name group), span(time)]
-					// Note: Screenshot confirms .user-info is the flex parent.
-					$header_flex_selectors[] = "{$sel} .thread-header .user-info";
-					$time_selectors[] = "{$sel} .thread-header .user-info .thread-time";
-					$thread_header_selectors[] = "{$sel} .thread-header";
-				}
-				$header_flex_str = implode(', ', $header_flex_selectors);
-				$time_str = implode(', ', $time_selectors);
-				$thread_header_str = implode(', ', $thread_header_selectors);
+				// 1. Thread Header: Use standard flex row.
+				// We need to swap Avatar and UserInfo.
+				// Avatar is first in DOM. UserInfo is second.
+				// Use ORDER.
+				$thread_header_extra .= "display: flex !important; flex-direction: row !important; justify-content: flex-end !important; width: 100% !important;";
 
-				// 0. Reverse the Thread Header to put Avatar on the Right
-				// SupportCandy Structure: .thread-header > [img(avatar), div(user-info)]
-				// We enforce flex display to ensure the reversal works.
-				// row-reverse: Item 1 (Avatar), Item 2 (UserInfo).
-				// Result: [UserInfo] [Avatar] (Aligned to Start/Right).
-				$css .= "{$thread_header_str} { display: flex !important; flex-direction: row-reverse !important; justify-content: flex-start !important; }";
+				// Avatar: Move to End (Right)
+				$avatar_extra .= "order: 2 !important; margin-left: 10px !important; margin-right: 0 !important;";
 
-				// 1. Set container to standard row, align right.
-				$css .= "{$header_flex_str} { flex-direction: row !important; justify-content: flex-end !important; }";
+				// UserInfo: Move to Start (Left)
+				$user_info_extra .= "order: 1 !important; text-align: right !important; justify-content: flex-end !important;";
 
-				// 2. Reorder items. Time (order 1) comes before Name (order 2).
-				// We use flex order to force [Time] [Name] layout while keeping alignment to the right.
-				// Name Group
-				$name_group_selectors = [];
-				foreach ($wrapper_selectors as $sel) {
-					$name_group_selectors[] = "{$sel} .thread-header .user-info > div";
-				}
-				$name_group_str = implode(', ', $name_group_selectors);
-				$css .= "{$name_group_str} { order: 2 !important; margin-left: 10px !important; }"; // Add margin for spacing
+				// Inside UserInfo: [Name Group] [Time]
+				// We want [Time] [Name Group]
+				// Time is 2nd in DOM. Name is 1st in DOM.
+				// Wait, DOM is .user-info > [div(name), span(time)]
+				// So Name is 1st, Time is 2nd.
+				// We want Time first.
+				$user_info_time_extra .= "order: 1 !important; margin-right: 10px !important; margin-left: 0 !important;";
+				$user_info_name_extra .= "order: 2 !important;";
 
-				// Time
-				$css .= "{$time_str} { order: 1 !important; margin-right: 0 !important; margin-left: 0 !important; }";
-
-				// 5. Align content text to the right
-				// We need to target the .thread-text inside the wrapper
-				$text_selectors = [];
-				foreach ($wrapper_selectors as $sel) {
-					$text_selectors[] = "{$sel} .thread-text";
-				}
-				$text_str = implode(', ', $text_selectors);
-				$css .= "{$text_str} { text-align: right !important; }";
+				// Text Body Alignment
+				$thread_text_extra .= "text-align: right !important;";
 
 			} elseif ( $styles['alignment'] === 'center' ) {
-				$css .= "margin-left: auto !important; margin-right: auto !important;";
-				$css .= "margin-bottom: 20px !important;";
-				$css .= "flex-direction: row !important;";
+				// CENTER ALIGNMENT
+				$align_css .= "margin-left: auto !important; margin-right: auto !important;";
+				$align_css .= "align-items: center !important;";
+				$align_css .= "margin-bottom: 20px !important;";
+
+				$thread_header_extra .= "justify-content: center !important;";
+				$user_info_extra .= "text-align: center !important; justify-content: center !important;";
+				$thread_text_extra .= "text-align: center !important;";
+
 			} else {
-				$css .= "margin-right: auto !important; margin-left: 0 !important;";
-				$css .= "margin-bottom: 20px !important;";
-				$css .= "flex-direction: row !important;";
+				// LEFT ALIGNMENT (Default)
+				$align_css .= "margin-right: auto !important; margin-left: 0 !important;";
+				$align_css .= "align-items: flex-start !important;";
+				$align_css .= "margin-bottom: 20px !important;";
+
+				// Standard Layout: [Avatar] [UserInfo: [Name] [Time]]
+				$thread_header_extra .= "justify-content: flex-start !important;";
+
+				// Avatar First
+				$avatar_extra .= "order: 1 !important; margin-right: 15px !important;";
+
+				// UserInfo Second
+				$user_info_extra .= "order: 2 !important; text-align: left !important; justify-content: flex-start !important;";
+
+				// Inside UserInfo: [Name] [Time] (Standard)
+				// Name First
+				$user_info_name_extra .= "order: 1 !important;";
+				// Time Second (pushed right usually)
+				$user_info_time_extra .= "order: 2 !important; margin-left: auto !important;";
+
+				$thread_text_extra .= "text-align: left !important;";
 			}
 
+			$css .= $align_css;
 			$css .= "padding: 15px !important;";
 
 			// Borders
@@ -264,7 +269,6 @@ class Core {
 			$css .= "}";
 
 			// 2. Reset Inner Body Styles
-			// We need to strip styles from the .thread-body because the wrapper now has them
 			$body_selectors = [];
 			foreach ($wrapper_selectors as $sel) {
 				$body_selectors[] = $sel . ' .thread-body';
@@ -277,9 +281,8 @@ class Core {
 			$css .= "box-shadow: none !important;";
 			$css .= "padding: 0 !important;";
 			$css .= "margin: 0 !important;";
-			$css .= "width: auto !important;";
+			$css .= "width: 100% !important;"; // Ensure body takes full width of flex container
 			$css .= "max-width: 100% !important;";
-			$css .= "flex: 1 !important;"; // Take remaining space
 			$css .= "}";
 
 			// 3. Avatar Handling
@@ -290,25 +293,49 @@ class Core {
 			$avatar_selector_str = implode(', ', $avatar_selectors);
 
 			if ( empty( $options['chat_bubbles_show_avatars'] ) ) {
-				// Hide if option is disabled
 				$css .= "{$avatar_selector_str} { display: none !important; }";
 			} else {
-				// Show and Style if enabled
 				$css .= "{$avatar_selector_str} {";
 				$css .= "display: block !important;";
-				// Add margin to separate from body. Logic depends on alignment/direction.
-				// Since we use flex-direction: row-reverse for Right align, 'margin-right' on avatar (which is first in DOM)
-				// effectively puts space between it and the body in both visual orientations?
-				// Row: [Avatar] --margin-right--> [Body]
-				// Row-Reverse: [Body] <--margin-right-- [Avatar] (Visual Right)
-				// Wait, in Row-Reverse, margin-right on the first item (Avatar) pushes it away from the flex start (Right edge)? No.
-				// Let's stick to standard margins.
-				$css .= "margin: 0 15px !important;";
+				$css .= $avatar_extra;
 				$css .= "align-self: flex-start !important;";
 				$css .= "}";
 			}
 
-			// 4. Text Color inside
+			// 4. Thread Header & Sub-element Layout
+			$header_selectors = [];
+			$user_info_selectors = [];
+			$user_info_name_selectors = [];
+			$user_info_time_selectors = [];
+			$thread_text_selectors = [];
+
+			foreach ($wrapper_selectors as $sel) {
+				$header_selectors[] = "{$sel} .thread-header";
+				$user_info_selectors[] = "{$sel} .thread-header .user-info";
+				// SupportCandy structure: .user-info > div (name group)
+				$user_info_name_selectors[] = "{$sel} .thread-header .user-info > div";
+				$user_info_time_selectors[] = "{$sel} .thread-header .user-info .thread-time";
+				$thread_text_selectors[] = "{$sel} .thread-text";
+			}
+
+			// Apply Header Logic
+			if ($thread_header_extra) {
+				$css .= implode(', ', $header_selectors) . " { " . $thread_header_extra . " margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
+			}
+			if ($user_info_extra) {
+				$css .= implode(', ', $user_info_selectors) . " { display: flex !important; flex: 1 !important; align-items: center !important; " . $user_info_extra . " }";
+			}
+			if ($user_info_name_extra) {
+				$css .= implode(', ', $user_info_name_selectors) . " { display: flex; align-items: center; " . $user_info_name_extra . " }";
+			}
+			if ($user_info_time_extra) {
+				$css .= implode(', ', $user_info_time_selectors) . " { " . $user_info_time_extra . " }";
+			}
+			if ($thread_text_extra) {
+				$css .= implode(', ', $thread_text_selectors) . " { " . $thread_text_extra . " }";
+			}
+
+			// 5. Text Color inside
 			$color_selectors = [];
 			$sub_elements = ['.thread-text', '.user-info h2', '.user-info h2.user-name', '.user-info span', 'a', '.thread-header h2', '.thread-header span', '.wpsc-log-diff'];
 
@@ -320,14 +347,6 @@ class Core {
 			$color_selector_str = implode(', ', $color_selectors);
 
 			$css .= "{$color_selector_str} { color: {$styles['text_color']} !important; }";
-
-			// 5. Header layout adjustment
-			$header_selectors = [];
-			foreach ($wrapper_selectors as $part) {
-				$header_selectors[] = trim($part) . ' .thread-header';
-			}
-			$header_selector_str = implode(', ', $header_selectors);
-			$css .= "{$header_selector_str} { margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }";
 
 			// 6. Image Bounding Box
 			if ( ! empty( $options['chat_bubbles_image_box'] ) ) {

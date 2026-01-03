@@ -88,7 +88,7 @@ class Settings {
 								<div id="preview-bubble-customer" class="sb-preview-bubble customer">
 									<div class="sb-preview-header">
 										<img class="sb-preview-avatar" src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y" alt="Avatar" style="display:none;" />
-										<strong><?php esc_html_e( 'John Doe (Customer)', 'stackboost-for-supportcandy' ); ?></strong>
+										<strong class="sb-preview-name"><?php esc_html_e( 'John Doe (Customer)', 'stackboost-for-supportcandy' ); ?></strong>
 										<span class="sb-time">10:30 AM</span>
 									</div>
 									<div class="preview-text">
@@ -100,7 +100,7 @@ class Settings {
 								<div id="preview-bubble-note" class="sb-preview-bubble note">
 									<div class="sb-preview-header">
 										<img class="sb-preview-avatar" src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y" alt="Avatar" style="display:none;" />
-										<strong><?php esc_html_e( 'Agent (Private Note)', 'stackboost-for-supportcandy' ); ?></strong>
+										<strong class="sb-preview-name"><?php esc_html_e( 'Agent (Private Note)', 'stackboost-for-supportcandy' ); ?></strong>
 										<span class="sb-time">10:32 AM</span>
 									</div>
 									<div class="preview-text">
@@ -112,7 +112,7 @@ class Settings {
 								<div id="preview-bubble-log" class="sb-preview-bubble log">
 									<div class="sb-preview-header">
 										<img class="sb-preview-avatar" src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y" alt="Avatar" style="display:none;" />
-										<strong><?php esc_html_e( 'System Log', 'stackboost-for-supportcandy' ); ?></strong>
+										<strong class="sb-preview-name"><?php esc_html_e( 'System Log', 'stackboost-for-supportcandy' ); ?></strong>
 										<span class="sb-time">10:33 AM</span>
 									</div>
 									<div class="preview-text">
@@ -124,7 +124,7 @@ class Settings {
 								<div id="preview-bubble-agent" class="sb-preview-bubble agent">
 									<div class="sb-preview-header">
 										<img class="sb-preview-avatar" src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y" alt="Avatar" style="display:none;" />
-										<strong><?php esc_html_e( 'Support Agent', 'stackboost-for-supportcandy' ); ?></strong>
+										<strong class="sb-preview-name"><?php esc_html_e( 'Support Agent', 'stackboost-for-supportcandy' ); ?></strong>
 										<span class="sb-time">10:35 AM</span>
 									</div>
 									<div class="preview-text">

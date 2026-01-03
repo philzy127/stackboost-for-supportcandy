@@ -60,6 +60,8 @@
     position: relative;
     max-width: 85%;
     transition: all 0.2s ease;
+    display: flex; /* Enforce flex to allow order manipulation */
+    flex-direction: column;
 }
 
 .sb-preview-header {
@@ -70,6 +72,11 @@
     justify-content: flex-start;
     align-items: center;
     gap: 8px;
+    width: 100%;
+}
+
+.sb-preview-body {
+    width: 100%;
 }
 
 .sb-preview-avatar {
@@ -79,46 +86,82 @@
     object-fit: cover;
 }
 
-/* Default Left Alignment Layout */
-.sb-time {
+/* --- Alignment Classes --- */
+
+/* Left Alignment (Default) */
+.sb-align-left {
+    align-self: flex-start;
+    margin-right: auto;
+    margin-left: 0;
+    text-align: left;
+}
+
+.sb-align-left .sb-time {
     margin-left: auto; /* Pushes time to the far right */
 }
 
-/* Right Alignment Layout */
-.sb-preview-bubble.sb-right-aligned {
+/* Center Alignment */
+.sb-align-center {
+    align-self: center;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.sb-align-center .sb-preview-header {
+    justify-content: center;
+}
+
+/* Right Alignment */
+.sb-align-right {
+    align-self: flex-end;
+    margin-left: auto;
+    margin-right: 0;
     text-align: right;
 }
 
-.sb-preview-bubble.sb-right-aligned .sb-preview-header {
-    flex-direction: row-reverse;
+/* For Right Align:
+   We want: [Time] [Name] [Avatar]
+   Header is: [Avatar] [Name] [Time] (DOM order)
+   We use ORDER to swap them.
+*/
+.sb-align-right .sb-preview-header {
+    justify-content: flex-end;
 }
 
-.sb-preview-bubble.sb-right-aligned .sb-time {
+.sb-align-right .sb-preview-avatar {
+    order: 3; /* Move avatar to end (Right) */
+    margin-left: 8px;
+}
+
+.sb-align-right .sb-preview-name {
+    order: 2; /* Name in middle */
+}
+
+.sb-align-right .sb-time {
+    order: 1; /* Time at start (Left) */
+    margin-right: auto; /* Push everything else to right? No, we want tight grouping?
+                           User said: "align all of it's content right".
+                           So Time should be next to Name. */
+    margin-right: 8px;
     margin-left: 0;
-    margin-right: auto; /* Pushes time to the far left (visually first) */
 }
 
-/* Specific Preview Mock Data */
+/* Specific Preview Mock Data defaults */
 .sb-preview-bubble.customer {
     /* Default fallback styles if JS fails */
     background: #e5e5e5;
-    align-self: flex-start;
-    margin-right: auto;
 }
 
 .sb-preview-bubble.agent {
     background: #2271b1;
     color: #fff;
-    align-self: flex-end;
-    margin-left: auto;
 }
 
 .sb-preview-bubble.note {
     background: #fff8e5;
     border: 1px solid #f0c33c;
     color: #333;
-    align-self: center;
-    margin: 0 auto;
-    max-width: 90%;
     font-style: italic;
+    max-width: 90%;
 }

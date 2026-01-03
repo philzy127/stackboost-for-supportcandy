@@ -553,30 +553,24 @@
                 $preview.find('.sb-preview-avatar').hide();
             }
 
-            // Alignment (Flexbox self-alignment & Content Alignment)
-            $preview.removeClass('sb-right-aligned'); // Reset class
+            // Alignment (Using CSS Classes)
+            $preview.removeClass('sb-align-left sb-align-center sb-align-right'); // Reset classes
+
+            // We apply alignment via classes defined in chat-bubbles.css.
+            // Inline overrides for margins are removed to let the class handle it,
+            // EXCEPT where we might need to clear inline styles set by previous iterations.
+            $preview.css({
+                'margin-left': '',
+                'margin-right': '',
+                'align-self': ''
+            });
 
             if (styles.align === 'right') {
-                $preview.css({
-                    'margin-left': 'auto',
-                    'margin-right': '0',
-                    'align-self': 'flex-end'
-                });
-                $preview.addClass('sb-right-aligned');
+                $preview.addClass('sb-align-right');
             } else if (styles.align === 'center') {
-                $preview.css({
-                    'margin-left': 'auto',
-                    'margin-right': 'auto',
-                    'align-self': 'center'
-                });
-                // Center alignment doesn't strictly follow the right-align requirements,
-                // but we could apply 'text-align: center' if needed. For now sticking to default LTR header.
+                $preview.addClass('sb-align-center');
             } else {
-                $preview.css({
-                    'margin-right': 'auto',
-                    'margin-left': '0',
-                    'align-self': 'flex-start'
-                });
+                $preview.addClass('sb-align-left');
             }
 
             // Remove Tails Logic (per user request)
