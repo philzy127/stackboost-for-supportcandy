@@ -480,7 +480,8 @@
                 'padding': styles.padding + 'px',
                 'font-weight': styles.bold ? 'bold' : 'normal',
                 'font-style': styles.italic ? 'italic' : 'normal',
-                'text-decoration': styles.underline ? 'underline' : 'none'
+                'text-decoration': styles.underline ? 'underline' : 'none',
+                'text-align': styles.align // Sync text alignment with bubble alignment
             };
 
             // Border Logic
