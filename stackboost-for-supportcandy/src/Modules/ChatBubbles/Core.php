@@ -61,10 +61,25 @@ class Core {
 			if ( ! is_string( $hook_suffix ) ) {
 				return;
 			}
-			// Only load on Ticket View or Ticket List
-			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false ) {
+			// Only load on Ticket View, Ticket List, or Settings Page
+			if ( strpos( $hook_suffix, 'wpsc-tickets' ) === false && strpos( $hook_suffix, 'wpsc-view-ticket' ) === false && strpos( $hook_suffix, 'stackboost-chat-bubbles' ) === false ) {
 				return; // Exit silent if not a ticket page
 			}
+
+			// If we are on our settings page, SupportCandy does NOT load its own styles. We must do it manually.
+			if ( strpos( $hook_suffix, 'stackboost-chat-bubbles' ) !== false && defined( 'WPSC_PLUGIN_URL' ) && defined( 'WPSC_VERSION' ) ) {
+				// Determine RTL
+				$is_rtl = is_rtl();
+
+				// Enqueue Framework
+				$fw_css = $is_rtl ? 'framework/style-rtl.css' : 'framework/style.css';
+				wp_enqueue_style( 'wpsc-framework', WPSC_PLUGIN_URL . $fw_css, [], WPSC_VERSION );
+
+				// Enqueue Admin CSS
+				$admin_css = $is_rtl ? 'asset/css/admin-rtl.css' : 'asset/css/admin.css';
+				wp_enqueue_style( 'wpsc-admin', WPSC_PLUGIN_URL . $admin_css, ['wpsc-framework'], WPSC_VERSION );
+			}
+
 			$handle = 'wpsc-admin';
 		} else {
 			// Frontend Check
@@ -127,7 +142,7 @@ class Core {
 			}
 
 			// Roots
-			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container'];
+			$roots = ['.wpsc-it-container', '.wpsc-shortcode-container', '#wpsc-container', '.stackboost-chat-preview-container'];
 
 			$wrapper_selectors = [];
 			foreach ($roots as $root) {
@@ -180,6 +195,8 @@ class Core {
 			// Alignment & Direction
 			// Note: We deliberately set margin-bottom to ensure bubbles don't collapse on each other,
 			// especially for 'center' alignment where '0 auto' was nuking the bottom margin.
+			$child_css = ''; // Collect child rules separately to avoid nesting syntax errors
+
 			if ( $styles['alignment'] === 'right' ) {
 				$css .= "margin-left: auto !important; margin-right: 0 !important;";
 				$css .= "margin-bottom: 20px !important;";
@@ -201,31 +218,95 @@ class Core {
 				$time_str = implode(', ', $time_selectors);
 
 				// 1. Reverse the Name/Action container
-				$css .= "{$header_flex_str} { flex-direction: row-reverse !important; justify-content: flex-start !important; }";
+				$child_css .= "{$header_flex_str} { flex-direction: row-reverse !important; justify-content: flex-start !important; gap: 6px !important; }";
+
+				// 2. Reverse Header (Move Actions to Left)
+				$header_selectors = [];
+				foreach ($wrapper_selectors as $sel) {
+					$header_selectors[] = "{$sel} .thread-header";
+				}
+				$header_str = implode(', ', $header_selectors);
+				$child_css .= "{$header_str} { flex-direction: row-reverse !important; }";
 
 				// 3. Align the User Info text block to the right
-				$css .= "{$user_info_str} { text-align: right !important; width: 100% !important; }";
+				$child_css .= "{$user_info_str} { text-align: right !important; width: 100% !important; }";
 
 				// 4. Align the timestamp to the right
-				$css .= "{$time_str} { text-align: right !important; display: block !important; }";
+				$child_css .= "{$time_str} { text-align: right !important; display: block !important; }";
 
 				// 5. Align content text to the right
-				// We need to target the .thread-text inside the wrapper
+				// Target container for width and alignment
 				$text_selectors = [];
 				foreach ($wrapper_selectors as $sel) {
 					$text_selectors[] = "{$sel} .thread-text";
 				}
 				$text_str = implode(', ', $text_selectors);
-				$css .= "{$text_str} { text-align: right !important; }";
+				$child_css .= "{$text_str} { text-align: right !important; width: 100% !important; }";
+
+				// Target children for forced alignment (without forced width)
+				$text_child_selectors = [];
+				foreach ($wrapper_selectors as $sel) {
+					$text_child_selectors[] = "{$sel} .thread-text *";
+				}
+				$text_child_str = implode(', ', $text_child_selectors);
+				$child_css .= "{$text_child_str} { text-align: right !important; }";
+
+				// 6. Align Body Content Right (Attachments, Headers, etc)
+				// .thread-body needs align-items: flex-end to push flex children to the right side
+				$body_selectors_align = [];
+				foreach ($wrapper_selectors as $sel) {
+					$body_selectors_align[] = "{$sel} .thread-body";
+				}
+				$body_align_str = implode(', ', $body_selectors_align);
+				$child_css .= "{$body_align_str} { align-items: flex-end !important; text-align: right !important; }";
 
 			} elseif ( $styles['alignment'] === 'center' ) {
 				$css .= "margin-left: auto !important; margin-right: auto !important;";
 				$css .= "margin-bottom: 20px !important;";
 				$css .= "flex-direction: row !important;";
+
+				// Align Body Content Center
+				$body_selectors_align = [];
+				$header_selectors = [];
+				$text_selectors = [];
+				$text_child_selectors = [];
+				$user_info_selectors = [];
+				$header_flex_selectors = [];
+
+				foreach ($wrapper_selectors as $sel) {
+					$body_selectors_align[] = "{$sel} .thread-body";
+					$header_selectors[] = "{$sel} .thread-header";
+					$text_selectors[] = "{$sel} .thread-text";
+					$text_child_selectors[] = "{$sel} .thread-text *";
+					$user_info_selectors[] = "{$sel} .thread-header .user-info";
+					$header_flex_selectors[] = "{$sel} .thread-header .user-info > div";
+				}
+				$body_align_str = implode(', ', $body_selectors_align);
+				$header_str = implode(', ', $header_selectors);
+				$text_str = implode(', ', $text_selectors);
+				$text_child_str = implode(', ', $text_child_selectors);
+				$user_info_str = implode(', ', $user_info_selectors);
+				$header_flex_str = implode(', ', $header_flex_selectors);
+
+				$child_css .= "{$body_align_str} { align-items: center !important; text-align: center !important; }";
+				$child_css .= "{$header_str} { justify-content: center !important; }";
+				$child_css .= "{$text_str} { text-align: center !important; width: 100% !important; }";
+				$child_css .= "{$text_child_str} { text-align: center !important; }";
+				$child_css .= "{$user_info_str} { align-items: center !important; }";
+				$child_css .= "{$header_flex_str} { justify-content: center !important; }";
+
 			} else {
 				$css .= "margin-right: auto !important; margin-left: 0 !important;";
 				$css .= "margin-bottom: 20px !important;";
 				$css .= "flex-direction: row !important;";
+
+				// Align Body Content Left
+				$body_selectors_align = [];
+				foreach ($wrapper_selectors as $sel) {
+					$body_selectors_align[] = "{$sel} .thread-body";
+				}
+				$body_align_str = implode(', ', $body_selectors_align);
+				$child_css .= "{$body_align_str} { align-items: flex-start !important; text-align: left !important; }";
 			}
 
 			$css .= "padding: 15px !important;";
@@ -243,6 +324,11 @@ class Core {
 			}
 
 			$css .= "}";
+
+			// Append Child CSS rules (must be outside the wrapper block)
+			if ( ! empty( $child_css ) ) {
+				$css .= $child_css;
+			}
 
 			// 2. Reset Inner Body Styles
 			// We need to strip styles from the .thread-body because the wrapper now has them
@@ -318,6 +404,21 @@ class Core {
 				}
 				$img_selector_str = implode(', ', $img_selectors);
 				$css .= "{$img_selector_str} { border: 1px solid rgba(0,0,0,0.2) !important; padding: 3px !important; background: rgba(255,255,255,0.5) !important; border-radius: 3px !important; }";
+			}
+
+			// 7. Log Diff Alignment (Specific fix for centered status changes)
+			$diff_selectors = [];
+			foreach ($wrapper_selectors as $part) {
+				$diff_selectors[] = trim($part) . ' .wpsc-log-diff';
+			}
+			$diff_selector_str = implode(', ', $diff_selectors);
+
+			if ( $styles['alignment'] === 'center' ) {
+				$css .= "{$diff_selector_str} { justify-content: center !important; }";
+			} elseif ( $styles['alignment'] === 'right' ) {
+				$css .= "{$diff_selector_str} { justify-content: flex-end !important; }";
+			} else {
+				$css .= "{$diff_selector_str} { justify-content: flex-start !important; }";
 			}
 		}
 
