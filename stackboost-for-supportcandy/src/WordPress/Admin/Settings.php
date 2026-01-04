@@ -824,6 +824,7 @@ class Settings {
 				'diagnostic_log_enabled',
 				'enable_log_general',
 				'enable_log_ticket_view',
+				'enable_log_conditional_options', // Moved up for user visibility
 				'enable_log_date_time',
 				'enable_log_after_hours',
 				'enable_log_conditional_views',
@@ -834,7 +835,6 @@ class Settings {
 				'enable_log_onboarding',
 				'enable_log_appearance', // Added Appearance Logging
 				'enable_log_chat_bubbles', // Added Chat Bubbles Logging
-				'enable_log_conditional_options', // Added Conditional Options Logging
 			],
 			// 'stackboost-date-time' removed - uses isolated option group via custom AJAX
 			'stackboost-chat-bubbles' => class_exists( 'StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings' ) ? \StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings::get_settings_keys() : [],
@@ -1022,6 +1022,7 @@ class Settings {
 		$modules = [
 			'enable_log_general'           => __( 'General Settings', 'stackboost-for-supportcandy' ),
 			'enable_log_ticket_view'       => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+			'enable_log_conditional_options' => __( 'Conditional Options', 'stackboost-for-supportcandy' ),
 			'enable_log_date_time'         => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
 			'enable_log_after_hours'       => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 			'enable_log_chat_bubbles'      => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
@@ -1032,7 +1033,6 @@ class Settings {
 			'enable_log_directory'         => __( 'Company Directory', 'stackboost-for-supportcandy' ),
 			'enable_log_onboarding'        => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
 			'enable_log_appearance'        => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ),
-			'enable_log_conditional_options' => __( 'Conditional Options', 'stackboost-for-supportcandy' ),
 		];
 
 		foreach ( $modules as $key => $label ) {

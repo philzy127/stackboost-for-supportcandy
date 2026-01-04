@@ -1,9 +1,14 @@
 (function($) {
     'use strict';
 
-    // State
+    // State initialization helper to avoid Array vs Object issues with JSON.stringify
+    var initialRules = stackboostCO.rules;
+    if (Array.isArray(initialRules) && initialRules.length === 0) {
+        initialRules = {};
+    }
+
     var state = {
-        rules: stackboostCO.rules || {}, // Map: field_slug => rule object
+        rules: initialRules, // Map: field_slug => rule object
         fieldOptionsCache: {},
         rolesCache: { wp: [], sc: [] },
         limit: 5 // Default limit
@@ -11,6 +16,10 @@
 
     // Initialize
     $(document).ready(function() {
+        if (typeof stackboostLog === 'function') {
+            stackboostLog('Conditional Options: Admin JS Loaded.', state);
+        }
+
         initLimit();
         renderRules();
         updateCounter();
@@ -135,6 +144,9 @@
 
                 if (currentSlug) {
                     delete state.rules[currentSlug];
+                    if (typeof stackboostLog === 'function') {
+                        stackboostLog('Conditional Options: Rule Deleted.', currentSlug);
+                    }
                 }
                 $card.remove();
                 updateCounter();
@@ -154,6 +166,10 @@
 
                 // Promote new rule
                 state.rules[newSlug] = rule;
+                if (typeof stackboostLog === 'function') {
+                    stackboostLog('Conditional Options: New Rule Initialized.', { slug: newSlug, rule: rule });
+                }
+
                 // Update DOM ID
                 $card.attr('id', 'rule-' + newSlug);
                 $card.find('.pm-delete-rule').attr('data-slug', newSlug);
@@ -169,6 +185,11 @@
         $card.find('input[type=radio]').on('change', function() {
             var newCtx = $(this).val();
             rule.context = newCtx;
+
+            if (typeof stackboostLog === 'function') {
+                stackboostLog('Conditional Options: Context Changed.', { context: newCtx });
+            }
+
             // Re-render matrix with new context roles
             var currentSlug = slug || $card.find('.pm-field-select').val();
             if (currentSlug) {
@@ -338,10 +359,16 @@
         // Prepare Data
         // state.rules is already up to date via references
 
+        var payload = JSON.stringify(state.rules);
+
+        if (typeof stackboostLog === 'function') {
+            stackboostLog('Conditional Options: Saving Rules. Payload:', payload);
+        }
+
         $.post(stackboost_admin_ajax.ajax_url, {
             action: 'stackboost_co_save_rules',
             nonce: stackboost_admin_ajax.nonce,
-            rules: JSON.stringify(state.rules)
+            rules: payload
         }, function(res) {
             $btn.prop('disabled', false);
             $spinner.removeClass('is-active');
