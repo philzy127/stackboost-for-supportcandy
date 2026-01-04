@@ -365,15 +365,6 @@ class WordPress extends Module {
 						</table>
 					</div>
 
-					<!-- Card 4: Ticket Type Hiding -->
-					<div class="stackboost-card">
-						<h2><?php esc_html_e( 'Hide Ticket Types from Non-Agents', 'stackboost-for-supportcandy' ); ?></h2>
-						<p><?php esc_html_e( 'This feature hides specified ticket categories from the dropdown menu for any user who is not an agent.', 'stackboost-for-supportcandy' ); ?></p>
-						<table class="form-table">
-							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_ticket_type_hiding_section' ); ?>
-						</table>
-					</div>
-
 				</div>
 
 				<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
@@ -503,32 +494,6 @@ class WordPress extends Module {
 				'desc'    => 'The format of the time display.',
 			]
 		);
-
-		// Section: Ticket Type Hiding
-		add_settings_section( 'stackboost_ticket_type_hiding_section', __( 'Hide Ticket Types from Non-Agents', 'stackboost-for-supportcandy' ), null, $page_slug );
-		add_settings_field( 'stackboost_enable_ticket_type_hiding', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_type_hiding_section', [ 'id' => 'enable_ticket_type_hiding', 'desc' => 'Hide specific ticket types from non-agent users.' ] );
-
-		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
-		$custom_fields_choices = [];
-		foreach ( $plugin_instance->get_supportcandy_columns() as $name ) {
-			$custom_fields_choices[ $name ] = $name;
-		}
-
-		add_settings_field(
-			'stackboost_ticket_type_custom_field_name',
-			__( 'Custom Field Name', 'stackboost-for-supportcandy' ),
-			[ $this, 'render_select_field' ],
-			$page_slug,
-			'stackboost_ticket_type_hiding_section',
-			[
-				'id'          => 'ticket_type_custom_field_name',
-				'placeholder' => __( '-- Select a Custom Field --', 'stackboost-for-supportcandy' ),
-				'choices'     => $custom_fields_choices,
-				'desc'        => __( 'The custom field that represents the ticket type (e.g., "Ticket Category").', 'stackboost-for-supportcandy' ),
-			]
-		);
-
-		add_settings_field( 'stackboost_ticket_types_to_hide', __( 'Ticket Types to Hide', 'stackboost-for-supportcandy' ), [ $this, 'render_textarea_field' ], $page_slug, 'stackboost_ticket_type_hiding_section', [ 'id' => 'ticket_types_to_hide', 'class' => 'regular-text', 'desc' => 'One ticket type per line. e.g., Network Access Request' ] );
 	}
 
 	/**
@@ -677,12 +642,5 @@ class WordPress extends Module {
 	 */
 	public function render_hr_separator() {
 		echo '<hr>';
-	}
-
-	/**
-	 * Render the description for the Hide Ticket Types section.
-	 */
-	public function render_ticket_type_hiding_description() {
-		echo '<p>' . esc_html__( 'This feature hides specified ticket categories from the dropdown menu for any user who is not an agent.', 'stackboost-for-supportcandy' ) . '</p>';
 	}
 }

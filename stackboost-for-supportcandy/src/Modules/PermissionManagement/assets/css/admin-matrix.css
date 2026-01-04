@@ -1,0 +1,142 @@
+#stackboost-pm-app {
+    max-width: 1200px;
+    margin-top: 20px;
+}
+
+.pm-header {
+    display: flex;
+    justify_content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.pm-limit-counter {
+    font-weight: bold;
+    background: #f0f0f1;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.pm-limit-counter.limit-reached {
+    color: #d63638;
+    background: #fbeaea;
+}
+
+.pm-rule-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+    position: relative;
+    border-radius: 4px;
+}
+
+.pm-rule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.pm-delete-rule {
+    color: #a00;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 20px;
+}
+
+.pm-delete-rule:hover {
+    color: #d63638;
+}
+
+.pm-field-selector, .pm-context-selector {
+    margin-bottom: 15px;
+}
+
+.pm-matrix-container {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.pm-matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pm-matrix-table th {
+    background: #f9f9f9;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.pm-matrix-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.pm-matrix-table tr:hover {
+    background: #fdfdfd;
+}
+
+.pm-role-pill {
+    display: inline-block;
+    background: #e5e5e5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin: 2px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.pm-role-pill.selected {
+    background: #d63638; /* Red for Hidden */
+    color: white;
+}
+
+.pm-save-actions {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.pm-save-actions .spinner {
+    float: none;
+    margin-left: 10px;
+}
+
+/* Modal for Role Selection (Simple implementation) */
+.pm-role-dropdown {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    background: #fff;
+    position: absolute;
+    z-index: 100;
+    width: 300px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.pm-role-checkbox {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.pm-loading-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+}

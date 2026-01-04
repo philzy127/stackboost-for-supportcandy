@@ -10,6 +10,7 @@ use StackBoost\ForSupportCandy\Modules\Appearance;
 use StackBoost\ForSupportCandy\Modules\ChatBubbles;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
+use StackBoost\ForSupportCandy\Modules\PermissionManagement;
 
 /**
  * Main plugin class.
@@ -77,6 +78,14 @@ final class Plugin {
 
 		if ( stackboost_is_feature_active( 'date_time_formatting' ) ) {
 			$this->modules['date_time_formatting'] = DateTimeFormatting\WordPress::get_instance();
+		}
+
+		// Permission Management (Lite)
+		if ( stackboost_is_feature_active( 'permission_management' ) ) {
+			$class = 'StackBoost\ForSupportCandy\Modules\PermissionManagement\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['permission_management'] = $class::get_instance();
+			}
 		}
 
 		// Pro Features
@@ -316,11 +325,7 @@ final class Plugin {
 				'enabled'       => ! empty( $options['enable_hide_empty_columns'] ),
 				'hide_priority' => ! empty( $options['enable_hide_priority_column'] ),
 			];
-			$features_data['ticket_type_hiding'] = [
-				'enabled'       => ! empty( $options['enable_ticket_type_hiding'] ),
-				'field_id'      => $this->get_custom_field_id_by_name( $options['ticket_type_custom_field_name'] ?? '' ),
-				'types_to_hide' => $qol_core->parse_types_to_hide( $options['ticket_types_to_hide'] ?? '' ),
-			];
+			// Removed legacy ticket_type_hiding logic
 		}
 
 		// Gather data from Conditional Views module
@@ -370,6 +375,7 @@ final class Plugin {
             'stackboost_page_stackboost-utm',
             'stackboost_page_stackboost-ats',
             'stackboost_page_stackboost-directory',
+            'stackboost_page_stackboost-permission-management',
             // Robust fallback for standard hook naming convention
             'stackboost-for-supportcandy_page_stackboost-ticket-view',
             'stackboost-for-supportcandy_page_stackboost-after-hours',
@@ -383,6 +389,7 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-date-time',
             'stackboost-for-supportcandy_page_stackboost-appearance',
             'stackboost-for-supportcandy_page_stackboost-chat-bubbles',
+            'stackboost-for-supportcandy_page_stackboost-permission-management',
             // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
             'stackboost_page_stackboost-date-time',
 		];
