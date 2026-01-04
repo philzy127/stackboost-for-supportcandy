@@ -126,8 +126,12 @@
         $card.find('.pm-delete-rule').on('click', function(e) {
             e.preventDefault();
             if (confirm(stackboostPM.i18n.confirm_delete)) {
-                if (slug) {
-                    delete state.rules[slug];
+                // BUG FIX: Read slug from the DOM element, as 'slug' variable is closure-scoped
+                // and might be empty if this is a newly created rule that was just assigned a field.
+                var currentSlug = $(this).attr('data-slug');
+
+                if (currentSlug) {
+                    delete state.rules[currentSlug];
                 }
                 $card.remove();
                 updateCounter();

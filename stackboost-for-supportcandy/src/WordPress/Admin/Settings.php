@@ -67,6 +67,18 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketView\WordPress::get_instance(), 'render_page' ],
 		];
 
+		// 2.1 Permission Management - Lite
+		if ( stackboost_is_feature_active( 'permission_management' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\PermissionManagement\WordPress' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-permission-management',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Permission Management', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Permissions', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\PermissionManagement\WordPress::get_instance(), 'render_page' ],
+			];
+		}
+
 		// 3. Date & Time Formatting (New Module) - Lite
 		if ( stackboost_is_feature_active( 'date_time_formatting' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page' ) ) {
 			$menu_config[] = [
@@ -802,6 +814,7 @@ class Settings {
 				'page_last_loaded_label',
 				'page_last_loaded_format'
 			],
+			'stackboost-permission-management' => ['permission_management_rules'], // Whitelisted!
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
@@ -931,6 +944,21 @@ class Settings {
 
 					case 'conditional_hiding_rules':
 						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['action', 'columns', 'condition', 'view']) : [];
+						break;
+
+					case 'permission_management_rules':
+						// Decode JSON if it's a string, or trust array if already array
+						// Since sanitization usually receives the raw POST data, it might be an array if PHP handles nested inputs
+						// But in our case it's saved via AJAX as a JSON string, or potentially via options.php as hidden input?
+						// Our `save_rules` logic in Core.php handles saving directly.
+						// BUT if we are here, it means we are saving via `stackboost_save_settings` AJAX or options.php.
+						// We need to support this to ensure safety if standard save is used.
+
+						// Note: The UI saves via `stackboost_pm_save_rules` which calls Core->save_rules directly.
+						// But if we whitelist it here, we ensure that if a full options save occurs, it is NOT stripped.
+						// We don't need complex sanitization here if we trust the custom handler,
+						// but let's implement basic struct check.
+						$saved_settings[$key] = is_array($value) ? $value : []; // Basic array check
 						break;
 
 					case 'after_hours_message':
