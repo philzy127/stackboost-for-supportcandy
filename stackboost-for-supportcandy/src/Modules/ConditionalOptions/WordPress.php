@@ -193,6 +193,10 @@ class WordPress extends Module {
 	 * AJAX: Get Field Options.
 	 */
 	public function ajax_get_field_options() {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'AJAX Get Field Options Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
+		}
+
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -250,6 +254,10 @@ class WordPress extends Module {
 	 * AJAX: Get Roles.
 	 */
 	public function ajax_get_roles() {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'AJAX Get Roles Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
+		}
+
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -266,6 +274,10 @@ class WordPress extends Module {
 	 * AJAX: Save Rules.
 	 */
 	public function ajax_save_rules() {
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'AJAX Save Rules Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
+		}
+
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -275,6 +287,10 @@ class WordPress extends Module {
 		$rules_json = stripslashes( $_POST['rules'] ?? '[]' );
 		$rules      = json_decode( $rules_json, true );
 
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'Decoded Rules: ' . print_r( $rules, true ), 'conditional_options' );
+		}
+
 		if ( ! is_array( $rules ) ) {
 			wp_send_json_error( [ 'message' => 'Invalid data format' ] );
 		}
@@ -282,7 +298,14 @@ class WordPress extends Module {
 		$result = Core::get_instance()->save_rules( $rules );
 
 		if ( is_wp_error( $result ) ) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( 'Save Error: ' . $result->get_error_message(), 'conditional_options' );
+			}
 			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+		}
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'Save Success', 'conditional_options' );
 		}
 
 		wp_send_json_success( [ 'message' => __( 'Rules saved successfully.', 'stackboost-for-supportcandy' ) ] );
@@ -290,6 +313,12 @@ class WordPress extends Module {
 
 	/**
 	 * Backend Enforcement Logic.
+	 * Hooked to `wpsc_create_ticket_data`.
+	 *
+	 * @param array $data The data to be inserted.
+	 * @param array $custom_fields Array of custom field objects.
+	 * @param bool  $is_my_profile
+	 * @return array The filtered data.
 	 */
 	public function enforce_permissions_on_submission( $data, $custom_fields, $is_my_profile ) {
 		if ( current_user_can( 'manage_options' ) ) {
@@ -324,17 +353,22 @@ class WordPress extends Module {
 			}
 
 			$context = $rule['context'];
-			$option_rules = $rule['option_rules'];
+			$option_rules = $rule['option_rules']; // [ option_id => [ excluded_roles ] ]
 
 			$submitted_value = $data[ $field_slug ];
+			// $submitted_value is typically the Option ID (int) or Array of IDs (multi-select)
+
+			// Normalize to array for checking
 			$submitted_ids = is_array( $submitted_value ) ? $submitted_value : [ $submitted_value ];
 
 			foreach ( $submitted_ids as $id ) {
 				if ( isset( $option_rules[ $id ] ) ) {
 					$excluded_roles = $option_rules[ $id ];
 
+					// Check against context
 					$roles_to_check = ( 'wp' === $context ) ? $current_wp_roles : $current_sc_roles;
 
+					// "Any Hidden = Hidden" Logic
 					$is_restricted = false;
 					foreach ( $roles_to_check as $user_role ) {
 						if ( in_array( $user_role, $excluded_roles, true ) ) {
@@ -344,12 +378,21 @@ class WordPress extends Module {
 					}
 
 					if ( $is_restricted ) {
+						// Found a restricted value!
+						// Action: Remove it (sanitize).
+						// For single select, set to empty/default.
+						// For multi-select, remove this ID from array.
+
 						if ( is_array( $data[ $field_slug ] ) ) {
 							$data[ $field_slug ] = array_diff( $data[ $field_slug ], [ $id ] );
 						} else {
+							// Single value
+							// We should check if there's a default, or just null it.
+							// Setting to '' usually triggers default handling or empty.
 							$data[ $field_slug ] = '';
 						}
 
+						// Log enforcement action
 						if ( function_exists( 'stackboost_log' ) ) {
 							stackboost_log( "Permission Enforcement: Blocked value '$id' for field '$field_slug' for user.", 'security' );
 						}
