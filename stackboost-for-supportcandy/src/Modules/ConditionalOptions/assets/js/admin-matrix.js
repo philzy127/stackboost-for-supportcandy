@@ -75,7 +75,7 @@
         if (stackboostCO.tier === 'lite' && count > 5) {
             // Revert
             $card.remove();
-            alert(stackboostCO.i18n.limit_reached);
+            stackboostAlert(stackboostCO.i18n.limit_reached);
         }
     }
 
@@ -128,17 +128,17 @@
         // Delete
         $card.find('.pm-delete-rule').on('click', function(e) {
             e.preventDefault();
-            if (confirm(stackboostCO.i18n.confirm_delete)) {
+            var $btn = $(this);
+            stackboostConfirm(stackboostCO.i18n.confirm_delete, 'Confirm Delete', function() {
                 // BUG FIX: Read slug from the DOM element, as 'slug' variable is closure-scoped
-                // and might be empty if this is a newly created rule that was just assigned a field.
-                var currentSlug = $(this).attr('data-slug');
+                var currentSlug = $btn.attr('data-slug');
 
                 if (currentSlug) {
                     delete state.rules[currentSlug];
                 }
                 $card.remove();
                 updateCounter();
-            }
+            }, null, 'Yes, Delete', 'Cancel', true);
         });
 
         // Field Change
@@ -147,7 +147,7 @@
             if (newSlug) {
                 // Check if rule already exists
                 if (state.rules[newSlug]) {
-                    alert('Rule for this field already exists.');
+                    stackboostAlert('Rule for this field already exists.', 'Error');
                     $(this).val('');
                     return;
                 }
@@ -347,9 +347,9 @@
             $spinner.removeClass('is-active');
 
             if (res.success) {
-                alert(res.data.message);
+                stackboostAlert(res.data.message, 'Success');
             } else {
-                alert('Error: ' + res.data.message);
+                stackboostAlert('Error: ' + res.data.message, 'Error');
             }
         });
     }

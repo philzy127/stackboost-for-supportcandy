@@ -2,6 +2,8 @@
 
 namespace StackBoost\ForSupportCandy\Modules\ConditionalOptions;
 
+use StackBoost\ForSupportCandy\WordPress\Admin\Settings;
+
 /**
  * Core Logic for Conditional Options.
  * Handles data retrieval, validation, and rule processing.
@@ -133,12 +135,6 @@ class Core {
 	public function save_rules( array $new_rules ) {
 		// Check limit
 		$limit = 5; // Free/Lite Limit
-		// Note: Ideally check for Pro license to bypass limit, but currently spec says "Free users are limited to 5".
-		// Assuming strict 5 for now until Pro tier upgrade path is defined for this specific feature limit.
-		// Actually, standard pattern is `stackboost_get_license_tier()`.
-		// If tier is NOT 'lite', maybe we allow more?
-		// The brief says "Free users are limited to 5".
-		// Let's enforce 5 for 'lite', unlimited for others.
 
 		$tier = stackboost_get_license_tier();
 		if ( 'lite' === $tier && count( $new_rules ) > $limit ) {
@@ -147,6 +143,17 @@ class Core {
 
 		$options = get_option( 'stackboost_settings', [] );
 		$options['conditional_options_rules'] = $new_rules;
+
+		// IMPORTANT: Remove the strict sanitization filter for this programmatic update.
+		// The central Settings::sanitize_settings callback requires 'page_slug' to be present
+		// in the input array to determine which fields to process. Since we are updating
+		// the rules programmatically here (and not simulating a full form submission),
+		// the sanitizer would see missing data and return the *old* settings or an empty array,
+		// causing the save to fail silently.
+		if ( class_exists( '\StackBoost\ForSupportCandy\WordPress\Admin\Settings' ) ) {
+			$settings_instance = \StackBoost\ForSupportCandy\WordPress\Admin\Settings::get_instance();
+			remove_filter( 'sanitize_option_stackboost_settings', [ $settings_instance, 'sanitize_settings' ] );
+		}
 
 		return update_option( 'stackboost_settings', $options );
 	}
