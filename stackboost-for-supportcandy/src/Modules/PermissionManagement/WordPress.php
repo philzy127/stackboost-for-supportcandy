@@ -201,38 +201,40 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$field_slug = sanitize_text_field( $_POST['field_slug'] ?? '' );
+		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( $_POST['field_slug'] ) : '';
 		if ( empty( $field_slug ) ) {
 			wp_send_json_error( [ 'message' => 'Missing field slug' ] );
 		}
 
-		global $wpdb;
-		// Use dynamic prefix to ensure compatibility if prefix changes, but default to 'psmsc_'
-		// as per codebase conventions in this environment (confirmed by Plugin.php and repo).
-		$table = $wpdb->prefix . 'psmsc_custom_fields';
+		if ( ! class_exists( '\WPSC_Custom_Field' ) ) {
+			wp_send_json_error( [ 'message' => 'SupportCandy classes not loaded.' ] );
+		}
 
-		// Check table existence to be safe against different SC versions
-		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) !== $table ) {
-			// Fallback to standard wpsc_ prefix if psmsc_ is missing
-			$table_fallback = $wpdb->prefix . 'wpsc_custom_fields';
-			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_fallback ) ) === $table_fallback ) {
-				$table = $table_fallback;
-			} else {
-				wp_send_json_error( [ 'message' => 'SupportCandy tables not found.' ] );
+		$cf = \WPSC_Custom_Field::get_cf_by_slug( $field_slug );
+		if ( ! $cf ) {
+			wp_send_json_error( [ 'message' => 'Field not found.' ] );
+		}
+
+		// Check if field has options
+		if ( ! $cf->type::$has_options ) {
+			wp_send_json_error( [ 'message' => 'This field type does not support options.' ] );
+		}
+
+		$options = $cf->get_options();
+		$response_data = [];
+		foreach ( $options as $option ) {
+			// option is likely an object or array with id/name
+			$id = is_object( $option ) ? $option->id : ( $option['id'] ?? '' );
+			$name = is_object( $option ) ? $option->name : ( $option['name'] ?? '' );
+			if ( $id ) {
+				$response_data[] = [
+					'id' => $id,
+					'name' => $name,
+				];
 			}
 		}
 
-		$field_id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE slug = %s", $field_slug ) );
-
-		if ( ! $field_id ) {
-			// Try lookup by name as fallback if ID resolution failed but name was provided?
-			// The JS passes name too.
-			// But slug should be unique.
-			wp_send_json_error( [ 'message' => 'Field not found' ] );
-		}
-
-		$options = Core::get_instance()->get_field_options( (int) $field_id );
-		wp_send_json_success( $options );
+		wp_send_json_success( $response_data );
 	}
 
 	/**
