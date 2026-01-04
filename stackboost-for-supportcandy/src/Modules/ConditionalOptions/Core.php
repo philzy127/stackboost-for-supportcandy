@@ -141,20 +141,17 @@ class Core {
 			return new \WP_Error( 'limit_exceeded', sprintf( __( 'You have reached the limit of %d rules for the Free version.', 'stackboost-for-supportcandy' ), $limit ) );
 		}
 
-		$options = get_option( 'stackboost_settings', [] );
-		$options['conditional_options_rules'] = $new_rules;
+		// Construct payload to pass through Settings::sanitize_settings
+		// This mimics a form submission, ensuring the central sanitizer processes it correctly.
+		$payload = [
+			'page_slug'                 => 'stackboost-conditional-options',
+			'conditional_options_rules' => $new_rules,
+		];
 
-		// IMPORTANT: Remove the strict sanitization filter for this programmatic update.
-		// The central Settings::sanitize_settings callback requires 'page_slug' to be present
-		// in the input array to determine which fields to process. Since we are updating
-		// the rules programmatically here (and not simulating a full form submission),
-		// the sanitizer would see missing data and return the *old* settings or an empty array,
-		// causing the save to fail silently.
-		if ( class_exists( '\StackBoost\ForSupportCandy\WordPress\Admin\Settings' ) ) {
-			$settings_instance = \StackBoost\ForSupportCandy\WordPress\Admin\Settings::get_instance();
-			remove_filter( 'sanitize_option_stackboost_settings', [ $settings_instance, 'sanitize_settings' ] );
-		}
-
-		return update_option( 'stackboost_settings', $options );
+		// We use update_option with the payload.
+		// WordPress calls the 'sanitize_option_stackboost_settings' filter (Settings::sanitize_settings).
+		// The sanitizer sees 'page_slug', fetches the *existing* settings from DB, merges/updates
+		// 'conditional_options_rules' from our payload, and returns the full clean array to be saved.
+		return update_option( 'stackboost_settings', $payload );
 	}
 }
