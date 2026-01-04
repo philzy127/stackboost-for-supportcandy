@@ -122,6 +122,9 @@
         // Bind Events
         $card.append($el);
 
+        // Initial Check for Context Lock
+        updateContextLock($card, rule);
+
         // Delete
         $card.find('.pm-delete-rule').on('click', function(e) {
             e.preventDefault();
@@ -166,11 +169,6 @@
         $card.find('input[type=radio]').on('change', function() {
             var newCtx = $(this).val();
             rule.context = newCtx;
-            // Clear existing rules if context switches?
-            // The brief says "The Admin selects roles from the chosen context only."
-            // Implicitly, yes, we should probably clear or re-render.
-            // But we keep `option_rules` structure but validation roles will change.
-
             // Re-render matrix with new context roles
             var currentSlug = slug || $card.find('.pm-field-select').val();
             if (currentSlug) {
@@ -183,6 +181,31 @@
 
     function getFieldName(slug) {
         return stackboostCO.fields[slug] || slug;
+    }
+
+    // Helper: Disable/Enable context radios based on selected rules
+    function updateContextLock($card, rule) {
+        var hasActiveRules = false;
+
+        // Iterate active rules to check if any role is selected
+        if (rule.option_rules) {
+            $.each(rule.option_rules, function(optId, roles) {
+                if (roles && roles.length > 0) {
+                    hasActiveRules = true;
+                    return false; // Break loop
+                }
+            });
+        }
+
+        var $radios = $card.find('input[type="radio"][name^="ctx_"]');
+
+        if (hasActiveRules) {
+            // Disable the unchecked radio
+            $radios.not(':checked').prop('disabled', true);
+        } else {
+            // Enable all
+            $radios.prop('disabled', false);
+        }
     }
 
     function loadFieldData(slug, context) {
@@ -294,6 +317,9 @@
                     rule.option_rules[optId].splice(idx, 1);
                 }
             }
+
+            // Update Context Lock
+            updateContextLock($card, rule);
         });
     }
 
