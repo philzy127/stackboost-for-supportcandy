@@ -1,14 +1,14 @@
 <?php
 
-namespace StackBoost\ForSupportCandy\Modules\PermissionManagement;
+namespace StackBoost\ForSupportCandy\Modules\ConditionalOptions;
 
 use StackBoost\ForSupportCandy\Core\Module;
 
 /**
- * WordPress Adapter for Permission Management.
+ * WordPress Adapter for Conditional Options.
  * Handles hooks, settings registration, and script enqueueing.
  *
- * @package StackBoost\ForSupportCandy\Modules\PermissionManagement
+ * @package StackBoost\ForSupportCandy\Modules\ConditionalOptions
  */
 class WordPress extends Module {
 
@@ -37,7 +37,7 @@ class WordPress extends Module {
 	 * @return string
 	 */
 	public function get_slug(): string {
-		return 'permission_management';
+		return 'conditional_options';
 	}
 
 	/**
@@ -49,9 +49,9 @@ class WordPress extends Module {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_scripts' ] );
 
 		// AJAX Hooks for Admin UI
-		add_action( 'wp_ajax_stackboost_pm_get_field_options', [ $this, 'ajax_get_field_options' ] );
-		add_action( 'wp_ajax_stackboost_pm_get_roles', [ $this, 'ajax_get_roles' ] );
-		add_action( 'wp_ajax_stackboost_pm_save_rules', [ $this, 'ajax_save_rules' ] );
+		add_action( 'wp_ajax_stackboost_co_get_field_options', [ $this, 'ajax_get_field_options' ] );
+		add_action( 'wp_ajax_stackboost_co_get_roles', [ $this, 'ajax_get_roles' ] );
+		add_action( 'wp_ajax_stackboost_co_save_rules', [ $this, 'ajax_save_rules' ] );
 
 		// Security Enforcement Hook (Backend)
 		// wpsc_create_ticket_data filters the data right before insertion.
@@ -67,15 +67,15 @@ class WordPress extends Module {
 		}
 
 		// Enqueue module-specific assets
-		wp_enqueue_style( 'stackboost-pm-admin-css' );
-		wp_enqueue_script( 'stackboost-pm-admin-js' );
+		wp_enqueue_style( 'stackboost-co-admin-css' );
+		wp_enqueue_script( 'stackboost-co-admin-js' );
 
 		?>
 		<div class="wrap stackboost-dashboard">
-			<h1><?php esc_html_e( 'Permission Management', 'stackboost-for-supportcandy' ); ?></h1>
+			<h1><?php esc_html_e( 'Conditional Options', 'stackboost-for-supportcandy' ); ?></h1>
 			<p><?php esc_html_e( 'Configure granular visibility rules for field options based on user roles.', 'stackboost-for-supportcandy' ); ?></p>
 
-			<div id="stackboost-pm-app">
+			<div id="stackboost-co-app">
 				<!-- JS App Container -->
 				<div class="stackboost-card">
 					<div class="pm-header">
@@ -114,20 +114,20 @@ class WordPress extends Module {
 	 * Enqueue Admin Scripts.
 	 */
 	public function enqueue_admin_scripts( $hook_suffix ) {
-		if ( 'stackboost-for-supportcandy_page_stackboost-permission-management' !== $hook_suffix && 'stackboost_page_stackboost-permission-management' !== $hook_suffix ) {
+		if ( 'stackboost-for-supportcandy_page_stackboost-conditional-options' !== $hook_suffix && 'stackboost_page_stackboost-conditional-options' !== $hook_suffix ) {
 			return;
 		}
 
 		wp_register_style(
-			'stackboost-pm-admin-css',
-			STACKBOOST_PLUGIN_URL . 'src/Modules/PermissionManagement/assets/css/admin-matrix.css',
+			'stackboost-co-admin-css',
+			STACKBOOST_PLUGIN_URL . 'src/Modules/ConditionalOptions/assets/css/admin-matrix.css',
 			[],
 			STACKBOOST_VERSION
 		);
 
 		wp_register_script(
-			'stackboost-pm-admin-js',
-			STACKBOOST_PLUGIN_URL . 'src/Modules/PermissionManagement/assets/js/admin-matrix.js',
+			'stackboost-co-admin-js',
+			STACKBOOST_PLUGIN_URL . 'src/Modules/ConditionalOptions/assets/js/admin-matrix.js',
 			[ 'jquery', 'stackboost-admin-common' ], // Depends on common for nonce/ajax_url
 			STACKBOOST_VERSION,
 			true
@@ -137,7 +137,7 @@ class WordPress extends Module {
 		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
 		$core = Core::get_instance();
 
-		wp_localize_script( 'stackboost-pm-admin-js', 'stackboostPM', [
+		wp_localize_script( 'stackboost-co-admin-js', 'stackboostCO', [
 			'fields' => $plugin_instance->get_supportcandy_columns(), // Pass field list [slug => name]
 			'rules'  => $core->get_rules(),
 			'tier'   => stackboost_get_license_tier(),
@@ -153,8 +153,8 @@ class WordPress extends Module {
 	 */
 	public function enqueue_frontend_scripts() {
 		wp_enqueue_script(
-			'stackboost-pm-frontend',
-			STACKBOOST_PLUGIN_URL . 'src/Modules/PermissionManagement/assets/js/frontend-enforcement.js',
+			'stackboost-co-frontend',
+			STACKBOOST_PLUGIN_URL . 'src/Modules/ConditionalOptions/assets/js/frontend-enforcement.js',
 			[ 'jquery' ],
 			STACKBOOST_VERSION,
 			true
@@ -169,8 +169,6 @@ class WordPress extends Module {
 		if ( is_user_logged_in() ) {
 			$user = wp_get_current_user();
 			$current_wp_roles = (array) $user->roles;
-		} else {
-			// Guest role handling if needed, usually empty or 'guest'
 		}
 
 		// SupportCandy Role (Agent)
@@ -181,7 +179,7 @@ class WordPress extends Module {
 			}
 		}
 
-		wp_localize_script( 'stackboost-pm-frontend', 'stackboostPMRules', [
+		wp_localize_script( 'stackboost-co-frontend', 'stackboostCORules', [
 			'rules' => $core->get_rules(),
 			'user'  => [
 				'wp_roles' => $current_wp_roles,
@@ -215,15 +213,26 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => 'Field not found.' ] );
 		}
 
-		// Check if field has options
-		if ( ! $cf->type::$has_options ) {
-			wp_send_json_error( [ 'message' => 'This field type does not support options.' ] );
+		$response_data = [];
+		$raw_options = [];
+
+		// Specific Handling for Standard Fields that don't use generic options
+		if ( 'df_category' === $cf->type::$slug ) {
+			$raw_options = \WPSC_Category::find( [ 'items_per_page' => 0 ] )['results'];
+		} elseif ( 'df_priority' === $cf->type::$slug ) {
+			$raw_options = \WPSC_Priority::find( [ 'items_per_page' => 0 ] )['results'];
+		} elseif ( 'df_status' === $cf->type::$slug ) {
+			$raw_options = \WPSC_Status::find( [ 'items_per_page' => 0 ] )['results'];
+		} else {
+			// Generic Handling
+			if ( ! $cf->type::$has_options ) {
+				wp_send_json_error( [ 'message' => 'This field type does not support options.' ] );
+			}
+			$raw_options = $cf->get_options();
 		}
 
-		$options = $cf->get_options();
-		$response_data = [];
-		foreach ( $options as $option ) {
-			// option is likely an object or array with id/name
+		foreach ( $raw_options as $option ) {
+			// Handle object vs array (models are objects)
 			$id = is_object( $option ) ? $option->id : ( $option['id'] ?? '' );
 			$name = is_object( $option ) ? $option->name : ( $option['name'] ?? '' );
 			if ( $id ) {
@@ -270,13 +279,6 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => 'Invalid data format' ] );
 		}
 
-		// Sanitize Rules Structure
-		// [ field_slug => [ context => 'wp', option_rules => [ option_id => [ role1, role2 ] ] ] ]
-		// We should accept the array as is but ensure keys/values are safe.
-		// For simplicity, we trust the structure but sanitize strings.
-
-		// TODO: Implement deep sanitization if needed.
-
 		$result = Core::get_instance()->save_rules( $rules );
 
 		if ( is_wp_error( $result ) ) {
@@ -288,12 +290,6 @@ class WordPress extends Module {
 
 	/**
 	 * Backend Enforcement Logic.
-	 * Hooked to `wpsc_create_ticket_data`.
-	 *
-	 * @param array $data The data to be inserted.
-	 * @param array $custom_fields Array of custom field objects.
-	 * @param bool  $is_my_profile
-	 * @return array The filtered data.
 	 */
 	public function enforce_permissions_on_submission( $data, $custom_fields, $is_my_profile ) {
 		if ( current_user_can( 'manage_options' ) ) {
@@ -328,22 +324,17 @@ class WordPress extends Module {
 			}
 
 			$context = $rule['context'];
-			$option_rules = $rule['option_rules']; // [ option_id => [ excluded_roles ] ]
+			$option_rules = $rule['option_rules'];
 
 			$submitted_value = $data[ $field_slug ];
-			// $submitted_value is typically the Option ID (int) or Array of IDs (multi-select)
-
-			// Normalize to array for checking
 			$submitted_ids = is_array( $submitted_value ) ? $submitted_value : [ $submitted_value ];
 
 			foreach ( $submitted_ids as $id ) {
 				if ( isset( $option_rules[ $id ] ) ) {
 					$excluded_roles = $option_rules[ $id ];
 
-					// Check against context
 					$roles_to_check = ( 'wp' === $context ) ? $current_wp_roles : $current_sc_roles;
 
-					// "Any Hidden = Hidden" Logic
 					$is_restricted = false;
 					foreach ( $roles_to_check as $user_role ) {
 						if ( in_array( $user_role, $excluded_roles, true ) ) {
@@ -353,22 +344,15 @@ class WordPress extends Module {
 					}
 
 					if ( $is_restricted ) {
-						// Found a restricted value!
-						// Action: Remove it (sanitize).
-						// For single select, set to empty/default.
-						// For multi-select, remove this ID from array.
-
 						if ( is_array( $data[ $field_slug ] ) ) {
 							$data[ $field_slug ] = array_diff( $data[ $field_slug ], [ $id ] );
 						} else {
-							// Single value
-							// We should check if there's a default, or just null it.
-							// Setting to '' usually triggers default handling or empty.
 							$data[ $field_slug ] = '';
 						}
 
-						// Log enforcement action
-						stackboost_log( "Permission Enforcement: Blocked value '$id' for field '$field_slug' for user.", 'security' );
+						if ( function_exists( 'stackboost_log' ) ) {
+							stackboost_log( "Permission Enforcement: Blocked value '$id' for field '$field_slug' for user.", 'security' );
+						}
 					}
 				}
 			}

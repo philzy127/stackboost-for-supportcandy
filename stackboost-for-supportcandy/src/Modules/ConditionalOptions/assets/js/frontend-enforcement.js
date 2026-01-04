@@ -2,12 +2,12 @@
     'use strict';
 
     $(document).ready(function() {
-        if (typeof stackboostPMRules === 'undefined' || !stackboostPMRules.rules) {
+        if (typeof stackboostCORules === 'undefined' || !stackboostCORules.rules) {
             return;
         }
 
-        var rules = stackboostPMRules.rules;
-        var user = stackboostPMRules.user;
+        var rules = stackboostCORules.rules;
+        var user = stackboostCORules.user;
 
         // Admin Bypass
         if (user.is_admin) {

@@ -10,7 +10,7 @@ use StackBoost\ForSupportCandy\Modules\Appearance;
 use StackBoost\ForSupportCandy\Modules\ChatBubbles;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
-use StackBoost\ForSupportCandy\Modules\PermissionManagement;
+use StackBoost\ForSupportCandy\Modules\ConditionalOptions;
 
 /**
  * Main plugin class.
@@ -80,11 +80,11 @@ final class Plugin {
 			$this->modules['date_time_formatting'] = DateTimeFormatting\WordPress::get_instance();
 		}
 
-		// Permission Management (Lite)
-		if ( stackboost_is_feature_active( 'permission_management' ) ) {
-			$class = 'StackBoost\ForSupportCandy\Modules\PermissionManagement\WordPress';
+		// Conditional Options (Lite)
+		if ( stackboost_is_feature_active( 'conditional_options' ) ) {
+			$class = 'StackBoost\ForSupportCandy\Modules\ConditionalOptions\WordPress';
 			if ( class_exists( $class ) ) {
-				$this->modules['permission_management'] = $class::get_instance();
+				$this->modules['conditional_options'] = $class::get_instance();
 			}
 		}
 
@@ -375,7 +375,7 @@ final class Plugin {
             'stackboost_page_stackboost-utm',
             'stackboost_page_stackboost-ats',
             'stackboost_page_stackboost-directory',
-            'stackboost_page_stackboost-permission-management',
+            'stackboost_page_stackboost-conditional-options',
             // Robust fallback for standard hook naming convention
             'stackboost-for-supportcandy_page_stackboost-ticket-view',
             'stackboost-for-supportcandy_page_stackboost-after-hours',
@@ -389,7 +389,7 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-date-time',
             'stackboost-for-supportcandy_page_stackboost-appearance',
             'stackboost-for-supportcandy_page_stackboost-chat-bubbles',
-            'stackboost-for-supportcandy_page_stackboost-permission-management',
+            'stackboost-for-supportcandy_page_stackboost-conditional-options',
             // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
             'stackboost_page_stackboost-date-time',
 		];

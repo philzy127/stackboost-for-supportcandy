@@ -1,12 +1,12 @@
 <?php
 
-namespace StackBoost\ForSupportCandy\Modules\PermissionManagement;
+namespace StackBoost\ForSupportCandy\Modules\ConditionalOptions;
 
 /**
- * Core Logic for Permission Management.
+ * Core Logic for Conditional Options.
  * Handles data retrieval, validation, and rule processing.
  *
- * @package StackBoost\ForSupportCandy\Modules\PermissionManagement
+ * @package StackBoost\ForSupportCandy\Modules\ConditionalOptions
  */
 class Core {
 
@@ -25,7 +25,7 @@ class Core {
 
 	/**
 	 * Get available options for a specific SupportCandy field.
-	 * Supports standard Dropdowns and other option-based fields.
+	 * Supports standard fields (Category, Priority, Status) and generic Custom Fields.
 	 *
 	 * @param int $field_id The SupportCandy Field ID.
 	 * @return array List of options [ 'id' => int, 'name' => string ].
@@ -40,19 +40,40 @@ class Core {
 			return [];
 		}
 
-		// Ensure the field supports options
-		// We can check if the type class has 'has_options' property set to true.
-		// Or simply check if get_options() returns anything.
-		// Based on repo analysis, `WPSC_Custom_Field::get_options()` works for fields with options.
+		$result = [];
+		$raw_options = [];
 
-		$options = $field->get_options();
-		$result  = [];
+		// Specific Handling for Standard Fields
+		// Note: We check the class type string as specific static properties might be set on subclasses
+		if ( 'df_category' === $field->type::$slug ) {
+			if ( class_exists( '\WPSC_Category' ) ) {
+				$raw_options = \WPSC_Category::find( [ 'items_per_page' => 0 ] )['results'];
+			}
+		} elseif ( 'df_priority' === $field->type::$slug ) {
+			if ( class_exists( '\WPSC_Priority' ) ) {
+				$raw_options = \WPSC_Priority::find( [ 'items_per_page' => 0 ] )['results'];
+			}
+		} elseif ( 'df_status' === $field->type::$slug ) {
+			if ( class_exists( '\WPSC_Status' ) ) {
+				$raw_options = \WPSC_Status::find( [ 'items_per_page' => 0 ] )['results'];
+			}
+		} else {
+			// Generic Handling for Custom Fields
+			if ( $field->type::$has_options ) {
+				$raw_options = $field->get_options();
+			}
+		}
 
-		foreach ( $options as $option ) {
-			$result[] = [
-				'id'   => $option->id,
-				'name' => $option->name,
-			];
+		foreach ( $raw_options as $option ) {
+			$id = is_object( $option ) ? $option->id : ( $option['id'] ?? '' );
+			$name = is_object( $option ) ? $option->name : ( $option['name'] ?? '' );
+
+			if ( $id ) {
+				$result[] = [
+					'id'   => $id,
+					'name' => $name,
+				];
+			}
 		}
 
 		return $result;
@@ -99,7 +120,7 @@ class Core {
 	 */
 	public function get_rules(): array {
 		$options = get_option( 'stackboost_settings', [] );
-		return $options['permission_management_rules'] ?? [];
+		return $options['conditional_options_rules'] ?? [];
 	}
 
 	/**
@@ -125,7 +146,7 @@ class Core {
 		}
 
 		$options = get_option( 'stackboost_settings', [] );
-		$options['permission_management_rules'] = $new_rules;
+		$options['conditional_options_rules'] = $new_rules;
 
 		return update_option( 'stackboost_settings', $options );
 	}

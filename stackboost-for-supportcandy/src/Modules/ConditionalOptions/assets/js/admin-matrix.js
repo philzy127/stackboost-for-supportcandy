@@ -3,7 +3,7 @@
 
     // State
     var state = {
-        rules: stackboostPM.rules || {}, // Map: field_slug => rule object
+        rules: stackboostCO.rules || {}, // Map: field_slug => rule object
         fieldOptionsCache: {},
         rolesCache: { wp: [], sc: [] },
         limit: 5 // Default limit
@@ -22,7 +22,7 @@
 
     function initLimit() {
         // Simple tier check
-        if (stackboostPM.tier === 'lite') {
+        if (stackboostCO.tier === 'lite') {
             state.limit = 5;
         } else {
             state.limit = 999; // Unlimited
@@ -72,10 +72,10 @@
 
         // Disable Add button if limit reached (visual check)
         var count = $('#pm-rules-container .pm-rule-card').length;
-        if (stackboostPM.tier === 'lite' && count > 5) {
+        if (stackboostCO.tier === 'lite' && count > 5) {
             // Revert
             $card.remove();
-            alert(stackboostPM.i18n.limit_reached);
+            alert(stackboostCO.i18n.limit_reached);
         }
     }
 
@@ -97,7 +97,7 @@
         html += '<label>Target Field: </label>';
         html += '<select class="pm-field-select" ' + (slug ? 'disabled' : '') + '>';
         html += '<option value="">-- Select Field --</option>';
-        $.each(stackboostPM.fields, function(fSlug, fName) {
+        $.each(stackboostCO.fields, function(fSlug, fName) {
             html += '<option value="' + fSlug + '" ' + (slug === fSlug ? 'selected' : '') + '>' + fName + '</option>';
         });
         html += '</select>';
@@ -125,7 +125,7 @@
         // Delete
         $card.find('.pm-delete-rule').on('click', function(e) {
             e.preventDefault();
-            if (confirm(stackboostPM.i18n.confirm_delete)) {
+            if (confirm(stackboostCO.i18n.confirm_delete)) {
                 // BUG FIX: Read slug from the DOM element, as 'slug' variable is closure-scoped
                 // and might be empty if this is a newly created rule that was just assigned a field.
                 var currentSlug = $(this).attr('data-slug');
@@ -182,7 +182,7 @@
     }
 
     function getFieldName(slug) {
-        return stackboostPM.fields[slug] || slug;
+        return stackboostCO.fields[slug] || slug;
     }
 
     function loadFieldData(slug, context) {
@@ -197,7 +197,7 @@
             rolesPromise.resolve(state.rolesCache[context]);
         } else {
             $.post(stackboost_admin_ajax.ajax_url, {
-                action: 'stackboost_pm_get_roles',
+                action: 'stackboost_co_get_roles',
                 nonce: stackboost_admin_ajax.nonce,
                 context: context
             }, function(res) {
@@ -216,7 +216,7 @@
             optionsPromise.resolve(state.fieldOptionsCache[slug]);
         } else {
             $.post(stackboost_admin_ajax.ajax_url, {
-                action: 'stackboost_pm_get_field_options',
+                action: 'stackboost_co_get_field_options',
                 nonce: stackboost_admin_ajax.nonce,
                 field_slug: slug,
                 field_name: getFieldName(slug) // Fallback or helper
@@ -313,7 +313,7 @@
         // state.rules is already up to date via references
 
         $.post(stackboost_admin_ajax.ajax_url, {
-            action: 'stackboost_pm_save_rules',
+            action: 'stackboost_co_save_rules',
             nonce: stackboost_admin_ajax.nonce,
             rules: JSON.stringify(state.rules)
         }, function(res) {
