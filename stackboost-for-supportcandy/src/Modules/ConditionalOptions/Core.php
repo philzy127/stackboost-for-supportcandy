@@ -116,6 +116,18 @@ class Core {
 	}
 
 	/**
+	 * Check if the feature is enabled globally.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool {
+		$options = get_option( 'stackboost_settings', [] );
+		// Default to false (disabled) if not set, or whatever standard you prefer.
+		// Assuming '1' or 'on' means enabled.
+		return ! empty( $options['conditional_options_enabled'] );
+	}
+
+	/**
 	 * Retrieve all stored permission rules.
 	 *
 	 * @return array
@@ -126,13 +138,14 @@ class Core {
 	}
 
 	/**
-	 * Save a new rule or update existing ones.
+	 * Save configuration (rules + enabled status).
 	 * Enforces the "Lite Limit" of 5 rules.
 	 *
 	 * @param array $new_rules The full array of rules to save.
+	 * @param bool  $is_enabled Whether the feature is enabled.
 	 * @return bool|\WP_Error True on success, WP_Error on failure.
 	 */
-	public function save_rules( array $new_rules ) {
+	public function save_config( array $new_rules, bool $is_enabled ) {
 		// Check limit
 		$limit = 5; // Free/Lite Limit
 
@@ -142,16 +155,15 @@ class Core {
 		}
 
 		// Construct payload to pass through Settings::sanitize_settings
-		// This mimics a form submission, ensuring the central sanitizer processes it correctly.
 		$payload = [
-			'page_slug'                 => 'stackboost-conditional-options',
-			'conditional_options_rules' => $new_rules,
+			'page_slug'                   => 'stackboost-conditional-options',
+			'conditional_options_rules'   => $new_rules,
+			'conditional_options_enabled' => $is_enabled ? '1' : '0',
 		];
 
 		// We use update_option with the payload.
-		// WordPress calls the 'sanitize_option_stackboost_settings' filter (Settings::sanitize_settings).
 		// The sanitizer sees 'page_slug', fetches the *existing* settings from DB, merges/updates
-		// 'conditional_options_rules' from our payload, and returns the full clean array to be saved.
+		// 'conditional_options_rules' and 'conditional_options_enabled' from our payload.
 		return update_option( 'stackboost_settings', $payload );
 	}
 }

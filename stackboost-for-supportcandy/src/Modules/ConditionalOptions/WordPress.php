@@ -70,12 +70,28 @@ class WordPress extends Module {
 		wp_enqueue_style( 'stackboost-co-admin-css' );
 		wp_enqueue_script( 'stackboost-co-admin-js' );
 
+		$core = Core::get_instance();
+		$is_enabled = $core->is_enabled();
 		?>
 		<div class="wrap stackboost-dashboard">
 			<h1><?php esc_html_e( 'Conditional Options', 'stackboost-for-supportcandy' ); ?></h1>
 			<p><?php esc_html_e( 'Configure granular visibility rules for field options based on user roles.', 'stackboost-for-supportcandy' ); ?></p>
 
-			<div id="stackboost-co-app">
+			<!-- Global Enable/Disable Toggle -->
+			<div class="stackboost-card" style="margin-bottom: 20px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
+				<div>
+					<h3 style="margin: 0;"><?php esc_html_e( 'Enable Feature', 'stackboost-for-supportcandy' ); ?></h3>
+					<p class="description" style="margin-top: 5px;"><?php esc_html_e( 'Toggle this feature on or off globally.', 'stackboost-for-supportcandy' ); ?></p>
+				</div>
+				<div class="stackboost-toggle-wrapper">
+					<label class="switch">
+						<input type="checkbox" id="stackboost_co_enabled" <?php checked( $is_enabled, true ); ?>>
+						<span class="slider round"></span>
+					</label>
+				</div>
+			</div>
+
+			<div id="stackboost-co-app" class="<?php echo $is_enabled ? '' : 'stackboost-disabled-ui'; ?>">
 				<!-- Main Table View -->
 				<div class="stackboost-card">
 					<div class="pm-header">
@@ -200,10 +216,11 @@ class WordPress extends Module {
 		$core = Core::get_instance();
 
 		wp_localize_script( 'stackboost-co-admin-js', 'stackboostCO', [
-			'fields' => $plugin_instance->get_supportcandy_columns(), // Pass field list [slug => name]
-			'rules'  => $core->get_rules(),
-			'tier'   => stackboost_get_license_tier(),
-			'i18n'   => [
+			'fields'  => $plugin_instance->get_supportcandy_columns(), // Pass field list [slug => name]
+			'rules'   => $core->get_rules(),
+			'enabled' => $core->is_enabled(),
+			'tier'    => stackboost_get_license_tier(),
+			'i18n'    => [
 				'confirm_delete' => __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ),
 				'limit_reached'  => __( 'Limit Reached: Upgrade to Pro for unlimited rules.', 'stackboost-for-supportcandy' ),
 				'toggle_all'     => __( 'Select All / None', 'stackboost-for-supportcandy' ),
@@ -215,6 +232,12 @@ class WordPress extends Module {
 	 * Enqueue Frontend Enforcement Scripts.
 	 */
 	public function enqueue_frontend_scripts() {
+		$core = Core::get_instance();
+
+		if ( ! $core->is_enabled() ) {
+			return;
+		}
+
 		wp_enqueue_script(
 			'stackboost-co-frontend',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/ConditionalOptions/assets/js/frontend-enforcement.js',
@@ -222,8 +245,6 @@ class WordPress extends Module {
 			STACKBOOST_VERSION,
 			true
 		);
-
-		$core = Core::get_instance();
 
 		// Determine Current User Roles
 		$current_wp_roles = [];
@@ -349,16 +370,17 @@ class WordPress extends Module {
 
 		$rules_json = stripslashes( $_POST['rules'] ?? '[]' );
 		$rules      = json_decode( $rules_json, true );
+		$is_enabled = isset( $_POST['enabled'] ) && 'true' === $_POST['enabled'];
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'Decoded Rules: ' . print_r( $rules, true ), 'conditional_options' );
+			stackboost_log( 'Decoded Rules: ' . print_r( $rules, true ) . ' Enabled: ' . ( $is_enabled ? 'Yes' : 'No' ), 'conditional_options' );
 		}
 
 		if ( ! is_array( $rules ) ) {
 			wp_send_json_error( [ 'message' => 'Invalid data format' ] );
 		}
 
-		$result = Core::get_instance()->save_rules( $rules );
+		$result = Core::get_instance()->save_config( $rules, $is_enabled );
 
 		if ( is_wp_error( $result ) ) {
 			if ( function_exists( 'stackboost_log' ) ) {
@@ -387,6 +409,10 @@ class WordPress extends Module {
 		// Removed Admin bypass to allow testing/enforcement for admins too
 
 		$core = Core::get_instance();
+		if ( ! $core->is_enabled() ) {
+			return $data;
+		}
+
 		$rules = $core->get_rules();
 
 		if ( empty( $rules ) ) {

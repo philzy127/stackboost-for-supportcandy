@@ -11,6 +11,7 @@
 
     var state = {
         rules: initialRules,
+        isEnabled: stackboostCO.enabled,
         fieldOptionsCache: {},
         rolesCache: { wp: [], sc: [] },
         limit: (stackboostCO.tier === 'lite') ? 5 : 999,
@@ -22,6 +23,7 @@
         renderRulesTable();
         updateCounter();
         initModalEvents();
+        initToggle();
 
         $('#pm-add-rule-btn').on('click', function(e) {
             e.preventDefault();
@@ -33,6 +35,23 @@
             openModal(null);
         });
     });
+
+    function initToggle() {
+        $('#stackboost_co_enabled').on('change', function() {
+            var isChecked = $(this).is(':checked');
+            state.isEnabled = isChecked;
+
+            // Toggle UI state
+            if (isChecked) {
+                $('#stackboost-co-app').removeClass('stackboost-disabled-ui');
+            } else {
+                $('#stackboost-co-app').addClass('stackboost-disabled-ui');
+            }
+
+            // Save immediately
+            saveToServer();
+        });
+    }
 
     // --- Table Rendering ---
 
@@ -240,11 +259,12 @@
         $.post(stackboost_admin_ajax.ajax_url, {
             action: 'stackboost_co_save_rules',
             nonce: stackboost_admin_ajax.nonce,
-            rules: payload
+            rules: payload,
+            enabled: state.isEnabled
         }, function(res) {
             if (res.success) {
                 if (successCallback) successCallback();
-                stackboost_show_toast('Rules saved successfully.', 'success');
+                stackboost_show_toast('Settings saved successfully.', 'success');
             } else {
                 if (failCallback) failCallback();
                 stackboostAlert('Error: ' + res.data.message, 'Error');

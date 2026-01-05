@@ -41,6 +41,7 @@
     function processSelect($select, rule, user) {
         var optionRules = rule.option_rules;
         var userRoles = (rule.context === 'wp') ? user.wp_roles : user.sc_roles;
+        var hasChanges = false;
 
         $select.find('option').each(function() {
             var $opt = $(this);
@@ -60,10 +61,11 @@
 
             if (shouldHide) {
                 $opt.remove();
+                hasChanges = true;
             }
         });
 
-        if ($select.hasClass('select2-hidden-accessible') || $select.data('select2')) {
+        if (hasChanges && ($select.hasClass('select2-hidden-accessible') || $select.data('select2'))) {
              $select.trigger('change.select2');
         }
     }
