@@ -1,7 +1,7 @@
 (function($) {
     'use strict';
 
-    console.log('Conditional Options JS Loaded - Version Check 3.0 (Hardened)');
+    console.log('Conditional Options JS Loaded - v5.0 (Simplified)');
 
     // State initialization
     var initialRules = stackboostCO.rules;
@@ -19,34 +19,12 @@
     };
 
     $(document).ready(function() {
-        if (typeof stackboostLog === 'function') {
-            stackboost_log('Conditional Options: Admin JS Loaded.', state);
-        }
-
         renderRulesTable();
         updateCounter();
         initModalEvents();
 
-        // Safe Select2 Init
-        if ($.fn.select2) {
-            try {
-                var $modal = $('#stackboost-co-modal-overlay');
-                if ($modal.length) {
-                    $('#pm-modal-field-select').select2({
-                        width: '100%',
-                        dropdownParent: $modal
-                    });
-                } else {
-                    console.error('StackBoost Modal Overlay NOT FOUND in DOM.');
-                }
-            } catch (e) {
-                console.error('StackBoost: Select2 init failed:', e);
-            }
-        }
-
         $('#pm-add-rule-btn').on('click', function(e) {
             e.preventDefault();
-            console.log('Add Rule Clicked');
             var count = Object.keys(state.rules).length;
             if (count >= state.limit) {
                 stackboostAlert(stackboostCO.i18n.limit_reached);
@@ -96,7 +74,6 @@
     function initModalEvents() {
         $(document).on('click', '.pm-edit-rule', function(e) {
             e.preventDefault();
-            console.log('Edit Rule Clicked');
             var slug = $(this).data('slug');
             openModal(slug);
         });
@@ -177,26 +154,35 @@
             $('#pm-modal-matrix').html('<div class="pm-loading-placeholder">Select a field to configure options.</div>');
         }
 
-        // Brute Force Visibility
-        $modal.addClass('active');
-        $modal.css({
+        // Show Modal
+        $modal.addClass('active').show().css({
             'display': 'flex',
             'visibility': 'visible',
             'opacity': '1',
-            'z-index': '999999' // Ensure it's on top
+            'z-index': '999999'
         });
-        console.log('Modal Opened', $modal);
+
+        // Initialize Select2
+        if ($.fn.select2) {
+            $fieldSelect.select2({
+                width: '100%',
+                dropdownParent: $modal
+            });
+        }
     }
 
     function closeModal() {
         var $modal = $('#stackboost-co-modal-overlay');
-        $modal.removeClass('active');
-        // Reset brute force styles (keep none)
-        $modal.css({
+        $modal.removeClass('active').hide().css({
             'display': 'none',
             'visibility': 'hidden',
             'opacity': '0'
         });
+
+        var $fieldSelect = $('#pm-modal-field-select');
+        if ($fieldSelect.data('select2')) {
+            $fieldSelect.select2('destroy');
+        }
     }
 
     function saveModal() {
