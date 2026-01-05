@@ -1,243 +1,244 @@
 (function($) {
     'use strict';
 
-    // State initialization helper to avoid Array vs Object issues with JSON.stringify
+    // State initialization
     var initialRules = stackboostCO.rules;
     if (Array.isArray(initialRules) && initialRules.length === 0) {
         initialRules = {};
     }
 
     var state = {
-        rules: initialRules, // Map: field_slug => rule object
+        rules: initialRules,
         fieldOptionsCache: {},
         rolesCache: { wp: [], sc: [] },
-        limit: 5 // Default limit
+        limit: (stackboostCO.tier === 'lite') ? 5 : 999,
+        currentEditingSlug: null,
+        isNewRule: false
     };
 
-    // Initialize
     $(document).ready(function() {
         if (typeof stackboostLog === 'function') {
-            stackboostLog('Conditional Options: Admin JS Loaded.', state);
+            stackboost_log('Conditional Options: Admin JS Loaded.', state);
         }
 
-        initLimit();
-        renderRules();
+        renderRulesTable();
         updateCounter();
+        initModalEvents();
 
-        // Event Listeners
-        $('#pm-add-rule-btn').on('click', addNewRule);
-        $('#pm-save-all-btn').on('click', saveAllRules);
-    });
-
-    function initLimit() {
-        // Simple tier check
-        if (stackboostCO.tier === 'lite') {
-            state.limit = 5;
-        } else {
-            state.limit = 999; // Unlimited
-        }
-    }
-
-    function updateCounter() {
-        var count = Object.keys(state.rules).length;
-        var text = 'Rules Used: ' + count + ' / ' + (state.limit === 999 ? '∞' : state.limit);
-        var $counter = $('.pm-limit-counter');
-
-        $counter.text(text);
-
-        if (count >= state.limit) {
-            $counter.addClass('limit-reached');
-            $('#pm-add-rule-btn').prop('disabled', true);
-        } else {
-            $counter.removeClass('limit-reached');
-            $('#pm-add-rule-btn').prop('disabled', false);
-        }
-    }
-
-    function renderRules() {
-        var $container = $('#pm-rules-container');
-        $container.empty();
-
-        $.each(state.rules, function(slug, rule) {
-            $container.append(buildRuleCard(slug, rule));
-            // Trigger fetch options if not loaded
-            if (slug) {
-                loadFieldData(slug, rule.context);
-            }
-        });
-    }
-
-    function addNewRule() {
-        // Create a temporary unique ID for new rule untill field is selected
-        var tempId = 'new_' + Date.now();
-        var newRule = {
-            context: 'wp',
-            option_rules: {}
-        };
-
-        // Add to DOM only, don't add to state.rules until field is selected to avoid key collisions
-        var $card = buildRuleCard('', newRule, tempId);
-        $('#pm-rules-container').prepend($card);
-
-        // Disable Add button if limit reached (visual check)
-        var count = $('#pm-rules-container .pm-rule-card').length;
-        if (stackboostCO.tier === 'lite' && count > 5) {
-            // Revert
-            $card.remove();
-            stackboostAlert(stackboostCO.i18n.limit_reached);
-        }
-    }
-
-    function buildRuleCard(slug, rule, tempId) {
-        var cardId = slug ? 'rule-' + slug : 'rule-' + tempId;
-        var $card = $('<div class="pm-rule-card" id="' + cardId + '"></div>');
-
-        // Header
-        var html = '<div class="pm-rule-header">';
-        html += '<h3>' + (slug ? getFieldName(slug) : 'New Rule') + '</h3>';
-        html += '<a href="#" class="pm-delete-rule" data-slug="' + slug + '" data-tempid="' + tempId + '">&times;</a>';
-        html += '</div>';
-
-        // Settings
-        html += '<div class="pm-settings-row">';
-
-        // Field Selector
-        html += '<div class="pm-field-selector">';
-        html += '<label>Target Field: </label>';
-        html += '<select class="pm-field-select" ' + (slug ? 'disabled' : '') + '>';
-        html += '<option value="">-- Select Field --</option>';
-        $.each(stackboostCO.fields, function(fSlug, fName) {
-            html += '<option value="' + fSlug + '" ' + (slug === fSlug ? 'selected' : '') + '>' + fName + '</option>';
-        });
-        html += '</select>';
-        html += '</div>';
-
-        // Context Selector
-        html += '<div class="pm-context-selector">';
-        html += '<label>Role Context: </label>';
-        html += '<label><input type="radio" name="ctx_' + cardId + '" value="wp" ' + (rule.context === 'wp' ? 'checked' : '') + '> WP Roles</label> ';
-        html += '<label><input type="radio" name="ctx_' + cardId + '" value="sc" ' + (rule.context === 'sc' ? 'checked' : '') + '> SC Roles</label>';
-        html += '</div>';
-
-        html += '</div>'; // End settings row
-
-        // Matrix Container
-        html += '<div class="pm-matrix-container">';
-        html += '<div class="pm-loading-placeholder">Select a field to configure options.</div>';
-        html += '</div>';
-
-        var $el = $(html);
-
-        // Bind Events
-        $card.append($el);
-
-        // Initial Check for Context Lock
-        updateContextLock($card, rule);
-
-        // Delete
-        $card.find('.pm-delete-rule').on('click', function(e) {
-            e.preventDefault();
-            var $btn = $(this);
-            stackboostConfirm(stackboostCO.i18n.confirm_delete, 'Confirm Delete', function() {
-                // BUG FIX: Read slug from the DOM element, as 'slug' variable is closure-scoped
-                var currentSlug = $btn.attr('data-slug');
-
-                if (currentSlug) {
-                    delete state.rules[currentSlug];
-                    if (typeof stackboostLog === 'function') {
-                        stackboostLog('Conditional Options: Rule Deleted.', currentSlug);
-                    }
-                }
-                $card.remove();
-                updateCounter();
-            }, null, 'Yes, Delete', 'Cancel', true);
-        });
-
-        // Field Change
-        $card.find('.pm-field-select').on('change', function() {
-            var newSlug = $(this).val();
-            if (newSlug) {
-                // Check if rule already exists
-                if (state.rules[newSlug]) {
-                    stackboostAlert('Rule for this field already exists.', 'Error');
-                    $(this).val('');
-                    return;
-                }
-
-                // Promote new rule
-                state.rules[newSlug] = rule;
-                if (typeof stackboostLog === 'function') {
-                    stackboostLog('Conditional Options: New Rule Initialized.', { slug: newSlug, rule: rule });
-                }
-
-                // Update DOM ID
-                $card.attr('id', 'rule-' + newSlug);
-                $card.find('.pm-delete-rule').attr('data-slug', newSlug);
-                $card.find('h3').text(getFieldName(newSlug));
-                $(this).prop('disabled', true); // Lock field once selected
-
-                loadFieldData(newSlug, rule.context);
-                updateCounter();
-            }
-        });
-
-        // Context Change
-        $card.find('input[type=radio]').on('change', function() {
-            var newCtx = $(this).val();
-            rule.context = newCtx;
-
-            if (typeof stackboostLog === 'function') {
-                stackboostLog('Conditional Options: Context Changed.', { context: newCtx });
-            }
-
-            // Re-render matrix with new context roles
-            var currentSlug = slug || $card.find('.pm-field-select').val();
-            if (currentSlug) {
-                renderMatrix(currentSlug, rule.context);
-            }
-        });
-
-        return $card;
-    }
-
-    function getFieldName(slug) {
-        return stackboostCO.fields[slug] || slug;
-    }
-
-    // Helper: Disable/Enable context radios based on selected rules
-    function updateContextLock($card, rule) {
-        var hasActiveRules = false;
-
-        // Iterate active rules to check if any role is selected
-        if (rule.option_rules) {
-            $.each(rule.option_rules, function(optId, roles) {
-                if (roles && roles.length > 0) {
-                    hasActiveRules = true;
-                    return false; // Break loop
-                }
+        if ($.fn.select2) {
+            $('#pm-modal-field-select').select2({
+                width: '100%',
+                dropdownParent: $('#stackboost-co-modal-overlay')
             });
         }
 
-        var $radios = $card.find('input[type="radio"][name^="ctx_"]');
+        $('#pm-add-rule-btn').on('click', function() {
+            var count = Object.keys(state.rules).length;
+            if (count >= state.limit) {
+                stackboostAlert(stackboostCO.i18n.limit_reached);
+                return;
+            }
+            openModal(null);
+        });
+    });
 
-        if (hasActiveRules) {
-            // Disable the unchecked radio
-            $radios.not(':checked').prop('disabled', true);
+    // --- Table Rendering ---
+
+    function renderRulesTable() {
+        var $tbody = $('#pm-rules-table-body');
+        $tbody.empty();
+
+        var slugs = Object.keys(state.rules);
+
+        if (slugs.length === 0) {
+            $('#pm-no-rules-msg').show();
+            $('.pm-rules-wrapper table').hide();
         } else {
-            // Enable all
-            $radios.prop('disabled', false);
+            $('#pm-no-rules-msg').hide();
+            $('.pm-rules-wrapper table').show();
+
+            slugs.forEach(function(slug) {
+                var rule = state.rules[slug];
+                var fieldName = getFieldName(slug);
+                var contextLabel = (rule.context === 'wp') ? 'WP Roles' : 'SupportCandy Roles';
+
+                var row = '<tr>';
+                row += '<td><strong>' + fieldName + '</strong><br><small style="color:#666">' + slug + '</small></td>';
+                row += '<td>' + contextLabel + '</td>';
+                row += '<td style="text-align: right;">';
+                row += '<button type="button" class="stackboost-icon-btn pm-edit-rule" data-slug="' + slug + '" title="Edit"><span class="dashicons dashicons-edit"></span></button>';
+                row += '<button type="button" class="stackboost-icon-btn pm-delete-rule" data-slug="' + slug + '" title="Delete"><span class="dashicons dashicons-trash"></span></button>';
+                row += '</td>';
+                row += '</tr>';
+
+                $tbody.append(row);
+            });
         }
+        updateCounter();
     }
 
-    function loadFieldData(slug, context) {
-        var $card = $('#rule-' + slug);
-        var $matrix = $card.find('.pm-matrix-container');
+    // --- Modal Logic ---
 
-        $matrix.html('<div class="pm-loading">Loading options...</div>');
+    function initModalEvents() {
+        $(document).on('click', '.pm-edit-rule', function() {
+            var slug = $(this).data('slug');
+            openModal(slug);
+        });
 
-        // Fetch Roles (if not cached)
+        $(document).on('click', '.pm-delete-rule', function() {
+            var slug = $(this).data('slug');
+            stackboostConfirm(stackboostCO.i18n.confirm_delete, 'Delete Rule', function() {
+                delete state.rules[slug];
+                saveToServer(function() {
+                     renderRulesTable();
+                });
+            }, null, 'Delete', 'Cancel', true);
+        });
+
+        $('.stackboost-modal-close, .button-secondary').on('click', closeModal);
+
+        $('#stackboost-co-modal-overlay').on('click', function(e) {
+            if ($(e.target).is('#stackboost-co-modal-overlay')) {
+                closeModal();
+            }
+        });
+
+        $('#pm-modal-field-select').on('change', function() {
+            var slug = $(this).val();
+            if (slug) {
+                var context = $('input[name="modal_context"]:checked').val();
+                loadMatrix(slug, context);
+            } else {
+                $('#pm-modal-matrix').html('<div class="pm-loading-placeholder">Select a field to configure options.</div>');
+            }
+        });
+
+        $('input[name="modal_context"]').on('change', function() {
+            var context = $(this).val();
+            var slug = $('#pm-modal-field-select').val();
+            if (slug) {
+                loadMatrix(slug, context);
+            }
+        });
+
+        $('#pm-modal-save-btn').on('click', saveModal);
+    }
+
+    function openModal(slug) {
+        var $modal = $('#stackboost-co-modal-overlay');
+        var $title = $modal.find('.stackboost-modal-title');
+        var $fieldSelect = $('#pm-modal-field-select');
+        var $radiosContext = $('input[name="modal_context"]');
+
+        $fieldSelect.val('').trigger('change');
+        $('#pm-modal-matrix').empty();
+
+        if (slug) {
+            state.isNewRule = false;
+            state.currentEditingSlug = slug;
+            var rule = state.rules[slug];
+
+            $title.text('Edit Rule: ' + getFieldName(slug));
+            $fieldSelect.val(slug).trigger('change').prop('disabled', true);
+            $radiosContext.filter('[value="' + rule.context + '"]').prop('checked', true);
+
+            loadMatrix(slug, rule.context, rule.option_rules);
+        } else {
+            state.isNewRule = true;
+            state.currentEditingSlug = null;
+
+            $title.text('Add New Rule');
+            $fieldSelect.prop('disabled', false);
+            $radiosContext.filter('[value="sc"]').prop('checked', true);
+
+            $('#pm-modal-matrix').html('<div class="pm-loading-placeholder">Select a field to configure options.</div>');
+        }
+
+        $modal.show();
+    }
+
+    function closeModal() {
+        $('#stackboost-co-modal-overlay').hide();
+    }
+
+    function saveModal() {
+        var slug = $('#pm-modal-field-select').val();
+        if (!slug) {
+            alert('Please select a field.');
+            return;
+        }
+
+        var context = $('input[name="modal_context"]:checked').val();
+
+        var optionRules = {};
+        $('.pm-matrix-table tbody tr').each(function() {
+            var $row = $(this);
+            var $cell = $row.find('.pm-role-cell');
+            var optId = $cell.data('opt-id');
+            var selectedRoles = [];
+
+            $cell.find('.pm-role-pill.selected').each(function() {
+                selectedRoles.push($(this).data('role'));
+            });
+
+            if (selectedRoles.length > 0) {
+                optionRules[optId] = selectedRoles;
+            }
+        });
+
+        if (state.isNewRule && state.rules[slug]) {
+            alert('A rule for this field already exists. Please edit the existing rule.');
+            return;
+        }
+
+        var newRule = {
+            context: context,
+            option_rules: optionRules
+        };
+
+        state.rules[slug] = newRule;
+
+        var $btn = $('#pm-modal-save-btn');
+        $btn.text('Saving...').prop('disabled', true);
+
+        saveToServer(function() {
+            $btn.text('Save Rule').prop('disabled', false);
+            closeModal();
+            renderRulesTable();
+        }, function() {
+            $btn.text('Save Rule').prop('disabled', false);
+        });
+    }
+
+    function saveToServer(successCallback, failCallback) {
+        var payload = JSON.stringify(state.rules);
+
+        $.post(stackboost_admin_ajax.ajax_url, {
+            action: 'stackboost_co_save_rules',
+            nonce: stackboost_admin_ajax.nonce,
+            rules: payload
+        }, function(res) {
+            if (res.success) {
+                if (successCallback) successCallback();
+                stackboost_show_toast('Rules saved successfully.', 'success');
+            } else {
+                if (failCallback) failCallback();
+                stackboostAlert('Error: ' + res.data.message, 'Error');
+            }
+        }).fail(function() {
+            if (failCallback) failCallback();
+             stackboostAlert('Server Error.', 'Error');
+        });
+    }
+
+    // --- Matrix Logic ---
+
+    function loadMatrix(slug, context, existingRules) {
+        var $container = $('#pm-modal-matrix');
+        $container.html('<div class="pm-loading">Loading options & roles...</div>');
+
         var rolesPromise = $.Deferred();
-        if (state.rolesCache[context].length > 0) {
+        if (state.rolesCache[context] && state.rolesCache[context].length > 0) {
             rolesPromise.resolve(state.rolesCache[context]);
         } else {
             $.post(stackboost_admin_ajax.ajax_url, {
@@ -254,44 +255,42 @@
             });
         }
 
-        // Fetch Options (if not cached)
         var optionsPromise = $.Deferred();
         if (state.fieldOptionsCache[slug]) {
             optionsPromise.resolve(state.fieldOptionsCache[slug]);
         } else {
-            $.post(stackboost_admin_ajax.ajax_url, {
+             $.post(stackboost_admin_ajax.ajax_url, {
                 action: 'stackboost_co_get_field_options',
                 nonce: stackboost_admin_ajax.nonce,
-                field_slug: slug,
-                field_name: getFieldName(slug) // Fallback or helper
+                field_slug: slug
             }, function(res) {
                 if (res.success) {
                     state.fieldOptionsCache[slug] = res.data;
                     optionsPromise.resolve(res.data);
                 } else {
-                    $matrix.html('<div class="error">Failed to load options: ' + res.data.message + '</div>');
-                    optionsPromise.reject();
+                    optionsPromise.reject(res.data.message);
                 }
             });
         }
 
         $.when(rolesPromise, optionsPromise).done(function(roles, options) {
-            renderMatrixTable(slug, roles, options);
+            var rulesToApply = existingRules || {};
+            renderMatrixHTML(roles, options, rulesToApply);
+        }).fail(function(err) {
+            $container.html('<div class="error">Error: ' + (err || 'Could not load data') + '</div>');
         });
     }
 
-    function renderMatrixTable(slug, roles, options) {
-        var $card = $('#rule-' + slug);
-        var $matrix = $card.find('.pm-matrix-container');
-        var rule = state.rules[slug];
+    function renderMatrixHTML(roles, options, selectedMap) {
+        var $container = $('#pm-modal-matrix');
 
         if (!options.length) {
-            $matrix.html('<div class="notice">No options found for this field.</div>');
+            $container.html('<div class="notice">No options found for this field.</div>');
             return;
         }
 
         var html = '<table class="pm-matrix-table">';
-        html += '<thead><tr><th>Option Name</th><th>Hide from Roles (Click to Toggle)</th></tr></thead>';
+        html += '<thead><tr><th>Option Name</th><th>Target Roles (' + stackboostCO.i18n.toggle_all + ')</th></tr></thead>';
         html += '<tbody>';
 
         $.each(options, function(i, opt) {
@@ -299,12 +298,14 @@
             html += '<td>' + opt.name + '</td>';
             html += '<td class="pm-role-cell" data-opt-id="' + opt.id + '">';
 
-            // Render Role Pills
-            var currentHidden = rule.option_rules[opt.id] || [];
+            // Toggle All Button for Row
+            html += '<span class="pm-toggle-all-row dashicons dashicons-yes" title="Select All / None"></span>';
+
+            var currentSelected = selectedMap[opt.id] || [];
 
             $.each(roles, function(j, role) {
-                var isHidden = currentHidden.indexOf(role.slug) > -1;
-                html += '<span class="pm-role-pill ' + (isHidden ? 'selected' : '') + '" data-role="' + role.slug + '">' + role.name + '</span>';
+                var isSelected = currentSelected.indexOf(role.slug) > -1;
+                html += '<span class="pm-role-pill ' + (isSelected ? 'selected' : '') + '" data-role="' + role.slug + '">' + role.name + '</span>';
             });
 
             html += '</td>';
@@ -312,73 +313,46 @@
         });
 
         html += '</tbody></table>';
-        $matrix.html(html);
+        $container.html(html);
 
-        // Bind Click Handlers for Pills
-        $matrix.find('.pm-role-pill').on('click', function() {
-            var $pill = $(this);
-            var $cell = $pill.closest('td');
-            var optId = $cell.data('opt-id');
-            var roleSlug = $pill.data('role');
+        // Bind Click Handlers
+        $container.find('.pm-role-pill').on('click', function() {
+            $(this).toggleClass('selected');
+        });
 
-            $pill.toggleClass('selected');
+        // Toggle All Handler
+        $container.find('.pm-toggle-all-row').on('click', function() {
+            var $btn = $(this);
+            var $cell = $btn.closest('td');
+            var $pills = $cell.find('.pm-role-pill');
 
-            // Update State
-            if (!rule.option_rules[optId]) rule.option_rules[optId] = [];
+            // Check state: if all are selected, deselect all. Otherwise, select all.
+            var allSelected = $pills.length === $pills.filter('.selected').length;
 
-            if ($pill.hasClass('selected')) {
-                // Add
-                if (rule.option_rules[optId].indexOf(roleSlug) === -1) {
-                    rule.option_rules[optId].push(roleSlug);
-                }
+            if (allSelected) {
+                $pills.removeClass('selected');
+                $btn.removeClass('active'); // Optional visual state
             } else {
-                // Remove
-                var idx = rule.option_rules[optId].indexOf(roleSlug);
-                if (idx > -1) {
-                    rule.option_rules[optId].splice(idx, 1);
-                }
+                $pills.addClass('selected');
+                $btn.addClass('active');
             }
-
-            // Update Context Lock
-            updateContextLock($card, rule);
         });
     }
 
-    // Helper to refresh matrix when context changes
-    function renderMatrix(slug, context) {
-        loadFieldData(slug, context);
+    function getFieldName(slug) {
+        return stackboostCO.fields[slug] || slug;
     }
 
-    function saveAllRules() {
-        var $btn = $('#pm-save-all-btn');
-        var $spinner = $btn.next('.spinner');
+    function updateCounter() {
+        var count = Object.keys(state.rules).length;
+        var text = 'Rules Used: ' + count + ' / ' + (state.limit === 999 ? '∞' : state.limit);
+        $('.pm-limit-counter').text(text);
 
-        $btn.prop('disabled', true);
-        $spinner.addClass('is-active');
-
-        // Prepare Data
-        // state.rules is already up to date via references
-
-        var payload = JSON.stringify(state.rules);
-
-        if (typeof stackboostLog === 'function') {
-            stackboostLog('Conditional Options: Saving Rules. Payload:', payload);
+        if (count >= state.limit) {
+            $('.pm-limit-counter').addClass('limit-reached');
+        } else {
+             $('.pm-limit-counter').removeClass('limit-reached');
         }
-
-        $.post(stackboost_admin_ajax.ajax_url, {
-            action: 'stackboost_co_save_rules',
-            nonce: stackboost_admin_ajax.nonce,
-            rules: payload
-        }, function(res) {
-            $btn.prop('disabled', false);
-            $spinner.removeClass('is-active');
-
-            if (res.success) {
-                stackboostAlert(res.data.message, 'Success');
-            } else {
-                stackboostAlert('Error: ' + res.data.message, 'Error');
-            }
-        });
     }
 
 })(jQuery);

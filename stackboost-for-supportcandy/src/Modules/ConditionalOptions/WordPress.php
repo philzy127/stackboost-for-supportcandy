@@ -76,7 +76,7 @@ class WordPress extends Module {
 			<p><?php esc_html_e( 'Configure granular visibility rules for field options based on user roles.', 'stackboost-for-supportcandy' ); ?></p>
 
 			<div id="stackboost-co-app">
-				<!-- JS App Container -->
+				<!-- Main Table View -->
 				<div class="stackboost-card">
 					<div class="pm-header">
 						<h2><?php esc_html_e( 'Manage Rules', 'stackboost-for-supportcandy' ); ?></h2>
@@ -89,16 +89,78 @@ class WordPress extends Module {
 						<button id="pm-add-rule-btn" class="button button-primary"><?php esc_html_e( 'Add New Rule', 'stackboost-for-supportcandy' ); ?></button>
 					</div>
 
-					<div id="pm-rules-container">
-						<!-- Rules will be rendered here -->
+					<div class="pm-rules-wrapper" style="margin-top: 15px;">
+						<table class="wp-list-table widefat fixed striped">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'Target Field', 'stackboost-for-supportcandy' ); ?></th>
+									<th><?php esc_html_e( 'Context', 'stackboost-for-supportcandy' ); ?></th>
+									<th style="width: 100px; text-align: right;"><?php esc_html_e( 'Actions', 'stackboost-for-supportcandy' ); ?></th>
+								</tr>
+							</thead>
+							<tbody id="pm-rules-table-body">
+								<!-- Populated by JS -->
+							</tbody>
+						</table>
+						<p id="pm-no-rules-msg" style="display:none; text-align:center; padding: 20px; font-style: italic;">
+							<?php esc_html_e( 'No rules configured.', 'stackboost-for-supportcandy' ); ?>
+						</p>
 					</div>
 				</div>
 			</div>
 
-			<div class="pm-save-actions">
-				<button id="pm-save-all-btn" class="button button-primary button-large"><?php esc_html_e( 'Save Changes', 'stackboost-for-supportcandy' ); ?></button>
-				<span class="spinner"></span>
+			<!-- Hidden Modal for Add/Edit -->
+			<div id="stackboost-co-modal-overlay" class="stackboost-modal-overlay" style="display:none;">
+				<div class="stackboost-modal-box" style="max-width: 800px; width: 90%;">
+					<div class="stackboost-modal-header">
+						<h3 class="stackboost-modal-title"><?php esc_html_e( 'Edit Rule', 'stackboost-for-supportcandy' ); ?></h3>
+						<button type="button" class="stackboost-modal-close">&times;</button>
+					</div>
+
+					<div class="stackboost-modal-body">
+						<div class="pm-settings-row">
+							<!-- Field Selector -->
+							<div class="pm-field-selector">
+								<label for="pm-modal-field-select"><?php esc_html_e( 'Target Field:', 'stackboost-for-supportcandy' ); ?></label>
+								<select id="pm-modal-field-select" class="pm-field-select" style="width: 100%;">
+									<option value="">-- <?php esc_html_e( 'Select Field', 'stackboost-for-supportcandy' ); ?> --</option>
+									<?php
+									$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
+									$fields = $plugin_instance->get_supportcandy_columns();
+									foreach ( $fields as $slug => $name ) {
+										echo '<option value="' . esc_attr( $slug ) . '">' . esc_html( $name ) . '</option>';
+									}
+									?>
+								</select>
+							</div>
+
+							<!-- Context Selector -->
+							<div class="pm-context-selector">
+								<label><?php esc_html_e( 'Role Context:', 'stackboost-for-supportcandy' ); ?></label>
+								<div class="pm-radio-group">
+									<label><input type="radio" name="modal_context" value="sc" checked> <?php esc_html_e( 'SupportCandy Roles', 'stackboost-for-supportcandy' ); ?></label>
+									<label><input type="radio" name="modal_context" value="wp"> <?php esc_html_e( 'WP Roles', 'stackboost-for-supportcandy' ); ?></label>
+								</div>
+							</div>
+						</div>
+
+						<p class="description" style="margin-bottom: 15px;">
+							<?php esc_html_e( 'Select the roles that should be BLOCKED from seeing each option.', 'stackboost-for-supportcandy' ); ?>
+						</p>
+
+						<!-- Matrix Container -->
+						<div class="pm-matrix-container" id="pm-modal-matrix">
+							<div class="pm-loading-placeholder"><?php esc_html_e( 'Select a field to configure options.', 'stackboost-for-supportcandy' ); ?></div>
+						</div>
+					</div>
+
+					<div class="stackboost-modal-footer">
+						<button type="button" class="button button-secondary stackboost-modal-close"><?php esc_html_e( 'Cancel', 'stackboost-for-supportcandy' ); ?></button>
+						<button type="button" id="pm-modal-save-btn" class="button button-primary"><?php esc_html_e( 'Save Rule', 'stackboost-for-supportcandy' ); ?></button>
+					</div>
+				</div>
 			</div>
+
 		</div>
 		<?php
 	}
@@ -144,6 +206,7 @@ class WordPress extends Module {
 			'i18n'   => [
 				'confirm_delete' => __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ),
 				'limit_reached'  => __( 'Limit Reached: Upgrade to Pro for unlimited rules.', 'stackboost-for-supportcandy' ),
+				'toggle_all'     => __( 'Select All / None', 'stackboost-for-supportcandy' ),
 			]
 		] );
 	}
@@ -184,7 +247,7 @@ class WordPress extends Module {
 			'user'  => [
 				'wp_roles' => $current_wp_roles,
 				'sc_roles' => $current_sc_roles,
-				'is_admin' => current_user_can( 'manage_options' ), // Admin Override
+				// 'is_admin' removed as we now enforce for admins too if rule exists
 			]
 		] );
 	}
@@ -321,9 +384,7 @@ class WordPress extends Module {
 	 * @return array The filtered data.
 	 */
 	public function enforce_permissions_on_submission( $data, $custom_fields, $is_my_profile ) {
-		if ( current_user_can( 'manage_options' ) ) {
-			return $data; // Admins are exempt
-		}
+		// Removed Admin bypass to allow testing/enforcement for admins too
 
 		$core = Core::get_instance();
 		$rules = $core->get_rules();
@@ -353,50 +414,49 @@ class WordPress extends Module {
 			}
 
 			$context = $rule['context'];
-			$option_rules = $rule['option_rules']; // [ option_id => [ excluded_roles ] ]
+			$option_rules = $rule['option_rules']; // [ option_id => [ target_roles ] ]
 
 			$submitted_value = $data[ $field_slug ];
-			// $submitted_value is typically the Option ID (int) or Array of IDs (multi-select)
-
-			// Normalize to array for checking
+			// Normalize to array
 			$submitted_ids = is_array( $submitted_value ) ? $submitted_value : [ $submitted_value ];
+			$modified_ids = $submitted_ids;
+			$has_change = false;
 
-			foreach ( $submitted_ids as $id ) {
-				if ( isset( $option_rules[ $id ] ) ) {
-					$excluded_roles = $option_rules[ $id ];
+			foreach ( $submitted_ids as $key => $id ) {
+				// If no rules for this specific option, it's visible by default.
+				if ( ! isset( $option_rules[ $id ] ) ) {
+					continue;
+				}
 
-					// Check against context
-					$roles_to_check = ( 'wp' === $context ) ? $current_wp_roles : $current_sc_roles;
+				$target_roles = $option_rules[ $id ];
+				$roles_to_check = ( 'wp' === $context ) ? $current_wp_roles : $current_sc_roles;
 
-					// "Any Hidden = Hidden" Logic
-					$is_restricted = false;
-					foreach ( $roles_to_check as $user_role ) {
-						if ( in_array( $user_role, $excluded_roles, true ) ) {
-							$is_restricted = true;
-							break;
-						}
+				// Check if user has any of the target roles
+				$user_has_target_role = false;
+				foreach ( $roles_to_check as $user_role ) {
+					if ( in_array( $user_role, $target_roles, true ) ) {
+						$user_has_target_role = true;
+						break;
 					}
+				}
 
-					if ( $is_restricted ) {
-						// Found a restricted value!
-						// Action: Remove it (sanitize).
-						// For single select, set to empty/default.
-						// For multi-select, remove this ID from array.
+				// Deny Mode Only: Hide if user HAS the target role
+				if ( $user_has_target_role ) {
+					unset( $modified_ids[ $key ] );
+					$has_change = true;
 
-						if ( is_array( $data[ $field_slug ] ) ) {
-							$data[ $field_slug ] = array_diff( $data[ $field_slug ], [ $id ] );
-						} else {
-							// Single value
-							// We should check if there's a default, or just null it.
-							// Setting to '' usually triggers default handling or empty.
-							$data[ $field_slug ] = '';
-						}
-
-						// Log enforcement action
-						if ( function_exists( 'stackboost_log' ) ) {
-							stackboost_log( "Permission Enforcement: Blocked value '$id' for field '$field_slug' for user.", 'security' );
-						}
+					if ( function_exists( 'stackboost_log' ) ) {
+						stackboost_log( "Permission Enforcement: Blocked value '$id' for field '$field_slug' (User Role Match).", 'security' );
 					}
+				}
+			}
+
+			if ( $has_change ) {
+				if ( is_array( $data[ $field_slug ] ) ) {
+					$data[ $field_slug ] = array_values( $modified_ids ); // Re-index
+				} else {
+					// Single value was blocked
+					$data[ $field_slug ] = '';
 				}
 			}
 		}
