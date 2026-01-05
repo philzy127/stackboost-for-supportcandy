@@ -1,6 +1,8 @@
 (function($) {
     'use strict';
 
+    console.log('Conditional Options JS Loaded - Version Check 3.0 (Hardened)');
+
     // State initialization
     var initialRules = stackboostCO.rules;
     if (Array.isArray(initialRules) && initialRules.length === 0) {
@@ -25,14 +27,26 @@
         updateCounter();
         initModalEvents();
 
+        // Safe Select2 Init
         if ($.fn.select2) {
-            $('#pm-modal-field-select').select2({
-                width: '100%',
-                dropdownParent: $('#stackboost-co-modal-overlay')
-            });
+            try {
+                var $modal = $('#stackboost-co-modal-overlay');
+                if ($modal.length) {
+                    $('#pm-modal-field-select').select2({
+                        width: '100%',
+                        dropdownParent: $modal
+                    });
+                } else {
+                    console.error('StackBoost Modal Overlay NOT FOUND in DOM.');
+                }
+            } catch (e) {
+                console.error('StackBoost: Select2 init failed:', e);
+            }
         }
 
-        $('#pm-add-rule-btn').on('click', function() {
+        $('#pm-add-rule-btn').on('click', function(e) {
+            e.preventDefault();
+            console.log('Add Rule Clicked');
             var count = Object.keys(state.rules).length;
             if (count >= state.limit) {
                 stackboostAlert(stackboostCO.i18n.limit_reached);
@@ -80,12 +94,15 @@
     // --- Modal Logic ---
 
     function initModalEvents() {
-        $(document).on('click', '.pm-edit-rule', function() {
+        $(document).on('click', '.pm-edit-rule', function(e) {
+            e.preventDefault();
+            console.log('Edit Rule Clicked');
             var slug = $(this).data('slug');
             openModal(slug);
         });
 
-        $(document).on('click', '.pm-delete-rule', function() {
+        $(document).on('click', '.pm-delete-rule', function(e) {
+            e.preventDefault();
             var slug = $(this).data('slug');
             stackboostConfirm(stackboostCO.i18n.confirm_delete, 'Delete Rule', function() {
                 delete state.rules[slug];
@@ -95,7 +112,10 @@
             }, null, 'Delete', 'Cancel', true);
         });
 
-        $('.stackboost-modal-close, .button-secondary').on('click', closeModal);
+        $('.stackboost-modal-close, .button-secondary').on('click', function(e) {
+            e.preventDefault();
+            closeModal();
+        });
 
         $('#stackboost-co-modal-overlay').on('click', function(e) {
             if ($(e.target).is('#stackboost-co-modal-overlay')) {
@@ -121,7 +141,10 @@
             }
         });
 
-        $('#pm-modal-save-btn').on('click', saveModal);
+        $('#pm-modal-save-btn').on('click', function(e) {
+            e.preventDefault();
+            saveModal();
+        });
     }
 
     function openModal(slug) {
@@ -154,11 +177,26 @@
             $('#pm-modal-matrix').html('<div class="pm-loading-placeholder">Select a field to configure options.</div>');
         }
 
-        $modal.show();
+        // Brute Force Visibility
+        $modal.addClass('active');
+        $modal.css({
+            'display': 'flex',
+            'visibility': 'visible',
+            'opacity': '1',
+            'z-index': '999999' // Ensure it's on top
+        });
+        console.log('Modal Opened', $modal);
     }
 
     function closeModal() {
-        $('#stackboost-co-modal-overlay').hide();
+        var $modal = $('#stackboost-co-modal-overlay');
+        $modal.removeClass('active');
+        // Reset brute force styles (keep none)
+        $modal.css({
+            'display': 'none',
+            'visibility': 'hidden',
+            'opacity': '0'
+        });
     }
 
     function saveModal() {

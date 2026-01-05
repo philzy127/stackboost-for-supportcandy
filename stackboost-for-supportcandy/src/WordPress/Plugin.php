@@ -492,6 +492,8 @@ final class Plugin {
 	public function get_supportcandy_columns(): array {
 		global $wpdb;
 		$columns             = [];
+
+		// 1. Fetch Custom Fields from DB
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $custom_fields_table ) ) ) {
 			$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$custom_fields_table}`", ARRAY_A );
@@ -501,6 +503,24 @@ final class Plugin {
 				}
 			}
 		}
+
+		// 2. Add Standard Fields (Safe Hardcoding)
+		// We add both 'slug' and 'df_slug' variants to ensure matching works regardless of how SC stores it.
+		$standard_fields = [
+			'status'      => __( 'Status', 'stackboost-for-supportcandy' ),
+			'df_status'   => __( 'Status', 'stackboost-for-supportcandy' ),
+			'category'    => __( 'Category', 'stackboost-for-supportcandy' ),
+			'df_category' => __( 'Category', 'stackboost-for-supportcandy' ),
+			'priority'    => __( 'Priority', 'stackboost-for-supportcandy' ),
+			'df_priority' => __( 'Priority', 'stackboost-for-supportcandy' ),
+		];
+
+		foreach ( $standard_fields as $slug => $name ) {
+			if ( ! isset( $columns[ $slug ] ) ) {
+				$columns[ $slug ] = $name;
+			}
+		}
+
 		asort( $columns );
 		return $columns;
 	}
