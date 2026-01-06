@@ -15,10 +15,10 @@ jQuery(document).ready(function($) {
         // 1. Populate Attendee List
         const $attendeesPreview = $('#attendees-list-preview');
         if ($attendeesPreview.length) {
-            if (odbDashboardVars && typeof odbDashboardVars.thisWeekAttendees !== 'undefined') {
-                if (odbDashboardVars.thisWeekAttendees.length > 0) {
+            if (stackboostOdbVars && typeof stackboostOdbVars.thisWeekAttendees !== 'undefined') {
+                if (stackboostOdbVars.thisWeekAttendees.length > 0) {
                     let attendeesList = '<ul style="list-style: none; padding: 0;">';
-                    odbDashboardVars.thisWeekAttendees.forEach(function(attendee) {
+                    stackboostOdbVars.thisWeekAttendees.forEach(function(attendee) {
                         attendeesList += '<li style="padding: 4px 0;">' + attendee.name + '</li>';
                     });
                     attendeesList += '</ul>';
@@ -67,14 +67,14 @@ jQuery(document).ready(function($) {
     // --- End Pre-Onboarding View Logic ---
 
     // Basic check to ensure localization data is available.
-    if (typeof odbDashboardVars === 'undefined' || !odbDashboardVars.fullSequence || odbDashboardVars.fullSequence.length === 0) {
-        stackboost_client_log('Localization data (odbDashboardVars) is missing or incomplete.', 'warning');
+    if (typeof stackboostOdbVars === 'undefined' || !stackboostOdbVars.fullSequence || stackboostOdbVars.fullSequence.length === 0) {
+        stackboost_client_log('Localization data (stackboostOdbVars) is missing or incomplete.', 'warning');
         return;
     }
 
-    const currentStepId = odbDashboardVars.currentStepId;
-    const currentStepIndex = odbDashboardVars.currentStepIndex;
-    const completionStepId = odbDashboardVars.completionStepId; // Get the virtual completion step ID
+    const currentStepId = stackboostOdbVars.currentStepId;
+    const currentStepIndex = stackboostOdbVars.currentStepIndex;
+    const completionStepId = stackboostOdbVars.completionStepId; // Get the virtual completion step ID
     const isCurrentlyOnCompletionStage = (currentStepId === completionStepId);
 
     const $nextButton = $('.onboarding-next-button');
@@ -92,17 +92,17 @@ jQuery(document).ready(function($) {
         // Use central logger if available, otherwise fallback
         if (typeof window.stackboost_log === 'function') {
             window.stackboost_log(`[Onboarding ${context}] ` + message);
-        } else if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
+        } else if (typeof stackboostOdbVars !== 'undefined' && stackboostOdbVars.debugEnabled) {
             window.stackboost_log(`[StackBoost ${context}] ` + message);
         }
 
         // Send to server if debug is enabled (preserving original logic)
-        if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
-            $.post(odbDashboardVars.ajaxurl, {
+        if (typeof stackboostOdbVars !== 'undefined' && stackboostOdbVars.debugEnabled) {
+            $.post(stackboostOdbVars.ajaxurl, {
                 action: 'stackboost_log_client_event',
                 message: message,
                 context: context,
-                nonce: odbDashboardVars.sendCertificatesNonce
+                nonce: stackboostOdbVars.sendCertificatesNonce
             });
         }
     }
@@ -115,7 +115,7 @@ jQuery(document).ready(function($) {
         $completionStage.removeClass('onboarding-completion-stage--hidden').show(); // Ensure it's visible by removing class and showing
         $navigationContainer.show(); // Ensure navigation buttons are shown for the completion page
 
-        populateAttendeesSelection(odbDashboardVars.thisWeekAttendees);
+        populateAttendeesSelection(stackboostOdbVars.thisWeekAttendees);
 
         // Adjust back/next button visibility for the completion stage
         $backButton.show(); // Always show back button on completion stage
@@ -197,7 +197,7 @@ jQuery(document).ready(function($) {
         const checkedItems = $checklistContainer.find('li.completed').length;
 
         // Determine if this is the last *real* step before the virtual completion step
-        const isLastRealStep = (parseInt(currentStepIndex, 10) === odbDashboardVars.fullSequence.length - 2);
+        const isLastRealStep = (parseInt(currentStepIndex, 10) === stackboostOdbVars.fullSequence.length - 2);
 
         if (isLastRealStep) { // If clicking the "Final Step" button
             if (totalItems > 0) {
@@ -280,11 +280,11 @@ jQuery(document).ready(function($) {
         e.preventDefault();
 
         // Determine if this is the last *real* step (before the virtual completion step)
-        const isLastRealStep = (parseInt(currentStepIndex, 10) === odbDashboardVars.fullSequence.length - 2);
+        const isLastRealStep = (parseInt(currentStepIndex, 10) === stackboostOdbVars.fullSequence.length - 2);
 
         if (isLastRealStep) { // If clicking the "Final Step" button
             // Navigate to the virtual completion step URL
-            const completionStepData = odbDashboardVars.fullSequence.find(step => step.id === completionStepId);
+            const completionStepData = stackboostOdbVars.fullSequence.find(step => step.id === completionStepId);
             if (completionStepData && completionStepData.permalink) {
                 const correctedPermalink = completionStepData.permalink.replace(/&#038;/g, '&');
                 window.location.href = correctedPermalink;
@@ -295,8 +295,8 @@ jQuery(document).ready(function($) {
             // Logic for 'Next Step' button (regular navigation)
             const nextStepIndex = parseInt(currentStepIndex, 10) + 1;
 
-            if (nextStepIndex < odbDashboardVars.fullSequence.length) {
-                const nextStep = odbDashboardVars.fullSequence[nextStepIndex];
+            if (nextStepIndex < stackboostOdbVars.fullSequence.length) {
+                const nextStep = stackboostOdbVars.fullSequence[nextStepIndex];
 
                 if (nextStep && nextStep.permalink) {
                     const correctedPermalink = nextStep.permalink.replace(/&#038;/g, '&');
@@ -316,9 +316,9 @@ jQuery(document).ready(function($) {
 
         if (isCurrentlyOnCompletionStage) {
             // If on the completion stage, go back to the last real step.
-            const lastRealStepIndex = odbDashboardVars.fullSequence.length - 2;
+            const lastRealStepIndex = stackboostOdbVars.fullSequence.length - 2;
             if (lastRealStepIndex >= 0) {
-                const prevStep = odbDashboardVars.fullSequence[lastRealStepIndex];
+                const prevStep = stackboostOdbVars.fullSequence[lastRealStepIndex];
                 window.location.href = prevStep.permalink.replace(/&#038;/g, '&');
             } else {
                 window.location.href = window.location.pathname;
@@ -328,7 +328,7 @@ jQuery(document).ready(function($) {
             const prevStepIndex = parseInt(currentStepIndex, 10) - 1;
             if (prevStepIndex >= 0) {
                 // If there's a previous step in the sequence, go to it.
-                const prevStep = odbDashboardVars.fullSequence[prevStepIndex];
+                const prevStep = stackboostOdbVars.fullSequence[prevStepIndex];
                 if (prevStep && prevStep.permalink) {
                     const correctedPermalink = prevStep.permalink.replace(/&#038;/g, '&');
                     window.location.href = correctedPermalink;
@@ -368,11 +368,11 @@ jQuery(document).ready(function($) {
         stackboost_client_log(`Sending certificates for ${presentAttendees.length} attendees.`);
 
         $.ajax({
-            url: odbDashboardVars.ajaxurl, // WordPress AJAX URL
+            url: stackboostOdbVars.ajaxurl, // WordPress AJAX URL
             type: 'POST',
             data: {
                 action: 'stackboost_onboarding_send_certificates', // Our custom AJAX action
-                nonce: odbDashboardVars.sendCertificatesNonce, // Security nonce
+                nonce: stackboostOdbVars.sendCertificatesNonce, // Security nonce
                 present_attendees: JSON.stringify(presentAttendees),
                 not_present_attendees: JSON.stringify(notPresentAttendees) // Send not present for logging/future use
             },
@@ -433,7 +433,7 @@ jQuery(document).ready(function($) {
                     // A potential enhancement here would be to navigate to the first step of the dashboard
                     // (or a dashboard overview) after successful completion and clearing,
                     // to ensure a fresh load of the first step.
-                    // window.location.href = odbDashboardVars.fullSequence[0].permalink.replace(/&#038;/g, '&');
+                    // window.location.href = stackboostOdbVars.fullSequence[0].permalink.replace(/&#038;/g, '&');
                     // This is commented out as it changes navigation flow, but is a common pattern for "completion".
 
                 } else {

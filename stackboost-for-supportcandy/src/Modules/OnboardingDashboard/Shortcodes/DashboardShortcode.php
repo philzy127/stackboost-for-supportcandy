@@ -25,6 +25,10 @@ class DashboardShortcode {
 		$is_completion_page = ( isset( $_GET['step_id'] ) && $_GET['step_id'] === 'completion' );
 
 		if ( $is_shortcode_page || $is_block_page || $is_completion_page ) {
+            // Attempt to dequeue legacy script to prevent conflicts
+            wp_dequeue_script( 'onboarding-dashboard' );
+            wp_deregister_script( 'onboarding-dashboard' );
+
             // Only enqueue manually if it's NOT a block page (block handles CSS via metadata)
             if ( ! $is_block_page ) {
                 wp_enqueue_style(
@@ -141,7 +145,7 @@ class DashboardShortcode {
 				stackboost_log( "Frontend Dashboard: Failed to fetch attendees or no data returned. Error: " . ( is_wp_error( $tickets_data ) ? $tickets_data->get_error_message() : 'None' ), 'error' );
 			}
 
-			wp_localize_script( 'stackboost-onboarding-dashboard', 'odbDashboardVars', [
+			wp_localize_script( 'stackboost-onboarding-dashboard', 'stackboostOdbVars', [
 				'checklistItems' => $checklist_items,
 				'fullSequence' => $full_sequence,
 				'currentStepId' => $current_step_id,
