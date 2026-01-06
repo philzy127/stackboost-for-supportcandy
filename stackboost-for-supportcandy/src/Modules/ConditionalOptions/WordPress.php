@@ -77,23 +77,27 @@ class WordPress extends Module {
 			<h1><?php esc_html_e( 'Conditional Options', 'stackboost-for-supportcandy' ); ?></h1>
 			<p><?php esc_html_e( 'Configure granular visibility rules for field options based on user roles.', 'stackboost-for-supportcandy' ); ?></p>
 
-			<!-- Global Enable/Disable Toggle -->
-			<div class="stackboost-card" style="margin-bottom: 20px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
-				<div>
-					<h3 style="margin: 0;"><?php esc_html_e( 'Enable Feature', 'stackboost-for-supportcandy' ); ?></h3>
-					<p class="description" style="margin-top: 5px;"><?php esc_html_e( 'Toggle this feature on or off globally.', 'stackboost-for-supportcandy' ); ?></p>
+			<div id="stackboost-co-app">
+				<!-- Global Enable/Disable Toggle -->
+				<div class="stackboost-card" style="margin-bottom: 20px;">
+					<div class="pm-header">
+						<h2 style="margin: 0;"><?php esc_html_e( 'Feature Status', 'stackboost-for-supportcandy' ); ?></h2>
+						<button id="stackboost_co_save_main" class="button button-primary"><?php esc_html_e( 'Save Settings', 'stackboost-for-supportcandy' ); ?></button>
+					</div>
+					<div style="display: flex; align-items: center; gap: 15px;">
+						<label class="switch">
+							<input type="checkbox" id="stackboost_co_enabled" <?php checked( $is_enabled, true ); ?>>
+							<span class="slider round"></span>
+						</label>
+						<div>
+							<strong><?php esc_html_e( 'Enable Conditional Options', 'stackboost-for-supportcandy' ); ?></strong>
+							<p class="description" style="margin: 5px 0 0;"><?php esc_html_e( 'Toggle this feature on or off globally. Rules will not be enforced when disabled.', 'stackboost-for-supportcandy' ); ?></p>
+						</div>
+					</div>
 				</div>
-				<div class="stackboost-toggle-wrapper">
-					<label class="switch">
-						<input type="checkbox" id="stackboost_co_enabled" <?php checked( $is_enabled, true ); ?>>
-						<span class="slider round"></span>
-					</label>
-				</div>
-			</div>
 
-			<div id="stackboost-co-app" class="<?php echo $is_enabled ? '' : 'stackboost-disabled-ui'; ?>">
 				<!-- Main Table View -->
-				<div class="stackboost-card">
+				<div id="stackboost-co-rules-card" class="stackboost-card <?php echo $is_enabled ? '' : 'stackboost-disabled-ui'; ?>">
 					<div class="pm-header">
 						<h2><?php esc_html_e( 'Manage Rules', 'stackboost-for-supportcandy' ); ?></h2>
 						<div class="pm-limit-counter">

@@ -37,19 +37,31 @@
     });
 
     function initToggle() {
+        // Toggle Logic
         $('#stackboost_co_enabled').on('change', function() {
             var isChecked = $(this).is(':checked');
             state.isEnabled = isChecked;
 
             // Toggle UI state
+            var $rulesCard = $('#stackboost-co-rules-card');
             if (isChecked) {
-                $('#stackboost-co-app').removeClass('stackboost-disabled-ui');
+                $rulesCard.removeClass('stackboost-disabled-ui');
             } else {
-                $('#stackboost-co-app').addClass('stackboost-disabled-ui');
+                $rulesCard.addClass('stackboost-disabled-ui');
             }
+        });
 
-            // Save immediately
-            saveToServer();
+        // Save Button Logic
+        $('#stackboost_co_save_main').on('click', function(e) {
+            e.preventDefault();
+            var $btn = $(this);
+            $btn.prop('disabled', true).text('Saving...');
+
+            saveToServer(function() {
+                $btn.prop('disabled', false).text('Save Settings');
+            }, function() {
+                $btn.prop('disabled', false).text('Save Settings');
+            });
         });
     }
 
