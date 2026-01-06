@@ -77,6 +77,34 @@ class TicketService {
 
 		$fields_to_hydrate = array_unique( array_filter( $fields_to_hydrate ) );
 
+		// Optimize Certificate Check: Collect all IDs first
+		$ticket_ids = [];
+		foreach ( $all_tickets_objects as $ticket_obj ) {
+			$ticket_ids[] = $ticket_obj->id;
+		}
+
+		// Batch check for certificates
+		$certificates_map = [];
+		if ( ! empty( $ticket_ids ) ) {
+			global $wpdb;
+			$table_name = $wpdb->prefix . 'wpsc_attachments'; // Assuming standard table name
+			// Verify if table exists to prevent crash if SC structure is different
+			// But for now, standard SC uses wpsc_attachments.
+
+			$ids_placeholder = implode( ',', array_map( 'intval', $ticket_ids ) );
+			$query = "SELECT ticket_id, COUNT(*) as count FROM $table_name WHERE ticket_id IN ($ids_placeholder) AND name LIKE 'Onboarding_Certificate_%' GROUP BY ticket_id";
+
+			$results = $wpdb->get_results( $query );
+
+			if ( $results ) {
+				foreach ( $results as $row ) {
+					if ( $row->count > 0 ) {
+						$certificates_map[ $row->ticket_id ] = true;
+					}
+				}
+			}
+		}
+
 		foreach ( $all_tickets_objects as $ticket_obj ) {
 			// Convert WPSC_Ticket object to associative array
 			$t_array = $ticket_obj->to_array();
@@ -88,6 +116,9 @@ class TicketService {
                     $t_array[ $cf ] = $ticket_obj->$cf ?? null;
                 }
             }
+
+            // Hydrate certificate status
+            $t_array['has_certificate'] = isset( $certificates_map[ $ticket_obj->id ] );
 
 			$all_tickets[] = $t_array;
 		}
@@ -129,16 +160,7 @@ class TicketService {
 						$sorted['future_onboarding'][] = $ticket;
 					}
 				} catch ( \Exception $e ) {
-					// Ignore date error, treat as unscheduled/problematic if desired,
-					// but original logic just falls through.
-					// If date is invalid, it falls here or we need explicit else?
-					// Original logic: if ( $is_cleared && ! empty( $date_str ) ) entered this block.
-					// If Exception, it leaves the block.
-					// The ticket is then NOT added to any sorted list in the original logic?
-					// Let's check original logic:
-					// "try { ... } catch { }" - if it fails, nothing happens inside catch.
-					// The "else" for "if ($is_cleared...)" handles the uncleared.
-					// So yes, invalid date cleared tickets might be dropped. preserving this behavior.
+					// Ignore date error, treat as unscheduled/problematic
 				}
 			} else {
 				$sorted['uncleared_or_unscheduled'][] = $ticket;

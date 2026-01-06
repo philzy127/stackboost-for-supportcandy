@@ -138,6 +138,7 @@ class DashboardShortcode {
 						$this_week_attendees[] = [
 							'id'   => $t['id'],
 							'name' => esc_html( $name_val ),
+                            'has_certificate' => ! empty( $t['has_certificate'] ),
 						];
 					}
 				}

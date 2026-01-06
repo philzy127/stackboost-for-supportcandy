@@ -19,7 +19,11 @@ jQuery(document).ready(function($) {
                 if (stackboostOdbVars.thisWeekAttendees.length > 0) {
                     let attendeesList = '<ul style="list-style: none; padding: 0;">';
                     stackboostOdbVars.thisWeekAttendees.forEach(function(attendee) {
-                        attendeesList += '<li style="padding: 4px 0;">' + attendee.name + '</li>';
+                        let iconHtml = '';
+                        if (attendee.has_certificate) {
+                            iconHtml = ' <span class="dashicons dashicons-yes-alt" style="color: green; font-size: 18px; width: 18px; height: 18px; vertical-align: middle;" title="Certificate Generated"></span>';
+                        }
+                        attendeesList += '<li style="padding: 4px 0;">' + attendee.name + iconHtml + '</li>';
                     });
                     attendeesList += '</ul>';
                     $attendeesPreview.html(attendeesList);
@@ -252,7 +256,13 @@ jQuery(document).ready(function($) {
             html += '<label>';
             // Added margin-right to the checkbox for spacing from the name
             html += '<input type="checkbox" name="not_present_attendee" value="' + attendee.id + '" data-name="' + attendee.name + '" style="margin-right: 8px;">';
-            html += '<span>' + attendee.name + '</span>'; // Only display name
+
+            let iconHtml = '';
+            if (attendee.has_certificate) {
+                iconHtml = ' <span class="dashicons dashicons-yes-alt" style="color: green; font-size: 18px; width: 18px; height: 18px; vertical-align: middle;" title="Certificate Generated"></span>';
+            }
+
+            html += '<span>' + attendee.name + iconHtml + '</span>'; // Display name and icon
             html += '</label>';
             html += '</div>';
         });
@@ -387,6 +397,21 @@ jQuery(document).ready(function($) {
                         response.data.results.forEach(function(result) {
                             if (result.status === 'success') {
                                 successCount++;
+
+                                // Update UI with checkmark for successful attendees
+                                let $attendeeLabel = $(`input[name="not_present_attendee"][value="${result.attendee_id || ''}"]`).parent();
+                                // Note: result might not have ID if not returned, let's use name match fallback or rely on ordering if needed.
+                                // Actually result just has 'attendee' name.
+                                // To be precise, we iterate all inputs and match name.
+                                $('#onboarding-attendees-selection input[name="not_present_attendee"]').each(function() {
+                                    if ($(this).data('name') === result.attendee) {
+                                        let $span = $(this).siblings('span');
+                                        if ($span.find('.dashicons-yes-alt').length === 0) {
+                                             $span.append(' <span class="dashicons dashicons-yes-alt" style="color: green; font-size: 18px; width: 18px; height: 18px; vertical-align: middle;" title="Certificate Generated"></span>');
+                                        }
+                                    }
+                                });
+
                             } else {
                                 errorCount++;
                             }
