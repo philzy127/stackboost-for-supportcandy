@@ -7,6 +7,28 @@
 
 jQuery(document).ready(function($) {
 
+    // --- Logging Helper ---
+    function stackboost_client_log(message, context = 'onboarding_js') {
+        // Use central logger if available, otherwise fallback
+        if (typeof window.stackboostLog === 'function') {
+            window.stackboostLog(message, null, 'log');
+        } else if (typeof window.stackboost_log === 'function') {
+            window.stackboost_log(`[Onboarding ${context}] ` + message);
+        } else if (typeof stackboostOdbVars !== 'undefined' && stackboostOdbVars.debugEnabled) {
+            console.log(`[StackBoost ${context}] ` + message);
+        }
+
+        // Send to server if debug is enabled (preserving original logic)
+        if (typeof stackboostOdbVars !== 'undefined' && stackboostOdbVars.debugEnabled) {
+            $.post(stackboostOdbVars.ajaxurl, {
+                action: 'stackboost_log_client_event',
+                message: message,
+                context: context,
+                nonce: stackboostOdbVars.sendCertificatesNonce
+            });
+        }
+    }
+
     // --- Pre-Onboarding View Logic ---
     const $preSessionView = $('.onboarding-pre-session-view');
     if ($preSessionView.length) {
@@ -15,11 +37,20 @@ jQuery(document).ready(function($) {
         // 1. Populate Attendee List
         const $attendeesPreview = $('#attendees-list-preview');
         if ($attendeesPreview.length) {
-            if (odbDashboardVars && typeof odbDashboardVars.thisWeekAttendees !== 'undefined') {
-                if (odbDashboardVars.thisWeekAttendees.length > 0) {
+            console.log('[StackBoost FORCE] Populating attendees list preview (Diagnostic Log)'); // Force log as requested
+            stackboost_client_log('Populating attendees list preview...');
+
+            if (stackboostOdbVars && typeof stackboostOdbVars.thisWeekAttendees !== 'undefined') {
+                console.log('[StackBoost FORCE] Attendees Data:', stackboostOdbVars.thisWeekAttendees); // Force log as requested
+
+                if (stackboostOdbVars.thisWeekAttendees.length > 0) {
                     let attendeesList = '<ul style="list-style: none; padding: 0;">';
-                    odbDashboardVars.thisWeekAttendees.forEach(function(attendee) {
-                        attendeesList += '<li style="padding: 4px 0;">' + attendee.name + '</li>';
+                    stackboostOdbVars.thisWeekAttendees.forEach(function(attendee) {
+                        let iconHtml = '';
+                        if (attendee.has_certificate) {
+                            iconHtml = ' <span class="dashicons dashicons-yes-alt" style="color: green; font-size: 18px; width: 18px; height: 18px; vertical-align: middle;" title="Certificate Generated"></span>';
+                        }
+                        attendeesList += '<li style="padding: 4px 0;">' + attendee.name + iconHtml + '</li>';
                     });
                     attendeesList += '</ul>';
                     $attendeesPreview.html(attendeesList);
@@ -27,6 +58,8 @@ jQuery(document).ready(function($) {
                     $attendeesPreview.html('<p>No attendees scheduled for today.</p>');
                 }
             } else {
+                console.error('[StackBoost FORCE] Error: stackboostOdbVars.thisWeekAttendees is undefined.');
+                stackboost_client_log('Error: stackboostOdbVars.thisWeekAttendees is undefined.', 'error');
                 $attendeesPreview.html('<p style="color: red;">Error: Could not load attendee data.</p>');
             }
         }
@@ -67,14 +100,14 @@ jQuery(document).ready(function($) {
     // --- End Pre-Onboarding View Logic ---
 
     // Basic check to ensure localization data is available.
-    if (typeof odbDashboardVars === 'undefined' || !odbDashboardVars.fullSequence || odbDashboardVars.fullSequence.length === 0) {
-        stackboost_client_log('Localization data (odbDashboardVars) is missing or incomplete.', 'warning');
+    if (typeof stackboostOdbVars === 'undefined' || !stackboostOdbVars.fullSequence || stackboostOdbVars.fullSequence.length === 0) {
+        stackboost_client_log('Localization data (stackboostOdbVars) is missing or incomplete.', 'warning');
         return;
     }
 
-    const currentStepId = odbDashboardVars.currentStepId;
-    const currentStepIndex = odbDashboardVars.currentStepIndex;
-    const completionStepId = odbDashboardVars.completionStepId; // Get the virtual completion step ID
+    const currentStepId = stackboostOdbVars.currentStepId;
+    const currentStepIndex = stackboostOdbVars.currentStepIndex;
+    const completionStepId = stackboostOdbVars.completionStepId; // Get the virtual completion step ID
     const isCurrentlyOnCompletionStage = (currentStepId === completionStepId);
 
     const $nextButton = $('.onboarding-next-button');
@@ -87,25 +120,6 @@ jQuery(document).ready(function($) {
     const $completionStatusMessage = $('.onboarding-completion-status-message'); // Select status message
     const $navigationContainer = $('.onboarding-navigation'); // Select navigation container
 
-    // --- Logging Helper ---
-    function stackboost_client_log(message, context = 'onboarding_js') {
-        // Use central logger if available, otherwise fallback
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log(`[Onboarding ${context}] ` + message);
-        } else if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
-            window.stackboost_log(`[StackBoost ${context}] ` + message);
-        }
-
-        // Send to server if debug is enabled (preserving original logic)
-        if (typeof odbDashboardVars !== 'undefined' && odbDashboardVars.debugEnabled) {
-            $.post(odbDashboardVars.ajaxurl, {
-                action: 'stackboost_log_client_event',
-                message: message,
-                context: context,
-                nonce: odbDashboardVars.sendCertificatesNonce
-            });
-        }
-    }
 
     // --- Initial Display Logic based on current step ---
     if (isCurrentlyOnCompletionStage) {
@@ -115,7 +129,7 @@ jQuery(document).ready(function($) {
         $completionStage.removeClass('onboarding-completion-stage--hidden').show(); // Ensure it's visible by removing class and showing
         $navigationContainer.show(); // Ensure navigation buttons are shown for the completion page
 
-        populateAttendeesSelection(odbDashboardVars.thisWeekAttendees);
+        populateAttendeesSelection(stackboostOdbVars.thisWeekAttendees);
 
         // Adjust back/next button visibility for the completion stage
         $backButton.show(); // Always show back button on completion stage
@@ -197,7 +211,7 @@ jQuery(document).ready(function($) {
         const checkedItems = $checklistContainer.find('li.completed').length;
 
         // Determine if this is the last *real* step before the virtual completion step
-        const isLastRealStep = (parseInt(currentStepIndex, 10) === odbDashboardVars.fullSequence.length - 2);
+        const isLastRealStep = (parseInt(currentStepIndex, 10) === stackboostOdbVars.fullSequence.length - 2);
 
         if (isLastRealStep) { // If clicking the "Final Step" button
             if (totalItems > 0) {
@@ -252,7 +266,13 @@ jQuery(document).ready(function($) {
             html += '<label>';
             // Added margin-right to the checkbox for spacing from the name
             html += '<input type="checkbox" name="not_present_attendee" value="' + attendee.id + '" data-name="' + attendee.name + '" style="margin-right: 8px;">';
-            html += '<span>' + attendee.name + '</span>'; // Only display name
+
+            let iconHtml = '';
+            if (attendee.has_certificate) {
+                iconHtml = ' <span class="dashicons dashicons-yes-alt" style="color: green; font-size: 18px; width: 18px; height: 18px; vertical-align: middle;" title="Certificate Generated"></span>';
+            }
+
+            html += '<span>' + attendee.name + iconHtml + '</span>'; // Display name and icon
             html += '</label>';
             html += '</div>';
         });
@@ -280,11 +300,11 @@ jQuery(document).ready(function($) {
         e.preventDefault();
 
         // Determine if this is the last *real* step (before the virtual completion step)
-        const isLastRealStep = (parseInt(currentStepIndex, 10) === odbDashboardVars.fullSequence.length - 2);
+        const isLastRealStep = (parseInt(currentStepIndex, 10) === stackboostOdbVars.fullSequence.length - 2);
 
         if (isLastRealStep) { // If clicking the "Final Step" button
             // Navigate to the virtual completion step URL
-            const completionStepData = odbDashboardVars.fullSequence.find(step => step.id === completionStepId);
+            const completionStepData = stackboostOdbVars.fullSequence.find(step => step.id === completionStepId);
             if (completionStepData && completionStepData.permalink) {
                 const correctedPermalink = completionStepData.permalink.replace(/&#038;/g, '&');
                 window.location.href = correctedPermalink;
@@ -295,8 +315,8 @@ jQuery(document).ready(function($) {
             // Logic for 'Next Step' button (regular navigation)
             const nextStepIndex = parseInt(currentStepIndex, 10) + 1;
 
-            if (nextStepIndex < odbDashboardVars.fullSequence.length) {
-                const nextStep = odbDashboardVars.fullSequence[nextStepIndex];
+            if (nextStepIndex < stackboostOdbVars.fullSequence.length) {
+                const nextStep = stackboostOdbVars.fullSequence[nextStepIndex];
 
                 if (nextStep && nextStep.permalink) {
                     const correctedPermalink = nextStep.permalink.replace(/&#038;/g, '&');
@@ -316,9 +336,9 @@ jQuery(document).ready(function($) {
 
         if (isCurrentlyOnCompletionStage) {
             // If on the completion stage, go back to the last real step.
-            const lastRealStepIndex = odbDashboardVars.fullSequence.length - 2;
+            const lastRealStepIndex = stackboostOdbVars.fullSequence.length - 2;
             if (lastRealStepIndex >= 0) {
-                const prevStep = odbDashboardVars.fullSequence[lastRealStepIndex];
+                const prevStep = stackboostOdbVars.fullSequence[lastRealStepIndex];
                 window.location.href = prevStep.permalink.replace(/&#038;/g, '&');
             } else {
                 window.location.href = window.location.pathname;
@@ -328,7 +348,7 @@ jQuery(document).ready(function($) {
             const prevStepIndex = parseInt(currentStepIndex, 10) - 1;
             if (prevStepIndex >= 0) {
                 // If there's a previous step in the sequence, go to it.
-                const prevStep = odbDashboardVars.fullSequence[prevStepIndex];
+                const prevStep = stackboostOdbVars.fullSequence[prevStepIndex];
                 if (prevStep && prevStep.permalink) {
                     const correctedPermalink = prevStep.permalink.replace(/&#038;/g, '&');
                     window.location.href = correctedPermalink;
@@ -368,11 +388,11 @@ jQuery(document).ready(function($) {
         stackboost_client_log(`Sending certificates for ${presentAttendees.length} attendees.`);
 
         $.ajax({
-            url: odbDashboardVars.ajaxurl, // WordPress AJAX URL
+            url: stackboostOdbVars.ajaxurl, // WordPress AJAX URL
             type: 'POST',
             data: {
                 action: 'stackboost_onboarding_send_certificates', // Our custom AJAX action
-                nonce: odbDashboardVars.sendCertificatesNonce, // Security nonce
+                nonce: stackboostOdbVars.sendCertificatesNonce, // Security nonce
                 present_attendees: JSON.stringify(presentAttendees),
                 not_present_attendees: JSON.stringify(notPresentAttendees) // Send not present for logging/future use
             },
@@ -387,6 +407,21 @@ jQuery(document).ready(function($) {
                         response.data.results.forEach(function(result) {
                             if (result.status === 'success') {
                                 successCount++;
+
+                                // Update UI with checkmark for successful attendees
+                                let $attendeeLabel = $(`input[name="not_present_attendee"][value="${result.attendee_id || ''}"]`).parent();
+                                // Note: result might not have ID if not returned, let's use name match fallback or rely on ordering if needed.
+                                // Actually result just has 'attendee' name.
+                                // To be precise, we iterate all inputs and match name.
+                                $('#onboarding-attendees-selection input[name="not_present_attendee"]').each(function() {
+                                    if ($(this).data('name') === result.attendee) {
+                                        let $span = $(this).siblings('span');
+                                        if ($span.find('.dashicons-yes-alt').length === 0) {
+                                             $span.append(' <span class="dashicons dashicons-yes-alt" style="color: green; font-size: 18px; width: 18px; height: 18px; vertical-align: middle;" title="Certificate Generated"></span>');
+                                        }
+                                    }
+                                });
+
                             } else {
                                 errorCount++;
                             }
@@ -433,7 +468,7 @@ jQuery(document).ready(function($) {
                     // A potential enhancement here would be to navigate to the first step of the dashboard
                     // (or a dashboard overview) after successful completion and clearing,
                     // to ensure a fresh load of the first step.
-                    // window.location.href = odbDashboardVars.fullSequence[0].permalink.replace(/&#038;/g, '&');
+                    // window.location.href = stackboostOdbVars.fullSequence[0].permalink.replace(/&#038;/g, '&');
                     // This is commented out as it changes navigation flow, but is a common pattern for "completion".
 
                 } else {
