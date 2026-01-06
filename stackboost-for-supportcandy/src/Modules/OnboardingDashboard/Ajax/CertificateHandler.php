@@ -20,7 +20,9 @@ class CertificateHandler {
 	 */
 	public static function handle_client_log() {
 		// Verify Nonce (reusing certificate nonce as it's the context for dashboard actions)
-		check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce' );
+		if ( ! check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid Nonce' );
+		}
 
 		$message = isset( $_POST['message'] ) ? sanitize_text_field( $_POST['message'] ) : '';
 		$context = isset( $_POST['context'] ) ? sanitize_text_field( $_POST['context'] ) : 'onboarding_js';
@@ -38,7 +40,10 @@ class CertificateHandler {
 	public static function handle_request() {
 		stackboost_log( 'Certificate Generation Initiated.', 'onboarding' );
 		// Verify Nonce
-		check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce' );
+		if ( ! check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce', false ) ) {
+			stackboost_log( 'Certificate Generation Failed: Invalid Nonce. POST nonce: ' . ( $_POST['nonce'] ?? 'NULL' ), 'error' );
+			wp_send_json_error( 'Security check failed. Please refresh the page and try again.' );
+		}
 
 		// Verify Capability
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_onboarding_dashboard' ) ) {

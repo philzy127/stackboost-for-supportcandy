@@ -175,6 +175,7 @@ class Staff {
 		// Logic Config
 		$onboarding_date_field_key    = $config['field_onboarding_date'];
 		$onboarding_cleared_field_key = $config['field_cleared'];
+		$staff_name_field_key         = $config['field_staff_name']; // Identify name column
 
 		// Phone Logic
 		$phone_mode             = $config['phone_config_mode']; // 'single' or 'multiple'
@@ -308,6 +309,13 @@ class Staff {
 									// SupportCandy to_array might return array of IDs or values.
 									// If it's simple array, implode.
 									$display_value = implode( ', ', $display_value );
+								}
+
+								// -- Logic: Certificate Checkmark --
+								if ( $slug === $staff_name_field_key ) {
+									if ( ! empty( $ticket['has_certificate'] ) ) {
+										$display_value .= ' <span class="dashicons dashicons-yes-alt" style="color: green; font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-left: 5px;" title="' . esc_attr__( 'Certificate Generated', 'stackboost-for-supportcandy' ) . '"></span>';
+									}
 								}
 
 								?>
