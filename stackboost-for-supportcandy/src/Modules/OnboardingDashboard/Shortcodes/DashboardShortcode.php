@@ -145,6 +145,7 @@ class DashboardShortcode {
 						];
 					}
 				}
+                stackboost_log( "Frontend Dashboard: Final Attendees Data: " . json_encode($this_week_attendees), 'onboarding' );
 			} else {
 				stackboost_log( "Frontend Dashboard: Failed to fetch attendees or no data returned. Error: " . ( is_wp_error( $tickets_data ) ? $tickets_data->get_error_message() : 'None' ), 'error' );
 			}

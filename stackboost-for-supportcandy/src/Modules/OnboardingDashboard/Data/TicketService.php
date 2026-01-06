@@ -87,21 +87,31 @@ class TicketService {
 		$certificates_map = [];
 		if ( ! empty( $ticket_ids ) ) {
 			global $wpdb;
-			$table_name = $wpdb->prefix . 'wpsc_attachments'; // Assuming standard table name
-			// Verify if table exists to prevent crash if SC structure is different
-			// But for now, standard SC uses wpsc_attachments.
+
+			// Dynamic table name detection
+			$table_name = $wpdb->prefix . 'wpsc_attachments';
+			if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) != $table_name ) {
+				$table_name = $wpdb->prefix . 'psmsc_attachments';
+			}
+
+			stackboost_log( "TicketService: Checking certificates in table: $table_name", 'onboarding' );
 
 			$ids_placeholder = implode( ',', array_map( 'intval', $ticket_ids ) );
 			$query = "SELECT ticket_id, COUNT(*) as count FROM $table_name WHERE ticket_id IN ($ids_placeholder) AND name LIKE 'Onboarding_Certificate_%' GROUP BY ticket_id";
 
+			stackboost_log( "TicketService: Query: $query", 'onboarding' );
+
 			$results = $wpdb->get_results( $query );
 
 			if ( $results ) {
+				stackboost_log( "TicketService: Certificate Query Results Found: " . count( $results ), 'onboarding' );
 				foreach ( $results as $row ) {
 					if ( $row->count > 0 ) {
 						$certificates_map[ $row->ticket_id ] = true;
 					}
 				}
+			} else {
+				stackboost_log( "TicketService: No certificates found matching criteria.", 'onboarding' );
 			}
 		}
 
@@ -119,6 +129,9 @@ class TicketService {
 
             // Hydrate certificate status
             $t_array['has_certificate'] = isset( $certificates_map[ $ticket_obj->id ] );
+			if ( $t_array['has_certificate'] ) {
+				stackboost_log( "TicketService: Ticket ID {$ticket_obj->id} has a certificate.", 'onboarding' );
+			}
 
 			$all_tickets[] = $t_array;
 		}

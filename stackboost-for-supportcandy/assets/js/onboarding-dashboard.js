@@ -37,10 +37,11 @@ jQuery(document).ready(function($) {
         // 1. Populate Attendee List
         const $attendeesPreview = $('#attendees-list-preview');
         if ($attendeesPreview.length) {
+            console.log('[StackBoost FORCE] Populating attendees list preview (Diagnostic Log)'); // Force log as requested
             stackboost_client_log('Populating attendees list preview...');
 
             if (stackboostOdbVars && typeof stackboostOdbVars.thisWeekAttendees !== 'undefined') {
-                stackboost_client_log('Attendees data found: ' + JSON.stringify(stackboostOdbVars.thisWeekAttendees));
+                console.log('[StackBoost FORCE] Attendees Data:', stackboostOdbVars.thisWeekAttendees); // Force log as requested
 
                 if (stackboostOdbVars.thisWeekAttendees.length > 0) {
                     let attendeesList = '<ul style="list-style: none; padding: 0;">';
@@ -57,6 +58,7 @@ jQuery(document).ready(function($) {
                     $attendeesPreview.html('<p>No attendees scheduled for today.</p>');
                 }
             } else {
+                console.error('[StackBoost FORCE] Error: stackboostOdbVars.thisWeekAttendees is undefined.');
                 stackboost_client_log('Error: stackboostOdbVars.thisWeekAttendees is undefined.', 'error');
                 $attendeesPreview.html('<p style="color: red;">Error: Could not load attendee data.</p>');
             }
