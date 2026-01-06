@@ -39,10 +39,13 @@ class DashboardShortcode {
                 );
             }
 
+			// Enqueue util script first to ensure logging functions are available
+			wp_enqueue_script( 'stackboost-util' );
+
 			wp_enqueue_script(
 				'stackboost-onboarding-dashboard',
 				\STACKBOOST_PLUGIN_URL . 'assets/js/onboarding-dashboard.js',
-				[ 'jquery' ],
+				[ 'jquery', 'stackboost-util' ], // Added stackboost-util dependency
 				\STACKBOOST_VERSION,
 				true
 			);

@@ -7,6 +7,28 @@
 
 jQuery(document).ready(function($) {
 
+    // --- Logging Helper ---
+    function stackboost_client_log(message, context = 'onboarding_js') {
+        // Use central logger if available, otherwise fallback
+        if (typeof window.stackboostLog === 'function') {
+            window.stackboostLog(message, null, 'log');
+        } else if (typeof window.stackboost_log === 'function') {
+            window.stackboost_log(`[Onboarding ${context}] ` + message);
+        } else if (typeof stackboostOdbVars !== 'undefined' && stackboostOdbVars.debugEnabled) {
+            console.log(`[StackBoost ${context}] ` + message);
+        }
+
+        // Send to server if debug is enabled (preserving original logic)
+        if (typeof stackboostOdbVars !== 'undefined' && stackboostOdbVars.debugEnabled) {
+            $.post(stackboostOdbVars.ajaxurl, {
+                action: 'stackboost_log_client_event',
+                message: message,
+                context: context,
+                nonce: stackboostOdbVars.sendCertificatesNonce
+            });
+        }
+    }
+
     // --- Pre-Onboarding View Logic ---
     const $preSessionView = $('.onboarding-pre-session-view');
     if ($preSessionView.length) {
@@ -15,7 +37,11 @@ jQuery(document).ready(function($) {
         // 1. Populate Attendee List
         const $attendeesPreview = $('#attendees-list-preview');
         if ($attendeesPreview.length) {
+            stackboost_client_log('Populating attendees list preview...');
+
             if (stackboostOdbVars && typeof stackboostOdbVars.thisWeekAttendees !== 'undefined') {
+                stackboost_client_log('Attendees data found: ' + JSON.stringify(stackboostOdbVars.thisWeekAttendees));
+
                 if (stackboostOdbVars.thisWeekAttendees.length > 0) {
                     let attendeesList = '<ul style="list-style: none; padding: 0;">';
                     stackboostOdbVars.thisWeekAttendees.forEach(function(attendee) {
@@ -31,6 +57,7 @@ jQuery(document).ready(function($) {
                     $attendeesPreview.html('<p>No attendees scheduled for today.</p>');
                 }
             } else {
+                stackboost_client_log('Error: stackboostOdbVars.thisWeekAttendees is undefined.', 'error');
                 $attendeesPreview.html('<p style="color: red;">Error: Could not load attendee data.</p>');
             }
         }
@@ -91,25 +118,6 @@ jQuery(document).ready(function($) {
     const $completionStatusMessage = $('.onboarding-completion-status-message'); // Select status message
     const $navigationContainer = $('.onboarding-navigation'); // Select navigation container
 
-    // --- Logging Helper ---
-    function stackboost_client_log(message, context = 'onboarding_js') {
-        // Use central logger if available, otherwise fallback
-        if (typeof window.stackboost_log === 'function') {
-            window.stackboost_log(`[Onboarding ${context}] ` + message);
-        } else if (typeof stackboostOdbVars !== 'undefined' && stackboostOdbVars.debugEnabled) {
-            window.stackboost_log(`[StackBoost ${context}] ` + message);
-        }
-
-        // Send to server if debug is enabled (preserving original logic)
-        if (typeof stackboostOdbVars !== 'undefined' && stackboostOdbVars.debugEnabled) {
-            $.post(stackboostOdbVars.ajaxurl, {
-                action: 'stackboost_log_client_event',
-                message: message,
-                context: context,
-                nonce: stackboostOdbVars.sendCertificatesNonce
-            });
-        }
-    }
 
     // --- Initial Display Logic based on current step ---
     if (isCurrentlyOnCompletionStage) {
