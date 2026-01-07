@@ -814,7 +814,7 @@ class Settings {
 				'page_last_loaded_label',
 				'page_last_loaded_format'
 			],
-			'stackboost-conditional-options' => ['conditional_options_rules'], // Correctly whitelisted
+			'stackboost-conditional-options' => ['conditional_options_rules', 'conditional_options_enabled'], // Whitelisted
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
@@ -882,6 +882,7 @@ class Settings {
 					case 'enable_log_appearance':
 					case 'enable_log_chat_bubbles':
 					case 'enable_log_conditional_options':
+					case 'conditional_options_enabled':
 					case 'chat_bubbles_enable_ticket':
 					case 'chat_bubbles_enable_email':
 					case 'chat_bubbles_shadow_enable':
