@@ -275,7 +275,7 @@
         }, function(res) {
             if (res.success) {
                 if (successCallback) successCallback();
-                stackboost_show_toast('Settings saved successfully.', 'success');
+                stackboost_show_toast(res.data.message || 'Settings saved successfully.', 'success');
             } else {
                 if (failCallback) failCallback();
                 stackboostAlert('Error: ' + res.data.message, 'Error');
