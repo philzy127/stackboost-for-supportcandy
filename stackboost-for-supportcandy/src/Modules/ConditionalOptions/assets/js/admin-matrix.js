@@ -1,7 +1,7 @@
 (function($) {
     'use strict';
 
-    console.log('Conditional Options JS Loaded - v5.0 (Simplified)');
+    console.log('Conditional Options JS Loaded - v5.1');
 
     // State initialization
     var initialRules = stackboostCO.rules;
@@ -56,7 +56,7 @@
             // Toggle Button State
             $('#pm-add-rule-btn').prop('disabled', !isChecked);
 
-            // Auto-save
+            // Auto-save using the standard stackboost banner
             saveToServer();
         });
     }
@@ -265,7 +265,7 @@
         // Remove existing toasts
         $('.stackboost-toast').remove();
 
-        // Show saving notice
+        // Show saving notice (The stackboost banner)
         stackboost_show_toast('Saving...', 'info');
 
         var payload = JSON.stringify(state.rules);
@@ -280,6 +280,7 @@
 
             if (res.success) {
                 if (successCallback) successCallback();
+                // Show success banner
                 stackboost_show_toast(res.data.message || 'Settings saved successfully.', 'success');
             } else {
                 if (failCallback) failCallback();

@@ -210,7 +210,7 @@ class WordPress extends Module {
 			'stackboost-co-admin-js',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/ConditionalOptions/assets/js/admin-matrix.js',
 			[ 'jquery', 'stackboost-admin-common' ], // Depends on common for nonce/ajax_url
-			STACKBOOST_VERSION . '.2',
+			STACKBOOST_VERSION . '.3',
 			true
 		);
 
