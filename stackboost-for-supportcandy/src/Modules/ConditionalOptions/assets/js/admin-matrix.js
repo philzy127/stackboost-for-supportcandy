@@ -49,19 +49,9 @@
             } else {
                 $rulesCard.addClass('stackboost-disabled-ui');
             }
-        });
 
-        // Save Button Logic
-        $('#stackboost_co_save_main').on('click', function(e) {
-            e.preventDefault();
-            var $btn = $(this);
-            $btn.prop('disabled', true).text('Saving...');
-
-            saveToServer(function() {
-                $btn.prop('disabled', false).text('Save Settings');
-            }, function() {
-                $btn.prop('disabled', false).text('Save Settings');
-            });
+            // Auto-save
+            saveToServer();
         });
     }
 

@@ -82,7 +82,6 @@ class WordPress extends Module {
 				<div class="stackboost-card" style="margin-bottom: 20px;">
 					<div class="pm-header">
 						<h2 style="margin: 0;"><?php esc_html_e( 'Feature Status', 'stackboost-for-supportcandy' ); ?></h2>
-						<button id="stackboost_co_save_main" class="button button-primary"><?php esc_html_e( 'Save Settings', 'stackboost-for-supportcandy' ); ?></button>
 					</div>
 					<div style="display: flex; align-items: center; gap: 15px;">
 						<label class="switch">
