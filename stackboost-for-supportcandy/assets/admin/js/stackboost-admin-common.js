@@ -25,7 +25,13 @@
      */
     window.stackboost_show_toast = function(message, type) {
         type = type || 'success';
-        var noticeClass = type === 'error' ? 'notice-error' : 'notice-success';
+        var noticeClass = 'notice-success';
+        if (type === 'error') {
+            noticeClass = 'notice-error';
+        } else if (type === 'info') {
+            noticeClass = 'notice-info';
+        }
+
         // Manually include the dismissal button markup
         var notice = $('<div class="notice ' + noticeClass + ' is-dismissible stackboost-toast"><p>' + message + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>');
 

@@ -262,6 +262,9 @@
     }
 
     function saveToServer(successCallback, failCallback) {
+        // Remove existing toasts
+        $('.stackboost-toast').remove();
+
         // Show saving notice
         stackboost_show_toast('Saving...', 'info');
 
@@ -273,6 +276,8 @@
             rules: payload,
             enabled: state.isEnabled
         }, function(res) {
+            $('.stackboost-toast').remove();
+
             if (res.success) {
                 if (successCallback) successCallback();
                 stackboost_show_toast(res.data.message || 'Settings saved successfully.', 'success');
@@ -281,6 +286,8 @@
                 stackboostAlert('Error: ' + res.data.message, 'Error');
             }
         }).fail(function() {
+            $('.stackboost-toast').remove();
+
             if (failCallback) failCallback();
              stackboostAlert('Server Error.', 'Error');
         });
