@@ -25,6 +25,9 @@
         initModalEvents();
         initToggle();
 
+        // Set initial button state
+        $('#pm-add-rule-btn').prop('disabled', !state.isEnabled);
+
         $('#pm-add-rule-btn').on('click', function(e) {
             e.preventDefault();
             var count = Object.keys(state.rules).length;
@@ -49,6 +52,9 @@
             } else {
                 $rulesCard.addClass('stackboost-disabled-ui');
             }
+
+            // Toggle Button State
+            $('#pm-add-rule-btn').prop('disabled', !isChecked);
 
             // Auto-save
             saveToServer();
@@ -256,6 +262,9 @@
     }
 
     function saveToServer(successCallback, failCallback) {
+        // Show saving notice
+        stackboost_show_toast('Saving...', 'info');
+
         var payload = JSON.stringify(state.rules);
 
         $.post(stackboost_admin_ajax.ajax_url, {

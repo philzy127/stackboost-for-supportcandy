@@ -81,7 +81,7 @@ class WordPress extends Module {
 				<!-- Global Enable/Disable Toggle -->
 				<div class="stackboost-card" style="margin-bottom: 20px;">
 					<div class="pm-header">
-						<h2 style="margin: 0;"><?php esc_html_e( 'Feature Status', 'stackboost-for-supportcandy' ); ?></h2>
+						<h2 style="margin-bottom: 15px;"><?php esc_html_e( 'Feature Status', 'stackboost-for-supportcandy' ); ?></h2>
 					</div>
 					<div style="display: flex; align-items: center; gap: 15px;">
 						<label class="switch">
