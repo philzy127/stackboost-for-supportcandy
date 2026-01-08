@@ -101,6 +101,11 @@ class Core {
 					'name' => $details['name'],
 				];
 			}
+			// Add Guest/Visitor for WP Context
+			$roles[] = [
+				'slug' => 'guest',
+				'name' => __( 'Guest / Visitor', 'stackboost-for-supportcandy' ),
+			];
 		} elseif ( 'sc' === $context ) {
 			// SupportCandy Roles are stored in 'wpsc-agent-roles' option.
 			$sc_roles = get_option( 'wpsc-agent-roles', [] );
@@ -110,6 +115,16 @@ class Core {
 					'name' => $details['label'], // 'label' holds the display name
 				];
 			}
+			// Add Guest/Visitor for SC Context
+			$roles[] = [
+				'slug' => 'guest',
+				'name' => __( 'Guest / Visitor', 'stackboost-for-supportcandy' ),
+			];
+			// Add User (No SC Role) for SC Context
+			$roles[] = [
+				'slug' => 'user',
+				'name' => __( 'User', 'stackboost-for-supportcandy' ),
+			];
 		}
 
 		return $roles;

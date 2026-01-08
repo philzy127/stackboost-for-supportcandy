@@ -275,8 +275,10 @@ class WordPress extends Module {
 		wp_localize_script( 'stackboost-co-frontend', 'stackboostCORules', [
 			'rules' => $core->get_rules(),
 			'user'  => [
-				'wp_roles' => $current_wp_roles,
-				'sc_roles' => $current_sc_roles,
+				'wp_roles'    => $current_wp_roles,
+				'sc_roles'    => $current_sc_roles,
+				'is_guest'    => ! is_user_logged_in(),
+				'is_sc_user'  => empty( $current_sc_roles ),
 				// 'is_admin' removed as we now enforce for admins too if rule exists
 			]
 		] );
@@ -472,6 +474,20 @@ class WordPress extends Module {
 					if ( in_array( $user_role, $target_roles, true ) ) {
 						$user_has_target_role = true;
 						break;
+					}
+				}
+
+				// Specific Check for 'guest' role (Not Logged In)
+				if ( ! $user_has_target_role && in_array( 'guest', $target_roles, true ) ) {
+					if ( ! is_user_logged_in() ) {
+						$user_has_target_role = true;
+					}
+				}
+
+				// Specific Check for 'user' role (SC Context - No SC Role)
+				if ( ! $user_has_target_role && 'sc' === $context && in_array( 'user', $target_roles, true ) ) {
+					if ( empty( $current_sc_roles ) ) {
+						$user_has_target_role = true;
 					}
 				}
 

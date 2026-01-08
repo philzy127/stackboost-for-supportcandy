@@ -380,6 +380,7 @@
         // Bind Click Handlers
         $container.find('.pm-role-pill').on('click', function() {
             $(this).toggleClass('selected');
+            updateContextLockState();
         });
 
         // Toggle All Handler
@@ -398,7 +399,32 @@
                 $pills.addClass('selected');
                 $btn.addClass('active');
             }
+            updateContextLockState();
         });
+
+        // Initialize Lock State
+        updateContextLockState();
+    }
+
+    function updateContextLockState() {
+        var $pills = $('.pm-role-pill.selected');
+        var $radios = $('input[name="modal_context"]');
+
+        if ($pills.length > 0) {
+            // Something is selected, disable the OTHER context radio
+            var currentContext = $('input[name="modal_context"]:checked').val();
+            $radios.each(function() {
+                var val = $(this).val();
+                if (val !== currentContext) {
+                    $(this).prop('disabled', true).parent().css('opacity', '0.5');
+                } else {
+                    $(this).prop('disabled', false).parent().css('opacity', '1');
+                }
+            });
+        } else {
+            // Nothing selected, enable all
+            $radios.prop('disabled', false).parent().css('opacity', '1');
+        }
     }
 
     function getFieldName(slug) {
