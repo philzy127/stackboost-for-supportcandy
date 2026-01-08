@@ -33,7 +33,7 @@
         }
 
         // Manually include the dismissal button markup
-        var notice = $('<div class="notice ' + noticeClass + ' is-dismissible stackboost-toast"><p>' + message + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>');
+        var notice = $('<div class="notice ' + noticeClass + ' is-dismissible stackboost-admin-notice"><p>' + message + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>');
 
         // Insert after the page title
         $('.wrap > h1').after(notice);

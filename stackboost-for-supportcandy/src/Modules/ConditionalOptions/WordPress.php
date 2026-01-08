@@ -72,8 +72,14 @@ class WordPress extends Module {
 
 		$core = Core::get_instance();
 		$is_enabled = $core->is_enabled();
+
+		// Get active theme class
+		$theme_class = 'sb-theme-clean-tech'; // Default
+		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+		}
 		?>
-		<div class="wrap stackboost-dashboard">
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php esc_html_e( 'Conditional Options', 'stackboost-for-supportcandy' ); ?></h1>
 			<p><?php esc_html_e( 'Configure granular visibility rules for field options based on user roles.', 'stackboost-for-supportcandy' ); ?></p>
 
