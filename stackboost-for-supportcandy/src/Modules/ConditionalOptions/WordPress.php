@@ -224,12 +224,33 @@ class WordPress extends Module {
 		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
 		$core = Core::get_instance();
 
+		// Pre-fetch Option Names for Existing Rules
+		$rules = $core->get_rules();
+		$ruleOptionNames = [];
+
+		if ( ! empty( $rules ) && class_exists( '\WPSC_Custom_Field' ) ) {
+			foreach ( $rules as $field_slug => $rule ) {
+				$cf = \WPSC_Custom_Field::get_cf_by_slug( $field_slug );
+				if ( $cf && $cf->id ) {
+					// Fetch options using existing Core helper which handles standard/custom fields
+					$options = $core->get_field_options( $cf->id );
+					// Build map: Option ID -> Name
+					$optionMap = [];
+					foreach ( $options as $opt ) {
+						$optionMap[ $opt['id'] ] = $opt['name'];
+					}
+					$ruleOptionNames[ $field_slug ] = $optionMap;
+				}
+			}
+		}
+
 		wp_localize_script( 'stackboost-co-admin-js', 'stackboostCO', [
-			'fields'  => $plugin_instance->get_supportcandy_columns(), // Pass field list [slug => name]
-			'rules'   => $core->get_rules(),
-			'enabled' => $core->is_enabled(),
-			'tier'    => stackboost_get_license_tier(),
-			'i18n'    => [
+			'fields'          => $plugin_instance->get_supportcandy_columns(), // Pass field list [slug => name]
+			'rules'           => $rules,
+			'ruleOptionNames' => $ruleOptionNames, // Lookup for display
+			'enabled'         => $core->is_enabled(),
+			'tier'            => stackboost_get_license_tier(),
+			'i18n'            => [
 				'confirm_delete' => __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ),
 				'limit_reached'  => __( 'Limit Reached: Upgrade to Pro for unlimited rules.', 'stackboost-for-supportcandy' ),
 				'toggle_all'     => __( 'Select All / None', 'stackboost-for-supportcandy' ),

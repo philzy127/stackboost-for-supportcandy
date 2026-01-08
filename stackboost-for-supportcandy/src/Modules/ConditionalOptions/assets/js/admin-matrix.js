@@ -76,14 +76,44 @@
             $('#pm-no-rules-msg').hide();
             $('.pm-rules-wrapper table').show();
 
+            // Add Header for Customized Options if not exists
+            if ($('.wp-list-table thead th.pm-col-customized').length === 0) {
+                $('.wp-list-table thead tr th:nth-child(2)').after('<th class="pm-col-customized">Customized Options</th>');
+            }
+
             slugs.forEach(function(slug) {
                 var rule = state.rules[slug];
                 var fieldName = getFieldName(slug);
                 var contextLabel = (rule.context === 'wp') ? 'WP Roles' : 'SupportCandy Roles';
 
+                // Build Customized Options String
+                var customizedOptions = [];
+                var optionMap = stackboostCO.ruleOptionNames[slug] || {};
+
+                if (rule.option_rules) {
+                    $.each(rule.option_rules, function(optId, roles) {
+                        if (roles && roles.length > 0) {
+                            var name = optionMap[optId] || 'ID:' + optId;
+                            customizedOptions.push(name);
+                        }
+                    });
+                }
+
+                var customText = '<em>None</em>';
+                if (customizedOptions.length > 0) {
+                    var displayList = customizedOptions;
+                    var moreText = '';
+                    if (customizedOptions.length > 3) {
+                        displayList = customizedOptions.slice(0, 3);
+                        moreText = ', ... (' + (customizedOptions.length - 3) + ' more)';
+                    }
+                    customText = displayList.join(', ') + moreText;
+                }
+
                 var row = '<tr>';
                 row += '<td><strong>' + fieldName + '</strong><br><small style="color:#666">' + slug + '</small></td>';
                 row += '<td>' + contextLabel + '</td>';
+                row += '<td>' + customText + '</td>';
                 row += '<td style="text-align: right;">';
                 row += '<button type="button" class="stackboost-icon-btn pm-edit-rule" data-slug="' + slug + '" title="Edit"><span class="dashicons dashicons-edit"></span></button>';
                 row += '<button type="button" class="stackboost-icon-btn pm-delete-rule" data-slug="' + slug + '" title="Delete"><span class="dashicons dashicons-trash"></span></button>';
