@@ -2,6 +2,10 @@
 
 namespace StackBoost\ForSupportCandy\Modules\ChatBubbles;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings;
 
 /**
@@ -86,7 +90,7 @@ class Core {
 			// We register a dummy handle to attach our inline styles to, ensuring they load anywhere
 			// SupportCandy might be present (shortcodes, widgets, etc).
 			$handle = 'stackboost-chat-bubbles-frontend';
-			wp_register_style( $handle, false );
+			wp_register_style( $handle, false, [], STACKBOOST_VERSION );
 			wp_enqueue_style( $handle );
 		}
 

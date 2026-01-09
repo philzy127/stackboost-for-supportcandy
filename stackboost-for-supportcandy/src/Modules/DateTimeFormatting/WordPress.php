@@ -2,6 +2,10 @@
 
 namespace StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use StackBoost\ForSupportCandy\Core\Module;
 use StackBoost\ForSupportCandy\WordPress\Plugin;
 use DateTime;
@@ -105,7 +109,7 @@ class WordPress extends Module {
 			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
 		}
 
-		$input = $_POST['stackboost_date_time_settings'];
+		$input = $_POST['stackboost_date_time_settings']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$sanitized = $this->sanitize_settings( $input );
 
 		if ( update_option( 'stackboost_date_time_settings', $sanitized ) ) {

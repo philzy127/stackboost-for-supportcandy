@@ -8,6 +8,7 @@
  * Text Domain: stackboost-for-supportcandy
  * Domain Path: /languages
  * Requires Plugins: supportcandy
+ * License: GPLv2 or later
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

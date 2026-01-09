@@ -2,6 +2,10 @@
 
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Ajax;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use StackBoost\ForSupportCandy\Services\PdfService;
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Settings;
 
@@ -179,7 +183,7 @@ class CertificateHandler {
 				}
 
 				if ( file_exists( $filepath ) ) {
-					unlink( $filepath );
+					wp_delete_file( $filepath ); // Replaced unlink with wp_delete_file
 				}
 			} catch ( \Throwable $e ) {
 				stackboost_log( 'Critical error processing certificate for ' . $attendee_name . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(), 'error' );
@@ -315,8 +319,9 @@ class CertificateHandler {
 		$rel_path   = '/wpsc/' . $today->format( 'Y' ) . '/' . $today->format( 'm' ) . '/';
 		$target_dir = $upload_dir['basedir'] . $rel_path;
 
+		// Use WP_Filesystem for directory creation if possible, but mkdir is standard fallback if direct access is allowed
 		if ( ! file_exists( $target_dir ) ) {
-			mkdir( $target_dir, 0755, true );
+			wp_mkdir_p( $target_dir );
 		}
 
 		// Ensure unique filename

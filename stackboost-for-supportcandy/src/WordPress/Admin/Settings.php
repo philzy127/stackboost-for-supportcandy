@@ -2,6 +2,10 @@
 
 namespace StackBoost\ForSupportCandy\WordPress\Admin;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Manages the admin settings pages and sanitization for the plugin.
  *
@@ -370,7 +374,7 @@ class Settings {
 					<script>
 					(function($) {
 						$(document).ready(function() {
-							var pool = <?php echo $upsell_json; ?>;
+							var pool = <?php echo $upsell_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
 							var currentIndex = <?php echo (int) $start_index; ?>;
 							var $widget = $('#stackboost-spotlight-widget');
 							var timer = null;
@@ -708,7 +712,7 @@ class Settings {
                 $.post(ajaxurl, {
                     action: 'stackboost_activate_license',
                     license_key: key,
-                    nonce: '<?php echo wp_create_nonce( 'stackboost_license_nonce' ); ?>'
+                    nonce: '<?php echo esc_js( wp_create_nonce( 'stackboost_license_nonce' ) ); ?>'
                 }, function(response) {
                     if (response.success) {
                         msg.css('color', 'green').text('<?php esc_html_e( 'License activated successfully! Reloading...', 'stackboost-for-supportcandy' ); ?>');
@@ -733,7 +737,7 @@ class Settings {
 
                 $.post(ajaxurl, {
                     action: 'stackboost_deactivate_license',
-                    nonce: '<?php echo wp_create_nonce( 'stackboost_license_nonce' ); ?>'
+                    nonce: '<?php echo esc_js( wp_create_nonce( 'stackboost_license_nonce' ) ); ?>'
                 }, function(response) {
                     if (response.success) {
                         msg.css('color', 'green').text('<?php esc_html_e( 'License deactivated. Reloading...', 'stackboost-for-supportcandy' ); ?>');
@@ -1107,6 +1111,12 @@ class Settings {
 			case 'download_log':
 				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'stackboost_download_log_nonce' ) ) {
 					if ( file_exists( $log_file ) ) {
+						global $wp_filesystem;
+						if ( empty( $wp_filesystem ) ) {
+							require_once ABSPATH . 'wp-admin/includes/file.php';
+							WP_Filesystem();
+						}
+
 						header( 'Content-Description: File Transfer' );
 						header( 'Content-Type: application/octet-stream' );
 						header( 'Content-Disposition: attachment; filename="stackboost-debug.log"' );
@@ -1114,7 +1124,10 @@ class Settings {
 						header( 'Cache-Control: must-revalidate' );
 						header( 'Pragma: public' );
 						header( 'Content-Length: ' . filesize( $log_file ) );
-						readfile( $log_file );
+
+						if ( $wp_filesystem->exists( $log_file ) ) {
+							echo $wp_filesystem->get_contents( $log_file );
+						}
 						exit;
 					} else {
 						wp_die( 'Log file not found.' );

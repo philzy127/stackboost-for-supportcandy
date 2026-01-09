@@ -2,6 +2,10 @@
 
 namespace StackBoost\ForSupportCandy\Modules\ConditionalOptions;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use StackBoost\ForSupportCandy\Core\Module;
 
 /**
@@ -399,7 +403,7 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$rules_json = stripslashes( $_POST['rules'] ?? '[]' );
+		$rules_json = stripslashes( $_POST['rules'] ?? '[]' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$rules      = json_decode( $rules_json, true );
 		$is_enabled = isset( $_POST['enabled'] ) && 'true' === $_POST['enabled'];
 

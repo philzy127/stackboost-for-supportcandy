@@ -211,7 +211,7 @@ class DirectoryShortcode {
                                 <?php // Modern grid uses a hidden thead generally, or we style it away. But for accessibility/datatables it needs to exist. ?>
 
                                 <?php if ( in_array( 'photo', $visible_columns, true ) ) : ?>
-									<th class="sb-col-photo"><?php esc_html_e( '', 'stackboost-for-supportcandy' ); // No label for photo ?></th>
+									<th class="sb-col-photo"></th>
 								<?php endif; ?>
 
                                 <?php if ( in_array( 'name', $visible_columns, true ) ) : ?>

@@ -404,7 +404,7 @@ class WordPress {
 						)
 					);
 					$active  = ( $active_tab === $tab_id ) ? ' nav-tab-active' : '';
-					echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . $active . '">' . esc_html( $tab_name ) . '</a>';
+					echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . esc_attr( $active ) . '">' . esc_html( $tab_name ) . '</a>';
 				}
 				?>
 			</h2>
@@ -997,7 +997,7 @@ class WordPress {
 			7  => __( 'Staff saved.', 'stackboost-for-supportcandy' ),
 			8  => __( 'Staff submitted.', 'stackboost-for-supportcandy' ),
 			9  => sprintf(
-				// translators: %1$s: date and time of the scheduled post.
+				/* translators: %1$s: date and time of the scheduled post. */
 				__( 'Staff scheduled for: %1$s.', 'stackboost-for-supportcandy' ),
 				'<strong>' . date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ) . '</strong>'
 			),
@@ -1259,6 +1259,7 @@ class WordPress {
 					$items_removed = true;
 				} else {
 					$items_retained = true;
+					/* translators: %d: Staff profile ID. */
 					$messages[]     = sprintf( __( 'Staff profile (ID %d) could not be removed.', 'stackboost-for-supportcandy' ), $post->ID );
 				}
 			}

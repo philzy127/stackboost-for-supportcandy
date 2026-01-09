@@ -2,6 +2,10 @@
 
 namespace StackBoost\ForSupportCandy\WordPress;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use StackBoost\ForSupportCandy\WordPress\Admin\Settings;
 use StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
 use StackBoost\ForSupportCandy\Modules\QolEnhancements;

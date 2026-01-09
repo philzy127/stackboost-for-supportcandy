@@ -1,4 +1,7 @@
 # StackBoost - For SupportCandy
+Tested up to: 6.9
+Stable Tag: 1.6.0
+License: GPLv2 or later
 
 StackBoost - For SupportCandy is a powerful enhancement plugin for the SupportCandy helpdesk system in WordPress. It adds a suite of advanced features designed to streamline ticket management, improve agent workflow, and provide greater control over the user interface.
 

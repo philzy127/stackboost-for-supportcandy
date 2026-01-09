@@ -2,6 +2,10 @@
 
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Data;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 class CustomPostTypes {
 
 	/**
@@ -67,10 +71,10 @@ class CustomPostTypes {
 			'not_found'             => __( 'Not found', 'stackboost-for-supportcandy' ),
 			'not_found_in_trash'    => __( 'Not found in Trash', 'stackboost-for-supportcandy' ),
 			'featured_image'        => __( 'Featured Image', 'stackboost-for-supportcandy' ),
-			'set_featured_image'    => __( 'Set featured image', 'stackboost-for-supportcandy' ),
-			'remove_featured_image' => __( 'Remove featured image', 'stackboost-for-supportcandy' ),
+			'set_featured_image'    => esc_html__( 'Set featured image', 'stackboost-for-supportcandy' ),
+			'remove_featured_image' => esc_html__( 'Remove featured image', 'stackboost-for-supportcandy' ),
 			'use_featured_image'    => __( 'Use as featured image', 'stackboost-for-supportcandy' ),
-			'insert_into_item'      => __( 'Insert into onboarding step', 'stackboost-for-supportcandy' ),
+			'insert_into_item'      => esc_html__( 'Insert into onboarding step', 'stackboost-for-supportcandy' ),
 			'uploaded_to_this_item' => __( 'Uploaded to this onboarding step', 'stackboost-for-supportcandy' ),
 			'items_list'            => __( 'Onboarding Steps list', 'stackboost-for-supportcandy' ),
 			'items_list_navigation' => __( 'Onboarding Steps list navigation', 'stackboost-for-supportcandy' ),

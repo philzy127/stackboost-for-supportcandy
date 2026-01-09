@@ -2,6 +2,10 @@
 
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 class Settings {
 
 	const OPTION_GROUP = 'stackboost_onboarding_general';

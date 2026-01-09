@@ -5,6 +5,10 @@
  * @package StackBoost\ForSupportCandy\WordPress
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Check if SupportCandy Pro is active.
  *

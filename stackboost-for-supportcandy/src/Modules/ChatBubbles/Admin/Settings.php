@@ -2,6 +2,10 @@
 
 namespace StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Settings Page for Chat Bubbles.
  */
@@ -17,7 +21,7 @@ class Settings {
 
 		// Get active theme class
 		$theme_class = 'sb-theme-clean-tech'; // Default
-		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+		if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
 			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
 		}
 
@@ -110,7 +114,7 @@ class Settings {
 												<span class="thread-time">10:30 AM</span>
 											</div>
 											<div class="actions">
-												<?php echo $action_icons; ?>
+												<?php echo $action_icons; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 											</div>
 										</div>
 										<div class="thread-text">
@@ -138,7 +142,7 @@ class Settings {
 												<span class="thread-time">10:32 AM</span>
 											</div>
 											<div class="actions">
-												<?php echo $action_icons; ?>
+												<?php echo $action_icons; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 											</div>
 										</div>
 										<div class="thread-text">
@@ -192,7 +196,7 @@ class Settings {
 												<span class="thread-time">10:35 AM</span>
 											</div>
 											<div class="actions">
-												<?php echo $action_icons; ?>
+												<?php echo $action_icons; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 											</div>
 										</div>
 										<div class="thread-text">

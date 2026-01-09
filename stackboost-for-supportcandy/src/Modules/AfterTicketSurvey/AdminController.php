@@ -112,7 +112,7 @@ class AdminController {
                 'error' => 'An error occurred.',
             ];
             $message_text = $messages[ $_GET['message'] ] ?? 'Action completed.';
-            echo "<div class=\"notice notice-{$type} is-dismissible\"><p>{$message_text}</p></div>";
+            echo "<div class=\"notice notice-" . esc_attr( $type ) . " is-dismissible\"><p>" . esc_html( $message_text ) . "</p></div>";
         }
     }
 
