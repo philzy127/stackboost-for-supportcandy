@@ -1114,6 +1114,7 @@ class Settings {
 						header( 'Cache-Control: must-revalidate' );
 						header( 'Pragma: public' );
 						header( 'Content-Length: ' . filesize( $log_file ) );
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						readfile( $log_file );
 						exit;
 					} else {
@@ -1134,11 +1135,19 @@ class Settings {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
+		global $wp_filesystem;
+		if ( empty( $wp_filesystem ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		if ( ! WP_Filesystem() ) {
+			wp_send_json_error( __( 'Unable to initialize filesystem.', 'stackboost-for-supportcandy' ) );
+		}
+
 		$upload_dir = wp_upload_dir();
 		$log_file   = $upload_dir['basedir'] . '/stackboost-logs/debug.log';
 
-		if ( file_exists( $log_file ) ) {
-			file_put_contents( $log_file, '' );
+		if ( $wp_filesystem->exists( $log_file ) ) {
+			$wp_filesystem->put_contents( $log_file, '' );
 			wp_send_json_success( __( 'Log file cleared successfully.', 'stackboost-for-supportcandy' ) );
 		} else {
 			wp_send_json_error( __( 'Log file not found.', 'stackboost-for-supportcandy' ) );
