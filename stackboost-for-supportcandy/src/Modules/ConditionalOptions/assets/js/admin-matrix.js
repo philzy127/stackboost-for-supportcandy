@@ -111,7 +111,7 @@
                 }
 
                 var row = '<tr>';
-                row += '<td><strong>' + fieldName + '</strong><br><small style="color:#666">' + slug + '</small></td>';
+                row += '<td><strong>' + fieldName + '</strong></td>';
                 row += '<td>' + contextLabel + '</td>';
                 row += '<td>' + customText + '</td>';
                 row += '<td style="text-align: right;">';
@@ -195,7 +195,7 @@
             state.currentEditingSlug = slug;
             var rule = state.rules[slug];
 
-            $title.text('Edit Rule: ' + getFieldName(slug));
+            $title.text('Edit Rule: ' + getFieldName(slug) + ' (' + slug + ')');
             $fieldSelect.val(slug).trigger('change').prop('disabled', true);
             $radiosContext.filter('[value="' + rule.context + '"]').prop('checked', true);
 
@@ -210,8 +210,17 @@
             // Filter options: Disable fields that already have rules
             $fieldSelect.find('option').each(function() {
                 var val = $(this).val();
+                // Reset text first to avoid appending multiple times on re-open
+                var originalText = $(this).data('original-text');
+                if (!originalText) {
+                    originalText = $(this).text();
+                    $(this).data('original-text', originalText);
+                }
+                $(this).text(originalText);
+
                 if (val && state.rules[val]) {
                     $(this).prop('disabled', true);
+                    $(this).text(originalText + ' (Already Configured)');
                 } else {
                     $(this).prop('disabled', false);
                 }
