@@ -1,7 +1,7 @@
 (function($) {
     'use strict';
 
-    console.log('Conditional Options JS Loaded - v5.0 (Simplified)');
+    // console.log('Conditional Options JS Loaded - v5.0 (Simplified)');
 
     // State initialization
     var initialRules = stackboostCO.rules;

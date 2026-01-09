@@ -43,6 +43,18 @@ StackBoost extends SupportCandy with modular features. Each feature is encapsula
     *   `Core::get_stackboost_theme_colors()`: A helper that maps Admin Theme slugs to hex codes, allowing the frontend to replicate the admin theme without loading admin assets.
     *   **Frontend Integration:** Uses `wp_enqueue_scripts` to register a virtual style handle (`stackboost-chat-bubbles-frontend`) and attach inline CSS.
 
+### 5. Conditional Options
+*   **Location:** `src/Modules/ConditionalOptions/`
+*   **Purpose:** Enforces granular visibility rules for field options based on user roles.
+*   **Key Logic:**
+    *   **Context Locking:** Enforced in `admin-matrix.js`. Ensures admin cannot select both WP roles and SupportCandy roles simultaneously.
+    *   **Pseudo-Roles:**
+        *   `guest`: Mapped to `!is_user_logged_in()`.
+        *   `user` (SC Context): Mapped to `empty($sc_roles)`, effectively targeting any user without an explicit agent role.
+    *   **Enforcement:**
+        *   **Backend:** `WordPress::enforce_permissions_on_submission` hooks into `wpsc_create_ticket_data` to sanitize incoming data.
+        *   **Frontend:** `frontend-enforcement.js` uses `stackboostCORules` localized data to remove options from the DOM.
+
 ## Logging Standards
 
 *   **Central Function:** `stackboost_log( $message, $context )` defined in `bootstrap.php`.

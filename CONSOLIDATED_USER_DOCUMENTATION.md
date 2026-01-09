@@ -116,7 +116,39 @@ Configures the core logic of the module.
 
 ---
 
-## 4. After Ticket Survey (ATS)
+## 4. Conditional Options
+
+Located at **StackBoost > Conditional Options**.
+
+Controls the visibility of specific options within dropdown/radio fields based on the user's role.
+
+*   **Feature Status:** Master switch to enable/disable all conditional option rules globally.
+
+### Manage Rules
+*   **Table View:**
+    *   **Target Field:** The SupportCandy field being modified.
+    *   **Context:** Whether the rule applies based on "WP Roles" or "SupportCandy Roles".
+    *   **Customized Options:** Lists the specific options (e.g., "High", "Low") that have active restrictions.
+*   **Add New Rule:**
+    1.  **Select Field:** Choose a field from the dropdown. Only fields that support options (Dropdown, Radio, Checkbox, Status, Priority, Category) are available. Fields with existing rules are disabled to prevent conflicts.
+    2.  **Select Context:** Choose the role context:
+        *   **SupportCandy Roles:** Applies to Agents based on their SupportCandy role. Also includes special roles for Guests and Non-Agent Users.
+        *   **WP Roles:** Applies based on standard WordPress roles (Administrator, Editor, etc.) and Guest.
+        *   **Note:** You cannot mix contexts. Once you select roles in one context, the other context is locked. To switch, uncheck all roles first.
+    3.  **Configure Matrix:**
+        *   The matrix lists every option for the selected field.
+        *   Click the role names (e.g., "Agent", "Manager") to **BLOCK** that option for that role.
+        *   **Red (Selected):** The user with this role CANNOT see this option.
+        *   **White (Unselected):** The option is visible.
+
+### Special Role Targets
+In addition to standard roles, you can target specific user states:
+*   **Guest / Visitor:** Targets any user who is **not logged in** to WordPress. Available in both contexts.
+*   **User (SupportCandy Context):** Targets any user (logged in or guest) who **does not have a SupportCandy Agent role**. This is useful for creating rules that apply to all customers/end-users regardless of their WP role.
+
+---
+
+## 5. After Ticket Survey (ATS)
 
 Located at **StackBoost > After Ticket Survey**. Collects user feedback.
 
@@ -140,12 +172,12 @@ Create and configure your survey questions here.
 ### Usage
 *   **Shortcode:** `[stackboost_after_ticket_survey]`
 *   **Pre-filling Data:**
-    *   To pre-fill data (like Ticket ID or Technician Name), add query parameters to your survey page URL that match the **Prefill Key** you defined in the question settings.
-    *   *Example:* `https://yoursite.com/survey/?ticket_id=123&tech=John` (assuming keys are `ticket_id` and `tech`).
+    *   **URL Parameters:** Add query parameters matching your **Prefill Key**.
+    *   *Example:* `https://yoursite.com/survey/?ticket_id=123&tech=John`
 
 ---
 
-## 5. Unified Ticket Macro (UTM)
+## 6. Unified Ticket Macro (UTM)
 
 Located at **StackBoost > Unified Ticket Macro**. Standardizes email notifications.
 
@@ -170,7 +202,7 @@ In SupportCandy Email Templates, use `{{stackboost_unified_ticket}}`. This repla
 
 ---
 
-## 6. After-Hours Notice
+## 7. After-Hours Notice
 
 Located at **StackBoost > After-Hours Notice**.
 
@@ -195,7 +227,7 @@ Checkboxes to show the notice on:
 
 ---
 
-## 7. Ticket View Customizer
+## 8. Ticket View Customizer
 
 Located at **StackBoost > Ticket View**. Customizes the ticket detail page UI.
 
@@ -217,7 +249,7 @@ Allows you to organize custom fields into collapsible sections.
 
 ---
 
-## 8. Date & Time Formatting
+## 9. Date & Time Formatting
 
 Located at **StackBoost > Date & Time**.
 
@@ -236,7 +268,7 @@ Allows you to override how dates are displayed in ticket lists.
 
 ---
 
-## 9. Conditional Views
+## 10. Conditional Views
 
 Located at **StackBoost > Conditional Views**.
 
@@ -258,7 +290,7 @@ Dynamically hides columns in the ticket list based on the current View (Filter).
 
 ---
 
-## 10. Queue Macro
+## 11. Queue Macro
 
 Located at **StackBoost > Queue Macro**.
 
@@ -275,7 +307,7 @@ Located at **StackBoost > Queue Macro**.
 
 ---
 
-## 11. Privacy & GDPR Compliance
+## 12. Privacy & GDPR Compliance
 
 StackBoost is designed with strict data privacy principles ("Zero External Leakage") to ensure compliance with GDPR and other privacy regulations.
 
