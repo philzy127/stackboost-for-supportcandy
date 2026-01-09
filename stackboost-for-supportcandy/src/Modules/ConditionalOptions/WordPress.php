@@ -150,8 +150,7 @@ class WordPress extends Module {
 								<select id="pm-modal-field-select" class="pm-field-select" style="width: 100%;">
 									<option value="">-- <?php esc_html_e( 'Select Field', 'stackboost-for-supportcandy' ); ?> --</option>
 									<?php
-									$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
-									$fields = $plugin_instance->get_supportcandy_columns();
+									$fields = Core::get_instance()->get_eligible_fields();
 									foreach ( $fields as $slug => $name ) {
 										echo '<option value="' . esc_attr( $slug ) . '">' . esc_html( $name ) . '</option>';
 									}
