@@ -370,6 +370,7 @@ class Settings {
 					<script>
 					(function($) {
 						$(document).ready(function() {
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							var pool = <?php echo $upsell_json; ?>;
 							var currentIndex = <?php echo (int) $start_index; ?>;
 							var $widget = $('#stackboost-spotlight-widget');
@@ -708,7 +709,7 @@ class Settings {
                 $.post(ajaxurl, {
                     action: 'stackboost_activate_license',
                     license_key: key,
-                    nonce: '<?php echo wp_create_nonce( 'stackboost_license_nonce' ); ?>'
+                    nonce: '<?php echo esc_js( wp_create_nonce( 'stackboost_license_nonce' ) ); ?>'
                 }, function(response) {
                     if (response.success) {
                         msg.css('color', 'green').text('<?php esc_html_e( 'License activated successfully! Reloading...', 'stackboost-for-supportcandy' ); ?>');
@@ -733,7 +734,7 @@ class Settings {
 
                 $.post(ajaxurl, {
                     action: 'stackboost_deactivate_license',
-                    nonce: '<?php echo wp_create_nonce( 'stackboost_license_nonce' ); ?>'
+                    nonce: '<?php echo esc_js( wp_create_nonce( 'stackboost_license_nonce' ) ); ?>'
                 }, function(response) {
                     if (response.success) {
                         msg.css('color', 'green').text('<?php esc_html_e( 'License deactivated. Reloading...', 'stackboost-for-supportcandy' ); ?>');
