@@ -1,7 +1,7 @@
 (function($) {
     'use strict';
 
-    console.log('Conditional Options JS Loaded - v5.0 (Simplified)');
+    // console.log('Conditional Options JS Loaded - v5.0 (Simplified)');
 
     // State initialization
     var initialRules = stackboostCO.rules;
@@ -76,14 +76,44 @@
             $('#pm-no-rules-msg').hide();
             $('.pm-rules-wrapper table').show();
 
+            // Add Header for Customized Options if not exists
+            if ($('.wp-list-table thead th.pm-col-customized').length === 0) {
+                $('.wp-list-table thead tr th:nth-child(2)').after('<th class="pm-col-customized">Customized Options</th>');
+            }
+
             slugs.forEach(function(slug) {
                 var rule = state.rules[slug];
                 var fieldName = getFieldName(slug);
                 var contextLabel = (rule.context === 'wp') ? 'WP Roles' : 'SupportCandy Roles';
 
+                // Build Customized Options String
+                var customizedOptions = [];
+                var optionMap = stackboostCO.ruleOptionNames[slug] || {};
+
+                if (rule.option_rules) {
+                    $.each(rule.option_rules, function(optId, roles) {
+                        if (roles && roles.length > 0) {
+                            var name = optionMap[optId] || 'ID:' + optId;
+                            customizedOptions.push(name);
+                        }
+                    });
+                }
+
+                var customText = '<em>None</em>';
+                if (customizedOptions.length > 0) {
+                    var displayList = customizedOptions;
+                    var moreText = '';
+                    if (customizedOptions.length > 3) {
+                        displayList = customizedOptions.slice(0, 3);
+                        moreText = ', ... (' + (customizedOptions.length - 3) + ' more)';
+                    }
+                    customText = displayList.join(', ') + moreText;
+                }
+
                 var row = '<tr>';
-                row += '<td><strong>' + fieldName + '</strong><br><small style="color:#666">' + slug + '</small></td>';
+                row += '<td><strong>' + fieldName + '</strong></td>';
                 row += '<td>' + contextLabel + '</td>';
+                row += '<td>' + customText + '</td>';
                 row += '<td style="text-align: right;">';
                 row += '<button type="button" class="stackboost-icon-btn pm-edit-rule" data-slug="' + slug + '" title="Edit"><span class="dashicons dashicons-edit"></span></button>';
                 row += '<button type="button" class="stackboost-icon-btn pm-delete-rule" data-slug="' + slug + '" title="Delete"><span class="dashicons dashicons-trash"></span></button>';
@@ -165,7 +195,7 @@
             state.currentEditingSlug = slug;
             var rule = state.rules[slug];
 
-            $title.text('Edit Rule: ' + getFieldName(slug));
+            $title.text('Edit Rule: ' + getFieldName(slug) + ' (' + slug + ')');
             $fieldSelect.val(slug).trigger('change').prop('disabled', true);
             $radiosContext.filter('[value="' + rule.context + '"]').prop('checked', true);
 
@@ -176,6 +206,26 @@
 
             $title.text('Add New Rule');
             $fieldSelect.prop('disabled', false);
+
+            // Filter options: Disable fields that already have rules
+            $fieldSelect.find('option').each(function() {
+                var val = $(this).val();
+                // Reset text first to avoid appending multiple times on re-open
+                var originalText = $(this).data('original-text');
+                if (!originalText) {
+                    originalText = $(this).text();
+                    $(this).data('original-text', originalText);
+                }
+                $(this).text(originalText);
+
+                if (val && state.rules[val]) {
+                    $(this).prop('disabled', true);
+                    $(this).text(originalText + ' (Already Configured)');
+                } else {
+                    $(this).prop('disabled', false);
+                }
+            });
+
             $radiosContext.filter('[value="sc"]').prop('checked', true);
 
             $('#pm-modal-matrix').html('<div class="pm-loading-placeholder">Select a field to configure options.</div>');
@@ -265,6 +315,11 @@
         // Remove existing toasts
         $('.stackboost-admin-notice').remove();
 
+        // Sync enabled state from DOM to be safe
+        if ($('#stackboost_co_enabled').length) {
+            state.isEnabled = $('#stackboost_co_enabled').is(':checked');
+        }
+
         // Show saving notice
         stackboost_show_toast('Saving...', 'info');
 
@@ -328,6 +383,15 @@
             }, function(res) {
                 if (res.success) {
                     state.fieldOptionsCache[slug] = res.data;
+
+                    // Update global option name cache for friendly display in table
+                    if (!stackboostCO.ruleOptionNames[slug]) {
+                        stackboostCO.ruleOptionNames[slug] = {};
+                    }
+                    $.each(res.data, function(idx, opt) {
+                        stackboostCO.ruleOptionNames[slug][opt.id] = opt.name;
+                    });
+
                     optionsPromise.resolve(res.data);
                 } else {
                     optionsPromise.reject(res.data.message);
@@ -380,6 +444,7 @@
         // Bind Click Handlers
         $container.find('.pm-role-pill').on('click', function() {
             $(this).toggleClass('selected');
+            updateContextLockState();
         });
 
         // Toggle All Handler
@@ -398,7 +463,32 @@
                 $pills.addClass('selected');
                 $btn.addClass('active');
             }
+            updateContextLockState();
         });
+
+        // Initialize Lock State
+        updateContextLockState();
+    }
+
+    function updateContextLockState() {
+        var $pills = $('.pm-role-pill.selected');
+        var $radios = $('input[name="modal_context"]');
+
+        if ($pills.length > 0) {
+            // Something is selected, disable the OTHER context radio
+            var currentContext = $('input[name="modal_context"]:checked').val();
+            $radios.each(function() {
+                var val = $(this).val();
+                if (val !== currentContext) {
+                    $(this).prop('disabled', true).parent().css('opacity', '0.5');
+                } else {
+                    $(this).prop('disabled', false).parent().css('opacity', '1');
+                }
+            });
+        } else {
+            // Nothing selected, enable all
+            $radios.prop('disabled', false).parent().css('opacity', '1');
+        }
     }
 
     function getFieldName(slug) {

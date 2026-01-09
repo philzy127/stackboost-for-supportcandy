@@ -98,11 +98,30 @@
     }
 
     function hasRole(userRoles, targetRoles) {
+        // Standard Role Check
         for (var i = 0; i < userRoles.length; i++) {
             if (targetRoles.indexOf(userRoles[i]) > -1) {
                 return true;
             }
         }
+
+        // Special Check: Guest
+        if (targetRoles.indexOf('guest') > -1) {
+            if (stackboostCORules.user.is_guest) {
+                return true;
+            }
+        }
+
+        // Special Check: User (SupportCandy - No SC Role)
+        if (targetRoles.indexOf('user') > -1) {
+            // Only relevant if we are in SC context logic, but rule context is already decided by caller passing `userRoles`
+            // However, `userRoles` passed to this function is just an array.
+            // We need to check the global user object for the `is_sc_user` flag.
+            if (stackboostCORules.user.is_sc_user) {
+                return true;
+            }
+        }
+
         return false;
     }
 

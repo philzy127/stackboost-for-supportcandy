@@ -101,6 +101,11 @@ class Core {
 					'name' => $details['name'],
 				];
 			}
+			// Add Guest/Visitor for WP Context
+			$roles[] = [
+				'slug' => 'guest',
+				'name' => __( 'Guest / Visitor', 'stackboost-for-supportcandy' ),
+			];
 		} elseif ( 'sc' === $context ) {
 			// SupportCandy Roles are stored in 'wpsc-agent-roles' option.
 			$sc_roles = get_option( 'wpsc-agent-roles', [] );
@@ -110,6 +115,16 @@ class Core {
 					'name' => $details['label'], // 'label' holds the display name
 				];
 			}
+			// Add Guest/Visitor for SC Context
+			$roles[] = [
+				'slug' => 'guest',
+				'name' => __( 'Guest / Visitor', 'stackboost-for-supportcandy' ),
+			];
+			// Add User (No SC Role) for SC Context
+			$roles[] = [
+				'slug' => 'user',
+				'name' => __( 'User', 'stackboost-for-supportcandy' ),
+			];
 		}
 
 		return $roles;
@@ -165,5 +180,44 @@ class Core {
 		// The sanitizer sees 'page_slug', fetches the *existing* settings from DB, merges/updates
 		// 'conditional_options_rules' and 'conditional_options_enabled' from our payload.
 		return update_option( 'stackboost_settings', $payload );
+	}
+
+	/**
+	 * Get list of fields that support options (eligible for rules).
+	 *
+	 * @return array Associative array [ 'slug' => 'Field Name' ]
+	 */
+	public function get_eligible_fields(): array {
+		if ( ! class_exists( '\StackBoost\ForSupportCandy\WordPress\Plugin' ) || ! class_exists( '\WPSC_Custom_Field' ) ) {
+			return [];
+		}
+
+		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
+		$all_fields      = $plugin_instance->get_supportcandy_columns();
+		$eligible_fields = [];
+
+		foreach ( $all_fields as $slug => $name ) {
+			$cf = \WPSC_Custom_Field::get_cf_by_slug( $slug );
+			if ( ! $cf ) {
+				continue;
+			}
+
+			$has_options = false;
+
+			// Check Standard Fields
+			if ( in_array( $cf->type::$slug, [ 'df_category', 'df_priority', 'df_status' ], true ) ) {
+				$has_options = true;
+			}
+			// Check Generic Custom Fields
+			elseif ( $cf->type::$has_options ) {
+				$has_options = true;
+			}
+
+			if ( $has_options ) {
+				$eligible_fields[ $slug ] = $name;
+			}
+		}
+
+		return $eligible_fields;
 	}
 }

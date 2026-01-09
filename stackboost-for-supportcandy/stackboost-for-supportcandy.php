@@ -1,12 +1,13 @@
 <?php
 /**
  * Plugin Name: StackBoost - For SupportCandy
- * Description: A collection of enhancements for the SupportCandy plugin, rebranded and refactored.
- * Version: 4.3.22
+ * Description: Advanced flexibility for SupportCandy. StackBoost provides a modular suite of tools including role-based logic, directory integration, and workflow automation to streamline your support operations.
+ * Version: 1.6.0
  * Author: StackBoost
  * Author URI: https://stackboost.net
  * Text Domain: stackboost-for-supportcandy
  * Domain Path: /languages
+ * Requires Plugins: supportcandy
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'STACKBOOST_VERSION', '4.3.22' );
+define( 'STACKBOOST_VERSION', '1.6.0' );
 define( 'STACKBOOST_PLUGIN_FILE', __FILE__ );
 define( 'STACKBOOST_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'STACKBOOST_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
