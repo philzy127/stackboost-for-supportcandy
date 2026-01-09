@@ -6,10 +6,6 @@ use StackBoost\ForSupportCandy\Core\Module;
 use StackBoost\ForSupportCandy\Modules\ConditionalViews\Core as ConditionalViewsCore;
 use StackBoost\ForSupportCandy\WordPress\Plugin;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 /**
  * WordPress Adapter for the Conditional Views feature.
  *
@@ -188,7 +184,7 @@ class WordPress extends Module {
 			</select>
 
 			<select name="stackboost_settings[conditional_hiding_rules][<?php echo esc_attr( $index ); ?>][columns]" class="stackboost-rule-columns">
-                <option value=""><?php esc_html_e( '-- Select Column --', 'stackboost-for-supportcandy' ); ?></option>
+                <option value=""><?php _e('-- Select Column --', 'stackboost-for-supportcandy'); ?></option>
 				<?php foreach ( $columns as $key => $label ) : ?>
 					<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $selected_col, $key ); ?>>
 						<?php echo esc_html( $label ); ?>
@@ -202,7 +198,7 @@ class WordPress extends Module {
 			</select>
 
 			<select name="stackboost_settings[conditional_hiding_rules][<?php echo esc_attr( $index ); ?>][view]">
-                <option value=""><?php esc_html_e( '-- Select View --', 'stackboost-for-supportcandy' ); ?></option>
+                <option value=""><?php _e('-- Select View --', 'stackboost-for-supportcandy'); ?></option>
 				<?php foreach ( $views as $id => $name ) : ?>
 					<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $view_id, $id ); ?>><?php echo esc_html( $name ); ?></option>
 				<?php endforeach; ?>

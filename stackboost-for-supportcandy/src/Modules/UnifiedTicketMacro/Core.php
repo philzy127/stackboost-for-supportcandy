@@ -1,10 +1,11 @@
 <?php
+/**
+ * Unified Ticket Macro - Core Logic
+ *
+ * @package StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro
+ */
 
 namespace StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro;
-
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -144,7 +145,7 @@ class Core {
 					\stackboost_log( "[UTM] Description body retrieved (length=" . strlen( $display_value ) . ")", 'module-utm' );
 
 					// Filter out "Not Applicable" text (often used as a placeholder).
-					$clean_text = trim( wp_strip_all_tags( $display_value ) );
+					$clean_text = trim( strip_tags( $display_value ) );
 					if ( 0 === strcasecmp( $clean_text, 'Not Applicable' ) ) {
 						\stackboost_log( "[UTM] Description is 'Not Applicable'. Clearing value.", 'module-utm' );
 						$display_value = '';
@@ -155,7 +156,7 @@ class Core {
 
 				// If description is empty after retrieval/cleaning, skip it entirely.
 				// We do this here to ignore the original $field_value which might be unreliable.
-				if ( empty( $display_value ) || '' === trim( wp_strip_all_tags( $display_value ) ) ) {
+				if ( empty( $display_value ) || '' === trim( strip_tags( $display_value ) ) ) {
 					\stackboost_log( "[UTM] Skipping 'description' - Value is empty or effectively empty.", 'module-utm' );
 					continue;
 				}

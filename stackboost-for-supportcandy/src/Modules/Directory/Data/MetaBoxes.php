@@ -158,19 +158,19 @@ class MetaBoxes {
 				echo '<p class="description">' . esc_html__( 'Select the department or program for this staff member.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'active' === $key ) {
 				$checked = ( 'Yes' === $value || '1' === $value ) ? 'checked' : '';
-				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . esc_attr( $checked ) . ' />';
+				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . $checked . ' />';
 				echo '<p class="description">' . esc_html__( 'Check if this entry is active; uncheck if deprecated.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'private' === $key ) {
 				$checked = ( 'Yes' === $value || '1' === $value ) ? 'checked' : '';
-				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . esc_attr( $checked ) . ' />';
+				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . $checked . ' />';
 				echo '<p class="description">' . esc_html__( 'Private listings are only visible in the backend.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'active_as_of_date' === $key ) {
 				$date_value = $value ? esc_attr( $value ) : ( $is_add_new_screen ? current_time( 'Y-m-d' ) : '' );
-				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $date_value ) . '" class="regular-text stackboost-datepicker" />';
+				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . $date_value . '" class="regular-text stackboost-datepicker" />';
 				echo '<p class="description">' . esc_html__( 'Date from which this entry is considered active.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'planned_exit_date' === $key ) {
 				$date_value = $value ? esc_attr( $value ) : '';
-				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $date_value ) . '" class="regular-text stackboost-datepicker" />';
+				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . $date_value . '" class="regular-text stackboost-datepicker" />';
 				echo '<p class="description">' . esc_html__( 'Optional: Date when this entry is planned to become inactive.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( in_array( $key, array( 'unique_id', 'last_updated_by', 'last_updated_on' ), true ) ) {
 				echo '<p id="' . esc_attr( $key ) . '">' . esc_html( $value ) . '</p>';
@@ -257,7 +257,7 @@ class MetaBoxes {
 
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Needs Completion', 'stackboost-for-supportcandy' ) . '</th>';
-		echo '<td>' . wp_kses_post( $needs_completion_display ) . '<p class="description">' . esc_html__( 'This status is automatically determined by the completeness of the address fields.', 'stackboost-for-supportcandy' ) . '</p></td>';
+		echo '<td>' . $needs_completion_display . '<p class="description">' . esc_html__( 'This status is automatically determined by the completeness of the address fields.', 'stackboost-for-supportcandy' ) . '</p></td>';
 		echo '</tr>';
 
 		echo '</table>';

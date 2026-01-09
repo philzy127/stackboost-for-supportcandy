@@ -2,10 +2,6 @@
 
 namespace StackBoost\ForSupportCandy\Modules\QueueMacro;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 use StackBoost\ForSupportCandy\Core\Module;
 use StackBoost\ForSupportCandy\Modules\QueueMacro\Core as QueueMacroCore;
 use StackBoost\ForSupportCandy\WordPress\Plugin;
@@ -285,7 +281,7 @@ class WordPress extends Module {
         ?>
         <div class="stackboost-dual-list-container">
             <div class="dual-list-box">
-                <h3><?php esc_html_e( 'Available Statuses', 'stackboost-for-supportcandy' ); ?></h3>
+                <h3><?php _e( 'Available Statuses', 'stackboost-for-supportcandy' ); ?></h3>
                 <select multiple id="stackboost_available_statuses" size="8">
                     <?php foreach ( $available_statuses_map as $id => $name ) : ?>
                         <option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $name ); ?></option>
@@ -297,7 +293,7 @@ class WordPress extends Module {
                 <button type="button" class="button" id="stackboost_remove_status"><span class="dashicons dashicons-arrow-left"></span></button>
             </div>
             <div class="dual-list-box">
-                <h3><?php esc_html_e( 'Selected Statuses', 'stackboost-for-supportcandy' ); ?></h3>
+                <h3><?php _e( 'Selected Statuses', 'stackboost-for-supportcandy' ); ?></h3>
                 <select multiple name="stackboost_settings[<?php echo esc_attr( $args['id'] ); ?>][]" id="stackboost_selected_statuses" size="8">
                     <?php foreach ( $selected_statuses_map as $id => $name ) : ?>
                         <option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $name ); ?></option>
@@ -314,12 +310,12 @@ class WordPress extends Module {
      */
     public function render_test_button_field() {
         ?>
-        <p><?php esc_html_e( 'Click the button to see the current queue counts based on your saved settings.', 'stackboost-for-supportcandy' ); ?></p>
+        <p><?php _e( 'Click the button to see the current queue counts based on your saved settings.', 'stackboost-for-supportcandy' ); ?></p>
         <p>
-            <button type="button" id="stackboost_test_queue_macro_button" class="button"><?php esc_html_e( 'Run Test', 'stackboost-for-supportcandy' ); ?></button>
+            <button type="button" id="stackboost_test_queue_macro_button" class="button"><?php _e( 'Run Test', 'stackboost-for-supportcandy' ); ?></button>
         </p>
         <div id="stackboost_test_results" style="display:none;">
-            <h4><?php esc_html_e( 'Test Results', 'stackboost-for-supportcandy' ); ?></h4>
+            <h4><?php _e( 'Test Results', 'stackboost-for-supportcandy' ); ?></h4>
             <div id="stackboost_test_results_content"></div>
         </div>
         <?php

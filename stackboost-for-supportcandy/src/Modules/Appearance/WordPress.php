@@ -2,10 +2,6 @@
 
 namespace StackBoost\ForSupportCandy\Modules\Appearance;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 use StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page;
 use StackBoost\ForSupportCandy\WordPress\Admin\Settings;
 

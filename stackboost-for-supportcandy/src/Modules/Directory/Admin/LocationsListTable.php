@@ -194,7 +194,7 @@ class LocationsListTable extends \WP_List_Table {
 				<option value="yes" <?php selected( $current_filter, 'yes' ); ?>><?php esc_html_e( 'Needs Completion', 'stackboost-for-supportcandy' ); ?></option>
 				<option value="no" <?php selected( $current_filter, 'no' ); ?>><?php esc_html_e( 'Completed', 'stackboost-for-supportcandy' ); ?></option>
 			</select>
-			<?php submit_button( __( 'Filter', 'stackboost-for-supportcandy' ), 'button', 'filter_action', false, array( 'id' => 'post-query-submit' ) ); ?>
+			<?php submit_button( __( 'Filter' ), 'button', 'filter_action', false, array( 'id' => 'post-query-submit' ) ); ?>
 		</div>
 		<?php
 	}

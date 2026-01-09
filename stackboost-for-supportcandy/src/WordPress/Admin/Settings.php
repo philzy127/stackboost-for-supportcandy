@@ -1114,21 +1114,38 @@ class Settings {
 						global $wp_filesystem;
 						if ( empty( $wp_filesystem ) ) {
 							require_once ABSPATH . 'wp-admin/includes/file.php';
-							WP_Filesystem();
-						}
+							if ( true === WP_Filesystem() ) {
+								header( 'Content-Description: File Transfer' );
+								header( 'Content-Type: application/octet-stream' );
+								header( 'Content-Disposition: attachment; filename="stackboost-debug.log"' );
+								header( 'Expires: 0' );
+								header( 'Cache-Control: must-revalidate' );
+								header( 'Pragma: public' );
+								header( 'Content-Length: ' . filesize( $log_file ) );
 
-						header( 'Content-Description: File Transfer' );
-						header( 'Content-Type: application/octet-stream' );
-						header( 'Content-Disposition: attachment; filename="stackboost-debug.log"' );
-						header( 'Expires: 0' );
-						header( 'Cache-Control: must-revalidate' );
-						header( 'Pragma: public' );
-						header( 'Content-Length: ' . filesize( $log_file ) );
+								if ( $wp_filesystem->exists( $log_file ) ) {
+									echo $wp_filesystem->get_contents( $log_file );
+								}
+								exit;
+							} else {
+                                // Fallback or Error if filesystem init fails
+                                wp_die( 'Could not initialize filesystem.' );
+                            }
+						} else {
+                            // If global already exists, use it
+                            if ( $wp_filesystem->exists( $log_file ) ) {
+                                header( 'Content-Description: File Transfer' );
+								header( 'Content-Type: application/octet-stream' );
+								header( 'Content-Disposition: attachment; filename="stackboost-debug.log"' );
+								header( 'Expires: 0' );
+								header( 'Cache-Control: must-revalidate' );
+								header( 'Pragma: public' );
+								header( 'Content-Length: ' . filesize( $log_file ) );
 
-						if ( $wp_filesystem->exists( $log_file ) ) {
-							echo $wp_filesystem->get_contents( $log_file );
-						}
-						exit;
+                                echo $wp_filesystem->get_contents( $log_file );
+                                exit;
+                            }
+                        }
 					} else {
 						wp_die( 'Log file not found.' );
 					}

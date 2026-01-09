@@ -2,10 +2,6 @@
 
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Shortcodes;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Staff;
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Settings;
 
@@ -262,7 +258,7 @@ class DashboardShortcode {
 			<div class="onboarding-dashboard-container">
 				<h2 class="onboarding-title"><?php echo esc_html( $step_post->post_title ); ?></h2>
 				<div class="onboarding-main-content onboarding-main-step-content">
-					<?php echo wp_kses_post( apply_filters( 'the_content', $step_post->post_content ) ); ?>
+					<?php echo apply_filters( 'the_content', $step_post->post_content ); ?>
 
 					<?php if ( ! empty( $checklist ) ) : ?>
 						<div class="onboarding-checklist-section">
@@ -293,7 +289,7 @@ class DashboardShortcode {
 						<div class="onboarding-notes-section">
 							<h3><span class="dashicons dashicons-edit"></span> Notes</h3>
 							<div class="onboarding-notes-content">
-								<?php echo wp_kses_post( apply_filters( 'the_content', $notes ) ); ?>
+								<?php echo apply_filters( 'the_content', $notes ); ?>
 							</div>
 						</div>
 					<?php endif; ?>

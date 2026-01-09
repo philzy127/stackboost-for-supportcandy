@@ -97,27 +97,7 @@ class TicketService {
 			stackboost_log( "TicketService: Checking certificates in table: $table_name", 'onboarding' );
 
 			$ids_placeholder = implode( ',', array_map( 'intval', $ticket_ids ) );
-			// Fix: Use prepare with manual placeholder expansion for IN clause as WPDB::prepare doesn't support arrays natively for IN.
-			// However, since we map to intval above, the string is safe integers.
-			// But for strict compliance, let's use %d placeholders.
-			// Actually, just escaping the table name (which is trusted internal) and using the safe int list is standard practice when prepare is tricky.
-			// BUT the report says "Unescaped parameter $query".
-			// We can use $wpdb->prepare if we construct the placeholders.
-
-			// Construct placeholders: %d, %d, %d
-			$placeholders = implode( ',', array_fill( 0, count( $ticket_ids ), '%d' ) );
-
-			// Prepare arguments: table name is NOT an argument for prepare, it must be interpolated.
-			// The LIKE string needs escaping for like? No, it's a string literal.
-
-			// We can trust $table_name as it's derived from $wpdb->prefix.
-			// $ids_placeholder is safe integers.
-
-			// Let's use $wpdb->prepare for the LIKE clause to be super safe and satisfy the linter's desire for prepare().
-			$query = $wpdb->prepare(
-				"SELECT ticket_id, COUNT(*) as count FROM `{$table_name}` WHERE ticket_id IN ($placeholders) AND name LIKE %s GROUP BY ticket_id",
-				array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] )
-			);
+			$query = "SELECT ticket_id, COUNT(*) as count FROM $table_name WHERE ticket_id IN ($ids_placeholder) AND name LIKE 'Onboarding_Certificate_%' GROUP BY ticket_id";
 
 			stackboost_log( "TicketService: Query: $query", 'onboarding' );
 

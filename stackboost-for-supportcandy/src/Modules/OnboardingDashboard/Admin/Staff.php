@@ -2,10 +2,6 @@
 
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 class Staff {
 
 	/**
@@ -30,7 +26,6 @@ class Staff {
 				<div class="notice notice-warning inline">
 					<p>
 						<?php
-						/* translators: %s: Settings URL */
 						printf(
 							wp_kses_post( __( 'Please configure the Onboarding settings (Request Type, ID, and Column Mapping) in the <strong><a href="%s">Settings</a></strong> tab to view the staff list.', 'stackboost-for-supportcandy' ) ),
 							esc_url( admin_url( 'admin.php?page=stackboost-onboarding-dashboard&tab=settings' ) )
@@ -145,7 +140,7 @@ class Staff {
 
 						$.post(ajaxurl, {
 							action: 'stackboost_onboarding_refresh_cache',
-							nonce: '<?php echo esc_js( wp_create_nonce( "stkb_refresh_cache_nonce" ) ); ?>'
+							nonce: '<?php echo wp_create_nonce( "stkb_refresh_cache_nonce" ); ?>'
 						}, function(response) {
 							if (response.success) {
 								$status.text('<?php esc_html_e( "Data updated! Reloading...", "stackboost-for-supportcandy" ); ?>').css('color', 'green');

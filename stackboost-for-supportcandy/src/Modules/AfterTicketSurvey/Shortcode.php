@@ -297,21 +297,21 @@ class Shortcode {
 
 		switch ( $question['question_type'] ) {
 			case 'ticket_number':
-				echo "<input type='text' name='" . esc_attr( $input_name ) . "' value='" . esc_attr( $input_value ) . "' class='stackboost-ats-input' " . esc_attr( $required_attr ) . " " . $readonly_style . ">"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr} {$readonly_style}>";
 				break;
 			case 'short_text':
-				echo "<input type='text' name='" . esc_attr( $input_name ) . "' value='" . esc_attr( $input_value ) . "' class='stackboost-ats-input' " . esc_attr( $required_attr ) . " " . $readonly_style . ">"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo "<input type='text' name='{$input_name}' value='{$input_value}' class='stackboost-ats-input' {$required_attr} {$readonly_style}>";
 				break;
 			case 'long_text':
 				// If textarea has a prefill value, put it inside the tags
-				echo "<textarea name='" . esc_attr( $input_name ) . "' rows='4' class='stackboost-ats-input' " . esc_attr( $required_attr ) . " " . $readonly_style . ">" . esc_textarea( $input_value ) . "</textarea>"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo "<textarea name='{$input_name}' rows='4' class='stackboost-ats-input' {$required_attr} {$readonly_style}>" . esc_textarea( $input_value ) . "</textarea>";
 				break;
 			case 'rating':
-				echo '<div class="stackboost-ats-rating-options" ' . $readonly_style . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo '<div class="stackboost-ats-rating-options" ' . $readonly_style . '>';
 				for ( $i = 1; $i <= 5; $i++ ) {
                     // Check if prefill value matches the rating option
                     $checked = ( $input_value == $i ) ? 'checked' : '';
-					echo "<label class='stackboost-ats-radio-label'><input type='radio' name='" . esc_attr( $input_name ) . "' value='" . esc_attr( $i ) . "' class='stackboost-ats-radio' " . esc_attr( $required_attr ) . " " . esc_attr( $checked ) . "><span class='stackboost-ats-radio-text'>" . esc_html( $i ) . "</span></label>";
+					echo "<label class='stackboost-ats-radio-label'><input type='radio' name='{$input_name}' value='{$i}' class='stackboost-ats-radio' {$required_attr} {$checked}><span class='stackboost-ats-radio-text'>{$i}</span></label>";
 				}
 				echo '<span class="stackboost-ats-rating-guide">(1 = Poor, 5 = Excellent)</span></div>';
 				break;
@@ -345,7 +345,7 @@ class Shortcode {
                     }
                 }
 
-                echo "<select name='" . esc_attr( $input_name ) . "' class='stackboost-ats-input' " . esc_attr( $required_attr ) . " " . $readonly_style . ">"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                echo "<select name='{$input_name}' class='stackboost-ats-input' {$required_attr} {$readonly_style}>";
 				echo '<option value="">-- Select --</option>';
 				foreach ( $dd_options as $opt ) {
                     $selected = '';

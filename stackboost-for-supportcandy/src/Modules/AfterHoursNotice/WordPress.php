@@ -318,7 +318,7 @@ class WordPress extends Module {
 				}
 
 				// The message is saved via wp_kses_post, so it's safe to display.
-				echo '<div class="stackboost-after-hours-notice" style="margin-left: 15px; margin-bottom: 15px;">' . wp_kses_post( wpautop( $message ) ) . '</div>';
+				echo '<div class="stackboost-after-hours-notice" style="margin-left: 15px; margin-bottom: 15px;">' . wpautop( $message ) . '</div>';
 
 				if ( is_admin() ) {
 					echo '</div>';

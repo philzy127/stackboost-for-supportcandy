@@ -2,10 +2,6 @@
 
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Blocks;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Shortcodes\DashboardShortcode;
 
 /**

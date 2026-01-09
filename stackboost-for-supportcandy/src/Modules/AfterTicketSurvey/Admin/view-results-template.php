@@ -5,18 +5,14 @@
  * @var array $questions   List of survey questions.
  * @var array $submissions List of survey submissions with answers.
  */
-
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
 ?>
-<h2><?php esc_html_e( 'View Survey Results', 'stackboost-for-supportcandy' ); ?></h2>
+<h2><?php _e('View Survey Results', 'stackboost-for-supportcandy'); ?></h2>
 <table class="wp-list-table widefat fixed striped stackboost-ats-results-table">
     <thead>
         <tr>
-            <th><?php esc_html_e( 'ID', 'stackboost-for-supportcandy' ); ?></th>
-            <th><?php esc_html_e( 'Date', 'stackboost-for-supportcandy' ); ?></th>
-            <th><?php esc_html_e( 'User', 'stackboost-for-supportcandy' ); ?></th>
+            <th><?php _e('ID', 'stackboost-for-supportcandy'); ?></th>
+            <th><?php _e('Date', 'stackboost-for-supportcandy'); ?></th>
+            <th><?php _e('User', 'stackboost-for-supportcandy'); ?></th>
             <?php foreach ( $questions as $q ) : ?>
                 <th>
                     <?php echo esc_html( ! empty( $q['report_heading'] ) ? $q['report_heading'] : $q['question_text'] ); ?>
@@ -24,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                           data-question-id="<?php echo esc_attr( $q['id'] ); ?>"
                           data-question-text="<?php echo esc_attr( $q['question_text'] ); ?>"
                           data-report-heading="<?php echo esc_attr( $q['report_heading'] ); ?>"
-                          title="<?php esc_attr_e( 'Edit Report Heading', 'stackboost-for-supportcandy' ); ?>"></span>
+                          title="<?php _e('Edit Report Heading', 'stackboost-for-supportcandy'); ?>"></span>
                 </th>
             <?php endforeach; ?>
         </tr>
@@ -56,15 +52,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div id="stackboost-ats-heading-modal" class="stackboost-ats-modal" style="display: none;">
     <div class="modal-content">
         <span class="close-modal">&times;</span>
-        <h3><?php esc_html_e( 'Edit Report Heading', 'stackboost-for-supportcandy' ); ?></h3>
-        <p><strong><?php esc_html_e( 'Full Question:', 'stackboost-for-supportcandy' ); ?></strong> <span id="stackboost-ats-modal-question-text"></span></p>
+        <h3><?php _e('Edit Report Heading', 'stackboost-for-supportcandy'); ?></h3>
+        <p><strong><?php _e('Full Question:', 'stackboost-for-supportcandy'); ?></strong> <span id="stackboost-ats-modal-question-text"></span></p>
         <form id="stackboost-ats-heading-form">
             <input type="hidden" id="stackboost-ats-modal-question-id" name="question_id">
             <p>
-                <label for="stackboost-ats-modal-report-heading"><strong><?php esc_html_e( 'Report Heading:', 'stackboost-for-supportcandy' ); ?></strong></label><br>
+                <label for="stackboost-ats-modal-report-heading"><strong><?php _e('Report Heading:', 'stackboost-for-supportcandy'); ?></strong></label><br>
                 <input type="text" id="stackboost-ats-modal-report-heading" name="report_heading" class="regular-text">
             </p>
-            <button type="submit" class="button button-primary"><?php esc_html_e( 'Save Heading', 'stackboost-for-supportcandy' ); ?></button>
+            <button type="submit" class="button button-primary"><?php _e('Save Heading', 'stackboost-for-supportcandy'); ?></button>
         </form>
     </div>
 </div>

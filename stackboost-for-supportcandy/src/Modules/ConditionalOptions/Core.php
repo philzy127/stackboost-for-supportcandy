@@ -2,10 +2,6 @@
 
 namespace StackBoost\ForSupportCandy\Modules\ConditionalOptions;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 use StackBoost\ForSupportCandy\WordPress\Admin\Settings;
 
 /**
@@ -170,7 +166,6 @@ class Core {
 
 		$tier = stackboost_get_license_tier();
 		if ( 'lite' === $tier && count( $new_rules ) > $limit ) {
-			/* translators: %d: maximum number of rules allowed */
 			return new \WP_Error( 'limit_exceeded', sprintf( __( 'You have reached the limit of %d rules for the Free version.', 'stackboost-for-supportcandy' ), $limit ) );
 		}
 

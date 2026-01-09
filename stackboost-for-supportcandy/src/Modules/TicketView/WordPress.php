@@ -503,7 +503,7 @@ class WordPress extends Module {
 		$options = get_option( 'stackboost_settings' );
 		$id = $args['id'];
 		$checked = isset( $options[ $id ] ) && $options[ $id ] ? 'checked' : '';
-		echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="1" ' . $checked . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="1" ' . $checked . '>';
 		if ( ! empty( $args['desc'] ) ) {
 			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
 		}
@@ -551,7 +551,7 @@ class WordPress extends Module {
 			$disabled_attr = 'disabled';
 		}
 
-		echo '<option value="utm" ' . selected( $selected, 'utm', false ) . ' ' . esc_attr( $disabled_attr ) . '>' . esc_html( $utm_label ) . '</option>';
+		echo '<option value="utm" ' . selected( $selected, 'utm', false ) . ' ' . $disabled_attr . '>' . $utm_label . '</option>';
 
 		echo '</select>';
 
