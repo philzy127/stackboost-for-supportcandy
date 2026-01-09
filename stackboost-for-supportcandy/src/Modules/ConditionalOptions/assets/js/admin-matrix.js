@@ -315,6 +315,11 @@
         // Remove existing toasts
         $('.stackboost-admin-notice').remove();
 
+        // Sync enabled state from DOM to be safe
+        if ($('#stackboost_co_enabled').length) {
+            state.isEnabled = $('#stackboost_co_enabled').is(':checked');
+        }
+
         // Show saving notice
         stackboost_show_toast('Saving...', 'info');
 
@@ -378,6 +383,15 @@
             }, function(res) {
                 if (res.success) {
                     state.fieldOptionsCache[slug] = res.data;
+
+                    // Update global option name cache for friendly display in table
+                    if (!stackboostCO.ruleOptionNames[slug]) {
+                        stackboostCO.ruleOptionNames[slug] = {};
+                    }
+                    $.each(res.data, function(idx, opt) {
+                        stackboostCO.ruleOptionNames[slug][opt.id] = opt.name;
+                    });
+
                     optionsPromise.resolve(res.data);
                 } else {
                     optionsPromise.reject(res.data.message);
