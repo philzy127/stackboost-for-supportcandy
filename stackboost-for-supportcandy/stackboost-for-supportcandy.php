@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: StackBoost - For SupportCandy
- * Description: A collection of enhancements for the SupportCandy plugin, rebranded and refactored.
- * Version: 4.3.23
+ * Description: Enhance your SupportCandy experience with powerful new features like Company Directory, Onboarding Dashboard, Chat Bubbles, and more.
+ * Version: 1.6.0
  * Author: StackBoost
  * Author URI: https://stackboost.net
  * Text Domain: stackboost-for-supportcandy
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'STACKBOOST_VERSION', '4.3.23' );
+define( 'STACKBOOST_VERSION', '1.6.0' );
 define( 'STACKBOOST_PLUGIN_FILE', __FILE__ );
 define( 'STACKBOOST_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'STACKBOOST_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

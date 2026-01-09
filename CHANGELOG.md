@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-1.5.3
+1.6.0
 -----
 *   Added: Conditional Options - Mutual exclusivity enforcement between WordPress Roles and SupportCandy Roles contexts to prevent conflicting rules.
 *   Added: Conditional Options - "Guest / Visitor" role option in both contexts to target users who are not logged in.
