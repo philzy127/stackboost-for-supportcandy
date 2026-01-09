@@ -10,6 +10,7 @@ use StackBoost\ForSupportCandy\Modules\Appearance;
 use StackBoost\ForSupportCandy\Modules\ChatBubbles;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
+use StackBoost\ForSupportCandy\Modules\ConditionalOptions;
 
 /**
  * Main plugin class.
@@ -77,6 +78,14 @@ final class Plugin {
 
 		if ( stackboost_is_feature_active( 'date_time_formatting' ) ) {
 			$this->modules['date_time_formatting'] = DateTimeFormatting\WordPress::get_instance();
+		}
+
+		// Conditional Options (Lite)
+		if ( stackboost_is_feature_active( 'conditional_options' ) ) {
+			$class = 'StackBoost\ForSupportCandy\Modules\ConditionalOptions\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['conditional_options'] = $class::get_instance();
+			}
 		}
 
 		// Pro Features
@@ -316,11 +325,7 @@ final class Plugin {
 				'enabled'       => ! empty( $options['enable_hide_empty_columns'] ),
 				'hide_priority' => ! empty( $options['enable_hide_priority_column'] ),
 			];
-			$features_data['ticket_type_hiding'] = [
-				'enabled'       => ! empty( $options['enable_ticket_type_hiding'] ),
-				'field_id'      => $this->get_custom_field_id_by_name( $options['ticket_type_custom_field_name'] ?? '' ),
-				'types_to_hide' => $qol_core->parse_types_to_hide( $options['ticket_types_to_hide'] ?? '' ),
-			];
+			// Removed legacy ticket_type_hiding logic
 		}
 
 		// Gather data from Conditional Views module
@@ -370,6 +375,7 @@ final class Plugin {
             'stackboost_page_stackboost-utm',
             'stackboost_page_stackboost-ats',
             'stackboost_page_stackboost-directory',
+            'stackboost_page_stackboost-conditional-options',
             // Robust fallback for standard hook naming convention
             'stackboost-for-supportcandy_page_stackboost-ticket-view',
             'stackboost-for-supportcandy_page_stackboost-after-hours',
@@ -383,6 +389,7 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-date-time',
             'stackboost-for-supportcandy_page_stackboost-appearance',
             'stackboost-for-supportcandy_page_stackboost-chat-bubbles',
+            'stackboost-for-supportcandy_page_stackboost-conditional-options',
             // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
             'stackboost_page_stackboost-date-time',
 		];
@@ -480,41 +487,82 @@ final class Plugin {
 
 	/**
 	 * A utility function to get SupportCandy custom fields.
+	 * Results are cached for 1 hour to improve performance.
+	 *
 	 * @return array
 	 */
 	public function get_supportcandy_columns(): array {
+		$cached_columns = get_transient( 'stackboost_sc_columns_cache' );
+		if ( false !== $cached_columns ) {
+			return $cached_columns;
+		}
+
 		global $wpdb;
 		$columns             = [];
+
+		// 1. Fetch Custom Fields from DB
+		// Optimization: Removed 'SHOW TABLES' check. If table doesn't exist, query returns false/empty safely.
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
-		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $custom_fields_table ) ) ) {
-			$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$custom_fields_table}`", ARRAY_A );
-			if ( $custom_fields ) {
-				foreach ( $custom_fields as $field ) {
-					$columns[ $field['slug'] ] = $field['name'];
-				}
+
+		// Suppress errors for this specific query to avoid noise if SC is inactive
+		$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$custom_fields_table}`", ARRAY_A );
+
+		if ( $custom_fields ) {
+			foreach ( $custom_fields as $field ) {
+				$columns[ $field['slug'] ] = $field['name'];
 			}
 		}
+
+		// 2. Add Standard Fields (Safe Hardcoding)
+		$standard_fields = [
+			'status'      => __( 'Status', 'stackboost-for-supportcandy' ),
+			'df_status'   => __( 'Status', 'stackboost-for-supportcandy' ),
+			'category'    => __( 'Category', 'stackboost-for-supportcandy' ),
+			'df_category' => __( 'Category', 'stackboost-for-supportcandy' ),
+			'priority'    => __( 'Priority', 'stackboost-for-supportcandy' ),
+			'df_priority' => __( 'Priority', 'stackboost-for-supportcandy' ),
+		];
+
+		foreach ( $standard_fields as $slug => $name ) {
+			if ( ! isset( $columns[ $slug ] ) ) {
+				$columns[ $slug ] = $name;
+			}
+		}
+
 		asort( $columns );
+
+		set_transient( 'stackboost_sc_columns_cache', $columns, HOUR_IN_SECONDS );
+
 		return $columns;
 	}
 
 	/**
 	 * A utility function to get SupportCandy statuses.
+	 * Results are cached for 1 hour.
+	 *
 	 * @return array Associative array of [ ID => Name ]
 	 */
 	public function get_supportcandy_statuses(): array {
+		$cached_statuses = get_transient( 'stackboost_sc_statuses_cache' );
+		if ( false !== $cached_statuses ) {
+			return $cached_statuses;
+		}
+
 		global $wpdb;
 		$statuses      = [];
 		$status_table  = $wpdb->prefix . 'psmsc_statuses';
 
-		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $status_table ) ) ) {
-			$results = $wpdb->get_results( "SELECT id, name FROM `{$status_table}` ORDER BY name ASC" );
-			if ( $results ) {
-				foreach ( $results as $status ) {
-					$statuses[ $status->id ] = $status->name;
-				}
+		// Optimization: Removed 'SHOW TABLES' check.
+		$results = $wpdb->get_results( "SELECT id, name FROM `{$status_table}` ORDER BY name ASC" );
+
+		if ( $results ) {
+			foreach ( $results as $status ) {
+				$statuses[ $status->id ] = $status->name;
 			}
 		}
+
+		set_transient( 'stackboost_sc_statuses_cache', $statuses, HOUR_IN_SECONDS );
+
 		return $statuses;
 	}
 

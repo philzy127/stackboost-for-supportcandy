@@ -25,12 +25,24 @@
      */
     window.stackboost_show_toast = function(message, type) {
         type = type || 'success';
-        var noticeClass = type === 'error' ? 'notice-error' : 'notice-success';
+        var noticeClass = 'notice-success';
+        if (type === 'error') {
+            noticeClass = 'notice-error';
+        } else if (type === 'info') {
+            noticeClass = 'notice-info';
+        }
+
         // Manually include the dismissal button markup
-        var notice = $('<div class="notice ' + noticeClass + ' is-dismissible stackboost-toast"><p>' + message + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>');
+        var notice = $('<div class="notice ' + noticeClass + ' is-dismissible stackboost-admin-notice"><p>' + message + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>');
 
         // Insert after the page title
-        $('.wrap > h1').after(notice);
+        var $title = $('.wrap > h1');
+        if ($title.length) {
+            $title.after(notice);
+        } else {
+            // Fallback: prepend to dashboard container if H1 is missing/different
+            $('.stackboost-dashboard').prepend(notice);
+        }
 
         // Make it dismissible using WordPress standard JS if available, but manual dismiss is safer for dynamic content
         notice.on('click', '.notice-dismiss', function() {

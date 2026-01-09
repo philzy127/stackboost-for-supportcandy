@@ -10,6 +10,7 @@ StackBoost is a modular add-on for the SupportCandy WordPress plugin, designed t
 *   **Onboarding Dashboard:** Streamline employee onboarding with checklists, progress tracking, and automated PDF certificate generation.
 *   **Unified Ticket Macro:** Replace dozens of email templates with a single, smart macro that generates a dynamic table of ticket details.
 *   **After Ticket Survey:** Automatically collect customer feedback upon ticket closure with customizable, multi-question surveys.
+*   **Conditional Options:** Enforce granular visibility rules for ticket fields based on User Roles (WordPress or SupportCandy), including Guests.
 *   **Queue Macros:** Show customers their exact position in the support queue to manage expectations.
 *   **Chat Bubbles:** Transform linear ticket threads into a modern, chat-like interface with customizable colors, shadows, and avatars.
 *   **Feature Spotlight:** A smart dashboard widget that highlights the best tools available for your license tier.

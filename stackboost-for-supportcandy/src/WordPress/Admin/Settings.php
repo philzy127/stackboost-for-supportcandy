@@ -67,6 +67,18 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketView\WordPress::get_instance(), 'render_page' ],
 		];
 
+		// 2.1 Conditional Options - Lite
+		if ( stackboost_is_feature_active( 'conditional_options' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\ConditionalOptions\WordPress' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-conditional-options',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Conditional Options', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Conditional Options', 'stackboost-for-supportcandy' ),
+				'capability'  => 'manage_options',
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\ConditionalOptions\WordPress::get_instance(), 'render_page' ],
+			];
+		}
+
 		// 3. Date & Time Formatting (New Module) - Lite
 		if ( stackboost_is_feature_active( 'date_time_formatting' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page' ) ) {
 			$menu_config[] = [
@@ -802,6 +814,7 @@ class Settings {
 				'page_last_loaded_label',
 				'page_last_loaded_format'
 			],
+			'stackboost-conditional-options' => ['conditional_options_rules', 'conditional_options_enabled'], // Whitelisted
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
@@ -811,6 +824,7 @@ class Settings {
 				'diagnostic_log_enabled',
 				'enable_log_general',
 				'enable_log_ticket_view',
+				'enable_log_conditional_options', // Moved up for user visibility
 				'enable_log_date_time',
 				'enable_log_after_hours',
 				'enable_log_conditional_views',
@@ -867,6 +881,8 @@ class Settings {
 					case 'enable_log_onboarding':
 					case 'enable_log_appearance':
 					case 'enable_log_chat_bubbles':
+					case 'enable_log_conditional_options':
+					case 'conditional_options_enabled':
 					case 'chat_bubbles_enable_ticket':
 					case 'chat_bubbles_enable_email':
 					case 'chat_bubbles_shadow_enable':
@@ -933,6 +949,21 @@ class Settings {
 						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['action', 'columns', 'condition', 'view']) : [];
 						break;
 
+					case 'conditional_options_rules':
+						// Decode JSON if it's a string, or trust array if already array
+						// Since sanitization usually receives the raw POST data, it might be an array if PHP handles nested inputs
+						// But in our case it's saved via AJAX as a JSON string, or potentially via options.php as hidden input?
+						// Our `save_rules` logic in Core.php handles saving directly.
+						// BUT if we are here, it means we are saving via `stackboost_save_settings` AJAX or options.php.
+						// We need to support this to ensure safety if standard save is used.
+
+						// Note: The UI saves via `stackboost_co_save_rules` which calls Core->save_rules directly.
+						// But if we whitelist it here, we ensure that if a full options save occurs, it is NOT stripped.
+						// We don't need complex sanitization here if we trust the custom handler,
+						// but let's implement basic struct check.
+						$saved_settings[$key] = is_array($value) ? $value : []; // Basic array check
+						break;
+
 					case 'after_hours_message':
 						$saved_settings[$key] = wp_kses_post($value);
 						break;
@@ -992,6 +1023,7 @@ class Settings {
 		$modules = [
 			'enable_log_general'           => __( 'General Settings', 'stackboost-for-supportcandy' ),
 			'enable_log_ticket_view'       => __( 'Ticket View', 'stackboost-for-supportcandy' ),
+			'enable_log_conditional_options' => __( 'Conditional Options', 'stackboost-for-supportcandy' ),
 			'enable_log_date_time'         => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
 			'enable_log_after_hours'       => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 			'enable_log_chat_bubbles'      => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),

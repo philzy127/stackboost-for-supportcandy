@@ -31,6 +31,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
         'qol_enhancements',
         'after_hours_notice',
         'date_time_formatting',
+        'conditional_options',
     ];
 
     $features_pro = [

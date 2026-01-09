@@ -45,6 +45,18 @@ spl_autoload_register( function ( $class ) {
  * @since 3.0.0
  */
 function stackboost_run() {
+	// Check for SupportCandy
+	if ( ! defined( 'WPSC_VERSION' ) ) {
+		add_action( 'admin_notices', function() {
+			?>
+			<div class="notice notice-error is-dismissible">
+				<p><?php esc_html_e( 'StackBoost requires SupportCandy to be installed and active.', 'stackboost-for-supportcandy' ); ?></p>
+			</div>
+			<?php
+		} );
+		return;
+	}
+
 	return Plugin::get_instance();
 }
 
@@ -86,6 +98,7 @@ function stackboost_log( $message, $context = 'general' ) {
         'queue_macro'          => 'enable_log_queue_macro',
         'appearance'           => 'enable_log_appearance',
         'chat_bubbles'         => 'enable_log_chat_bubbles',
+        'conditional_options'  => 'enable_log_conditional_options',
 
         // Directory (handles multiple contexts)
         'directory-import'     => 'enable_log_directory',
