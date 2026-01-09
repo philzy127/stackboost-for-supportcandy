@@ -206,6 +206,17 @@
 
             $title.text('Add New Rule');
             $fieldSelect.prop('disabled', false);
+
+            // Filter options: Disable fields that already have rules
+            $fieldSelect.find('option').each(function() {
+                var val = $(this).val();
+                if (val && state.rules[val]) {
+                    $(this).prop('disabled', true);
+                } else {
+                    $(this).prop('disabled', false);
+                }
+            });
+
             $radiosContext.filter('[value="sc"]').prop('checked', true);
 
             $('#pm-modal-matrix').html('<div class="pm-loading-placeholder">Select a field to configure options.</div>');
