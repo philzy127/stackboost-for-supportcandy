@@ -370,8 +370,7 @@ class Settings {
 					<script>
 					(function($) {
 						$(document).ready(function() {
-							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-							var pool = <?php echo $upsell_json; ?>;
+							var pool = <?php echo $upsell_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
 							var currentIndex = <?php echo (int) $start_index; ?>;
 							var $widget = $('#stackboost-spotlight-widget');
 							var timer = null;
