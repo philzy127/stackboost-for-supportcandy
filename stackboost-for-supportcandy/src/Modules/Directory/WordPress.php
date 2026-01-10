@@ -404,7 +404,7 @@ class WordPress {
 						)
 					);
 					$active  = ( $active_tab === $tab_id ) ? ' nav-tab-active' : '';
-					echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . $active . '">' . esc_html( $tab_name ) . '</a>';
+					echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . esc_attr( $active ) . '">' . esc_html( $tab_name ) . '</a>';
 				}
 				?>
 			</h2>
