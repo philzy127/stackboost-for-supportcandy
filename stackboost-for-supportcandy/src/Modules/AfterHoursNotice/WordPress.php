@@ -318,7 +318,7 @@ class WordPress extends Module {
 				}
 
 				// The message is saved via wp_kses_post, so it's safe to display.
-				echo '<div class="stackboost-after-hours-notice" style="margin-left: 15px; margin-bottom: 15px;">' . wpautop( $message ) . '</div>';
+				echo '<div class="stackboost-after-hours-notice" style="margin-left: 15px; margin-bottom: 15px;">' . wp_kses_post( wpautop( $message ) ) . '</div>';
 
 				if ( is_admin() ) {
 					echo '</div>';
@@ -345,6 +345,7 @@ class WordPress extends Module {
 			stackboost_log( 'AfterHoursNotice: Currently after hours. Prepending notice to email.', 'after_hours' );
 			$message = $options['after_hours_message'] ?? '';
 			if ( ! empty( $message ) ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				$notice      = '<div class="stackboost-after-hours-notice" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #ffba00; background-color: #fff8e5;">' . wpautop( $message ) . '</div>';
 				$email_data['body'] = $notice . $email_data['body'];
 			}
