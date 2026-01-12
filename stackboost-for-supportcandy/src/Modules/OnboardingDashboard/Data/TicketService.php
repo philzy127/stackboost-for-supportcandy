@@ -92,7 +92,8 @@ class TicketService {
 			$table_name = $wpdb->prefix . 'wpsc_attachments';
 			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) != $table_name ) {
+			$table_name_like = $wpdb->esc_like( $table_name );
+			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) != $table_name ) {
 				$table_name = $wpdb->prefix . 'psmsc_attachments';
 			}
 
@@ -101,8 +102,9 @@ class TicketService {
 			$ids_placeholder = implode( ',', array_fill( 0, count( $ticket_ids ), '%d' ) );
 			// $table_name is derived from $wpdb->prefix so it is safe to interpolate directly, but usually safer to use $wpdb->prefix logic strictly.
 			// Since we checked against SHOW TABLES output above, it matches a real table name.
+			$safe_table_name = esc_sql( $table_name );
 			$query = $wpdb->prepare(
-				"SELECT ticket_id, COUNT(*) as count FROM $table_name WHERE ticket_id IN ($ids_placeholder) AND name LIKE %s GROUP BY ticket_id",
+				"SELECT ticket_id, COUNT(*) as count FROM {$safe_table_name} WHERE ticket_id IN ($ids_placeholder) AND name LIKE %s GROUP BY ticket_id",
 				array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] )
 			);
 

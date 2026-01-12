@@ -94,12 +94,14 @@ class AdminController {
         global $wpdb;
         if ( ! empty( $_POST['selected_submissions'] ) ) {
             $ids = implode( ',', array_map( 'absint', $_POST['selected_submissions'] ) );
+            $safe_submissions_table = esc_sql( $this->survey_submissions_table_name );
+            $safe_answers_table = esc_sql( $this->survey_answers_table_name );
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $wpdb->query( "DELETE FROM {$this->survey_submissions_table_name} WHERE id IN ($ids)" );
+            $wpdb->query( "DELETE FROM {$safe_submissions_table} WHERE id IN ($ids)" );
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $wpdb->query( "DELETE FROM {$this->survey_answers_table_name} WHERE submission_id IN ($ids)" );
+            $wpdb->query( "DELETE FROM {$safe_answers_table} WHERE submission_id IN ($ids)" );
         }
         wp_safe_redirect( admin_url( 'admin.php?page=stackboost-ats&tab=submissions&message=submissions_deleted' ) );
         exit;
@@ -126,28 +128,32 @@ class AdminController {
         global $wpdb;
         // Logic for handling GET based delete/edit has been moved to AJAX.
         // We only need to fetch the list for initial display.
+        $safe_table = esc_sql( $this->questions_table_name );
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $questions = $wpdb->get_results( "SELECT * FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
+        $questions = $wpdb->get_results( "SELECT * FROM {$safe_table} ORDER BY sort_order ASC", ARRAY_A );
         include __DIR__ . '/Admin/manage-questions-template.php';
     }
 
     private function render_submissions_tab() {
         global $wpdb;
+        $safe_table = esc_sql( $this->survey_submissions_table_name );
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $submissions = $wpdb->get_results( "SELECT id, submission_date FROM {$this->survey_submissions_table_name} ORDER BY submission_date DESC", ARRAY_A );
+        $submissions = $wpdb->get_results( "SELECT id, submission_date FROM {$safe_table} ORDER BY submission_date DESC", ARRAY_A );
         include __DIR__ . '/Admin/manage-submissions-template.php';
     }
 
     private function render_results_tab() {
         global $wpdb;
+        $safe_questions_table = esc_sql( $this->questions_table_name );
+        $safe_submissions_table = esc_sql( $this->survey_submissions_table_name );
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $questions = $wpdb->get_results( "SELECT id, question_text, report_heading, question_type, prefill_key FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
+        $questions = $wpdb->get_results( "SELECT id, question_text, report_heading, question_type, prefill_key FROM {$safe_questions_table} ORDER BY sort_order ASC", ARRAY_A );
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $submissions = $wpdb->get_results( "SELECT s.*, u.display_name FROM {$this->survey_submissions_table_name} s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID ORDER BY submission_date DESC", ARRAY_A );
+        $submissions = $wpdb->get_results( "SELECT s.*, u.display_name FROM {$safe_submissions_table} s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID ORDER BY submission_date DESC", ARRAY_A );
         include __DIR__ . '/Admin/view-results-template.php';
     }
 }

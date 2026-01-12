@@ -506,11 +506,12 @@ final class Plugin {
 		// 1. Fetch Custom Fields from DB
 		// Optimization: Removed 'SHOW TABLES' check. If table doesn't exist, query returns false/empty safely.
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
+		$safe_table = esc_sql( $custom_fields_table );
 
 		// Suppress errors for this specific query to avoid noise if SC is inactive
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$custom_fields_table}`", ARRAY_A );
+		$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$safe_table}`", ARRAY_A );
 
 		if ( $custom_fields ) {
 			foreach ( $custom_fields as $field ) {
@@ -556,11 +557,12 @@ final class Plugin {
 		global $wpdb;
 		$statuses      = [];
 		$status_table  = $wpdb->prefix . 'psmsc_statuses';
+		$safe_table = esc_sql( $status_table );
 
 		// Optimization: Removed 'SHOW TABLES' check.
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$results = $wpdb->get_results( "SELECT id, name FROM `{$status_table}` ORDER BY name ASC" );
+		$results = $wpdb->get_results( "SELECT id, name FROM `{$safe_table}` ORDER BY name ASC" );
 
 		if ( $results ) {
 			foreach ( $results as $status ) {
@@ -584,15 +586,18 @@ final class Plugin {
 			return 0;
 		}
 		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
+		$table_name_like = $wpdb->esc_like( $table_name );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) !== $table_name ) {
+		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) !== $table_name ) {
 			return 0;
 		}
+
+		$safe_table = esc_sql( $table_name );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$field_id = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT id FROM `{$table_name}` WHERE name = %s",
+				"SELECT id FROM `{$safe_table}` WHERE name = %s",
 				$field_name
 			)
 		);

@@ -44,7 +44,7 @@ class Ajax {
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $result = $wpdb->update(
-            $this->questions_table_name,
+            esc_sql( $this->questions_table_name ),
             [ 'report_heading' => $report_heading ],
             [ 'id' => $question_id ],
             [ '%s' ],
@@ -78,7 +78,8 @@ class Ajax {
 
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$this->questions_table_name} WHERE id = %d", $question_id ), ARRAY_A );
+        $safe_table = esc_sql( $this->questions_table_name );
+        $question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$safe_table} WHERE id = %d", $question_id ), ARRAY_A );
 
         if ( ! $question ) {
             stackboost_log( "ATS get_question: Question not found.", 'ats' );
@@ -88,7 +89,8 @@ class Ajax {
         if ( $question['question_type'] === 'dropdown' ) {
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question_id ), ARRAY_A );
+            $safe_dropdown_table = esc_sql( $this->dropdown_options_table_name );
+            $options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$safe_dropdown_table} WHERE question_id = %d ORDER BY sort_order ASC", $question_id ), ARRAY_A );
             $question['options_str'] = implode( ', ', array_column( $options, 'option_value' ) );
         } else {
             $question['options_str'] = '';
@@ -117,7 +119,8 @@ class Ajax {
         if ( ! $question_id ) {
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $current_max_order = (int) $wpdb->get_var( "SELECT MAX(sort_order) FROM {$this->questions_table_name}" );
+            $safe_table = esc_sql( $this->questions_table_name );
+            $current_max_order = (int) $wpdb->get_var( "SELECT MAX(sort_order) FROM {$safe_table}" );
         }
 
         $data = [
@@ -141,7 +144,8 @@ class Ajax {
         if ( $data['question_type'] === 'ticket_number' ) {
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $existing_id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$this->questions_table_name} WHERE question_type = %s", 'ticket_number' ) );
+            $safe_table = esc_sql( $this->questions_table_name );
+            $existing_id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$safe_table} WHERE question_type = %s", 'ticket_number' ) );
             // If one exists AND (we are creating new OR we are updating a different question)
             if ( $existing_id && ( ! $question_id || $existing_id != $question_id ) ) {
                  stackboost_log( "ATS save_question failed: Highlander Rule violated. Existing ID: $existing_id", 'ats' );
@@ -153,7 +157,7 @@ class Ajax {
             // Update
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $result = $wpdb->update( $this->questions_table_name, $data, [ 'id' => $question_id ] );
+            $result = $wpdb->update( esc_sql( $this->questions_table_name ), $data, [ 'id' => $question_id ] );
             if ( false === $result ) {
                 stackboost_log( "ATS save_question update failed. DB Error: " . $wpdb->last_error, 'ats' );
                 wp_send_json_error( 'Failed to update question.' );
@@ -166,7 +170,7 @@ class Ajax {
 
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $result = $wpdb->insert( $this->questions_table_name, $data );
+            $result = $wpdb->insert( esc_sql( $this->questions_table_name ), $data );
             if ( false === $result ) {
                 stackboost_log( "ATS save_question insert failed. Data: " . print_r($data, true) . " DB Error: " . $wpdb->last_error, 'ats' );
                 wp_send_json_error( 'Failed to add question.' );
@@ -178,7 +182,7 @@ class Ajax {
         if ( $data['question_type'] === 'dropdown' ) {
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
+            $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] );
 
             if ( ! empty( $_POST['dropdown_options'] ) ) {
                 $options = array_map( 'trim', explode( ',', $_POST['dropdown_options'] ) );
@@ -186,7 +190,7 @@ class Ajax {
                     if ( ! empty( $opt ) ) {
                         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
                         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-                        $wpdb->insert( $this->dropdown_options_table_name, [
+                        $wpdb->insert( esc_sql( $this->dropdown_options_table_name ), [
                             'question_id'  => $question_id,
                             'option_value' => $opt,
                             'sort_order'   => $index
@@ -198,7 +202,7 @@ class Ajax {
              // Clean up options if type changed away from dropdown
              // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
              // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-             $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
+             $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] );
         }
 
         stackboost_log( "ATS save_question success. ID: {$question_id}", 'ats' );
@@ -225,10 +229,10 @@ class Ajax {
 
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->delete( $this->questions_table_name, [ 'id' => $question_id ] );
+        $wpdb->delete( esc_sql( $this->questions_table_name ), [ 'id' => $question_id ] );
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
+        $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] );
 
         wp_send_json_success( 'Question deleted successfully.' );
     }
@@ -255,7 +259,7 @@ class Ajax {
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $wpdb->update(
-                $this->questions_table_name,
+                esc_sql( $this->questions_table_name ),
                 [ 'sort_order' => intval( $position ) ],
                 [ 'id' => intval( $question_id ) ]
             );

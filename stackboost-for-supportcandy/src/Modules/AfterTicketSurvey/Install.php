@@ -74,13 +74,14 @@ class Install {
         // Check for 'prefill_key' and 'is_readonly_prefill' columns in questions table
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$this->questions_table_name}'" ) === $this->questions_table_name ) {
+        if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $wpdb->esc_like( $this->questions_table_name ) ) ) === $this->questions_table_name ) {
+            $safe_table = esc_sql( $this->questions_table_name );
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $prefill_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$this->questions_table_name} LIKE 'prefill_key'" );
+            $prefill_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM {$safe_table} LIKE %s", 'prefill_key' ) );
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $readonly_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$this->questions_table_name} LIKE 'is_readonly_prefill'" );
+            $readonly_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM {$safe_table} LIKE %s", 'is_readonly_prefill' ) );
 
             if ( empty( $prefill_exists ) ) {
                 stackboost_log("ATS: Schema Drift Detected. 'prefill_key' missing. forcing install.", 'ats');
@@ -173,14 +174,15 @@ class Install {
         // Check if table exists before querying
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$this->questions_table_name}'" ) != $this->questions_table_name ) {
+        if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $wpdb->esc_like( $this->questions_table_name ) ) ) != $this->questions_table_name ) {
             stackboost_log("ATS: seed_default_questions aborted. Table does not exist.", 'ats');
             return;
         }
 
+        $safe_table = esc_sql( $this->questions_table_name );
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		if ( $wpdb->get_var( "SELECT COUNT(*) FROM {$this->questions_table_name}" ) > 0 ) {
+		if ( $wpdb->get_var( "SELECT COUNT(*) FROM {$safe_table}" ) > 0 ) {
 			return; // Don't seed if questions already exist.
 		}
 

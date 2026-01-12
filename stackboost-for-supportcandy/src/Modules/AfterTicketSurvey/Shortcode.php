@@ -89,7 +89,8 @@ class Shortcode {
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$questions = $wpdb->get_results( "SELECT id, question_type FROM {$this->questions_table_name}", ARRAY_A );
+		$safe_table = esc_sql( $this->questions_table_name );
+		$questions = $wpdb->get_results( "SELECT id, question_type FROM {$safe_table}", ARRAY_A );
 
 		// VALIDATION PHASE
 		$errors = [];
@@ -156,7 +157,8 @@ class Shortcode {
 		// We fetch prefill_key as well
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key, is_readonly_prefill FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
+		$safe_table = esc_sql( $this->questions_table_name );
+		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key, is_readonly_prefill FROM {$safe_table} ORDER BY sort_order ASC", ARRAY_A );
 		if ( empty( $questions ) ) {
 			echo '<p class="stackboost-ats-no-questions">No survey questions have been configured.</p>';
 			return;
@@ -266,7 +268,8 @@ class Shortcode {
                 // We need to resolve the best match here for validation purposes
                 // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-                $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
+                $safe_dropdown_table = esc_sql( $this->dropdown_options_table_name );
+                $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$safe_dropdown_table} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
                 $highest_score = 0;
                 $input_lower = strtolower( $input_value );
 
@@ -330,7 +333,8 @@ class Shortcode {
                 if ( ! isset( $dd_options ) ) {
 				    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 				    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				    $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
+				    $safe_dropdown_table = esc_sql( $this->dropdown_options_table_name );
+				    $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$safe_dropdown_table} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
                 }
 
                 // Recalculate match if we didn't do it for validation (i.e. not prefilled/readonly check)
