@@ -106,6 +106,7 @@ class TicketService {
 
 			stackboost_log( "TicketService: Query: $query", 'onboarding' );
 
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$results = $wpdb->get_results( $query );
 
 			if ( $results ) {

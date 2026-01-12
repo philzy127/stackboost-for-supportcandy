@@ -143,7 +143,7 @@ class Staff {
 
 						$.post(ajaxurl, {
 							action: 'stackboost_onboarding_refresh_cache',
-							nonce: '<?php echo wp_create_nonce( "stkb_refresh_cache_nonce" ); ?>'
+							nonce: '<?php echo esc_js( wp_create_nonce( "stkb_refresh_cache_nonce" ) ); ?>'
 						}, function(response) {
 							if (response.success) {
 								$status.text('<?php echo esc_js( __( 'Data updated! Reloading...', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'green');

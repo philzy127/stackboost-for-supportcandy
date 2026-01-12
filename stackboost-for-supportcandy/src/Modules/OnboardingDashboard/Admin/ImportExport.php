@@ -53,7 +53,7 @@ class ImportExport {
 				<h3 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Legacy Data Migration (Manual)', 'stackboost-for-supportcandy' ); ?></h3>
 				<p><?php esc_html_e( 'If you have imported data from the old "Onboarding Dashboard" plugin using WordPress Importer, the posts may be stored as "Legacy Onboarding Steps". Use this tool to convert them to the new format.', 'stackboost-for-supportcandy' ); ?></p>
 
-				<p><strong><?php printf( esc_html__( 'Found %d legacy items.', 'stackboost-for-supportcandy' ), $legacy_count ); ?></strong></p>
+				<p><strong><?php printf( esc_html__( 'Found %d legacy items.', 'stackboost-for-supportcandy' ), (int) $legacy_count ); ?></strong></p>
 
 				<?php if ( $legacy_count > 0 ) : ?>
 					<button type="button" id="migrateDataBtn" class="button button-primary"><?php esc_html_e( 'Migrate Legacy Data Now', 'stackboost-for-supportcandy' ); ?></button>
@@ -68,7 +68,7 @@ class ImportExport {
 			jQuery(document).ready(function($) {
 				// Export
 				$('#exportStepsBtn').on('click', function() {
-					window.location.href = ajaxurl + '?action=stackboost_onboarding_export_steps&nonce=<?php echo wp_create_nonce( 'stackboost_onboarding_export' ); ?>';
+					window.location.href = ajaxurl + '?action=stackboost_onboarding_export_steps&nonce=<?php echo esc_js( wp_create_nonce( 'stackboost_onboarding_export' ) ); ?>';
 				});
 
 				// Import
@@ -76,7 +76,7 @@ class ImportExport {
 					e.preventDefault();
 					var formData = new FormData(this);
 					formData.append('action', 'stackboost_onboarding_import_steps');
-					formData.append('nonce', '<?php echo wp_create_nonce( 'stackboost_onboarding_import' ); ?>');
+					formData.append('nonce', '<?php echo esc_js( wp_create_nonce( 'stackboost_onboarding_import' ) ); ?>');
 
 					var btn = $('#importStepsBtn');
 					var msg = $('#importMessage');
@@ -120,7 +120,7 @@ class ImportExport {
 
                             $.post(ajaxurl, {
                                 action: 'stackboost_onboarding_migrate_data',
-                                nonce: '<?php echo wp_create_nonce( 'stackboost_onboarding_settings_nonce' ); ?>'
+                                nonce: '<?php echo esc_js( wp_create_nonce( 'stackboost_onboarding_settings_nonce' ) ); ?>'
                             }, function(response) {
                                 msg.removeClass('notice-error notice-success').hide();
                                 if (response.success) {
@@ -263,6 +263,7 @@ class ImportExport {
 		header( 'Cache-Control: must-revalidate' );
 		header( 'Pragma: public' );
 		header( 'Content-Length: ' . strlen( $json_content ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo $json_content;
 		exit;
 	}

@@ -185,13 +185,13 @@ class Shortcode {
             $css_vars[] = '--ats-intro-color: ' . esc_attr( $atts['introTextColor'] ) . ';';
         }
 
-        $style_attr = '';
+        $css_style_string = '';
         if ( ! empty( $css_vars ) ) {
-            $style_attr = 'style="' . implode( ' ', $css_vars ) . '"';
+            $css_style_string = implode( ' ', $css_vars );
         }
 
 		?>
-		<div class="<?php echo esc_attr( $container_classes ); ?>" <?php echo $style_attr; ?>>
+		<div class="<?php echo esc_attr( $container_classes ); ?>" <?php if ( $css_style_string ) echo 'style="' . esc_attr( $css_style_string ) . '"'; ?>>
             <?php if ( ! empty( $atts['formTitle'] ) ) : ?>
                 <h2 class="stackboost-ats-main-title"><?php echo esc_html( $atts['formTitle'] ); ?></h2>
             <?php endif; ?>
@@ -290,24 +290,24 @@ class Shortcode {
         }
 
         // Determine Read-Only State
-        $readonly_style = '';
+        $is_readonly = false;
         if ( ! $validation_failed && ! empty( $input_value ) && ! empty( $question['is_readonly_prefill'] ) ) {
-             $readonly_style = 'style="pointer-events: none;" tabindex="-1"';
+             $is_readonly = true;
         }
 
 		switch ( $question['question_type'] ) {
 			case 'ticket_number':
-				echo '<input type="text" name="' . esc_attr( $input_name ) . '" value="' . esc_attr( $input_value ) . '" class="stackboost-ats-input" ' . esc_html( $required_attr ) . ' ' . $readonly_style . '>';
+				echo '<input type="text" name="' . esc_attr( $input_name ) . '" value="' . esc_attr( $input_value ) . '" class="stackboost-ats-input" ' . esc_html( $required_attr ) . ( $is_readonly ? ' style="pointer-events: none;" tabindex="-1"' : '' ) . '>';
 				break;
 			case 'short_text':
-				echo '<input type="text" name="' . esc_attr( $input_name ) . '" value="' . esc_attr( $input_value ) . '" class="stackboost-ats-input" ' . esc_html( $required_attr ) . ' ' . $readonly_style . '>';
+				echo '<input type="text" name="' . esc_attr( $input_name ) . '" value="' . esc_attr( $input_value ) . '" class="stackboost-ats-input" ' . esc_html( $required_attr ) . ( $is_readonly ? ' style="pointer-events: none;" tabindex="-1"' : '' ) . '>';
 				break;
 			case 'long_text':
 				// If textarea has a prefill value, put it inside the tags
-				echo '<textarea name="' . esc_attr( $input_name ) . '" rows="4" class="stackboost-ats-input" ' . esc_html( $required_attr ) . ' ' . $readonly_style . '>' . esc_textarea( $input_value ) . '</textarea>';
+				echo '<textarea name="' . esc_attr( $input_name ) . '" rows="4" class="stackboost-ats-input" ' . esc_html( $required_attr ) . ( $is_readonly ? ' style="pointer-events: none;" tabindex="-1"' : '' ) . '>' . esc_textarea( $input_value ) . '</textarea>';
 				break;
 			case 'rating':
-				echo '<div class="stackboost-ats-rating-options" ' . $readonly_style . '>';
+				echo '<div class="stackboost-ats-rating-options" ' . ( $is_readonly ? ' style="pointer-events: none;" tabindex="-1"' : '' ) . '>';
 				for ( $i = 1; $i <= 5; $i++ ) {
                     // Check if prefill value matches the rating option
                     $checked = ( $input_value == $i ) ? 'checked' : '';
@@ -345,22 +345,19 @@ class Shortcode {
                     }
                 }
 
-                echo '<select name="' . esc_attr( $input_name ) . '" class="stackboost-ats-input" ' . esc_html( $required_attr ) . ' ' . $readonly_style . '>';
+                echo '<select name="' . esc_attr( $input_name ) . '" class="stackboost-ats-input" ' . esc_html( $required_attr ) . ( $is_readonly ? ' style="pointer-events: none;" tabindex="-1"' : '' ) . '>';
 				echo '<option value="">-- Select --</option>';
 				foreach ( $dd_options as $opt ) {
-                    $selected = '';
-
+					echo '<option value="' . esc_attr( $opt->option_value ) . '" ';
                     // Use fuzzy match if available
                     if ( ! empty( $best_match_value ) ) {
-                        $selected = selected( $best_match_value, $opt->option_value, false );
+                        selected( $best_match_value, $opt->option_value );
                     }
                     // Legacy Fallback
                     elseif ( ( $options['ats_technician_question_id'] ?? 0 ) == $question['id'] && ! empty( $prefill_tech_name ) ) {
-                        $selected = selected( strtolower( $prefill_tech_name ), strtolower( $opt->option_value ), false );
+                        selected( strtolower( $prefill_tech_name ), strtolower( $opt->option_value ) );
                     }
-
-					// We do not escape $selected as selected() outputs safe HTML attributes (e.g. selected='selected')
-					echo '<option value="' . esc_attr( $opt->option_value ) . '" ' . $selected . '>' . esc_html( $opt->option_value ) . '</option>';
+                    echo '>' . esc_html( $opt->option_value ) . '</option>';
 				}
 				echo '</select>';
 				break;

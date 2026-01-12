@@ -313,12 +313,12 @@ class WordPress extends Module {
      */
     public function render_test_button_field() {
         ?>
-        <p><?php _e( 'Click the button to see the current queue counts based on your saved settings.', 'stackboost-for-supportcandy' ); ?></p>
+        <p><?php esc_html_e( 'Click the button to see the current queue counts based on your saved settings.', 'stackboost-for-supportcandy' ); ?></p>
         <p>
-            <button type="button" id="stackboost_test_queue_macro_button" class="button"><?php _e( 'Run Test', 'stackboost-for-supportcandy' ); ?></button>
+            <button type="button" id="stackboost_test_queue_macro_button" class="button"><?php esc_html_e( 'Run Test', 'stackboost-for-supportcandy' ); ?></button>
         </p>
         <div id="stackboost_test_results" style="display:none;">
-            <h4><?php _e( 'Test Results', 'stackboost-for-supportcandy' ); ?></h4>
+            <h4><?php esc_html_e( 'Test Results', 'stackboost-for-supportcandy' ); ?></h4>
             <div id="stackboost_test_results_content"></div>
         </div>
         <?php
