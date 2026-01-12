@@ -41,13 +41,14 @@ class Ajax {
             wp_send_json_error( 'Invalid question ID.' );
         }
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $result = $wpdb->update(
             esc_sql( $this->questions_table_name ),
             [ 'report_heading' => $report_heading ],
             [ 'id' => $question_id ],
             [ '%s' ],
             [ '%d' ]
-        ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        );
 
         if ( false === $result ) {
             wp_send_json_error( 'Failed to update heading.' );
@@ -211,8 +212,10 @@ class Ajax {
             wp_send_json_error( 'Invalid question ID.' );
         }
 
-        $wpdb->delete( esc_sql( $this->questions_table_name ), [ 'id' => $question_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->delete( esc_sql( $this->questions_table_name ), [ 'id' => $question_id ] );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] );
 
         wp_send_json_success( 'Question deleted successfully.' );
     }
@@ -236,12 +239,12 @@ class Ajax {
         }
 
         foreach ( $order as $position => $question_id ) {
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $wpdb->update(
                 esc_sql( $this->questions_table_name ),
                 [ 'sort_order' => intval( $position ) ],
                 [ 'id' => intval( $question_id ) ]
-            ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            );
         }
 
         wp_send_json_success( 'Questions reordered successfully.' );
