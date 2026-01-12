@@ -1,4 +1,6 @@
 <?php
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Template for the "View Results" tab in the After Ticket Survey admin page.
  *

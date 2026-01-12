@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\WordPress\Admin;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
  * Manages the admin settings pages and sanitization for the plugin.

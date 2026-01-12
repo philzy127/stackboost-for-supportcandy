@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Data;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 class CustomPostTypes {
 

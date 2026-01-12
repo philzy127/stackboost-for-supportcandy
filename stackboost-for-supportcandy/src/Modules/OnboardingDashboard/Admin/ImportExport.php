@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 class ImportExport {
 

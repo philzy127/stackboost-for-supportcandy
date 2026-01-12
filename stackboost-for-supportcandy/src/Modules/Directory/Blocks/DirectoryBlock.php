@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\Directory\Blocks;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Modules\Directory\Shortcodes\DirectoryShortcode;
 use StackBoost\ForSupportCandy\Modules\Directory\Data\CustomPostTypes;

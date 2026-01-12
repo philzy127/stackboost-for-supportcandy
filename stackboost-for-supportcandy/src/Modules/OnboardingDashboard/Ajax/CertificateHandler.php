@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Ajax;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Services\PdfService;
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Settings;

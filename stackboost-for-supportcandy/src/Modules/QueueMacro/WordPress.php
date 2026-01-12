@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\QueueMacro;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
 use StackBoost\ForSupportCandy\Modules\QueueMacro\Core as QueueMacroCore;

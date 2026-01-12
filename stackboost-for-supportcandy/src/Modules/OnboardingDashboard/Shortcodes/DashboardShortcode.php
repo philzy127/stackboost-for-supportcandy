@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Shortcodes;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Staff;
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Settings;
