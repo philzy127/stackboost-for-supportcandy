@@ -90,10 +90,8 @@ class TicketService {
 
 			// Dynamic table name detection
 			$table_name = $wpdb->prefix . 'wpsc_attachments';
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$table_name_like = $wpdb->esc_like( $table_name );
-			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) != $table_name ) {
+			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) != $table_name ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$table_name = $wpdb->prefix . 'psmsc_attachments';
 			}
 
@@ -110,9 +108,7 @@ class TicketService {
 
 			stackboost_log( "TicketService: Query: $query", 'onboarding' );
 
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$results = $wpdb->get_results( $query );
+			$results = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 			if ( $results ) {
 				stackboost_log( "TicketService: Certificate Query Results Found: " . count( $results ), 'onboarding' );
