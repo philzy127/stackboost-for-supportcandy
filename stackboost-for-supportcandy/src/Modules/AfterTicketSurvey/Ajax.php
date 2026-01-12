@@ -177,19 +177,19 @@ class Ajax {
                 $options = array_map( 'trim', explode( ',', $_POST['dropdown_options'] ) );
                 foreach ( $options as $index => $opt ) {
                     if ( ! empty( $opt ) ) {
-                        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
                         $wpdb->insert( esc_sql( $this->dropdown_options_table_name ), [
                             'question_id'  => $question_id,
                             'option_value' => $opt,
                             'sort_order'   => $index
-                        ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                        ] );
                     }
                 }
             }
         } elseif ( $data['question_type'] !== 'dropdown' ) {
              // Clean up options if type changed away from dropdown
-             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-             $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+             $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] );
         }
 
         stackboost_log( "ATS save_question success. ID: {$question_id}", 'ats' );

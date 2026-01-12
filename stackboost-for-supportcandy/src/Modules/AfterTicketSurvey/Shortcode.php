@@ -331,7 +331,8 @@ class Shortcode {
                 if ( ! isset( $dd_options ) ) {
 				    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 				    $safe_dropdown_table = esc_sql( $this->dropdown_options_table_name );
-				    $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$safe_dropdown_table} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				    $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$safe_dropdown_table} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
                 }
 
                 // Recalculate match if we didn't do it for validation (i.e. not prefilled/readonly check)
