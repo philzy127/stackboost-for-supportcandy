@@ -73,6 +73,7 @@ class Shortcode {
 		global $wpdb;
 		$user_id = get_current_user_id();
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->insert(
 			$this->survey_submissions_table_name,
 			[
@@ -89,7 +90,8 @@ class Shortcode {
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$safe_table = esc_sql( $this->questions_table_name );
-		$questions = $wpdb->get_results( "SELECT id, question_type FROM {$safe_table}", ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$questions = $wpdb->get_results( "SELECT id, question_type FROM {$safe_table}", ARRAY_A );
 
 		// VALIDATION PHASE
 		$errors = [];
@@ -120,7 +122,7 @@ class Shortcode {
 			$input_name = 'stackboost_ats_q_' . $question['id'];
 			if ( isset( $_POST[ $input_name ] ) ) {
 				$answer = is_array($_POST[$input_name]) ? sanitize_text_field(implode(', ', $_POST[$input_name])) : sanitize_textarea_field($_POST[$input_name]);
-				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->insert(
 					$this->survey_answers_table_name,
 					[
@@ -128,7 +130,7 @@ class Shortcode {
 						'question_id'   => $question['id'],
 						'answer_value'  => $answer,
 					]
-				); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				);
 			}
 		}
 
@@ -154,7 +156,8 @@ class Shortcode {
 		// We fetch prefill_key as well
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$safe_table = esc_sql( $this->questions_table_name );
-		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key, is_readonly_prefill FROM {$safe_table} ORDER BY sort_order ASC", ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key, is_readonly_prefill FROM {$safe_table} ORDER BY sort_order ASC", ARRAY_A );
 		if ( empty( $questions ) ) {
 			echo '<p class="stackboost-ats-no-questions">No survey questions have been configured.</p>';
 			return;

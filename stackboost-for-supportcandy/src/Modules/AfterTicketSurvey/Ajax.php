@@ -41,14 +41,14 @@ class Ajax {
             wp_send_json_error( 'Invalid question ID.' );
         }
 
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $result = $wpdb->update(
             esc_sql( $this->questions_table_name ),
             [ 'report_heading' => $report_heading ],
             [ 'id' => $question_id ],
             [ '%s' ],
             [ '%d' ]
-        ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        );
 
         if ( false === $result ) {
             wp_send_json_error( 'Failed to update heading.' );
@@ -169,8 +169,8 @@ class Ajax {
 
         // Handle Dropdown Options
         if ( $data['question_type'] === 'dropdown' ) {
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] );
 
             if ( ! empty( $_POST['dropdown_options'] ) ) {
                 $options = array_map( 'trim', explode( ',', $_POST['dropdown_options'] ) );
@@ -213,10 +213,10 @@ class Ajax {
             wp_send_json_error( 'Invalid question ID.' );
         }
 
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $wpdb->delete( esc_sql( $this->questions_table_name ), [ 'id' => $question_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->delete( esc_sql( $this->questions_table_name ), [ 'id' => $question_id ] );
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] );
 
         wp_send_json_success( 'Question deleted successfully.' );
     }

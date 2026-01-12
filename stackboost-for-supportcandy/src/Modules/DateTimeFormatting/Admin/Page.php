@@ -210,14 +210,14 @@ class Page {
 		$table_name_like = $wpdb->esc_like( $custom_fields_table );
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$safe_table = esc_sql( $custom_fields_table );
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$custom_fields = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT slug, name FROM `{$safe_table}` WHERE type = %s",
 					'datetime'
 				),
 				ARRAY_A
-			); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			);
 			if ( $custom_fields ) {
 				foreach ( $custom_fields as $field ) {
 					$columns[ $field['slug'] ] = $field['name'];
