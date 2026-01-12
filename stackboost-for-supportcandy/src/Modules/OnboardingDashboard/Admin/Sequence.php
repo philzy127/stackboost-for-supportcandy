@@ -170,8 +170,8 @@ class Sequence {
 								<li class="ui-state-default" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
 									<span class="stkb-step-title"><?php echo esc_html( $post->post_title ); ?></span>
 									<div class="stkb-step-actions">
-										<a href="<?php echo get_edit_post_link( $post->ID ); ?>" class="dashicons dashicons-edit" title="<?php esc_attr_e( 'Edit', 'stackboost-for-supportcandy' ); ?>"></a>
-										<a href="<?php echo get_delete_post_link( $post->ID ); ?>" class="dashicons dashicons-trash stackboost-delete-step-btn" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>"></a>
+										<a href="<?php echo esc_url( get_edit_post_link( $post->ID ) ); ?>" class="dashicons dashicons-edit" title="<?php esc_attr_e( 'Edit', 'stackboost-for-supportcandy' ); ?>"></a>
+										<a href="<?php echo esc_url( get_delete_post_link( $post->ID ) ); ?>" class="dashicons dashicons-trash stackboost-delete-step-btn" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>"></a>
 									</div>
 									<input type="hidden" name="onboarding_sequence[]" value="<?php echo esc_attr( $post->ID ); ?>">
 								</li>
@@ -186,8 +186,8 @@ class Sequence {
 								<li class="ui-state-default" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
 									<span class="stkb-step-title"><?php echo esc_html( $post->post_title ); ?></span>
 									<div class="stkb-step-actions">
-										<a href="<?php echo get_edit_post_link( $post->ID ); ?>" class="dashicons dashicons-edit" title="<?php esc_attr_e( 'Edit', 'stackboost-for-supportcandy' ); ?>"></a>
-										<a href="<?php echo get_delete_post_link( $post->ID ); ?>" class="dashicons dashicons-trash stackboost-delete-step-btn" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>"></a>
+										<a href="<?php echo esc_url( get_edit_post_link( $post->ID ) ); ?>" class="dashicons dashicons-edit" title="<?php esc_attr_e( 'Edit', 'stackboost-for-supportcandy' ); ?>"></a>
+										<a href="<?php echo esc_url( get_delete_post_link( $post->ID ) ); ?>" class="dashicons dashicons-trash stackboost-delete-step-btn" title="<?php esc_attr_e( 'Move to Trash', 'stackboost-for-supportcandy' ); ?>"></a>
 									</div>
 								</li>
 							<?php endforeach; ?>

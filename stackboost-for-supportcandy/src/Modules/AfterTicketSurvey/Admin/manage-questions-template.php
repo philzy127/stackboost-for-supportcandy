@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                     <td class="stackboost-ats-sort-handle" style="cursor: move;"><span class="dashicons dashicons-menu"></span></td>
                     <td><?php echo esc_html( $q['question_text'] ); ?></td>
                     <td><?php echo esc_html( str_replace('_', ' ', ucfirst( $q['question_type'] ) ) ); ?></td>
-                    <td><?php echo $q['is_required'] ? __('Yes', 'stackboost-for-supportcandy') : __('No', 'stackboost-for-supportcandy'); ?></td>
+                    <td><?php echo $q['is_required'] ? esc_html__( 'Yes', 'stackboost-for-supportcandy' ) : esc_html__( 'No', 'stackboost-for-supportcandy' ); ?></td>
                     <td>
                         <?php
                         if ( $q['question_type'] === 'dropdown' ) {

@@ -91,7 +91,7 @@ class ImportExport {
 						processData: false,
 						contentType: false,
 						success: function(response) {
-							btn.prop('disabled', false).text('<?php esc_html_e( 'Import JSON', 'stackboost-for-supportcandy' ); ?>');
+							btn.prop('disabled', false).text('<?php echo esc_js( __( 'Import JSON', 'stackboost-for-supportcandy' ) ); ?>');
 							if (response.success) {
 								msg.removeClass('notice-error').addClass('notice-success').html('<p>' + response.data.message + '</p>').show();
 								setTimeout(function() { location.reload(); }, 2000);
@@ -100,7 +100,7 @@ class ImportExport {
 							}
 						},
 						error: function() {
-							btn.prop('disabled', false).text('<?php esc_html_e( 'Import JSON', 'stackboost-for-supportcandy' ); ?>');
+							btn.prop('disabled', false).text('<?php echo esc_js( __( 'Import JSON', 'stackboost-for-supportcandy' ) ); ?>');
 							msg.removeClass('notice-success').addClass('notice-error').html('<p>Server error occurred.</p>').show();
 						}
 					});
@@ -128,7 +128,7 @@ class ImportExport {
                                     btn.text('Migration Complete');
                                     setTimeout(function() { location.reload(); }, 2000);
                                 } else {
-                                    btn.prop('disabled', false).text('<?php esc_html_e( 'Migrate Legacy Data Now', 'stackboost-for-supportcandy' ); ?>');
+                                    btn.prop('disabled', false).text('<?php echo esc_js( __( 'Migrate Legacy Data Now', 'stackboost-for-supportcandy' ) ); ?>');
                                     msg.addClass('notice-error').html('<p>' + response.data.message + '</p>').show();
                                 }
                             });
