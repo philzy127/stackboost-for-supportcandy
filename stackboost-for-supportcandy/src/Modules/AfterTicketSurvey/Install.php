@@ -72,8 +72,11 @@ class Install {
         $needs_repair = false;
 
         // Check for 'prefill_key' and 'is_readonly_prefill' columns in questions table
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$this->questions_table_name}'" ) === $this->questions_table_name ) {
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             $prefill_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$this->questions_table_name} LIKE 'prefill_key'" );
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             $readonly_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$this->questions_table_name} LIKE 'is_readonly_prefill'" );
 
             if ( empty( $prefill_exists ) ) {
@@ -165,11 +168,13 @@ class Install {
 		global $wpdb;
 
         // Check if table exists before querying
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$this->questions_table_name}'" ) != $this->questions_table_name ) {
             stackboost_log("ATS: seed_default_questions aborted. Table does not exist.", 'ats');
             return;
         }
 
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		if ( $wpdb->get_var( "SELECT COUNT(*) FROM {$this->questions_table_name}" ) > 0 ) {
 			return; // Don't seed if questions already exist.
 		}

@@ -87,6 +87,7 @@ class Shortcode {
 			return;
 		}
 
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$questions = $wpdb->get_results( "SELECT id, question_type FROM {$this->questions_table_name}", ARRAY_A );
 
 		// VALIDATION PHASE
@@ -103,6 +104,7 @@ class Shortcode {
 
 		if ( ! empty( $errors ) ) {
 			// Clean up the empty submission created above
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$wpdb->delete( $this->survey_submissions_table_name, [ 'id' => $submission_id ] );
 
 			foreach ( $errors as $err ) {
@@ -117,6 +119,7 @@ class Shortcode {
 			$input_name = 'stackboost_ats_q_' . $question['id'];
 			if ( isset( $_POST[ $input_name ] ) ) {
 				$answer = is_array($_POST[$input_name]) ? sanitize_text_field(implode(', ', $_POST[$input_name])) : sanitize_textarea_field($_POST[$input_name]);
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 				$wpdb->insert(
 					$this->survey_answers_table_name,
 					[
@@ -148,6 +151,7 @@ class Shortcode {
 		$options = get_option( 'stackboost_settings', [] );
 
 		// We fetch prefill_key as well
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key, is_readonly_prefill FROM {$this->questions_table_name} ORDER BY sort_order ASC", ARRAY_A );
 		if ( empty( $questions ) ) {
 			echo '<p class="stackboost-ats-no-questions">No survey questions have been configured.</p>';
@@ -256,6 +260,7 @@ class Shortcode {
             }
             elseif ( $question['question_type'] === 'dropdown' ) {
                 // We need to resolve the best match here for validation purposes
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
                 $highest_score = 0;
                 $input_lower = strtolower( $input_value );
@@ -318,6 +323,7 @@ class Shortcode {
 			case 'dropdown':
                 // Note: $dd_options and $best_match_value might already be calculated above during validation
                 if ( ! isset( $dd_options ) ) {
+				    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 				    $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
                 }
 

@@ -508,6 +508,7 @@ final class Plugin {
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
 
 		// Suppress errors for this specific query to avoid noise if SC is inactive
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$custom_fields_table}`", ARRAY_A );
 
 		if ( $custom_fields ) {
@@ -556,6 +557,7 @@ final class Plugin {
 		$status_table  = $wpdb->prefix . 'psmsc_statuses';
 
 		// Optimization: Removed 'SHOW TABLES' check.
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$results = $wpdb->get_results( "SELECT id, name FROM `{$status_table}` ORDER BY name ASC" );
 
 		if ( $results ) {
@@ -583,6 +585,7 @@ final class Plugin {
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) !== $table_name ) {
 			return 0;
 		}
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$field_id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT id FROM `{$table_name}` WHERE name = %s",

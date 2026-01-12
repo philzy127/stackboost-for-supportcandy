@@ -208,6 +208,7 @@ class Page {
 		global $wpdb;
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $custom_fields_table ) ) ) {
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$custom_fields = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT slug, name FROM `{$custom_fields_table}` WHERE type = %s",

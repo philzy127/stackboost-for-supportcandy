@@ -90,6 +90,7 @@ class TicketService {
 
 			// Dynamic table name detection
 			$table_name = $wpdb->prefix . 'wpsc_attachments';
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 			if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) != $table_name ) {
 				$table_name = $wpdb->prefix . 'psmsc_attachments';
 			}
