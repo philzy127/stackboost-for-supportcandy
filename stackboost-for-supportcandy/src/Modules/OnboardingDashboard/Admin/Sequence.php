@@ -118,7 +118,7 @@ class Sequence {
 	public static function save_success_notice() {
 		?>
 		<div class="notice notice-success is-dismissible">
-			<p><?php _e( 'Onboarding sequence saved!', 'stackboost-for-supportcandy' ); ?></p>
+			<p><?php esc_html_e( 'Onboarding sequence saved!', 'stackboost-for-supportcandy' ); ?></p>
 		</div>
 		<?php
 	}

@@ -139,17 +139,17 @@ class Staff {
 						var $status = $('#stkb-refresh-status');
 
 						$button.prop('disabled', true);
-						$status.text('<?php esc_html_e( "Updating...", "stackboost-for-supportcandy" ); ?>').css('color', 'black').show();
+						$status.text('<?php echo esc_js( __( 'Updating...', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'black').show();
 
 						$.post(ajaxurl, {
 							action: 'stackboost_onboarding_refresh_cache',
 							nonce: '<?php echo wp_create_nonce( "stkb_refresh_cache_nonce" ); ?>'
 						}, function(response) {
 							if (response.success) {
-								$status.text('<?php esc_html_e( "Data updated! Reloading...", "stackboost-for-supportcandy" ); ?>').css('color', 'green');
+								$status.text('<?php echo esc_js( __( 'Data updated! Reloading...', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'green');
 								setTimeout(function() { location.reload(); }, 1000);
 							} else {
-								$status.text('<?php esc_html_e( "Update failed.", "stackboost-for-supportcandy" ); ?>').css('color', 'red');
+								$status.text('<?php echo esc_js( __( 'Update failed.', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'red');
 								$button.prop('disabled', false);
 							}
 						});

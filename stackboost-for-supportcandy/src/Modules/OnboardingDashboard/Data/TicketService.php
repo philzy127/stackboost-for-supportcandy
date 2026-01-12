@@ -96,8 +96,13 @@ class TicketService {
 
 			stackboost_log( "TicketService: Checking certificates in table: $table_name", 'onboarding' );
 
-			$ids_placeholder = implode( ',', array_map( 'intval', $ticket_ids ) );
-			$query = "SELECT ticket_id, COUNT(*) as count FROM $table_name WHERE ticket_id IN ($ids_placeholder) AND name LIKE 'Onboarding_Certificate_%' GROUP BY ticket_id";
+			$ids_placeholder = implode( ',', array_fill( 0, count( $ticket_ids ), '%d' ) );
+			// $table_name is derived from $wpdb->prefix so it is safe to interpolate directly, but usually safer to use $wpdb->prefix logic strictly.
+			// Since we checked against SHOW TABLES output above, it matches a real table name.
+			$query = $wpdb->prepare(
+				"SELECT ticket_id, COUNT(*) as count FROM $table_name WHERE ticket_id IN ($ids_placeholder) AND name LIKE %s GROUP BY ticket_id",
+				array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] )
+			);
 
 			stackboost_log( "TicketService: Query: $query", 'onboarding' );
 

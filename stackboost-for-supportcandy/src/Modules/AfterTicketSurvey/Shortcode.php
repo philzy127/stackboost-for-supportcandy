@@ -286,7 +286,7 @@ class Shortcode {
             $input_value = ''; // Reset invalid value
             $best_match_value = '';
             stackboost_log( "Invalid pre-fill value for field ID {$question['id']} ignored.", 'ats' );
-            echo "<script>if(typeof window.stackboostLog === 'function') { window.stackboostLog('Invalid pre-fill value for field ID {$question['id']} ignored.', null, 'warn'); }</script>";
+            echo "<script>if(typeof window.stackboostLog === 'function') { window.stackboostLog('Invalid pre-fill value for field ID " . esc_js( $question['id'] ) . " ignored.', null, 'warn'); }</script>";
         }
 
         // Determine Read-Only State
@@ -313,7 +313,7 @@ class Shortcode {
                     $checked = ( $input_value == $i ) ? 'checked' : '';
 					echo '<label class="stackboost-ats-radio-label"><input type="radio" name="' . esc_attr( $input_name ) . '" value="' . esc_attr( $i ) . '" class="stackboost-ats-radio" ' . esc_html( $required_attr ) . ' ' . esc_attr( $checked ) . '><span class="stackboost-ats-radio-text">' . esc_html( $i ) . '</span></label>';
 				}
-				echo '<span class="stackboost-ats-rating-guide">(1 = Poor, 5 = Excellent)</span></div>';
+				echo '<span class="stackboost-ats-rating-guide">' . esc_html__( '(1 = Poor, 5 = Excellent)', 'stackboost-for-supportcandy' ) . '</span></div>';
 				break;
 			case 'dropdown':
                 // Note: $dd_options and $best_match_value might already be calculated above during validation
@@ -359,7 +359,8 @@ class Shortcode {
                         $selected = selected( strtolower( $prefill_tech_name ), strtolower( $opt->option_value ), false );
                     }
 
-					echo '<option value="' . esc_attr( $opt->option_value ) . '" ' . esc_html( $selected ) . '>' . esc_html( $opt->option_value ) . '</option>';
+					// We do not escape $selected as selected() outputs safe HTML attributes (e.g. selected='selected')
+					echo '<option value="' . esc_attr( $opt->option_value ) . '" ' . $selected . '>' . esc_html( $opt->option_value ) . '</option>';
 				}
 				echo '</select>';
 				break;
