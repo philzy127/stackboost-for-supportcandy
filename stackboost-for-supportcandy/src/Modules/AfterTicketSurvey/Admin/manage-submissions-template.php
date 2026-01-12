@@ -7,8 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @var array $submissions The list of all survey submissions.
  */
 ?>
-<h2><?php _e('Manage Survey Submissions', 'stackboost-for-supportcandy'); ?></h2>
-<p><?php _e('Select one or more submissions below and click "Delete" to permanently remove them.', 'stackboost-for-supportcandy'); ?></p>
+<h2><?php esc_html_e( 'Manage Survey Submissions', 'stackboost-for-supportcandy' ); ?></h2>
+<p><?php esc_html_e( 'Select one or more submissions below and click "Delete" to permanently remove them.', 'stackboost-for-supportcandy' ); ?></p>
 
 <?php if ( ! empty( $submissions ) ) : ?>
     <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="stackboost-ats-submissions-form">
@@ -20,8 +20,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
             <thead>
                 <tr>
                     <th class="check-column"><input type="checkbox" id="stackboost-ats-select-all"></th>
-                    <th><?php _e('Submission ID', 'stackboost-for-supportcandy'); ?></th>
-                    <th><?php _e('Date Submitted', 'stackboost-for-supportcandy'); ?></th>
+                    <th><?php esc_html_e( 'Submission ID', 'stackboost-for-supportcandy' ); ?></th>
+                    <th><?php esc_html_e( 'Date Submitted', 'stackboost-for-supportcandy' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -38,7 +38,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
         </table>
         <br>
         <button type="submit" class="button button-primary" id="stackboost-delete-submissions-btn">
-            <?php _e('Delete Selected Submissions', 'stackboost-for-supportcandy'); ?>
+            <?php esc_html_e( 'Delete Selected Submissions', 'stackboost-for-supportcandy' ); ?>
         </button>
     </form>
     <script>
@@ -66,5 +66,5 @@ if ( ! defined( 'ABSPATH' ) ) exit;
         });
     </script>
 <?php else : ?>
-    <p><?php _e('No survey submissions to manage yet.', 'stackboost-for-supportcandy'); ?></p>
+    <p><?php esc_html_e( 'No survey submissions to manage yet.', 'stackboost-for-supportcandy' ); ?></p>
 <?php endif; ?>
