@@ -290,6 +290,7 @@ class MetaBoxes {
 		$unique_id = get_post_meta( $post_id, '_unique_id', true );
 		if ( empty( $unique_id ) ) {
 			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$max_id        = $wpdb->get_var( "SELECT MAX(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->postmeta} WHERE meta_key = '_unique_id'" );
 			$new_unique_id = ( $max_id ) ? $max_id + 1 : 1;
 			update_post_meta( $post_id, '_unique_id', $new_unique_id );

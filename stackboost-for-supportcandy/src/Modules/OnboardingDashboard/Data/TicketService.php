@@ -91,6 +91,7 @@ class TicketService {
 			// Dynamic table name detection
 			$table_name = $wpdb->prefix . 'wpsc_attachments';
 			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) != $table_name ) {
 				$table_name = $wpdb->prefix . 'psmsc_attachments';
 			}
@@ -108,6 +109,7 @@ class TicketService {
 			stackboost_log( "TicketService: Query: $query", 'onboarding' );
 
 			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$results = $wpdb->get_results( $query );
 
 			if ( $results ) {

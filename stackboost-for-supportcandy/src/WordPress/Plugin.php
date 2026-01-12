@@ -509,6 +509,7 @@ final class Plugin {
 
 		// Suppress errors for this specific query to avoid noise if SC is inactive
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$custom_fields_table}`", ARRAY_A );
 
 		if ( $custom_fields ) {
@@ -558,6 +559,7 @@ final class Plugin {
 
 		// Optimization: Removed 'SHOW TABLES' check.
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results( "SELECT id, name FROM `{$status_table}` ORDER BY name ASC" );
 
 		if ( $results ) {
@@ -582,10 +584,12 @@ final class Plugin {
 			return 0;
 		}
 		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) !== $table_name ) {
 			return 0;
 		}
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$field_id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT id FROM `{$table_name}` WHERE name = %s",

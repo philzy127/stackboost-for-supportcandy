@@ -110,6 +110,7 @@ class Upgrade {
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results( $query );
 
 		$updated_count = 0;

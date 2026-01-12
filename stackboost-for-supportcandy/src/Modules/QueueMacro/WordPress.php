@@ -268,6 +268,7 @@ class WordPress extends Module {
 
         $status_table = $wpdb->prefix . 'psmsc_statuses';
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $all_statuses = $wpdb->get_results( "SELECT id, name FROM {$status_table} ORDER BY name ASC" );
 
         $available_statuses_map = [];

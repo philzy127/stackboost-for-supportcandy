@@ -35,6 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
             <td><?php echo esc_html( $sub['display_name'] ?? __('Guest', 'stackboost-for-supportcandy') ); ?></td>
             <?php
             global $wpdb;
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $answers = $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM {$wpdb->prefix}stackboost_ats_survey_answers WHERE submission_id = %d", $sub['id'] ), OBJECT_K );
             foreach ( $questions as $q ) {
                 $answer = $answers[ $q['id'] ]->answer_value ?? '';

@@ -449,6 +449,7 @@ class Management {
 
 								// To avoid duplicates, let's search for an attachment with this GUID (URL)
 								global $wpdb;
+								// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 								$attachment_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE guid = %s", $image_url ) );
 
 								if ( ! $attachment_id ) {

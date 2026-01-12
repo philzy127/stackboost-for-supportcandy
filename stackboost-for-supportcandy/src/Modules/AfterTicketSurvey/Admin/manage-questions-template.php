@@ -42,6 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                             global $wpdb;
                             $options_table = $wpdb->prefix . 'stackboost_ats_dropdown_options';
                             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+                            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
                             $options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$options_table} WHERE question_id = %d ORDER BY sort_order ASC", $q['id'] ), ARRAY_A );
                             echo esc_html( implode(', ', array_column($options, 'option_value')) );
                         } else {
