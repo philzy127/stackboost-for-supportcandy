@@ -169,7 +169,8 @@ class Ajax {
 
         // Handle Dropdown Options
         if ( $data['question_type'] === 'dropdown' ) {
-            $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $wpdb->delete( esc_sql( $this->dropdown_options_table_name ), [ 'question_id' => $question_id ] );
 
             if ( ! empty( $_POST['dropdown_options'] ) ) {
                 $options = array_map( 'trim', explode( ',', $_POST['dropdown_options'] ) );
