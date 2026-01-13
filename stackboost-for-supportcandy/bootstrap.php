@@ -139,7 +139,7 @@ function stackboost_log( $message, $context = 'general' ) {
     $entry     = sprintf( "[%s] [%s] ", $timestamp, $context );
 
     if ( is_array( $message ) || is_object( $message ) ) {
-        $entry .= print_r( $message, true );
+        $entry .= json_encode( $message );
     } else {
         $entry .= $message;
     }

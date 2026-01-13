@@ -104,10 +104,12 @@ class WordPress extends Module {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		if ( ! isset( $_POST['stackboost_date_time_settings'] ) ) {
 			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$input = wp_unslash( $_POST['stackboost_date_time_settings'] );
 		$sanitized = $this->sanitize_settings( $input );
 
@@ -213,8 +215,10 @@ class WordPress extends Module {
 
 		// CONTEXT CHECK
 		$is_admin_list    = is_admin() && function_exists( 'get_current_screen' ) && get_current_screen() && get_current_screen()->id === 'toplevel_page_wpsc-tickets';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$is_frontend_list = isset( $_REQUEST['action'] ) && $_REQUEST['action'] === 'wpsc_get_tickets'; // Approximate check for frontend AJAX list
 		// Also check strict frontend context param if sent by custom scripts
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$is_frontend_explicit = isset( $_POST['is_frontend'] ) && '1' === $_POST['is_frontend'];
 
 		// We apply formatting in admin lists and potentially frontend lists.

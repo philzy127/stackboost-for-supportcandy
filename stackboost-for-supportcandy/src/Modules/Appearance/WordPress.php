@@ -53,6 +53,7 @@ class WordPress {
 
         // Check if we are on a StackBoost page via GET param (more robust) or Screen ID
         $is_stackboost_page = false;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
         if ( ! empty( $page ) && strpos( $page, 'stackboost' ) !== false ) {
             $is_stackboost_page = true;

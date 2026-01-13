@@ -781,7 +781,7 @@ class Settings {
 	public function sanitize_settings( array $input ): array {
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( 'Settings::sanitize_settings called.', 'core' );
-			stackboost_log( 'Input Data: ' . print_r( $input, true ), 'core' );
+			stackboost_log( 'Input Data: ' . json_encode( $input ), 'core' );
 		}
 
 		$saved_settings = get_option('stackboost_settings', []);
@@ -927,7 +927,7 @@ class Settings {
 
 					case 'date_format_rules':
 						if ( function_exists( 'stackboost_log' ) ) {
-							stackboost_log( 'Sanitizing date_format_rules. Raw Value: ' . print_r( $value, true ), 'core' );
+							stackboost_log( 'Sanitizing date_format_rules. Raw Value: ' . json_encode( $value ), 'core' );
 						}
 						// Check if rules are present in the submission.
 						if ( is_array( $value ) ) {
@@ -948,7 +948,7 @@ class Settings {
 								$sanitized_rules[]              = $sanitized_rule;
 							}
 							if ( function_exists( 'stackboost_log' ) ) {
-								stackboost_log( 'Final Sanitized Rules: ' . print_r( $sanitized_rules, true ), 'core' );
+								stackboost_log( 'Final Sanitized Rules: ' . json_encode( $sanitized_rules ), 'core' );
 							}
 							$saved_settings[$key] = $sanitized_rules;
 						} else {
@@ -1129,7 +1129,7 @@ class Settings {
 
 		switch ( $_GET['stackboost_action'] ) {
 			case 'download_log':
-				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'stackboost_download_log_nonce' ) ) {
+				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'stackboost_download_log_nonce' ) ) {
 					global $wp_filesystem;
 					if ( empty( $wp_filesystem ) ) {
 						require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -1191,17 +1191,18 @@ class Settings {
 	 * AJAX handler to save settings via the central sanitizer.
 	 */
 	public function ajax_save_settings() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( 'AJAX Save Settings Called', 'core' );
-			stackboost_log( 'POST Data: ' . print_r( $_POST, true ), 'core' );
+			stackboost_log( 'POST Data: ' . json_encode( $_POST ), 'core' );
 		}
-
-		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		if ( ! isset( $_POST['stackboost_settings'] ) || ! is_array( $_POST['stackboost_settings'] ) ) {
             if ( function_exists( 'stackboost_log' ) ) {
                 stackboost_log( 'Invalid settings data structure.', 'core' );
@@ -1210,10 +1211,11 @@ class Settings {
 		}
 
 		// Retrieve the new settings from the POST request.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		$new_settings = $_POST['stackboost_settings'];
 
         if ( function_exists( 'stackboost_log' ) ) {
-            stackboost_log( 'New Settings to Process: ' . print_r( $new_settings, true ), 'core' );
+            stackboost_log( 'New Settings to Process: ' . json_encode( $new_settings ), 'core' );
         }
 
 		// Get the existing settings.
@@ -1224,11 +1226,11 @@ class Settings {
 		// But here, we are simulating a form submission. The $new_settings array should contain the
 		// 'page_slug' which tells sanitize_settings() which fields to process.
 		// It will merge these new values into the existing saved_settings and return the full array.
-		// IMPORTANT: wp_unslash is needed here because we are reading raw $_POST.
-		$sanitized_settings = $this->sanitize_settings( wp_unslash( $new_settings ) );
+		// IMPORTANT: wp_unslash is handled inside sanitize_settings to support both slashed (options.php) and unslashed inputs.
+		$sanitized_settings = $this->sanitize_settings( $new_settings );
 
         if ( function_exists( 'stackboost_log' ) ) {
-            stackboost_log( 'Final Sanitized Settings: ' . print_r( $sanitized_settings, true ), 'core' );
+            stackboost_log( 'Final Sanitized Settings: ' . json_encode( $sanitized_settings ), 'core' );
         }
 
 		// Update the option.
@@ -1364,7 +1366,7 @@ class Settings {
             wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
         }
 
-        $license_key = sanitize_text_field( $_POST['license_key'] ?? '' );
+        $license_key = sanitize_text_field( wp_unslash( $_POST['license_key'] ?? '' ) );
         if ( empty( $license_key ) ) {
             wp_send_json_error( __( 'Missing license key.', 'stackboost-for-supportcandy' ) );
         }

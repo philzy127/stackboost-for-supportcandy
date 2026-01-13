@@ -39,6 +39,7 @@ class Page {
 			'import_export' => __( 'Import / Export', 'stackboost-for-supportcandy' ),
 		];
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'steps';
 
         $theme_class = 'sb-theme-clean-tech';

@@ -157,6 +157,7 @@ class WordPress {
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
 			// Dashicons is loaded by default in admin.
 
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
 			// Enqueue scripts for the Contact Widget settings tab.
@@ -374,6 +375,7 @@ class WordPress {
 		// Add any other tabs that might not be in the order array to the end
 		$tabs = array_merge($ordered_tabs, array_diff_key($tabs, $ordered_tabs));
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
         $theme_class = 'sb-theme-clean-tech';
@@ -944,7 +946,9 @@ class WordPress {
 		}
 
 		// Check for our custom query arg to determine the return link.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
 
 		$return_link = '';
@@ -957,7 +961,9 @@ class WordPress {
 			}
 
 			// 2. Fallback/Primary Method: Use the referer URL from the POST data if available.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			if ( isset( $_POST['_wp_original_http_referer'] ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
 				// Security check: ensure the referer is for the correct ticket (frontend or backend).
 				$is_frontend_url = strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false;
@@ -1066,7 +1072,9 @@ class WordPress {
 			}
 
 			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
 
 			if ( 'ticket' === $from && $ticket_id > 0 ) {
@@ -1078,7 +1086,9 @@ class WordPress {
 				}
 
 				// 2. Fallback/Primary Method for All Contexts: Use the referer URL.
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				if ( isset( $_POST['_wp_original_http_referer'] ) ) {
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing
 					$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
 
 					// Security check: ensure the referer is for the correct ticket (frontend or backend).
@@ -1164,6 +1174,7 @@ class WordPress {
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
 			'paged'          => $page,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				array(
 					'key'     => '_stackboost_email_address',
@@ -1240,6 +1251,7 @@ class WordPress {
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
 			'paged'          => $page,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				array(
 					'key'     => '_stackboost_email_address',

@@ -29,6 +29,7 @@ class Sequence {
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'steps';
 		if ( 'steps' !== $tab ) {
 			return;

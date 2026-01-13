@@ -25,13 +25,13 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ( $submissions as $sub ) : ?>
+            <?php foreach ( $submissions as $stackboost_sub ) : ?>
                 <tr>
                     <th scope="row" class="check-column">
-                        <input type="checkbox" name="selected_submissions[]" value="<?php echo esc_attr( $sub['id'] ); ?>">
+                        <input type="checkbox" name="selected_submissions[]" value="<?php echo esc_attr( $stackboost_sub['id'] ); ?>">
                     </th>
-                    <td><?php echo esc_html( $sub['id'] ); ?></td>
-                    <td><?php echo esc_html( $sub['submission_date'] ); ?></td>
+                    <td><?php echo esc_html( $stackboost_sub['id'] ); ?></td>
+                    <td><?php echo esc_html( $stackboost_sub['submission_date'] ); ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

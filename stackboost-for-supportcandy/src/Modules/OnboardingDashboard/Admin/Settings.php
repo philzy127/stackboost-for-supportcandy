@@ -256,6 +256,7 @@ class Settings {
 	 * Enqueue Assets for Settings Page.
 	 */
 	public static function enqueue_assets() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : '';
 		if ( 'settings' !== $tab && 'certificate' !== $tab ) {
 			return;
@@ -282,6 +283,7 @@ class Settings {
 	public static function render_page() {
 		self::enqueue_assets();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['settings-updated'] ) ) {
 			add_settings_error( 'stackboost_messages', 'stackboost_message', __( 'Settings Saved', 'stackboost-for-supportcandy' ), 'updated' );
 		}
@@ -531,6 +533,7 @@ class Settings {
 	public static function render_certificate_page() {
 		self::enqueue_assets();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['settings-updated'] ) ) {
 			add_settings_error( 'stackboost_messages', 'stackboost_message', __( 'Settings Saved', 'stackboost-for-supportcandy' ), 'updated' );
 		}

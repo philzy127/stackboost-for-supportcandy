@@ -30,31 +30,31 @@ if ( ! defined( 'ABSPATH' ) ) exit;
             <?php if ( empty( $questions ) ) : ?>
                 <tr class="no-items"><td colspan="7"><?php esc_html_e( 'No questions found.', 'stackboost-for-supportcandy' ); ?></td></tr>
             <?php else : ?>
-                <?php foreach ( $questions as $q ) : ?>
-                <tr data-id="<?php echo esc_attr($q['id']); ?>" data-type="<?php echo esc_attr($q['question_type']); ?>">
+                <?php foreach ( $questions as $stackboost_q ) : ?>
+                <tr data-id="<?php echo esc_attr($stackboost_q['id']); ?>" data-type="<?php echo esc_attr($stackboost_q['question_type']); ?>">
                     <td class="stackboost-ats-sort-handle" style="cursor: move;"><span class="dashicons dashicons-menu"></span></td>
-                    <td><?php echo esc_html( $q['question_text'] ); ?></td>
-                    <td><?php echo esc_html( str_replace('_', ' ', ucfirst( $q['question_type'] ) ) ); ?></td>
-                    <td><?php echo $q['is_required'] ? esc_html__( 'Yes', 'stackboost-for-supportcandy' ) : esc_html__( 'No', 'stackboost-for-supportcandy' ); ?></td>
+                    <td><?php echo esc_html( $stackboost_q['question_text'] ); ?></td>
+                    <td><?php echo esc_html( str_replace('_', ' ', ucfirst( $stackboost_q['question_type'] ) ) ); ?></td>
+                    <td><?php echo $stackboost_q['is_required'] ? esc_html__( 'Yes', 'stackboost-for-supportcandy' ) : esc_html__( 'No', 'stackboost-for-supportcandy' ); ?></td>
                     <td>
                         <?php
-                        if ( $q['question_type'] === 'dropdown' ) {
+                        if ( $stackboost_q['question_type'] === 'dropdown' ) {
                             global $wpdb;
-                            $options_table = $wpdb->prefix . 'stackboost_ats_dropdown_options';
-                            $safe_options_table = $options_table;
+                            $stackboost_options_table = $wpdb->prefix . 'stackboost_ats_dropdown_options';
+                            $stackboost_safe_options_table = $stackboost_options_table;
                             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-                            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-                            $options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$safe_options_table}` WHERE question_id = %d ORDER BY sort_order ASC", $q['id'] ), ARRAY_A );
-                            echo esc_html( implode(', ', array_column($options, 'option_value')) );
+                            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                            $stackboost_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$stackboost_safe_options_table}` WHERE question_id = %d ORDER BY sort_order ASC", $stackboost_q['id'] ), ARRAY_A );
+                            echo esc_html( implode(', ', array_column($stackboost_options, 'option_value')) );
                         } else {
                             echo '-';
                         }
                         ?>
                     </td>
-                    <td><?php echo esc_html( $q['prefill_key'] ?? '-' ); ?></td>
+                    <td><?php echo esc_html( $stackboost_q['prefill_key'] ?? '-' ); ?></td>
                     <td>
-                        <button type="button" class="stackboost-icon-btn stackboost-ats-edit-question" data-id="<?php echo esc_attr($q['id']); ?>" title="<?php esc_attr_e('Edit', 'stackboost-for-supportcandy'); ?>"><span class="dashicons dashicons-edit"></span></button>
-                        <button type="button" class="stackboost-icon-btn stackboost-ats-delete-question" data-id="<?php echo esc_attr($q['id']); ?>" title="<?php esc_attr_e('Delete', 'stackboost-for-supportcandy'); ?>"><span class="dashicons dashicons-trash"></span></button>
+                        <button type="button" class="stackboost-icon-btn stackboost-ats-edit-question" data-id="<?php echo esc_attr($stackboost_q['id']); ?>" title="<?php esc_attr_e('Edit', 'stackboost-for-supportcandy'); ?>"><span class="dashicons dashicons-edit"></span></button>
+                        <button type="button" class="stackboost-icon-btn stackboost-ats-delete-question" data-id="<?php echo esc_attr($stackboost_q['id']); ?>" title="<?php esc_attr_e('Delete', 'stackboost-for-supportcandy'); ?>"><span class="dashicons dashicons-trash"></span></button>
                     </td>
                 </tr>
                 <?php endforeach; ?>

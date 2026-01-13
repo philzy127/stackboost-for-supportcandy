@@ -179,7 +179,7 @@ class CustomPostTypes {
 	 * @param int $post_id
 	 */
 	public static function save_meta_box_data( $post_id ) {
-		if ( ! isset( $_POST['stkb_onboarding_meta_nonce'] ) || ! wp_verify_nonce( $_POST['stkb_onboarding_meta_nonce'], 'stkb_onboarding_save_meta' ) ) {
+		if ( ! isset( $_POST['stkb_onboarding_meta_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['stkb_onboarding_meta_nonce'] ) ), 'stkb_onboarding_save_meta' ) ) {
 			return;
 		}
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
@@ -190,12 +190,12 @@ class CustomPostTypes {
 		}
 
 		if ( isset( $_POST['stkb_onboarding_checklist_field'] ) ) {
-			$checklist_items = sanitize_textarea_field( $_POST['stkb_onboarding_checklist_field'] );
+			$checklist_items = sanitize_textarea_field( wp_unslash( $_POST['stkb_onboarding_checklist_field'] ) );
 			update_post_meta( $post_id, '_stackboost_onboarding_checklist_items', $checklist_items );
 		}
 
 		if ( isset( $_POST['stkb_onboarding_notes_field'] ) ) {
-			$notes_content = wp_kses_post( $_POST['stkb_onboarding_notes_field'] );
+			$notes_content = wp_kses_post( wp_unslash( $_POST['stkb_onboarding_notes_field'] ) );
 			update_post_meta( $post_id, '_stackboost_onboarding_notes_content', $notes_content );
 		}
 	}

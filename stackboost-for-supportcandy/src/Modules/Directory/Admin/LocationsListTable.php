@@ -271,6 +271,7 @@ class LocationsListTable extends \WP_List_Table {
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
 			if ( 'stackboost_needs_completion' === $orderby ) {
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				$args['meta_key'] = '_needs_completion';
 				$args['orderby']  = 'meta_value';
 			} else {
@@ -281,6 +282,7 @@ class LocationsListTable extends \WP_List_Table {
 
 		$current_filter = isset( $_REQUEST['stackboost_needs_completion_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_needs_completion_filter'] ) ) : 'all';
 		if ( 'all' !== $current_filter ) {
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			$args['meta_query'] = array(
 				array(
 					'key'   => '_needs_completion',

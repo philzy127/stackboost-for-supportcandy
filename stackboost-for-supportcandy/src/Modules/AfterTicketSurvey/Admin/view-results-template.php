@@ -15,34 +15,34 @@ if ( ! defined( 'ABSPATH' ) ) exit;
             <th><?php esc_html_e( 'ID', 'stackboost-for-supportcandy' ); ?></th>
             <th><?php esc_html_e( 'Date', 'stackboost-for-supportcandy' ); ?></th>
             <th><?php esc_html_e( 'User', 'stackboost-for-supportcandy' ); ?></th>
-            <?php foreach ( $questions as $q ) : ?>
+            <?php foreach ( $questions as $stackboost_q ) : ?>
                 <th>
-                    <?php echo esc_html( ! empty( $q['report_heading'] ) ? $q['report_heading'] : $q['question_text'] ); ?>
+                    <?php echo esc_html( ! empty( $stackboost_q['report_heading'] ) ? $stackboost_q['report_heading'] : $stackboost_q['question_text'] ); ?>
                     <span class="dashicons dashicons-edit stackboost-ats-edit-heading"
-                          data-question-id="<?php echo esc_attr( $q['id'] ); ?>"
-                          data-question-text="<?php echo esc_attr( $q['question_text'] ); ?>"
-                          data-report-heading="<?php echo esc_attr( $q['report_heading'] ); ?>"
+                          data-question-id="<?php echo esc_attr( $stackboost_q['id'] ); ?>"
+                          data-question-text="<?php echo esc_attr( $stackboost_q['question_text'] ); ?>"
+                          data-report-heading="<?php echo esc_attr( $stackboost_q['report_heading'] ); ?>"
                           title="<?php esc_attr_e( 'Edit Report Heading', 'stackboost-for-supportcandy' ); ?>"></span>
                 </th>
             <?php endforeach; ?>
         </tr>
     </thead>
     <tbody>
-    <?php foreach ( $submissions as $sub ) : ?>
+    <?php foreach ( $submissions as $stackboost_sub ) : ?>
         <tr>
-            <td><?php echo esc_html($sub['id']); ?></td>
-            <td><?php echo esc_html($sub['submission_date']); ?></td>
-            <td><?php echo esc_html( $sub['display_name'] ?? __('Guest', 'stackboost-for-supportcandy') ); ?></td>
+            <td><?php echo esc_html($stackboost_sub['id']); ?></td>
+            <td><?php echo esc_html($stackboost_sub['submission_date']); ?></td>
+            <td><?php echo esc_html( $stackboost_sub['display_name'] ?? __('Guest', 'stackboost-for-supportcandy') ); ?></td>
             <?php
             global $wpdb;
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $answers = $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM {$wpdb->prefix}stackboost_ats_survey_answers WHERE submission_id = %d", $sub['id'] ), OBJECT_K );
-            foreach ( $questions as $q ) {
-                $answer = $answers[ $q['id'] ]->answer_value ?? '';
-                if ( $q['question_type'] === 'ticket_number' && is_numeric( $answer ) ) {
-                    echo '<td><a href="' . esc_url( \WPSC_Functions::get_ticket_url( $answer, '1' ) ) . '" target="_blank">' . esc_html( $answer ) . '</a></td>';
+            $stackboost_answers = $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM {$wpdb->prefix}stackboost_ats_survey_answers WHERE submission_id = %d", $stackboost_sub['id'] ), OBJECT_K );
+            foreach ( $questions as $stackboost_q ) {
+                $stackboost_answer = $stackboost_answers[ $stackboost_q['id'] ]->answer_value ?? '';
+                if ( $stackboost_q['question_type'] === 'ticket_number' && is_numeric( $stackboost_answer ) ) {
+                    echo '<td><a href="' . esc_url( \WPSC_Functions::get_ticket_url( $stackboost_answer, '1' ) ) . '" target="_blank">' . esc_html( $stackboost_answer ) . '</a></td>';
                 } else {
-                    echo '<td>' . nl2br(esc_html( $answer )) . '</td>';
+                    echo '<td>' . nl2br(esc_html( $stackboost_answer )) . '</td>';
                 }
             }
             ?>

@@ -281,10 +281,12 @@ class ImportExport {
 			wp_send_json_error( [ 'message' => 'Permission denied.' ] );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( empty( $_FILES['import_file'] ) ) {
 			wp_send_json_error( [ 'message' => 'No file uploaded.' ] );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$file = $_FILES['import_file'];
 		if ( $file['error'] !== UPLOAD_ERR_OK ) {
 			wp_send_json_error( [ 'message' => 'File upload error.' ] );

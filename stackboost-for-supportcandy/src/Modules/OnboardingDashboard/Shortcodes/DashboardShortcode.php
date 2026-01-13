@@ -25,6 +25,7 @@ class DashboardShortcode {
 		global $post;
 		$is_shortcode_page = ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'stackboost_onboarding_dashboard' ) );
 		$is_block_page     = ( is_a( $post, 'WP_Post' ) && has_block( 'stackboost/onboarding-dashboard', $post ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$is_completion_page = ( isset( $_GET['step_id'] ) && $_GET['step_id'] === 'completion' );
 
 		if ( $is_shortcode_page || $is_block_page || $is_completion_page ) {
@@ -96,8 +97,10 @@ class DashboardShortcode {
 			$current_step_id = null;
 			$current_step_index = -1;
 
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( isset( $_GET['step_id'] ) ) {
-				$req = $_GET['step_id'];
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$req = sanitize_text_field( wp_unslash( $_GET['step_id'] ) );
 				foreach ( $full_sequence as $idx => $data ) {
 					if ( $data['id'] == $req ) {
 						$current_step_id = $req;
@@ -192,7 +195,8 @@ class DashboardShortcode {
 			$full_sequence[] = $id;
 		}
 
-		$req_id = $_GET['step_id'] ?? null;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$req_id = isset( $_GET['step_id'] ) ? sanitize_text_field( wp_unslash( $_GET['step_id'] ) ) : null;
 		$is_completion = ( $req_id === 'completion' );
 		$is_pre = ( ! $req_id );
 

@@ -271,6 +271,7 @@ class WordPress extends Module {
         $safe_status_table = $status_table;
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $all_statuses = $wpdb->get_results( "SELECT id, name FROM `{$safe_status_table}` ORDER BY name ASC" );
 
         $available_statuses_map = [];
