@@ -789,7 +789,7 @@ class Settings {
 			$saved_settings = [];
 		}
 
-		$page_slug = sanitize_key($input['page_slug'] ?? '');
+		$page_slug = isset( $input['page_slug'] ) ? sanitize_key( $input['page_slug'] ) : '';
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( "Processing page_slug: {$page_slug}", 'core' );
 		}
@@ -854,6 +854,26 @@ class Settings {
 				$value = $input[$key];
 
 				// Sanitize based on the key. This is the crucial step.
+				// Note: wp_unslash is generally handled by register_setting automatically before this callback for direct form submissions,
+				// but for manual calls (like AJAX), we might need it. For consistency, we rely on sanitize_* functions handling slashes or input source being managed.
+				// However, if we suspect double slashing or raw input, we should unslash.
+				// Given this is a sanitize_callback for register_setting, WP usually slashes $_POST before passing it here if it came from options.php?
+				// Actually register_setting callbacks receive unslashed data if called via rest, but slashed if via options.php?
+				// Let's assume standard behavior: sanitization functions should handle their data.
+				// To be ultra-safe and compliant:
+				// If we are coming from $_POST, data is slashed. wp_unslash is recommended before sanitization.
+				// But $input here is the value of the option being saved.
+				// Let's apply wp_unslash if it's a string, or map it if array.
+
+				// We can't blindly unslash $value if it's already modified or deep array.
+				// Instead, we will assume $value needs unslashing before sanitization if it's a string.
+
+				if ( is_string( $value ) ) {
+					$value = wp_unslash( $value );
+				} elseif ( is_array( $value ) ) {
+					$value = wp_unslash( $value );
+				}
+
 				switch ($key) {
 					case 'enable_ticket_details_card':
 					case 'enable_hide_empty_columns':
@@ -964,6 +984,7 @@ class Settings {
 						// But if we whitelist it here, we ensure that if a full options save occurs, it is NOT stripped.
 						// We don't need complex sanitization here if we trust the custom handler,
 						// but let's implement basic struct check.
+						// Also ensure unslash happens if it wasn't handled above (which it was)
 						$saved_settings[$key] = is_array($value) ? $value : []; // Basic array check
 						break;
 
@@ -1203,7 +1224,8 @@ class Settings {
 		// But here, we are simulating a form submission. The $new_settings array should contain the
 		// 'page_slug' which tells sanitize_settings() which fields to process.
 		// It will merge these new values into the existing saved_settings and return the full array.
-		$sanitized_settings = $this->sanitize_settings( $new_settings );
+		// IMPORTANT: wp_unslash is needed here because we are reading raw $_POST.
+		$sanitized_settings = $this->sanitize_settings( wp_unslash( $new_settings ) );
 
         if ( function_exists( 'stackboost_log' ) ) {
             stackboost_log( 'Final Sanitized Settings: ' . print_r( $sanitized_settings, true ), 'core' );

@@ -21,20 +21,20 @@ if ( ! function_exists( 'stackboost_uninstall_log' ) ) {
 stackboost_uninstall_log( 'Uninstall process started.' );
 
 // 1. Check for Authorization
-$settings = get_option( 'stackboost_settings', [] );
-$authorized_timestamp = isset( $settings['uninstall_authorized_timestamp'] ) ? (int) $settings['uninstall_authorized_timestamp'] : 0;
+$stackboost_settings = get_option( 'stackboost_settings', [] );
+$stackboost_authorized_timestamp = isset( $stackboost_settings['uninstall_authorized_timestamp'] ) ? (int) $stackboost_settings['uninstall_authorized_timestamp'] : 0;
 
-stackboost_uninstall_log( 'Authorized Timestamp: ' . $authorized_timestamp );
+stackboost_uninstall_log( 'Authorized Timestamp: ' . $stackboost_authorized_timestamp );
 
 // If not authorized, or timestamp is 0, exit (Safe Mode - Default WordPress Uninstall behavior).
-if ( empty( $authorized_timestamp ) ) {
+if ( empty( $stackboost_authorized_timestamp ) ) {
 	stackboost_uninstall_log( 'Authorization check FAILED: Timestamp is empty. Exiting (Safe Mode).' );
     return;
 }
 
 // 2. Check Time Limit (5 Minutes)
 // 5 minutes = 300 seconds.
-if ( ( time() - $authorized_timestamp ) > 300 ) {
+if ( ( time() - $stackboost_authorized_timestamp ) > 300 ) {
 	stackboost_uninstall_log( 'Authorization check FAILED: Time limit exceeded. Exiting.' );
     return; // Authorization expired.
 }

@@ -27,8 +27,8 @@ class CertificateHandler {
 			wp_send_json_error( 'Invalid Nonce' );
 		}
 
-		$message = isset( $_POST['message'] ) ? sanitize_text_field( $_POST['message'] ) : '';
-		$context = isset( $_POST['context'] ) ? sanitize_text_field( $_POST['context'] ) : 'onboarding_js';
+		$message = isset( $_POST['message'] ) ? sanitize_text_field( wp_unslash( $_POST['message'] ) ) : '';
+		$context = isset( $_POST['context'] ) ? sanitize_text_field( wp_unslash( $_POST['context'] ) ) : 'onboarding_js';
 
 		if ( ! empty( $message ) ) {
 			stackboost_log( "[Client] $message", $context );
@@ -56,7 +56,7 @@ class CertificateHandler {
 			}
 		}
 
-		$present_attendees = isset( $_POST['present_attendees'] ) ? json_decode( stripslashes( $_POST['present_attendees'] ), true ) : [];
+		$present_attendees = isset( $_POST['present_attendees'] ) ? json_decode( wp_unslash( $_POST['present_attendees'] ), true ) : [];
 
 		if ( empty( $present_attendees ) ) {
 			stackboost_log( 'No attendees marked present.', 'onboarding' );

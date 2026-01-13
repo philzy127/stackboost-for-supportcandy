@@ -28,7 +28,7 @@ class Settings {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
-		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( $_POST['field_slug'] ) : '';
+		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['field_slug'] ) ) : '';
 		if ( empty( $field_slug ) ) {
 			wp_send_json_error( __( 'Invalid field slug.', 'stackboost-for-supportcandy' ) );
 		}

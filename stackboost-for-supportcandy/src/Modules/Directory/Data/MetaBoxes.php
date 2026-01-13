@@ -310,7 +310,7 @@ class MetaBoxes {
 
 		foreach ( $fields_to_save as $field ) {
 			if ( isset( $_POST[ $field ] ) ) {
-				$value = wp_unslash( $_POST[ $field ] );
+				$value = isset( $_POST[ $field ] ) ? wp_unslash( $_POST[ $field ] ) : '';
 				// Sanitize phone numbers based on format.
 				if ( 'office_phone' === $field || 'mobile_phone' === $field ) {
 					// Check digit-only version first
@@ -334,11 +334,11 @@ class MetaBoxes {
 		}
 
 		if ( isset( $_POST['location'] ) ) {
-			$location_id = sanitize_text_field( $_POST['location'] );
+			$location_id = sanitize_text_field( wp_unslash( $_POST['location'] ) );
 			update_post_meta( $post_id, '_location_id', $location_id );
 
 			if ( isset( $_POST['sb_staff_dir_location_name_hidden'] ) ) {
-				$location_name = sanitize_text_field( $_POST['sb_staff_dir_location_name_hidden'] );
+				$location_name = sanitize_text_field( wp_unslash( $_POST['sb_staff_dir_location_name_hidden'] ) );
 				update_post_meta( $post_id, '_location', $location_name );
 			}
 		}
@@ -357,8 +357,8 @@ class MetaBoxes {
 		}
 		update_post_meta( $post_id, '_private', $private_status );
 
-		$active_as_of_date_str = isset( $_POST['active_as_of_date'] ) ? sanitize_text_field( $_POST['active_as_of_date'] ) : '';
-		$planned_exit_date_str = isset( $_POST['planned_exit_date'] ) ? sanitize_text_field( $_POST['planned_exit_date'] ) : '';
+		$active_as_of_date_str = isset( $_POST['active_as_of_date'] ) ? sanitize_text_field( wp_unslash( $_POST['active_as_of_date'] ) ) : '';
+		$planned_exit_date_str = isset( $_POST['planned_exit_date'] ) ? sanitize_text_field( wp_unslash( $_POST['planned_exit_date'] ) ) : '';
 
 		$current_timestamp = current_time( 'timestamp' );
 
@@ -409,10 +409,10 @@ class MetaBoxes {
 			return;
 		}
 
-		$address_line1 = isset( $_POST['address_line1'] ) ? sanitize_text_field( $_POST['address_line1'] ) : '';
-		$city          = isset( $_POST['city'] ) ? sanitize_text_field( $_POST['city'] ) : '';
-		$state         = isset( $_POST['state'] ) ? sanitize_text_field( $_POST['state'] ) : '';
-		$zip           = isset( $_POST['zip'] ) ? sanitize_text_field( $_POST['zip'] ) : '';
+		$address_line1 = isset( $_POST['address_line1'] ) ? sanitize_text_field( wp_unslash( $_POST['address_line1'] ) ) : '';
+		$city          = isset( $_POST['city'] ) ? sanitize_text_field( wp_unslash( $_POST['city'] ) ) : '';
+		$state         = isset( $_POST['state'] ) ? sanitize_text_field( wp_unslash( $_POST['state'] ) ) : '';
+		$zip           = isset( $_POST['zip'] ) ? sanitize_text_field( wp_unslash( $_POST['zip'] ) ) : '';
 
 		update_post_meta( $post_id, '_address_line1', $address_line1 );
 		update_post_meta( $post_id, '_city', $city );
@@ -420,10 +420,10 @@ class MetaBoxes {
 		update_post_meta( $post_id, '_zip', $zip );
 
 		if ( isset( $_POST['location_phone_number'] ) ) {
-			update_post_meta( $post_id, '_location_phone_number', sanitize_text_field( $_POST['location_phone_number'] ) );
+			update_post_meta( $post_id, '_location_phone_number', sanitize_text_field( wp_unslash( $_POST['location_phone_number'] ) ) );
 		}
 		if ( isset( $_POST['location_department_program'] ) ) {
-			update_post_meta( $post_id, '_location_department_program', sanitize_text_field( $_POST['location_department_program'] ) );
+			update_post_meta( $post_id, '_location_department_program', sanitize_text_field( wp_unslash( $_POST['location_department_program'] ) ) );
 		}
 
 		$is_complete             = ! empty( $address_line1 ) && ! empty( $city ) && ! empty( $state ) && ! empty( $zip );

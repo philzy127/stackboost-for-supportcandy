@@ -108,7 +108,7 @@ class WordPress extends Module {
 			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
 		}
 
-		$input = $_POST['stackboost_date_time_settings'];
+		$input = wp_unslash( $_POST['stackboost_date_time_settings'] );
 		$sanitized = $this->sanitize_settings( $input );
 
 		if ( update_option( 'stackboost_date_time_settings', $sanitized ) ) {

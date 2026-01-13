@@ -506,7 +506,7 @@ final class Plugin {
 		// 1. Fetch Custom Fields from DB
 		// Optimization: Removed 'SHOW TABLES' check. If table doesn't exist, query returns false/empty safely.
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
-		$safe_table = esc_sql( $custom_fields_table );
+		$safe_table = $custom_fields_table;
 
 		// Suppress errors for this specific query to avoid noise if SC is inactive
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -557,7 +557,7 @@ final class Plugin {
 		global $wpdb;
 		$statuses      = [];
 		$status_table  = $wpdb->prefix . 'psmsc_statuses';
-		$safe_table = esc_sql( $status_table );
+		$safe_table = $status_table;
 
 		// Optimization: Removed 'SHOW TABLES' check.
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -592,7 +592,7 @@ final class Plugin {
 			return 0;
 		}
 
-		$safe_table = esc_sql( $table_name );
+		$safe_table = $table_name;
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$field_id = $wpdb->get_var(

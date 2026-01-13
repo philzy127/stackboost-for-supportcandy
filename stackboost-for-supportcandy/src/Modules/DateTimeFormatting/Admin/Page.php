@@ -210,7 +210,7 @@ class Page {
 		$table_name_like = $wpdb->esc_like( $custom_fields_table );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) ) {
-			$safe_table = esc_sql( $custom_fields_table );
+			$safe_table = $custom_fields_table;
 			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$custom_fields = $wpdb->get_results(
 				$wpdb->prepare(

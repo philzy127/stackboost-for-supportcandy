@@ -39,7 +39,7 @@ class Page {
 			'import_export' => __( 'Import / Export', 'stackboost-for-supportcandy' ),
 		];
 
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'steps';
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'steps';
 
         $theme_class = 'sb-theme-clean-tech';
         if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {

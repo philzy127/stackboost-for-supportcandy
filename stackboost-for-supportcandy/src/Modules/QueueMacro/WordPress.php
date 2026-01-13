@@ -94,6 +94,7 @@ class WordPress extends Module {
 		$statuses   = $options['queue_macro_statuses'] ?? [];
 
 		// Get the type value from the submitted form data.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$type_value = isset( $_POST[ $type_field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $type_field ] ) ) : '';
 
 		stackboost_log( "QueueMacro: Calculating count for field '{$type_field}' with value '{$type_value}'.", 'queue_macro' );
@@ -267,10 +268,10 @@ class WordPress extends Module {
         $selected_statuses = isset( $options[ $args['id'] ] ) ? $options[ $args['id'] ] : [];
 
         $status_table = $wpdb->prefix . 'psmsc_statuses';
-        $safe_status_table = esc_sql( $status_table );
+        $safe_status_table = $status_table;
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $all_statuses = $wpdb->get_results( "SELECT id, name FROM {$safe_status_table} ORDER BY name ASC" );
+        $all_statuses = $wpdb->get_results( "SELECT id, name FROM `{$safe_status_table}` ORDER BY name ASC" );
 
         $available_statuses_map = [];
         $selected_statuses_map  = [];

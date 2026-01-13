@@ -101,10 +101,10 @@ class Sequence {
 			return;
 		}
 
-		if ( isset( $_POST['stkb_sequence_nonce'] ) && wp_verify_nonce( $_POST['stkb_sequence_nonce'], 'stkb_save_sequence' ) ) {
+		if ( isset( $_POST['stkb_sequence_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['stkb_sequence_nonce'] ) ), 'stkb_save_sequence' ) ) {
 			if ( isset( $_POST['onboarding_sequence'] ) && is_array( $_POST['onboarding_sequence'] ) ) {
 				stackboost_log( 'Saving new onboarding sequence...', 'onboarding' );
-				$new_sequence = array_map( 'absint', $_POST['onboarding_sequence'] );
+				$new_sequence = array_map( 'absint', wp_unslash( $_POST['onboarding_sequence'] ) );
 				update_option( self::OPTION_SEQUENCE, $new_sequence );
 				stackboost_log( 'Onboarding sequence updated: ' . implode( ',', $new_sequence ), 'onboarding' );
 				add_action( 'admin_notices', [ __CLASS__, 'save_success_notice' ] );

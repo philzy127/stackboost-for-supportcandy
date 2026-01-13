@@ -227,6 +227,7 @@ class Management {
 		check_ajax_referer( 'stackboost_directory_json_import', 'nonce' );
 
 		// Attempt to override execution time limit for large imports.
+		// phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
 		if ( function_exists( 'set_time_limit' ) ) {
 			set_time_limit( 0 );
 		}
@@ -241,7 +242,7 @@ class Management {
 
 		stackboost_log( 'Starting Directory JSON Import...', 'directory-import' );
 
-		$file_content = file_get_contents( $_FILES['json_file']['tmp_name'] );
+		$file_content = file_get_contents( sanitize_text_field( $_FILES['json_file']['tmp_name'] ) );
 		$data = json_decode( $file_content, true );
 
 		if ( ! $data || ! is_array( $data ) ) {

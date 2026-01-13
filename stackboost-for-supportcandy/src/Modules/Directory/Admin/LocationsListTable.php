@@ -92,7 +92,8 @@ class LocationsListTable extends \WP_List_Table {
 					return '<span style="color: green;">' . esc_html__( 'No', 'stackboost-for-supportcandy' ) . '</span>';
 				}
 			default:
-				return print_r( $item, true );
+				// Removed print_r debug
+				return '';
 		}
 	}
 
@@ -120,7 +121,9 @@ class LocationsListTable extends \WP_List_Table {
 			'edit'   => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item->ID ), __( 'Edit', 'stackboost-for-supportcandy' ) ),
 		);
 
-		if ( 'trash' === ( $_REQUEST['post_status'] ?? '' ) ) {
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+
+		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=locations&action=untrash&post=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
 			$actions['delete']  = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=locations&action=delete&post=' . $item->ID ), 'delete-post_' . $item->ID ), __( 'Delete Permanently', 'stackboost-for-supportcandy' ) );
 		} else {
@@ -137,7 +140,9 @@ class LocationsListTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions() {
 		$actions = array();
-		if ( 'trash' === ( $_REQUEST['post_status'] ?? '' ) ) {
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+
+		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = __( 'Restore', 'stackboost-for-supportcandy' );
 			$actions['delete']  = __( 'Delete Permanently', 'stackboost-for-supportcandy' );
 		} else {
@@ -154,9 +159,9 @@ class LocationsListTable extends \WP_List_Table {
 	protected function get_views() {
 		$status_links = array();
 		$num_posts    = wp_count_posts( $this->post_type, 'readable' );
-		$post_status  = $_REQUEST['post_status'] ?? 'all';
+		$post_status  = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'all';
 
-		$all_class           = ( 'all' === $post_status && ! isset( $_REQUEST['post_status'] ) ) ? ' class="current"' : '';
+		$all_class           = ( 'all' === $post_status ) ? ' class="current"' : '';
 		$status_links['all'] = "<a href='admin.php?page=stackboost-directory&tab=locations'{$all_class}>All <span class='count'>(" . ( $num_posts->publish + $num_posts->draft ) . ')</span></a>';
 
 		if ( ! empty( $num_posts->trash ) ) {
@@ -182,10 +187,11 @@ class LocationsListTable extends \WP_List_Table {
 	 * Adds a dropdown filter for "Needs Completion" status.
 	 */
 	public function add_location_needs_completion_filter() {
-		if ( isset( $_REQUEST['post_status'] ) && 'trash' === $_REQUEST['post_status'] ) {
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+		if ( 'trash' === $post_status ) {
 			return;
 		}
-		$current_filter = isset( $_REQUEST['stackboost_needs_completion_filter'] ) ? sanitize_text_field( $_REQUEST['stackboost_needs_completion_filter'] ) : 'all';
+		$current_filter = isset( $_REQUEST['stackboost_needs_completion_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_needs_completion_filter'] ) ) : 'all';
 		?>
 		<div class="alignleft actions">
 			<label class="screen-reader-text" for="stackboost_needs_completion_filter"><?php esc_html_e( 'Filter by Completion Status', 'stackboost-for-supportcandy' ); ?></label>
@@ -207,7 +213,8 @@ class LocationsListTable extends \WP_List_Table {
 		if ( ! $action ) {
 			return;
 		}
-		$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( (array) $_REQUEST['post'] ) : array();
+
+		$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( wp_unslash( (array) $_REQUEST['post'] ) ) : array();
 		if ( empty( $post_ids ) ) {
 			return;
 		}
@@ -252,14 +259,14 @@ class LocationsListTable extends \WP_List_Table {
 			'post_type'      => $this->post_type,
 			'posts_per_page' => $per_page,
 			'offset'         => $offset,
-			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( $_REQUEST['post_status'] ) : 'any' ),
+			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'any' ),
 		);
 
-		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( $_REQUEST['orderby'] ) : 'title';
-		$order   = ( ! empty( $_REQUEST['order'] ) ) ? sanitize_key( $_REQUEST['order'] ) : 'asc';
+		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['orderby'] ) ) : 'title';
+		$order   = ( ! empty( $_REQUEST['order'] ) ) ? sanitize_key( wp_unslash( $_REQUEST['order'] ) ) : 'asc';
 
 		if ( isset( $_REQUEST['s'] ) ) {
-			$args['s'] = sanitize_text_field( $_REQUEST['s'] );
+			$args['s'] = sanitize_text_field( wp_unslash( $_REQUEST['s'] ) );
 		}
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
@@ -272,7 +279,7 @@ class LocationsListTable extends \WP_List_Table {
 			$args['order'] = $order;
 		}
 
-		$current_filter = isset( $_REQUEST['stackboost_needs_completion_filter'] ) ? sanitize_text_field( $_REQUEST['stackboost_needs_completion_filter'] ) : 'all';
+		$current_filter = isset( $_REQUEST['stackboost_needs_completion_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_needs_completion_filter'] ) ) : 'all';
 		if ( 'all' !== $current_filter ) {
 			$args['meta_query'] = array(
 				array(

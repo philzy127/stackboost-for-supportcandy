@@ -75,13 +75,13 @@ class Install {
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $wpdb->esc_like( $this->questions_table_name ) ) ) === $this->questions_table_name ) {
-            $safe_table = esc_sql( $this->questions_table_name );
+            $safe_table = $this->questions_table_name;
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $prefill_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM {$safe_table} LIKE %s", 'prefill_key' ) );
+            $prefill_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM `{$safe_table}` LIKE %s", 'prefill_key' ) );
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $readonly_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM {$safe_table} LIKE %s", 'is_readonly_prefill' ) );
+            $readonly_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM `{$safe_table}` LIKE %s", 'is_readonly_prefill' ) );
 
             if ( empty( $prefill_exists ) ) {
                 stackboost_log("ATS: Schema Drift Detected. 'prefill_key' missing. forcing install.", 'ats');
@@ -157,7 +157,7 @@ class Install {
 		) $charset_collate;";
 
         $result = dbDelta( [ $sql_questions, $sql_dropdown_options, $sql_submissions, $sql_answers ] );
-        stackboost_log("ATS: dbDelta result: " . print_r($result, true), 'ats');
+        // stackboost_log("ATS: dbDelta result: " . print_r($result, true), 'ats');
 
 		$this->seed_default_questions();
 
@@ -179,10 +179,10 @@ class Install {
             return;
         }
 
-        $safe_table = esc_sql( $this->questions_table_name );
+        $safe_table = $this->questions_table_name;
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		if ( $wpdb->get_var( "SELECT COUNT(*) FROM {$safe_table}" ) > 0 ) {
+		if ( $wpdb->get_var( "SELECT COUNT(*) FROM `{$safe_table}`" ) > 0 ) {
 			return; // Don't seed if questions already exist.
 		}
 
