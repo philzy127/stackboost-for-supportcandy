@@ -109,8 +109,7 @@ class TicketService {
 
 			stackboost_log( "TicketService: Query: $prepared_query", 'onboarding' );
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$results = $wpdb->get_results( $prepared_query );
 
 			if ( $results ) {
