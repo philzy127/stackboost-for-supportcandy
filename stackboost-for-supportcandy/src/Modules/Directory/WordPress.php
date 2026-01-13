@@ -992,6 +992,7 @@ class WordPress {
 			2  => __( 'Custom field updated.', 'stackboost-for-supportcandy' ),
 			3  => __( 'Custom field deleted.', 'stackboost-for-supportcandy' ),
 			4  => __( 'Staff updated.', 'stackboost-for-supportcandy' ),
+			/* translators: %s: revision title */
 			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
 			6  => __( 'Staff published.', 'stackboost-for-supportcandy' ) . $return_link,
 			7  => __( 'Staff saved.', 'stackboost-for-supportcandy' ),
