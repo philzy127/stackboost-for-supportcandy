@@ -511,6 +511,7 @@ final class Plugin {
 		// Suppress errors for this specific query to avoid noise if SC is inactive
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$safe_table}`", ARRAY_A );
 
 		if ( $custom_fields ) {
@@ -594,9 +595,10 @@ final class Plugin {
 
 		$safe_table = $table_name;
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$field_id = $wpdb->get_var(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT id FROM `{$safe_table}` WHERE name = %s",
 				$field_name
 			)
