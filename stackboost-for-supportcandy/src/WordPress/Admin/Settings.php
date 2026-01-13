@@ -1109,7 +1109,16 @@ class Settings {
 		switch ( $_GET['stackboost_action'] ) {
 			case 'download_log':
 				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'stackboost_download_log_nonce' ) ) {
-					if ( file_exists( $log_file ) ) {
+					global $wp_filesystem;
+					if ( empty( $wp_filesystem ) ) {
+						require_once ABSPATH . 'wp-admin/includes/file.php';
+					}
+
+					if ( ! WP_Filesystem() ) {
+						wp_die( 'Unable to initialize filesystem.' );
+					}
+
+					if ( $wp_filesystem->exists( $log_file ) ) {
 						header( 'Content-Description: File Transfer' );
 						header( 'Content-Type: application/octet-stream' );
 						header( 'Content-Disposition: attachment; filename="stackboost-debug.log"' );
@@ -1118,7 +1127,7 @@ class Settings {
 						header( 'Pragma: public' );
 						header( 'Content-Length: ' . filesize( $log_file ) );
 						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-						readfile( $log_file );
+						echo $wp_filesystem->get_contents( $log_file );
 						exit;
 					} else {
 						wp_die( 'Log file not found.' );

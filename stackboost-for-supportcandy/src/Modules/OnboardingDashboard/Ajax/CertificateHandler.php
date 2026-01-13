@@ -182,7 +182,7 @@ class CertificateHandler {
 				}
 
 				if ( file_exists( $filepath ) ) {
-					unlink( $filepath );
+					wp_delete_file( $filepath );
 				}
 			} catch ( \Throwable $e ) {
 				stackboost_log( 'Critical error processing certificate for ' . $attendee_name . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(), 'error' );
@@ -319,7 +319,7 @@ class CertificateHandler {
 		$target_dir = $upload_dir['basedir'] . $rel_path;
 
 		if ( ! file_exists( $target_dir ) ) {
-			mkdir( $target_dir, 0755, true );
+			wp_mkdir_p( $target_dir );
 		}
 
 		// Ensure unique filename

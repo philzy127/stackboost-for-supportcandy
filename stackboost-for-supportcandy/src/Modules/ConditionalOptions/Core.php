@@ -166,6 +166,7 @@ class Core {
 
 		$tier = stackboost_get_license_tier();
 		if ( 'lite' === $tier && count( $new_rules ) > $limit ) {
+			/* translators: %d: limit number of rules */
 			return new \WP_Error( 'limit_exceeded', sprintf( __( 'You have reached the limit of %d rules for the Free version.', 'stackboost-for-supportcandy' ), $limit ) );
 		}
 

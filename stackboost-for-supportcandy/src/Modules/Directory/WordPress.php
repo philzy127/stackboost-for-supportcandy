@@ -999,7 +999,7 @@ class WordPress {
 			9  => sprintf(
 				// translators: %1$s: date and time of the scheduled post.
 				__( 'Staff scheduled for: %1$s.', 'stackboost-for-supportcandy' ),
-				'<strong>' . date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ) . '</strong>'
+				'<strong>' . date_i18n( __( 'M j, Y @ G:i', 'stackboost-for-supportcandy' ), strtotime( $post->post_date ) ) . '</strong>'
 			),
 			10 => __( 'Staff draft updated.', 'stackboost-for-supportcandy' ),
 		);
@@ -1259,6 +1259,7 @@ class WordPress {
 					$items_removed = true;
 				} else {
 					$items_retained = true;
+				/* translators: %d: post ID */
 					$messages[]     = sprintf( __( 'Staff profile (ID %d) could not be removed.', 'stackboost-for-supportcandy' ), $post->ID );
 				}
 			}

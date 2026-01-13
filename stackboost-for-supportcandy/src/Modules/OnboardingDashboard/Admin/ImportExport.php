@@ -53,7 +53,10 @@ class ImportExport {
 				<h3 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Legacy Data Migration (Manual)', 'stackboost-for-supportcandy' ); ?></h3>
 				<p><?php esc_html_e( 'If you have imported data from the old "Onboarding Dashboard" plugin using WordPress Importer, the posts may be stored as "Legacy Onboarding Steps". Use this tool to convert them to the new format.', 'stackboost-for-supportcandy' ); ?></p>
 
-				<p><strong><?php printf( esc_html__( 'Found %d legacy items.', 'stackboost-for-supportcandy' ), (int) $legacy_count ); ?></strong></p>
+				<p><strong><?php
+				/* translators: %d: count of legacy items */
+				printf( esc_html__( 'Found %d legacy items.', 'stackboost-for-supportcandy' ), (int) $legacy_count );
+				?></strong></p>
 
 				<?php if ( $legacy_count > 0 ) : ?>
 					<button type="button" id="migrateDataBtn" class="button button-primary"><?php esc_html_e( 'Migrate Legacy Data Now', 'stackboost-for-supportcandy' ); ?></button>
@@ -254,7 +257,7 @@ class ImportExport {
 		}
 
 		$json_content = json_encode( $export_data, JSON_PRETTY_PRINT );
-		$filename     = 'onboarding-steps-export-' . date( 'Y-m-d' ) . '.json';
+		$filename     = 'onboarding-steps-export-' . gmdate( 'Y-m-d' ) . '.json';
 
 		header( 'Content-Description: File Transfer' );
 		header( 'Content-Type: application/json' );

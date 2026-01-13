@@ -123,7 +123,7 @@ function stackboost_format_phone_number( string $phone, string $extension, strin
     // Construct copy text to match display: (xxx) xxx-xxxx, ext. yyy
     $copy_text_formatted = $display_phone;
     // Strip HTML tags from display_phone (which might contain the extension span) to get clean text for clipboard
-    $copy_text_formatted = strip_tags( $copy_text_formatted );
+    $copy_text_formatted = wp_strip_all_tags( $copy_text_formatted );
 
     $copy_span = sprintf(
         ' <span class="stackboost-copy-phone-icon" data-phone="%s" data-extension="%s" data-copy-text="%s" title="%s">%s</span>',

@@ -102,15 +102,15 @@ class TicketService {
 			// $table_name is derived from $wpdb->prefix so it is safe to interpolate directly, but usually safer to use $wpdb->prefix logic strictly.
 			// Since we checked against SHOW TABLES output above, it matches a real table name.
 			$safe_table_name = esc_sql( $table_name );
-			$query = $wpdb->prepare(
-				"SELECT ticket_id, COUNT(*) as count FROM {$safe_table_name} WHERE ticket_id IN ($ids_placeholder) AND name LIKE %s GROUP BY ticket_id",
-				array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] )
-			);
+			$query = "SELECT ticket_id, COUNT(*) as count FROM {$safe_table_name} WHERE ticket_id IN ($ids_placeholder) AND name LIKE %s GROUP BY ticket_id";
 
-			stackboost_log( "TicketService: Query: $query", 'onboarding' );
+			$prepared_query = $wpdb->prepare( $query, array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] ) );
 
+			stackboost_log( "TicketService: Query: $prepared_query", 'onboarding' );
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$results = $wpdb->get_results( $query );
+			$results = $wpdb->get_results( $prepared_query );
 
 			if ( $results ) {
 				stackboost_log( "TicketService: Certificate Query Results Found: " . count( $results ), 'onboarding' );

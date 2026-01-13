@@ -30,6 +30,7 @@ class Staff {
 					<p>
 						<?php
 						printf(
+							/* translators: %s: settings url */
 							wp_kses_post( __( 'Please configure the Onboarding settings (Request Type, ID, and Column Mapping) in the <strong><a href="%s">Settings</a></strong> tab to view the staff list.', 'stackboost-for-supportcandy' ) ),
 							esc_url( admin_url( 'admin.php?page=stackboost-onboarding-dashboard&tab=settings' ) )
 						);
@@ -86,13 +87,17 @@ class Staff {
 
 			if ( $last_updated_timestamp ) {
 				$last_updated_string = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last_updated_timestamp );
+				/* translators: %s: timestamp string */
 				echo '<p style="margin-bottom: 15px;"><em>' . sprintf( esc_html__( 'Data current as of: %s', 'stackboost-for-supportcandy' ), esc_html( $last_updated_string ) ) . '</em></p>';
 			}
 
 			if ( is_wp_error( $onboarding_tickets ) ) {
 				?>
 				<div class="notice notice-error">
-					<p><?php printf( esc_html__( 'Failed to retrieve tickets: %s', 'stackboost-for-supportcandy' ), esc_html( $onboarding_tickets->get_error_message() ) ); ?></p>
+					<p><?php
+					/* translators: %s: error message */
+					printf( esc_html__( 'Failed to retrieve tickets: %s', 'stackboost-for-supportcandy' ), esc_html( $onboarding_tickets->get_error_message() ) );
+					?></p>
 				</div>
 				<?php
 				return;

@@ -211,7 +211,7 @@ class Management {
 
 		header( 'Content-Description: File Transfer' );
 		header( 'Content-Type: application/json' );
-		header( 'Content-Disposition: attachment; filename="stackboost-directory-export-' . date( 'Y-m-d' ) . '.json"' );
+		header( 'Content-Disposition: attachment; filename="stackboost-directory-export-' . gmdate( 'Y-m-d' ) . '.json"' );
 		header( 'Expires: 0' );
 		header( 'Cache-Control: must-revalidate' );
 		header( 'Pragma: public' );
@@ -507,6 +507,8 @@ class Management {
 		}
 
 		$file_path = sanitize_text_field( $_FILES['csv_file']['tmp_name'] );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$handle = fopen( $file_path, 'r' );
 
 		if ( false === $handle ) {
@@ -569,6 +571,7 @@ class Management {
 			}
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		fclose( $handle );
 
 		wp_send_json_success( array(
