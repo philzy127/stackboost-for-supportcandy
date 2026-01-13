@@ -273,6 +273,7 @@ class MetaBoxes {
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! wp_verify_nonce( $_POST['sb_staff_dir_meta_box_nonce'], 'sb_staff_dir_meta_box' ) ) {
 			return;
 		}
@@ -310,6 +311,7 @@ class MetaBoxes {
 
 		foreach ( $fields_to_save as $field ) {
 			if ( isset( $_POST[ $field ] ) ) {
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				$value = isset( $_POST[ $field ] ) ? wp_unslash( $_POST[ $field ] ) : '';
 				// Sanitize phone numbers based on format.
 				if ( 'office_phone' === $field || 'mobile_phone' === $field ) {

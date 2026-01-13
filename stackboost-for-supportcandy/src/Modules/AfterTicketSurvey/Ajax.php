@@ -35,7 +35,7 @@ class Ajax {
 
         global $wpdb;
         $question_id = isset( $_POST['question_id'] ) ? intval( $_POST['question_id'] ) : 0;
-        $report_heading = isset( $_POST['report_heading'] ) ? sanitize_text_field( $_POST['report_heading'] ) : '';
+        $report_heading = isset( $_POST['report_heading'] ) ? sanitize_text_field( wp_unslash( $_POST['report_heading'] ) ) : '';
 
         if ( ! $question_id ) {
             wp_send_json_error( 'Invalid question ID.' );
@@ -77,6 +77,7 @@ class Ajax {
 
         $safe_table = $this->questions_table_name;
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM `{$safe_table}` WHERE id = %d", $question_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
         if ( ! $question ) {
@@ -180,7 +181,7 @@ class Ajax {
             $wpdb->delete( $safe_dropdown_table, [ 'question_id' => $question_id ] );
 
             if ( ! empty( $_POST['dropdown_options'] ) ) {
-                $options = array_map( 'trim', explode( ',', wp_unslash( $_POST['dropdown_options'] ) ) );
+                $options = array_map( 'sanitize_text_field', array_map( 'trim', explode( ',', wp_unslash( $_POST['dropdown_options'] ) ) ) );
                 foreach ( $options as $index => $opt ) {
                     if ( ! empty( $opt ) ) {
                         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

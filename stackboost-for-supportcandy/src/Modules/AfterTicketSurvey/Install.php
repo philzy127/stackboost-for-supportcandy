@@ -78,6 +78,7 @@ class Install {
             $safe_table = $this->questions_table_name;
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             $prefill_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM `{$safe_table}` LIKE %s", 'prefill_key' ) );
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

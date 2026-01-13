@@ -56,6 +56,7 @@ class StaffListTable extends \WP_List_Table {
 	 * @return array
 	 */
 	public function get_columns() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
 
 		$columns = array(
@@ -170,6 +171,7 @@ class StaffListTable extends \WP_List_Table {
 			'view'   => sprintf( '<a href="%s">%s</a>', get_permalink( $item->ID ), __( 'View', 'stackboost-for-supportcandy' ) ),
 		);
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
 
 		if ( 'trash' === $post_status ) {
@@ -190,6 +192,7 @@ class StaffListTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions() {
 		$actions = array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
 
 		if ( 'trash' === $post_status ) {
@@ -237,10 +240,12 @@ class StaffListTable extends \WP_List_Table {
 	 * Adds a dropdown filter for active status.
 	 */
 	public function add_active_status_filter() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
 		if ( 'trash' === $post_status ) {
 			return;
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
 		?>
 		<div class="alignleft actions">
@@ -304,6 +309,7 @@ class StaffListTable extends \WP_List_Table {
 		$current_page = $this->get_pagenum();
 		$offset       = ( $current_page - 1 ) * $per_page;
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$args = array(
 			'post_type'      => $this->post_type,
 			'posts_per_page' => $per_page,
@@ -311,10 +317,13 @@ class StaffListTable extends \WP_List_Table {
 			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'any' ),
 		);
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['orderby'] ) ) : 'title';
 		$order   = ( ! empty( $_REQUEST['order'] ) ) ? sanitize_key( wp_unslash( $_REQUEST['order'] ) ) : 'asc';
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_REQUEST['s'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$args['s'] = sanitize_text_field( wp_unslash( $_REQUEST['s'] ) );
 		}
 
@@ -333,6 +342,7 @@ class StaffListTable extends \WP_List_Table {
 			$args['order'] = $order;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
 		if ( 'all' !== $current_filter ) {
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query

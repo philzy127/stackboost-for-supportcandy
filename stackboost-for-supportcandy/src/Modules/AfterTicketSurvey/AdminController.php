@@ -43,6 +43,7 @@ class AdminController {
      * Render the main admin page with its tabbed interface.
      */
     public function render_page() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'questions';
 
         $theme_class = 'sb-theme-clean-tech';

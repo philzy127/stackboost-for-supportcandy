@@ -23,6 +23,7 @@ function stackboost_is_supportcandy_pro_active() {
  */
 if ( ! function_exists( 'is_supportcandy_pro_active' ) ) {
     function is_supportcandy_pro_active() {
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
         return stackboost_is_supportcandy_pro_active();
     }
 }

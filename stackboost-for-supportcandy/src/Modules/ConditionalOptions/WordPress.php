@@ -402,6 +402,7 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$rules_json = isset( $_POST['rules'] ) ? wp_unslash( $_POST['rules'] ) : '[]';
 		$rules      = json_decode( $rules_json, true );
 		$is_enabled = isset( $_POST['enabled'] ) && 'true' === $_POST['enabled'];

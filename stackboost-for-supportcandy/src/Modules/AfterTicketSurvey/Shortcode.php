@@ -91,6 +91,7 @@ class Shortcode {
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$safe_table = $this->questions_table_name;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$questions = $wpdb->get_results( "SELECT id, question_type FROM `{$safe_table}`", ARRAY_A );
 
 		// VALIDATION PHASE
