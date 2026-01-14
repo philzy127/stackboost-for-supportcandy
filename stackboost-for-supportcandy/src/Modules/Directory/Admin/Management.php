@@ -227,8 +227,8 @@ class Management {
 		check_ajax_referer( 'stackboost_directory_json_import', 'nonce' );
 
 		// Attempt to override execution time limit for large imports.
-		// phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
 		if ( function_exists( 'set_time_limit' ) ) {
+			// phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
 			set_time_limit( 0 );
 		}
 

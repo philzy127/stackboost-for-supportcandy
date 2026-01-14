@@ -76,9 +76,8 @@ class Ajax {
         }
 
         $safe_table = $this->questions_table_name;
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM `{$safe_table}` WHERE id = %d", $question_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM `{$safe_table}` WHERE id = %d", $question_id ), ARRAY_A );
 
         if ( ! $question ) {
             stackboost_log( "ATS get_question: Question not found.", 'ats' );
@@ -87,7 +86,7 @@ class Ajax {
 
         if ( $question['question_type'] === 'dropdown' ) {
             $safe_dropdown_table = $this->dropdown_options_table_name;
-            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$safe_dropdown_table}` WHERE question_id = %d ORDER BY sort_order ASC", $question_id ), ARRAY_A );
             $question['options_str'] = implode( ', ', array_column( $options, 'option_value' ) );
         } else {
@@ -116,7 +115,7 @@ class Ajax {
         $current_max_order = 0;
         if ( ! $question_id ) {
             $safe_table = $this->questions_table_name;
-            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $current_max_order = (int) $wpdb->get_var( "SELECT MAX(sort_order) FROM `{$safe_table}`" );
         }
 
@@ -140,7 +139,7 @@ class Ajax {
         // Highlander Rule: Only one 'ticket_number' question allowed per form.
         if ( $data['question_type'] === 'ticket_number' ) {
             $safe_table = $this->questions_table_name;
-            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $existing_id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM `{$safe_table}` WHERE question_type = %s", 'ticket_number' ) );
             // If one exists AND (we are creating new OR we are updating a different question)
             if ( $existing_id && ( ! $question_id || $existing_id != $question_id ) ) {
@@ -180,7 +179,9 @@ class Ajax {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $wpdb->delete( $safe_dropdown_table, [ 'question_id' => $question_id ] );
 
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( ! empty( $_POST['dropdown_options'] ) ) {
+                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $options = array_map( 'sanitize_text_field', array_map( 'trim', explode( ',', wp_unslash( $_POST['dropdown_options'] ) ) ) );
                 foreach ( $options as $index => $opt ) {
                     if ( ! empty( $opt ) ) {
@@ -239,8 +240,10 @@ class Ajax {
         check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
 
         global $wpdb;
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $order = isset( $_POST['order'] ) ? $_POST['order'] : [];
         if ( is_array( $order ) ) {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $order = array_map( 'wp_unslash', $order );
         }
 

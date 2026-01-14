@@ -22,8 +22,13 @@ function stackboost_is_supportcandy_pro_active() {
  * @return bool
  */
 if ( ! function_exists( 'is_supportcandy_pro_active' ) ) {
+    /**
+     * Check if SupportCandy Pro is active (Legacy wrapper).
+     *
+     * @return bool
+     */
+    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
     function is_supportcandy_pro_active() {
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
         return stackboost_is_supportcandy_pro_active();
     }
 }

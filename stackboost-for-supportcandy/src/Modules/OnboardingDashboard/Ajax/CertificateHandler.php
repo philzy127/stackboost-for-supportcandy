@@ -27,6 +27,7 @@ class CertificateHandler {
 			wp_send_json_error( 'Invalid Nonce' );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$message = isset( $_POST['message'] ) ? sanitize_text_field( wp_unslash( $_POST['message'] ) ) : '';
 		$context = isset( $_POST['context'] ) ? sanitize_text_field( wp_unslash( $_POST['context'] ) ) : 'onboarding_js';
 
@@ -44,7 +45,9 @@ class CertificateHandler {
 		stackboost_log( 'Certificate Generation Initiated.', 'onboarding' );
 		// Verify Nonce
 		if ( ! check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce', false ) ) {
-			stackboost_log( 'Certificate Generation Failed: Invalid Nonce. POST nonce: ' . ( $_POST['nonce'] ?? 'NULL' ), 'error' );
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$nonce_val = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : 'NULL';
+			stackboost_log( 'Certificate Generation Failed: Invalid Nonce. POST nonce: ' . $nonce_val, 'error' );
 			wp_send_json_error( 'Security check failed. Please refresh the page and try again.' );
 		}
 

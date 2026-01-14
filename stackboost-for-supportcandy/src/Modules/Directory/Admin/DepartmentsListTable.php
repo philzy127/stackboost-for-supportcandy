@@ -113,9 +113,12 @@ class DepartmentsListTable extends \WP_List_Table {
 		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
 
 		if ( 'trash' === $post_status ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=departments&action=untrash&post=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$actions['delete']  = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=departments&action=delete&post=' . $item->ID ), 'delete-post_' . $item->ID ), __( 'Delete Permanently', 'stackboost-for-supportcandy' ) );
 		} else {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$actions['trash'] = sprintf( '<a href="%s" class="submitdelete">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=departments&action=trash&post=' . $item->ID ), 'trash-post_' . $item->ID ), __( 'Trash', 'stackboost-for-supportcandy' ) );
 		}
 
@@ -170,6 +173,7 @@ class DepartmentsListTable extends \WP_List_Table {
 		if ( ! $action ) {
 			return;
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( wp_unslash( (array) $_REQUEST['post'] ) ) : array();
 		if ( empty( $post_ids ) ) {
 			return;

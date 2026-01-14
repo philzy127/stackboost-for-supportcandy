@@ -42,8 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                             global $wpdb;
                             $stackboost_options_table = $wpdb->prefix . 'stackboost_ats_dropdown_options';
                             $stackboost_safe_options_table = $stackboost_options_table;
-                            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-                            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                             $stackboost_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$stackboost_safe_options_table}` WHERE question_id = %d ORDER BY sort_order ASC", $stackboost_q['id'] ), ARRAY_A );
                             echo esc_html( implode(', ', array_column($stackboost_options, 'option_value')) );
                         } else {
