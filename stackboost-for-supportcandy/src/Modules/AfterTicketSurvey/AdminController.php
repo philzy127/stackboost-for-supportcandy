@@ -93,8 +93,8 @@ class AdminController {
 
     private function process_submissions_form() {
         global $wpdb;
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
         if ( ! empty( $_POST['selected_submissions'] ) ) {
+            // Note: Nonce is verified by check_admin_referer() in handle_admin_post() before calling this method.
             // phpcs:ignore WordPress.Security.NonceVerification.Missing
             $ids_array = array_map( 'absint', $_POST['selected_submissions'] );
             $ids = implode( ',', $ids_array );
@@ -117,7 +117,9 @@ class AdminController {
      * Display admin notices for this module.
      */
     public function display_admin_notices() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         if ( isset( $_GET['page'] ) && 'stackboost-ats' === $_GET['page'] && isset( $_GET['message'] ) ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             $message = sanitize_text_field( wp_unslash( $_GET['message'] ) );
             $type = strpos( $message, 'fail' ) !== false || $message === 'error' ? 'error' : 'success';
             $messages = [

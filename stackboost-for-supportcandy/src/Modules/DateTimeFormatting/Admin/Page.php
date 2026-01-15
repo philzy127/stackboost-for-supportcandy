@@ -214,6 +214,7 @@ class Page {
 			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$custom_fields = $wpdb->get_results(
 				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					"SELECT slug, name FROM `{$safe_table}` WHERE type = %s",
 					'datetime'
 				),

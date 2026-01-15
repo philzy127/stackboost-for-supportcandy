@@ -158,6 +158,7 @@ class WordPress {
 			// Dashicons is loaded by default in admin.
 
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
 			// Enqueue scripts for the Contact Widget settings tab.

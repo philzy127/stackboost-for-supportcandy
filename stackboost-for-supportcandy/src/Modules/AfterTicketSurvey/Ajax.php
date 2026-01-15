@@ -240,11 +240,9 @@ class Ajax {
         check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
 
         global $wpdb;
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $order = isset( $_POST['order'] ) ? $_POST['order'] : [];
         if ( is_array( $order ) ) {
-            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $order = array_map( 'wp_unslash', $order );
+            $order = array_map( 'intval', array_map( 'wp_unslash', $order ) );
         }
 
         // stackboost_log( "ATS reorder_questions: " . print_r($order, true), 'ats' );
