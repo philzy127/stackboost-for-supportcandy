@@ -948,6 +948,7 @@ class WordPress {
 
 		// Check for our custom query arg to determine the return link.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
