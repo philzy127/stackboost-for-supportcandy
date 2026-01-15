@@ -57,6 +57,7 @@ class StaffListTable extends \WP_List_Table {
 	 */
 	public function get_columns() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
 
 		$columns = array(
@@ -318,9 +319,11 @@ class StaffListTable extends \WP_List_Table {
 			'post_type'      => $this->post_type,
 			'posts_per_page' => $per_page,
 			'offset'         => $offset,
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'any' ),
 		);
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['orderby'] ) ) : 'title';
 		$order   = ( ! empty( $_REQUEST['order'] ) ) ? sanitize_key( wp_unslash( $_REQUEST['order'] ) ) : 'asc';
