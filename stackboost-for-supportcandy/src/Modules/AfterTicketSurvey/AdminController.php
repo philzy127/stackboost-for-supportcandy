@@ -94,8 +94,6 @@ class AdminController {
     private function process_submissions_form() {
         global $wpdb;
         if ( ! empty( $_POST['selected_submissions'] ) ) {
-            // Note: Nonce is verified by check_admin_referer() in handle_admin_post() before calling this method.
-            // phpcs:ignore WordPress.Security.NonceVerification.Missing
             $ids_array = array_map( 'absint', $_POST['selected_submissions'] );
             $ids = implode( ',', $ids_array );
             if ( empty( $ids ) ) {
@@ -104,9 +102,9 @@ class AdminController {
             $safe_submissions_table = $this->survey_submissions_table_name;
             $safe_answers_table = $this->survey_answers_table_name;
 
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $wpdb->query( "DELETE FROM `{$safe_submissions_table}` WHERE id IN ($ids)" );
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $wpdb->query( "DELETE FROM `{$safe_answers_table}` WHERE submission_id IN ($ids)" );
         }
         wp_safe_redirect( admin_url( 'admin.php?page=stackboost-ats&tab=submissions&message=submissions_deleted' ) );
@@ -138,7 +136,7 @@ class AdminController {
         // Logic for handling GET based delete/edit has been moved to AJAX.
         // We only need to fetch the list for initial display.
         $safe_table = $this->questions_table_name;
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $questions = $wpdb->get_results( "SELECT * FROM `{$safe_table}` ORDER BY sort_order ASC", ARRAY_A );
         include __DIR__ . '/Admin/manage-questions-template.php';
     }
@@ -146,7 +144,7 @@ class AdminController {
     private function render_submissions_tab() {
         global $wpdb;
         $safe_table = $this->survey_submissions_table_name;
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $submissions = $wpdb->get_results( "SELECT id, submission_date FROM `{$safe_table}` ORDER BY submission_date DESC", ARRAY_A );
         include __DIR__ . '/Admin/manage-submissions-template.php';
     }
@@ -155,9 +153,9 @@ class AdminController {
         global $wpdb;
         $safe_questions_table = $this->questions_table_name;
         $safe_submissions_table = $this->survey_submissions_table_name;
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $questions = $wpdb->get_results( "SELECT id, question_text, report_heading, question_type, prefill_key FROM `{$safe_questions_table}` ORDER BY sort_order ASC", ARRAY_A );
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $submissions = $wpdb->get_results( "SELECT s.*, u.display_name FROM `{$safe_submissions_table}` s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID ORDER BY submission_date DESC", ARRAY_A );
         include __DIR__ . '/Admin/view-results-template.php';
     }

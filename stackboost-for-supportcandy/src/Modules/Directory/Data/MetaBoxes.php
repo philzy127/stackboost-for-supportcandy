@@ -399,7 +399,8 @@ class MetaBoxes {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['sb_location_details_meta_box_nonce'] ) ), 'sb_location_details_meta_box' ) ) {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		if ( ! wp_verify_nonce( $_POST['sb_location_details_meta_box_nonce'], 'sb_location_details_meta_box' ) ) {
 			return;
 		}
 

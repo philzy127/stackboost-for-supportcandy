@@ -88,17 +88,16 @@ class Shortcode {
 			return;
 		}
 
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$safe_table = $this->questions_table_name;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$questions = $wpdb->get_results( "SELECT id, question_type FROM `{$safe_table}`", ARRAY_A );
 
 		// VALIDATION PHASE
 		$errors = [];
 		foreach ( $questions as $question ) {
 			$input_name = 'stackboost_ats_q_' . $question['id'];
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			if ( isset( $_POST[ $input_name ] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				$val = is_array( $_POST[ $input_name ] ) ? implode( '', wp_unslash( $_POST[ $input_name ] ) ) : wp_unslash( $_POST[ $input_name ] );
 				if ( 'ticket_number' === $question['question_type'] && ! is_numeric( $val ) ) {
 					$errors[] = "Ticket Number must be numeric.";
@@ -108,8 +107,8 @@ class Shortcode {
 
 		if ( ! empty( $errors ) ) {
 			// Clean up the empty submission created above
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-			$wpdb->delete( $this->survey_submissions_table_name, [ 'id' => $submission_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->delete( $this->survey_submissions_table_name, [ 'id' => $submission_id ] );
 
 			foreach ( $errors as $err ) {
 				echo '<div class="stackboost-ats-error-message">' . esc_html( $err ) . '</div>';
@@ -124,9 +123,9 @@ class Shortcode {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			if ( isset( $_POST[ $input_name ] ) ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
-				$raw_answer = $_POST[$input_name];
+				$post_val = $_POST[$input_name];
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-				$answer = is_array( $raw_answer ) ? sanitize_text_field( implode( ', ', wp_unslash( $raw_answer ) ) ) : sanitize_textarea_field( wp_unslash( $raw_answer ) );
+				$answer = is_array($post_val) ? sanitize_text_field(implode(', ', wp_unslash( $post_val ) ) ) : sanitize_textarea_field( wp_unslash( $post_val ) );
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->insert(
 					$this->survey_answers_table_name,
@@ -159,8 +158,9 @@ class Shortcode {
 		$options = get_option( 'stackboost_settings', [] );
 
 		// We fetch prefill_key as well
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$safe_table = $this->questions_table_name;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key, is_readonly_prefill FROM `{$safe_table}` ORDER BY sort_order ASC", ARRAY_A );
 		if ( empty( $questions ) ) {
 			echo '<p class="stackboost-ats-no-questions">No survey questions have been configured.</p>';
@@ -278,8 +278,9 @@ class Shortcode {
                 // We need to resolve the best match here for validation purposes
                 // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $safe_dropdown_table = $this->dropdown_options_table_name;
-                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-                $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$safe_dropdown_table}` WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$safe_dropdown_table}` WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
                 $highest_score = 0;
                 $input_lower = strtolower( $input_value );
 

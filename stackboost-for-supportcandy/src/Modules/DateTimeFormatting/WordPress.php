@@ -140,6 +140,7 @@ class WordPress extends Module {
 		// However, relying on the hook suffix can be fragile if WordPress sanitizes it unexpectedly.
 		// A more robust check is to verify the 'page' query parameter directly.
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
 
 		if ( $current_page !== $page_slug ) {
