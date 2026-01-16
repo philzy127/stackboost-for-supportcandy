@@ -276,7 +276,7 @@ class Settings {
                         </div>
                         <div class="stackboost-status-item">
                             <span class="stackboost-status-label"><?php esc_html_e( 'SupportCandy Status', 'stackboost-for-supportcandy' ); ?></span>
-                            <?php if ( stackboost_stackboost_is_supportcandy_pro_active() ) : ?>
+                            <?php if ( stackboost_is_supportcandy_pro_active() ) : ?>
                                 <span class="stackboost-status-value success"><?php esc_html_e( 'Pro Active', 'stackboost-for-supportcandy' ); ?></span>
                             <?php else : ?>
                                 <span class="stackboost-status-value warning"><?php esc_html_e( 'Free Version', 'stackboost-for-supportcandy' ); ?></span>
