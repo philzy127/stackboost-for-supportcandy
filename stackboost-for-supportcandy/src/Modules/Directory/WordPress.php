@@ -1007,7 +1007,11 @@ class WordPress {
 			9  => sprintf(
 				// translators: %1$s: date and time of the scheduled post.
 				__( 'Staff scheduled for: %1$s.', 'stackboost-for-supportcandy' ),
-				'<strong>' . date_i18n( __( 'M j, Y @ G:i', 'stackboost-for-supportcandy' ), strtotime( $post->post_date ) ) . '</strong>'
+				'<strong>' . date_i18n(
+					// translators: Date format, see https://www.php.net/manual/en/datetime.format.php
+					__( 'M j, Y @ G:i', 'stackboost-for-supportcandy' ),
+					strtotime( $post->post_date )
+				) . '</strong>'
 			),
 			10 => __( 'Staff draft updated.', 'stackboost-for-supportcandy' ),
 		);

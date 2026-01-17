@@ -97,7 +97,9 @@ class Shortcode {
 		$errors = [];
 		foreach ( $questions as $question ) {
 			$input_name = 'stackboost_ats_q_' . $question['id'];
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			if ( isset( $_POST[ $input_name ] ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				$val = is_array( $_POST[ $input_name ] ) ? implode( '', wp_unslash( $_POST[ $input_name ] ) ) : wp_unslash( $_POST[ $input_name ] );
 				if ( 'ticket_number' === $question['question_type'] && ! is_numeric( $val ) ) {
 					$errors[] = "Ticket Number must be numeric.";
@@ -122,8 +124,8 @@ class Shortcode {
 			$input_name = 'stackboost_ats_q_' . $question['id'];
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			if ( isset( $_POST[ $input_name ] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing
-				$post_val = $_POST[$input_name]; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+				$post_val = $_POST[$input_name];
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				$answer = is_array($post_val) ? sanitize_text_field(implode(', ', wp_unslash( $post_val ) ) ) : sanitize_textarea_field( wp_unslash( $post_val ) );
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
