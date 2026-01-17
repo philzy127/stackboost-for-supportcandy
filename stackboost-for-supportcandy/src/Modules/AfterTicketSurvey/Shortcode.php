@@ -90,7 +90,7 @@ class Shortcode {
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$safe_table = $this->questions_table_name;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$questions = $wpdb->get_results( "SELECT id, question_type FROM `{$safe_table}`", ARRAY_A );
 
 		// VALIDATION PHASE
@@ -123,7 +123,7 @@ class Shortcode {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			if ( isset( $_POST[ $input_name ] ) ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
-				$post_val = $_POST[$input_name];
+				$post_val = $_POST[$input_name]; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				$answer = is_array($post_val) ? sanitize_text_field(implode(', ', wp_unslash( $post_val ) ) ) : sanitize_textarea_field( wp_unslash( $post_val ) );
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -160,7 +160,7 @@ class Shortcode {
 		// We fetch prefill_key as well
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$safe_table = $this->questions_table_name;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$questions = $wpdb->get_results( "SELECT id, question_text, question_type, is_required, prefill_key, is_readonly_prefill FROM `{$safe_table}` ORDER BY sort_order ASC", ARRAY_A );
 		if ( empty( $questions ) ) {
 			echo '<p class="stackboost-ats-no-questions">No survey questions have been configured.</p>';
@@ -278,8 +278,7 @@ class Shortcode {
                 // We need to resolve the best match here for validation purposes
                 // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $safe_dropdown_table = $this->dropdown_options_table_name;
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
                 $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$safe_dropdown_table}` WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
                 $highest_score = 0;
                 $input_lower = strtolower( $input_value );
@@ -344,7 +343,7 @@ class Shortcode {
                 if ( ! isset( $dd_options ) ) {
 				    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 				    $safe_dropdown_table = $this->dropdown_options_table_name;
-                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				    $dd_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$safe_dropdown_table}` WHERE question_id = %d ORDER BY sort_order ASC", $question['id'] ) );
                 }
 

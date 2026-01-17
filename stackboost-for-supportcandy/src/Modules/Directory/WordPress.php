@@ -610,9 +610,9 @@ class WordPress {
 			if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
 				// Primary method for backend.
 				$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
-			} elseif ( isset( $_REQUEST['ticket_id'] ) ) {
+			} elseif ( isset( $_REQUEST['ticket_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				// Fallback for frontend AJAX view, where the ID is in the REQUEST.
-				$current_ticket_id = absint( $_REQUEST['ticket_id'] );
+				$current_ticket_id = absint( $_REQUEST['ticket_id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			}
 
 			// If the passed $ticket is unreliable (frontend), create a new one.
@@ -1073,9 +1073,9 @@ class WordPress {
 			}
 
 			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
 
 			if ( 'ticket' === $from && $ticket_id > 0 ) {

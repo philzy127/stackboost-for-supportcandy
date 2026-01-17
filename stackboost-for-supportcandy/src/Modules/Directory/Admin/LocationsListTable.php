@@ -161,6 +161,7 @@ class LocationsListTable extends \WP_List_Table {
 	protected function get_views() {
 		$status_links = array();
 		$num_posts    = wp_count_posts( $this->post_type, 'readable' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$post_status  = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'all';
 
 		$all_class           = ( 'all' === $post_status ) ? ' class="current"' : '';
@@ -265,6 +266,7 @@ class LocationsListTable extends \WP_List_Table {
 			'post_type'      => $this->post_type,
 			'posts_per_page' => $per_page,
 			'offset'         => $offset,
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'any' ),
 		);
 

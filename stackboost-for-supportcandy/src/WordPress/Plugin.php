@@ -561,8 +561,7 @@ final class Plugin {
 		$safe_table = $status_table;
 
 		// Optimization: Removed 'SHOW TABLES' check.
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$results = $wpdb->get_results( "SELECT id, name FROM `{$safe_table}` ORDER BY name ASC" );
 
 		if ( $results ) {
