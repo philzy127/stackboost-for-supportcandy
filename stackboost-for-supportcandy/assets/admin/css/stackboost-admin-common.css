@@ -33,6 +33,7 @@
 .stackboost-dashboard input[type="password"],
 .stackboost-dashboard textarea {
     background-color: var(--sb-input-bg, #ffffff);
+    color: var(--sb-text-main, #3c434a);
     border-radius: var(--sb-radius, 4px);
     padding: 4px 8px; /* Compact padding */
     border: var(--sb-card-border, 1px solid #ccd0d4);
@@ -41,6 +42,7 @@
 /* Specific styling for selects to account for the dropdown arrow */
 .stackboost-dashboard select {
     background-color: var(--sb-input-bg, #ffffff);
+    color: var(--sb-text-main, #3c434a);
     border-radius: var(--sb-radius, 4px);
     /* Top/Bottom: 4px to balance height (compact), Right: 30px for arrow, Left: 8px for text */
     padding: 4px 30px 4px 8px;
@@ -393,6 +395,10 @@
 }
 
 /* Section Headers */
+.stackboost-dashboard h1 {
+    color: var(--sb-text-main, #1d2327);
+}
+
 .stackboost-dashboard h2 {
     color: var(--sb-accent, #1a3d5c);
     /* Ensure it overrides any default WP h2 styles if necessary, though usually color isn't set aggressively */
@@ -440,7 +446,8 @@
     margin-bottom: 20px;
 }
 
-.stackboost-dashboard .stackboost-card .form-table p.description {
+.stackboost-dashboard .stackboost-card .form-table p.description,
+.stackboost-dashboard .stackboost-card .description {
     margin-top: 5px;
     font-size: 13px;
     color: var(--sb-text-muted, #666);
