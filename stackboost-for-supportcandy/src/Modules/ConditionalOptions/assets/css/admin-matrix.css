@@ -14,14 +14,17 @@
 
 .pm-limit-counter {
     font-weight: bold;
-    background: #f0f0f1;
+    background: var(--sb-input-bg, #f0f0f1);
+    color: var(--sb-text-main, #3c434a);
     padding: 5px 10px;
     border-radius: 4px;
+    border: 1px solid var(--sb-card-border, #ccd0d4);
 }
 
 .pm-limit-counter.limit-reached {
-    color: #d63638;
-    background: #fbeaea;
+    color: var(--sb-destructive, #d63638);
+    background: #fbeaea; /* Consider a variable for danger bg if used elsewhere, but strict red is ok for limit */
+    border-color: var(--sb-destructive, #d63638);
 }
 
 /* Modal Specific Styles */
@@ -62,10 +65,10 @@
 
 /* Matrix Table Styles */
 .pm-matrix-container {
-    border: 1px solid #ddd;
+    border: var(--sb-card-border, 1px solid #ddd);
     max-height: 400px;
     overflow-y: auto;
-    background: #fff;
+    background: var(--sb-card-bg, #fff);
 }
 
 .pm-matrix-table {
@@ -74,10 +77,11 @@
 }
 
 .pm-matrix-table th {
-    background: #f9f9f9;
+    background: var(--sb-bg-main, #f9f9f9);
+    color: var(--sb-text-main, #333);
     padding: 10px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    border-bottom: var(--sb-card-border, 1px solid #ddd);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -85,18 +89,21 @@
 
 .pm-matrix-table td {
     padding: 10px;
-    border-bottom: 1px solid #eee;
+    border-bottom: var(--sb-card-border, 1px solid #eee);
     vertical-align: top;
+    color: var(--sb-text-main, #3c434a);
 }
 
 .pm-matrix-table tr:hover {
-    background: #fdfdfd;
+    background: var(--sb-input-bg, #fdfdfd);
 }
 
 /* Role Pills */
 .pm-role-pill {
     display: inline-block;
-    background: #e5e5e5;
+    background: var(--sb-input-bg, #e5e5e5);
+    border: 1px solid var(--sb-card-border, #ccc);
+    color: var(--sb-text-main, #3c434a);
     padding: 3px 8px;
     border-radius: 3px;
     margin: 2px;
@@ -107,12 +114,14 @@
 }
 
 .pm-role-pill:hover {
-    background: #d0d0d0;
+    border-color: var(--sb-accent, #2271b1);
+    color: var(--sb-accent, #2271b1);
 }
 
 .pm-role-pill.selected {
-    background: #d63638; /* Red for Hidden */
-    color: white;
+    background: var(--sb-destructive, #d63638); /* Red for Hidden */
+    border-color: var(--sb-destructive, #d63638);
+    color: #fff;
 }
 
 /* Toggle All Button */
@@ -137,9 +146,9 @@
 .pm-loading-placeholder {
     padding: 30px;
     text-align: center;
-    color: #777;
+    color: var(--sb-text-muted, #777);
     font-style: italic;
-    background: #fafafa;
+    background: var(--sb-bg-main, #fafafa);
 }
 
 .pm-loading {
