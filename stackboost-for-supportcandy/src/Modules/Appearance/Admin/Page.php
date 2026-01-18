@@ -24,6 +24,7 @@ class Page {
             'sb-theme-heroic'              => 'Heroic',
             'sb-theme-clean-tech'          => 'Clean Tech (Default)',
             'sb-theme-hudson-valley-eco'   => 'Hudson Valley Eco',
+            'sb-theme-dark-mode'           => 'Dark Mode',
         ];
 
         ?>

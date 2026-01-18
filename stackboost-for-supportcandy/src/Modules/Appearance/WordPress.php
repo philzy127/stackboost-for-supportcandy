@@ -149,7 +149,8 @@ class WordPress {
             'sb-theme-cloud-dancer',
             'sb-theme-heroic',
             'sb-theme-clean-tech',
-            'sb-theme-hudson-valley-eco'
+            'sb-theme-hudson-valley-eco',
+            'sb-theme-dark-mode'
         ];
 
         if ( ! in_array( $theme, $valid_themes ) ) {

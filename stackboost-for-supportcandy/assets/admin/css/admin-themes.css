@@ -18,6 +18,9 @@
     --sb-radius: 2px;
     --sb-input-bg: #ffffff;
     --sb-spacing: 8px;
+
+    --sb-text-main: #3c434a;
+    --sb-text-muted: #646970;
 }
 
 /* Theme 1: WordPress Sync */
@@ -120,4 +123,24 @@
     --sb-radius: 8px;
     --sb-input-bg: #fdfdfd;
     --sb-spacing: 10px;
+}
+
+/* Theme 7: Dark Mode */
+.sb-theme-dark-mode {
+    --sb-accent: #61afef; /* Light Blue for contrast */
+    --sb-accent-secondary: #7ec2ff; /* Lighter variant */
+    --sb-accent-dark: #4a8bb5; /* Darker variant */
+    --sb-text-on-accent: #ffffff;
+    --sb-destructive: #ff6b6b; /* Lighter red */
+    --sb-success: #4cd964; /* Lighter green */
+
+    --sb-bg-main: #121212;
+    --sb-card-bg: #1e1e1e;
+    --sb-card-border: 1px solid #333;
+    --sb-radius: 4px;
+    --sb-input-bg: #2c2c2c;
+    --sb-spacing: 8px;
+
+    --sb-text-main: #e0e0e0;
+    --sb-text-muted: #a0a0a0;
 }

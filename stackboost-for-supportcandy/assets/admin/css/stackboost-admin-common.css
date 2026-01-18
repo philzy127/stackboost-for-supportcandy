@@ -3,7 +3,7 @@
 /* Main Dashboard Wrapper */
 .stackboost-dashboard {
     background-color: var(--sb-bg-main, #f6f7f7);
-    color: #3c434a; /* Standard WP Text Color */
+    color: var(--sb-text-main, #3c434a); /* Standard WP Text Color */
     padding: 20px; /* Internal spacing */
     box-sizing: border-box;
     /* Standard WP behavior: contain within .wrap */
@@ -89,7 +89,7 @@
     padding: 0;
     margin: 0;
     cursor: pointer;
-    color: #50575e;
+    color: var(--sb-text-muted, #50575e);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -128,7 +128,7 @@
 }
 
 #stackboost-no-rules-message {
-    color: #666;
+    color: var(--sb-text-muted, #666);
     font-style: italic;
 }
 
@@ -443,7 +443,7 @@
 .stackboost-dashboard .stackboost-card .form-table p.description {
     margin-top: 5px;
     font-size: 13px;
-    color: #666;
+    color: var(--sb-text-muted, #666);
 }
 
 /* Ensure spacing below top table navigation */
