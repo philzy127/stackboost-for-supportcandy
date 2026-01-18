@@ -17,8 +17,8 @@ mkdir -p "$PRO_DIR"
 mkdir -p "$REPO_DIR"
 
 echo "Copying source files..."
-rsync -av --exclude '.git' --exclude '.github' --exclude 'build' --exclude 'tests' --exclude 'Documentation' --exclude '*.md' "$SRC_DIR/" "$PRO_DIR/" > /dev/null
-rsync -av --exclude '.git' --exclude '.github' --exclude 'build' --exclude 'tests' --exclude 'Documentation' --exclude '*.md' "$SRC_DIR/" "$REPO_DIR/" > /dev/null
+rsync -av --exclude '.git' --exclude '.github' --exclude 'build' --exclude 'tests' --exclude 'Documentation' "$SRC_DIR/" "$PRO_DIR/" > /dev/null
+rsync -av --exclude '.git' --exclude '.github' --exclude 'build' --exclude 'tests' --exclude 'Documentation' "$SRC_DIR/" "$REPO_DIR/" > /dev/null
 
 # --- BUILD PREMIUM VERSION ---
 echo "Building Premium version..."
