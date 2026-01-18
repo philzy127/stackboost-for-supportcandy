@@ -1,0 +1,193 @@
+./stackboost-for-supportcandy/src/Admin/Upgrade.php:117:		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/QueueMacro/WordPress.php:97:		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/QueueMacro/WordPress.php:272:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+./stackboost-for-supportcandy/src/Modules/QueueMacro/WordPress.php:273:        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/QueueMacro/WordPress.php:274:        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/QueueMacro/WordPress.php:275:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/ChatBubbles/Admin/Settings.php:114:												// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+./stackboost-for-supportcandy/src/Modules/ChatBubbles/Admin/Settings.php:145:												// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+./stackboost-for-supportcandy/src/Modules/ChatBubbles/Admin/Settings.php:202:												// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+./stackboost-for-supportcandy/src/Modules/ChatBubbles/WordPress.php:49:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Data/MetaBoxes.php:276:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/Directory/Data/MetaBoxes.php:294:			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/Directory/Data/MetaBoxes.php:314:				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/Directory/Data/MetaBoxes.php:402:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:112:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:132:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:152:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:174:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:216:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:221:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:225:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:227:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:230:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/DepartmentsListTable.php:232:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:59:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:174:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:195:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:215:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:244:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:249:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:272:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:314:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:319:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:323:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:325:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:328:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:330:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:336:				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:340:				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:349:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/StaffListTable.php:352:			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/Management.php:231:			// phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/Management.php:239:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/Management.php:246:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/Management.php:455:								// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/Management.php:508:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/Management.php:513:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/Management.php:516:		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/Management.php:579:		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:124:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:144:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:164:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:193:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:198:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:222:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:264:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:269:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:273:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:275:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:278:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:280:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:286:				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:295:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/Admin/LocationsListTable.php:298:			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:160:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:352:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:613:			} elseif ( isset( $_REQUEST['ticket_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:615:				$current_ticket_id = absint( $_REQUEST['ticket_id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:712:							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:769:					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:949:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:951:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:964:			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:966:				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:1002:			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:1079:			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:1081:			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:1093:				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:1095:					// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:1181:			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+./stackboost-for-supportcandy/src/Modules/Directory/WordPress.php:1258:			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Data/TicketService.php:38:			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Data/TicketService.php:95:			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Data/TicketService.php:108:			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Data/TicketService.php:113:			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Ajax/CertificateHandler.php:46:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Ajax/CertificateHandler.php:48:			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Admin/Settings.php:259:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Admin/Settings.php:286:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Admin/Settings.php:536:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Admin/Sequence.php:32:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Admin/ImportExport.php:269:		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Admin/ImportExport.php:284:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Admin/ImportExport.php:289:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Admin/Page.php:42:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Shortcodes/DashboardShortcode.php:28:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Shortcodes/DashboardShortcode.php:100:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Shortcodes/DashboardShortcode.php:102:				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Shortcodes/DashboardShortcode.php:198:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Shortcodes/DashboardShortcode.php:269:					// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+./stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Shortcodes/DashboardShortcode.php:303:								// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+./stackboost-for-supportcandy/src/Modules/AfterHoursNotice/WordPress.php:351:				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+./stackboost-for-supportcandy/src/Modules/AfterHoursNotice/WordPress.php:377:            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+./stackboost-for-supportcandy/src/Modules/AfterHoursNotice/WordPress.php:396:            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Admin/manage-questions-template.php:45:                            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Admin/view-results-template.php:38:            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:75:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:78:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:80:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:172:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:173:        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:180:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:181:        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:182:		if ( $wpdb->get_var( "SELECT COUNT(*) FROM `{$safe_table}`" ) > 0 ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:197:			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php:213:					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/WordPress.php:122:        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/WordPress.php:129:        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:76:		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:91:		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:93:		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:100:			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:102:				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:112:			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:125:			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:127:				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:129:				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:131:				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:163:		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:165:		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:173:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:175:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:252:		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:254:			// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:258:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:260:			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:272:        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:281:                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:283:			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:346:				    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php:348:                    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:46:        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:96:        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:98:            // phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:107:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:109:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:120:        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:122:            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:141:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:149:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:158:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/AdminController.php:160:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:44:        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:79:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:89:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:118:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:142:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:153:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:165:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:177:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:180:            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:182:                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:186:                        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:197:             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:223:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:225:        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:241:        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+./stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php:254:            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/Appearance/WordPress.php:56:        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/ConditionalOptions/WordPress.php:405:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/DateTimeFormatting/Admin/Page.php:211:		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/DateTimeFormatting/Admin/Page.php:214:			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/Modules/DateTimeFormatting/Admin/Page.php:217:					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Modules/DateTimeFormatting/WordPress.php:107:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+./stackboost-for-supportcandy/src/Modules/DateTimeFormatting/WordPress.php:112:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+./stackboost-for-supportcandy/src/Modules/DateTimeFormatting/WordPress.php:143:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/DateTimeFormatting/WordPress.php:219:		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+./stackboost-for-supportcandy/src/Modules/DateTimeFormatting/WordPress.php:222:		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+./stackboost-for-supportcandy/src/WordPress/Admin/Settings.php:376:							var pool = <?php echo $upsell_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
+./stackboost-for-supportcandy/src/WordPress/Admin/Settings.php:1150:						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+./stackboost-for-supportcandy/src/WordPress/Admin/Settings.php:1205:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+./stackboost-for-supportcandy/src/WordPress/Admin/Settings.php:1214:		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+./stackboost-for-supportcandy/src/WordPress/supportcandy-pro-check.php:30:    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+./stackboost-for-supportcandy/src/WordPress/Plugin.php:512:		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+./stackboost-for-supportcandy/src/WordPress/Plugin.php:513:		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/WordPress/Plugin.php:514:		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/WordPress/Plugin.php:564:		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/WordPress/Plugin.php:590:		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/WordPress/Plugin.php:596:		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+./stackboost-for-supportcandy/src/WordPress/Plugin.php:599:				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+./stackboost-for-supportcandy/src/Services/DirectoryService.php:73:			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+./stackboost-for-supportcandy/src/Services/DirectoryService.php:195:			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+./AGENTS.md:98:You may only use `// phpcs:ignore` comments if:
