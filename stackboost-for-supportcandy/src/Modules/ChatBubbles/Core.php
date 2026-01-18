@@ -783,7 +783,7 @@ class Core {
 		if ($styles['width'] < 0 || $styles['width'] > 100) $styles['width'] = 85;
 		$styles['radius'] = absint($styles['radius']);
 		if ($styles['radius'] > 100) $styles['radius'] = 100;
-		$styles['padding'] = absint($styles['padding']);
+		$styles['padding'] = isset($styles['padding']) ? absint($styles['padding']) : 15;
 		$styles['font_size'] = absint($styles['font_size']);
 		$styles['font_family'] = sanitize_text_field($styles['font_family']);
 		$styles['border_width'] = absint($styles['border_width']);
