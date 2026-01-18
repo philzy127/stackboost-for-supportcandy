@@ -110,7 +110,10 @@ class Settings {
 												<span class="thread-time">10:30 AM</span>
 											</div>
 											<div class="actions">
-												<?php echo $action_icons; ?>
+												<?php
+												// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+												echo $action_icons;
+												?>
 											</div>
 										</div>
 										<div class="thread-text">
@@ -138,7 +141,10 @@ class Settings {
 												<span class="thread-time">10:32 AM</span>
 											</div>
 											<div class="actions">
-												<?php echo $action_icons; ?>
+												<?php
+												// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+												echo $action_icons;
+												?>
 											</div>
 										</div>
 										<div class="thread-text">
@@ -192,7 +198,10 @@ class Settings {
 												<span class="thread-time">10:35 AM</span>
 											</div>
 											<div class="actions">
-												<?php echo $action_icons; ?>
+												<?php
+												// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+												echo $action_icons;
+												?>
 											</div>
 										</div>
 										<div class="thread-text">

@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Staff {
 
@@ -27,6 +30,7 @@ class Staff {
 					<p>
 						<?php
 						printf(
+							/* translators: %s: settings url */
 							wp_kses_post( __( 'Please configure the Onboarding settings (Request Type, ID, and Column Mapping) in the <strong><a href="%s">Settings</a></strong> tab to view the staff list.', 'stackboost-for-supportcandy' ) ),
 							esc_url( admin_url( 'admin.php?page=stackboost-onboarding-dashboard&tab=settings' ) )
 						);
@@ -83,13 +87,17 @@ class Staff {
 
 			if ( $last_updated_timestamp ) {
 				$last_updated_string = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last_updated_timestamp );
+				/* translators: %s: timestamp string */
 				echo '<p style="margin-bottom: 15px;"><em>' . sprintf( esc_html__( 'Data current as of: %s', 'stackboost-for-supportcandy' ), esc_html( $last_updated_string ) ) . '</em></p>';
 			}
 
 			if ( is_wp_error( $onboarding_tickets ) ) {
 				?>
 				<div class="notice notice-error">
-					<p><?php printf( esc_html__( 'Failed to retrieve tickets: %s', 'stackboost-for-supportcandy' ), esc_html( $onboarding_tickets->get_error_message() ) ); ?></p>
+					<p><?php
+					/* translators: %s: error message */
+					printf( esc_html__( 'Failed to retrieve tickets: %s', 'stackboost-for-supportcandy' ), esc_html( $onboarding_tickets->get_error_message() ) );
+					?></p>
 				</div>
 				<?php
 				return;
@@ -136,17 +144,17 @@ class Staff {
 						var $status = $('#stkb-refresh-status');
 
 						$button.prop('disabled', true);
-						$status.text('<?php esc_html_e( "Updating...", "stackboost-for-supportcandy" ); ?>').css('color', 'black').show();
+						$status.text('<?php echo esc_js( __( 'Updating...', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'black').show();
 
 						$.post(ajaxurl, {
 							action: 'stackboost_onboarding_refresh_cache',
-							nonce: '<?php echo wp_create_nonce( "stkb_refresh_cache_nonce" ); ?>'
+							nonce: '<?php echo esc_js( wp_create_nonce( "stkb_refresh_cache_nonce" ) ); ?>'
 						}, function(response) {
 							if (response.success) {
-								$status.text('<?php esc_html_e( "Data updated! Reloading...", "stackboost-for-supportcandy" ); ?>').css('color', 'green');
+								$status.text('<?php echo esc_js( __( 'Data updated! Reloading...', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'green');
 								setTimeout(function() { location.reload(); }, 1000);
 							} else {
-								$status.text('<?php esc_html_e( "Update failed.", "stackboost-for-supportcandy" ); ?>').css('color', 'red');
+								$status.text('<?php echo esc_js( __( 'Update failed.', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'red');
 								$button.prop('disabled', false);
 							}
 						});

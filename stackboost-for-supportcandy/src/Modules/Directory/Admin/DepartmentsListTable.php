@@ -81,7 +81,8 @@ class DepartmentsListTable extends \WP_List_Table {
 	 * @return mixed
 	 */
 	public function column_default( $item, $column_name ) {
-		return print_r( $item, true );
+		// Removed print_r
+		return '';
 	}
 
 	/**
@@ -108,7 +109,10 @@ class DepartmentsListTable extends \WP_List_Table {
 			'edit'   => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item->ID ), __( 'Edit', 'stackboost-for-supportcandy' ) ),
 		);
 
-		if ( 'trash' === ( $_REQUEST['post_status'] ?? '' ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+
+		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=departments&action=untrash&post=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
 			$actions['delete']  = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=departments&action=delete&post=' . $item->ID ), 'delete-post_' . $item->ID ), __( 'Delete Permanently', 'stackboost-for-supportcandy' ) );
 		} else {
@@ -125,7 +129,10 @@ class DepartmentsListTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions() {
 		$actions = array();
-		if ( 'trash' === ( $_REQUEST['post_status'] ?? '' ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+
+		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = __( 'Restore', 'stackboost-for-supportcandy' );
 			$actions['delete']  = __( 'Delete Permanently', 'stackboost-for-supportcandy' );
 		} else {
@@ -142,9 +149,10 @@ class DepartmentsListTable extends \WP_List_Table {
 	protected function get_views() {
 		$status_links = array();
 		$num_posts    = wp_count_posts( $this->post_type, 'readable' );
-		$post_status  = $_REQUEST['post_status'] ?? 'all';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_status  = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'all';
 
-		$all_class           = ( 'all' === $post_status && ! isset( $_REQUEST['post_status'] ) ) ? ' class="current"' : '';
+		$all_class           = ( 'all' === $post_status ) ? ' class="current"' : '';
 		$status_links['all'] = "<a href='admin.php?page=stackboost-directory&tab=departments'{$all_class}>All <span class='count'>(" . ( $num_posts->publish + $num_posts->draft ) . ')</span></a>';
 
 		if ( ! empty( $num_posts->trash ) ) {
@@ -163,7 +171,8 @@ class DepartmentsListTable extends \WP_List_Table {
 		if ( ! $action ) {
 			return;
 		}
-		$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( (array) $_REQUEST['post'] ) : array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( wp_unslash( (array) $_REQUEST['post'] ) ) : array();
 		if ( empty( $post_ids ) ) {
 			return;
 		}
@@ -204,18 +213,24 @@ class DepartmentsListTable extends \WP_List_Table {
 		$current_page = $this->get_pagenum();
 		$offset       = ( $current_page - 1 ) * $per_page;
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$args = array(
 			'post_type'      => $this->post_type,
 			'posts_per_page' => $per_page,
 			'offset'         => $offset,
-			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( $_REQUEST['post_status'] ) : 'any' ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'any' ),
 		);
 
-		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( $_REQUEST['orderby'] ) : 'title';
-		$order   = ( ! empty( $_REQUEST['order'] ) ) ? sanitize_key( $_REQUEST['order'] ) : 'asc';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['orderby'] ) ) : 'title';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order   = ( ! empty( $_REQUEST['order'] ) ) ? sanitize_key( wp_unslash( $_REQUEST['order'] ) ) : 'asc';
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_REQUEST['s'] ) ) {
-			$args['s'] = sanitize_text_field( $_REQUEST['s'] );
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$args['s'] = sanitize_text_field( wp_unslash( $_REQUEST['s'] ) );
 		}
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {

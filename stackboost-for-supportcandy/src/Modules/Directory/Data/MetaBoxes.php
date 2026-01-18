@@ -158,19 +158,19 @@ class MetaBoxes {
 				echo '<p class="description">' . esc_html__( 'Select the department or program for this staff member.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'active' === $key ) {
 				$checked = ( 'Yes' === $value || '1' === $value ) ? 'checked' : '';
-				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . $checked . ' />';
+				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . esc_attr( $checked ) . ' />';
 				echo '<p class="description">' . esc_html__( 'Check if this entry is active; uncheck if deprecated.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'private' === $key ) {
 				$checked = ( 'Yes' === $value || '1' === $value ) ? 'checked' : '';
-				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . $checked . ' />';
+				echo '<input type="checkbox" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="Yes" ' . esc_attr( $checked ) . ' />';
 				echo '<p class="description">' . esc_html__( 'Private listings are only visible in the backend.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'active_as_of_date' === $key ) {
-				$date_value = $value ? esc_attr( $value ) : ( $is_add_new_screen ? current_time( 'Y-m-d' ) : '' );
-				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . $date_value . '" class="regular-text stackboost-datepicker" />';
+				$date_value = $value ? $value : ( $is_add_new_screen ? current_time( 'Y-m-d' ) : '' );
+				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $date_value ) . '" class="regular-text stackboost-datepicker" />';
 				echo '<p class="description">' . esc_html__( 'Date from which this entry is considered active.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( 'planned_exit_date' === $key ) {
-				$date_value = $value ? esc_attr( $value ) : '';
-				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . $date_value . '" class="regular-text stackboost-datepicker" />';
+				$date_value = $value ? $value : '';
+				echo '<input type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $date_value ) . '" class="regular-text stackboost-datepicker" />';
 				echo '<p class="description">' . esc_html__( 'Optional: Date when this entry is planned to become inactive.', 'stackboost-for-supportcandy' ) . '</p>';
 			} elseif ( in_array( $key, array( 'unique_id', 'last_updated_by', 'last_updated_on' ), true ) ) {
 				echo '<p id="' . esc_attr( $key ) . '">' . esc_html( $value ) . '</p>';
@@ -257,7 +257,7 @@ class MetaBoxes {
 
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Needs Completion', 'stackboost-for-supportcandy' ) . '</th>';
-		echo '<td>' . $needs_completion_display . '<p class="description">' . esc_html__( 'This status is automatically determined by the completeness of the address fields.', 'stackboost-for-supportcandy' ) . '</p></td>';
+		echo '<td>' . wp_kses_post( $needs_completion_display ) . '<p class="description">' . esc_html__( 'This status is automatically determined by the completeness of the address fields.', 'stackboost-for-supportcandy' ) . '</p></td>';
 		echo '</tr>';
 
 		echo '</table>';
@@ -273,6 +273,7 @@ class MetaBoxes {
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! wp_verify_nonce( $_POST['sb_staff_dir_meta_box_nonce'], 'sb_staff_dir_meta_box' ) ) {
 			return;
 		}
@@ -290,6 +291,7 @@ class MetaBoxes {
 		$unique_id = get_post_meta( $post_id, '_unique_id', true );
 		if ( empty( $unique_id ) ) {
 			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$max_id        = $wpdb->get_var( "SELECT MAX(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->postmeta} WHERE meta_key = '_unique_id'" );
 			$new_unique_id = ( $max_id ) ? $max_id + 1 : 1;
 			update_post_meta( $post_id, '_unique_id', $new_unique_id );
@@ -309,7 +311,8 @@ class MetaBoxes {
 
 		foreach ( $fields_to_save as $field ) {
 			if ( isset( $_POST[ $field ] ) ) {
-				$value = wp_unslash( $_POST[ $field ] );
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				$value = isset( $_POST[ $field ] ) ? wp_unslash( $_POST[ $field ] ) : '';
 				// Sanitize phone numbers based on format.
 				if ( 'office_phone' === $field || 'mobile_phone' === $field ) {
 					// Check digit-only version first
@@ -333,11 +336,11 @@ class MetaBoxes {
 		}
 
 		if ( isset( $_POST['location'] ) ) {
-			$location_id = sanitize_text_field( $_POST['location'] );
+			$location_id = sanitize_text_field( wp_unslash( $_POST['location'] ) );
 			update_post_meta( $post_id, '_location_id', $location_id );
 
 			if ( isset( $_POST['sb_staff_dir_location_name_hidden'] ) ) {
-				$location_name = sanitize_text_field( $_POST['sb_staff_dir_location_name_hidden'] );
+				$location_name = sanitize_text_field( wp_unslash( $_POST['sb_staff_dir_location_name_hidden'] ) );
 				update_post_meta( $post_id, '_location', $location_name );
 			}
 		}
@@ -356,8 +359,8 @@ class MetaBoxes {
 		}
 		update_post_meta( $post_id, '_private', $private_status );
 
-		$active_as_of_date_str = isset( $_POST['active_as_of_date'] ) ? sanitize_text_field( $_POST['active_as_of_date'] ) : '';
-		$planned_exit_date_str = isset( $_POST['planned_exit_date'] ) ? sanitize_text_field( $_POST['planned_exit_date'] ) : '';
+		$active_as_of_date_str = isset( $_POST['active_as_of_date'] ) ? sanitize_text_field( wp_unslash( $_POST['active_as_of_date'] ) ) : '';
+		$planned_exit_date_str = isset( $_POST['planned_exit_date'] ) ? sanitize_text_field( wp_unslash( $_POST['planned_exit_date'] ) ) : '';
 
 		$current_timestamp = current_time( 'timestamp' );
 
@@ -396,6 +399,7 @@ class MetaBoxes {
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		if ( ! wp_verify_nonce( $_POST['sb_location_details_meta_box_nonce'], 'sb_location_details_meta_box' ) ) {
 			return;
 		}
@@ -408,10 +412,10 @@ class MetaBoxes {
 			return;
 		}
 
-		$address_line1 = isset( $_POST['address_line1'] ) ? sanitize_text_field( $_POST['address_line1'] ) : '';
-		$city          = isset( $_POST['city'] ) ? sanitize_text_field( $_POST['city'] ) : '';
-		$state         = isset( $_POST['state'] ) ? sanitize_text_field( $_POST['state'] ) : '';
-		$zip           = isset( $_POST['zip'] ) ? sanitize_text_field( $_POST['zip'] ) : '';
+		$address_line1 = isset( $_POST['address_line1'] ) ? sanitize_text_field( wp_unslash( $_POST['address_line1'] ) ) : '';
+		$city          = isset( $_POST['city'] ) ? sanitize_text_field( wp_unslash( $_POST['city'] ) ) : '';
+		$state         = isset( $_POST['state'] ) ? sanitize_text_field( wp_unslash( $_POST['state'] ) ) : '';
+		$zip           = isset( $_POST['zip'] ) ? sanitize_text_field( wp_unslash( $_POST['zip'] ) ) : '';
 
 		update_post_meta( $post_id, '_address_line1', $address_line1 );
 		update_post_meta( $post_id, '_city', $city );
@@ -419,10 +423,10 @@ class MetaBoxes {
 		update_post_meta( $post_id, '_zip', $zip );
 
 		if ( isset( $_POST['location_phone_number'] ) ) {
-			update_post_meta( $post_id, '_location_phone_number', sanitize_text_field( $_POST['location_phone_number'] ) );
+			update_post_meta( $post_id, '_location_phone_number', sanitize_text_field( wp_unslash( $_POST['location_phone_number'] ) ) );
 		}
 		if ( isset( $_POST['location_department_program'] ) ) {
-			update_post_meta( $post_id, '_location_department_program', sanitize_text_field( $_POST['location_department_program'] ) );
+			update_post_meta( $post_id, '_location_department_program', sanitize_text_field( wp_unslash( $_POST['location_department_program'] ) ) );
 		}
 
 		$is_complete             = ! empty( $address_line1 ) && ! empty( $city ) && ! empty( $state ) && ! empty( $zip );

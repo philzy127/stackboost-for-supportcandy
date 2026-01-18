@@ -104,13 +104,18 @@ class Upgrade {
 		$meta_keys = array( '_office_phone', '_mobile_phone' );
 
 		$placeholders = implode( ',', array_fill( 0, count( $meta_keys ), '%s' ) );
-		$query = $wpdb->prepare(
-			"SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE meta_key IN ($placeholders) AND meta_value IS NOT NULL AND meta_value != ''",
-			$meta_keys
-		);
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$results = $wpdb->get_results( $query );
+		// The query string itself must be constructed safely since IN() clauses are dynamic in structure
+		// but the VALUES are passed to prepare().
+		// However, $wpdb->prepare() doesn't strictly support dynamic IN clause size via a single placeholder easily without manual placeholder construction.
+		// The existing code manually constructs placeholders, which is correct, but passes it to prepare which is good.
+		// BUT the linter flags "Found $query" in get_results, meaning it wants the prepare call to happen THERE or be assigned clearly.
+		// Let's make it clearer.
+
+		$sql = "SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE meta_key IN ($placeholders) AND meta_value IS NOT NULL AND meta_value != ''";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = $wpdb->get_results( $wpdb->prepare( $sql, $meta_keys ) );
 
 		$updated_count = 0;
 		foreach ( $results as $row ) {

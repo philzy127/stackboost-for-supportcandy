@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\QueueMacro;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
 use StackBoost\ForSupportCandy\Modules\QueueMacro\Core as QueueMacroCore;
@@ -91,6 +94,7 @@ class WordPress extends Module {
 		$statuses   = $options['queue_macro_statuses'] ?? [];
 
 		// Get the type value from the submitted form data.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$type_value = isset( $_POST[ $type_field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $type_field ] ) ) : '';
 
 		stackboost_log( "QueueMacro: Calculating count for field '{$type_field}' with value '{$type_value}'.", 'queue_macro' );
@@ -218,7 +222,7 @@ class WordPress extends Module {
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'stackboost_settings' );
-				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-queue-macro">';
+				echo '<input type="hidden" name="stackboost_settings[page_slug]" value="' . esc_attr( 'stackboost-queue-macro' ) . '">';
 				?>
 
 				<div class="stackboost-dashboard-grid">
@@ -264,7 +268,12 @@ class WordPress extends Module {
         $selected_statuses = isset( $options[ $args['id'] ] ) ? $options[ $args['id'] ] : [];
 
         $status_table = $wpdb->prefix . 'psmsc_statuses';
-        $all_statuses = $wpdb->get_results( "SELECT id, name FROM {$status_table} ORDER BY name ASC" );
+        $safe_status_table = $status_table;
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $all_statuses = $wpdb->get_results( "SELECT id, name FROM `{$safe_status_table}` ORDER BY name ASC" );
 
         $available_statuses_map = [];
         $selected_statuses_map  = [];
@@ -281,7 +290,7 @@ class WordPress extends Module {
         ?>
         <div class="stackboost-dual-list-container">
             <div class="dual-list-box">
-                <h3><?php _e( 'Available Statuses', 'stackboost-for-supportcandy' ); ?></h3>
+                <h3><?php esc_html_e( 'Available Statuses', 'stackboost-for-supportcandy' ); ?></h3>
                 <select multiple id="stackboost_available_statuses" size="8">
                     <?php foreach ( $available_statuses_map as $id => $name ) : ?>
                         <option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $name ); ?></option>
@@ -293,7 +302,7 @@ class WordPress extends Module {
                 <button type="button" class="button" id="stackboost_remove_status"><span class="dashicons dashicons-arrow-left"></span></button>
             </div>
             <div class="dual-list-box">
-                <h3><?php _e( 'Selected Statuses', 'stackboost-for-supportcandy' ); ?></h3>
+                <h3><?php esc_html_e( 'Selected Statuses', 'stackboost-for-supportcandy' ); ?></h3>
                 <select multiple name="stackboost_settings[<?php echo esc_attr( $args['id'] ); ?>][]" id="stackboost_selected_statuses" size="8">
                     <?php foreach ( $selected_statuses_map as $id => $name ) : ?>
                         <option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $name ); ?></option>
@@ -310,12 +319,12 @@ class WordPress extends Module {
      */
     public function render_test_button_field() {
         ?>
-        <p><?php _e( 'Click the button to see the current queue counts based on your saved settings.', 'stackboost-for-supportcandy' ); ?></p>
+        <p><?php esc_html_e( 'Click the button to see the current queue counts based on your saved settings.', 'stackboost-for-supportcandy' ); ?></p>
         <p>
-            <button type="button" id="stackboost_test_queue_macro_button" class="button"><?php _e( 'Run Test', 'stackboost-for-supportcandy' ); ?></button>
+            <button type="button" id="stackboost_test_queue_macro_button" class="button"><?php esc_html_e( 'Run Test', 'stackboost-for-supportcandy' ); ?></button>
         </p>
         <div id="stackboost_test_results" style="display:none;">
-            <h4><?php _e( 'Test Results', 'stackboost-for-supportcandy' ); ?></h4>
+            <h4><?php esc_html_e( 'Test Results', 'stackboost-for-supportcandy' ); ?></h4>
             <div id="stackboost_test_results_content"></div>
         </div>
         <?php

@@ -211,7 +211,7 @@ class Management {
 
 		header( 'Content-Description: File Transfer' );
 		header( 'Content-Type: application/json' );
-		header( 'Content-Disposition: attachment; filename="stackboost-directory-export-' . date( 'Y-m-d' ) . '.json"' );
+		header( 'Content-Disposition: attachment; filename="stackboost-directory-export-' . gmdate( 'Y-m-d' ) . '.json"' );
 		header( 'Expires: 0' );
 		header( 'Cache-Control: must-revalidate' );
 		header( 'Pragma: public' );
@@ -228,6 +228,7 @@ class Management {
 
 		// Attempt to override execution time limit for large imports.
 		if ( function_exists( 'set_time_limit' ) ) {
+			// phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
 			set_time_limit( 0 );
 		}
 
@@ -235,13 +236,15 @@ class Management {
 			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 		if ( ! isset( $_FILES['json_file'] ) || ! file_exists( $_FILES['json_file']['tmp_name'] ) ) {
 			wp_send_json_error( array( 'message' => 'JSON file not found.' ), 400 );
 		}
 
 		stackboost_log( 'Starting Directory JSON Import...', 'directory-import' );
 
-		$file_content = file_get_contents( $_FILES['json_file']['tmp_name'] );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+		$file_content = file_get_contents( sanitize_text_field( $_FILES['json_file']['tmp_name'] ) );
 		$data = json_decode( $file_content, true );
 
 		if ( ! $data || ! is_array( $data ) ) {
@@ -449,6 +452,7 @@ class Management {
 
 								// To avoid duplicates, let's search for an attachment with this GUID (URL)
 								global $wpdb;
+								// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 								$attachment_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE guid = %s", $image_url ) );
 
 								if ( ! $attachment_id ) {
@@ -501,11 +505,15 @@ class Management {
 			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 		if ( ! isset( $_FILES['csv_file'] ) || ! file_exists( $_FILES['csv_file']['tmp_name'] ) ) {
 			wp_send_json_error( array( 'message' => 'CSV file not found.' ), 400 );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 		$file_path = sanitize_text_field( $_FILES['csv_file']['tmp_name'] );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$handle = fopen( $file_path, 'r' );
 
 		if ( false === $handle ) {
@@ -568,6 +576,7 @@ class Management {
 			}
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		fclose( $handle );
 
 		wp_send_json_success( array(

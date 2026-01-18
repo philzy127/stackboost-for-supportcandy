@@ -1,5 +1,7 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 use StackBoost\ForSupportCandy\WordPress\Plugin;
 
 /**
@@ -133,11 +135,11 @@ function stackboost_log( $message, $context = 'general' ) {
     }
 
     // Format the message.
-    $timestamp = date( 'Y-m-d H:i:s' );
+    $timestamp = gmdate( 'Y-m-d H:i:s' );
     $entry     = sprintf( "[%s] [%s] ", $timestamp, $context );
 
     if ( is_array( $message ) || is_object( $message ) ) {
-        $entry .= print_r( $message, true );
+        $entry .= json_encode( $message );
     } else {
         $entry .= $message;
     }

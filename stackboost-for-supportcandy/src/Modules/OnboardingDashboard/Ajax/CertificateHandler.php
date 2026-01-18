@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Ajax;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Services\PdfService;
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Settings;
@@ -24,8 +27,8 @@ class CertificateHandler {
 			wp_send_json_error( 'Invalid Nonce' );
 		}
 
-		$message = isset( $_POST['message'] ) ? sanitize_text_field( $_POST['message'] ) : '';
-		$context = isset( $_POST['context'] ) ? sanitize_text_field( $_POST['context'] ) : 'onboarding_js';
+		$message = isset( $_POST['message'] ) ? sanitize_text_field( wp_unslash( $_POST['message'] ) ) : '';
+		$context = isset( $_POST['context'] ) ? sanitize_text_field( wp_unslash( $_POST['context'] ) ) : 'onboarding_js';
 
 		if ( ! empty( $message ) ) {
 			stackboost_log( "[Client] $message", $context );
@@ -40,7 +43,9 @@ class CertificateHandler {
 	public static function handle_request() {
 		stackboost_log( 'Certificate Generation Initiated.', 'onboarding' );
 		// Verify Nonce
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		if ( ! check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce', false ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 			stackboost_log( 'Certificate Generation Failed: Invalid Nonce. POST nonce: ' . ( $_POST['nonce'] ?? 'NULL' ), 'error' );
 			wp_send_json_error( 'Security check failed. Please refresh the page and try again.' );
 		}
@@ -53,7 +58,7 @@ class CertificateHandler {
 			}
 		}
 
-		$present_attendees = isset( $_POST['present_attendees'] ) ? json_decode( stripslashes( $_POST['present_attendees'] ), true ) : [];
+		$present_attendees = isset( $_POST['present_attendees'] ) ? json_decode( sanitize_text_field( wp_unslash( $_POST['present_attendees'] ) ), true ) : [];
 
 		if ( empty( $present_attendees ) ) {
 			stackboost_log( 'No attendees marked present.', 'onboarding' );
@@ -179,7 +184,7 @@ class CertificateHandler {
 				}
 
 				if ( file_exists( $filepath ) ) {
-					unlink( $filepath );
+					wp_delete_file( $filepath );
 				}
 			} catch ( \Throwable $e ) {
 				stackboost_log( 'Critical error processing certificate for ' . $attendee_name . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(), 'error' );
@@ -316,7 +321,7 @@ class CertificateHandler {
 		$target_dir = $upload_dir['basedir'] . $rel_path;
 
 		if ( ! file_exists( $target_dir ) ) {
-			mkdir( $target_dir, 0755, true );
+			wp_mkdir_p( $target_dir );
 		}
 
 		// Ensure unique filename

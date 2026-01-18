@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Shortcodes;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Staff;
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Settings;
@@ -22,6 +25,7 @@ class DashboardShortcode {
 		global $post;
 		$is_shortcode_page = ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'stackboost_onboarding_dashboard' ) );
 		$is_block_page     = ( is_a( $post, 'WP_Post' ) && has_block( 'stackboost/onboarding-dashboard', $post ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$is_completion_page = ( isset( $_GET['step_id'] ) && $_GET['step_id'] === 'completion' );
 
 		if ( $is_shortcode_page || $is_block_page || $is_completion_page ) {
@@ -93,8 +97,10 @@ class DashboardShortcode {
 			$current_step_id = null;
 			$current_step_index = -1;
 
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( isset( $_GET['step_id'] ) ) {
-				$req = $_GET['step_id'];
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$req = sanitize_text_field( wp_unslash( $_GET['step_id'] ) );
 				foreach ( $full_sequence as $idx => $data ) {
 					if ( $data['id'] == $req ) {
 						$current_step_id = $req;
@@ -189,7 +195,8 @@ class DashboardShortcode {
 			$full_sequence[] = $id;
 		}
 
-		$req_id = $_GET['step_id'] ?? null;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$req_id = isset( $_GET['step_id'] ) ? sanitize_text_field( wp_unslash( $_GET['step_id'] ) ) : null;
 		$is_completion = ( $req_id === 'completion' );
 		$is_pre = ( ! $req_id );
 
@@ -258,7 +265,10 @@ class DashboardShortcode {
 			<div class="onboarding-dashboard-container">
 				<h2 class="onboarding-title"><?php echo esc_html( $step_post->post_title ); ?></h2>
 				<div class="onboarding-main-content onboarding-main-step-content">
-					<?php echo apply_filters( 'the_content', $step_post->post_content ); ?>
+					<?php
+					// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+					echo wp_kses_post( apply_filters( 'the_content', $step_post->post_content ) );
+					?>
 
 					<?php if ( ! empty( $checklist ) ) : ?>
 						<div class="onboarding-checklist-section">
@@ -289,7 +299,10 @@ class DashboardShortcode {
 						<div class="onboarding-notes-section">
 							<h3><span class="dashicons dashicons-edit"></span> Notes</h3>
 							<div class="onboarding-notes-content">
-								<?php echo apply_filters( 'the_content', $notes ); ?>
+								<?php
+								// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+								echo wp_kses_post( apply_filters( 'the_content', $notes ) );
+								?>
 							</div>
 						</div>
 					<?php endif; ?>

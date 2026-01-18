@@ -69,8 +69,8 @@ abstract class Module {
 	public function render_textarea_field( array $args ) {
 		$options = get_option( 'stackboost_settings', [] );
 		$value   = isset( $options[ $args['id'] ] ) ? $options[ $args['id'] ] : '';
-		$class   = ! empty( $args['class'] ) ? esc_attr( $args['class'] ) : 'large-text';
-		echo '<textarea id="' . esc_attr( $args['id'] ) . '" name="stackboost_settings[' . esc_attr( $args['id'] ) . ']" rows="5" class="' . $class . '">' . esc_textarea( $value ) . '</textarea>';
+		$class   = ! empty( $args['class'] ) ? $args['class'] : 'large-text';
+		echo '<textarea id="' . esc_attr( $args['id'] ) . '" name="stackboost_settings[' . esc_attr( $args['id'] ) . ']" rows="5" class="' . esc_attr( $class ) . '">' . esc_textarea( $value ) . '</textarea>';
 		if ( ! empty( $args['desc'] ) ) {
 			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
 		}
@@ -106,10 +106,10 @@ abstract class Module {
 	public function render_select_field( $args ) {
 		$options = get_option( 'stackboost_settings', [] );
 		$value   = isset( $options[ $args['id'] ] ) ? $options[ $args['id'] ] : '';
-		$class   = ! empty( $args['class'] ) ? esc_attr( $args['class'] ) : 'regular';
+		$class   = ! empty( $args['class'] ) ? $args['class'] : 'regular';
 		$choices = ! empty( $args['choices'] ) && is_array( $args['choices'] ) ? $args['choices'] : [];
 
-		echo '<select id="' . esc_attr( $args['id'] ) . '" name="stackboost_settings[' . esc_attr( $args['id'] ) . ']" class="' . $class . '">';
+		echo '<select id="' . esc_attr( $args['id'] ) . '" name="stackboost_settings[' . esc_attr( $args['id'] ) . ']" class="' . esc_attr( $class ) . '">';
 
 		if ( isset( $args['placeholder'] ) ) {
 			echo '<option value="">' . esc_html( $args['placeholder'] ) . '</option>';

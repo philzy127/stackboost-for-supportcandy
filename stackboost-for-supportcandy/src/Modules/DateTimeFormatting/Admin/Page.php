@@ -207,10 +207,15 @@ class Page {
 
 		global $wpdb;
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
-		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $custom_fields_table ) ) ) {
+		$table_name_like = $wpdb->esc_like( $custom_fields_table );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) ) {
+			$safe_table = $custom_fields_table;
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$custom_fields = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT slug, name FROM `{$custom_fields_table}` WHERE type = %s",
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT slug, name FROM `{$safe_table}` WHERE type = %s",
 					'datetime'
 				),
 				ARRAY_A

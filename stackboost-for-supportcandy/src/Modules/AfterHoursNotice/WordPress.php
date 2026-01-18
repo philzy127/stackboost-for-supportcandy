@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
 use StackBoost\ForSupportCandy\Modules\AfterHoursNotice\Core as AfterHoursNoticeCore;
@@ -318,7 +321,7 @@ class WordPress extends Module {
 				}
 
 				// The message is saved via wp_kses_post, so it's safe to display.
-				echo '<div class="stackboost-after-hours-notice" style="margin-left: 15px; margin-bottom: 15px;">' . wpautop( $message ) . '</div>';
+				echo '<div class="stackboost-after-hours-notice" style="margin-left: 15px; margin-bottom: 15px;">' . wp_kses_post( wpautop( $message ) ) . '</div>';
 
 				if ( is_admin() ) {
 					echo '</div>';
@@ -345,6 +348,7 @@ class WordPress extends Module {
 			stackboost_log( 'AfterHoursNotice: Currently after hours. Prepending notice to email.', 'after_hours' );
 			$message = $options['after_hours_message'] ?? '';
 			if ( ! empty( $message ) ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				$notice      = '<div class="stackboost-after-hours-notice" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #ffba00; background-color: #fff8e5;">' . wpautop( $message ) . '</div>';
 				$email_data['body'] = $notice . $email_data['body'];
 			}
@@ -370,6 +374,7 @@ class WordPress extends Module {
 
         // 1. Non-Recurring
         $non_recurring = \WPSC_Holiday::find( [
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             'meta_query' => [
                 'relation' => 'AND',
                 [ 'slug' => 'agent', 'compare' => '=', 'val' => 0 ],
@@ -388,6 +393,7 @@ class WordPress extends Module {
         // 2. Recurring - This is tricky because Core logic expects explicit Y-m-d dates.
         // We need to generate this year's instance of the recurring holiday.
         $recurring = \WPSC_Holiday::find( [
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             'meta_query' => [
                 'relation' => 'AND',
                 [ 'slug' => 'agent', 'compare' => '=', 'val' => 0 ],

@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\ConditionalOptions;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
 
@@ -308,17 +311,17 @@ class WordPress extends Module {
 	 * AJAX: Get Field Options.
 	 */
 	public function ajax_get_field_options() {
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'AJAX Get Field Options Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
-		}
-
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		// if ( function_exists( 'stackboost_log' ) ) {
+		// 	stackboost_log( 'AJAX Get Field Options Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
+		// }
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( $_POST['field_slug'] ) : '';
+		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['field_slug'] ) ) : '';
 		if ( empty( $field_slug ) ) {
 			wp_send_json_error( [ 'message' => 'Missing field slug' ] );
 		}
@@ -369,17 +372,17 @@ class WordPress extends Module {
 	 * AJAX: Get Roles.
 	 */
 	public function ajax_get_roles() {
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'AJAX Get Roles Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
-		}
-
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		// if ( function_exists( 'stackboost_log' ) ) {
+		// 	stackboost_log( 'AJAX Get Roles Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
+		// }
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$context = sanitize_text_field( $_POST['context'] ?? 'wp' );
+		$context = sanitize_text_field( wp_unslash( $_POST['context'] ?? 'wp' ) );
 		$roles   = Core::get_instance()->get_roles( $context );
 
 		wp_send_json_success( $roles );
@@ -389,23 +392,24 @@ class WordPress extends Module {
 	 * AJAX: Save Rules.
 	 */
 	public function ajax_save_rules() {
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'AJAX Save Rules Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
-		}
-
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		// if ( function_exists( 'stackboost_log' ) ) {
+		// 	stackboost_log( 'AJAX Save Rules Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
+		// }
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$rules_json = stripslashes( $_POST['rules'] ?? '[]' );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$rules_json = isset( $_POST['rules'] ) ? wp_unslash( $_POST['rules'] ) : '[]';
 		$rules      = json_decode( $rules_json, true );
 		$is_enabled = isset( $_POST['enabled'] ) && 'true' === $_POST['enabled'];
 
-		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'Decoded Rules: ' . print_r( $rules, true ) . ' Enabled: ' . ( $is_enabled ? 'Yes' : 'No' ), 'conditional_options' );
-		}
+		// if ( function_exists( 'stackboost_log' ) ) {
+		// 	stackboost_log( 'Decoded Rules: ' . print_r( $rules, true ) . ' Enabled: ' . ( $is_enabled ? 'Yes' : 'No' ), 'conditional_options' );
+		// }
 
 		if ( ! is_array( $rules ) ) {
 			wp_send_json_error( [ 'message' => 'Invalid data format' ] );

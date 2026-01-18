@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Page {
 
@@ -36,7 +39,8 @@ class Page {
 			'import_export' => __( 'Import / Export', 'stackboost-for-supportcandy' ),
 		];
 
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'steps';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'steps';
 
         $theme_class = 'sb-theme-clean-tech';
         if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -56,7 +60,7 @@ class Page {
 						admin_url( 'admin.php' )
 					);
 					$active  = ( $active_tab === $tab_id ) ? ' nav-tab-active' : '';
-					echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . $active . '">' . esc_html( $tab_name ) . '</a>';
+					echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . esc_attr( $active ) . '">' . esc_html( $tab_name ) . '</a>';
 				}
 				?>
 			</h2>

@@ -35,6 +35,7 @@ class TicketService {
 		$args = [
 			'items_per_page' => 0, // All
 			'is_active'      => 1, // Only active tickets
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => [
 				'relation' => 'AND',
 				[
@@ -90,18 +91,27 @@ class TicketService {
 
 			// Dynamic table name detection
 			$table_name = $wpdb->prefix . 'wpsc_attachments';
-			if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) != $table_name ) {
+			$table_name_like = $wpdb->esc_like( $table_name );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) != $table_name ) {
 				$table_name = $wpdb->prefix . 'psmsc_attachments';
 			}
 
 			stackboost_log( "TicketService: Checking certificates in table: $table_name", 'onboarding' );
 
-			$ids_placeholder = implode( ',', array_map( 'intval', $ticket_ids ) );
-			$query = "SELECT ticket_id, COUNT(*) as count FROM $table_name WHERE ticket_id IN ($ids_placeholder) AND name LIKE 'Onboarding_Certificate_%' GROUP BY ticket_id";
+			$ids_placeholder = implode( ',', array_fill( 0, count( $ticket_ids ), '%d' ) );
+			// $table_name is derived from $wpdb->prefix so it is safe to interpolate directly, but usually safer to use $wpdb->prefix logic strictly.
+			// Since we checked against SHOW TABLES output above, it matches a real table name.
+			$safe_table_name = esc_sql( $table_name );
+			$query = "SELECT ticket_id, COUNT(*) as count FROM {$safe_table_name} WHERE ticket_id IN ($ids_placeholder) AND name LIKE %s GROUP BY ticket_id";
 
-			stackboost_log( "TicketService: Query: $query", 'onboarding' );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$prepared_query = $wpdb->prepare( $query, array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] ) );
 
-			$results = $wpdb->get_results( $query );
+			stackboost_log( "TicketService: Query: $prepared_query", 'onboarding' );
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$results = $wpdb->get_results( $prepared_query );
 
 			if ( $results ) {
 				stackboost_log( "TicketService: Certificate Query Results Found: " . count( $results ), 'onboarding' );

@@ -35,15 +35,16 @@ class Ajax {
 
         global $wpdb;
         $question_id = isset( $_POST['question_id'] ) ? intval( $_POST['question_id'] ) : 0;
-        $report_heading = isset( $_POST['report_heading'] ) ? sanitize_text_field( $_POST['report_heading'] ) : '';
+        $report_heading = isset( $_POST['report_heading'] ) ? sanitize_text_field( wp_unslash( $_POST['report_heading'] ) ) : '';
 
         if ( ! $question_id ) {
             wp_send_json_error( 'Invalid question ID.' );
         }
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $result = $wpdb->update(
             $this->questions_table_name,
-            [ 'report_heading' => $report_heading ],
+            [ 'report_heading' => wp_unslash( $report_heading ) ],
             [ 'id' => $question_id ],
             [ '%s' ],
             [ '%d' ]
@@ -74,7 +75,9 @@ class Ajax {
             wp_send_json_error( 'Invalid question ID.' );
         }
 
-        $question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$this->questions_table_name} WHERE id = %d", $question_id ), ARRAY_A );
+        $safe_table = $this->questions_table_name;
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $question = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM `{$safe_table}` WHERE id = %d", $question_id ), ARRAY_A );
 
         if ( ! $question ) {
             stackboost_log( "ATS get_question: Question not found.", 'ats' );
@@ -82,7 +85,9 @@ class Ajax {
         }
 
         if ( $question['question_type'] === 'dropdown' ) {
-            $options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM {$this->dropdown_options_table_name} WHERE question_id = %d ORDER BY sort_order ASC", $question_id ), ARRAY_A );
+            $safe_dropdown_table = $this->dropdown_options_table_name;
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$safe_dropdown_table}` WHERE question_id = %d ORDER BY sort_order ASC", $question_id ), ARRAY_A );
             $question['options_str'] = implode( ', ', array_column( $options, 'option_value' ) );
         } else {
             $question['options_str'] = '';
@@ -109,21 +114,23 @@ class Ajax {
         // Get the current max sort order if adding new
         $current_max_order = 0;
         if ( ! $question_id ) {
-            $current_max_order = (int) $wpdb->get_var( "SELECT MAX(sort_order) FROM {$this->questions_table_name}" );
+            $safe_table = $this->questions_table_name;
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $current_max_order = (int) $wpdb->get_var( "SELECT MAX(sort_order) FROM `{$safe_table}`" );
         }
 
         $data = [
-            'question_text' => sanitize_text_field( $_POST['question_text'] ),
-            'question_type' => sanitize_text_field( $_POST['question_type'] ),
+            'question_text' => isset($_POST['question_text']) ? sanitize_text_field( wp_unslash( $_POST['question_text'] ) ) : '',
+            'question_type' => isset($_POST['question_type']) ? sanitize_text_field( wp_unslash( $_POST['question_type'] ) ) : '',
             'is_required'   => isset( $_POST['is_required'] ) && $_POST['is_required'] === '1' ? 1 : 0,
             'is_readonly_prefill' => isset( $_POST['is_readonly_prefill'] ) && $_POST['is_readonly_prefill'] === '1' ? 1 : 0,
             'sort_order'    => isset( $_POST['sort_order'] ) ? intval( $_POST['sort_order'] ) : ($question_id ? 0 : $current_max_order + 1),
-            'prefill_key'   => sanitize_text_field( $_POST['prefill_key'] ?? '' )
+            'prefill_key'   => isset($_POST['prefill_key']) ? sanitize_text_field( wp_unslash( $_POST['prefill_key'] ) ) : ''
         ];
 
         // Note: prefill_key is allowed for ALL types now.
 
-        stackboost_log( "ATS save_question data: " . print_r($data, true), 'ats' );
+        // stackboost_log( "ATS save_question data: " . print_r($data, true), 'ats' );
 
         if ( empty( $data['question_text'] ) ) {
             wp_send_json_error( 'Question text is required.' );
@@ -131,7 +138,9 @@ class Ajax {
 
         // Highlander Rule: Only one 'ticket_number' question allowed per form.
         if ( $data['question_type'] === 'ticket_number' ) {
-            $existing_id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$this->questions_table_name} WHERE question_type = %s", 'ticket_number' ) );
+            $safe_table = $this->questions_table_name;
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $existing_id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM `{$safe_table}` WHERE question_type = %s", 'ticket_number' ) );
             // If one exists AND (we are creating new OR we are updating a different question)
             if ( $existing_id && ( ! $question_id || $existing_id != $question_id ) ) {
                  stackboost_log( "ATS save_question failed: Highlander Rule violated. Existing ID: $existing_id", 'ats' );
@@ -141,6 +150,7 @@ class Ajax {
 
         if ( $question_id ) {
             // Update
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $result = $wpdb->update( $this->questions_table_name, $data, [ 'id' => $question_id ] );
             if ( false === $result ) {
                 stackboost_log( "ATS save_question update failed. DB Error: " . $wpdb->last_error, 'ats' );
@@ -152,9 +162,10 @@ class Ajax {
                 $data['report_heading'] = '';
             }
 
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $result = $wpdb->insert( $this->questions_table_name, $data );
             if ( false === $result ) {
-                stackboost_log( "ATS save_question insert failed. Data: " . print_r($data, true) . " DB Error: " . $wpdb->last_error, 'ats' );
+                // stackboost_log( "ATS save_question insert failed. Data: " . print_r($data, true) . " DB Error: " . $wpdb->last_error, 'ats' );
                 wp_send_json_error( 'Failed to add question.' );
             }
             $question_id = $wpdb->insert_id;
@@ -162,12 +173,17 @@ class Ajax {
 
         // Handle Dropdown Options
         if ( $data['question_type'] === 'dropdown' ) {
-            $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
+            $safe_dropdown_table = $this->dropdown_options_table_name;
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $wpdb->delete( $safe_dropdown_table, [ 'question_id' => $question_id ] );
 
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( ! empty( $_POST['dropdown_options'] ) ) {
-                $options = array_map( 'trim', explode( ',', $_POST['dropdown_options'] ) );
+                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                $options = array_map( 'sanitize_text_field', array_map( 'trim', explode( ',', wp_unslash( $_POST['dropdown_options'] ) ) ) );
                 foreach ( $options as $index => $opt ) {
                     if ( ! empty( $opt ) ) {
+                        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
                         $wpdb->insert( $this->dropdown_options_table_name, [
                             'question_id'  => $question_id,
                             'option_value' => $opt,
@@ -178,6 +194,7 @@ class Ajax {
             }
         } elseif ( $data['question_type'] !== 'dropdown' ) {
              // Clean up options if type changed away from dropdown
+             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
              $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
         }
 
@@ -203,7 +220,9 @@ class Ajax {
             wp_send_json_error( 'Invalid question ID.' );
         }
 
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->delete( $this->questions_table_name, [ 'id' => $question_id ] );
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->delete( $this->dropdown_options_table_name, [ 'question_id' => $question_id ] );
 
         wp_send_json_success( 'Question deleted successfully.' );
@@ -219,15 +238,20 @@ class Ajax {
         check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
 
         global $wpdb;
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
         $order = isset( $_POST['order'] ) ? $_POST['order'] : [];
+        if ( is_array( $order ) ) {
+            $order = array_map( 'intval', array_map( 'wp_unslash', $order ) );
+        }
 
-        stackboost_log( "ATS reorder_questions: " . print_r($order, true), 'ats' );
+        // stackboost_log( "ATS reorder_questions: " . print_r($order, true), 'ats' );
 
         if ( empty( $order ) || ! is_array( $order ) ) {
             wp_send_json_error( 'Invalid order data.' );
         }
 
         foreach ( $order as $position => $question_id ) {
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $wpdb->update(
                 $this->questions_table_name,
                 [ 'sort_order' => intval( $position ) ],

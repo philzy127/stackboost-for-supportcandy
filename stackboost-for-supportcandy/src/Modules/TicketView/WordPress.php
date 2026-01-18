@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\TicketView;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
 
@@ -58,7 +61,7 @@ class WordPress extends Module {
 	public function ajax_get_ticket_details_card() {
 		// Use the same nonce action as the frontend script, which is 'wpsc_get_individual_ticket'.
 		// We use wp_verify_nonce instead of check_ajax_referer to handle failures gracefully with JSON.
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'wpsc_get_individual_ticket' ) ) {
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpsc_get_individual_ticket' ) ) {
 			wp_send_json_error( [ 'message' => 'Security check failed (Nonce mismatch)' ] );
 		}
 
@@ -254,10 +257,10 @@ class WordPress extends Module {
 		$options = get_option( 'stackboost_settings' );
 
 		// Debug log options
-		stackboost_log( "TicketView::enqueue_scripts options: " . print_r( [
+		stackboost_log( "TicketView::enqueue_scripts options: " . json_encode( [
 			'enable_page_last_loaded'      => $options['enable_page_last_loaded'] ?? 'not set',
 			'enable_ticket_details_card'   => $options['enable_ticket_details_card'] ?? 'not set',
-		], true ), 'ticket_view' );
+		] ), 'ticket_view' );
 
 		// Enqueue Page Last Loaded Script
 		if ( ! empty( $options['enable_page_last_loaded'] ) ) {
@@ -503,7 +506,7 @@ class WordPress extends Module {
 		$options = get_option( 'stackboost_settings' );
 		$id = $args['id'];
 		$checked = isset( $options[ $id ] ) && $options[ $id ] ? 'checked' : '';
-		echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="1" ' . $checked . '>';
+		echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="1" ' . esc_attr( $checked ) . '>';
 		if ( ! empty( $args['desc'] ) ) {
 			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
 		}
@@ -551,7 +554,7 @@ class WordPress extends Module {
 			$disabled_attr = 'disabled';
 		}
 
-		echo '<option value="utm" ' . selected( $selected, 'utm', false ) . ' ' . $disabled_attr . '>' . $utm_label . '</option>';
+		echo '<option value="utm" ' . selected( $selected, 'utm', false ) . ' ' . esc_attr( $disabled_attr ) . '>' . esc_html( $utm_label ) . '</option>';
 
 		echo '</select>';
 

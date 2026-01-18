@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Settings {
 
@@ -25,7 +28,7 @@ class Settings {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
-		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( $_POST['field_slug'] ) : '';
+		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['field_slug'] ) ) : '';
 		if ( empty( $field_slug ) ) {
 			wp_send_json_error( __( 'Invalid field slug.', 'stackboost-for-supportcandy' ) );
 		}
@@ -253,6 +256,7 @@ class Settings {
 	 * Enqueue Assets for Settings Page.
 	 */
 	public static function enqueue_assets() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : '';
 		if ( 'settings' !== $tab && 'certificate' !== $tab ) {
 			return;
@@ -279,6 +283,7 @@ class Settings {
 	public static function render_page() {
 		self::enqueue_assets();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['settings-updated'] ) ) {
 			add_settings_error( 'stackboost_messages', 'stackboost_message', __( 'Settings Saved', 'stackboost-for-supportcandy' ), 'updated' );
 		}
@@ -528,6 +533,7 @@ class Settings {
 	public static function render_certificate_page() {
 		self::enqueue_assets();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['settings-updated'] ) ) {
 			add_settings_error( 'stackboost_messages', 'stackboost_message', __( 'Settings Saved', 'stackboost-for-supportcandy' ), 'updated' );
 		}

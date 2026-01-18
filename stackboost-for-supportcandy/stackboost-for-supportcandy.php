@@ -8,6 +8,8 @@
  * Text Domain: stackboost-for-supportcandy
  * Domain Path: /languages
  * Requires Plugins: supportcandy
+ * License: GPLv2 or later
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -19,7 +21,7 @@ define( 'STACKBOOST_VERSION', '1.6.0' );
 define( 'STACKBOOST_PLUGIN_FILE', __FILE__ );
 define( 'STACKBOOST_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'STACKBOOST_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'STACKBOOST_REQUIRED_UPDATE_TIMESTAMP', '202510131911' );
+define( 'STACKBOOST_REQUIRED_UPDATE_TIMESTAMP', '202601130000' );
 
 /**
  * Handles one-time upgrade routines.

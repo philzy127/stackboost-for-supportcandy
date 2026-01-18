@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Data;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 class CustomPostTypes {
 
@@ -145,10 +148,10 @@ class CustomPostTypes {
 		$checklist_items = get_post_meta( $post->ID, '_stackboost_onboarding_checklist_items', true );
 
 		echo '<p>';
-		echo '<label for="stkb_onboarding_checklist_field">' . __( 'Enter each checklist item on a new line:', 'stackboost-for-supportcandy' ) . '</label>';
+		echo '<label for="stkb_onboarding_checklist_field">' . esc_html__( 'Enter each checklist item on a new line:', 'stackboost-for-supportcandy' ) . '</label>';
 		echo '<textarea name="stkb_onboarding_checklist_field" id="stkb_onboarding_checklist_field" rows="8" style="width:100%;">' . esc_textarea( $checklist_items ) . '</textarea>';
 		echo '</p>';
-		echo '<p class="description">' . __( 'Each line will be a separate checkbox item on the frontend. Use [text in brackets] for info tooltips.', 'stackboost-for-supportcandy' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Each line will be a separate checkbox item on the frontend. Use [text in brackets] for info tooltips.', 'stackboost-for-supportcandy' ) . '</p>';
 	}
 
 	/**
@@ -168,7 +171,7 @@ class CustomPostTypes {
 				'media_buttons' => true,
 			)
 		);
-		echo '<p class="description">' . __( 'Enter any additional notes for this step. Supports rich text, images, and links.', 'stackboost-for-supportcandy' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Enter any additional notes for this step. Supports rich text, images, and links.', 'stackboost-for-supportcandy' ) . '</p>';
 	}
 
 	/**
@@ -176,7 +179,7 @@ class CustomPostTypes {
 	 * @param int $post_id
 	 */
 	public static function save_meta_box_data( $post_id ) {
-		if ( ! isset( $_POST['stkb_onboarding_meta_nonce'] ) || ! wp_verify_nonce( $_POST['stkb_onboarding_meta_nonce'], 'stkb_onboarding_save_meta' ) ) {
+		if ( ! isset( $_POST['stkb_onboarding_meta_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['stkb_onboarding_meta_nonce'] ) ), 'stkb_onboarding_save_meta' ) ) {
 			return;
 		}
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
@@ -187,12 +190,12 @@ class CustomPostTypes {
 		}
 
 		if ( isset( $_POST['stkb_onboarding_checklist_field'] ) ) {
-			$checklist_items = sanitize_textarea_field( $_POST['stkb_onboarding_checklist_field'] );
+			$checklist_items = sanitize_textarea_field( wp_unslash( $_POST['stkb_onboarding_checklist_field'] ) );
 			update_post_meta( $post_id, '_stackboost_onboarding_checklist_items', $checklist_items );
 		}
 
 		if ( isset( $_POST['stkb_onboarding_notes_field'] ) ) {
-			$notes_content = wp_kses_post( $_POST['stkb_onboarding_notes_field'] );
+			$notes_content = wp_kses_post( wp_unslash( $_POST['stkb_onboarding_notes_field'] ) );
 			update_post_meta( $post_id, '_stackboost_onboarding_notes_content', $notes_content );
 		}
 	}

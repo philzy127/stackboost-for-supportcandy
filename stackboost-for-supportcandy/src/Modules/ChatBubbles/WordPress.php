@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\ChatBubbles;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
 
@@ -43,7 +46,8 @@ class WordPress extends Module {
 	public function init_hooks() {
 		// Log only on relevant pages to reduce noise
 		if ( function_exists( 'stackboost_log' ) ) {
-			$page = isset( $_GET['page'] ) ? $_GET['page'] : '';
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 			$allowed_pages = [ 'stackboost-chat-bubbles', 'wpsc-tickets', 'wpsc-view-ticket' ];
 			if ( in_array( $page, $allowed_pages ) ) {
 				stackboost_log( 'ChatBubbles WP Adapter Init Hooks. (Page: ' . $page . ')', 'chat_bubbles' );

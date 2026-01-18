@@ -1,6 +1,9 @@
 <?php
 
+
 namespace StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
 
@@ -116,12 +119,14 @@ class WordPress extends Module {
      */
     public function enqueue_admin_assets(string $hook_suffix) {
         // Robust check for the admin page
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         if ( ! isset( $_GET['page'] ) || 'stackboost-ats' !== $_GET['page'] ) {
             return;
         }
 
         wp_enqueue_style( 'stackboost-ats-admin', STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-ats-admin.css', [], STACKBOOST_VERSION );
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'main';
         $options = get_option( 'stackboost_settings', [] );
         $diagnostic_log_enabled = ! empty( $options['diagnostic_log_enabled'] );

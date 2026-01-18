@@ -157,6 +157,7 @@ class WordPress {
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
 			// Dashicons is loaded by default in admin.
 
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
 			// Enqueue scripts for the Contact Widget settings tab.
@@ -348,6 +349,9 @@ class WordPress {
 	 * Render the admin page.
 	 */
 	public function render_admin_page() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
+
 		$base_tabs = array(
 			'staff'           => __( 'Staff', 'stackboost-for-supportcandy' ),
 			'departments'     => __( 'Departments', 'stackboost-for-supportcandy' ),
@@ -373,8 +377,6 @@ class WordPress {
 		}
 		// Add any other tabs that might not be in the order array to the end
 		$tabs = array_merge($ordered_tabs, array_diff_key($tabs, $ordered_tabs));
-
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
 
         $theme_class = 'sb-theme-clean-tech';
         if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -404,7 +406,7 @@ class WordPress {
 						)
 					);
 					$active  = ( $active_tab === $tab_id ) ? ' nav-tab-active' : '';
-					echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . $active . '">' . esc_html( $tab_name ) . '</a>';
+					echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . esc_attr( $active ) . '">' . esc_html( $tab_name ) . '</a>';
 				}
 				?>
 			</h2>
@@ -608,9 +610,9 @@ class WordPress {
 			if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
 				// Primary method for backend.
 				$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
-			} elseif ( isset( $_REQUEST['ticket_id'] ) ) {
+			} elseif ( isset( $_REQUEST['ticket_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				// Fallback for frontend AJAX view, where the ID is in the REQUEST.
-				$current_ticket_id = absint( $_REQUEST['ticket_id'] );
+				$current_ticket_id = absint( $_REQUEST['ticket_id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			}
 
 			// If the passed $ticket is unreliable (frontend), create a new one.
@@ -944,7 +946,9 @@ class WordPress {
 		}
 
 		// Check for our custom query arg to determine the return link.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
 
 		$return_link = '';
@@ -957,7 +961,9 @@ class WordPress {
 			}
 
 			// 2. Fallback/Primary Method: Use the referer URL from the POST data if available.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			if ( isset( $_POST['_wp_original_http_referer'] ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
 				// Security check: ensure the referer is for the correct ticket (frontend or backend).
 				$is_frontend_url = strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false;
@@ -992,14 +998,19 @@ class WordPress {
 			2  => __( 'Custom field updated.', 'stackboost-for-supportcandy' ),
 			3  => __( 'Custom field deleted.', 'stackboost-for-supportcandy' ),
 			4  => __( 'Staff updated.', 'stackboost-for-supportcandy' ),
-			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
+			/* translators: %s: revision title */
+			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			6  => __( 'Staff published.', 'stackboost-for-supportcandy' ) . $return_link,
 			7  => __( 'Staff saved.', 'stackboost-for-supportcandy' ),
 			8  => __( 'Staff submitted.', 'stackboost-for-supportcandy' ),
 			9  => sprintf(
 				// translators: %1$s: date and time of the scheduled post.
 				__( 'Staff scheduled for: %1$s.', 'stackboost-for-supportcandy' ),
-				'<strong>' . date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ) . '</strong>'
+				'<strong>' . date_i18n(
+					// translators: Date format, see https://www.php.net/manual/en/datetime.format.php
+					__( 'M j, Y @ G:i', 'stackboost-for-supportcandy' ),
+					strtotime( $post->post_date )
+				) . '</strong>'
 			),
 			10 => __( 'Staff draft updated.', 'stackboost-for-supportcandy' ),
 		);
@@ -1065,7 +1076,9 @@ class WordPress {
 			}
 
 			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
 
 			if ( 'ticket' === $from && $ticket_id > 0 ) {
@@ -1077,7 +1090,9 @@ class WordPress {
 				}
 
 				// 2. Fallback/Primary Method for All Contexts: Use the referer URL.
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				if ( isset( $_POST['_wp_original_http_referer'] ) ) {
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing
 					$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
 
 					// Security check: ensure the referer is for the correct ticket (frontend or backend).
@@ -1163,6 +1178,7 @@ class WordPress {
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
 			'paged'          => $page,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				array(
 					'key'     => '_stackboost_email_address',
@@ -1239,6 +1255,7 @@ class WordPress {
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
 			'paged'          => $page,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				array(
 					'key'     => '_stackboost_email_address',
@@ -1259,6 +1276,7 @@ class WordPress {
 					$items_removed = true;
 				} else {
 					$items_retained = true;
+				/* translators: %d: post ID */
 					$messages[]     = sprintf( __( 'Staff profile (ID %d) could not be removed.', 'stackboost-for-supportcandy' ), $post->ID );
 				}
 			}
