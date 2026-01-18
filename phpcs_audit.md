@@ -106,6 +106,16 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
 
 ---
 
+## **stackboost-for-supportcandy/src/Integration/SupportCandyRepository.php**
+
+*   **Various Lines (26, 42, 63, 69, 72)**
+    *   **Rule**: `PluginCheck.Security.DirectDB.UnescapedDBParameter`, `WordPress.DB.DirectDatabaseQuery.DirectQuery`, `WordPress.DB.DirectDatabaseQuery.NoCaching`, `WordPress.DB.PreparedSQL.InterpolatedNotPrepared`
+    *   **Context**: Queries to fetch custom fields and statuses from SupportCandy tables (`psmsc_custom_fields`, `psmsc_statuses`).
+    *   **Reason**: Integration with third-party plugin tables which use dynamic names.
+    *   **Verdict**: **Justified**. Centralized repository for external integration.
+
+---
+
 ## **stackboost-for-supportcandy/src/Modules/Appearance/WordPress.php**
 
 *   **Line 56**
@@ -252,16 +262,6 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
     *   **Context**: `$_POST['stackboost_settings']`.
     *   **Reason**: This is the raw input for the settings save handler. It should be followed by sanitization logic.
     *   **Verdict**: **Justified** (Provided that `$this->save_settings()` or similar logic downstream performs the actual sanitization).
-
----
-
-## **stackboost-for-supportcandy/src/WordPress/Plugin.php**
-
-*   **Lines 512, 564, 590, 596**
-    *   **Rule**: `DirectDatabaseQuery`, `UnescapedDBParameter`
-    *   **Context**: Queries to `psmsc_custom_fields` and `psmsc_statuses`.
-    *   **Reason**: Integration with SupportCandy (third-party plugin) tables.
-    *   **Verdict**: **Justified**.
 
 ---
 
