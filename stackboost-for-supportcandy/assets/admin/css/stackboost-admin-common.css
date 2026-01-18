@@ -51,6 +51,12 @@
     vertical-align: middle;
 }
 
+/* Ensure options inside select also inherit color (fixes some dark mode browser issues) */
+.stackboost-dashboard select option {
+    background-color: var(--sb-input-bg, #ffffff);
+    color: var(--sb-text-main, #3c434a);
+}
+
 .stackboost-dashboard input[type="text"]:focus,
 .stackboost-dashboard input[type="number"]:focus,
 .stackboost-dashboard input[type="email"]:focus,

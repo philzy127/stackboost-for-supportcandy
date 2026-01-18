@@ -47,9 +47,6 @@ class Page {
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <p class="description" style="margin-top: 5px;">
-                            <?php esc_html_e( 'Changes are saved automatically.', 'stackboost-for-supportcandy' ); ?>
-                        </p>
                         <div style="margin-top: 15px;">
                             <button type="button" id="stackboost_save_theme_btn" class="button button-primary">
                                 <?php esc_html_e( 'Save Theme', 'stackboost-for-supportcandy' ); ?>

@@ -64,7 +64,8 @@
 }
 
 .stackboost-modal-box {
-    background: #fff;
+    background: var(--sb-card-bg, #fff);
+    color: var(--sb-text-main, #3c434a);
     padding: 20px;
     border-radius: 5px;
     width: 400px;
@@ -84,13 +85,14 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-    border-bottom: 1px solid #eee;
+    border-bottom: var(--sb-card-border, 1px solid #eee);
     padding-bottom: 10px;
 }
 
 .stackboost-modal-title {
     margin: 0;
     font-size: 18px;
+    color: var(--sb-text-main, #3c434a);
 }
 
 .stackboost-modal-close {
@@ -98,11 +100,11 @@
     border: none;
     font-size: 20px;
     cursor: pointer;
-    color: #999;
+    color: var(--sb-text-muted, #999);
 }
 
 .stackboost-modal-close:hover {
-    color: #333;
+    color: var(--sb-text-main, #333);
 }
 
 .stackboost-modal-footer {
@@ -110,7 +112,7 @@
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
-    border-top: 1px solid #eee;
+    border-top: var(--sb-card-border, 1px solid #eee);
     padding-top: 10px;
 }
 
@@ -133,14 +135,14 @@
 }
 
 .stackboost-btn-secondary {
-    background: #f0f0f1;
-    color: #2c3338;
-    border: 1px solid #c3c4c7;
+    background: var(--sb-input-bg, #f0f0f1);
+    color: var(--sb-text-main, #2c3338);
+    border: 1px solid var(--sb-card-border, #c3c4c7);
 }
 
 .stackboost-btn-secondary:hover {
-    background: #f6f7f7;
-    border-color: #8c8f94;
+    background: var(--sb-card-bg, #f6f7f7);
+    border-color: var(--sb-text-muted, #8c8f94);
 }
 
 .stackboost-btn-danger {

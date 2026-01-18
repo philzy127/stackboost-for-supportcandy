@@ -629,7 +629,7 @@ class Settings {
 				</div>
 			<?php endif; ?>
 
-			<div class="stackboost-uninstall-controls">
+			<div class="stackboost-uninstall-controls" style="margin-top: 15px;">
 				<button type="button" id="stackboost-authorize-uninstall-btn" class="button button-link-delete" style="<?php echo $is_authorized ? 'display:none;' : ''; ?>">
 					<?php esc_html_e( 'Authorize Complete Data Removal', 'stackboost-for-supportcandy' ); ?>
 				</button>
