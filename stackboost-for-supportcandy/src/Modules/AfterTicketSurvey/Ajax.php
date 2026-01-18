@@ -115,7 +115,7 @@ class Ajax {
         $current_max_order = 0;
         if ( ! $question_id ) {
             $safe_table = $this->questions_table_name;
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $current_max_order = (int) $wpdb->get_var( "SELECT MAX(sort_order) FROM `{$safe_table}`" );
         }
 

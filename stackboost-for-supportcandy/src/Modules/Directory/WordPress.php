@@ -610,9 +610,9 @@ class WordPress {
 			if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
 				// Primary method for backend.
 				$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
-			} elseif ( isset( $_REQUEST['ticket_id'] ) ) {
+			} elseif ( isset( $_REQUEST['ticket_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				// Fallback for frontend AJAX view, where the ID is in the REQUEST.
-				$current_ticket_id = absint( $_REQUEST['ticket_id'] );
+				$current_ticket_id = absint( $_REQUEST['ticket_id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			}
 
 			// If the passed $ticket is unreliable (frontend), create a new one.
@@ -999,15 +999,18 @@ class WordPress {
 			3  => __( 'Custom field deleted.', 'stackboost-for-supportcandy' ),
 			4  => __( 'Staff updated.', 'stackboost-for-supportcandy' ),
 			/* translators: %s: revision title */
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
+			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			6  => __( 'Staff published.', 'stackboost-for-supportcandy' ) . $return_link,
 			7  => __( 'Staff saved.', 'stackboost-for-supportcandy' ),
 			8  => __( 'Staff submitted.', 'stackboost-for-supportcandy' ),
 			9  => sprintf(
 				// translators: %1$s: date and time of the scheduled post.
 				__( 'Staff scheduled for: %1$s.', 'stackboost-for-supportcandy' ),
-				'<strong>' . date_i18n( __( 'M j, Y @ G:i', 'stackboost-for-supportcandy' ), strtotime( $post->post_date ) ) . '</strong>'
+				'<strong>' . date_i18n(
+					// translators: Date format, see https://www.php.net/manual/en/datetime.format.php
+					__( 'M j, Y @ G:i', 'stackboost-for-supportcandy' ),
+					strtotime( $post->post_date )
+				) . '</strong>'
 			),
 			10 => __( 'Staff draft updated.', 'stackboost-for-supportcandy' ),
 		);
@@ -1073,9 +1076,9 @@ class WordPress {
 			}
 
 			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
 
 			if ( 'ticket' === $from && $ticket_id > 0 ) {
