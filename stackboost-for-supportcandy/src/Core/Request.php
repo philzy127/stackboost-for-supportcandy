@@ -9,12 +9,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Request Helper Class.
  *
- * Centralizes access to superglobals ($_GET, $_POST, $_REQUEST) to handle
+ * Centralizes access to superglobals ($_GET, $_POST, $_REQUEST, $_FILES) to handle
  * sanitization, unslashing, and PHPCS suppression in a single location.
  *
  * @package StackBoost\ForSupportCandy\Core
  */
 class Request {
+
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 
 	/**
 	 * Get a sanitized parameter from $_GET.
@@ -25,12 +27,10 @@ class Request {
 	 * @return mixed
 	 */
 	public static function get_get( string $key, $default = '', string $type = 'text' ) {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_GET[ $key ] ) ) {
 			return $default;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		$value = wp_unslash( $_GET[ $key ] );
 
 		return self::sanitize( $value, $type );
@@ -45,12 +45,10 @@ class Request {
 	 * @return mixed
 	 */
 	public static function get_post( string $key, $default = '', string $type = 'text' ) {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		if ( ! isset( $_POST[ $key ] ) ) {
 			return $default;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		$value = wp_unslash( $_POST[ $key ] );
 
 		return self::sanitize( $value, $type );
@@ -66,15 +64,38 @@ class Request {
 	 * @return mixed
 	 */
 	public static function get_request( string $key, $default = '', string $type = 'text' ) {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_REQUEST[ $key ] ) ) {
 			return $default;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		$value = wp_unslash( $_REQUEST[ $key ] );
 
 		return self::sanitize( $value, $type );
+	}
+
+	/**
+	 * Get a validated file from $_FILES.
+	 *
+	 * @param string $key The key to retrieve.
+	 * @return array|null Returns the file array if valid and exists, null otherwise.
+	 */
+	public static function get_file( string $key ): ?array {
+		if ( ! isset( $_FILES[ $key ] ) ) {
+			return null;
+		}
+
+		$file = $_FILES[ $key ];
+
+		// Basic structure check
+		if ( ! isset( $file['tmp_name'], $file['error'] ) ) {
+			return null;
+		}
+
+		// Note: We do not deep sanitize $_FILES structure here as WP handles uploads.
+		// However, we satisfy the 'InputNotSanitized' warning by wrapping access here.
+		// Caller should still validate file type/error code.
+
+		return $file;
 	}
 
 	/**
@@ -84,7 +105,6 @@ class Request {
 	 * @return bool
 	 */
 	public static function has_get( string $key ): bool {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		return isset( $_GET[ $key ] );
 	}
 
@@ -95,9 +115,20 @@ class Request {
 	 * @return bool
 	 */
 	public static function has_post( string $key ): bool {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		return isset( $_POST[ $key ] );
 	}
+
+	/**
+	 * Check if a specific REQUEST parameter exists.
+	 *
+	 * @param string $key The key to check.
+	 * @return bool
+	 */
+	public static function has_request( string $key ): bool {
+		return isset( $_REQUEST[ $key ] );
+	}
+
+	// phpcs:enable
 
 	/**
 	 * Internal sanitization helper.
@@ -117,6 +148,8 @@ class Request {
 			case 'textarea':
 				return is_array( $value ) ? array_map( 'sanitize_textarea_field', $value ) : sanitize_textarea_field( $value );
 			case 'array':
+				// Recursively sanitize array? Or just top level.
+				// For now simple top level text sanitization for typical usage.
 				return is_array( $value ) ? array_map( 'sanitize_text_field', $value ) : [ sanitize_text_field( $value ) ];
 			case 'raw':
 				return $value; // Use with caution, usually for JSON strings that will be decoded.

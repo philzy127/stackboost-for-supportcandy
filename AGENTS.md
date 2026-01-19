@@ -94,12 +94,13 @@ Jules must execute the following checklist upon code completion and before PR su
 4. **Build & Versioning:**
     *   **Zip Validation:** Verify the build script output is installable.
     *   **Tagging:** Create a PATCH tag. Ask lead developer before MINOR/MAJOR increments.
-## 🚫 5. The Exclusion Protocol (Strict)
-You may only use `// phpcs:ignore` comments if:
-1. **Exhaustion:** There is no secure/efficient alternative.
-2. **Specificity:** Use specific codes (e.g., `WordPress.Security.NonceVerification.Missing`).
-3. **Proximity:** Place immediately preceding the line.
-4. **No Stacking:** Distribute ignores to the specific lines they apply to.
+## 🚫 5. The Exclusion Protocol (Strict - Fix Before Ignore)
+You may only use `// phpcs:ignore` comments as a last resort.
+1. **Remedy First:** If a linter warning can be resolved by refactoring (e.g., creating a helper class for repetitive patterns, using a Repository pattern for DB access, or properly sanitizing input), you **MUST** fix the code rather than suppress the warning.
+2. **Exhaustion:** Only suppress if there is no secure/efficient architectural alternative.
+3. **Specificity:** Use specific codes (e.g., `WordPress.Security.NonceVerification.Missing`).
+4. **Proximity:** Place immediately preceding the line.
+5. **No Stacking:** Distribute ignores to the specific lines they apply to.
 ## 🧪 6. Pre-Output Self-Correction Checklist
 1. Did I prefix every function and class?
 2. Is there a nonce check before saving data?
@@ -108,3 +109,4 @@ You may only use `// phpcs:ignore` comments if:
 5. Did I replace `error_log`/`print_r` with the central logger?
 6. Did I ensure all assets are local (No CDNs)?
 7. Did I check for `ABSPATH` at the top of the file?
+8. Did I fix the root cause of any linter warnings instead of just ignoring them?

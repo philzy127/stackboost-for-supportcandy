@@ -5,6 +5,7 @@ namespace StackBoost\ForSupportCandy\Modules\Appearance;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use StackBoost\ForSupportCandy\Core\Request;
 use StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page;
 use StackBoost\ForSupportCandy\WordPress\Admin\Settings;
 
@@ -53,8 +54,8 @@ class WordPress {
 
         // Check if we are on a StackBoost page via GET param (more robust) or Screen ID
         $is_stackboost_page = false;
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		$page = Request::get_get( 'page', '', 'text' );
+
         if ( ! empty( $page ) && strpos( $page, 'stackboost' ) !== false ) {
             $is_stackboost_page = true;
         } elseif ( strpos( $screen->id, 'stackboost' ) !== false ) {
@@ -139,7 +140,7 @@ class WordPress {
             wp_send_json_error( 'Unauthorized' );
         }
 
-        $theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
+		$theme = Request::get_post( 'theme', '', 'text' );
         stackboost_log( 'Appearance: Saving theme: ' . $theme, 'appearance' );
 
         // Validate theme

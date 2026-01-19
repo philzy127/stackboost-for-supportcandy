@@ -2,6 +2,8 @@
 
 namespace StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 
+use StackBoost\ForSupportCandy\Core\Request;
+
 /**
  * Handles the frontend survey shortcode.
  *
@@ -46,7 +48,10 @@ class Shortcode {
 		);
 
 		ob_start();
-		if ( ! is_admin() && isset( $_POST['stackboost_ats_submit_survey'] ) && isset( $_POST['stackboost_ats_survey_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['stackboost_ats_survey_nonce'] ) ), 'stackboost_ats_survey_form_nonce' ) ) {
+		// Request::get_post() handles unslash/sanitization. wp_verify_nonce handles the rest.
+		$nonce = Request::get_post( 'stackboost_ats_survey_nonce' );
+
+		if ( ! is_admin() && Request::has_post( 'stackboost_ats_submit_survey' ) && ! empty( $nonce ) && wp_verify_nonce( $nonce, 'stackboost_ats_survey_form_nonce' ) ) {
 			$this->handle_submission( $atts );
 		} else {
 			$this->display_form( $atts );
@@ -80,10 +85,13 @@ class Shortcode {
 		$errors = [];
 		foreach ( $questions as $question ) {
 			$input_name = 'stackboost_ats_q_' . $question['id'];
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			if ( isset( $_POST[ $input_name ] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-				$val = is_array( $_POST[ $input_name ] ) ? implode( '', wp_unslash( $_POST[ $input_name ] ) ) : wp_unslash( $_POST[ $input_name ] );
+
+			if ( Request::has_post( $input_name ) ) {
+				$val = Request::get_post( $input_name );
+				if ( is_array( $val ) ) {
+					$val = implode( '', $val );
+				}
+
 				if ( 'ticket_number' === $question['question_type'] && ! is_numeric( $val ) ) {
 					$errors[] = 'Ticket Number must be numeric.';
 				}
@@ -104,12 +112,19 @@ class Shortcode {
 		// SAVING PHASE
 		foreach ( $questions as $question ) {
 			$input_name = 'stackboost_ats_q_' . $question['id'];
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			if ( isset( $_POST[ $input_name ] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-				$post_val = $_POST[ $input_name ];
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-				$answer = is_array( $post_val ) ? sanitize_text_field( implode( ', ', wp_unslash( $post_val ) ) ) : sanitize_textarea_field( wp_unslash( $post_val ) );
+
+			if ( Request::has_post( $input_name ) ) {
+				// Use 'textarea' type for long_text questions to preserve line breaks
+				$sanitization_type = ( $question['question_type'] === 'long_text' ) ? 'textarea' : 'text';
+
+				$post_val = Request::get_post( $input_name, '', $sanitization_type );
+
+				$answer = '';
+				if ( is_array( $post_val ) ) {
+					$answer = implode( ', ', $post_val );
+				} else {
+					$answer = $post_val;
+				}
 
 				$this->repository->insert_answer(
 					[
@@ -146,10 +161,8 @@ class Shortcode {
 		}
 
 		// Legacy support
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$prefill_ticket_id = isset( $_GET['ticket_id'] ) ? sanitize_text_field( wp_unslash( $_GET['ticket_id'] ) ) : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$prefill_tech_name = isset( $_GET['tech'] ) ? sanitize_text_field( wp_unslash( $_GET['tech'] ) ) : '';
+		$prefill_ticket_id = Request::get_get( 'ticket_id' );
+		$prefill_tech_name = Request::get_get( 'tech' );
 
 		// Layout classes
 		$container_classes = 'stackboost-ats-survey-container';
@@ -224,16 +237,13 @@ class Shortcode {
 		$input_value   = '';
 
 		// 0. Sticky Input (Validation Errors)
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( isset( $_POST[ $input_name ] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			$input_value = sanitize_text_field( is_array( $_POST[ $input_name ] ) ? implode( ',', wp_unslash( $_POST[ $input_name ] ) ) : wp_unslash( $_POST[ $input_name ] ) );
+		if ( Request::has_post( $input_name ) ) {
+			$post_val = Request::get_post( $input_name );
+			$input_value = is_array( $post_val ) ? implode( ',', $post_val ) : $post_val;
 		}
 		// 1. Check for specific prefill key first (Generic logic)
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		elseif ( ! empty( $question['prefill_key'] ) && isset( $_GET[ $question['prefill_key'] ] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$input_value = sanitize_text_field( wp_unslash( $_GET[ $question['prefill_key'] ] ) );
+		elseif ( ! empty( $question['prefill_key'] ) && Request::has_get( $question['prefill_key'] ) ) {
+			$input_value = Request::get_get( $question['prefill_key'] );
 		}
 		// 2. Fallback to legacy logic
 		elseif ( ( $options['ats_ticket_question_id'] ?? 0 ) == $question['id'] && ! empty( $prefill_ticket_id ) ) {
@@ -244,8 +254,7 @@ class Shortcode {
 		$validation_failed = false;
 		$best_match_value  = '';
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( ! empty( $input_value ) && ! isset( $_POST[ $input_name ] ) ) { // Only validate if from URL/prefill, not POST
+		if ( ! empty( $input_value ) && ! Request::has_post( $input_name ) ) { // Only validate if from URL/prefill, not POST
 			if ( $question['question_type'] === 'ticket_number' ) {
 				if ( ! is_numeric( $input_value ) ) {
 					$validation_failed = true;

@@ -5,6 +5,8 @@ namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use StackBoost\ForSupportCandy\Core\Request;
+
 class ImportExport {
 
 	/**
@@ -312,7 +314,7 @@ class ImportExport {
 		}
 
 		// Optional: Clear existing steps
-		if ( ! empty( $_POST['clear_existing'] ) ) {
+		if ( Request::has_post( 'clear_existing' ) ) {
 			$existing = get_posts( [
 				'post_type'      => 'stkb_onboarding_step',
 				'posts_per_page' => -1,
@@ -384,7 +386,7 @@ class ImportExport {
 		if ( ! empty( $new_sequence ) ) {
 			// If we cleared existing, or if we just want to append, we update the sequence.
 			// If we appended, we should merge.
-			if ( empty( $_POST['clear_existing'] ) ) {
+			if ( ! Request::has_post( 'clear_existing' ) ) {
 				$existing_sequence = get_option( 'stackboost_onboarding_sequence', [] );
 				$new_sequence = array_merge( $existing_sequence, $new_sequence );
 			}

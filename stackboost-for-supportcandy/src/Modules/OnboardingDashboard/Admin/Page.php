@@ -5,6 +5,8 @@ namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use StackBoost\ForSupportCandy\Core\Request;
+
 class Page {
 
 	/**
@@ -39,8 +41,7 @@ class Page {
 			'import_export' => __( 'Import / Export', 'stackboost-for-supportcandy' ),
 		];
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'steps';
+		$active_tab = Request::get_get( 'tab', 'steps', 'key' );
 
         $theme_class = 'sb-theme-clean-tech';
         if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {

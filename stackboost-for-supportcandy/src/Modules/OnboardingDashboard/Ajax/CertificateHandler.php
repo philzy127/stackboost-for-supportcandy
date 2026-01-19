@@ -5,6 +5,7 @@ namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Ajax;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use StackBoost\ForSupportCandy\Core\Request;
 use StackBoost\ForSupportCandy\Services\PdfService;
 use StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Settings;
 
@@ -27,8 +28,8 @@ class CertificateHandler {
 			wp_send_json_error( 'Invalid Nonce' );
 		}
 
-		$message = isset( $_POST['message'] ) ? sanitize_text_field( wp_unslash( $_POST['message'] ) ) : '';
-		$context = isset( $_POST['context'] ) ? sanitize_text_field( wp_unslash( $_POST['context'] ) ) : 'onboarding_js';
+		$message = Request::get_post( 'message', '', 'text' );
+		$context = Request::get_post( 'context', 'onboarding_js', 'text' );
 
 		if ( ! empty( $message ) ) {
 			stackboost_log( "[Client] $message", $context );
@@ -43,10 +44,9 @@ class CertificateHandler {
 	public static function handle_request() {
 		stackboost_log( 'Certificate Generation Initiated.', 'onboarding' );
 		// Verify Nonce
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		if ( ! check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce', false ) ) {
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-			stackboost_log( 'Certificate Generation Failed: Invalid Nonce. POST nonce: ' . ( $_POST['nonce'] ?? 'NULL' ), 'error' );
+			$post_nonce = Request::get_post( 'nonce', 'NULL', 'text' );
+			stackboost_log( 'Certificate Generation Failed: Invalid Nonce. POST nonce: ' . $post_nonce, 'error' );
 			wp_send_json_error( 'Security check failed. Please refresh the page and try again.' );
 		}
 
@@ -58,7 +58,10 @@ class CertificateHandler {
 			}
 		}
 
-		$present_attendees = isset( $_POST['present_attendees'] ) ? json_decode( sanitize_text_field( wp_unslash( $_POST['present_attendees'] ) ), true ) : [];
+		$raw_attendees = Request::get_post( 'present_attendees', '', 'raw' );
+		// Ensure it's unslashed before decoding if Request didn't (Request does if we use 'raw', but let's be sure).
+		// Request::get_post('raw') calls wp_unslash.
+		$present_attendees = isset( $raw_attendees ) ? json_decode( $raw_attendees, true ) : [];
 
 		if ( empty( $present_attendees ) ) {
 			stackboost_log( 'No attendees marked present.', 'onboarding' );

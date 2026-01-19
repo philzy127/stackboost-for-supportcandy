@@ -8,6 +8,7 @@
 
 namespace StackBoost\ForSupportCandy\Modules\Directory\Admin;
 
+use StackBoost\ForSupportCandy\Core\Request;
 use StackBoost\ForSupportCandy\Modules\Directory\Data\CustomPostTypes;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -23,10 +24,10 @@ class Management {
 	 * Render the management page.
 	 */
 	public static function render_management_page() {
-        $theme_class = 'sb-theme-clean-tech';
-        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
-            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
-        }
+		$theme_class = 'sb-theme-clean-tech';
+		if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+		}
 		?>
 		<div class="stackboost-card stackboost-card-connected">
 			<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Data Migration', 'stackboost-for-supportcandy' ); ?></h2>
@@ -54,13 +55,15 @@ class Management {
 			wp_send_json_error( 'Permission denied.' );
 		}
 
-		$cpts = new CustomPostTypes();
-		$posts = get_posts( array(
-			'post_type' => $cpts->post_type,
-			'post_status' => 'any',
-			'numberposts' => -1,
-			'fields' => 'ids',
-		) );
+		$cpts  = new CustomPostTypes();
+		$posts = get_posts(
+			array(
+				'post_type'   => $cpts->post_type,
+				'post_status' => 'any',
+				'numberposts' => -1,
+				'fields'      => 'ids',
+			)
+		);
 
 		foreach ( $posts as $post_id ) {
 			wp_delete_post( $post_id, true );
@@ -178,12 +181,14 @@ class Management {
 		);
 
 		// Helper to get posts with meta
-		$get_data = function( $post_type ) {
-			$posts = get_posts( array(
-				'post_type'      => $post_type,
-				'posts_per_page' => -1,
-				'post_status'    => 'any',
-			) );
+		$get_data = function ( $post_type ) {
+			$posts = get_posts(
+				array(
+					'post_type'      => $post_type,
+					'posts_per_page' => -1,
+					'post_status'    => 'any',
+				)
+			);
 
 			$result = array();
 			foreach ( $posts as $post ) {
@@ -236,16 +241,16 @@ class Management {
 			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-		if ( ! isset( $_FILES['json_file'] ) || ! file_exists( $_FILES['json_file']['tmp_name'] ) ) {
+		$json_file = Request::get_file( 'json_file' );
+
+		if ( ! $json_file || ! file_exists( $json_file['tmp_name'] ) ) {
 			wp_send_json_error( array( 'message' => 'JSON file not found.' ), 400 );
 		}
 
 		stackboost_log( 'Starting Directory JSON Import...', 'directory-import' );
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-		$file_content = file_get_contents( sanitize_text_field( $_FILES['json_file']['tmp_name'] ) );
-		$data = json_decode( $file_content, true );
+		$file_content = file_get_contents( sanitize_text_field( $json_file['tmp_name'] ) );
+		$data         = json_decode( $file_content, true );
 
 		if ( ! $data || ! is_array( $data ) ) {
 			stackboost_log( 'Import failed: Invalid JSON file.', 'directory-import' );
@@ -254,7 +259,7 @@ class Management {
 
 		// Step 1: Clear Data (Full Replacement)
 		stackboost_log( 'Clearing existing directory data...', 'directory-import' );
-		$cpts = new CustomPostTypes();
+		$cpts       = new CustomPostTypes();
 		$post_types = array(
 			$cpts->post_type,
 			$cpts->location_post_type,
@@ -262,12 +267,14 @@ class Management {
 		);
 
 		foreach ( $post_types as $post_type ) {
-			$posts = get_posts( array(
-				'post_type'      => $post_type,
-				'posts_per_page' => -1,
-				'post_status'    => 'any',
-				'fields'         => 'ids',
-			) );
+			$posts = get_posts(
+				array(
+					'post_type'      => $post_type,
+					'posts_per_page' => -1,
+					'post_status'    => 'any',
+					'fields'         => 'ids',
+				)
+			);
 			foreach ( $posts as $post_id ) {
 				wp_delete_post( $post_id, true );
 			}
@@ -275,7 +282,7 @@ class Management {
 		stackboost_log( 'Existing data cleared.', 'directory-import' );
 
 		// Counters & Errors
-		$counts = array(
+		$counts   = array(
 			'departments' => 0,
 			'locations'   => 0,
 			'staff'       => 0,
@@ -291,7 +298,7 @@ class Management {
 					'post_type'   => $cpts->department_post_type,
 					'post_status' => isset( $dept['status'] ) ? sanitize_text_field( $dept['status'] ) : 'publish',
 				);
-				$post_id = wp_insert_post( $post_data );
+				$post_id   = wp_insert_post( $post_data );
 				if ( ! is_wp_error( $post_id ) ) {
 					$counts['departments']++;
 					// Restore meta if present
@@ -320,7 +327,7 @@ class Management {
 					'post_type'   => $cpts->location_post_type,
 					'post_status' => isset( $loc['status'] ) ? sanitize_text_field( $loc['status'] ) : 'publish',
 				);
-				$post_id = wp_insert_post( $post_data );
+				$post_id   = wp_insert_post( $post_data );
 				if ( ! is_wp_error( $post_id ) ) {
 					$counts['locations']++;
 					$location_name_map[ $loc['title'] ] = $post_id;
@@ -364,11 +371,11 @@ class Management {
 
 				$post_data = array(
 					'post_title'   => sanitize_text_field( $staff['title'] ),
-					'post_content' => wp_kses_post( isset($staff['content']) ? $staff['content'] : '' ),
+					'post_content' => wp_kses_post( isset( $staff['content'] ) ? $staff['content'] : '' ),
 					'post_type'    => $cpts->post_type,
 					'post_status'  => isset( $staff['status'] ) ? sanitize_text_field( $staff['status'] ) : 'publish',
 				);
-				$post_id = wp_insert_post( $post_data );
+				$post_id   = wp_insert_post( $post_data );
 
 				if ( ! is_wp_error( $post_id ) ) {
 					$counts['staff']++;
@@ -394,24 +401,23 @@ class Management {
 					}
 
 					// Resolve Location
-					$new_location_id = '';
+					$new_location_id   = '';
 					$new_location_name = '';
 
 					// First try name from meta
 					if ( ! empty( $staff['meta']['_location'][0] ) ) {
 						$loc_name = $staff['meta']['_location'][0];
 						if ( isset( $location_name_map[ $loc_name ] ) ) {
-							$new_location_id = $location_name_map[ $loc_name ];
+							$new_location_id   = $location_name_map[ $loc_name ];
 							$new_location_name = $loc_name;
 						}
-					}
-					// Fallback to legacy ID map
-					elseif ( ! empty( $staff['meta']['_location_id'][0] ) ) {
+					} elseif ( ! empty( $staff['meta']['_location_id'][0] ) ) {
+						// Fallback to legacy ID map
 						$legacy_id = $staff['meta']['_location_id'][0];
 						if ( isset( $legacy_location_id_map[ $legacy_id ] ) ) {
 							$loc_name = $legacy_location_id_map[ $legacy_id ];
 							if ( isset( $location_name_map[ $loc_name ] ) ) {
-								$new_location_id = $location_name_map[ $loc_name ];
+								$new_location_id   = $location_name_map[ $loc_name ];
 								$new_location_name = $loc_name;
 							}
 						}
@@ -457,13 +463,13 @@ class Management {
 
 								if ( ! $attachment_id ) {
 									// Create attachment
-									$filetype = wp_check_filetype( basename( $abs_path ), null );
-									$attachment = array(
+									$filetype      = wp_check_filetype( basename( $abs_path ), null );
+									$attachment    = array(
 										'guid'           => $image_url,
 										'post_mime_type' => $filetype['type'],
 										'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $abs_path ) ),
 										'post_content'   => '',
-										'post_status'    => 'inherit'
+										'post_status'    => 'inherit',
 									);
 									$attachment_id = wp_insert_attachment( $attachment, $abs_path, $post_id );
 								}
@@ -484,15 +490,17 @@ class Management {
 
 		stackboost_log( 'Import completed successfully.', 'directory-import' );
 
-		wp_send_json_success( array(
-			'message' => sprintf(
-				'Import Complete. Imported: %d Departments, %d Locations, %d Staff Entries.',
-				$counts['departments'],
-				$counts['locations'],
-				$counts['staff']
-			),
-			'failures' => $failures,
-		) );
+		wp_send_json_success(
+			array(
+				'message'  => sprintf(
+					'Import Complete. Imported: %d Departments, %d Locations, %d Staff Entries.',
+					$counts['departments'],
+					$counts['locations'],
+					$counts['staff']
+				),
+				'failures' => $failures,
+			)
+		);
 	}
 
 	/**
@@ -505,13 +513,13 @@ class Management {
 			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-		if ( ! isset( $_FILES['csv_file'] ) || ! file_exists( $_FILES['csv_file']['tmp_name'] ) ) {
+		$csv_file = Request::get_file( 'csv_file' );
+
+		if ( ! $csv_file || ! file_exists( $csv_file['tmp_name'] ) ) {
 			wp_send_json_error( array( 'message' => 'CSV file not found.' ), 400 );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-		$file_path = sanitize_text_field( $_FILES['csv_file']['tmp_name'] );
+		$file_path = sanitize_text_field( $csv_file['tmp_name'] );
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$handle = fopen( $file_path, 'r' );
@@ -523,19 +531,19 @@ class Management {
 		// Skip header row
 		fgetcsv( $handle );
 
-		$cpts = new CustomPostTypes();
-		$imported_count = 0;
-		$skipped_count = 0;
+		$cpts            = new CustomPostTypes();
+		$imported_count  = 0;
+		$skipped_count   = 0;
 		$skipped_details = array();
 
 		while ( ( $row = fgetcsv( $handle ) ) !== false ) {
-			$name = sanitize_text_field( $row[0] );
-			$email = sanitize_email( $row[1] );
+			$name         = sanitize_text_field( $row[0] );
+			$email        = sanitize_email( $row[1] );
 			$office_phone = preg_replace( '/\D/', '', $row[2] );
-			$extension = sanitize_text_field( $row[3] );
+			$extension    = sanitize_text_field( $row[3] );
 			$mobile_phone = preg_replace( '/\D/', '', $row[4] );
-			$job_title = sanitize_text_field( $row[5] );
-			$department = sanitize_text_field( $row[6] );
+			$job_title    = sanitize_text_field( $row[5] );
+			$department   = sanitize_text_field( $row[6] );
 
 			if ( empty( $name ) ) {
 				$skipped_count++;
@@ -551,15 +559,15 @@ class Management {
 				'post_type'   => $cpts->post_type,
 				'post_status' => 'publish',
 				'meta_input'  => array(
-					'_email_address'       => $email,
-					'_office_phone'        => $office_phone,
-					'_extension'           => $extension,
-					'_mobile_phone'        => $mobile_phone,
+					'_email_address'              => $email,
+					'_office_phone'               => $office_phone,
+					'_extension'                  => $extension,
+					'_mobile_phone'               => $mobile_phone,
 					'_stackboost_staff_job_title' => $job_title,
-					'_department_program'  => $department,
-					'_active'              => 'Yes',
-					'_last_updated_by'     => 'CSV Import',
-					'_last_updated_on'     => date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ),
+					'_department_program'         => $department,
+					'_active'                     => 'Yes',
+					'_last_updated_by'            => 'CSV Import',
+					'_last_updated_on'            => date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ),
 				),
 			);
 
@@ -579,11 +587,13 @@ class Management {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		fclose( $handle );
 
-		wp_send_json_success( array(
-			'message'         => sprintf( '%d entries imported successfully.', $imported_count ),
-			'skipped_count'   => $skipped_count,
-			'skipped_details' => $skipped_details,
-		) );
+		wp_send_json_success(
+			array(
+				'message'         => sprintf( '%d entries imported successfully.', $imported_count ),
+				'skipped_count'   => $skipped_count,
+				'skipped_details' => $skipped_details,
+			)
+		);
 	}
 
 	/**
@@ -597,7 +607,7 @@ class Management {
 			wp_send_json_error( 'Permission denied.' );
 		}
 
-		$cpts = new CustomPostTypes();
+		$cpts       = new CustomPostTypes();
 		$post_types = array(
 			$cpts->post_type,
 			$cpts->location_post_type,
@@ -605,12 +615,14 @@ class Management {
 		);
 
 		foreach ( $post_types as $post_type ) {
-			$posts = get_posts( array(
-				'post_type' => $post_type,
-				'post_status' => 'any',
-				'numberposts' => -1,
-				'fields' => 'ids',
-			) );
+			$posts = get_posts(
+				array(
+					'post_type'   => $post_type,
+					'post_status' => 'any',
+					'numberposts' => -1,
+					'fields'      => 'ids',
+				)
+			);
 
 			foreach ( $posts as $post_id ) {
 				wp_delete_post( $post_id, true ); // true to force delete and bypass trash.
@@ -626,9 +638,9 @@ class Management {
 	 * @return bool
 	 */
 	public static function can_user_manage(): bool {
-		$options = get_option( Settings::OPTION_NAME, array() );
+		$options          = get_option( Settings::OPTION_NAME, array() );
 		$management_roles = $options['management_roles'] ?? array( 'administrator' );
-		$user = wp_get_current_user();
+		$user             = wp_get_current_user();
 		return ! empty( array_intersect( $user->roles, $management_roles ) );
 	}
 }

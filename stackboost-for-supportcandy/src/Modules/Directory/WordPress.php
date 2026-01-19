@@ -15,6 +15,7 @@ use StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\StaffListTable;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\Directory\Data\CustomPostTypes;
+use StackBoost\ForSupportCandy\Core\Request;
 
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -157,8 +158,7 @@ class WordPress {
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
 			// Dashicons is loaded by default in admin.
 
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
+			$active_tab = Request::has_get( 'tab' ) ? Request::get_get( 'tab', 'staff', 'key' ) : 'staff';
 
 			// Enqueue scripts for the Contact Widget settings tab.
 			if ( 'contact_widget' === $active_tab ) {
@@ -349,8 +349,7 @@ class WordPress {
 	 * Render the admin page.
 	 */
 	public function render_admin_page() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'staff';
+		$active_tab = Request::has_get( 'tab' ) ? Request::get_get( 'tab', 'staff', 'key' ) : 'staff';
 
 		$base_tabs = array(
 			'staff'           => __( 'Staff', 'stackboost-for-supportcandy' ),
@@ -485,10 +484,12 @@ class WordPress {
 	public function ajax_get_staff_details() {
 		check_ajax_referer( 'stackboost_directory_public_nonce', 'stackboost_directory_nonce' );
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		if ( ! isset( $_POST['post_id'] ) ) {
 			wp_send_json_error( 'Missing post ID.' );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		$post_id = absint( $_POST['post_id'] );
 
 		// Fetch the raw post object. We still need this for some template functions.
@@ -548,7 +549,7 @@ class WordPress {
 			wp_send_json_error( 'Forbidden' );
 		}
 
-		$term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
+		$term = Request::has_get( 'term' ) ? Request::get_get( 'term' ) : '';
 
 		if ( empty( $term ) ) {
 			wp_send_json_error( 'Missing search term.' );
@@ -610,9 +611,9 @@ class WordPress {
 			if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
 				// Primary method for backend.
 				$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
-			} elseif ( isset( $_REQUEST['ticket_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			} elseif ( Request::has_request( 'ticket_id' ) ) {
 				// Fallback for frontend AJAX view, where the ID is in the REQUEST.
-				$current_ticket_id = absint( $_REQUEST['ticket_id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$current_ticket_id = absint( Request::get_request( 'ticket_id' ) );
 			}
 
 			// If the passed $ticket is unreliable (frontend), create a new one.
@@ -946,10 +947,8 @@ class WordPress {
 		}
 
 		// Check for our custom query arg to determine the return link.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$from      = isset( $_GET['from'] ) ? sanitize_key( $_GET['from'] ) : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( $_GET['ticket_id'] ) : 0;
+		$from      = Request::has_get( 'from' ) ? Request::get_get( 'from', '', 'key' ) : '';
+		$ticket_id = Request::has_get( 'ticket_id' ) ? absint( Request::get_get( 'ticket_id' ) ) : 0;
 
 		$return_link = '';
 		if ( 'ticket' === $from && $ticket_id > 0 ) {
@@ -961,10 +960,8 @@ class WordPress {
 			}
 
 			// 2. Fallback/Primary Method: Use the referer URL from the POST data if available.
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			if ( isset( $_POST['_wp_original_http_referer'] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing
-				$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
+			if ( Request::has_post( '_wp_original_http_referer' ) ) {
+				$referer_url = esc_url_raw( Request::get_post( '_wp_original_http_referer' ) );
 				// Security check: ensure the referer is for the correct ticket (frontend or backend).
 				$is_frontend_url = strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false;
 				$is_backend_url  = ( strpos( $referer_url, '/wp-admin/' ) !== false && strpos( $referer_url, '&id=' . $ticket_id ) !== false );
@@ -999,7 +996,8 @@ class WordPress {
 			3  => __( 'Custom field deleted.', 'stackboost-for-supportcandy' ),
 			4  => __( 'Staff updated.', 'stackboost-for-supportcandy' ),
 			/* translators: %s: revision title */
-			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			5  => isset( $_GET['revision'] ) ? sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
 			6  => __( 'Staff published.', 'stackboost-for-supportcandy' ) . $return_link,
 			7  => __( 'Staff saved.', 'stackboost-for-supportcandy' ),
 			8  => __( 'Staff submitted.', 'stackboost-for-supportcandy' ),
@@ -1076,10 +1074,8 @@ class WordPress {
 			}
 
 			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$from      = isset( $_POST['from'] ) ? sanitize_key( $_POST['from'] ) : '';
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
+			$from      = Request::has_post( 'from' ) ? Request::get_post( 'from', '', 'key' ) : '';
+			$ticket_id = Request::has_post( 'ticket_id' ) ? absint( Request::get_post( 'ticket_id' ) ) : 0;
 
 			if ( 'ticket' === $from && $ticket_id > 0 ) {
 				$ticket_url = '';
@@ -1090,10 +1086,8 @@ class WordPress {
 				}
 
 				// 2. Fallback/Primary Method for All Contexts: Use the referer URL.
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing
-				if ( isset( $_POST['_wp_original_http_referer'] ) ) {
-					// phpcs:ignore WordPress.Security.NonceVerification.Missing
-					$referer_url = esc_url_raw( wp_unslash( $_POST['_wp_original_http_referer'] ) );
+				if ( Request::has_post( '_wp_original_http_referer' ) ) {
+					$referer_url = esc_url_raw( Request::get_post( '_wp_original_http_referer' ) );
 
 					// Security check: ensure the referer is for the correct ticket (frontend or backend).
 					$is_frontend_url = strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false;

@@ -1,6 +1,8 @@
 # PHPCS Ignore Audit
 
-This document provides a detailed analysis of every `// phpcs:ignore` instance in the codebase, explaining the context, reason for exclusion, and whether it is justified or requires remedy.
+**Total Issues:** 49
+
+This document provides a detailed analysis of every `// phpcs:ignore` instance in the codebase, explaining the context, reason for exclusion, and whether it is justified.
 
 ## **stackboost-for-supportcandy/src/Admin/Upgrade.php**
 
@@ -12,23 +14,13 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
 
 ---
 
-## **stackboost-for-supportcandy/src/Core/Request.php**
-
-*   **Various Lines (get_get, get_post, get_request, has_get, has_post)**
-    *   **Rule**: `WordPress.Security.NonceVerification.Recommended`, `WordPress.Security.NonceVerification.Missing`, `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized`, `WordPress.Security.ValidatedSanitizedInput.MissingUnslash`
-    *   **Context**: Accessing `$_GET`, `$_POST`, and `$_REQUEST` superglobals.
-    *   **Reason**: This is the centralized Request Helper class designed to wrap and sanitize all input access. It handles `wp_unslash` and sanitization internally.
-    *   **Verdict**: **Justified**. This is the single source of truth for input retrieval, eliminating hundreds of scattered suppressions.
-
----
-
 ## **stackboost-for-supportcandy/src/Integration/SupportCandyRepository.php**
 
-*   **Various Lines (26, 42, 63, 69, 72)**
-    *   **Rule**: `PluginCheck.Security.DirectDB.UnescapedDBParameter`, `WordPress.DB.DirectDatabaseQuery.DirectQuery`, `WordPress.DB.DirectDatabaseQuery.NoCaching`, `WordPress.DB.PreparedSQL.InterpolatedNotPrepared`
-    *   **Context**: Queries to fetch custom fields and statuses from SupportCandy tables (`psmsc_custom_fields`, `psmsc_statuses`).
-    *   **Reason**: Integration with third-party plugin tables which use dynamic names.
-    *   **Verdict**: **Justified**. Centralized repository for external integration.
+*   **Line 149**
+    *   **Rule**: `WordPress.DB.PreparedSQL.NotPrepared`
+    *   **Context**: `ALTER TABLE` query.
+    *   **Reason**: Schema modification helper method.
+    *   **Verdict**: **Justified**.
 
 ---
 
@@ -53,69 +45,16 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
 *   **Line 45**
     *   **Rule**: `PluginCheck.Security.DirectDB.UnescapedDBParameter`, `WordPress.DB.DirectDatabaseQuery.DirectQuery`, etc.
     *   **Context**: Displaying questions list.
-    *   **Reason**: Template likely iterating or fetching data directly for display.
+    *   **Reason**: Template iterating or fetching data directly for display.
     *   **Verdict**: **Justified**. Admin template rendering context.
 
 ---
 
-## **stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Repository.php**
+## **stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Admin/view-results-template.php**
 
-*   **Lines 45, 58, 70, 82, 133, 169, 181, 224, 227, 252**
-    *   **Rule**: `PluginCheck.Security.DirectDB.UnescapedDBParameter`, `WordPress.DB.DirectDatabaseQuery.DirectQuery`, `WordPress.DB.DirectDatabaseQuery.NoCaching`, `WordPress.DB.PreparedSQL.InterpolatedNotPrepared`
-    *   **Context**: Direct database queries (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) operating on custom tables (`stackboost_ats_...`).
-    *   **Reason**: Custom tables have dynamic names (prefixed). This class centralizes all such access.
-    *   **Verdict**: **Justified**. Necessary for module functionality.
-
----
-
-## **stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Ajax.php**
-
-*   **Lines 147, 149**
-    *   **Rule**: `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized`
-    *   **Context**: Retrieving `$_POST['dropdown_options']`.
-    *   **Reason**: The raw CSV string is retrieved, then exploded, trimmed, and sanitized using `array_map('sanitize_text_field', ...)` immediately after.
-    *   **Verdict**: **Justified**.
-
-*   **Line 207**
-    *   **Rule**: `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized`, `MissingUnslash`
-    *   **Context**: Retrieving `$_POST['order']`.
-    *   **Reason**: Input is an array of IDs. It is immediately mapped with `intval` and `wp_unslash`.
-    *   **Verdict**: **Justified**.
-
----
-
-## **stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Install.php**
-
-*   **Lines 75, 78, 80, 172-182, 197, 213**
-    *   **Rule**: `DirectDatabaseQuery`, `UnescapedDBParameter`
-    *   **Context**: `CREATE TABLE` statements and schema verification.
-    *   **Reason**: Plugin installation/activation scripts must create tables directly.
-    *   **Verdict**: **Justified**.
-
----
-
-## **stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Shortcode.php**
-
-*   **Lines 83, 85, 107, 109, 111, 227, 229, 247**
-    *   **Rule**: `WordPress.Security.NonceVerification.Missing`, `ValidatedSanitizedInput.InputNotSanitized`, `MissingUnslash`
-    *   **Context**: Accessing `$_POST` to retrieve form submissions.
-    *   **Reason**: Nonce verification is performed in the main method. Input is sanitized before usage.
-    *   **Verdict**: **Justified**.
-
-*   **Lines 149, 151, 233, 235**
-    *   **Rule**: `WordPress.Security.NonceVerification.Recommended`
-    *   **Context**: Checking `$_GET` for pre-fill keys.
-    *   **Reason**: Read-only logic to populate form fields.
-    *   **Verdict**: **Justified**.
-
----
-
-## **stackboost-for-supportcandy/src/Modules/Appearance/WordPress.php**
-
-*   **Line 56**
-    *   **Rule**: `WordPress.Security.NonceVerification.Recommended`
-    *   **Context**: Checking `$_GET` to determine current admin page for theme application.
-    *   **Reason**: Routing/Display logic only.
+*   **Line 38**
+    *   **Rule**: `WordPress.DB.DirectDatabaseQuery.DirectQuery`
+    *   **Context**: Pagination calculation.
     *   **Verdict**: **Justified**.
 
 ---
@@ -126,16 +65,6 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
     *   **Rule**: `WordPress.Security.EscapeOutput.OutputNotEscaped`
     *   **Context**: Outputting JSON configuration or complex HTML structures.
     *   **Reason**: Data is encoded (e.g., `json_encode`) or HTML is intentionally rendered.
-    *   **Verdict**: **Justified**.
-
----
-
-## **stackboost-for-supportcandy/src/Modules/ConditionalOptions/WordPress.php**
-
-*   **Line 405**
-    *   **Rule**: `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized`
-    *   **Context**: `$rules_json = isset( $_POST['rules'] ) ? wp_unslash( $_POST['rules'] ) : '[]';`
-    *   **Reason**: The input is a JSON string. Validation happens on the decoded data.
     *   **Verdict**: **Justified**.
 
 ---
@@ -152,13 +81,13 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
 
 ## **stackboost-for-supportcandy/src/Modules/Directory/Admin/Management.php**
 
-*   **Line 231**
+*   **Line 236**
     *   **Rule**: `Squiz.PHP.DiscouragedFunctions.Discouraged`
     *   **Context**: `set_time_limit( 0 );`
     *   **Reason**: Used in `ajax_import_json` to prevent timeouts during large data imports.
     *   **Verdict**: **Justified**.
 
-*   **Lines 516, 579**
+*   **Lines 524, 587**
     *   **Rule**: `WordPress.WP.AlternativeFunctions.file_system_operations_fopen/fclose`
     *   **Context**: CSV generation using `fopen` and `fclose`.
     *   **Reason**: Efficient stream handling.
@@ -168,25 +97,29 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
 
 ## **stackboost-for-supportcandy/src/Modules/Directory/WordPress.php**
 
-*   **Lines 964, 966, 1079, 1081, 1093, 1095**
-    *   **Rule**: `NonceVerification.Missing`
-    *   **Context**: Checking `$_POST['from']` and `_wp_original_http_referer` to determine redirect URL after save.
-    *   **Reason**: Occurs after `save_post`. Redirection logic only.
-    *   **Verdict**: **Justified**.
-
-*   **Lines 1181, 1258**
+*   **Lines 1175, 1252**
     *   **Rule**: `SlowDBQuery.slow_db_query_meta_query`
     *   **Context**: Filtering CPTs by email address.
     *   **Reason**: Core requirement.
+    *   **Verdict**: **Justified**.
+
+*   **Lines 713, 770**
+    *   **Rule**: `OutputNotEscaped`
+    *   **Context**: Outputting Widget Content.
     *   **Verdict**: **Justified**.
 
 ---
 
 ## **stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Admin/ImportExport.php**
 
-*   **Line 269**
+*   **Line 271**
     *   **Rule**: `OutputNotEscaped`
     *   **Context**: `echo $json_data;` (Exporting data).
+    *   **Verdict**: **Justified**.
+
+*   **Lines 286, 291**
+    *   **Rule**: `InputNotSanitized`
+    *   **Context**: File handling.
     *   **Verdict**: **Justified**.
 
 ---
@@ -203,13 +136,7 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
 
 ## **stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Shortcodes/DashboardShortcode.php**
 
-*   **Lines 28, 100, 102, 198**
-    *   **Rule**: `NonceVerification.Recommended`
-    *   **Context**: Checking `$_GET['step_id']`.
-    *   **Reason**: Controls navigation in the wizard (read-only view state).
-    *   **Verdict**: **Justified**.
-
-*   **Lines 269, 303**
+*   **Lines 268, 302**
     *   **Rule**: `NonPrefixedHooknameFound`
     *   **Context**: `apply_filters( 'the_content', ... )`
     *   **Reason**: Intentionally applying Core WordPress content filters.
@@ -219,10 +146,14 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
 
 ## **stackboost-for-supportcandy/src/WordPress/Admin/Settings.php**
 
+*   **Lines 376, 1150**
+    *   **Rule**: `WordPress.Security.EscapeOutput.OutputNotEscaped`
+    *   **Context**: Outputting JSON or file content.
+    *   **Verdict**: **Justified**.
+
 *   **Lines 1205, 1214**
-    *   **Rule**: `InputNotSanitized`, `MissingUnslash`
-    *   **Context**: `$_POST['stackboost_settings']`.
-    *   **Reason**: Raw input passed to downstream sanitization.
+    *   **Rule**: `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized`, `WordPress.Security.ValidatedSanitizedInput.MissingUnslash`
+    *   **Context**: Processing raw input in complex settings validation.
     *   **Verdict**: **Justified**.
 
 ---
@@ -234,3 +165,15 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
     *   **Context**: `function is_supportcandy_pro_active()`
     *   **Reason**: Preserved for backward compatibility.
     *   **Verdict**: **Justified**.
+
+---
+
+## **stackboost-for-supportcandy/src/Services/DirectoryService.php**
+
+*   **Lines 73, 195**
+    *   **Rule**: `WordPress.DB.SlowDBQuery.slow_db_query_meta_query`
+    *   **Context**: `meta_query` in `get_posts`.
+    *   **Reason**: Functional requirement for directory filtering.
+    *   **Verdict**: **Justified**.
+
+---

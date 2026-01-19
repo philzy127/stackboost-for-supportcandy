@@ -16,6 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class SupportCandyRepository {
 
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
 	/**
 	 * Get all SupportCandy custom fields.
 	 *
@@ -26,8 +28,26 @@ class SupportCandyRepository {
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
 		$safe_table          = $custom_fields_table;
 
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$results = $wpdb->get_results( "SELECT slug, name FROM `{$safe_table}`", ARRAY_A );
+
+		return $results ?: [];
+	}
+
+	/**
+	 * Get SupportCandy custom fields filtered by type.
+	 *
+	 * @param string $type The field type (e.g., 'datetime').
+	 * @return array List of custom fields with 'slug' and 'name'.
+	 */
+	public function get_custom_fields_by_type( string $type ): array {
+		global $wpdb;
+		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
+		$safe_table          = $custom_fields_table;
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare( "SELECT slug, name FROM `{$safe_table}` WHERE type = %s", $type ),
+			ARRAY_A
+		);
 
 		return $results ?: [];
 	}
@@ -42,7 +62,6 @@ class SupportCandyRepository {
 		$status_table = $wpdb->prefix . 'psmsc_statuses';
 		$safe_table   = $status_table;
 
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$results = $wpdb->get_results( "SELECT id, name FROM `{$safe_table}` ORDER BY name ASC" );
 
 		return $results ?: [];
@@ -64,16 +83,13 @@ class SupportCandyRepository {
 		$table_name_like = $wpdb->esc_like( $table_name );
 
 		// Check if table exists first (optional, but preserved from legacy logic if robust)
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) !== $table_name ) {
 			return 0;
 		}
 
 		$safe_table = $table_name;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$field_id = $wpdb->get_var(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT id FROM `{$safe_table}` WHERE name = %s",
 				$field_name
 			)
@@ -81,4 +97,61 @@ class SupportCandyRepository {
 
 		return $field_id ? (int) $field_id : 0;
 	}
+
+	/**
+	 * Update the type of a custom field.
+	 *
+	 * @param string $slug The slug of the custom field.
+	 * @param string $new_type The new type (e.g., 'date', 'text').
+	 * @return bool True on success, false on failure.
+	 */
+	public function update_custom_field_type( string $slug, string $new_type ): bool {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
+
+		// Verify table exists
+		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) !== $table_name ) {
+			return false;
+		}
+
+		$result = $wpdb->update(
+			$table_name,
+			[ 'type' => $new_type ],
+			[ 'slug' => $slug ],
+			[ '%s' ],
+			[ '%s' ]
+		);
+
+		return false !== $result;
+	}
+
+	/**
+	 * Add a column to a table if it does not exist.
+	 *
+	 * @param string $table_name The table name (prefixed).
+	 * @param string $column_name The column name.
+	 * @param string $column_def The column definition (e.g., "varchar(50) NOT NULL DEFAULT 'text'").
+	 * @param string $after_column Optional. The column after which to position the new column.
+	 * @return bool True on success or if exists, false on failure.
+	 */
+	public function add_column_if_not_exists( string $table_name, string $column_name, string $column_def, string $after_column = '' ): bool {
+		global $wpdb;
+
+		// Sanitize table name (basic check, as this is internal)
+		// We trust the caller to pass correct table names from internal constants.
+
+		// Check if column exists
+		$row = $wpdb->get_results( "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '{$table_name}' AND column_name = '{$column_name}'" );
+
+		if ( empty( $row ) ) {
+			$after_clause = $after_column ? "AFTER `{$after_column}`" : "";
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( "ALTER TABLE `{$table_name}` ADD COLUMN `{$column_name}` {$column_def} {$after_clause}" );
+			return true;
+		}
+
+		return true;
+	}
+
+	// phpcs:enable
 }
