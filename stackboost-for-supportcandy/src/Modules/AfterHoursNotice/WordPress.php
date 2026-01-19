@@ -348,8 +348,7 @@ class WordPress extends Module {
 			stackboost_log( 'AfterHoursNotice: Currently after hours. Prepending notice to email.', 'after_hours' );
 			$message = $options['after_hours_message'] ?? '';
 			if ( ! empty( $message ) ) {
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				$notice      = '<div class="stackboost-after-hours-notice" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #ffba00; background-color: #fff8e5;">' . wpautop( $message ) . '</div>';
+				$notice      = '<div class="stackboost-after-hours-notice" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #ffba00; background-color: #fff8e5;">' . wp_kses_post( wpautop( $message ) ) . '</div>';
 				$email_data['body'] = $notice . $email_data['body'];
 			}
 		}

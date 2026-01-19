@@ -240,5 +240,17 @@ class Repository {
 		return $wpdb->get_results( $wpdb->prepare( "SELECT answer_text, rating FROM `{$safe_answers}` WHERE question_id = %d", $question_id ), ARRAY_A ) ?: [];
 	}
 
+	/**
+	 * Get all answers for a specific submission ID.
+	 *
+	 * @param int $submission_id Submission ID.
+	 * @return array List of answer objects keyed by question_id.
+	 */
+	public function get_answers_by_submission_id( int $submission_id ): array {
+		global $wpdb;
+		$safe_answers = $this->survey_answers_table_name;
+		return $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM `{$safe_answers}` WHERE submission_id = %d", $submission_id ), OBJECT_K ) ?: [];
+	}
+
 	// phpcs:enable
 }

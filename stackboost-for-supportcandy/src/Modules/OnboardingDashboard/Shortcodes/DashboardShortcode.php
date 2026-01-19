@@ -265,8 +265,7 @@ class DashboardShortcode {
 				<h2 class="onboarding-title"><?php echo esc_html( $step_post->post_title ); ?></h2>
 				<div class="onboarding-main-content onboarding-main-step-content">
 					<?php
-					// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
-					echo wp_kses_post( apply_filters( 'the_content', $step_post->post_content ) );
+					echo do_shortcode( wpautop( wp_kses_post( $step_post->post_content ) ) );
 					?>
 
 					<?php if ( ! empty( $checklist ) ) : ?>
@@ -299,8 +298,7 @@ class DashboardShortcode {
 							<h3><span class="dashicons dashicons-edit"></span> Notes</h3>
 							<div class="onboarding-notes-content">
 								<?php
-								// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
-								echo wp_kses_post( apply_filters( 'the_content', $notes ) );
+								echo do_shortcode( wpautop( wp_kses_post( $notes ) ) );
 								?>
 							</div>
 						</div>

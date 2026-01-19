@@ -1,6 +1,6 @@
 # PHPCS Ignore Audit
 
-**Total Issues:** 46
+**Total Issues:** 36
 
 This document provides a detailed analysis of every `// phpcs:ignore` instance in the codebase, explaining the context, reason for exclusion, and whether it is justified.
 
@@ -26,13 +26,7 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
 
 ## **stackboost-for-supportcandy/src/Modules/AfterHoursNotice/WordPress.php**
 
-*   **Line 351**
-    *   **Rule**: `WordPress.Security.EscapeOutput.OutputNotEscaped`
-    *   **Context**: `echo $message;` (where `$message` is constructed html).
-    *   **Reason**: The message variable contains HTML (e.g., links or formatting) that is intended to be rendered.
-    *   **Verdict**: **Justified** (Condition: `$message` must be constructed from safe/sanitized components).
-
-*   **Lines 377, 396**
+*   **Lines 376, 395**
     *   **Rule**: `WordPress.DB.SlowDBQuery.slow_db_query_meta_query`
     *   **Context**: `WP_Query` or `get_posts` using `meta_query` to filter by custom fields.
     *   **Reason**: Filtering tickets/posts by metadata is a core requirement for this module's functionality.
@@ -47,25 +41,6 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
     *   **Context**: Displaying questions list.
     *   **Reason**: Template iterating or fetching data directly for display.
     *   **Verdict**: **Justified**. Admin template rendering context.
-
----
-
-## **stackboost-for-supportcandy/src/Modules/AfterTicketSurvey/Admin/view-results-template.php**
-
-*   **Line 38**
-    *   **Rule**: `WordPress.DB.DirectDatabaseQuery.DirectQuery`
-    *   **Context**: Pagination calculation.
-    *   **Verdict**: **Justified**.
-
----
-
-## **stackboost-for-supportcandy/src/Modules/ChatBubbles/Admin/Settings.php**
-
-*   **Lines 114, 145, 202**
-    *   **Rule**: `WordPress.Security.EscapeOutput.OutputNotEscaped`
-    *   **Context**: Outputting JSON configuration or complex HTML structures.
-    *   **Reason**: Data is encoded (e.g., `json_encode`) or HTML is intentionally rendered.
-    *   **Verdict**: **Justified**.
 
 ---
 
@@ -125,40 +100,6 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
     *   **Rule**: `PreparedSQL.NotPrepared`, `DirectDatabaseQuery`
     *   **Context**: `$wpdb->prepare( $query, array_merge(...) )`.
     *   **Reason**: Building dynamic queries for custom metrics.
-    *   **Verdict**: **Justified**.
-
----
-
-## **stackboost-for-supportcandy/src/Modules/OnboardingDashboard/Shortcodes/DashboardShortcode.php**
-
-*   **Lines 268, 302**
-    *   **Rule**: `NonPrefixedHooknameFound`
-    *   **Context**: `apply_filters( 'the_content', ... )`
-    *   **Reason**: Intentionally applying Core WordPress content filters.
-    *   **Verdict**: **Justified**.
-
----
-
-## **stackboost-for-supportcandy/src/WordPress/Admin/Settings.php**
-
-*   **Lines 376, 1150**
-    *   **Rule**: `WordPress.Security.EscapeOutput.OutputNotEscaped`
-    *   **Context**: Outputting JSON or file content.
-    *   **Verdict**: **Justified**.
-
-*   **Lines 1205, 1214**
-    *   **Rule**: `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized`, `WordPress.Security.ValidatedSanitizedInput.MissingUnslash`
-    *   **Context**: Processing raw input in complex settings validation.
-    *   **Verdict**: **Justified**.
-
----
-
-## **stackboost-for-supportcandy/src/WordPress/supportcandy-pro-check.php**
-
-*   **Line 30**
-    *   **Rule**: `NonPrefixedFunctionFound`
-    *   **Context**: `function is_supportcandy_pro_active()`
-    *   **Reason**: Preserved for backward compatibility.
     *   **Verdict**: **Justified**.
 
 ---
