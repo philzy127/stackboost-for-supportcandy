@@ -549,6 +549,7 @@ class WordPress {
 			wp_send_json_error( 'Forbidden' );
 		}
 
+		// translators: The user search term.
 		$term = Request::has_get( 'term' ) ? Request::get_get( 'term' ) : '';
 
 		if ( empty( $term ) ) {

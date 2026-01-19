@@ -1,6 +1,6 @@
 # PHPCS Ignore Audit
 
-**Total Issues:** 49
+**Total Issues:** 46
 
 This document provides a detailed analysis of every `// phpcs:ignore` instance in the codebase, explaining the context, reason for exclusion, and whether it is justified.
 
@@ -115,11 +115,6 @@ This document provides a detailed analysis of every `// phpcs:ignore` instance i
 *   **Line 271**
     *   **Rule**: `OutputNotEscaped`
     *   **Context**: `echo $json_data;` (Exporting data).
-    *   **Verdict**: **Justified**.
-
-*   **Lines 286, 291**
-    *   **Rule**: `InputNotSanitized`
-    *   **Context**: File handling.
     *   **Verdict**: **Justified**.
 
 ---
