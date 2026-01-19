@@ -217,15 +217,60 @@ class Repository {
 		if ( empty( $ids ) ) {
 			return;
 		}
-		$ids_placeholder = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// $ids_placeholder = implode( ',', array_fill( 0, count( $ids ), '%d' ) ); // Removed as wpdb->prepare handles array differently? No, wait.
+
+		// The error "Replacement variables found, but no valid placeholders found" suggests that prepare() was called
+		// but the query string didn't have placeholders corresponding to the arguments passed.
+		// If we use dynamic placeholders like "... IN ($placeholders)", we MUST insert them into the query string BEFORE prepare()
+		// OR ensure that $placeholders contains the actual '%d' strings.
+
+		// Standard WP method for IN clauses:
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+
 		$safe_submissions = $this->survey_submissions_table_name;
 		$safe_answers     = $this->survey_answers_table_name;
 
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_submissions}` WHERE id IN ($ids_placeholder)", $ids ) );
+		// Correct usage: Construct the query with placeholders, then pass the flat array of values.
+		// Note: $ids is an array. prepare() accepts arguments variadically or as an array (since WP 3.5).
+		// However, if we pass an array as the second argument, it treats it as the values for the placeholders.
 
+		// Issue 1: $ids_placeholder was used in the query string, but PHPCS complained.
+		// The error "Replacement variables found, but no valid placeholders found" is specific.
+		// If I use $wpdb->prepare( "DELETE ... IN ($placeholders)", $ids ), and $placeholders is "%d,%d",
+		// then the query string passed to prepare is "DELETE ... IN (%d,%d)".
+		// This has valid placeholders. So why the error?
+		// Maybe PHPCS static analysis cannot see the content of $placeholders and assumes it might not have placeholders?
+		// Or maybe $ids is empty (handled by check above).
+
+		// Actually, `WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare` often fires if the query is a variable and not a string literal,
+		// preventing the linter from checking placeholders.
+
+		// But here I am constructing the query.
+
+		// Let's try ignoring the specific warning if the logic is correct, OR rewriting it.
+		// Code logic:
+		// $wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_submissions}` WHERE id IN ($placeholders)", $ids ) );
+
+		// This logic IS correct for WP.
+
+		// Let's verify the ignore tags.
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_answers}` WHERE submission_id IN ($ids_placeholder)", $ids ) );
+		// I ignored InterpolatedNotPrepared because I am interpolating $safe_submissions and $placeholders.
+		// But maybe I missed `UnfinishedPrepare`? The report says I triggered it.
+		// So I should add `WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare` to the ignore list.
+
+		// Wait, the error is: "Replacement variables found, but no valid placeholders found in the query."
+		// This means it thinks I passed arguments to prepare() but the query string has no %s or %d.
+		// This happens because $placeholders is a variable. The linter sees:
+		// prepare( "DELETE ... IN ($var)", $args )
+		// It doesn't know $var contains %d.
+		// So `UnfinishedPrepare` is indeed the correct rule to suppress here.
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_submissions}` WHERE id IN ($placeholders)", $ids ) );
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_answers}` WHERE submission_id IN ($placeholders)", $ids ) );
 	}
 
 	/**
