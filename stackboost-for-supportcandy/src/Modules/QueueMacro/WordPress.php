@@ -196,7 +196,7 @@ class WordPress extends Module {
 			'stackboost_queue_macro_section',
 			[
 				'id' => 'queue_macro_statuses',
-				'desc' => __( 'Select which ticket statuses should count toward the queue.', 'stackboost-for-supportcandy' )
+				'desc' => __( 'Select which ticket statuses should count toward the queue.', 'stackboost-for-supportcandy' ),
 			]
 		);
 		add_settings_field( 'stackboost_queue_macro_test', __( 'Test Queue Counts', 'stackboost-for-supportcandy' ), [ $this, 'render_test_button_field' ], $page_slug, 'stackboost_queue_macro_section' );
@@ -253,7 +253,7 @@ class WordPress extends Module {
 							</tr>
 							<tr>
 								<th><?php esc_html_e( 'Ticket Type Field', 'stackboost-for-supportcandy' ); ?></th>
-								<td><?php $this->render_select_field( [ 'id' => 'queue_macro_type_field', 'choices' => $all_type_fields, 'desc' => 'The field that distinguishes your queues (e.g., category, priority).', 'stackboost-for-supportcandy' ); ?></td>
+								<td><?php $this->render_select_field( [ 'id' => 'queue_macro_type_field', 'choices' => $all_type_fields, 'desc' => 'The field that distinguishes your queues (e.g., category, priority).' ] ); ?></td>
 							</tr>
 							<tr>
 								<th><?php esc_html_e( 'Non-Closed Statuses', 'stackboost-for-supportcandy' ); ?></th>
