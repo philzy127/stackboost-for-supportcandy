@@ -2,6 +2,8 @@
 
 namespace StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 
+use StackBoost\ForSupportCandy\Core\Request;
+
 /**
  * Handles the admin interface for the After Ticket Survey module.
  *
@@ -30,8 +32,7 @@ class AdminController {
 	 * Render the main admin page with its tabbed interface.
 	 */
 	public function render_page() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'questions';
+		$current_tab = Request::get_get( 'tab', 'questions', 'key' );
 
 		$theme_class = 'sb-theme-clean-tech';
 		if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -73,7 +74,7 @@ class AdminController {
 			return;
 		}
 
-		$post_action = isset( $_POST['form_action'] ) ? sanitize_text_field( wp_unslash( $_POST['form_action'] ) ) : '';
+		$post_action = Request::get_post( 'form_action', '', 'text' );
 
 		switch ( $post_action ) {
 			// Question management is now handled via AJAX in Ajax.php
@@ -85,10 +86,10 @@ class AdminController {
 	}
 
 	private function process_submissions_form() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( ! empty( $_POST['selected_submissions'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$ids_array = array_map( 'absint', $_POST['selected_submissions'] );
+		$selected_submissions = Request::get_post( 'selected_submissions', [], 'array' );
+
+		if ( ! empty( $selected_submissions ) ) {
+			$ids_array = array_map( 'absint', $selected_submissions );
 
 			// Use Repository for deletion
 			$this->repository->bulk_delete_submissions( $ids_array );
@@ -101,10 +102,9 @@ class AdminController {
 	 * Display admin notices for this module.
 	 */
 	public function display_admin_notices() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['page'] ) && 'stackboost-ats' === $_GET['page'] && isset( $_GET['message'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$message      = sanitize_text_field( wp_unslash( $_GET['message'] ) );
+		$page = Request::get_get( 'page', '', 'text' );
+		if ( 'stackboost-ats' === $page && Request::has_get( 'message' ) ) {
+			$message      = Request::get_get( 'message', '', 'text' );
 			$type         = strpos( $message, 'fail' ) !== false || $message === 'error' ? 'error' : 'success';
 			$messages     = [
 				'submissions_deleted' => 'Selected submissions deleted!',

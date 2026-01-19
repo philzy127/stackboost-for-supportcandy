@@ -11,6 +11,8 @@
 
 namespace StackBoost\ForSupportCandy\Modules\Directory\Admin;
 
+use StackBoost\ForSupportCandy\Core\Request;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -56,16 +58,15 @@ class StaffListTable extends \WP_List_Table {
 	 * @return array
 	 */
 	public function get_columns() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
+		$current_filter = Request::get_request( 'stackboost_active_filter', 'yes', 'text' );
 
 		$columns = array(
-			'cb'                   => '<input type="checkbox" />',
-			'title'                => __( 'Staff Name', 'stackboost-for-supportcandy' ),
-			'stackboost_contact_phone'    => __( 'Phone', 'stackboost-for-supportcandy' ),
-			'stackboost_email_address'    => __( 'Email', 'stackboost-for-supportcandy' ),
-			'sb_department_program' => __( 'Department / Program', 'stackboost-for-supportcandy' ),
-			'stackboost_job_title'        => __( 'Job Title', 'stackboost-for-supportcandy' ),
+			'cb'                       => '<input type="checkbox" />',
+			'title'                    => __( 'Staff Name', 'stackboost-for-supportcandy' ),
+			'stackboost_contact_phone' => __( 'Phone', 'stackboost-for-supportcandy' ),
+			'stackboost_email_address' => __( 'Email', 'stackboost-for-supportcandy' ),
+			'sb_department_program'    => __( 'Department / Program', 'stackboost-for-supportcandy' ),
+			'stackboost_job_title'     => __( 'Job Title', 'stackboost-for-supportcandy' ),
 		);
 
 		if ( 'all' === $current_filter ) {
@@ -82,9 +83,9 @@ class StaffListTable extends \WP_List_Table {
 	 */
 	public function get_sortable_columns() {
 		return array(
-			'title'                => array( 'title', false ),
+			'title'                 => array( 'title', false ),
 			'sb_department_program' => array( 'sb_department_program', false ),
-			'stackboost_job_title'        => array( 'stackboost_job_title', false ),
+			'stackboost_job_title'  => array( 'stackboost_job_title', false ),
 		);
 	}
 
@@ -107,7 +108,7 @@ class StaffListTable extends \WP_List_Table {
 
 				if ( ! empty( $office_phone ) ) {
 					$formatted_office = $directory_service->format_phone_number_string( $office_phone );
-					$output .= '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . esc_html( $formatted_office );
+					$output          .= '<span class="dashicons dashicons-building" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Office', 'stackboost-for-supportcandy' ) . '"></span>' . esc_html( $formatted_office );
 					if ( ! empty( $extension ) ) {
 						$output .= ' <span style="color: #777; font-size: 0.9em;">' . esc_html__( 'ext.', 'stackboost-for-supportcandy' ) . ' ' . esc_html( $extension ) . '</span>';
 					}
@@ -118,7 +119,7 @@ class StaffListTable extends \WP_List_Table {
 						$output .= '<br>';
 					}
 					$formatted_mobile = $directory_service->format_phone_number_string( $mobile_phone );
-					$output .= '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . esc_html( $formatted_mobile );
+					$output          .= '<span class="dashicons dashicons-smartphone" style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 5px; color: #555;" title="' . esc_attr__( 'Mobile', 'stackboost-for-supportcandy' ) . '"></span>' . esc_html( $formatted_mobile );
 				}
 
 				return ! empty( $output ) ? $output : '&mdash;';
@@ -167,20 +168,18 @@ class StaffListTable extends \WP_List_Table {
 	 */
 	public function column_title( $item ) {
 		$actions = array(
-			'edit'   => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item->ID ), __( 'Edit', 'stackboost-for-supportcandy' ) ),
-			'view'   => sprintf( '<a href="%s">%s</a>', get_permalink( $item->ID ), __( 'View', 'stackboost-for-supportcandy' ) ),
+			'edit' => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item->ID ), __( 'Edit', 'stackboost-for-supportcandy' ) ),
+			'view' => sprintf( '<a href="%s">%s</a>', get_permalink( $item->ID ), __( 'View', 'stackboost-for-supportcandy' ) ),
 		);
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+		$post_status = Request::get_request( 'post_status', '', 'key' );
 
 		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=untrash&post=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
 			$actions['delete']  = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=delete&post=' . $item->ID ), 'delete-post_' . $item->ID ), __( 'Delete Permanently', 'stackboost-for-supportcandy' ) );
 		} else {
-			$actions['trash']   = sprintf( '<a href="%s" class="submitdelete">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=trash&post=' . $item->ID ), 'trash-post_' . $item->ID ), __( 'Trash', 'stackboost-for-supportcandy' ) );
+			$actions['trash'] = sprintf( '<a href="%s" class="submitdelete">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=trash&post=' . $item->ID ), 'trash-post_' . $item->ID ), __( 'Trash', 'stackboost-for-supportcandy' ) );
 		}
-
 
 		return sprintf( '<strong><a class="row-title" href="%s">%s</a></strong>%s', get_edit_post_link( $item->ID ), $item->post_title, $this->row_actions( $actions ) );
 	}
@@ -192,8 +191,7 @@ class StaffListTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions() {
 		$actions = array();
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+		$post_status = Request::get_request( 'post_status', '', 'key' );
 
 		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = __( 'Restore', 'stackboost-for-supportcandy' );
@@ -212,14 +210,13 @@ class StaffListTable extends \WP_List_Table {
 	protected function get_views() {
 		$status_links = array();
 		$num_posts    = wp_count_posts( $this->post_type, 'readable' );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_status  = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'all';
+		$post_status  = Request::get_request( 'post_status', 'all', 'key' );
 
-		$all_class = ( 'all' === $post_status ) ? ' class="current"' : '';
+		$all_class           = ( 'all' === $post_status ) ? ' class="current"' : '';
 		$status_links['all'] = "<a href='admin.php?page=stackboost-directory&tab=staff'{$all_class}>All <span class='count'>(" . ( $num_posts->publish + $num_posts->draft ) . ')</span></a>';
 
 		if ( ! empty( $num_posts->trash ) ) {
-			$trash_class = ( 'trash' === $post_status ) ? ' class="current"' : '';
+			$trash_class           = ( 'trash' === $post_status ) ? ' class="current"' : '';
 			$status_links['trash'] = "<a href='admin.php?page=stackboost-directory&tab=staff&post_status=trash'{$trash_class}>Trash <span class='count'>(" . $num_posts->trash . ')</span></a>';
 		}
 
@@ -241,13 +238,11 @@ class StaffListTable extends \WP_List_Table {
 	 * Adds a dropdown filter for active status.
 	 */
 	public function add_active_status_filter() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+		$post_status = Request::get_request( 'post_status', '', 'key' );
 		if ( 'trash' === $post_status ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
+		$current_filter = Request::get_request( 'stackboost_active_filter', 'yes', 'text' );
 		?>
 		<div class="alignleft actions">
 			<label class="screen-reader-text" for="stackboost_active_filter"><?php esc_html_e( 'Filter by Active Status', 'stackboost-for-supportcandy' ); ?></label>
@@ -269,11 +264,14 @@ class StaffListTable extends \WP_List_Table {
 		if ( ! $action ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( wp_unslash( (array) $_REQUEST['post'] ) ) : array();
+
+		$post_ids = Request::get_request( 'post', [], 'array' );
 		if ( empty( $post_ids ) ) {
 			return;
 		}
+
+		// Ensure IDs are integers
+		$post_ids = array_map( 'intval', $post_ids );
 
 		check_admin_referer( 'bulk-' . $this->_args['plural'] );
 
@@ -311,24 +309,21 @@ class StaffListTable extends \WP_List_Table {
 		$current_page = $this->get_pagenum();
 		$offset       = ( $current_page - 1 ) * $per_page;
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_status = Request::get_request( 'post_status', 'any', 'key' );
+
 		$args = array(
 			'post_type'      => $this->post_type,
 			'posts_per_page' => $per_page,
 			'offset'         => $offset,
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'any' ),
+			'post_status'    => $post_status,
 		);
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['orderby'] ) ) : 'title';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$order   = ( ! empty( $_REQUEST['order'] ) ) ? sanitize_key( wp_unslash( $_REQUEST['order'] ) ) : 'asc';
+		$orderby = Request::get_request( 'orderby', 'title', 'text' );
+		$order   = Request::get_request( 'order', 'asc', 'key' );
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_REQUEST['s'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$args['s'] = sanitize_text_field( wp_unslash( $_REQUEST['s'] ) );
+		$s = Request::get_request( 's', '', 'text' );
+		if ( ! empty( $s ) ) {
+			$args['s'] = $s;
 		}
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
@@ -346,8 +341,7 @@ class StaffListTable extends \WP_List_Table {
 			$args['order'] = $order;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
+		$current_filter = Request::get_request( 'stackboost_active_filter', 'yes', 'text' );
 		if ( 'all' !== $current_filter ) {
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			$args['meta_query'] = array(
@@ -358,10 +352,7 @@ class StaffListTable extends \WP_List_Table {
 			);
 		}
 
-		$query      = new \WP_Query( $args );
-		if ($query->have_posts()) {
-		} else {
-		}
+		$query       = new \WP_Query( $args );
 		$this->items = $query->posts;
 
 		$total_items = $query->found_posts;

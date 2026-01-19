@@ -6,6 +6,7 @@ namespace StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
+use StackBoost\ForSupportCandy\Core\Request;
 use StackBoost\ForSupportCandy\WordPress\Plugin;
 use DateTime;
 
@@ -104,13 +105,15 @@ class WordPress extends Module {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-		if ( ! isset( $_POST['stackboost_date_time_settings'] ) ) {
+		if ( ! Request::has_post( 'stackboost_date_time_settings' ) ) {
 			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$input = wp_unslash( $_POST['stackboost_date_time_settings'] );
+		// Use 'array' type to handle nested array structure of settings
+		$input = Request::get_post( 'stackboost_date_time_settings', [], 'raw' );
+		// Note: 'raw' is used because sanitize_settings expects the array structure.
+		// Since sanitize_settings() iterates and runs sanitize_text_field(), this is safe.
+
 		$sanitized = $this->sanitize_settings( $input );
 
 		if ( update_option( 'stackboost_date_time_settings', $sanitized ) ) {
@@ -135,13 +138,7 @@ class WordPress extends Module {
 			stackboost_log( "DateTimeFormatting::enqueue_admin_scripts called. Hook: {$hook_suffix}", 'date_time_formatting' );
 		}
 
-		// Note: The main plugin uses 'toplevel_page_stackboost-for-supportcandy' for the main menu,
-		// and 'stackboost_page_stackboost-...' for submenus.
-		// However, relying on the hook suffix can be fragile if WordPress sanitizes it unexpectedly.
-		// A more robust check is to verify the 'page' query parameter directly.
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+		$current_page = Request::get_get( 'page', '', 'key' );
 
 		if ( $current_page !== $page_slug ) {
 			if ( function_exists( 'stackboost_log' ) ) {
@@ -216,11 +213,12 @@ class WordPress extends Module {
 
 		// CONTEXT CHECK
 		$is_admin_list    = is_admin() && function_exists( 'get_current_screen' ) && get_current_screen() && get_current_screen()->id === 'toplevel_page_wpsc-tickets';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$is_frontend_list = isset( $_REQUEST['action'] ) && $_REQUEST['action'] === 'wpsc_get_tickets'; // Approximate check for frontend AJAX list
+
+		$action_req = Request::get_request( 'action', '', 'key' );
+		$is_frontend_list = $action_req === 'wpsc_get_tickets'; // Approximate check for frontend AJAX list
+
 		// Also check strict frontend context param if sent by custom scripts
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$is_frontend_explicit = isset( $_POST['is_frontend'] ) && '1' === $_POST['is_frontend'];
+		$is_frontend_explicit = Request::get_post( 'is_frontend', '0', 'text' ) === '1';
 
 		// We apply formatting in admin lists and potentially frontend lists.
 		// The reference implementation was strict about contexts.
