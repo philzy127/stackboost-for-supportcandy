@@ -287,6 +287,7 @@ class ImportExport {
 			wp_send_json_error( [ 'message' => 'No file uploaded.' ] );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Array structure access only; specific properties are sanitized before use.
 		$file = $_FILES['import_file'];
 
 		// Sanitize file name to satisfy linter regarding $_FILES access

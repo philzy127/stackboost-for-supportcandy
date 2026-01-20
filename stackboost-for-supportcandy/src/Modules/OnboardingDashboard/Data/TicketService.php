@@ -106,11 +106,12 @@ class TicketService {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is verified safe above.
 			$query = "SELECT ticket_id, COUNT(*) as count FROM {$safe_table_name} WHERE ticket_id IN ($ids_placeholder) AND name LIKE %s GROUP BY ticket_id";
 
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query string is dynamically constructed but table name and placeholders are verified safe.
 			$prepared_query = $wpdb->prepare( $query, array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] ) );
 
 			stackboost_log( "TicketService: Query: $prepared_query", 'onboarding' );
 
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query required.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table query required; query is already prepared above.
 			$results = $wpdb->get_results( $prepared_query );
 
 			if ( $results ) {
