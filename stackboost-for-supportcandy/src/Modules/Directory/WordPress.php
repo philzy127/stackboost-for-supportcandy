@@ -768,8 +768,7 @@ class WordPress {
 				<div class="wpsc-widget-body">
 					<?php
 					// The content is already escaped.
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-					echo $widget_content;
+					echo wp_kses_post( $widget_content );
 					?>
 				</div>
 			</div>
