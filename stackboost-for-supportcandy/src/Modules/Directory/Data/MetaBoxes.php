@@ -273,7 +273,6 @@ class MetaBoxes {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! wp_verify_nonce( $_POST['sb_staff_dir_meta_box_nonce'], 'sb_staff_dir_meta_box' ) ) {
 			return;
 		}
@@ -291,7 +290,6 @@ class MetaBoxes {
 		$unique_id = get_post_meta( $post_id, '_unique_id', true );
 		if ( empty( $unique_id ) ) {
 			global $wpdb;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$max_id        = $wpdb->get_var( "SELECT MAX(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->postmeta} WHERE meta_key = '_unique_id'" );
 			$new_unique_id = ( $max_id ) ? $max_id + 1 : 1;
 			update_post_meta( $post_id, '_unique_id', $new_unique_id );
@@ -311,7 +309,6 @@ class MetaBoxes {
 
 		foreach ( $fields_to_save as $field ) {
 			if ( isset( $_POST[ $field ] ) ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization occurs immediately after unslashing.
 				$value = isset( $_POST[ $field ] ) ? wp_unslash( $_POST[ $field ] ) : '';
 				// Sanitize phone numbers based on format.
 				if ( 'office_phone' === $field || 'mobile_phone' === $field ) {
@@ -399,7 +396,6 @@ class MetaBoxes {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		if ( ! wp_verify_nonce( $_POST['sb_location_details_meta_box_nonce'], 'sb_location_details_meta_box' ) ) {
 			return;
 		}

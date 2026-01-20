@@ -16,7 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Request {
 
-	// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 
 	/**
 	 * Get a sanitized parameter from $_GET.
@@ -128,7 +127,6 @@ class Request {
 		return isset( $_REQUEST[ $key ] );
 	}
 
-	// phpcs:enable
 
 	/**
 	 * Internal sanitization helper.

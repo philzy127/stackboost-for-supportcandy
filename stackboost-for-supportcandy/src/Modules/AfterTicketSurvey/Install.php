@@ -60,7 +60,6 @@ class Install {
         $this->install();
     }
 
-	// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 	/**
 	 * Check if the database needs to be updated and run the installer if so.
@@ -217,5 +216,4 @@ class Install {
 		}
 	}
 
-	// phpcs:enable
 }

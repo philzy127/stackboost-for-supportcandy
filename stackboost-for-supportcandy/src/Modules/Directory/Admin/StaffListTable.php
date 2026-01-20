@@ -328,11 +328,9 @@ class StaffListTable extends \WP_List_Table {
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
 			if ( 'sb_department_program' === $orderby ) {
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				$args['meta_key'] = '_department_program';
 				$args['orderby']  = 'meta_value';
 			} elseif ( 'stackboost_job_title' === $orderby ) {
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				$args['meta_key'] = '_stackboost_staff_job_title';
 				$args['orderby']  = 'meta_value';
 			} else {
@@ -343,7 +341,6 @@ class StaffListTable extends \WP_List_Table {
 
 		$current_filter = Request::get_request( 'stackboost_active_filter', 'yes', 'text' );
 		if ( 'all' !== $current_filter ) {
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			$args['meta_query'] = array(
 				array(
 					'key'   => '_active',

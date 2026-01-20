@@ -16,7 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class SupportCandyRepository {
 
-	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange
 
 	/**
 	 * Get all SupportCandy custom fields.
@@ -145,7 +144,6 @@ class SupportCandyRepository {
 
 		if ( empty( $row ) ) {
 			$after_clause = $after_column ? "AFTER `{$after_column}`" : "";
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$wpdb->query( "ALTER TABLE `{$table_name}` ADD COLUMN `{$column_name}` {$column_def} {$after_clause}" );
 			return true;
 		}
@@ -153,5 +151,4 @@ class SupportCandyRepository {
 		return true;
 	}
 
-	// phpcs:enable
 }

@@ -11,7 +11,6 @@ namespace StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
  */
 class Repository {
 
-	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
 	/** @var string The name of the questions table. */
 	private string $questions_table_name;
@@ -252,5 +251,4 @@ class Repository {
 		return $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM `{$safe_answers}` WHERE submission_id = %d", $submission_id ), OBJECT_K ) ?: [];
 	}
 
-	// phpcs:enable
 }

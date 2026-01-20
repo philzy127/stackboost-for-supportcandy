@@ -233,7 +233,6 @@ class Management {
 
 		// Attempt to override execution time limit for large imports.
 		if ( function_exists( 'set_time_limit' ) ) {
-			// phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
 			set_time_limit( 0 );
 		}
 
@@ -458,7 +457,6 @@ class Management {
 
 								// To avoid duplicates, let's search for an attachment with this GUID (URL)
 								global $wpdb;
-								// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 								$attachment_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE guid = %s", $image_url ) );
 
 								if ( ! $attachment_id ) {
@@ -521,7 +519,6 @@ class Management {
 
 		$file_path = sanitize_text_field( $csv_file['tmp_name'] );
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$handle = fopen( $file_path, 'r' );
 
 		if ( false === $handle ) {
@@ -584,7 +581,6 @@ class Management {
 			}
 		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		fclose( $handle );
 
 		wp_send_json_success(

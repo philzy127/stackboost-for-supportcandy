@@ -484,12 +484,10 @@ class WordPress {
 	public function ajax_get_staff_details() {
 		check_ajax_referer( 'stackboost_directory_public_nonce', 'stackboost_directory_nonce' );
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		if ( ! isset( $_POST['post_id'] ) ) {
 			wp_send_json_error( 'Missing post ID.' );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		$post_id = absint( $_POST['post_id'] );
 
 		// Fetch the raw post object. We still need this for some template functions.
@@ -711,7 +709,6 @@ class WordPress {
 					if ( ! empty( $value ) ) {
 						if ( $is_html ) {
 							// This value is pre-formatted, trusted HTML from the DirectoryService or constructed above.
-							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							if ( 'photo_thumbnail' === $field_key || 'photo_link' === $field_key ) {
 								$list_items .= '<div class="stackboost-widget-field-photo">' . $value . '</div>';
 							} elseif ( 'phone' === $field_key && strpos( $value, '<br>' ) !== false ) {
@@ -1176,7 +1173,6 @@ class WordPress {
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
 			'paged'          => $page,
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				array(
 					'key'     => '_stackboost_email_address',
@@ -1253,7 +1249,6 @@ class WordPress {
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
 			'paged'          => $page,
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				array(
 					'key'     => '_stackboost_email_address',

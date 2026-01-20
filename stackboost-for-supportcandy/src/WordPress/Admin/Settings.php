@@ -1102,7 +1102,6 @@ class Settings {
 						header( 'Cache-Control: must-revalidate' );
 						header( 'Pragma: public' );
 						header( 'Content-Length: ' . filesize( $log_file ) );
-						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- This is a file download of a known text log file.
 						echo $wp_filesystem->get_contents( $log_file );
 						exit;
 					} else {
@@ -1169,7 +1168,6 @@ class Settings {
 
 		// For now, let's use direct $_POST but remove the ignores by using explicit checks.
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization happens in sanitize_settings callback.
 		$settings_data = isset( $_POST['stackboost_settings'] ) ? wp_unslash( $_POST['stackboost_settings'] ) : null;
 
 		if ( ! $settings_data || ! is_array( $settings_data ) ) {

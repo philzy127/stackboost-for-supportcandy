@@ -373,7 +373,6 @@ class WordPress extends Module {
 
         // 1. Non-Recurring
         $non_recurring = \WPSC_Holiday::find( [
-            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             'meta_query' => [
                 'relation' => 'AND',
                 [ 'slug' => 'agent', 'compare' => '=', 'val' => 0 ],
@@ -392,7 +391,6 @@ class WordPress extends Module {
         // 2. Recurring - This is tricky because Core logic expects explicit Y-m-d dates.
         // We need to generate this year's instance of the recurring holiday.
         $recurring = \WPSC_Holiday::find( [
-            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             'meta_query' => [
                 'relation' => 'AND',
                 [ 'slug' => 'agent', 'compare' => '=', 'val' => 0 ],
