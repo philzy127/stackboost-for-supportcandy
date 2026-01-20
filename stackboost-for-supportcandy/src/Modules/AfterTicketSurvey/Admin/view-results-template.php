@@ -34,20 +34,20 @@ use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\Repository;
     <?php
     // Use Repository for answers fetch inside the loop to avoid DirectDB
     // Ideally this should be eager loaded in the controller, but to fix the template quickly:
-    $repository = new Repository();
+    $stackboost_ats_repository = new Repository();
     foreach ( $submissions as $stackboost_sub ) : ?>
         <tr>
             <td><?php echo esc_html($stackboost_sub['id']); ?></td>
             <td><?php echo esc_html($stackboost_sub['submission_date']); ?></td>
             <td><?php echo esc_html( $stackboost_sub['display_name'] ?? __('Guest', 'stackboost-for-supportcandy') ); ?></td>
             <?php
-            $cache_key = 'stackboost_ats_sub_answers_' . $stackboost_sub['id'];
-            $stackboost_answers = get_transient( $cache_key );
+            $stackboost_ats_cache_key = 'stackboost_ats_sub_answers_' . $stackboost_sub['id'];
+            $stackboost_answers = get_transient( $stackboost_ats_cache_key );
 
             if ( false === $stackboost_answers ) {
-                $stackboost_answers = $repository->get_answers_by_submission_id( $stackboost_sub['id'] );
+                $stackboost_answers = $stackboost_ats_repository->get_answers_by_submission_id( $stackboost_sub['id'] );
                 // Cache for 1 hour to improve performance
-                set_transient( $cache_key, $stackboost_answers, HOUR_IN_SECONDS );
+                set_transient( $stackboost_ats_cache_key, $stackboost_answers, HOUR_IN_SECONDS );
             }
 
             foreach ( $questions as $stackboost_q ) {

@@ -87,7 +87,7 @@ class Settings {
 					// Actually, the previous implementation relied on mapping keys.
 					// Let's just pick a random start index here for simplicity in this refactor,
 					// or stick to 0. The JS handles rotation.
-					$start_index = rand( 0, count( $upsell_pool ) - 1 );
+					$start_index = wp_rand( 0, count( $upsell_pool ) - 1 );
 				}
 			}
 		} else {
@@ -1102,6 +1102,7 @@ class Settings {
 						header( 'Cache-Control: must-revalidate' );
 						header( 'Pragma: public' );
 						header( 'Content-Length: ' . filesize( $log_file ) );
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- This is a file download of a known text log file.
 						echo $wp_filesystem->get_contents( $log_file );
 						exit;
 					} else {
@@ -1168,7 +1169,8 @@ class Settings {
 
 		// For now, let's use direct $_POST but remove the ignores by using explicit checks.
 
-		$settings_data = isset( $_POST['stackboost_settings'] ) ? $_POST['stackboost_settings'] : null;
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization happens in sanitize_settings callback.
+		$settings_data = isset( $_POST['stackboost_settings'] ) ? wp_unslash( $_POST['stackboost_settings'] ) : null;
 
 		if ( ! $settings_data || ! is_array( $settings_data ) ) {
             if ( function_exists( 'stackboost_log' ) ) {
@@ -1179,7 +1181,7 @@ class Settings {
 
 		// Retrieve the new settings from the POST request.
 		// We will unslash here explicitly.
-		$new_settings = wp_unslash( $settings_data );
+		$new_settings = $settings_data;
 
         if ( function_exists( 'stackboost_log' ) ) {
             stackboost_log( 'New Settings to Process: ' . json_encode( $new_settings ), 'core' );
