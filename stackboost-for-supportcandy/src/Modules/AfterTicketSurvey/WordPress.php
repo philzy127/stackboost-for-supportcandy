@@ -127,7 +127,7 @@ class WordPress extends Module {
 
         wp_enqueue_style( 'stackboost-ats-admin', STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-ats-admin.css', [], STACKBOOST_VERSION );
 
-		$current_tab = Request::get_get( 'tab', 'main', 'key' );
+		$current_tab = Request::get_get( 'tab', 'questions', 'key' );
         $options = get_option( 'stackboost_settings', [] );
         $diagnostic_log_enabled = ! empty( $options['diagnostic_log_enabled'] );
 
