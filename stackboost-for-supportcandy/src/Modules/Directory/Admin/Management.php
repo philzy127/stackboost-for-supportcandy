@@ -233,6 +233,7 @@ class Management {
 
 		// Attempt to override execution time limit for large imports.
 		if ( function_exists( 'set_time_limit' ) ) {
+			// phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- Essential for large data imports.
 			set_time_limit( 0 );
 		}
 
@@ -248,7 +249,16 @@ class Management {
 
 		stackboost_log( 'Starting Directory JSON Import...', 'directory-import' );
 
-		$file_content = file_get_contents( sanitize_text_field( $json_file['tmp_name'] ) );
+		global $wp_filesystem;
+		if ( empty( $wp_filesystem ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+
+		if ( ! WP_Filesystem() ) {
+			wp_send_json_error( array( 'message' => 'Filesystem init failed.' ), 500 );
+		}
+
+		$file_content = $wp_filesystem->get_contents( sanitize_text_field( $json_file['tmp_name'] ) );
 		$data         = json_decode( $file_content, true );
 
 		if ( ! $data || ! is_array( $data ) ) {
@@ -456,8 +466,7 @@ class Management {
 								// Or just insert a new attachment linked to this file.
 
 								// To avoid duplicates, let's search for an attachment with this GUID (URL)
-								global $wpdb;
-								$attachment_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE guid = %s", $image_url ) );
+								$attachment_id = attachment_url_to_postid( $image_url );
 
 								if ( ! $attachment_id ) {
 									// Create attachment
@@ -519,6 +528,7 @@ class Management {
 
 		$file_path = sanitize_text_field( $csv_file['tmp_name'] );
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Robust CSV parsing requires fopen.
 		$handle = fopen( $file_path, 'r' );
 
 		if ( false === $handle ) {
@@ -534,13 +544,13 @@ class Management {
 		$skipped_details = array();
 
 		while ( ( $row = fgetcsv( $handle ) ) !== false ) {
-			$name         = sanitize_text_field( $row[0] );
-			$email        = sanitize_email( $row[1] );
-			$office_phone = preg_replace( '/\D/', '', $row[2] );
-			$extension    = sanitize_text_field( $row[3] );
-			$mobile_phone = preg_replace( '/\D/', '', $row[4] );
-			$job_title    = sanitize_text_field( $row[5] );
-			$department   = sanitize_text_field( $row[6] );
+			$name         = isset( $row[0] ) ? sanitize_text_field( $row[0] ) : '';
+			$email        = isset( $row[1] ) ? sanitize_email( $row[1] ) : '';
+			$office_phone = isset( $row[2] ) ? preg_replace( '/\D/', '', $row[2] ) : '';
+			$extension    = isset( $row[3] ) ? sanitize_text_field( $row[3] ) : '';
+			$mobile_phone = isset( $row[4] ) ? preg_replace( '/\D/', '', $row[4] ) : '';
+			$job_title    = isset( $row[5] ) ? sanitize_text_field( $row[5] ) : '';
+			$department   = isset( $row[6] ) ? sanitize_text_field( $row[6] ) : '';
 
 			if ( empty( $name ) ) {
 				$skipped_count++;

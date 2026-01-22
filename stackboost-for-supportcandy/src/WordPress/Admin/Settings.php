@@ -3,9 +3,9 @@
 
 namespace StackBoost\ForSupportCandy\WordPress\Admin;
 
-if ( ! defined( 'ABSPATH' ) ) exit;
-
 use StackBoost\ForSupportCandy\Core\Request;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
  * Manages the admin settings pages and sanitization for the plugin.
@@ -1102,6 +1102,7 @@ class Settings {
 						header( 'Cache-Control: must-revalidate' );
 						header( 'Pragma: public' );
 						header( 'Content-Length: ' . filesize( $log_file ) );
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Log file download, content is raw text.
 						echo $wp_filesystem->get_contents( $log_file );
 						exit;
 					} else {
@@ -1168,7 +1169,7 @@ class Settings {
 
 		// For now, let's use direct $_POST but remove the ignores by using explicit checks.
 
-		$settings_data = isset( $_POST['stackboost_settings'] ) ? wp_unslash( $_POST['stackboost_settings'] ) : null;
+		$settings_data = Request::get_post( 'stackboost_settings', null, 'raw' );
 
 		if ( ! $settings_data || ! is_array( $settings_data ) ) {
             if ( function_exists( 'stackboost_log' ) ) {

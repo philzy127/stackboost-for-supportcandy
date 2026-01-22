@@ -282,7 +282,7 @@ class Settings {
 	public static function render_page() {
 		self::enqueue_assets();
 
-		if ( isset( $_GET['settings-updated'] ) ) {
+		if ( \StackBoost\ForSupportCandy\Core\Request::has_get('settings-updated') ) {
 			add_settings_error( 'stackboost_messages', 'stackboost_message', __( 'Settings Saved', 'stackboost-for-supportcandy' ), 'updated' );
 		}
 		settings_errors( 'stackboost_messages' );

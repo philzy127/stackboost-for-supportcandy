@@ -26,10 +26,12 @@ class Request {
 	 * @return mixed
 	 */
 	public static function get_get( string $key, $default = '', string $type = 'text' ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- Verification handled by caller.
 		if ( ! isset( $_GET[ $key ] ) ) {
 			return $default;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Wrapper method.
 		$value = wp_unslash( $_GET[ $key ] );
 
 		return self::sanitize( $value, $type );
@@ -44,10 +46,12 @@ class Request {
 	 * @return mixed
 	 */
 	public static function get_post( string $key, $default = '', string $type = 'text' ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verification handled by caller.
 		if ( ! isset( $_POST[ $key ] ) ) {
 			return $default;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Wrapper method.
 		$value = wp_unslash( $_POST[ $key ] );
 
 		return self::sanitize( $value, $type );
@@ -63,10 +67,12 @@ class Request {
 	 * @return mixed
 	 */
 	public static function get_request( string $key, $default = '', string $type = 'text' ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- Verification handled by caller.
 		if ( ! isset( $_REQUEST[ $key ] ) ) {
 			return $default;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Wrapper method.
 		$value = wp_unslash( $_REQUEST[ $key ] );
 
 		return self::sanitize( $value, $type );
@@ -79,10 +85,12 @@ class Request {
 	 * @return array|null Returns the file array if valid and exists, null otherwise.
 	 */
 	public static function get_file( string $key ): ?array {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verification handled by caller.
 		if ( ! isset( $_FILES[ $key ] ) ) {
 			return null;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Wrapper method.
 		$file = $_FILES[ $key ];
 
 		// Basic structure check
@@ -104,6 +112,7 @@ class Request {
 	 * @return bool
 	 */
 	public static function has_get( string $key ): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Check only.
 		return isset( $_GET[ $key ] );
 	}
 
@@ -114,6 +123,7 @@ class Request {
 	 * @return bool
 	 */
 	public static function has_post( string $key ): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Check only.
 		return isset( $_POST[ $key ] );
 	}
 
@@ -124,6 +134,7 @@ class Request {
 	 * @return bool
 	 */
 	public static function has_request( string $key ): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Check only.
 		return isset( $_REQUEST[ $key ] );
 	}
 

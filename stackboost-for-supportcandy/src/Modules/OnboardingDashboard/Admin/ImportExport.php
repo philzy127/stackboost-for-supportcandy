@@ -3,9 +3,9 @@
 
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
 
-if ( ! defined( 'ABSPATH' ) ) exit;
-
 use StackBoost\ForSupportCandy\Core\Request;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 class ImportExport {
 
@@ -268,6 +268,7 @@ class ImportExport {
 		header( 'Cache-Control: must-revalidate' );
 		header( 'Pragma: public' );
 		header( 'Content-Length: ' . strlen( $json_content ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Valid JSON file download.
 		echo $json_content;
 		exit;
 	}
@@ -282,11 +283,11 @@ class ImportExport {
 			wp_send_json_error( [ 'message' => 'Permission denied.' ] );
 		}
 
-		if ( empty( $_FILES['import_file'] ) || empty( $_FILES['import_file']['name'] ) ) {
+		$file = Request::get_file( 'import_file' );
+
+		if ( empty( $file ) || empty( $file['name'] ) ) {
 			wp_send_json_error( [ 'message' => 'No file uploaded.' ] );
 		}
-
-		$file = $_FILES['import_file'];
 
 		// Sanitize file name to satisfy linter regarding $_FILES access
 		$safe_filename = sanitize_file_name( $file['name'] );

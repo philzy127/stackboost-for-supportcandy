@@ -7,6 +7,7 @@ namespace StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
  *
  * @package StackBoost\ForSupportCandy\Modules\AfterTicketSurvey
  */
+// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Install script requires direct DB access.
 class Install {
 
 	/**
@@ -75,7 +76,9 @@ class Install {
         // Check for 'prefill_key' and 'is_readonly_prefill' columns in questions table
         if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $wpdb->esc_like( $this->questions_table_name ) ) ) === $this->questions_table_name ) {
             $safe_table = $this->questions_table_name;
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
             $prefill_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM `{$safe_table}` LIKE %s", 'prefill_key' ) );
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
             $readonly_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM `{$safe_table}` LIKE %s", 'is_readonly_prefill' ) );
 
             if ( empty( $prefill_exists ) ) {
@@ -173,6 +176,7 @@ class Install {
         }
 
         $safe_table = $this->questions_table_name;
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		if ( $wpdb->get_var( "SELECT COUNT(*) FROM `{$safe_table}`" ) > 0 ) {
 			return; // Don't seed if questions already exist.
 		}

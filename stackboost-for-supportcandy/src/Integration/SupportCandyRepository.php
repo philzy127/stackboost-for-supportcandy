@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @package StackBoost\ForSupportCandy\Integration
  */
+// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Repository pattern encapsulates DB access.
 class SupportCandyRepository {
 
 
@@ -27,6 +28,7 @@ class SupportCandyRepository {
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
 		$safe_table          = $custom_fields_table;
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from DB prefix.
 		$results = $wpdb->get_results( "SELECT slug, name FROM `{$safe_table}`", ARRAY_A );
 
 		return $results ?: [];
@@ -43,6 +45,7 @@ class SupportCandyRepository {
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
 		$safe_table          = $custom_fields_table;
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from DB prefix.
 		$results = $wpdb->get_results(
 			$wpdb->prepare( "SELECT slug, name FROM `{$safe_table}` WHERE type = %s", $type ),
 			ARRAY_A
@@ -61,6 +64,7 @@ class SupportCandyRepository {
 		$status_table = $wpdb->prefix . 'psmsc_statuses';
 		$safe_table   = $status_table;
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from DB prefix.
 		$results = $wpdb->get_results( "SELECT id, name FROM `{$safe_table}` ORDER BY name ASC" );
 
 		return $results ?: [];
@@ -87,6 +91,7 @@ class SupportCandyRepository {
 		}
 
 		$safe_table = $table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from DB prefix.
 		$field_id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT id FROM `{$safe_table}` WHERE name = %s",
@@ -140,11 +145,22 @@ class SupportCandyRepository {
 		// We trust the caller to pass correct table names from internal constants.
 
 		// Check if column exists
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Internal system query on trusted tables.
 		$row = $wpdb->get_results( "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '{$table_name}' AND column_name = '{$column_name}'" );
 
 		if ( empty( $row ) ) {
-			$after_clause = $after_column ? "AFTER `{$after_column}`" : "";
-			$wpdb->query( "ALTER TABLE `{$table_name}` ADD COLUMN `{$column_name}` {$column_def} {$after_clause}" );
+			// Escape identifiers
+			$safe_table  = '`' . esc_sql( $table_name ) . '`';
+			$safe_column = '`' . esc_sql( $column_name ) . '`';
+			$safe_after  = $after_column ? 'AFTER `' . esc_sql( $after_column ) . '`' : '';
+
+			// Verify column definition safety (basic injection check)
+			if ( strpos( $column_def, ';' ) !== false ) {
+				return false;
+			}
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Schema modification is intended here; identifiers escaped.
+			$wpdb->query( "ALTER TABLE {$safe_table} ADD COLUMN {$safe_column} {$column_def} {$safe_after}" );
 			return true;
 		}
 

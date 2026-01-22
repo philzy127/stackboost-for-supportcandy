@@ -9,6 +9,7 @@ namespace StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
  *
  * @package StackBoost\ForSupportCandy\Modules\AfterTicketSurvey
  */
+// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Repository pattern encapsulates DB access.
 class Repository {
 
 
@@ -43,6 +44,7 @@ class Repository {
 	public function get_questions(): array {
 		global $wpdb;
 		$safe_table = $this->questions_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		return $wpdb->get_results( "SELECT * FROM `{$safe_table}` ORDER BY sort_order ASC", ARRAY_A ) ?: [];
 	}
 
@@ -55,6 +57,7 @@ class Repository {
 	public function get_question( int $id ): ?array {
 		global $wpdb;
 		$safe_table = $this->questions_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM `{$safe_table}` WHERE id = %d", $id ), ARRAY_A );
 	}
 
@@ -66,6 +69,7 @@ class Repository {
 	public function get_max_sort_order(): int {
 		global $wpdb;
 		$safe_table = $this->questions_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		return (int) $wpdb->get_var( "SELECT MAX(sort_order) FROM `{$safe_table}`" );
 	}
 
@@ -77,6 +81,7 @@ class Repository {
 	public function get_ticket_number_question_id(): ?int {
 		global $wpdb;
 		$safe_table = $this->questions_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		return $wpdb->get_var( $wpdb->prepare( "SELECT id FROM `{$safe_table}` WHERE question_type = %s", 'ticket_number' ) );
 	}
 
@@ -124,6 +129,7 @@ class Repository {
 	public function get_dropdown_options( int $question_id ): array {
 		global $wpdb;
 		$safe_table = $this->dropdown_options_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		return $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$safe_table}` WHERE question_id = %d ORDER BY sort_order ASC", $question_id ), ARRAY_A ) ?: [];
 	}
 
@@ -157,6 +163,7 @@ class Repository {
 	public function get_submissions(): array {
 		global $wpdb;
 		$safe_table = $this->survey_submissions_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		return $wpdb->get_results( "SELECT id, submission_date FROM `{$safe_table}` ORDER BY submission_date DESC", ARRAY_A ) ?: [];
 	}
 
@@ -168,6 +175,7 @@ class Repository {
 	public function get_submissions_with_users(): array {
 		global $wpdb;
 		$safe_table = $this->survey_submissions_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		return $wpdb->get_results( "SELECT s.*, u.display_name FROM `{$safe_table}` s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID ORDER BY submission_date DESC", ARRAY_A ) ?: [];
 	}
 
@@ -211,8 +219,10 @@ class Repository {
 		$safe_submissions = $this->survey_submissions_table_name;
 		$safe_answers     = $this->survey_answers_table_name;
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic table name and IN clause placeholders.
 		$wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_submissions}` WHERE id IN ($placeholders)", $ids ) );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic table name and IN clause placeholders.
 		$wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_answers}` WHERE submission_id IN ($placeholders)", $ids ) );
 	}
 
@@ -236,6 +246,7 @@ class Repository {
 	public function get_answers_for_question( int $question_id ): array {
 		global $wpdb;
 		$safe_answers = $this->survey_answers_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		return $wpdb->get_results( $wpdb->prepare( "SELECT answer_text, rating FROM `{$safe_answers}` WHERE question_id = %d", $question_id ), ARRAY_A ) ?: [];
 	}
 
@@ -248,6 +259,7 @@ class Repository {
 	public function get_answers_by_submission_id( int $submission_id ): array {
 		global $wpdb;
 		$safe_answers = $this->survey_answers_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
 		return $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM `{$safe_answers}` WHERE submission_id = %d", $submission_id ), OBJECT_K ) ?: [];
 	}
 
