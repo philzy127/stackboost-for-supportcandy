@@ -591,6 +591,7 @@ class Management {
 			}
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Robust CSV parsing requires fclose.
 		fclose( $handle );
 
 		wp_send_json_success(

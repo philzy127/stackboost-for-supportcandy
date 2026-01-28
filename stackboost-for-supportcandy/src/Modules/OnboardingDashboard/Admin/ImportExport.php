@@ -258,19 +258,12 @@ class ImportExport {
 			];
 		}
 
-		$json_content = json_encode( $export_data, JSON_PRETTY_PRINT );
 		$filename     = 'onboarding-steps-export-' . gmdate( 'Y-m-d' ) . '.json';
 
-		header( 'Content-Description: File Transfer' );
-		header( 'Content-Type: application/json' );
 		header( 'Content-Disposition: attachment; filename=' . $filename );
-		header( 'Expires: 0' );
-		header( 'Cache-Control: must-revalidate' );
-		header( 'Pragma: public' );
-		header( 'Content-Length: ' . strlen( $json_content ) );
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Valid JSON file download.
-		echo $json_content;
-		exit;
+
+		// Use wp_send_json for safe output
+		wp_send_json( $export_data, 200, JSON_PRETTY_PRINT );
 	}
 
 	/**

@@ -84,44 +84,16 @@ class TicketService {
 			$ticket_ids[] = (int) $ticket_obj->id;
 		}
 
-		// Batch check for certificates
+		// Batch check for certificates using Repository
 		$certificates_map = [];
-		if ( ! empty( $ticket_ids ) ) {
-			global $wpdb;
+		if ( ! empty( $ticket_ids ) && class_exists( 'StackBoost\ForSupportCandy\Integration\SupportCandyRepository' ) ) {
+			$repo = new \StackBoost\ForSupportCandy\Integration\SupportCandyRepository();
+			$certificates_map = $repo->get_tickets_with_certificates( $ticket_ids );
 
-			// Dynamic table name detection
-			$table_name = $wpdb->prefix . 'wpsc_attachments';
-			$table_name_like = $wpdb->esc_like( $table_name );
-			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) != $table_name ) {
-				$table_name = $wpdb->prefix . 'psmsc_attachments';
-			}
-
-			stackboost_log( "TicketService: Checking certificates in table: $table_name", 'onboarding' );
-
-			$ids_placeholder = implode( ',', array_fill( 0, count( $ticket_ids ), '%d' ) );
-			// $table_name is derived from $wpdb->prefix so it is safe to interpolate directly, but usually safer to use $wpdb->prefix logic strictly.
-			// Since we checked against SHOW TABLES output above, it matches a real table name.
-			$safe_table_name = esc_sql( $table_name );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholder construction for IN clause is necessary; input IDs are strictly cast to integers.
-			$query = "SELECT ticket_id, COUNT(*) as count FROM {$safe_table_name} WHERE ticket_id IN ($ids_placeholder) AND name LIKE %s GROUP BY ticket_id";
-
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- The query variable contains dynamic placeholders which is unavoidable for IN queries.
-			$prepared_query = $wpdb->prepare( $query, array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] ) );
-
-			stackboost_log( "TicketService: Query: $prepared_query", 'onboarding' );
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Specific service query, not easily centralized.
-			$results = $wpdb->get_results( $prepared_query );
-
-			if ( $results ) {
-				stackboost_log( "TicketService: Certificate Query Results Found: " . count( $results ), 'onboarding' );
-				foreach ( $results as $row ) {
-					if ( $row->count > 0 ) {
-						$certificates_map[ $row->ticket_id ] = true;
-					}
-				}
+			if ( ! empty( $certificates_map ) ) {
+				stackboost_log( "TicketService: Found certificates for " . count( $certificates_map ) . " tickets.", 'onboarding' );
 			} else {
-				stackboost_log( "TicketService: No certificates found matching criteria.", 'onboarding' );
+				stackboost_log( "TicketService: No certificates found.", 'onboarding' );
 			}
 		}
 

@@ -138,6 +138,52 @@ class SupportCandyRepository {
 	 * @param string $after_column Optional. The column after which to position the new column.
 	 * @return bool True on success or if exists, false on failure.
 	 */
+	/**
+	 * Get certificates for a list of tickets.
+	 *
+	 * @param array $ticket_ids List of ticket IDs.
+	 * @return array Map of ticket_id => true for tickets with certificates.
+	 */
+	public function get_tickets_with_certificates( array $ticket_ids ): array {
+		global $wpdb;
+
+		if ( empty( $ticket_ids ) ) {
+			return [];
+		}
+
+		// Ensure strictly integers
+		$ticket_ids = array_map( 'intval', $ticket_ids );
+
+		// Dynamic table name detection
+		$table_name = $wpdb->prefix . 'wpsc_attachments';
+		$table_name_like = $wpdb->esc_like( $table_name );
+		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) != $table_name ) {
+			$table_name = $wpdb->prefix . 'psmsc_attachments';
+		}
+
+		$ids_placeholder = implode( ',', array_fill( 0, count( $ticket_ids ), '%d' ) );
+		$safe_table_name = esc_sql( $table_name );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- Placeholder construction for IN clause is necessary.
+		$query = "SELECT ticket_id, COUNT(*) as count FROM {$safe_table_name} WHERE ticket_id IN ($ids_placeholder) AND name LIKE %s GROUP BY ticket_id";
+		$prepared_query = $wpdb->prepare( $query, array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] ) );
+		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Repository pattern encapsulates DB access.
+		$results = $wpdb->get_results( $prepared_query );
+
+		$certificates_map = [];
+		if ( $results ) {
+			foreach ( $results as $row ) {
+				if ( $row->count > 0 ) {
+					$certificates_map[ $row->ticket_id ] = true;
+				}
+			}
+		}
+
+		return $certificates_map;
+	}
+
 	public function add_column_if_not_exists( string $table_name, string $column_name, string $column_def, string $after_column = '' ): bool {
 		global $wpdb;
 
