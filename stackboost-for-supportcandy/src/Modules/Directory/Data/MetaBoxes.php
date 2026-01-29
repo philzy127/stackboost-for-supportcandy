@@ -292,9 +292,17 @@ class MetaBoxes {
 
 		$unique_id = get_post_meta( $post_id, '_unique_id', true );
 		if ( empty( $unique_id ) ) {
-			global $wpdb;
-			$max_id        = $wpdb->get_var( "SELECT MAX(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->postmeta} WHERE meta_key = '_unique_id'" );
-			$new_unique_id = ( $max_id ) ? $max_id + 1 : 1;
+			// Use Repository if available, otherwise fallback (though this dependency should exist)
+			if ( class_exists( 'StackBoost\ForSupportCandy\Integration\SupportCandyRepository' ) ) {
+				$repo = new \StackBoost\ForSupportCandy\Integration\SupportCandyRepository();
+				$new_unique_id = $repo->get_next_directory_unique_id();
+			} else {
+				// Fallback if repository missing (should not happen in standard build)
+				global $wpdb;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Fallback legacy query.
+				$max_id        = $wpdb->get_var( "SELECT MAX(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->postmeta} WHERE meta_key = '_unique_id'" );
+				$new_unique_id = ( $max_id ) ? $max_id + 1 : 1;
+			}
 			update_post_meta( $post_id, '_unique_id', $new_unique_id );
 		}
 

@@ -35,6 +35,7 @@ class TicketService {
 		$args = [
 			'items_per_page' => 0, // All
 			'is_active'      => 1, // Only active tickets
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
 			'meta_query'     => [
 				'relation' => 'AND',
 				[

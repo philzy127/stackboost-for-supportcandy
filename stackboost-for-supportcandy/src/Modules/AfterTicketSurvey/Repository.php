@@ -219,10 +219,10 @@ class Repository {
 		$safe_submissions = $this->survey_submissions_table_name;
 		$safe_answers     = $this->survey_answers_table_name;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic table name and IN clause placeholders.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic table name and IN clause placeholders.
 		$wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_submissions}` WHERE id IN ($placeholders)", $ids ) );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic table name and IN clause placeholders.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic table name and IN clause placeholders.
 		$wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_answers}` WHERE submission_id IN ($placeholders)", $ids ) );
 	}
 

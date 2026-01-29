@@ -1173,6 +1173,7 @@ class WordPress {
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
 			'paged'          => $page,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
 			'meta_query'     => array(
 				array(
 					'key'     => '_stackboost_email_address',

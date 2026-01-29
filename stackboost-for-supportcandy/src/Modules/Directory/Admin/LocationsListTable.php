@@ -279,6 +279,7 @@ class LocationsListTable extends \WP_List_Table {
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {
 			if ( 'stackboost_needs_completion' === $orderby ) {
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Inherently necessary for sorting by custom meta.
 				$args['meta_key'] = '_needs_completion';
 				$args['orderby']  = 'meta_value';
 			} else {
@@ -289,6 +290,7 @@ class LocationsListTable extends \WP_List_Table {
 
 		$current_filter = Request::get_request( 'stackboost_needs_completion_filter', 'all', 'text' );
 		if ( 'all' !== $current_filter ) {
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
 			$args['meta_query'] = array(
 				array(
 					'key'   => '_needs_completion',

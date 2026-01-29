@@ -144,6 +144,24 @@ class SupportCandyRepository {
 	 * @param array $ticket_ids List of ticket IDs.
 	 * @return array Map of ticket_id => true for tickets with certificates.
 	 */
+	/**
+	 * Get the next available unique ID for staff directory.
+	 *
+	 * @return int The next unique ID.
+	 */
+	public function get_next_directory_unique_id(): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Specific system query for unique ID generation.
+		$max_id = $wpdb->get_var( "SELECT MAX(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->postmeta} WHERE meta_key = '_unique_id'" );
+		return ( $max_id ) ? (int) $max_id + 1 : 1;
+	}
+
+	/**
+	 * Get certificates for a list of tickets.
+	 *
+	 * @param array $ticket_ids List of ticket IDs.
+	 * @return array Map of ticket_id => true for tickets with certificates.
+	 */
 	public function get_tickets_with_certificates( array $ticket_ids ): array {
 		global $wpdb;
 
@@ -206,7 +224,7 @@ class SupportCandyRepository {
 				return false;
 			}
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Schema modification is intended here; identifiers escaped.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema modification is intended here; identifiers escaped.
 			$wpdb->query( "ALTER TABLE {$safe_table} ADD COLUMN {$safe_column} {$column_def} {$safe_after}" );
 			return true;
 		}

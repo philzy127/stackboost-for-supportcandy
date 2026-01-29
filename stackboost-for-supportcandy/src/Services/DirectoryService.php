@@ -76,12 +76,14 @@ class DirectoryService {
 		);
 
 		if ( is_numeric( $user_id_or_email ) ) {
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
 			$query_args['meta_query'][] = array(
 				'key'     => '_user_id',
 				'value'   => (int) $user_id_or_email,
 				'compare' => '=',
 			);
 		} elseif ( is_email( $user_id_or_email ) ) {
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
 			$query_args['meta_query'][] = array(
 				'key'     => '_email_address',
 				'value'   => sanitize_email( $user_id_or_email ),
