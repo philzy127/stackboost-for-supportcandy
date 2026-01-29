@@ -45,11 +45,12 @@ class SupportCandyRepository {
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
 		$safe_table          = $custom_fields_table;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from DB prefix.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$results = $wpdb->get_results(
 			$wpdb->prepare( "SELECT slug, name FROM `{$safe_table}` WHERE type = %s", $type ),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 		return $results ?: [];
 	}
@@ -91,13 +92,14 @@ class SupportCandyRepository {
 		}
 
 		$safe_table = $table_name;
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from DB prefix.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$field_id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT id FROM `{$safe_table}` WHERE name = %s",
 				$field_name
 			)
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 		return $field_id ? (int) $field_id : 0;
 	}
@@ -151,8 +153,9 @@ class SupportCandyRepository {
 	 */
 	public function get_next_directory_unique_id(): int {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Specific system query for unique ID generation.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$max_id = $wpdb->get_var( "SELECT MAX(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->postmeta} WHERE meta_key = '_unique_id'" );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return ( $max_id ) ? (int) $max_id + 1 : 1;
 	}
 
@@ -224,8 +227,9 @@ class SupportCandyRepository {
 				return false;
 			}
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema modification is intended here; identifiers escaped.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query( "ALTER TABLE {$safe_table} ADD COLUMN {$safe_column} {$column_def} {$safe_after}" );
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return true;
 		}
 

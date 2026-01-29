@@ -372,7 +372,7 @@ class WordPress extends Module {
         $holidays_list = [];
 
         // 1. Non-Recurring
-		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
         $non_recurring = \WPSC_Holiday::find( [
             'meta_query' => [
                 'relation' => 'AND',
@@ -380,6 +380,7 @@ class WordPress extends Module {
                 [ 'slug' => 'is_recurring', 'compare' => '=', 'val' => 0 ],
             ]
         ] );
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
         if ( isset( $non_recurring['results'] ) ) {
             foreach ( $non_recurring['results'] as $holiday ) {
@@ -391,7 +392,7 @@ class WordPress extends Module {
 
         // 2. Recurring - This is tricky because Core logic expects explicit Y-m-d dates.
         // We need to generate this year's instance of the recurring holiday.
-		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
         $recurring = \WPSC_Holiday::find( [
             'meta_query' => [
                 'relation' => 'AND',
@@ -399,6 +400,7 @@ class WordPress extends Module {
                 [ 'slug' => 'is_recurring', 'compare' => '=', 'val' => 1 ],
             ]
         ] );
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
         if ( isset( $recurring['results'] ) ) {
             // Use wp_date to respect site timezone, not server timezone.

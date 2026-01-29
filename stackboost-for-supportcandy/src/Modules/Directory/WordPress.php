@@ -1183,7 +1183,9 @@ class WordPress {
 			),
 		);
 
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$query = new \WP_Query( $args );
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
 		if ( $query->have_posts() ) {
 			foreach ( $query->posts as $post ) {

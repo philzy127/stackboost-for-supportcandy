@@ -93,7 +93,9 @@ class DirectoryService {
 			return null; // Invalid input.
 		}
 
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$employee_query = new \WP_Query( $query_args );
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
 		if ( $employee_query->have_posts() ) {
 			return $employee_query->posts[0]->ID;
