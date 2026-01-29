@@ -1,6 +1,9 @@
 <?php
 
 if ( ! defined( 'ABSPATH' ) ) exit;
+
+use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\Repository;
+
 /**
  * Template for the "View Results" tab in the After Ticket Survey admin page.
  *
@@ -28,15 +31,25 @@ if ( ! defined( 'ABSPATH' ) ) exit;
         </tr>
     </thead>
     <tbody>
-    <?php foreach ( $submissions as $stackboost_sub ) : ?>
+    <?php
+    // Use Repository for answers fetch inside the loop to avoid DirectDB
+    // Ideally this should be eager loaded in the controller, but to fix the template quickly:
+    $stackboost_ats_repository = new Repository();
+    foreach ( $submissions as $stackboost_sub ) : ?>
         <tr>
             <td><?php echo esc_html($stackboost_sub['id']); ?></td>
             <td><?php echo esc_html($stackboost_sub['submission_date']); ?></td>
             <td><?php echo esc_html( $stackboost_sub['display_name'] ?? __('Guest', 'stackboost-for-supportcandy') ); ?></td>
             <?php
-            global $wpdb;
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $stackboost_answers = $wpdb->get_results( $wpdb->prepare( "SELECT question_id, answer_value FROM {$wpdb->prefix}stackboost_ats_survey_answers WHERE submission_id = %d", $stackboost_sub['id'] ), OBJECT_K );
+            $stackboost_ats_cache_key = 'stackboost_ats_sub_answers_' . $stackboost_sub['id'];
+            $stackboost_answers = get_transient( $stackboost_ats_cache_key );
+
+            if ( false === $stackboost_answers ) {
+                $stackboost_answers = $stackboost_ats_repository->get_answers_by_submission_id( $stackboost_sub['id'] );
+                // Cache for 1 hour to improve performance
+                set_transient( $stackboost_ats_cache_key, $stackboost_answers, HOUR_IN_SECONDS );
+            }
+
             foreach ( $questions as $stackboost_q ) {
                 $stackboost_answer = $stackboost_answers[ $stackboost_q['id'] ]->answer_value ?? '';
                 if ( $stackboost_q['question_type'] === 'ticket_number' && is_numeric( $stackboost_answer ) ) {

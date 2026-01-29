@@ -256,7 +256,7 @@ class Settings {
 	 * Enqueue Assets for Settings Page.
 	 */
 	public static function enqueue_assets() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading 'tab' for UI logic only, no data processing.
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : '';
 		if ( 'settings' !== $tab && 'certificate' !== $tab ) {
 			return;
@@ -283,8 +283,8 @@ class Settings {
 	public static function render_page() {
 		self::enqueue_assets();
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['settings-updated'] ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce check handled by WP core during settings save redirect.
+		if ( \StackBoost\ForSupportCandy\Core\Request::has_get('settings-updated') ) {
 			add_settings_error( 'stackboost_messages', 'stackboost_message', __( 'Settings Saved', 'stackboost-for-supportcandy' ), 'updated' );
 		}
 		settings_errors( 'stackboost_messages' );
@@ -533,7 +533,7 @@ class Settings {
 	public static function render_certificate_page() {
 		self::enqueue_assets();
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce check handled by WP core during settings save redirect. Basic isset check for UI flag.
 		if ( isset( $_GET['settings-updated'] ) ) {
 			add_settings_error( 'stackboost_messages', 'stackboost_message', __( 'Settings Saved', 'stackboost-for-supportcandy' ), 'updated' );
 		}

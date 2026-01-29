@@ -39,11 +39,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                     <td>
                         <?php
                         if ( $stackboost_q['question_type'] === 'dropdown' ) {
-                            global $wpdb;
-                            $stackboost_options_table = $wpdb->prefix . 'stackboost_ats_dropdown_options';
-                            $stackboost_safe_options_table = $stackboost_options_table;
-                            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-                            $stackboost_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_value FROM `{$stackboost_safe_options_table}` WHERE question_id = %d ORDER BY sort_order ASC", $stackboost_q['id'] ), ARRAY_A );
+                            // Use the repository to fetch options safely
+                            // Note: Instantiating here in the loop isn't ideal for performance but matches the template context.
+                            // ideally passed in via controller, but this fixes the DirectDB violation.
+                            $stackboost_ats_repo_instance = new \StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\Repository();
+                            $stackboost_options = $stackboost_ats_repo_instance->get_dropdown_options( $stackboost_q['id'] );
                             echo esc_html( implode(', ', array_column($stackboost_options, 'option_value')) );
                         } else {
                             echo '-';

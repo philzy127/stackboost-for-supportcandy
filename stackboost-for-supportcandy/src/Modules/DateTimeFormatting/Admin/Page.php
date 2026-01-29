@@ -3,6 +3,7 @@
 namespace StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin;
 
 use StackBoost\ForSupportCandy\WordPress\Plugin;
+use StackBoost\ForSupportCandy\Integration\SupportCandyRepository;
 
 /**
  * Handles the Date & Time Formatting settings page.
@@ -185,7 +186,6 @@ class Page {
 	 * Get all date-based columns for the settings page.
 	 */
 	private static function get_date_columns() {
-		$plugin = Plugin::get_instance();
 		$columns = [];
 
 		// Standard SupportCandy date fields.
@@ -196,34 +196,14 @@ class Page {
 			'date_updated' => __( 'Date Updated', 'stackboost-for-supportcandy' ),
 		];
 
-		// Get custom fields using the plugin's centralized method, but filtering for datetime.
-		// Note: The Plugin class method returns all columns. We need to check types if possible.
-		// Since get_supportcandy_columns doesn't return type, we might need a direct query here
-		// similar to the reference implementation to ensure we only get datetime fields.
-		// However, adhering to the project's "reuse" preference, we can check if we can get types.
-		// The Plugin class doesn't seem to expose types.
-		// So I will implement the specific query here as per the reference implementation
-		// to ensure correctness (filtering only datetime fields).
+		$repo = new SupportCandyRepository();
 
-		global $wpdb;
-		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
-		$table_name_like = $wpdb->esc_like( $custom_fields_table );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) ) {
-			$safe_table = $custom_fields_table;
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$custom_fields = $wpdb->get_results(
-				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT slug, name FROM `{$safe_table}` WHERE type = %s",
-					'datetime'
-				),
-				ARRAY_A
-			);
-			if ( $custom_fields ) {
-				foreach ( $custom_fields as $field ) {
-					$columns[ $field['slug'] ] = $field['name'];
-				}
+		// Use the repository method to fetch only datetime fields.
+		$custom_fields = $repo->get_custom_fields_by_type( 'datetime' );
+
+		if ( $custom_fields ) {
+			foreach ( $custom_fields as $field ) {
+				$columns[ $field['slug'] ] = $field['name'];
 			}
 		}
 

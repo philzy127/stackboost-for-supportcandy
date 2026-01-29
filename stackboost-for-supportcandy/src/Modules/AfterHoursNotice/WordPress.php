@@ -348,8 +348,7 @@ class WordPress extends Module {
 			stackboost_log( 'AfterHoursNotice: Currently after hours. Prepending notice to email.', 'after_hours' );
 			$message = $options['after_hours_message'] ?? '';
 			if ( ! empty( $message ) ) {
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				$notice      = '<div class="stackboost-after-hours-notice" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #ffba00; background-color: #fff8e5;">' . wpautop( $message ) . '</div>';
+				$notice      = '<div class="stackboost-after-hours-notice" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #ffba00; background-color: #fff8e5;">' . wp_kses_post( wpautop( $message ) ) . '</div>';
 				$email_data['body'] = $notice . $email_data['body'];
 			}
 		}
@@ -373,14 +372,15 @@ class WordPress extends Module {
         $holidays_list = [];
 
         // 1. Non-Recurring
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
         $non_recurring = \WPSC_Holiday::find( [
-            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             'meta_query' => [
                 'relation' => 'AND',
                 [ 'slug' => 'agent', 'compare' => '=', 'val' => 0 ],
                 [ 'slug' => 'is_recurring', 'compare' => '=', 'val' => 0 ],
             ]
         ] );
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
         if ( isset( $non_recurring['results'] ) ) {
             foreach ( $non_recurring['results'] as $holiday ) {
@@ -392,14 +392,15 @@ class WordPress extends Module {
 
         // 2. Recurring - This is tricky because Core logic expects explicit Y-m-d dates.
         // We need to generate this year's instance of the recurring holiday.
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
         $recurring = \WPSC_Holiday::find( [
-            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             'meta_query' => [
                 'relation' => 'AND',
                 [ 'slug' => 'agent', 'compare' => '=', 'val' => 0 ],
                 [ 'slug' => 'is_recurring', 'compare' => '=', 'val' => 1 ],
             ]
         ] );
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
         if ( isset( $recurring['results'] ) ) {
             // Use wp_date to respect site timezone, not server timezone.

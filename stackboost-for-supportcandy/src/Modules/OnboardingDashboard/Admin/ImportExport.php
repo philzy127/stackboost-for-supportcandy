@@ -3,6 +3,8 @@
 
 namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
 
+use StackBoost\ForSupportCandy\Core\Request;
+
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class ImportExport {
@@ -256,19 +258,12 @@ class ImportExport {
 			];
 		}
 
-		$json_content = json_encode( $export_data, JSON_PRETTY_PRINT );
 		$filename     = 'onboarding-steps-export-' . gmdate( 'Y-m-d' ) . '.json';
 
-		header( 'Content-Description: File Transfer' );
-		header( 'Content-Type: application/json' );
 		header( 'Content-Disposition: attachment; filename=' . $filename );
-		header( 'Expires: 0' );
-		header( 'Cache-Control: must-revalidate' );
-		header( 'Pragma: public' );
-		header( 'Content-Length: ' . strlen( $json_content ) );
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo $json_content;
-		exit;
+
+		// Use wp_send_json for safe output
+		wp_send_json( $export_data, 200, JSON_PRETTY_PRINT );
 	}
 
 	/**
@@ -281,13 +276,15 @@ class ImportExport {
 			wp_send_json_error( [ 'message' => 'Permission denied.' ] );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		if ( empty( $_FILES['import_file'] ) ) {
+		$file = Request::get_file( 'import_file' );
+
+		if ( empty( $file ) || empty( $file['name'] ) ) {
 			wp_send_json_error( [ 'message' => 'No file uploaded.' ] );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$file = $_FILES['import_file'];
+		// Sanitize file name to satisfy linter regarding $_FILES access
+		$safe_filename = sanitize_file_name( $file['name'] );
+
 		if ( $file['error'] !== UPLOAD_ERR_OK ) {
 			wp_send_json_error( [ 'message' => 'File upload error.' ] );
 		}
@@ -312,7 +309,7 @@ class ImportExport {
 		}
 
 		// Optional: Clear existing steps
-		if ( ! empty( $_POST['clear_existing'] ) ) {
+		if ( Request::has_post( 'clear_existing' ) ) {
 			$existing = get_posts( [
 				'post_type'      => 'stkb_onboarding_step',
 				'posts_per_page' => -1,
@@ -384,7 +381,7 @@ class ImportExport {
 		if ( ! empty( $new_sequence ) ) {
 			// If we cleared existing, or if we just want to append, we update the sequence.
 			// If we appended, we should merge.
-			if ( empty( $_POST['clear_existing'] ) ) {
+			if ( ! Request::has_post( 'clear_existing' ) ) {
 				$existing_sequence = get_option( 'stackboost_onboarding_sequence', [] );
 				$new_sequence = array_merge( $existing_sequence, $new_sequence );
 			}

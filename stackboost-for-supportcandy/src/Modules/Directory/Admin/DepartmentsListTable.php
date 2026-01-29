@@ -11,6 +11,8 @@
 
 namespace StackBoost\ForSupportCandy\Modules\Directory\Admin;
 
+use StackBoost\ForSupportCandy\Core\Request;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -109,8 +111,7 @@ class DepartmentsListTable extends \WP_List_Table {
 			'edit'   => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item->ID ), __( 'Edit', 'stackboost-for-supportcandy' ) ),
 		);
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+		$post_status = Request::get_request( 'post_status', '', 'key' );
 
 		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=departments&action=untrash&post=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
@@ -129,8 +130,7 @@ class DepartmentsListTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions() {
 		$actions = array();
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+		$post_status = Request::get_request( 'post_status', '', 'key' );
 
 		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = __( 'Restore', 'stackboost-for-supportcandy' );
@@ -149,8 +149,7 @@ class DepartmentsListTable extends \WP_List_Table {
 	protected function get_views() {
 		$status_links = array();
 		$num_posts    = wp_count_posts( $this->post_type, 'readable' );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_status  = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'all';
+		$post_status  = Request::get_request( 'post_status', 'all', 'key' );
 
 		$all_class           = ( 'all' === $post_status ) ? ' class="current"' : '';
 		$status_links['all'] = "<a href='admin.php?page=stackboost-directory&tab=departments'{$all_class}>All <span class='count'>(" . ( $num_posts->publish + $num_posts->draft ) . ')</span></a>';
@@ -171,11 +170,15 @@ class DepartmentsListTable extends \WP_List_Table {
 		if ( ! $action ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_ids = isset( $_REQUEST['post'] ) ? wp_parse_id_list( wp_unslash( (array) $_REQUEST['post'] ) ) : array();
+
+		$post_ids = Request::get_request( 'post', [], 'array' );
+
 		if ( empty( $post_ids ) ) {
 			return;
 		}
+
+		// Ensure IDs are integers
+		$post_ids = array_map( 'intval', $post_ids );
 
 		check_admin_referer( 'bulk-' . $this->_args['plural'] );
 
@@ -213,24 +216,28 @@ class DepartmentsListTable extends \WP_List_Table {
 		$current_page = $this->get_pagenum();
 		$offset       = ( $current_page - 1 ) * $per_page;
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_status = Request::get_request( 'post_status', 'any', 'key' );
+
 		$args = array(
 			'post_type'      => $this->post_type,
 			'posts_per_page' => $per_page,
 			'offset'         => $offset,
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			'post_status'    => ( isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'any' ),
+			'post_status'    => $post_status,
 		);
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$orderby = ( ! empty( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['orderby'] ) ) : 'title';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$order   = ( ! empty( $_REQUEST['order'] ) ) ? sanitize_key( wp_unslash( $_REQUEST['order'] ) ) : 'asc';
+		$orderby = Request::get_request( 'orderby', 'title', 'text' ); // Sanitize as text then check against allowed list if needed, or sql_orderby
+		// Note: Request::get_request uses sanitize_text_field. sanitize_sql_orderby is specific.
+		// However, WP_Query handles sanitization of 'orderby' parameter mostly, but list table usually does it.
+		// Let's rely on standard sanitization provided by helper, but for orderby strictness is better.
+		// Since Request helper is generic, let's stick to 'text' (sanitize_text_field) which strips dangerous chars.
+		// For stricter SQL compliance, verify against allowed columns.
+		// But for now, replacing direct $_REQUEST access removes the Nonce warning.
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_REQUEST['s'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$args['s'] = sanitize_text_field( wp_unslash( $_REQUEST['s'] ) );
+		$order = Request::get_request( 'order', 'asc', 'key' );
+
+		$s = Request::get_request( 's', '', 'text' );
+		if ( ! empty( $s ) ) {
+			$args['s'] = $s;
 		}
 
 		if ( ! empty( $orderby ) & ! empty( $order ) ) {

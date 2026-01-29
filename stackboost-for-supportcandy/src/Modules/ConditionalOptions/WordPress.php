@@ -6,6 +6,7 @@ namespace StackBoost\ForSupportCandy\Modules\ConditionalOptions;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
+use StackBoost\ForSupportCandy\Core\Request;
 
 /**
  * WordPress Adapter for Conditional Options.
@@ -321,7 +322,7 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['field_slug'] ) ) : '';
+		$field_slug = Request::get_post( 'field_slug', '', 'text' );
 		if ( empty( $field_slug ) ) {
 			wp_send_json_error( [ 'message' => 'Missing field slug' ] );
 		}
@@ -374,15 +375,11 @@ class WordPress extends Module {
 	public function ajax_get_roles() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		// if ( function_exists( 'stackboost_log' ) ) {
-		// 	stackboost_log( 'AJAX Get Roles Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
-		// }
-
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$context = sanitize_text_field( wp_unslash( $_POST['context'] ?? 'wp' ) );
+		$context = Request::get_post( 'context', 'wp', 'text' );
 		$roles   = Core::get_instance()->get_roles( $context );
 
 		wp_send_json_success( $roles );
@@ -394,22 +391,13 @@ class WordPress extends Module {
 	public function ajax_save_rules() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		// if ( function_exists( 'stackboost_log' ) ) {
-		// 	stackboost_log( 'AJAX Save Rules Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
-		// }
-
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$rules_json = isset( $_POST['rules'] ) ? wp_unslash( $_POST['rules'] ) : '[]';
+		$rules_json = Request::get_post( 'rules', '[]', 'raw' );
 		$rules      = json_decode( $rules_json, true );
-		$is_enabled = isset( $_POST['enabled'] ) && 'true' === $_POST['enabled'];
-
-		// if ( function_exists( 'stackboost_log' ) ) {
-		// 	stackboost_log( 'Decoded Rules: ' . print_r( $rules, true ) . ' Enabled: ' . ( $is_enabled ? 'Yes' : 'No' ), 'conditional_options' );
-		// }
+		$is_enabled = Request::get_post( 'enabled', '', 'text' ) === 'true';
 
 		if ( ! is_array( $rules ) ) {
 			wp_send_json_error( [ 'message' => 'Invalid data format' ] );

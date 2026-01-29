@@ -15,20 +15,3 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function stackboost_is_supportcandy_pro_active() {
     return class_exists( 'WPSC_Pro_Custom_Fields' );
 }
-
-/**
- * Check if SupportCandy Pro is active (Legacy wrapper).
- *
- * @return bool
- */
-if ( ! function_exists( 'is_supportcandy_pro_active' ) ) {
-    /**
-     * Check if SupportCandy Pro is active (Legacy wrapper).
-     *
-     * @return bool
-     */
-    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-    function is_supportcandy_pro_active() {
-        return stackboost_is_supportcandy_pro_active();
-    }
-}

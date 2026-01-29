@@ -14,6 +14,7 @@ use StackBoost\ForSupportCandy\Modules\ChatBubbles;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 use StackBoost\ForSupportCandy\Modules\ConditionalOptions;
+use StackBoost\ForSupportCandy\Integration\SupportCandyRepository;
 
 /**
  * Main plugin class.
@@ -31,6 +32,9 @@ final class Plugin {
 	/** @var array */
 	private array $modules = [];
 
+	/** @var SupportCandyRepository */
+	private SupportCandyRepository $sc_repository;
+
 	/**
 	 * Get the single instance of the class.
 	 */
@@ -45,6 +49,7 @@ final class Plugin {
 	 * Constructor.
 	 */
 	private function __construct() {
+		$this->sc_repository = new SupportCandyRepository();
 		$this->load_dependencies();
 		$this->init_hooks();
 	}
@@ -500,22 +505,14 @@ final class Plugin {
 			return $cached_columns;
 		}
 
-		global $wpdb;
-		$columns             = [];
-
-		// 1. Fetch Custom Fields from DB
-		// Optimization: Removed 'SHOW TABLES' check. If table doesn't exist, query returns false/empty safely.
-		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';
-		$safe_table = $custom_fields_table;
-
-		// Suppress errors for this specific query to avoid noise if SC is inactive
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$custom_fields = $wpdb->get_results( "SELECT slug, name FROM `{$safe_table}`", ARRAY_A );
+		$custom_fields = $this->sc_repository->get_custom_fields();
+		$columns       = [];
 
 		if ( $custom_fields ) {
 			foreach ( $custom_fields as $field ) {
+				// SupportCandy uses object or array depending on query mode, but get_results(ARRAY_A) returns array.
+				// However, if we change repo, we should ensure consistency.
+				// My new repository uses ARRAY_A.
 				$columns[ $field['slug'] ] = $field['name'];
 			}
 		}
@@ -555,17 +552,16 @@ final class Plugin {
 			return $cached_statuses;
 		}
 
-		global $wpdb;
-		$statuses      = [];
-		$status_table  = $wpdb->prefix . 'psmsc_statuses';
-		$safe_table = $status_table;
-
-		// Optimization: Removed 'SHOW TABLES' check.
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$results = $wpdb->get_results( "SELECT id, name FROM `{$safe_table}` ORDER BY name ASC" );
+		$results  = $this->sc_repository->get_statuses();
+		$statuses = [];
 
 		if ( $results ) {
 			foreach ( $results as $status ) {
+				// get_results (default OBJECT) returns objects.
+				// My repository uses get_results (default) for this query, so it returns objects.
+				// Wait, let me check Repository implementation.
+				// In SupportCandyRepository: $wpdb->get_results(..., OBJECT) is default if not specified.
+				// I specified nothing for get_statuses in repo, so it returns objects.
 				$statuses[ $status->id ] = $status->name;
 			}
 		}
@@ -581,26 +577,6 @@ final class Plugin {
 	 * @return int
 	 */
 	public function get_custom_field_id_by_name( string $field_name ): int {
-		global $wpdb;
-		if ( empty( $field_name ) ) {
-			return 0;
-		}
-		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
-		$table_name_like = $wpdb->esc_like( $table_name );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) !== $table_name ) {
-			return 0;
-		}
-
-		$safe_table = $table_name;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$field_id = $wpdb->get_var(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT id FROM `{$safe_table}` WHERE name = %s",
-				$field_name
-			)
-		);
-		return $field_id ? (int) $field_id : 0;
+		return $this->sc_repository->get_custom_field_id_by_name( $field_name );
 	}
 }

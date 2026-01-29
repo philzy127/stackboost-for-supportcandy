@@ -2,6 +2,8 @@
 
 namespace StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
 
+use StackBoost\ForSupportCandy\Core\Request;
+
 /**
  * Handles the admin interface for the After Ticket Survey module.
  *
@@ -9,156 +11,125 @@ namespace StackBoost\ForSupportCandy\Modules\AfterTicketSurvey;
  */
 class AdminController {
 
-    /** @var string The name of the questions table. */
-    private string $questions_table_name;
-
-    /** @var string The name of the dropdown options table. */
-    private string $dropdown_options_table_name;
-
-    /** @var string The name of the survey submissions table. */
-    private string $survey_submissions_table_name;
-
-    /** @var string The name of the survey answers table. */
-    private string $survey_answers_table_name;
+	/** @var Repository The repository instance. */
+	private Repository $repository;
 
 	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-        global $wpdb;
-        $this->questions_table_name        = $wpdb->prefix . 'stackboost_ats_questions';
-        $this->dropdown_options_table_name = $wpdb->prefix . 'stackboost_ats_dropdown_options';
-        $this->survey_submissions_table_name = $wpdb->prefix . 'stackboost_ats_survey_submissions';
-        $this->survey_answers_table_name   = $wpdb->prefix . 'stackboost_ats_survey_answers';
+		$this->repository = new Repository();
 	}
 
-    /**
-     * Add the submenu page for the survey module.
-     */
-    public function add_admin_menu() {
-        // Menu page is now registered centrally in Settings.php
-    }
+	/**
+	 * Add the submenu page for the survey module.
+	 */
+	public function add_admin_menu() {
+		// Menu page is now registered centrally in Settings.php
+	}
 
-    /**
-     * Render the main admin page with its tabbed interface.
-     */
-    public function render_page() {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'questions';
+	/**
+	 * Render the main admin page with its tabbed interface.
+	 */
+	public function render_page() {
+		$current_tab = Request::get_get( 'tab', 'questions', 'key' );
 
-        $theme_class = 'sb-theme-clean-tech';
-        if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
-            $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
-        }
-        ?>
-        <div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
-            <h1><?php esc_html_e( 'After Ticket Survey', 'stackboost-for-supportcandy' ); ?></h1>
-            <nav class="nav-tab-wrapper stackboost-tabs-connected">
-                <a href="?page=stackboost-ats&tab=questions" class="nav-tab <?php if($current_tab === 'questions') echo 'nav-tab-active'; ?>"><?php esc_html_e( 'Manage Questions', 'stackboost-for-supportcandy' ); ?></a>
-                <a href="?page=stackboost-ats&tab=submissions" class="nav-tab <?php if($current_tab === 'submissions') echo 'nav-tab-active'; ?>"><?php esc_html_e( 'Manage Submissions', 'stackboost-for-supportcandy' ); ?></a>
-                <a href="?page=stackboost-ats&tab=results" class="nav-tab <?php if($current_tab === 'results') echo 'nav-tab-active'; ?>"><?php esc_html_e( 'View Results', 'stackboost-for-supportcandy' ); ?></a>
-            </nav>
-            <div class="stackboost-card stackboost-card-connected">
-            <?php
-                switch ( $current_tab ) {
-                    case 'submissions': $this->render_submissions_tab(); break;
-                    case 'results': $this->render_results_tab(); break;
-                    case 'questions':
-                    default:
-                        $this->render_questions_tab();
-                        break;
-                }
-            ?>
-            </div>
-        </div>
-        <?php
-    }
+		$theme_class = 'sb-theme-clean-tech';
+		if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
+			$theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();
+		}
+		?>
+		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
+			<h1><?php esc_html_e( 'After Ticket Survey', 'stackboost-for-supportcandy' ); ?></h1>
+			<nav class="nav-tab-wrapper stackboost-tabs-connected">
+				<a href="?page=stackboost-ats&tab=questions" class="nav-tab <?php if ( $current_tab === 'questions' ) echo 'nav-tab-active'; ?>"><?php esc_html_e( 'Manage Questions', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="?page=stackboost-ats&tab=submissions" class="nav-tab <?php if ( $current_tab === 'submissions' ) echo 'nav-tab-active'; ?>"><?php esc_html_e( 'Manage Submissions', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="?page=stackboost-ats&tab=results" class="nav-tab <?php if ( $current_tab === 'results' ) echo 'nav-tab-active'; ?>"><?php esc_html_e( 'View Results', 'stackboost-for-supportcandy' ); ?></a>
+			</nav>
+			<div class="stackboost-card stackboost-card-connected">
+			<?php
+				switch ( $current_tab ) {
+					case 'submissions':
+						$this->render_submissions_tab();
+						break;
+					case 'results':
+						$this->render_results_tab();
+						break;
+					case 'questions':
+					default:
+						$this->render_questions_tab();
+						break;
+				}
+			?>
+			</div>
+		</div>
+		<?php
+	}
 
-    /**
-     * Handle form submissions from the admin page (e.g., adding/updating questions).
-     */
-    public function handle_admin_post() {
-        if ( ! current_user_can( 'manage_options' ) ) return;
+	/**
+	 * Handle form submissions from the admin page (e.g., adding/updating questions).
+	 */
+	public function handle_admin_post() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
 
-        $post_action = isset($_POST['form_action']) ? sanitize_text_field( wp_unslash( $_POST['form_action'] ) ) : '';
+		$post_action = Request::get_post( 'form_action', '', 'text' );
 
-        switch ($post_action) {
-            // Question management is now handled via AJAX in Ajax.php
-            case 'manage_submissions':
-                check_admin_referer( 'stackboost_ats_manage_submissions_nonce' );
-                $this->process_submissions_form();
-                break;
-        }
-    }
+		switch ( $post_action ) {
+			// Question management is now handled via AJAX in Ajax.php
+			case 'manage_submissions':
+				check_admin_referer( 'stackboost_ats_manage_submissions_nonce' );
+				$this->process_submissions_form();
+				break;
+		}
+	}
 
-    private function process_submissions_form() {
-        global $wpdb;
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        if ( ! empty( $_POST['selected_submissions'] ) ) {
-            // phpcs:ignore WordPress.Security.NonceVerification.Missing
-            $ids_array = array_map( 'absint', $_POST['selected_submissions'] );
-            $ids = implode( ',', $ids_array );
-            if ( empty( $ids ) ) {
-                return;
-            }
-            $safe_submissions_table = $this->survey_submissions_table_name;
-            $safe_answers_table = $this->survey_answers_table_name;
+	private function process_submissions_form() {
+		$selected_submissions = Request::get_post( 'selected_submissions', [], 'array' );
 
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query( "DELETE FROM `{$safe_submissions_table}` WHERE id IN ($ids)" );
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query( "DELETE FROM `{$safe_answers_table}` WHERE submission_id IN ($ids)" );
-        }
-        wp_safe_redirect( admin_url( 'admin.php?page=stackboost-ats&tab=submissions&message=submissions_deleted' ) );
-        exit;
-    }
+		if ( ! empty( $selected_submissions ) ) {
+			$ids_array = array_map( 'absint', $selected_submissions );
 
-    /**
-     * Display admin notices for this module.
-     */
-    public function display_admin_notices() {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        if ( isset( $_GET['page'] ) && 'stackboost-ats' === $_GET['page'] && isset( $_GET['message'] ) ) {
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $message = sanitize_text_field( wp_unslash( $_GET['message'] ) );
-            $type = strpos( $message, 'fail' ) !== false || $message === 'error' ? 'error' : 'success';
-            $messages = [
-                'submissions_deleted' => 'Selected submissions deleted!',
-                'error' => 'An error occurred.',
-            ];
-            $message_text = $messages[ $message ] ?? 'Action completed.';
-            echo '<div class="notice notice-' . esc_attr( $type ) . ' is-dismissible"><p>' . esc_html( $message_text ) . '</p></div>';
-        }
-    }
+			// Use Repository for deletion
+			$this->repository->bulk_delete_submissions( $ids_array );
+		}
+		wp_safe_redirect( admin_url( 'admin.php?page=stackboost-ats&tab=submissions&message=submissions_deleted' ) );
+		exit;
+	}
 
-    // --- Tab Rendering Methods --- //
+	/**
+	 * Display admin notices for this module.
+	 */
+	public function display_admin_notices() {
+		$page = Request::get_get( 'page', '', 'text' );
+		if ( 'stackboost-ats' === $page && Request::has_get( 'message' ) ) {
+			$message      = Request::get_get( 'message', '', 'text' );
+			$type         = strpos( $message, 'fail' ) !== false || $message === 'error' ? 'error' : 'success';
+			$messages     = [
+				'submissions_deleted' => 'Selected submissions deleted!',
+				'error'               => 'An error occurred.',
+			];
+			$message_text = $messages[ $message ] ?? 'Action completed.';
+			echo '<div class="notice notice-' . esc_attr( $type ) . ' is-dismissible"><p>' . esc_html( $message_text ) . '</p></div>';
+		}
+	}
 
-    private function render_questions_tab() {
-        global $wpdb;
-        // Logic for handling GET based delete/edit has been moved to AJAX.
-        // We only need to fetch the list for initial display.
-        $safe_table = $this->questions_table_name;
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $questions = $wpdb->get_results( "SELECT * FROM `{$safe_table}` ORDER BY sort_order ASC", ARRAY_A );
-        include __DIR__ . '/Admin/manage-questions-template.php';
-    }
+	// --- Tab Rendering Methods --- //
 
-    private function render_submissions_tab() {
-        global $wpdb;
-        $safe_table = $this->survey_submissions_table_name;
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $submissions = $wpdb->get_results( "SELECT id, submission_date FROM `{$safe_table}` ORDER BY submission_date DESC", ARRAY_A );
-        include __DIR__ . '/Admin/manage-submissions-template.php';
-    }
+	private function render_questions_tab() {
+		$questions = $this->repository->get_questions();
+		include __DIR__ . '/Admin/manage-questions-template.php';
+	}
 
-    private function render_results_tab() {
-        global $wpdb;
-        $safe_questions_table = $this->questions_table_name;
-        $safe_submissions_table = $this->survey_submissions_table_name;
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $questions = $wpdb->get_results( "SELECT id, question_text, report_heading, question_type, prefill_key FROM `{$safe_questions_table}` ORDER BY sort_order ASC", ARRAY_A );
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $submissions = $wpdb->get_results( "SELECT s.*, u.display_name FROM `{$safe_submissions_table}` s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID ORDER BY submission_date DESC", ARRAY_A );
-        include __DIR__ . '/Admin/view-results-template.php';
-    }
+	private function render_submissions_tab() {
+		$submissions = $this->repository->get_submissions();
+		include __DIR__ . '/Admin/manage-submissions-template.php';
+	}
+
+	private function render_results_tab() {
+		$questions   = $this->repository->get_questions();
+		$submissions = $this->repository->get_submissions_with_users();
+		include __DIR__ . '/Admin/view-results-template.php';
+	}
 }

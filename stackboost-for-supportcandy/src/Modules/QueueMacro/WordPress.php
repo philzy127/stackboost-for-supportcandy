@@ -6,8 +6,10 @@ namespace StackBoost\ForSupportCandy\Modules\QueueMacro;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\Core\Module;
+use StackBoost\ForSupportCandy\Core\Request;
 use StackBoost\ForSupportCandy\Modules\QueueMacro\Core as QueueMacroCore;
 use StackBoost\ForSupportCandy\WordPress\Plugin;
+use StackBoost\ForSupportCandy\Integration\SupportCandyRepository;
 
 /**
  * WordPress Adapter for the Queue Macro feature.
@@ -21,6 +23,9 @@ class WordPress extends Module {
 
 	/** @var QueueMacroCore */
 	private QueueMacroCore $core;
+
+	/** @var SupportCandyRepository */
+	private SupportCandyRepository $sc_repository;
 
 	/**
 	 * Get the single instance of the class.
@@ -41,6 +46,7 @@ class WordPress extends Module {
 		}
 
 		$this->core = new QueueMacroCore();
+		$this->sc_repository = new SupportCandyRepository();
 		parent::__construct();
 	}
 
@@ -94,8 +100,7 @@ class WordPress extends Module {
 		$statuses   = $options['queue_macro_statuses'] ?? [];
 
 		// Get the type value from the submitted form data.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$type_value = isset( $_POST[ $type_field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $type_field ] ) ) : '';
+		$type_value = Request::get_post( $type_field, '', 'text' );
 
 		stackboost_log( "QueueMacro: Calculating count for field '{$type_field}' with value '{$type_value}'.", 'queue_macro' );
 
@@ -183,7 +188,17 @@ class WordPress extends Module {
 			]
 		);
 
-		add_settings_field( 'stackboost_queue_macro_statuses', __( 'Non-Closed Statuses', 'stackboost-for-supportcandy' ), [ $this, 'render_statuses_dual_list_field' ], $page_slug, 'stackboost_queue_macro_section', [ 'id' => 'queue_macro_statuses', 'desc' => 'Select which ticket statuses should count toward the queue.' ] );
+		add_settings_field(
+			'stackboost_queue_macro_statuses',
+			__( 'Non-Closed Statuses', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_statuses_dual_list_field' ],
+			$page_slug,
+			'stackboost_queue_macro_section',
+			[
+				'id' => 'queue_macro_statuses',
+				'desc' => __( 'Select which ticket statuses should count toward the queue.', 'stackboost-for-supportcandy' ),
+			]
+		);
 		add_settings_field( 'stackboost_queue_macro_test', __( 'Test Queue Counts', 'stackboost-for-supportcandy' ), [ $this, 'render_test_button_field' ], $page_slug, 'stackboost_queue_macro_section' );
 	}
 
@@ -263,17 +278,10 @@ class WordPress extends Module {
      * @param array $args
      */
     public function render_statuses_dual_list_field( array $args ) {
-        global $wpdb;
         $options           = get_option( 'stackboost_settings', [] );
         $selected_statuses = isset( $options[ $args['id'] ] ) ? $options[ $args['id'] ] : [];
 
-        $status_table = $wpdb->prefix . 'psmsc_statuses';
-        $safe_status_table = $status_table;
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $all_statuses = $wpdb->get_results( "SELECT id, name FROM `{$safe_status_table}` ORDER BY name ASC" );
+        $all_statuses = $this->sc_repository->get_statuses();
 
         $available_statuses_map = [];
         $selected_statuses_map  = [];

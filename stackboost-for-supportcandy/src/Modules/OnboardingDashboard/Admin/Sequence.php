@@ -5,6 +5,8 @@ namespace StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use StackBoost\ForSupportCandy\Core\Request;
+
 class Sequence {
 
 	/**
@@ -29,8 +31,7 @@ class Sequence {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'steps';
+		$tab = Request::get_get( 'tab', 'steps', 'key' );
 		if ( 'steps' !== $tab ) {
 			return;
 		}
@@ -102,10 +103,13 @@ class Sequence {
 			return;
 		}
 
-		if ( isset( $_POST['stkb_sequence_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['stkb_sequence_nonce'] ) ), 'stkb_save_sequence' ) ) {
-			if ( isset( $_POST['onboarding_sequence'] ) && is_array( $_POST['onboarding_sequence'] ) ) {
+		// Nonce verification
+		if ( Request::has_post( 'stkb_sequence_nonce' ) && wp_verify_nonce( Request::get_post( 'stkb_sequence_nonce', '', 'text' ), 'stkb_save_sequence' ) ) {
+			$onboarding_sequence = Request::get_post( 'onboarding_sequence', [], 'array' );
+			if ( ! empty( $onboarding_sequence ) ) {
 				stackboost_log( 'Saving new onboarding sequence...', 'onboarding' );
-				$new_sequence = array_map( 'absint', wp_unslash( $_POST['onboarding_sequence'] ) );
+				// map array values to int
+				$new_sequence = array_map( 'absint', $onboarding_sequence );
 				update_option( self::OPTION_SEQUENCE, $new_sequence );
 				stackboost_log( 'Onboarding sequence updated: ' . implode( ',', $new_sequence ), 'onboarding' );
 				add_action( 'admin_notices', [ __CLASS__, 'save_success_notice' ] );

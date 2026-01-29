@@ -77,12 +77,14 @@ class DirectoryService {
 		);
 
 		if ( is_numeric( $user_id_or_email ) ) {
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering.
 			$query_args['meta_query'][] = array(
 				'key'     => '_user_id',
 				'value'   => (int) $user_id_or_email,
 				'compare' => '=',
 			);
 		} elseif ( is_email( $user_id_or_email ) ) {
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering.
 			$query_args['meta_query'][] = array(
 				'key'     => '_email_address',
 				'value'   => sanitize_email( $user_id_or_email ),
@@ -188,11 +190,11 @@ class DirectoryService {
 	public function get_all_active_employees_for_shortcode(): array {
 		$employees = array();
 
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$query_args = array(
 			'post_type'      => $this->staff_post_type,
 			'posts_per_page' => -1,
 			'post_status'    => 'publish',
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				'relation' => 'AND',
 				array(
@@ -218,6 +220,7 @@ class DirectoryService {
 		);
 
 		$query = new \WP_Query( $query_args );
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
 		if ( $query->have_posts() ) {
 			while ( $query->have_posts() ) {
