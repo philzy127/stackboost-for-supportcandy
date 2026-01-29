@@ -1102,8 +1102,7 @@ class Settings {
 						header( 'Cache-Control: must-revalidate' );
 						header( 'Pragma: public' );
 						header( 'Content-Length: ' . filesize( $log_file ) );
-						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Log file download, content is raw text.
-						echo $wp_filesystem->get_contents( $log_file );
+						echo $wp_filesystem->get_contents( $log_file ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Log file download, content is raw text.
 						exit;
 					} else {
 						wp_die( 'Log file not found.' );

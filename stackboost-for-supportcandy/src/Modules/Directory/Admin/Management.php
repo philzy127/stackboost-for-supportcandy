@@ -528,8 +528,7 @@ class Management {
 
 		$file_path = sanitize_text_field( $csv_file['tmp_name'] );
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Robust CSV parsing requires fopen.
-		$handle = fopen( $file_path, 'r' );
+		$handle = fopen( $file_path, 'r' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Robust CSV parsing requires fopen.
 
 		if ( false === $handle ) {
 			wp_send_json_error( array( 'message' => 'Could not open CSV file.' ), 500 );
@@ -591,8 +590,7 @@ class Management {
 			}
 		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Robust CSV parsing requires fclose.
-		fclose( $handle );
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Robust CSV parsing requires fclose.
 
 		wp_send_json_success(
 			array(

@@ -70,6 +70,7 @@ class DirectoryService {
 			'post_type'      => $this->staff_post_type,
 			'posts_per_page' => 1,
 			'post_status'    => 'publish',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				'relation' => 'OR',
 			),
@@ -94,7 +95,6 @@ class DirectoryService {
 		}
 
 		$employee_query = new \WP_Query( $query_args );
-		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
 		if ( $employee_query->have_posts() ) {
 			return $employee_query->posts[0]->ID;

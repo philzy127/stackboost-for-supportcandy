@@ -133,30 +133,14 @@ class SupportCandyRepository {
 	}
 
 	/**
-	 * Add a column to a table if it does not exist.
-	 *
-	 * @param string $table_name The table name (prefixed).
-	 * @param string $column_name The column name.
-	 * @param string $column_def The column definition (e.g., "varchar(50) NOT NULL DEFAULT 'text'").
-	 * @param string $after_column Optional. The column after which to position the new column.
-	 * @return bool True on success or if exists, false on failure.
-	 */
-	/**
-	 * Get certificates for a list of tickets.
-	 *
-	 * @param array $ticket_ids List of ticket IDs.
-	 * @return array Map of ticket_id => true for tickets with certificates.
-	 */
-	/**
 	 * Get the next available unique ID for staff directory.
 	 *
 	 * @return int The next unique ID.
 	 */
 	public function get_next_directory_unique_id(): int {
 		global $wpdb;
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Repository pattern encapsulates DB access.
 		$max_id = $wpdb->get_var( "SELECT MAX(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->postmeta} WHERE meta_key = '_unique_id'" );
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return ( $max_id ) ? (int) $max_id + 1 : 1;
 	}
 
@@ -192,6 +176,7 @@ class SupportCandyRepository {
 		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Repository pattern encapsulates DB access.
 		$results = $wpdb->get_results( $prepared_query );
 		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 
@@ -207,6 +192,15 @@ class SupportCandyRepository {
 		return $certificates_map;
 	}
 
+	/**
+	 * Add a column to a table if it does not exist.
+	 *
+	 * @param string $table_name The table name (prefixed).
+	 * @param string $column_name The column name.
+	 * @param string $column_def The column definition (e.g., "varchar(50) NOT NULL DEFAULT 'text'").
+	 * @param string $after_column Optional. The column after which to position the new column.
+	 * @return bool True on success or if exists, false on failure.
+	 */
 	public function add_column_if_not_exists( string $table_name, string $column_name, string $column_def, string $after_column = '' ): bool {
 		global $wpdb;
 
@@ -215,6 +209,7 @@ class SupportCandyRepository {
 
 		// Check if column exists
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Internal system query on trusted tables.
 		$row = $wpdb->get_results( "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '{$table_name}' AND column_name = '{$column_name}'" );
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
@@ -230,6 +225,7 @@ class SupportCandyRepository {
 			}
 
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema modification is intended here.
 			$wpdb->query( "ALTER TABLE {$safe_table} ADD COLUMN {$safe_column} {$column_def} {$safe_after}" );
 			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter
 			return true;
