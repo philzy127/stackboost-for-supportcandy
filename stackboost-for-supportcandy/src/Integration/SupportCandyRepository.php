@@ -169,7 +169,7 @@ class SupportCandyRepository {
 		$prepared_query = $wpdb->prepare( $query, array_merge( $ticket_ids, [ 'Onboarding_Certificate_%' ] ) );
 		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Repository pattern encapsulates DB access.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Repository pattern encapsulates DB access, and prepared string is passed.
 		$results = $wpdb->get_results( $prepared_query );
 
 		$certificates_map = [];
