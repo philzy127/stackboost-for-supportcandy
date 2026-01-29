@@ -1170,11 +1170,11 @@ class WordPress {
 
 		$export_items = array();
 
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$args         = array(
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
 			'paged'          => $page,
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
 			'meta_query'     => array(
 				array(
 					'key'     => '_stackboost_email_address',
@@ -1184,8 +1184,8 @@ class WordPress {
 			),
 		);
 
-		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary.
 		$query = new \WP_Query( $args );
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
 		if ( $query->have_posts() ) {
 			foreach ( $query->posts as $post ) {
@@ -1248,6 +1248,7 @@ class WordPress {
 		$items_retained = false;
 		$messages       = array();
 
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$args = array(
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
@@ -1262,6 +1263,7 @@ class WordPress {
 		);
 
 		$query = new \WP_Query( $args );
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
 		if ( $query->have_posts() ) {
 			foreach ( $query->posts as $post ) {
