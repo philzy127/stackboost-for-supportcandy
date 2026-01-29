@@ -1169,11 +1169,12 @@ class WordPress {
 		$page   = (int) $page;
 
 		$export_items = array();
+
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$args         = array(
 			'post_type'      => $this->core->cpts->post_type,
 			'posts_per_page' => $number,
 			'paged'          => $page,
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
 			'meta_query'     => array(
 				array(
 					'key'     => '_stackboost_email_address',
@@ -1183,7 +1184,6 @@ class WordPress {
 			),
 		);
 
-		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$query = new \WP_Query( $args );
 		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
