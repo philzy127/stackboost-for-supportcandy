@@ -643,9 +643,7 @@ class Management {
 	 * @return bool
 	 */
 	public static function can_user_manage(): bool {
-		$options          = get_option( Settings::OPTION_NAME, array() );
-		$management_roles = $options['management_roles'] ?? array( 'administrator' );
-		$user             = wp_get_current_user();
-		return ! empty( array_intersect( $user->roles, $management_roles ) );
+		// Strict check for destructive actions: Admin/Settings capability required.
+		return current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS );
 	}
 }
