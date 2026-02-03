@@ -367,15 +367,21 @@ class WordPress {
 			'departments'     => __( 'Departments', 'stackboost-for-supportcandy' ),
 			'locations'       => __( 'Locations', 'stackboost-for-supportcandy' ),
 			'contact_widget'  => __( 'Contact Widget', 'stackboost-for-supportcandy' ),
-			'settings'        => __( 'Settings', 'stackboost-for-supportcandy' ),
 		);
 
 		$advanced_tabs = array();
+		// Both 'Settings' and 'Management' tabs require management access (Admin/Settings Cap).
 		if ( $this->can_user_manage() ) {
+			$advanced_tabs['settings']   = __( 'Settings', 'stackboost-for-supportcandy' );
 			$advanced_tabs['management'] = __( 'Management', 'stackboost-for-supportcandy' );
 		}
 
 		$tabs = array_merge( $base_tabs, $advanced_tabs );
+
+		// Security Check: If attempting to access restricted tab directly
+		if ( in_array( $active_tab, [ 'settings', 'management' ], true ) && ! $this->can_user_manage() ) {
+			$active_tab = 'staff'; // Fallback
+		}
 
 		// Reorder per user request: Staff > Departments > Locations > Contact Widget > Settings > Management
 		$ordered_tabs = [];
