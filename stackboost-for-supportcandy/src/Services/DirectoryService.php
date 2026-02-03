@@ -123,6 +123,10 @@ class DirectoryService {
 		$employee_data->permalink           = get_permalink( $profile_id );
 		$employee_data->edit_post_link      = get_edit_post_link( $profile_id );
 		$employee_data->thumbnail_url       = get_the_post_thumbnail_url( $profile_id, 'medium' );
+		if ( ! $employee_data->thumbnail_url ) {
+			// Fallback to full size if medium is missing (common with imported images lacking generated sizes)
+			$employee_data->thumbnail_url = get_the_post_thumbnail_url( $profile_id, 'full' );
+		}
 		$employee_data->full_photo_url      = get_the_post_thumbnail_url( $profile_id, 'full' );
 		$employee_data->email               = get_post_meta( $profile_id, '_email_address', true );
 
