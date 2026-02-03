@@ -8,7 +8,8 @@
     "icon": "groups",
     "description": "Displays the Company Directory.",
     "supports": {
-        "html": false
+        "html": false,
+        "align": [ "wide", "full" ]
     },
     "textdomain": "stackboost-for-supportcandy",
     "editorScript": "file:./index.js",
