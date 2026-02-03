@@ -154,10 +154,24 @@ class Settings {
 	private static function render_role_checkboxes( string $setting_name, array $selected_roles ) {
 		$roles = get_editable_roles();
 		foreach ( $roles as $role_name => $role_info ) {
+			// Lock Administrator role: Always checked and disabled (visual only)
+			// We handle the actual forced value in sanitization/logic if needed,
+			// but UI feedback is key.
+			$is_admin = 'administrator' === $role_name;
+			$checked = $is_admin || in_array( $role_name, $selected_roles, true );
+			$disabled = $is_admin ? 'disabled' : '';
+
+			// If disabled, we need a hidden input to ensure it's still submitted or handled.
+			// Actually, if disabled, it won't submit. But our sanitization logic should/could re-add admin.
+			// Or we just rely on the fail-safe in WordPress.php and let the UI just be visual.
 			?>
 			<label>
-				<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[<?php echo esc_attr( $setting_name ); ?>][]" value="<?php echo esc_attr( $role_name ); ?>" <?php checked( in_array( $role_name, $selected_roles, true ) ); ?>>
+				<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[<?php echo esc_attr( $setting_name ); ?>][]" value="<?php echo esc_attr( $role_name ); ?>" <?php checked( $checked ); ?> <?php echo $disabled; ?>>
 				<?php echo esc_html( $role_info['name'] ); ?>
+				<?php if ( $is_admin ) : ?>
+					<span class="description" style="font-size: smaller; font-style: italic;">(<?php esc_html_e( 'Always Active', 'stackboost-for-supportcandy' ); ?>)</span>
+					<input type="hidden" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[<?php echo esc_attr( $setting_name ); ?>][]" value="administrator">
+				<?php endif; ?>
 			</label><br>
 			<?php
 		}

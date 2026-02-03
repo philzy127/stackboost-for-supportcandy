@@ -100,6 +100,11 @@ class WordPress {
 	 * @return bool
 	 */
 	public function can_user_edit(): bool {
+		// Fail-safe: Administrators always have access regardless of settings
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
 		// Use the new capability system.
 		// Fallback to legacy check if the capability is somehow missing (e.g. plugin update issue),
 		// but primarily check the cap. Admins have it by default via map_meta_cap.
@@ -123,6 +128,11 @@ class WordPress {
 	 * @return bool
 	 */
 	public function can_user_manage(): bool {
+		// Fail-safe: Administrators always have access regardless of settings
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
 		// Use the stricter 'manage settings' capability for the destructive Management tab.
 		if ( current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
 			return true;
