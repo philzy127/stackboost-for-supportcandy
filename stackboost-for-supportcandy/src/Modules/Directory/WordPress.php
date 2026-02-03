@@ -100,12 +100,20 @@ class WordPress {
 	 * @return bool
 	 */
 	public function can_user_edit(): bool {
-		$user = wp_get_current_user();
-		if ( in_array( 'administrator', $user->roles, true ) ) {
+		// Use the new capability system.
+		// Fallback to legacy check if the capability is somehow missing (e.g. plugin update issue),
+		// but primarily check the cap. Admins have it by default via map_meta_cap.
+		if ( current_user_can( STACKBOOST_CAP_MANAGE_DIRECTORY ) ) {
 			return true;
 		}
+
+		// Backward compatibility / Dual support for a transition period:
+		// Check the legacy option if the user doesn't have the explicit cap but might match the old role setting.
+		// Ideally we deprecate this, but for safety:
+		$user = wp_get_current_user();
 		$options    = get_option( Settings::OPTION_NAME, array() );
 		$edit_roles = $options['edit_roles'] ?? array( 'administrator', 'editor' );
+
 		return ! empty( array_intersect( $user->roles, $edit_roles ) );
 	}
 
@@ -115,10 +123,12 @@ class WordPress {
 	 * @return bool
 	 */
 	public function can_user_manage(): bool {
-		$user = wp_get_current_user();
-		if ( in_array( 'administrator', $user->roles, true ) ) {
+		if ( current_user_can( STACKBOOST_CAP_MANAGE_DIRECTORY ) ) {
 			return true;
 		}
+
+		// Backward compatibility:
+		$user = wp_get_current_user();
 		$options          = get_option( Settings::OPTION_NAME, array() );
 		$management_roles = $options['management_roles'] ?? array( 'administrator' );
 		return ! empty( array_intersect( $user->roles, $management_roles ) );

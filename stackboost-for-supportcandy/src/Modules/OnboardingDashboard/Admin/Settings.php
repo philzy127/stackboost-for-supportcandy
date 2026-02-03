@@ -24,7 +24,7 @@ class Settings {
 	public static function ajax_get_field_options() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ONBOARDING ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 

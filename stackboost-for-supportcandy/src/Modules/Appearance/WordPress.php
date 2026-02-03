@@ -135,7 +135,7 @@ class WordPress {
         }
 
         // 3. Permission Check
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( STACKBOOST_CAP_MANAGE_APPEARANCE ) ) {
             stackboost_log( 'Appearance: Unauthorized user.', 'appearance' );
             wp_send_json_error( 'Unauthorized' );
         }

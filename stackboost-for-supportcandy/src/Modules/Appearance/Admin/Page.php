@@ -8,7 +8,7 @@ class Page {
      * Render the Appearance settings page.
      */
     public static function render() {
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( STACKBOOST_CAP_MANAGE_APPEARANCE ) ) {
             return;
         }
 

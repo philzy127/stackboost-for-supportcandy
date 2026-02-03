@@ -25,7 +25,11 @@ class Ajax {
 	 * Handle the request to update a question's report heading.
 	 */
 	public function update_report_heading() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
 			wp_send_json_error( 'Permission denied.' );
 		}
 		check_ajax_referer( 'stackboost_ats_results_nonce', 'nonce' );
@@ -50,7 +54,7 @@ class Ajax {
 	 * Get a single question's data.
 	 */
 	public function get_question() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
 			wp_send_json_error( 'Permission denied.' );
 		}
 		check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
@@ -84,7 +88,7 @@ class Ajax {
 	 * Save a question (add or update).
 	 */
 	public function save_question() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
 			stackboost_log( "ATS save_question: Permission denied.", 'ats' );
 			wp_send_json_error( 'Permission denied.' );
 		}
@@ -183,7 +187,7 @@ class Ajax {
 	 * Delete a question.
 	 */
 	public function delete_question() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
 			wp_send_json_error( 'Permission denied.' );
 		}
 		check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
@@ -206,7 +210,7 @@ class Ajax {
 	 * Reorder questions.
 	 */
 	public function reorder_questions() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
 			wp_send_json_error( 'Permission denied.' );
 		}
 		check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );

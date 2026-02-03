@@ -51,7 +51,7 @@ class CertificateHandler {
 		}
 
 		// Verify Capability
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_onboarding_dashboard' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ONBOARDING ) ) {
 			if ( ! current_user_can( 'edit_posts' ) ) {
 				stackboost_log( 'Permission denied for certificate generation.', 'error' );
 				wp_send_json_error( 'Permission denied.' );

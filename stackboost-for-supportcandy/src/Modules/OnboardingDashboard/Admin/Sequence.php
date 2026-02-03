@@ -99,7 +99,7 @@ class Sequence {
 	 * Handle form submission.
 	 */
 	public static function handle_save() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ONBOARDING ) ) {
 			return;
 		}
 

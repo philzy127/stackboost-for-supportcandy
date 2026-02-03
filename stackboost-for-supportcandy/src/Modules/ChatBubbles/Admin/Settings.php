@@ -11,7 +11,7 @@ class Settings {
 	 * Render the administration page.
 	 */
 	public static function render_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_CHAT_BUBBLES ) ) {
 			return;
 		}
 

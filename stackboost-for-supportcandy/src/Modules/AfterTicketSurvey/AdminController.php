@@ -70,7 +70,7 @@ class AdminController {
 	 * Handle form submissions from the admin page (e.g., adding/updating questions).
 	 */
 	public function handle_admin_post() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
 			return;
 		}
 

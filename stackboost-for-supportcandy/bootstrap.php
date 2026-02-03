@@ -4,6 +4,25 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 use StackBoost\ForSupportCandy\WordPress\Plugin;
 
+// --- StackBoost Capabilities Constants ---
+// These define the granular permissions used throughout the plugin.
+// They are mapped to 'manage_options' by default for Admins via the 'map_meta_cap' filter below.
+
+define( 'STACKBOOST_CAP_VIEW_ADMIN', 'view_stackboost_admin' );
+define( 'STACKBOOST_CAP_MANAGE_SETTINGS', 'manage_stackboost_settings' );
+define( 'STACKBOOST_CAP_MANAGE_DIRECTORY', 'manage_stackboost_directory' );
+define( 'STACKBOOST_CAP_MANAGE_ONBOARDING', 'manage_stackboost_onboarding' );
+define( 'STACKBOOST_CAP_MANAGE_TICKET_VIEW', 'manage_stackboost_ticket_view' );
+define( 'STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS', 'manage_stackboost_conditional_options' );
+define( 'STACKBOOST_CAP_MANAGE_DATE_TIME', 'manage_stackboost_date_time' );
+define( 'STACKBOOST_CAP_MANAGE_AFTER_HOURS', 'manage_stackboost_after_hours' );
+define( 'STACKBOOST_CAP_MANAGE_CHAT_BUBBLES', 'manage_stackboost_chat_bubbles' );
+define( 'STACKBOOST_CAP_MANAGE_CONDITIONAL_VIEWS', 'manage_stackboost_conditional_views' );
+define( 'STACKBOOST_CAP_MANAGE_QUEUE_MACRO', 'manage_stackboost_queue_macro' );
+define( 'STACKBOOST_CAP_MANAGE_UTM', 'manage_stackboost_utm' );
+define( 'STACKBOOST_CAP_MANAGE_ATS', 'manage_stackboost_ats' );
+define( 'STACKBOOST_CAP_MANAGE_APPEARANCE', 'manage_stackboost_appearance' );
+
 /**
  * Autoloader for the plugin.
  *
@@ -149,6 +168,91 @@ function stackboost_log( $message, $context = 'general' ) {
     // Append to the log file.
     file_put_contents( $log_file, $entry, FILE_APPEND );
 }
+
+/**
+ * Map StackBoost custom capabilities to 'manage_options' by default.
+ *
+ * This ensures that Administrators (who have 'manage_options') automatically
+ * get all StackBoost capabilities without needing to modify the database roles.
+ * It also allows other roles to be explicitly granted these capabilities via
+ * a Role Manager plugin.
+ *
+ * @param array  $caps    The user's actual capabilities.
+ * @param string $cap     The capability name being checked.
+ * @param int    $user_id The user ID.
+ * @param array  $args    Adds the context to the capability.
+ * @return array The filtered capabilities.
+ */
+function stackboost_map_meta_cap( $caps, $cap, $user_id, $args ) {
+    $stackboost_caps = [
+        STACKBOOST_CAP_VIEW_ADMIN,
+        STACKBOOST_CAP_MANAGE_SETTINGS,
+        STACKBOOST_CAP_MANAGE_DIRECTORY,
+        STACKBOOST_CAP_MANAGE_ONBOARDING,
+        STACKBOOST_CAP_MANAGE_TICKET_VIEW,
+        STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS,
+        STACKBOOST_CAP_MANAGE_DATE_TIME,
+        STACKBOOST_CAP_MANAGE_AFTER_HOURS,
+        STACKBOOST_CAP_MANAGE_CHAT_BUBBLES,
+        STACKBOOST_CAP_MANAGE_CONDITIONAL_VIEWS,
+        STACKBOOST_CAP_MANAGE_QUEUE_MACRO,
+        STACKBOOST_CAP_MANAGE_UTM,
+        STACKBOOST_CAP_MANAGE_ATS,
+        STACKBOOST_CAP_MANAGE_APPEARANCE,
+    ];
+
+    // If the capability being checked is one of ours...
+    if ( in_array( $cap, $stackboost_caps, true ) ) {
+        // ...and the user doesn't already have it explicitly granted...
+        // (This check is implicit: if they had it, it would be in $caps, but here we are mapping REQUIREMENTS).
+        // Actually, map_meta_cap defines what is REQUIRED to have $cap.
+        // So we say: To have 'manage_stackboost_directory', you must have 'manage_options' UNLESS you have 'manage_stackboost_directory'.
+
+        // But map_meta_cap is usually for "edit_post" -> "edit_others_posts".
+        // For primitive caps like this, we usually use 'user_has_cap' filter OR just rely on the fact that if it's not in the DB, they don't have it.
+        // BUT we want Admins to have it by default.
+        // So: If user has 'manage_options', grant this cap.
+
+        // We should use 'user_has_cap' filter for this "granting" logic, NOT map_meta_cap.
+        // map_meta_cap is for mapping abstract caps to primitive caps.
+    }
+
+    return $caps;
+}
+
+/**
+ * Grant StackBoost capabilities to admins dynamically.
+ *
+ * @param array $allcaps An array of all the user's capabilities.
+ * @return array
+ */
+function stackboost_grant_admin_caps( $allcaps ) {
+    // If the user has 'manage_options' (Admin), grant all StackBoost caps.
+    if ( ! empty( $allcaps['manage_options'] ) ) {
+        $stackboost_caps = [
+            STACKBOOST_CAP_VIEW_ADMIN,
+            STACKBOOST_CAP_MANAGE_SETTINGS,
+            STACKBOOST_CAP_MANAGE_DIRECTORY,
+            STACKBOOST_CAP_MANAGE_ONBOARDING,
+            STACKBOOST_CAP_MANAGE_TICKET_VIEW,
+            STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS,
+            STACKBOOST_CAP_MANAGE_DATE_TIME,
+            STACKBOOST_CAP_MANAGE_AFTER_HOURS,
+            STACKBOOST_CAP_MANAGE_CHAT_BUBBLES,
+            STACKBOOST_CAP_MANAGE_CONDITIONAL_VIEWS,
+            STACKBOOST_CAP_MANAGE_QUEUE_MACRO,
+            STACKBOOST_CAP_MANAGE_UTM,
+            STACKBOOST_CAP_MANAGE_ATS,
+            STACKBOOST_CAP_MANAGE_APPEARANCE,
+        ];
+
+        foreach ( $stackboost_caps as $cap ) {
+            $allcaps[ $cap ] = true;
+        }
+    }
+    return $allcaps;
+}
+add_filter( 'user_has_cap', 'stackboost_grant_admin_caps' );
 
 // Get the plugin running.
 add_action( 'plugins_loaded', 'stackboost_run' );

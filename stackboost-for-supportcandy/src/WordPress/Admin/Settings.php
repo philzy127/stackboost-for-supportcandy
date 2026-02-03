@@ -122,7 +122,7 @@ class Settings {
 			'parent'      => 'stackboost-for-supportcandy', // Self-referencing for first submenu
 			'page_title'  => __( 'General Settings', 'stackboost-for-supportcandy' ),
 			'menu_title'  => __( 'General Settings', 'stackboost-for-supportcandy' ),
-			'capability'  => 'manage_options',
+			'capability'  => STACKBOOST_CAP_MANAGE_SETTINGS,
 			'callback'    => [ $this, 'render_settings_page' ],
 		];
 
@@ -132,7 +132,7 @@ class Settings {
 			'parent'      => 'stackboost-for-supportcandy',
 			'page_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
 			'menu_title'  => __( 'Ticket View', 'stackboost-for-supportcandy' ),
-			'capability'  => 'manage_options',
+			'capability'  => STACKBOOST_CAP_MANAGE_TICKET_VIEW,
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketView\WordPress::get_instance(), 'render_page' ],
 		];
 
@@ -143,7 +143,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Conditional Options', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Conditional Options', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\ConditionalOptions\WordPress::get_instance(), 'render_page' ],
 			];
 		}
@@ -155,7 +155,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Date & Time', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_DATE_TIME,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\DateTimeFormatting\Admin\Page::class, 'render_page' ],
 			];
 		}
@@ -170,7 +170,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_AFTER_HOURS,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\AfterHoursNotice\WordPress::get_instance(), 'render_page' ],
 			];
 		}
@@ -182,7 +182,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_CHAT_BUBBLES,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\ChatBubbles\WordPress::get_instance(), 'render_page' ],
 			];
 		}
@@ -194,7 +194,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_CONDITIONAL_VIEWS,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\ConditionalViews\WordPress::get_instance(), 'render_page' ],
 			];
 		}
@@ -206,7 +206,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_QUEUE_MACRO,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\QueueMacro\WordPress::get_instance(), 'render_page' ],
 			];
 		}
@@ -218,7 +218,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_UTM,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\WordPress::get_instance(), 'render_settings_page' ],
 			];
 		}
@@ -230,7 +230,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_ATS,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\WordPress::get_instance(), 'render_admin_page' ],
 			];
 		}
@@ -242,7 +242,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Company Directory', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Directory', 'stackboost-for-supportcandy' ), // Shortened for menu
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_DIRECTORY,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\Directory\WordPress::get_instance(), 'render_admin_page' ],
 			];
 		}
@@ -254,7 +254,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Onboarding', 'stackboost-for-supportcandy' ),
-				'capability'  => 'manage_options',
+				'capability'  => STACKBOOST_CAP_MANAGE_ONBOARDING,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\OnboardingDashboard\Admin\Page::class, 'render_page' ],
 			];
 		}
@@ -265,7 +265,7 @@ class Settings {
 			'parent'      => 'stackboost-for-supportcandy',
 			'page_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
 			'menu_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
-			'capability'  => 'manage_options',
+			'capability'  => STACKBOOST_CAP_MANAGE_APPEARANCE,
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page::class, 'render' ], // Using static call for consistency, though class is not static
 		];
 
@@ -275,7 +275,7 @@ class Settings {
 			'parent'      => 'stackboost-for-supportcandy',
 			'page_title'  => __( 'Diagnostics', 'stackboost-for-supportcandy' ),
 			'menu_title'  => __( 'Diagnostics', 'stackboost-for-supportcandy' ),
-			'capability'  => 'manage_options',
+			'capability'  => STACKBOOST_CAP_MANAGE_SETTINGS,
 			'callback'    => [ $this, 'render_settings_page' ],
 		];
 
@@ -290,7 +290,7 @@ class Settings {
 		add_menu_page(
 			__( 'StackBoost', 'stackboost-for-supportcandy' ),
 			__( 'StackBoost', 'stackboost-for-supportcandy' ),
-			'manage_options',
+			STACKBOOST_CAP_VIEW_ADMIN,
 			'stackboost-for-supportcandy',
 			[ $this, 'render_settings_page' ],
 			'dashicons-superhero',
