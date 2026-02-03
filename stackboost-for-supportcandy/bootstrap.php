@@ -204,5 +204,44 @@ function stackboost_grant_admin_caps( $allcaps ) {
 }
 add_filter( 'user_has_cap', 'stackboost_grant_admin_caps' );
 
+/**
+ * Explicitly add capabilities to the Administrator role on init.
+ *
+ * This ensures that these capabilities are "registered" in the database,
+ * allowing Role Manager plugins to discover and list them in their UI.
+ * This runs on admin_init to ensure it only impacts admin operations and
+ * avoids frontend overhead, though get_role is cached.
+ */
+function stackboost_register_caps_for_role_manager() {
+    $role = get_role( 'administrator' );
+    if ( ! $role ) {
+        return;
+    }
+
+    $stackboost_caps = [
+        STACKBOOST_CAP_VIEW_ADMIN,
+        STACKBOOST_CAP_MANAGE_SETTINGS,
+        STACKBOOST_CAP_MANAGE_DIRECTORY,
+        STACKBOOST_CAP_MANAGE_ONBOARDING,
+        STACKBOOST_CAP_MANAGE_TICKET_VIEW,
+        STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS,
+        STACKBOOST_CAP_MANAGE_DATE_TIME,
+        STACKBOOST_CAP_MANAGE_AFTER_HOURS,
+        STACKBOOST_CAP_MANAGE_CHAT_BUBBLES,
+        STACKBOOST_CAP_MANAGE_CONDITIONAL_VIEWS,
+        STACKBOOST_CAP_MANAGE_QUEUE_MACRO,
+        STACKBOOST_CAP_MANAGE_UTM,
+        STACKBOOST_CAP_MANAGE_ATS,
+        STACKBOOST_CAP_MANAGE_APPEARANCE,
+    ];
+
+    foreach ( $stackboost_caps as $cap ) {
+        if ( ! $role->has_cap( $cap ) ) {
+            $role->add_cap( $cap );
+        }
+    }
+}
+add_action( 'admin_init', 'stackboost_register_caps_for_role_manager' );
+
 // Get the plugin running.
 add_action( 'plugins_loaded', 'stackboost_run' );
