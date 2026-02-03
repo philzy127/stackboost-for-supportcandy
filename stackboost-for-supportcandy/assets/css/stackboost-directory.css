@@ -84,7 +84,7 @@
     margin-top: 20px;
     border: 1px solid #ddd; /* Added table border */
     border-radius: 8px; /* Rounded corners for the table */
-    overflow: hidden; /* Ensures rounded corners apply to content */
+    /* Removed overflow: hidden to allow avatar zoom to extend beyond table bounds */
     /* Removed initial display: none; from here. JS will control visibility via its wrapper. */
 }
 

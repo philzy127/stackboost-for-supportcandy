@@ -141,7 +141,7 @@ class DirectoryService {
 		}
 
         // Placeholder URL
-        $employee_data->placeholder_url = \STACKBOOST_PLUGIN_URL . 'assets/images/avatar-placeholder.png';
+        $employee_data->placeholder_url = \STACKBOOST_PLUGIN_URL . 'assets/images/avatar-placeholder.svg';
 
 		// Default Photo Fallback Logic (Legacy behavior: Custom -> Gravatar -> Placeholder)
         // This ensures existing consumers (like Widget, Modal) still work without modification.
