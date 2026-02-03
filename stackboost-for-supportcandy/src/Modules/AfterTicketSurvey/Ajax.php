@@ -26,10 +26,6 @@ class Ajax {
 	 */
 	public function update_report_heading() {
 		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
-		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
-		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
-		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
-		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
 			wp_send_json_error( 'Permission denied.' );
 		}
 		check_ajax_referer( 'stackboost_ats_results_nonce', 'nonce' );
