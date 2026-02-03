@@ -315,6 +315,10 @@ class Settings {
 	 * Render the generic wrapper for a settings page.
 	 */
 	public function render_settings_page() {
+		if ( ! current_user_can( STACKBOOST_CAP_VIEW_ADMIN ) ) {
+			return;
+		}
+
 		$screen = get_current_screen();
 		$page_slug = $screen->base === 'toplevel_page_stackboost-for-supportcandy' ? 'stackboost-for-supportcandy' : $screen->id;
         $page_slug = str_replace(['stackboost_page_', 'toplevel_page_'], '', $page_slug);
@@ -1118,7 +1122,7 @@ class Settings {
 	public function ajax_clear_log() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
@@ -1152,7 +1156,35 @@ class Settings {
 			stackboost_log( 'POST Data: ' . json_encode( $_POST ), 'core' );
 		}
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		// Save settings requires the capability relevant to the page being saved.
+		// However, the central sanitizer handles multiple pages.
+		// We'll check for general settings capability as a baseline, but ideally we should check per page_slug.
+		// For simplicity and security, we require 'manage_stackboost_settings' for the generic save handler
+		// because most modules have their own save handlers or use this one for generic options.
+		// Actually, Directory uses its own, but others use this.
+		// Let's assume if you can manage settings, you can save them.
+		// If granular control over saving specific modules via this handler is needed, we'd inspect $_POST['page_slug'].
+
+		$page_slug = Request::get_post( 'stackboost_settings', [], 'raw' )['page_slug'] ?? '';
+		$capability = STACKBOOST_CAP_MANAGE_SETTINGS;
+
+		// Map slug to capability
+		switch ( $page_slug ) {
+			case 'stackboost-ticket-view': $capability = STACKBOOST_CAP_MANAGE_TICKET_VIEW; break;
+			case 'stackboost-conditional-options': $capability = STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS; break;
+			case 'stackboost-date-time': $capability = STACKBOOST_CAP_MANAGE_DATE_TIME; break;
+			case 'stackboost-after-hours': $capability = STACKBOOST_CAP_MANAGE_AFTER_HOURS; break;
+			case 'stackboost-chat-bubbles': $capability = STACKBOOST_CAP_MANAGE_CHAT_BUBBLES; break;
+			case 'stackboost-conditional-views': $capability = STACKBOOST_CAP_MANAGE_CONDITIONAL_VIEWS; break;
+			case 'stackboost-queue-macro': $capability = STACKBOOST_CAP_MANAGE_QUEUE_MACRO; break;
+			case 'stackboost-utm': $capability = STACKBOOST_CAP_MANAGE_UTM; break;
+			case 'stackboost-ats': $capability = STACKBOOST_CAP_MANAGE_ATS; break;
+			case 'stackboost-directory': $capability = STACKBOOST_CAP_MANAGE_DIRECTORY; break;
+			case 'stackboost-onboarding-dashboard': $capability = STACKBOOST_CAP_MANAGE_ONBOARDING; break;
+			case 'stackboost-appearance': $capability = STACKBOOST_CAP_MANAGE_APPEARANCE; break;
+		}
+
+		if ( ! current_user_can( $capability ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
@@ -1324,7 +1356,7 @@ class Settings {
     public function ajax_activate_license() {
         check_ajax_referer( 'stackboost_license_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
         }
 
@@ -1363,7 +1395,7 @@ class Settings {
     public function ajax_deactivate_license() {
         check_ajax_referer( 'stackboost_license_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
         }
 
@@ -1394,7 +1426,7 @@ class Settings {
 	public function ajax_authorize_uninstall() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
@@ -1432,7 +1464,7 @@ class Settings {
 	public function ajax_cancel_uninstall() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 

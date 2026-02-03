@@ -169,56 +169,6 @@ function stackboost_log( $message, $context = 'general' ) {
     file_put_contents( $log_file, $entry, FILE_APPEND );
 }
 
-/**
- * Map StackBoost custom capabilities to 'manage_options' by default.
- *
- * This ensures that Administrators (who have 'manage_options') automatically
- * get all StackBoost capabilities without needing to modify the database roles.
- * It also allows other roles to be explicitly granted these capabilities via
- * a Role Manager plugin.
- *
- * @param array  $caps    The user's actual capabilities.
- * @param string $cap     The capability name being checked.
- * @param int    $user_id The user ID.
- * @param array  $args    Adds the context to the capability.
- * @return array The filtered capabilities.
- */
-function stackboost_map_meta_cap( $caps, $cap, $user_id, $args ) {
-    $stackboost_caps = [
-        STACKBOOST_CAP_VIEW_ADMIN,
-        STACKBOOST_CAP_MANAGE_SETTINGS,
-        STACKBOOST_CAP_MANAGE_DIRECTORY,
-        STACKBOOST_CAP_MANAGE_ONBOARDING,
-        STACKBOOST_CAP_MANAGE_TICKET_VIEW,
-        STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS,
-        STACKBOOST_CAP_MANAGE_DATE_TIME,
-        STACKBOOST_CAP_MANAGE_AFTER_HOURS,
-        STACKBOOST_CAP_MANAGE_CHAT_BUBBLES,
-        STACKBOOST_CAP_MANAGE_CONDITIONAL_VIEWS,
-        STACKBOOST_CAP_MANAGE_QUEUE_MACRO,
-        STACKBOOST_CAP_MANAGE_UTM,
-        STACKBOOST_CAP_MANAGE_ATS,
-        STACKBOOST_CAP_MANAGE_APPEARANCE,
-    ];
-
-    // If the capability being checked is one of ours...
-    if ( in_array( $cap, $stackboost_caps, true ) ) {
-        // ...and the user doesn't already have it explicitly granted...
-        // (This check is implicit: if they had it, it would be in $caps, but here we are mapping REQUIREMENTS).
-        // Actually, map_meta_cap defines what is REQUIRED to have $cap.
-        // So we say: To have 'manage_stackboost_directory', you must have 'manage_options' UNLESS you have 'manage_stackboost_directory'.
-
-        // But map_meta_cap is usually for "edit_post" -> "edit_others_posts".
-        // For primitive caps like this, we usually use 'user_has_cap' filter OR just rely on the fact that if it's not in the DB, they don't have it.
-        // BUT we want Admins to have it by default.
-        // So: If user has 'manage_options', grant this cap.
-
-        // We should use 'user_has_cap' filter for this "granting" logic, NOT map_meta_cap.
-        // map_meta_cap is for mapping abstract caps to primitive caps.
-    }
-
-    return $caps;
-}
 
 /**
  * Grant StackBoost capabilities to admins dynamically.
