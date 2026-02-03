@@ -123,7 +123,8 @@ class WordPress {
 	 * @return bool
 	 */
 	public function can_user_manage(): bool {
-		if ( current_user_can( STACKBOOST_CAP_MANAGE_DIRECTORY ) ) {
+		// Use the stricter 'manage settings' capability for the destructive Management tab.
+		if ( current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
 			return true;
 		}
 

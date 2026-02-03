@@ -34,14 +34,23 @@ class Page {
 	 */
 	public static function render_page() {
 		$tabs = [
-			'steps'         => __( 'Onboarding Steps', 'stackboost-for-supportcandy' ),
-			'staff'         => __( 'Staff', 'stackboost-for-supportcandy' ),
-			'certificate'   => __( 'Certificate', 'stackboost-for-supportcandy' ),
-			'settings'      => __( 'Settings', 'stackboost-for-supportcandy' ),
-			'import_export' => __( 'Import / Export', 'stackboost-for-supportcandy' ),
+			'steps' => __( 'Onboarding Steps', 'stackboost-for-supportcandy' ),
+			'staff' => __( 'Staff', 'stackboost-for-supportcandy' ),
 		];
 
+		// Restrict administrative tabs to the Settings capability
+		if ( current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
+			$tabs['certificate']   = __( 'Certificate', 'stackboost-for-supportcandy' );
+			$tabs['settings']      = __( 'Settings', 'stackboost-for-supportcandy' );
+			$tabs['import_export'] = __( 'Import / Export', 'stackboost-for-supportcandy' );
+		}
+
 		$active_tab = Request::get_get( 'tab', 'steps', 'key' );
+
+		// Security check: if user tries to access a restricted tab directly via URL
+		if ( in_array( $active_tab, [ 'certificate', 'settings', 'import_export' ], true ) && ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
+			$active_tab = 'steps'; // Fallback
+		}
 
         $theme_class = 'sb-theme-clean-tech';
         if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
