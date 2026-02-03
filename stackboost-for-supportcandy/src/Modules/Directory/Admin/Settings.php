@@ -166,7 +166,7 @@ class Settings {
 			// Or we just rely on the fail-safe in WordPress.php and let the UI just be visual.
 			?>
 			<label>
-				<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[<?php echo esc_attr( $setting_name ); ?>][]" value="<?php echo esc_attr( $role_name ); ?>" <?php checked( $checked ); ?> <?php echo $disabled; ?>>
+				<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[<?php echo esc_attr( $setting_name ); ?>][]" value="<?php echo esc_attr( $role_name ); ?>" <?php checked( $checked ); ?> <?php echo esc_attr( $disabled ); ?>>
 				<?php echo esc_html( $role_info['name'] ); ?>
 				<?php if ( $is_admin ) : ?>
 					<span class="description" style="font-size: smaller; font-style: italic;">(<?php esc_html_e( 'Always Active', 'stackboost-for-supportcandy' ); ?>)</span>
