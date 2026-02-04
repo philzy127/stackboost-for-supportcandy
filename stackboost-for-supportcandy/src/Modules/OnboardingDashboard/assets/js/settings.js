@@ -173,6 +173,12 @@ jQuery(document).ready(function($) {
                     var isSelected = ($.inArray(String(item.id), selectedOptions) !== -1) ? 'selected' : '';
                     optionsHtml += '<option value="' + item.id + '" ' + isSelected + '>' + item.name + '</option>';
                 });
+
+                // Destroy existing Select2 instance if it exists to allow clean re-init
+                if ($optionSelector.data('select2')) {
+                    $optionSelector.select2('destroy');
+                }
+
                 $optionSelector.html(optionsHtml).prop('disabled', false);
 
                 // Initialize Select2 if available and the element has the class
@@ -183,6 +189,10 @@ jQuery(document).ready(function($) {
                     });
                 }
             } else {
+                // Destroy existing Select2 instance before showing error
+                if ($optionSelector.data('select2')) {
+                    $optionSelector.select2('destroy');
+                }
                 $optionSelector.html('<option value="">' + response.data + '</option>'); // Error message
             }
         });
