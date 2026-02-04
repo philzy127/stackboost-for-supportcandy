@@ -230,6 +230,19 @@ jQuery(document).ready(function($) {
         }
     });
 
+    // --- Initialize SelectWoo on Static Fields ---
+    var select2Func = $.fn.selectWoo || $.fn.select2;
+    if (select2Func) {
+        // Initialize any selectwoo fields that are NOT the dynamic one (stkb_req_id)
+        // (stkb_req_id is handled in loadFieldOptions after AJAX)
+        $('.stackboost-selectwoo').not('#stkb_req_id').each(function() {
+            select2Func.call($(this), {
+                width: '100%',
+                placeholder: stackboost_admin_ajax.i18n_select_option || 'Select Options'
+            });
+        });
+    }
+
     // --- Form Submission ---
     $('form[action="options.php"]').on('submit', function() {
         // Select all options in the "Selected Fields" list so they get submitted

@@ -356,7 +356,7 @@ class Settings {
 					<tr>
 						<th scope="row"><label for="stkb_inactive_status"><?php esc_html_e( 'Inactive Statuses', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[inactive_statuses][]" id="stkb_inactive_status" multiple style="height: 150px;">
+							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[inactive_statuses][]" id="stkb_inactive_status" class="stackboost-selectwoo" multiple style="width: 100%;">
 								<?php foreach ( $sc_statuses as $id => $label ) : ?>
 									<option value="<?php echo esc_attr( $id ); ?>" <?php echo in_array( $id, (array) $config['inactive_statuses'] ) ? 'selected' : ''; ?>>
 										<?php echo esc_html( $label ); ?>
