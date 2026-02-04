@@ -28,9 +28,9 @@ class Page {
 		}
 		// Enqueue any shared assets here if needed.
 
-		// Attempt to enqueue SupportCandy's Select2
-		wp_enqueue_script( 'wpsc-select2' );
-		wp_enqueue_style( 'wpsc-select2' );
+		// Enqueue SelectWoo (Select2)
+		wp_enqueue_script( 'stackboost-select2' );
+		wp_enqueue_style( 'stackboost-select2' );
 	}
 
 	/**

@@ -181,9 +181,12 @@ jQuery(document).ready(function($) {
 
                 $optionSelector.html(optionsHtml).prop('disabled', false);
 
-                // Initialize Select2 if available and the element has the class
-                if ($.fn.select2 && $optionSelector.hasClass('stackboost-select2')) {
-                    $optionSelector.select2({
+                // Initialize SelectWoo/Select2 if available and the element has the class
+                // SelectWoo aliases itself as select2, but we check both to be safe
+                var select2Func = $.fn.selectWoo || $.fn.select2;
+
+                if (select2Func && $optionSelector.hasClass('stackboost-select2')) {
+                    select2Func.call($optionSelector, {
                         width: '100%',
                         placeholder: stackboost_admin_ajax.i18n_select_option || 'Select Options'
                     });
