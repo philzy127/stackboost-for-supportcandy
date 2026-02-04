@@ -174,6 +174,14 @@ jQuery(document).ready(function($) {
                     optionsHtml += '<option value="' + item.id + '" ' + isSelected + '>' + item.name + '</option>';
                 });
                 $optionSelector.html(optionsHtml).prop('disabled', false);
+
+                // Initialize Select2 if available and the element has the class
+                if ($.fn.select2 && $optionSelector.hasClass('stackboost-select2')) {
+                    $optionSelector.select2({
+                        width: '100%',
+                        placeholder: stackboost_admin_ajax.i18n_select_option || 'Select Options'
+                    });
+                }
             } else {
                 $optionSelector.html('<option value="">' + response.data + '</option>'); // Error message
             }
