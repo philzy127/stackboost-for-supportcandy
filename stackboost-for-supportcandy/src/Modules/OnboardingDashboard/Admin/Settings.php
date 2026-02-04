@@ -195,7 +195,7 @@ class Settings {
 		$defaults = [
 			// General Logic Fields
 			'request_type_field'    => '',
-			'request_type_id'       => '',
+			'request_type_id'       => [],
 			'inactive_statuses'     => [],
 			'field_staff_name'      => '', // New Name Field
 			'field_onboarding_date' => '',
@@ -218,6 +218,11 @@ class Settings {
 			'certificate_opening_text' => 'New Staffmember has completed Onboarding Training with [Trainer Name] and has been present for:',
 			'certificate_footer_text'  => 'Completed: [Date] - [Trainer Name]',
 		];
+
+		// Ensure request_type_id is an array (backward compatibility)
+		if ( isset( $options['request_type_id'] ) && ! is_array( $options['request_type_id'] ) ) {
+			$options['request_type_id'] = [ $options['request_type_id'] ];
+		}
 
 		// Check for migration necessity
 		if ( empty( $options['phone_config_mode'] ) && isset( $options['mobile_logic_mode'] ) ) {
@@ -341,12 +346,12 @@ class Settings {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="stkb_req_id"><?php esc_html_e( 'Onboarding Option', 'stackboost-for-supportcandy' ); ?></label></th>
+						<th scope="row"><label for="stkb_req_id"><?php esc_html_e( 'Onboarding Options', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_id]" id="stkb_req_id" data-selected="<?php echo esc_attr( $config['request_type_id'] ); ?>" disabled>
-								<option value=""><?php esc_html_e( '-- Select Option --', 'stackboost-for-supportcandy' ); ?></option>
+							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_id][]" id="stkb_req_id" data-selected="<?php echo esc_attr( json_encode( $config['request_type_id'] ) ); ?>" multiple disabled style="height: 150px;">
+								<option value=""><?php esc_html_e( '-- Select Options --', 'stackboost-for-supportcandy' ); ?></option>
 							</select>
-							<p class="description"><?php esc_html_e( 'Select the option that represents an "Onboarding" request.', 'stackboost-for-supportcandy' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Select one or more options that represent "Onboarding" requests.', 'stackboost-for-supportcandy' ); ?></p>
 						</td>
 					</tr>
 					<tr>

@@ -142,7 +142,18 @@ jQuery(document).ready(function($) {
     // --- AJAX Field Logic ---
     function loadFieldOptions($fieldSelector, $optionSelector) {
         var fieldSlug = $fieldSelector.val();
-        var selectedOption = $optionSelector.data('selected');
+        var rawSelected = $optionSelector.data('selected');
+        var selectedOptions = [];
+
+        // Normalize selected data to array
+        if (Array.isArray(rawSelected)) {
+            selectedOptions = rawSelected;
+        } else if (rawSelected !== undefined && rawSelected !== null && rawSelected !== '') {
+            selectedOptions = [rawSelected];
+        }
+
+        // Ensure all are strings for comparison
+        selectedOptions = selectedOptions.map(String);
 
         if (!fieldSlug) {
             $optionSelector.prop('disabled', true).html('<option value="">' + stackboost_admin_ajax.i18n_select_option + '</option>');
@@ -159,7 +170,7 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 var optionsHtml = '<option value="">' + stackboost_admin_ajax.i18n_select_option + '</option>';
                 $.each(response.data, function(index, item) {
-                    var isSelected = (item.id == selectedOption) ? 'selected' : '';
+                    var isSelected = ($.inArray(String(item.id), selectedOptions) !== -1) ? 'selected' : '';
                     optionsHtml += '<option value="' + item.id + '" ' + isSelected + '>' + item.name + '</option>';
                 });
                 $optionSelector.html(optionsHtml).prop('disabled', false);
