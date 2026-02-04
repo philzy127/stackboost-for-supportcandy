@@ -167,6 +167,7 @@ jQuery(document).ready(function($) {
             nonce: stackboost_admin_ajax.nonce,
             field_slug: fieldSlug
         }, function(response) {
+            console.log('[StackBoost] Field Options Loaded:', response);
             if (response.success) {
                 var optionsHtml = '';
                 $.each(response.data, function(index, item) {
@@ -176,6 +177,7 @@ jQuery(document).ready(function($) {
 
                 // Destroy existing Select2 instance if it exists to allow clean re-init
                 if ($optionSelector.data('select2')) {
+                    console.log('[StackBoost] Destroying existing select2 instance');
                     $optionSelector.select2('destroy');
                 }
 
@@ -185,11 +187,18 @@ jQuery(document).ready(function($) {
                 // SelectWoo aliases itself as select2, but we check both to be safe
                 var select2Func = $.fn.selectWoo || $.fn.select2;
 
-                if (select2Func && $optionSelector.hasClass('stackboost-select2')) {
-                    select2Func.call($optionSelector, {
-                        width: '100%',
-                        placeholder: stackboost_admin_ajax.i18n_select_option || 'Select Options'
-                    });
+                if (select2Func) {
+                    if ($optionSelector.hasClass('stackboost-selectwoo')) {
+                        console.log('[StackBoost] Initializing SelectWoo on', $optionSelector);
+                        select2Func.call($optionSelector, {
+                            width: '100%',
+                            placeholder: stackboost_admin_ajax.i18n_select_option || 'Select Options'
+                        });
+                    } else {
+                        console.warn('[StackBoost] Element missing .stackboost-selectwoo class');
+                    }
+                } else {
+                    console.error('[StackBoost] SelectWoo/Select2 library NOT found');
                 }
             } else {
                 // Destroy existing Select2 instance before showing error
