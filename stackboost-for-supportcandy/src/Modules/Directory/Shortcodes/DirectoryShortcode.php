@@ -399,10 +399,28 @@ class DirectoryShortcode {
 								<tr>
                                     <?php if ( in_array( 'photo', $visible_columns, true ) ) : ?>
                                         <td class="sb-col-photo">
+                                            <?php
+                                            // Make photo clickable based on link behavior
+                                            $photo_output = $photo_html;
+                                            if ( 'modal' === $listing_display_mode ) {
+                                                $photo_output = sprintf(
+                                                    '<a href="#" class="stackboost-modal-trigger" data-post-id="%s">%s</a>',
+                                                    esc_attr( $employee->id ),
+                                                    $photo_html
+                                                );
+                                            } elseif ( 'page' === $listing_display_mode ) {
+                                                $photo_output = sprintf(
+                                                    '<a href="%s">%s</a>',
+                                                    esc_url( $employee->permalink ),
+                                                    $photo_html
+                                                );
+                                            }
+                                            ?>
+
                                             <?php if ( 'modern' === $theme ) : ?>
-                                                <div class="sb-modern-avatar-wrapper"><?php echo wp_kses( $photo_html, $allowed_html ); ?></div>
+                                                <div class="sb-modern-avatar-wrapper"><?php echo wp_kses( $photo_output, $allowed_html ); ?></div>
                                             <?php else : ?>
-                                                <?php echo wp_kses( $photo_html, $allowed_html ); ?>
+                                                <?php echo wp_kses( $photo_output, $allowed_html ); ?>
                                             <?php endif; ?>
                                         </td>
                                     <?php endif; ?>
