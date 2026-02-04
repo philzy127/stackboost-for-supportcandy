@@ -318,7 +318,7 @@ class WordPress extends Module {
 	 * Render the administration page.
 	 */
 	public function render_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_VIEW ) ) {
 			return;
 		}
 

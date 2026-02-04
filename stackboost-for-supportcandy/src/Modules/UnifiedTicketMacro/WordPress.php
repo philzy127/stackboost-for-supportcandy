@@ -161,6 +161,10 @@ class WordPress {
 	 * Render the main settings page.
 	 */
 	public function render_settings_page() {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_UTM ) ) {
+			return;
+		}
+
         $theme_class = 'sb-theme-clean-tech';
         if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
             $theme_class = \StackBoost\ForSupportCandy\Modules\Appearance\WordPress::get_active_theme_class();

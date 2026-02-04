@@ -5,10 +5,13 @@ jQuery(document).ready(function($) {
         var $button = $(this);
         $button.prop('disabled', true).text('Exporting...');
 
+        var includeImages = $('#stackboost-export-include-images').is(':checked') ? 1 : 0;
+
         // Create a hidden form to trigger the download
         var form = $('<form></form>').attr('action', stackboostManagementAjax.ajax_url).attr('method', 'post');
         form.append($('<input></input>').attr('type', 'hidden').attr('name', 'action').attr('value', 'stackboost_directory_export_json'));
         form.append($('<input></input>').attr('type', 'hidden').attr('name', 'nonce').attr('value', stackboostManagementAjax.export_nonce)); // Use specific export nonce
+        form.append($('<input></input>').attr('type', 'hidden').attr('name', 'include_images').attr('value', includeImages));
 
         $('body').append(form);
         form.submit();

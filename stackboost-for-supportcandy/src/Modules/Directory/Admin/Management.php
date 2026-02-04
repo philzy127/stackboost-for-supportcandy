@@ -87,6 +87,16 @@ class Management {
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Export', 'stackboost-for-supportcandy' ); ?></th>
 				<td>
+					<p>
+						<label for="stackboost-export-include-images">
+							<input type="checkbox" id="stackboost-export-include-images" name="include_images" value="1">
+							<?php esc_html_e( 'Include Image References', 'stackboost-for-supportcandy' ); ?>
+						</label>
+						<br>
+						<span class="description">
+							<?php esc_html_e( 'Note: This will only function if the images are imported manually by the user or exist at the same path.', 'stackboost-for-supportcandy' ); ?>
+						</span>
+					</p>
 					<button id="stackboost-json-export-button" class="button button-secondary"><?php esc_html_e( 'Export JSON', 'stackboost-for-supportcandy' ); ?></button>
 				</td>
 			</tr>
@@ -180,8 +190,10 @@ class Management {
 			'staff'       => array(),
 		);
 
+		$include_images = Request::get_post( 'include_images' );
+
 		// Helper to get posts with meta
-		$get_data = function ( $post_type ) {
+		$get_data = function ( $post_type ) use ( $include_images ) {
 			$posts = get_posts(
 				array(
 					'post_type'      => $post_type,
@@ -199,7 +211,7 @@ class Management {
 					'meta'    => get_post_meta( $post->ID ),
 				);
 
-				if ( has_post_thumbnail( $post->ID ) ) {
+				if ( '1' === $include_images && has_post_thumbnail( $post->ID ) ) {
 					$item['featured_image_url'] = wp_get_attachment_url( get_post_thumbnail_id( $post->ID ) );
 				} else {
 					$item['featured_image_url'] = false;
@@ -643,9 +655,7 @@ class Management {
 	 * @return bool
 	 */
 	public static function can_user_manage(): bool {
-		$options          = get_option( Settings::OPTION_NAME, array() );
-		$management_roles = $options['management_roles'] ?? array( 'administrator' );
-		$user             = wp_get_current_user();
-		return ! empty( array_intersect( $user->roles, $management_roles ) );
+		// Strict check for destructive actions: Admin/Settings capability required.
+		return current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS );
 	}
 }

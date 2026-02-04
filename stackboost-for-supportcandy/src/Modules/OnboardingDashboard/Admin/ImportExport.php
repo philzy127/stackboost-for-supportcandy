@@ -155,7 +155,7 @@ class ImportExport {
 	public static function ajax_migrate_legacy_data() {
 		stackboost_log( 'Starting manual legacy data migration...', 'onboarding' );
 		check_ajax_referer( 'stackboost_onboarding_settings_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
 			wp_send_json_error( [ 'message' => 'Permission denied.' ] );
 		}
 
@@ -210,7 +210,7 @@ class ImportExport {
 	public static function ajax_export_steps() {
 		stackboost_log( 'Exporting Onboarding Steps...', 'onboarding' );
 		check_ajax_referer( 'stackboost_onboarding_export', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
 			wp_die( 'Permission denied' );
 		}
 
@@ -272,7 +272,7 @@ class ImportExport {
 	public static function ajax_import_steps() {
 		stackboost_log( 'Importing Onboarding Steps...', 'onboarding' );
 		check_ajax_referer( 'stackboost_onboarding_import', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
 			wp_send_json_error( [ 'message' => 'Permission denied.' ] );
 		}
 

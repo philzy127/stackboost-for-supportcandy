@@ -118,7 +118,7 @@ class WordPress extends Module {
 	 */
 	public function ajax_test_queue_counts() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_QUEUE_MACRO ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 

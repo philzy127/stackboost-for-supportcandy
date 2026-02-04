@@ -84,7 +84,7 @@
     margin-top: 20px;
     border: 1px solid #ddd; /* Added table border */
     border-radius: 8px; /* Rounded corners for the table */
-    overflow: hidden; /* Ensures rounded corners apply to content */
+    /* Removed overflow: hidden to allow avatar zoom to extend beyond table bounds */
     /* Removed initial display: none; from here. JS will control visibility via its wrapper. */
 }
 
@@ -203,6 +203,8 @@
 .dataTables_wrapper .dataTables_length {
     margin-bottom: 1em;
     text-align: left; /* Align length dropdown to the left */
+    display: inline-block; /* Ensure inline with filter if possible */
+    vertical-align: middle;
 }
 
 .dataTables_wrapper .dataTables_length select {
@@ -215,9 +217,10 @@
 /* Ensure the filter (search box) is visible and positioned correctly */
 .dataTables_wrapper .dataTables_filter {
     margin-bottom: 1em;
-    margin-top: 5px;
-    display: block !important; /* Force visibility in case something else is hiding it */
+    margin-top: 0;
+    display: inline-block !important; /* Allow sharing row */
     float: right; /* Standard DataTables positioning */
+    vertical-align: middle;
 }
 
 /* Add margin to filter dropdown in Locations tab (and similar views) */
@@ -252,7 +255,8 @@
     display: flex;
     align-items: flex-start; /* Aligns content (image) to the top */
     justify-content: center;
-    background-color: #f0f0f0; /* Placeholder background */
+    background-color: #ffffff; /* Placeholder background changed to white for better contrast */
+    border: 1px solid #eee; /* Added border */
 }
 
 .staff-photo img {
@@ -411,15 +415,15 @@
     overflow: hidden; /* Ensures image stays within bounds */
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     display: flex;
-    align-items: flex-start; /* Aligns content (image) to the top */
-    justify-content: center;
+    align-items: center; /* Center image vertically */
+    justify-content: center; /* Center image horizontally */
     background-color: #f0f0f0; /* Placeholder background */
 }
 
 .staff-photo img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* Expand to fit container without cropping */
     object-position: center;
     border-radius: 8px;
 }
@@ -544,7 +548,10 @@
     height: 80px;
     object-fit: cover;
     margin-bottom: 10px;
-    border: 2px solid #eee;
+    border: 1px solid #ddd; /* Light grey border for visibility */
+    background-color: #ffffff; /* White background */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Prepare for hover zoom */
+    transform-origin: center;
 }
 
 /* Modern Card Typography */
@@ -580,6 +587,15 @@
     height: 40px;
     border-radius: 50%;
     vertical-align: middle;
+}
+
+/* Hover Zoom Effect for Standard Table Avatars */
+.stackboost-theme-standard .stackboost-directory-avatar:hover {
+    transform: scale(2.5);
+    z-index: 100;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    /* border-radius: 4px; Optional: Change shape on zoom */
 }
 
 /* --- Photo Shape Styles --- */

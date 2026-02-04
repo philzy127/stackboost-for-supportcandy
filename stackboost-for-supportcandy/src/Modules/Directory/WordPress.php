@@ -100,12 +100,25 @@ class WordPress {
 	 * @return bool
 	 */
 	public function can_user_edit(): bool {
-		$user = wp_get_current_user();
-		if ( in_array( 'administrator', $user->roles, true ) ) {
+		// Fail-safe: Administrators always have access regardless of settings
+		if ( current_user_can( 'manage_options' ) ) {
 			return true;
 		}
+
+		// Use the new capability system.
+		// Fallback to legacy check if the capability is somehow missing (e.g. plugin update issue),
+		// but primarily check the cap. Admins have it by default via map_meta_cap.
+		if ( current_user_can( STACKBOOST_CAP_MANAGE_DIRECTORY ) ) {
+			return true;
+		}
+
+		// Backward compatibility / Dual support for a transition period:
+		// Check the legacy option if the user doesn't have the explicit cap but might match the old role setting.
+		// Ideally we deprecate this, but for safety:
+		$user = wp_get_current_user();
 		$options    = get_option( Settings::OPTION_NAME, array() );
 		$edit_roles = $options['edit_roles'] ?? array( 'administrator', 'editor' );
+
 		return ! empty( array_intersect( $user->roles, $edit_roles ) );
 	}
 
@@ -115,10 +128,18 @@ class WordPress {
 	 * @return bool
 	 */
 	public function can_user_manage(): bool {
-		$user = wp_get_current_user();
-		if ( in_array( 'administrator', $user->roles, true ) ) {
+		// Fail-safe: Administrators always have access regardless of settings
+		if ( current_user_can( 'manage_options' ) ) {
 			return true;
 		}
+
+		// Use the stricter 'manage settings' capability for the destructive Management tab.
+		if ( current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {
+			return true;
+		}
+
+		// Backward compatibility:
+		$user = wp_get_current_user();
 		$options          = get_option( Settings::OPTION_NAME, array() );
 		$management_roles = $options['management_roles'] ?? array( 'administrator' );
 		return ! empty( array_intersect( $user->roles, $management_roles ) );
@@ -356,15 +377,21 @@ class WordPress {
 			'departments'     => __( 'Departments', 'stackboost-for-supportcandy' ),
 			'locations'       => __( 'Locations', 'stackboost-for-supportcandy' ),
 			'contact_widget'  => __( 'Contact Widget', 'stackboost-for-supportcandy' ),
-			'settings'        => __( 'Settings', 'stackboost-for-supportcandy' ),
 		);
 
 		$advanced_tabs = array();
+		// Both 'Settings' and 'Management' tabs require management access (Admin/Settings Cap).
 		if ( $this->can_user_manage() ) {
+			$advanced_tabs['settings']   = __( 'Settings', 'stackboost-for-supportcandy' );
 			$advanced_tabs['management'] = __( 'Management', 'stackboost-for-supportcandy' );
 		}
 
 		$tabs = array_merge( $base_tabs, $advanced_tabs );
+
+		// Security Check: If attempting to access restricted tab directly
+		if ( in_array( $active_tab, [ 'settings', 'management' ], true ) && ! $this->can_user_manage() ) {
+			$active_tab = 'staff'; // Fallback
+		}
 
 		// Reorder per user request: Staff > Departments > Locations > Contact Widget > Settings > Management
 		$ordered_tabs = [];

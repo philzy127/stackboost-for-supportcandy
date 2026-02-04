@@ -66,7 +66,7 @@ class WordPress extends Module {
 	 * Render the administration page.
 	 */
 	public function render_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS ) ) {
 			return;
 		}
 
@@ -318,7 +318,7 @@ class WordPress extends Module {
 		// 	stackboost_log( 'AJAX Get Field Options Called. POST: ' . print_r( $_POST, true ), 'conditional_options' );
 		// }
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
@@ -375,7 +375,7 @@ class WordPress extends Module {
 	public function ajax_get_roles() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
@@ -391,7 +391,7 @@ class WordPress extends Module {
 	public function ajax_save_rules() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_CONDITIONAL_OPTIONS ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
