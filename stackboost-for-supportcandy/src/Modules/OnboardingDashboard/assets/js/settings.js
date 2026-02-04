@@ -168,7 +168,7 @@ jQuery(document).ready(function($) {
             field_slug: fieldSlug
         }, function(response) {
             if (response.success) {
-                var optionsHtml = '<option value="">' + stackboost_admin_ajax.i18n_select_option + '</option>';
+                var optionsHtml = '';
                 $.each(response.data, function(index, item) {
                     var isSelected = ($.inArray(String(item.id), selectedOptions) !== -1) ? 'selected' : '';
                     optionsHtml += '<option value="' + item.id + '" ' + isSelected + '>' + item.name + '</option>';

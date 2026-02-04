@@ -349,7 +349,6 @@ class Settings {
 						<th scope="row"><label for="stkb_req_id"><?php esc_html_e( 'Onboarding Options', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
 							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_id][]" id="stkb_req_id" data-selected="<?php echo esc_attr( json_encode( $config['request_type_id'] ) ); ?>" multiple disabled style="height: 150px;">
-								<option value=""><?php esc_html_e( '-- Select Options --', 'stackboost-for-supportcandy' ); ?></option>
 							</select>
 							<p class="description"><?php esc_html_e( 'Select one or more options that represent "Onboarding" requests.', 'stackboost-for-supportcandy' ); ?></p>
 						</td>
