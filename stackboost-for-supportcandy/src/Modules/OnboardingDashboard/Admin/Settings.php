@@ -270,7 +270,7 @@ class Settings {
 		wp_enqueue_script(
 			'stackboost-onboarding-settings-js',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/OnboardingDashboard/assets/js/settings.js',
-			[ 'jquery' ],
+			[ 'jquery', 'stackboost-select2' ],
 			STACKBOOST_VERSION,
 			true
 		);
