@@ -191,7 +191,7 @@ jQuery(document).ready(function($) {
                     if ($optionSelector.hasClass('stackboost-selectwoo')) {
                         console.log('[StackBoost] Initializing SelectWoo on', $optionSelector);
                         select2Func.call($optionSelector, {
-                            width: '100%',
+                            width: '25em',
                             placeholder: stackboost_admin_ajax.i18n_select_option || 'Select Options'
                         });
                     } else {
@@ -237,7 +237,7 @@ jQuery(document).ready(function($) {
         // (stkb_req_id is handled in loadFieldOptions after AJAX)
         $('.stackboost-selectwoo').not('#stkb_req_id').each(function() {
             select2Func.call($(this), {
-                width: '100%',
+                width: '25em',
                 placeholder: stackboost_admin_ajax.i18n_select_option || 'Select Options'
             });
         });
