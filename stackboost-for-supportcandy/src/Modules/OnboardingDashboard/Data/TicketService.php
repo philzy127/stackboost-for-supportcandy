@@ -21,13 +21,18 @@ class TicketService {
 		$config = Settings::get_config();
 
 		$request_type_key   = $config['request_type_field'];
-		$onboarding_type_id = $config['request_type_id'];
+		$onboarding_type_ids = $config['request_type_id']; // This is now an array
 		$inactive_ids       = $config['inactive_statuses']; // Array
 		$onboarding_date_key = $config['field_onboarding_date'];
 		$cleared_key        = $config['field_cleared'];
 
-		if ( empty( $request_type_key ) || empty( $onboarding_type_id ) ) {
+		if ( empty( $request_type_key ) || empty( $onboarding_type_ids ) ) {
 			return new \WP_Error( 'missing_config', 'Onboarding Settings not configured.' );
+		}
+
+		// Ensure IDs are an array (robustness)
+		if ( ! is_array( $onboarding_type_ids ) ) {
+			$onboarding_type_ids = [ $onboarding_type_ids ];
 		}
 
 		// 1. Fetch All Active Onboarding Tickets
@@ -40,8 +45,8 @@ class TicketService {
 				'relation' => 'AND',
 				[
 					'slug'    => $request_type_key,
-					'compare' => '=',
-					'val'     => $onboarding_type_id,
+					'compare' => 'IN',
+					'val'     => $onboarding_type_ids,
 				]
 			]
 		];

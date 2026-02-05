@@ -27,6 +27,10 @@ class Page {
 			return;
 		}
 		// Enqueue any shared assets here if needed.
+
+		// Enqueue SelectWoo
+		wp_enqueue_script( 'stackboost-selectwoo' );
+		wp_enqueue_style( 'stackboost-selectwoo' );
 	}
 
 	/**

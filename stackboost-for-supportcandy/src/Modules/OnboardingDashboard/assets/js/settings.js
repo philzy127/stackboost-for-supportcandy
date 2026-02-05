@@ -142,7 +142,18 @@ jQuery(document).ready(function($) {
     // --- AJAX Field Logic ---
     function loadFieldOptions($fieldSelector, $optionSelector) {
         var fieldSlug = $fieldSelector.val();
-        var selectedOption = $optionSelector.data('selected');
+        var rawSelected = $optionSelector.data('selected');
+        var selectedOptions = [];
+
+        // Normalize selected data to array
+        if (Array.isArray(rawSelected)) {
+            selectedOptions = rawSelected;
+        } else if (rawSelected !== undefined && rawSelected !== null && rawSelected !== '') {
+            selectedOptions = [rawSelected];
+        }
+
+        // Ensure all are strings for comparison
+        selectedOptions = selectedOptions.map(String);
 
         if (!fieldSlug) {
             $optionSelector.prop('disabled', true).html('<option value="">' + stackboost_admin_ajax.i18n_select_option + '</option>');
@@ -156,14 +167,44 @@ jQuery(document).ready(function($) {
             nonce: stackboost_admin_ajax.nonce,
             field_slug: fieldSlug
         }, function(response) {
+            console.log('[StackBoost] Field Options Loaded:', response);
             if (response.success) {
-                var optionsHtml = '<option value="">' + stackboost_admin_ajax.i18n_select_option + '</option>';
+                var optionsHtml = '';
                 $.each(response.data, function(index, item) {
-                    var isSelected = (item.id == selectedOption) ? 'selected' : '';
+                    var isSelected = ($.inArray(String(item.id), selectedOptions) !== -1) ? 'selected' : '';
                     optionsHtml += '<option value="' + item.id + '" ' + isSelected + '>' + item.name + '</option>';
                 });
+
+                // Destroy existing Select2 instance if it exists to allow clean re-init
+                if ($optionSelector.data('select2')) {
+                    console.log('[StackBoost] Destroying existing select2 instance');
+                    $optionSelector.select2('destroy');
+                }
+
                 $optionSelector.html(optionsHtml).prop('disabled', false);
+
+                // Initialize SelectWoo/Select2 if available and the element has the class
+                // SelectWoo aliases itself as select2, but we check both to be safe
+                var select2Func = $.fn.selectWoo || $.fn.select2;
+
+                if (select2Func) {
+                    if ($optionSelector.hasClass('stackboost-selectwoo')) {
+                        console.log('[StackBoost] Initializing SelectWoo on', $optionSelector);
+                        select2Func.call($optionSelector, {
+                            width: 'style',
+                            placeholder: stackboost_admin_ajax.i18n_select_option || 'Select Options'
+                        });
+                    } else {
+                        console.warn('[StackBoost] Element missing .stackboost-selectwoo class');
+                    }
+                } else {
+                    console.error('[StackBoost] SelectWoo/Select2 library NOT found');
+                }
             } else {
+                // Destroy existing Select2 instance before showing error
+                if ($optionSelector.data('select2')) {
+                    $optionSelector.select2('destroy');
+                }
                 $optionSelector.html('<option value="">' + response.data + '</option>'); // Error message
             }
         });
@@ -188,6 +229,19 @@ jQuery(document).ready(function($) {
             loadFieldOptions($this, $target);
         }
     });
+
+    // --- Initialize SelectWoo on Static Fields ---
+    var select2Func = $.fn.selectWoo || $.fn.select2;
+    if (select2Func) {
+        // Initialize any selectwoo fields that are NOT the dynamic one (stkb_req_id)
+        // (stkb_req_id is handled in loadFieldOptions after AJAX)
+        $('.stackboost-selectwoo').not('#stkb_req_id').each(function() {
+            select2Func.call($(this), {
+                width: 'style',
+                placeholder: stackboost_admin_ajax.i18n_select_option || 'Select Options'
+            });
+        });
+    }
 
     // --- Form Submission ---
     $('form[action="options.php"]').on('submit', function() {

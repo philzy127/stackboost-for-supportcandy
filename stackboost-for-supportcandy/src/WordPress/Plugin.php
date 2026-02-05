@@ -218,6 +218,21 @@ final class Plugin {
 			[],
 			STACKBOOST_VERSION
 		);
+
+		// SelectWoo (Fork of Select2)
+		wp_register_script(
+			'stackboost-selectwoo',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/selectwoo/js/selectWoo.full.min.js',
+			[ 'jquery' ],
+			'1.0.8',
+			true
+		);
+		wp_register_style(
+			'stackboost-selectwoo',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/selectwoo/css/selectWoo.min.css',
+			[],
+			'1.0.8'
+		);
 	}
 
 	/**
