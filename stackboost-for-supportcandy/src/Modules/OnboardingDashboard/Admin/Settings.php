@@ -334,7 +334,7 @@ class Settings {
 					<tr>
 						<th scope="row"><label for="stkb_req_type"><?php esc_html_e( 'Request Type Field', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_field]" id="stkb_req_type" class="stackboost-ajax-field-selector" data-target="#stkb_req_id">
+							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_field]" id="stkb_req_type" class="stackboost-ajax-field-selector regular-text" data-target="#stkb_req_id">
 								<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
 								<?php foreach ( $sc_fields as $key => $label ) : ?>
 									<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $config['request_type_field'], $key ); ?>>
@@ -348,7 +348,7 @@ class Settings {
 					<tr>
 						<th scope="row"><label for="stkb_req_id"><?php esc_html_e( 'Onboarding Options', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_id][]" id="stkb_req_id" class="stackboost-selectwoo" data-selected="<?php echo esc_attr( json_encode( $config['request_type_id'] ) ); ?>" multiple disabled>
+							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[request_type_id][]" id="stkb_req_id" class="stackboost-selectwoo regular-text" data-selected="<?php echo esc_attr( json_encode( $config['request_type_id'] ) ); ?>" multiple disabled>
 							</select>
 							<p class="description"><?php esc_html_e( 'Select one or more options that represent "Onboarding" requests.', 'stackboost-for-supportcandy' ); ?></p>
 						</td>
@@ -356,7 +356,7 @@ class Settings {
 					<tr>
 						<th scope="row"><label for="stkb_inactive_status"><?php esc_html_e( 'Inactive Statuses', 'stackboost-for-supportcandy' ); ?></label></th>
 						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[inactive_statuses][]" id="stkb_inactive_status" class="stackboost-selectwoo" multiple>
+							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[inactive_statuses][]" id="stkb_inactive_status" class="stackboost-selectwoo regular-text" multiple>
 								<?php foreach ( $sc_statuses as $id => $label ) : ?>
 									<option value="<?php echo esc_attr( $id ); ?>" <?php echo in_array( $id, (array) $config['inactive_statuses'] ) ? 'selected' : ''; ?>>
 										<?php echo esc_html( $label ); ?>
@@ -369,7 +369,7 @@ class Settings {
 					<tr>
 						<th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label></th>
 						<td>
-							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[<?php echo esc_attr( $key ); ?>]" id="<?php echo esc_attr( $key ); ?>">
+							<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[<?php echo esc_attr( $key ); ?>]" id="<?php echo esc_attr( $key ); ?>" class="regular-text">
 								<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
 								<?php foreach ( $sc_fields as $f_key => $f_label ) : ?>
 									<option value="<?php echo esc_attr( $f_key ); ?>" <?php selected( $config[ $key ], $f_key ); ?>>
