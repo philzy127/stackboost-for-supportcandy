@@ -103,6 +103,12 @@ class WordPress extends Module {
 		$content_type = $options['ticket_details_content'] ?? 'details_only';
 		$image_handling = $options['ticket_details_image_handling'] ?? 'fit';
 		$limit = isset( $options['ticket_details_history_limit'] ) ? intval( $options['ticket_details_history_limit'] ) : 0;
+		$chat_bubbles = ! empty( $options['ticket_details_chat_bubbles'] );
+
+		// Enforce Pro Check for Chat Bubbles
+		if ( $chat_bubbles && ! stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
+			$chat_bubbles = false;
+		}
 
 		$details_html = '';
 		$history_html = '';
@@ -209,7 +215,7 @@ class WordPress extends Module {
 				} elseif ( 'with_history' === $content_type ) {
 					// Render threads but strip the internal header from Core since we wrap it here
 					// Pass $description_in_utm as $exclude_description to avoid duplicate description.
-					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling, $limit, $description_in_utm );
+					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling, $limit, $description_in_utm, $chat_bubbles );
 
 					if ( ! empty( $threads_html ) ) {
 						$history_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
@@ -451,6 +457,18 @@ class WordPress extends Module {
 					'placeholder' => __( '[Image] Placeholder', 'stackboost-for-supportcandy' ),
 				],
 				'desc' => 'How to handle images within the description and notes.'
+			]
+		);
+
+		add_settings_field(
+			'stackboost_ticket_details_chat_bubbles',
+			__( 'Enable Chat Bubbles', 'stackboost-for-supportcandy' ) . ' <span class="stackboost-badge-pro">PRO</span>',
+			[ $this, 'render_checkbox_field' ],
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[
+				'id'   => 'ticket_details_chat_bubbles',
+				'desc' => 'Display conversation history as chat bubbles (Requires Pro Plan).',
 			]
 		);
 
