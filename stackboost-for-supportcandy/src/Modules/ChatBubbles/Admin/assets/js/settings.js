@@ -223,9 +223,10 @@
         }
 
         function updateBubble(type, theme) {
-            var $preview = $('#preview-bubble-' + type);
-            // Check for wrapper row
-            var $row = $preview.closest('.sb-preview-row');
+            // Fix: Target correct elements based on PHP markup
+            var $row = $('#preview-row-' + type);
+            var $preview = $row.find('.thread-body');
+
             var prefixName = 'stackboost_settings[chat_bubbles_' + type + '_';
 
             // Default Values
@@ -548,19 +549,17 @@
             $preview.css(cssMap);
 
             // Alignment & Avatars
-            var $target = ($row.length > 0) ? $row : $preview;
+            var $target = $row; // The row is the flex container
             var showAvatars = $('#chat_bubbles_show_avatars').is(':checked');
             var hasAvatar = (type !== 'log'); // Logs usually don't have avatars
-            var $avatar = $row.find('.sb-avatar');
+            var $avatar = $row.find('.thread-avatar');
 
-            // Reset internal bubble alignment if wrapped
-            if ($row.length > 0) {
-                $preview.css({
-                    'margin-left': '0',
-                    'margin-right': '0',
-                    'align-self': 'auto'
-                });
-            }
+            // Reset internal bubble alignment
+            $preview.css({
+                'margin-left': '0',
+                'margin-right': '0',
+                'align-self': 'auto'
+            });
 
             if (styles.align === 'right') {
                 $target.css({
