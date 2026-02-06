@@ -17,6 +17,12 @@
     padding-top: 10px;
 }
 
+.stackboost-ticket-history.stackboost-no-border {
+    border-top: none !important;
+    padding-top: 0 !important;
+    margin-top: 5px !important;
+}
+
 .stackboost-thread-item {
     font-size: 13px;
     line-height: 1.4;

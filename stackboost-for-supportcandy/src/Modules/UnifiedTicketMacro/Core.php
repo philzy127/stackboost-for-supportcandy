@@ -325,7 +325,12 @@ class Core {
 			return '';
 		}
 
-		$html = '<div class="stackboost-ticket-history">';
+		$wrapper_classes = 'stackboost-ticket-history';
+		if ( $exclude_description ) {
+			$wrapper_classes .= ' stackboost-no-border';
+		}
+
+		$html = '<div class="' . esc_attr( $wrapper_classes ) . '">';
 		// Internal header removed to allow wrapping in WPSC widget structure.
 		// $html .= '<h4>' . esc_html__( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h4>';
 
