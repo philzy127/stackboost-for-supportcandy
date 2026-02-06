@@ -370,6 +370,9 @@ class Core {
 
 			// Render
 			if ( $chat_bubbles ) {
+				$options = get_option( 'stackboost_settings', [] );
+				$show_avatar = ! empty( $options['chat_bubbles_show_avatars'] );
+
 				// Determine alignment (Left = Customer, Right = Agent/System)
 				// We check if the thread author is an agent.
 				// WPSC Thread logic:
@@ -402,6 +405,15 @@ class Core {
 				}
 
 				$html .= '<div class="stackboost-chat-row ' . esc_attr( $align_class ) . '">';
+
+				// Avatar (mimic WPSC structure for compatibility with Chat Bubbles CSS)
+				if ( $show_avatar ) {
+					$avatar_url = get_avatar_url( $thread->customer->email ?? '' );
+					$html .= '<div class="thread-avatar" style="margin: 0 10px;">';
+					$html .= '<img src="' . esc_url( $avatar_url ) . '" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%;" />';
+					$html .= '</div>';
+				}
+
 				$html .= '<div class="stackboost-chat-bubble">';
 				$html .= '<div class="stackboost-chat-meta"><strong>' . esc_html( $author_name ) . '</strong> &bull; ' . esc_html( $date_str ) . '</div>';
 				$html .= '<div class="stackboost-thread-body">' . $body . '</div>';

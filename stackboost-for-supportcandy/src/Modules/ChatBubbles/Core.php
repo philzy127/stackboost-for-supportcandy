@@ -160,6 +160,17 @@ class Core {
 					$wrapper_selectors[] = "{$root} .wpsc-thread.log";
 				}
 			}
+
+			// Add StackBoost Ticket Card Selectors (Pro Feature)
+			// These exist outside the standard WPSC containers, usually in a Tippy or dashboard wrapper.
+			// We map our internal classes to the Chat Bubble types.
+			if ( $type === 'agent' ) {
+				$wrapper_selectors[] = '.stackboost-chat-right:not(.stackboost-chat-note) .stackboost-chat-bubble';
+			} elseif ( $type === 'customer' ) {
+				$wrapper_selectors[] = '.stackboost-chat-left .stackboost-chat-bubble';
+			} elseif ( $type === 'note' ) {
+				$wrapper_selectors[] = '.stackboost-chat-note .stackboost-chat-bubble';
+			}
 			$wrapper_selector_str = implode(', ', $wrapper_selectors);
 
 			// 1. Style the Wrapper (The Bubble)
