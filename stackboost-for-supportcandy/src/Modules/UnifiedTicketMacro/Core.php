@@ -53,7 +53,8 @@ class Core {
 		\stackboost_log( '[UTM] replace_utm_macro() - Processing for ticket ID: ' . $ticket->id, 'module-utm' );
 
 		// Generate the HTML on-the-fly every time for maximum accuracy.
-		$html_to_insert = $this->build_live_utm_html( $ticket );
+		// Explicitly use 'table' format for emails.
+		$html_to_insert = $this->build_live_utm_html( $ticket, 'table' );
 		\stackboost_log( '[UTM] replace_utm_macro() - HTML generated on-the-fly.', 'module-utm' );
 
 		$str = str_replace( '{{stackboost_unified_ticket}}', $html_to_insert, $str );
@@ -70,13 +71,14 @@ class Core {
 	}
 
 	/**
-	 * Builds the HTML table for the UTM based on current settings and ticket data.
+	 * Builds the HTML for the UTM based on current settings and ticket data.
 	 *
 	 * @param \WPSC_Ticket $ticket The ticket object.
+	 * @param string       $format The output format ('table' or 'list'). Default is 'table'.
 	 * @return string The generated HTML.
 	 */
-	public function build_live_utm_html( \WPSC_Ticket $ticket ): string {
-		\stackboost_log( '[UTM] build_live_utm_html() - ENTER for ticket ID: ' . $ticket->id, 'module-utm' );
+	public function build_live_utm_html( \WPSC_Ticket $ticket, string $format = 'table' ): string {
+		\stackboost_log( '[UTM] build_live_utm_html() - ENTER for ticket ID: ' . $ticket->id . ' Format: ' . $format, 'module-utm' );
 		$options          = get_option( 'stackboost_settings', [] );
 		$is_enabled       = $options['utm_enabled'] ?? false;
 
@@ -110,7 +112,7 @@ class Core {
 		}
 
 		if ( empty( $selected_fields ) ) {
-			return '<table></table>';
+			return ( 'list' === $format ) ? '<div></div>' : '<table></table>';
 		}
 
 		// Use the official API to get a complete list of all field types.
@@ -121,7 +123,12 @@ class Core {
 			$field_types_map[ $slug ] = $field_type_class::$slug;
 		}
 
-		$html_output = '<table>';
+		$html_output = '';
+		if ( 'table' === $format ) {
+			$html_output = '<table>';
+		} elseif ( 'list' === $format ) {
+			$html_output = '<div class="stackboost-utm-list">';
+		}
 
 		foreach ( $selected_fields as $field_slug ) {
 			$field_value     = $ticket->{$field_slug};
@@ -245,16 +252,45 @@ class Core {
 			}
 
 			if ( ! empty( $display_value ) ) {
-				if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
-					// Fix alignment issue caused by paragraph margins in rich text fields.
-					$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
-					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
+				// Format Handling
+				if ( 'list' === $format ) {
+					// DIV based list layout
+					// Styles to mimic standard view
+					$row_style = 'margin-bottom: 8px; font-size: 13px; line-height: 1.5;';
+					$label_style = 'font-weight: 600; color: #50575e; margin-right: 5px;';
+					$value_style = 'color: #2c3338;';
+
+					if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
+						$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
+						$html_output .= '<div style="' . $row_style . '">';
+						$html_output .= '<div style="' . $label_style . ' display:block; margin-bottom: 2px;">' . esc_html( $field_name ) . '</div>';
+						$html_output .= '<div style="' . $value_style . '">' . $display_value . '</div>';
+						$html_output .= '</div>';
+					} else {
+						$html_output .= '<div style="' . $row_style . '">';
+						$html_output .= '<span style="' . $label_style . '">' . esc_html( $field_name ) . ':</span> ';
+						$html_output .= '<span style="' . $value_style . '">' . esc_html( $display_value ) . '</span>';
+						$html_output .= '</div>';
+					}
 				} else {
-					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
+					// TABLE based layout (Default)
+					if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
+						// Fix alignment issue caused by paragraph margins in rich text fields.
+						$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
+						$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
+					} else {
+						$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
+					}
 				}
 			}
 		}
-		$html_output .= '</table>';
+
+		if ( 'table' === $format ) {
+			$html_output .= '</table>';
+		} elseif ( 'list' === $format ) {
+			$html_output .= '</div>';
+		}
+
 		return $html_output;
 	}
 
