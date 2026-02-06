@@ -104,6 +104,14 @@ final class Plugin {
 			}
 		}
 
+		// Contextual Views (Revamp)
+		if ( stackboost_is_feature_active( 'contextual_views' ) ) {
+			$class = 'StackBoost\ForSupportCandy\Modules\ContextualViews\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['contextual_views'] = $class::get_instance();
+			}
+		}
+
 		if ( stackboost_is_feature_active( 'queue_macro' ) ) {
 			$class = 'StackBoost\ForSupportCandy\Modules\QueueMacro\WordPress';
 			if ( class_exists( $class ) ) {
@@ -364,6 +372,18 @@ final class Plugin {
 			}
 		}
 
+		// Gather data from Contextual Views module (Revamp)
+		if ( stackboost_is_feature_active( 'contextual_views' ) ) {
+			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\ContextualViews\Core' ) ) {
+				$ctx_core = new \StackBoost\ForSupportCandy\Modules\ContextualViews\Core();
+				$features_data['contextual_views'] = [
+					'enabled' => true, // Always enabled if module is active
+					'rules'   => $ctx_core->get_frontend_rules(),
+					'all_columns' => $this->get_supportcandy_columns(),
+				];
+			}
+		}
+
 		if ( ! empty( $features_data ) ) {
 			$localized_data['features'] = $features_data;
 		}
@@ -406,6 +426,7 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-ats',
             'stackboost-for-supportcandy_page_stackboost-directory',
             'stackboost-for-supportcandy_page_stackboost-conditional-views',
+            'stackboost-for-supportcandy_page_stackboost-contextual-views',
             'stackboost-for-supportcandy_page_stackboost-queue-macro',
             'stackboost-for-supportcandy_page_stackboost-onboarding-dashboard',
             'stackboost-for-supportcandy_page_stackboost-tools',

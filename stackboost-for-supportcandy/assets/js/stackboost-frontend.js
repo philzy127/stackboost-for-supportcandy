@@ -42,15 +42,219 @@
 			feature_ticket_details_card();
 		}
 
-		const emptyColsConfig = features.hide_empty_columns || {};
-		const conditionalConfig = features.conditional_hiding || {};
-		if (emptyColsConfig.enabled || emptyColsConfig.hide_priority || conditionalConfig.enabled) {
-			feature_manage_column_visibility();
+		let contextualRuleApplied = false;
+		if (features.contextual_views?.enabled) {
+			contextualRuleApplied = feature_contextual_views();
+		}
+
+		// If Contextual Views applied a rule, we skip the legacy Conditional Views logic for visibility.
+		// However, we might still want 'hide empty columns' logic to run ON TOP of the contextual view?
+		// The proposal says: "If a ContextualView rule exists... it takes precedence and disables the old ConditionalView logic".
+		// It doesn't explicitly say disable "Hide Empty Columns", but usually specific view settings override dynamic ones.
+		// For safety, let's assume we skip the legacy manager entirely if a contextual rule matched.
+		if (!contextualRuleApplied) {
+			const emptyColsConfig = features.hide_empty_columns || {};
+			const conditionalConfig = features.conditional_hiding || {};
+			if (emptyColsConfig.enabled || emptyColsConfig.hide_priority || conditionalConfig.enabled) {
+				feature_manage_column_visibility();
+			}
 		}
 
 		if (features.ticket_type_hiding?.enabled) {
 			feature_hide_ticket_types_for_non_agents();
 		}
+	}
+
+	/**
+	 * Feature: Contextual Ticket Views (Revamp).
+	 * Returns true if a rule was found and applied.
+	 */
+	function feature_contextual_views() {
+		const rules = features.contextual_views.rules || {};
+		const currentViewId = document.querySelector('#wpsc-input-filter')?.value || '0';
+		const pageView = currentViewId.replace('default-', ''); // Clean up 'default-' prefix if present
+
+		// Find rule for this view
+		// The rules object is keyed by rule ID, but we need to search by view_id.
+		let activeRule = null;
+		for (const id in rules) {
+			if (rules[id].view_id == pageView) {
+				activeRule = rules[id];
+				break;
+			}
+		}
+
+		if (!activeRule) {
+			return false; // No rule for this view, fall back to legacy
+		}
+
+		const table = document.querySelector('table.wpsc-ticket-list-tbl');
+		if (!table) return false;
+
+		const thead = table.querySelector('thead');
+		const tbody = table.querySelector('tbody');
+		if (!thead || !tbody) return false;
+
+		const headerRow = thead.querySelector('tr');
+		const bodyRows = Array.from(tbody.querySelectorAll('tr'));
+
+		const currentHeaders = Array.from(headerRow.children);
+
+		// Map current column slugs (or text) to their indices
+		// We rely on text content matching the configured column labels or slugs?
+		// The rule stores slugs. The table headers display Labels.
+		// We need a map of Slug -> Header Text or vice versa.
+		// PHP passes `columns` map (slug -> label).
+		// We can try to match header text to the known labels.
+
+		const allColumns = features.contextual_views.all_columns || {};
+		const headerMap = []; // Index -> Slug
+
+		currentHeaders.forEach((th, index) => {
+			const text = th.textContent.trim();
+			// Reverse lookup in allColumns (Label -> Slug)
+			// This is fuzzy because labels might have HTML or be slightly different.
+			// Ideally we would add data-slug attributes to TH in PHP, but we can't easily hook there without replacing templates.
+			// So we try best effort text match.
+			let matchedSlug = null;
+			for (const slug in allColumns) {
+				if (allColumns[slug] === text) {
+					matchedSlug = slug;
+					break;
+				}
+			}
+			// Fallback: Check if it matches a standard field manually if not found (e.g. checkbox column?)
+			if (!matchedSlug) {
+				// Special handling for checkbox or actions if any?
+				// SC usually has Ticket ID, Subject, etc.
+			}
+			headerMap[index] = matchedSlug;
+		});
+
+		// Calculate desired order
+		const desiredSlugs = activeRule.columns || [];
+
+		// Create a visibility plan: Show/Hide based on presence in desiredSlugs
+		// AND Reorder.
+
+		// We will reconstruct the rows.
+		// NOTE: This is destructive to events if we just move HTML.
+		// DataTables: Check if API is available.
+		if ($.fn.DataTable && $.fn.DataTable.isDataTable(table)) {
+			// If DataTables is active, use colReorder if available, or column().visible().
+			// SC DataTables implementation might differ.
+			// Use generic DOM approach for visibility first.
+
+			// For ordering: doing it via DOM on a DataTable is risky.
+			// We will try to just Hide/Show first, and if possible Reorder visually.
+			// Given the complexity of DataTables + DOM manipulation, we start with Visibility.
+			// The requirement says "utilize a virtual header mapping" if colReorder not available.
+			// Virtual header mapping implies swapping content.
+
+			// Implementation Strategy:
+			// 1. Identify indices of desired columns in the current table.
+			// 2. Hide everything else.
+			// 3. Move the desired columns (TH and TDs) to the front in order.
+
+			const indicesToKeep = [];
+			const slugToIndices = {};
+
+			headerMap.forEach((slug, index) => {
+				if (slug) {
+					slugToIndices[slug] = index;
+				}
+			});
+
+			// We need to handle columns that are NOT in our slug map (like Checkbox column at index 0 maybe?)
+			// Usually index 0 is checkbox. We probably want to keep it?
+			// User rule defines "Active Columns". If checkbox isn't in it, do we hide it?
+			// Probably yes, strict workspace.
+
+			const newOrderIndices = [];
+
+			// Always keep Checkbox if it exists and looks like one?
+			// Checkbox usually has class `wpsc_tl_check_all` or similar.
+			const checkboxTh = headerRow.querySelector('.wpsc-tl-chk-all, input[type="checkbox"]')?.closest('th');
+			let checkboxIndex = -1;
+			if (checkboxTh) {
+				checkboxIndex = Array.from(headerRow.children).indexOf(checkboxTh);
+				// If strictly following rule, we might hide it if not requested, but usually workspace implies data columns.
+				// Let's assume we keep checkbox at the start always for functionality.
+				newOrderIndices.push(checkboxIndex);
+			}
+
+			desiredSlugs.forEach(slug => {
+				// Find index of this slug in current table
+				// We iterate headers again to find match because headerMap might be incomplete
+				// or we use the map we built.
+
+				// Try to find index by text matching again if map failed, or use map.
+				let index = -1;
+				// Try map first
+				for(let i=0; i<headerMap.length; i++) {
+					if (headerMap[i] === slug) {
+						index = i;
+						break;
+					}
+				}
+
+				if (index === -1) {
+					// Fuzzy search by label
+					const label = allColumns[slug];
+					if (label) {
+						currentHeaders.forEach((th, i) => {
+							if (th.textContent.trim() === label) index = i;
+						});
+					}
+				}
+
+				if (index !== -1 && index !== checkboxIndex) {
+					newOrderIndices.push(index);
+				}
+			});
+
+			// Apply Visibility & Order
+			// We iterate through all current indices. If not in newOrderIndices, HIDE.
+			// If in newOrderIndices, we need to re-append in that order.
+
+			const fragment = document.createDocumentFragment();
+
+			// Reorder Headers
+			newOrderIndices.forEach(index => {
+				if (currentHeaders[index]) {
+					currentHeaders[index].style.display = ''; // Ensure visible
+					headerRow.appendChild(currentHeaders[index]); // Move to end (effectively reordering as we loop)
+				}
+			});
+
+			// Hide others
+			currentHeaders.forEach((th, index) => {
+				if (!newOrderIndices.includes(index)) {
+					th.style.display = 'none';
+				}
+			});
+
+			// Reorder Body
+			bodyRows.forEach(row => {
+				const cells = Array.from(row.children);
+				newOrderIndices.forEach(index => {
+					if (cells[index]) {
+						cells[index].style.display = '';
+						row.appendChild(cells[index]);
+					}
+				});
+
+				cells.forEach((td, index) => {
+					if (!newOrderIndices.includes(index)) {
+						td.style.display = 'none';
+					}
+				});
+			});
+
+			return true;
+		}
+
+		return false; // Fallback if table not found or error
 	}
 
 	/**

@@ -1,0 +1,53 @@
+.sb-cv-modal-content {
+    background: #fff;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.sb-cv-dual-list-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 20px;
+}
+
+.sb-cv-box {
+    width: 40%;
+}
+
+.sb-cv-box h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.sb-cv-select {
+    width: 100%;
+    height: 300px;
+}
+
+.sb-cv-controls {
+    width: 10%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-top: 40px;
+    gap: 10px;
+}
+
+.sb-cv-controls button {
+    width: 100%;
+}
+
+.sb-cv-order-controls {
+    margin-top: 10px;
+    text-align: right;
+}
+
+/* Modal styling if not using a library, but stackboost-util usually handles it.
+   Assuming we use StackBoostModal from util or similar.
+   If we use our own simple modal: */
+#sb-cv-modal {
+    /* Hidden by default, controlled by JS */
+}
