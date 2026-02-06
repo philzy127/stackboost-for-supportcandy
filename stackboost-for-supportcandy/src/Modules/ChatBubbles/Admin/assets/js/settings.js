@@ -163,6 +163,20 @@
             updatePreview();
         });
 
+        // Helper: Apply styles with !important
+        function applyImportantStyles($el, styles) {
+            $el.each(function() {
+                var el = this;
+                $.each(styles, function(prop, val) {
+                    if (val === '' || val === null) {
+                        el.style.removeProperty(prop);
+                    } else {
+                        el.style.setProperty(prop, val, 'important');
+                    }
+                });
+            });
+        }
+
         // Helper: Calculate luminance
         function getLuminance(hex) {
             // Remove hash
@@ -531,14 +545,14 @@
             var imageBox = $('#chat_bubbles_image_box').is(':checked');
             var $img = $preview.find('img');
             if (imageBox) {
-                $img.css({
+                applyImportantStyles($img, {
                     'border': '1px solid rgba(0,0,0,0.2)',
                     'padding': '3px',
                     'background': 'rgba(255,255,255,0.5)',
                     'border-radius': '3px'
                 });
             } else {
-                $img.css({
+                applyImportantStyles($img, {
                     'border': 'none',
                     'padding': '0',
                     'background': 'transparent',
@@ -546,7 +560,8 @@
                 });
             }
 
-            $preview.css(cssMap);
+            // Apply Base CSS with !important
+            applyImportantStyles($preview, cssMap);
 
             // Alignment & Avatars
             var $target = $row; // The row is the flex container
@@ -555,14 +570,14 @@
             var $avatar = $row.find('.thread-avatar');
 
             // Reset internal bubble alignment
-            $preview.css({
+            applyImportantStyles($preview, {
                 'margin-left': '0',
                 'margin-right': '0',
                 'align-self': 'auto'
             });
 
             if (styles.align === 'right') {
-                $target.css({
+                applyImportantStyles($target, {
                     'margin-left': 'auto',
                     'margin-right': '0',
                     'align-self': 'flex-end',
@@ -570,14 +585,13 @@
                 });
                 // If wrapped, avatar order
                 if ($row.length > 0) {
-                    $preview.css('order', '1');
+                    $preview.css('order', '1'); // Order doesn't usually need !important unless conflicted
                     $avatar.css('order', '2');
-                    $avatar.css('margin-left', '0');
-                    // Add small gap logic if needed, but flex gap handles it
+                    applyImportantStyles($avatar, { 'margin-left': '0', 'margin-right': '15px' }); // Add margin reset
                 }
 
             } else if (styles.align === 'center') {
-                $target.css({
+                applyImportantStyles($target, {
                     'margin-left': 'auto',
                     'margin-right': 'auto',
                     'align-self': 'center',
@@ -590,7 +604,7 @@
                 }
 
             } else {
-                $target.css({
+                applyImportantStyles($target, {
                     'margin-right': 'auto',
                     'margin-left': '0',
                     'align-self': 'flex-start',
@@ -599,6 +613,7 @@
                 if ($row.length > 0) {
                     $preview.css('order', '2');
                     $avatar.css('order', '1');
+                    applyImportantStyles($avatar, { 'margin-right': '15px', 'margin-left': '0' }); // Restore margin
                 }
             }
 
