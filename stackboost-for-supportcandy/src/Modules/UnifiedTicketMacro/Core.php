@@ -302,9 +302,10 @@ class Core {
 	 * @param bool         $include_private Whether to include private notes (for agents).
 	 * @param string       $image_handling How to handle images ('fit', 'strip', 'placeholder').
 	 * @param int          $limit Maximum number of threads to return (0 for unlimited).
+	 * @param bool         $exclude_description Whether to exclude the initial report thread.
 	 * @return string HTML of the threads.
 	 */
-	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0 ): string {
+	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0, bool $exclude_description = false ): string {
 		// Define which thread types to fetch
 		// Public always gets 'report' and 'reply'.
 		$types = [ 'report', 'reply' ];
@@ -328,6 +329,11 @@ class Core {
 		// $html .= '<h4>' . esc_html__( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h4>';
 
 		foreach ( $threads as $thread ) {
+			// Skip description if requested (typically 'report' type)
+			if ( $exclude_description && 'report' === $thread->type ) {
+				continue;
+			}
+
 			$html .= '<div class="stackboost-thread-item">';
 
 			// Header: Author + Date + Type

@@ -108,9 +108,22 @@ class WordPress extends Module {
 		$history_html = '';
 
 		// 1. Generate Base Details (Table/Card)
+		$description_in_utm = false;
 		if ( 'utm' === $view_type ) {
 			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
 				$utm_content = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->build_live_utm_html( $ticket, 'list' );
+
+				// Check if Description is included in UTM
+				$utm_options = get_option( 'stackboost_settings', [] );
+				$utm_fields  = $utm_options['utm_columns'] ?? [];
+				// We need to check if 'df_description' type exists in the selected columns.
+				// Since we don't have the types mapped here easily, we can check known slug 'description' or reuse logic.
+				// But wait, user might rename it.
+				// Let's rely on checking the field SLUG against known description fields.
+				// Standard SC description field slug is 'description'.
+				if ( in_array( 'description', $utm_fields, true ) ) {
+					$description_in_utm = true;
+				}
 
 				// Apply Theme Wrapper
 				$details_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
@@ -130,15 +143,11 @@ class WordPress extends Module {
 
 		// 2. Append Threads (Description / History)
 		if ( 'details_only' !== $content_type ) {
-			if ( class_exists( 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
+			// If we only want description but it's already in UTM, we skip everything.
+			if ( 'with_description' === $content_type && $description_in_utm ) {
+				// Do nothing, description is already shown.
+			} elseif ( class_exists( 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
 				$include_private = $current_user->is_agent; // Bonus point logic
-
-				// Special handling: 'with_description' only wants the report.
-				// 'with_history' wants everything.
-				// The `render_ticket_threads` function in UTM Core fetches based on types.
-				// We might need to adjust it or filter the result.
-				// Actually, `render_ticket_threads` fetches ALL history.
-				// If we only want description, we should just fetch the description thread.
 
 				if ( 'with_description' === $content_type ) {
 					$desc_thread = $ticket->get_description_thread();
@@ -199,7 +208,8 @@ class WordPress extends Module {
 					}
 				} elseif ( 'with_history' === $content_type ) {
 					// Render threads but strip the internal header from Core since we wrap it here
-					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling, $limit );
+					// Pass $description_in_utm as $exclude_description to avoid duplicate description.
+					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling, $limit, $description_in_utm );
 
 					if ( ! empty( $threads_html ) ) {
 						$history_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
