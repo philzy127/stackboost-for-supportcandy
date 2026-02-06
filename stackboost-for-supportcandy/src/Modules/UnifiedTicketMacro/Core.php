@@ -251,7 +251,8 @@ class Core {
 					break;
 			}
 
-			if ( ! empty( $display_value ) ) {
+			// Ensure display value is not just commas/whitespace (common artifact of empty multi-selects)
+			if ( ! empty( $display_value ) && trim( str_replace( ',', '', $display_value ) ) !== '' ) {
 				// Format Handling
 				if ( 'list' === $format ) {
 					// DIV based list layout
