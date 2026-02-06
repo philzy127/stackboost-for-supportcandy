@@ -561,7 +561,19 @@
             }
 
             // Apply Base CSS with !important
-            applyImportantStyles($preview, cssMap);
+            // Fix: Apply styles to the WRAPPER ($row), not the inner body ($preview), to match PHP logic.
+            applyImportantStyles($row, cssMap);
+
+            // Reset Inner Body Styles (Transparent)
+            applyImportantStyles($preview, {
+                'background': 'transparent',
+                'border': 'none',
+                'box-shadow': 'none',
+                'padding': '0',
+                'margin': '0',
+                'width': 'auto',
+                'max-width': '100%'
+            });
 
             // Alignment & Avatars
             var $target = $row; // The row is the flex container
@@ -570,10 +582,12 @@
             var $avatar = $row.find('.thread-avatar');
 
             // Reset internal bubble alignment
+            // Note: PHP logic sets reset styles on .thread-body. We do same here.
             applyImportantStyles($preview, {
                 'margin-left': '0',
                 'margin-right': '0',
-                'align-self': 'auto'
+                'align-self': 'auto',
+                'flex': '1' // Take remaining space
             });
 
             if (styles.align === 'right') {
