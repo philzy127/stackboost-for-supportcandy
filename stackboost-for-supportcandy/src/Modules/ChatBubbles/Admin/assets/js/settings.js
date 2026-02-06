@@ -590,6 +590,10 @@
                 'flex': '1' // Take remaining space
             });
 
+            // 4. Text Color inside (Match PHP Logic)
+            var textElements = $row.find('.thread-text, .user-info h2, .user-info h2.user-name, .user-info span, a, .thread-header h2, .thread-header span, .wpsc-log-diff');
+            applyImportantStyles(textElements, { 'color': styles.text });
+
             if (styles.align === 'right') {
                 applyImportantStyles($target, {
                     'margin-left': 'auto',
