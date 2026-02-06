@@ -436,6 +436,10 @@ class Core {
 			}
 		}
 
+		// 8. Specific Override for Ticket Details Card (Force 95% Width)
+		// We override the width set in step 1, but keep other styles.
+		$css .= ".stackboost-chat-bubble { width: 95% !important; max-width: 95% !important; }";
+
 		return $css;
 	}
 
