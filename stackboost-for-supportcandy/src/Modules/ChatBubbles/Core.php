@@ -439,7 +439,8 @@ class Core {
 		// 8. Specific Override for Ticket Details Card
 		// We override the width set in step 1, but keep other styles.
 		// Use high specificity selector to beat the generated rules.
-		$css .= ".stackboost-ticket-card-container .stackboost-chat-bubble { width: 90% !important; max-width: 90% !important; margin-bottom: 8px !important; }";
+		// Force flex-direction column to stack header and body vertically.
+		$css .= ".stackboost-ticket-card-container .stackboost-chat-bubble { width: 90% !important; max-width: 90% !important; margin-bottom: 8px !important; flex-direction: column !important; }";
 
 		return $css;
 	}
