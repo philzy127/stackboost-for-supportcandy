@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+1.6.1
+-----
+*   Added: Ticket Details Card - "Chat Bubbles" view for conversation history (Pro Feature).
+*   Changed: Ticket Details Card - Refactored "UTM" view to use a list layout similar to the "Standard" view for consistency.
+*   Improved: Ticket Details Card - Automatically suppresses the initial description in the history section if it is already displayed in the UTM fields.
+*   Improved: Ticket Details Card - Hides fields in UTM view that contain only commas/whitespace (common artifact of empty multi-selects).
+*   Fixed: Chat Bubbles - Settings page "Live Preview" not updating due to incorrect JS selectors and specificity issues.
+*   Fixed: Chat Bubbles - "Enable Chat Bubbles" setting in Ticket View not saving correctly due to missing sanitization whitelist entry.
+*   Fixed: Ticket Details Card - Removed unwanted horizontal separator line in conversation history when description is hidden.
+
 1.6.0
 -----
 *   Added: Conditional Options - Mutual exclusivity enforcement between WordPress Roles and SupportCandy Roles contexts to prevent conflicting rules.
