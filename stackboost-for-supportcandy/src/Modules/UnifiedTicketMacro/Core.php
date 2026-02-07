@@ -53,7 +53,8 @@ class Core {
 		\stackboost_log( '[UTM] replace_utm_macro() - Processing for ticket ID: ' . $ticket->id, 'module-utm' );
 
 		// Generate the HTML on-the-fly every time for maximum accuracy.
-		$html_to_insert = $this->build_live_utm_html( $ticket );
+		// Explicitly use 'table' format for emails.
+		$html_to_insert = $this->build_live_utm_html( $ticket, 'table' );
 		\stackboost_log( '[UTM] replace_utm_macro() - HTML generated on-the-fly.', 'module-utm' );
 
 		$str = str_replace( '{{stackboost_unified_ticket}}', $html_to_insert, $str );
@@ -70,13 +71,14 @@ class Core {
 	}
 
 	/**
-	 * Builds the HTML table for the UTM based on current settings and ticket data.
+	 * Builds the HTML for the UTM based on current settings and ticket data.
 	 *
 	 * @param \WPSC_Ticket $ticket The ticket object.
+	 * @param string       $format The output format ('table' or 'list'). Default is 'table'.
 	 * @return string The generated HTML.
 	 */
-	public function build_live_utm_html( \WPSC_Ticket $ticket ): string {
-		\stackboost_log( '[UTM] build_live_utm_html() - ENTER for ticket ID: ' . $ticket->id, 'module-utm' );
+	public function build_live_utm_html( \WPSC_Ticket $ticket, string $format = 'table' ): string {
+		\stackboost_log( '[UTM] build_live_utm_html() - ENTER for ticket ID: ' . $ticket->id . ' Format: ' . $format, 'module-utm' );
 		$options          = get_option( 'stackboost_settings', [] );
 		$is_enabled       = $options['utm_enabled'] ?? false;
 
@@ -110,7 +112,7 @@ class Core {
 		}
 
 		if ( empty( $selected_fields ) ) {
-			return '<table></table>';
+			return ( 'list' === $format ) ? '<div></div>' : '<table></table>';
 		}
 
 		// Use the official API to get a complete list of all field types.
@@ -121,7 +123,12 @@ class Core {
 			$field_types_map[ $slug ] = $field_type_class::$slug;
 		}
 
-		$html_output = '<table>';
+		$html_output = '';
+		if ( 'table' === $format ) {
+			$html_output = '<table>';
+		} elseif ( 'list' === $format ) {
+			$html_output = '<div class="stackboost-utm-list">';
+		}
 
 		foreach ( $selected_fields as $field_slug ) {
 			$field_value     = $ticket->{$field_slug};
@@ -244,17 +251,47 @@ class Core {
 					break;
 			}
 
-			if ( ! empty( $display_value ) ) {
-				if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
-					// Fix alignment issue caused by paragraph margins in rich text fields.
-					$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
-					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
+			// Ensure display value is not just commas/whitespace (common artifact of empty multi-selects)
+			if ( ! empty( $display_value ) && trim( str_replace( ',', '', $display_value ) ) !== '' ) {
+				// Format Handling
+				if ( 'list' === $format ) {
+					// DIV based list layout
+					// Styles to mimic standard view
+					$row_style = 'margin-bottom: 8px; font-size: 13px; line-height: 1.5;';
+					$label_style = 'font-weight: 600; color: #50575e; margin-right: 5px;';
+					$value_style = 'color: #2c3338;';
+
+					if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
+						$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
+						$html_output .= '<div style="' . $row_style . '">';
+						$html_output .= '<div style="' . $label_style . ' display:block; margin-bottom: 2px;">' . esc_html( $field_name ) . '</div>';
+						$html_output .= '<div style="' . $value_style . '">' . $display_value . '</div>';
+						$html_output .= '</div>';
+					} else {
+						$html_output .= '<div style="' . $row_style . '">';
+						$html_output .= '<span style="' . $label_style . '">' . esc_html( $field_name ) . ':</span> ';
+						$html_output .= '<span style="' . $value_style . '">' . esc_html( $display_value ) . '</span>';
+						$html_output .= '</div>';
+					}
 				} else {
-					$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
+					// TABLE based layout (Default)
+					if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
+						// Fix alignment issue caused by paragraph margins in rich text fields.
+						$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
+						$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
+					} else {
+						$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
+					}
 				}
 			}
 		}
-		$html_output .= '</table>';
+
+		if ( 'table' === $format ) {
+			$html_output .= '</table>';
+		} elseif ( 'list' === $format ) {
+			$html_output .= '</div>';
+		}
+
 		return $html_output;
 	}
 
@@ -265,9 +302,11 @@ class Core {
 	 * @param bool         $include_private Whether to include private notes (for agents).
 	 * @param string       $image_handling How to handle images ('fit', 'strip', 'placeholder').
 	 * @param int          $limit Maximum number of threads to return (0 for unlimited).
+	 * @param bool         $exclude_description Whether to exclude the initial report thread.
+	 * @param bool         $chat_bubbles Whether to render as chat bubbles (Pro).
 	 * @return string HTML of the threads.
 	 */
-	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0 ): string {
+	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0, bool $exclude_description = false, bool $chat_bubbles = false ): string {
 		// Define which thread types to fetch
 		// Public always gets 'report' and 'reply'.
 		$types = [ 'report', 'reply' ];
@@ -286,30 +325,20 @@ class Core {
 			return '';
 		}
 
-		$html = '<div class="stackboost-ticket-history">';
+		$wrapper_classes = 'stackboost-ticket-history';
+		if ( $exclude_description ) {
+			$wrapper_classes .= ' stackboost-no-border';
+		}
+
+		$html = '<div class="' . esc_attr( $wrapper_classes ) . '">';
 		// Internal header removed to allow wrapping in WPSC widget structure.
 		// $html .= '<h4>' . esc_html__( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h4>';
 
 		foreach ( $threads as $thread ) {
-			$html .= '<div class="stackboost-thread-item">';
-
-			// Header: Author + Date + Type
-			$author_name = $thread->customer ? $thread->customer->name : __( 'Unknown', 'stackboost-for-supportcandy' );
-			$date_str = $thread->date_created->setTimezone( wp_timezone() )->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
-
-			$type_label = '';
-			switch ( $thread->type ) {
-				case 'report': $type_label = __( 'Reported', 'stackboost-for-supportcandy' ); break;
-				case 'reply': $type_label = __( 'Replied', 'stackboost-for-supportcandy' ); break;
-				case 'note': $type_label = __( 'Private Note', 'stackboost-for-supportcandy' ); break;
+			// Skip description if requested (typically 'report' type)
+			if ( $exclude_description && 'report' === $thread->type ) {
+				continue;
 			}
-
-			$style_bg = ( 'note' === $thread->type ) ? 'background: #fff8e1;' : 'background: #f9f9f9;';
-			$style_border = ( 'note' === $thread->type ) ? 'border-left: 4px solid #fbc02d;' : 'border-left: 4px solid #ddd;';
-
-			$html .= '<div style="padding: 8px; margin-bottom: 10px; ' . $style_bg . $style_border . '">';
-			$html .= '<strong>' . esc_html( $author_name ) . '</strong> <span style="color:#777; font-size: 0.9em;">(' . esc_html( $type_label ) . ')</span>';
-			$html .= '<div style="font-size: 0.8em; color: #999;">' . esc_html( $date_str ) . '</div>';
 
 			// Body content processing
 			// We sanitize FIRST to ensure the content is safe.
@@ -340,10 +369,74 @@ class Core {
 				$body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body );
 			}
 
-			$html .= '<div class="stackboost-thread-body" style="margin-top: 5px;">' . $body . '</div>';
+			// Common Data
+			$author_name = $thread->customer ? $thread->customer->name : __( 'Unknown', 'stackboost-for-supportcandy' );
+			$date_str = $thread->date_created->setTimezone( wp_timezone() )->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
 
-			$html .= '</div>'; // End container
-			$html .= '</div>'; // End item
+			// Render
+			if ( $chat_bubbles ) {
+				// Determine alignment (Left = Customer, Right = Agent/System)
+				// We check if the thread author is an agent.
+				// WPSC Thread logic:
+				// If thread has `created_by` or we check customer object roles.
+				// Standard heuristic: If 'reply' or 'note' and user is agent -> Right.
+				// If 'report' or 'reply' and user is customer -> Left.
+				// A simpler check: Is the author an agent?
+				// $thread->customer is a WPSC_Customer object.
+				// However, determining if *that specific customer* is an agent might require checking roles.
+				// WPSC usually puts agent replies as 'reply' type.
+				// Let's assume:
+				// Left: Customer (Reporter)
+				// Right: Agent (Replier)
+
+				// We can check $thread->customer->is_agent if WPSC supports it (it usually does via user mapping).
+				// Safest Fallback: If type is 'note', it's internal/agent -> Right.
+				// If type is 'report', it's customer -> Left.
+				// If type is 'reply', check author.
+
+				$align_class = 'stackboost-chat-left'; // Default to Left (Customer)
+				$is_note = 'note' === $thread->type;
+
+				if ( $is_note ) {
+					$align_class = 'stackboost-chat-right stackboost-chat-note';
+				} elseif ( isset( $thread->customer ) && property_exists( $thread->customer, 'is_agent' ) && $thread->customer->is_agent ) {
+					$align_class = 'stackboost-chat-right';
+				} elseif ( isset( $thread->customer ) && isset( $thread->customer->user ) && in_array( 'administrator', $thread->customer->user->roles ?? [] ) ) {
+					// Fallback for admins who might not be marked 'is_agent' in some contexts
+					$align_class = 'stackboost-chat-right';
+				}
+
+				$html .= '<div class="stackboost-chat-row ' . esc_attr( $align_class ) . '">';
+
+				// Avatar removed for details card view as per requirements.
+
+				$html .= '<div class="stackboost-chat-bubble">';
+				$html .= '<div class="stackboost-chat-meta"><strong>' . esc_html( $author_name ) . '</strong> &bull; ' . esc_html( $date_str ) . '</div>';
+				$html .= '<div class="stackboost-thread-body">' . $body . '</div>';
+				$html .= '</div>';
+				$html .= '</div>';
+
+			} else {
+				// Standard List View
+				$html .= '<div class="stackboost-thread-item">';
+
+				$type_label = '';
+				switch ( $thread->type ) {
+					case 'report': $type_label = __( 'Reported', 'stackboost-for-supportcandy' ); break;
+					case 'reply': $type_label = __( 'Replied', 'stackboost-for-supportcandy' ); break;
+					case 'note': $type_label = __( 'Private Note', 'stackboost-for-supportcandy' ); break;
+				}
+
+				$style_bg = ( 'note' === $thread->type ) ? 'background: #fff8e1;' : 'background: #f9f9f9;';
+				$style_border = ( 'note' === $thread->type ) ? 'border-left: 4px solid #fbc02d;' : 'border-left: 4px solid #ddd;';
+
+				$html .= '<div style="padding: 8px; margin-bottom: 10px; ' . $style_bg . $style_border . '">';
+				$html .= '<strong>' . esc_html( $author_name ) . '</strong> <span style="color:#777; font-size: 0.9em;">(' . esc_html( $type_label ) . ')</span>';
+				$html .= '<div style="font-size: 0.8em; color: #999;">' . esc_html( $date_str ) . '</div>';
+				$html .= '<div class="stackboost-thread-body" style="margin-top: 5px;">' . $body . '</div>';
+				$html .= '</div>'; // End container
+				$html .= '</div>'; // End item
+			}
 		}
 		$html .= '</div>';
 

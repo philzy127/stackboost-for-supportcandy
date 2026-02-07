@@ -768,7 +768,8 @@ class Settings {
 				'enable_page_last_loaded',
 				'page_last_loaded_placement',
 				'page_last_loaded_label',
-				'page_last_loaded_format'
+				'page_last_loaded_format',
+				'ticket_details_chat_bubbles'
 			],
 			'stackboost-conditional-options' => ['conditional_options_rules', 'conditional_options_enabled'], // Whitelisted
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
@@ -859,6 +860,7 @@ class Settings {
 					case 'enable_log_chat_bubbles':
 					case 'enable_log_conditional_options':
 					case 'conditional_options_enabled':
+					case 'ticket_details_chat_bubbles':
 					case 'chat_bubbles_enable_ticket':
 					case 'chat_bubbles_enable_email':
 					case 'chat_bubbles_shadow_enable':

@@ -17,7 +17,70 @@
     padding-top: 10px;
 }
 
+.stackboost-ticket-history.stackboost-no-border {
+    border-top: none !important;
+    padding-top: 0 !important;
+    margin-top: 5px !important;
+}
+
 .stackboost-thread-item {
     font-size: 13px;
     line-height: 1.4;
+}
+
+/* Chat Bubbles (Pro Feature) */
+.stackboost-chat-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.stackboost-chat-bubble {
+    max-width: 85%;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.stackboost-chat-meta {
+    font-size: 0.85em;
+    margin-bottom: 5px;
+    opacity: 0.8;
+}
+
+/* Left (Customer/Reporter) */
+.stackboost-chat-left {
+    align-items: flex-start;
+}
+
+.stackboost-chat-left .stackboost-chat-bubble {
+    background-color: #f1f1f1;
+    color: #333;
+    border-bottom-left-radius: 2px;
+}
+
+/* Right (Agent/Reply) */
+.stackboost-chat-right {
+    align-items: flex-end;
+}
+
+.stackboost-chat-right .stackboost-chat-bubble {
+    background-color: #e3f2fd; /* Light Blue */
+    color: #0d47a1;
+    border-bottom-right-radius: 2px;
+}
+
+/* Private Note (Agent only) */
+.stackboost-chat-note .stackboost-chat-bubble {
+    background-color: #fff8e1; /* Light Yellow */
+    color: #5d4037;
+    border: 1px solid #ffe082;
+}
+
+.stackboost-chat-note .stackboost-chat-meta {
+    color: #f57f17;
+    font-weight: bold;
 }
