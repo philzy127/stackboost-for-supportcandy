@@ -198,12 +198,14 @@ class Page {
 
 		$repo = new SupportCandyRepository();
 
-		// Use the repository method to fetch only datetime fields.
-		$custom_fields = $repo->get_custom_fields_by_type( 'datetime' );
-
-		if ( $custom_fields ) {
-			foreach ( $custom_fields as $field ) {
-				$columns[ $field['slug'] ] = $field['name'];
+		// Use the repository method to fetch datetime, date, and time fields.
+		$target_types = [ 'datetime', 'date', 'time' ];
+		foreach ( $target_types as $type ) {
+			$fields = $repo->get_custom_fields_by_type( $type );
+			if ( $fields ) {
+				foreach ( $fields as $field ) {
+					$columns[ $field['slug'] ] = $field['name'];
+				}
 			}
 		}
 
