@@ -550,7 +550,7 @@ final class Plugin {
 
 		asort( $columns );
 
-		set_transient( 'stackboost_sc_columns_cache', $columns, HOUR_IN_SECONDS );
+		set_transient( 'stackboost_sc_columns_cache', $columns, 30 );
 
 		return $columns;
 	}

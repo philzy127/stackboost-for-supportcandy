@@ -365,7 +365,10 @@ class Staff {
 	 * Format Phone.
 	 */
 	private static function format_phone( $phone ) {
-		$phone = preg_replace('/[^0-9]/', '', $phone);
+		if ( ! is_string( $phone ) && ! is_numeric( $phone ) ) {
+			return $phone;
+		}
+		$phone = preg_replace('/[^0-9]/', '', (string) $phone);
 		if (strlen($phone) === 10) {
 			return preg_replace('/(\d{3})(\d{3})(\d{4})/', '($1) $2-$3', $phone);
 		}

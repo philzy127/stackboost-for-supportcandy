@@ -655,3 +655,44 @@
 span.dashicons.dashicons-smartphone {
 	transform: scale(1.4);
 }
+
+/* Contact Widget Fallback Styles */
+.stackboost-contact-widget {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    padding: 0;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+
+.stackboost-contact-widget .wpsc-widget-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    background: #fcfcfc;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stackboost-contact-widget .wpsc-widget-header h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.stackboost-contact-widget .wpsc-widget-body {
+    padding: 15px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.stackboost-contact-widget .wpsc-widget-body div {
+    margin-bottom: 8px;
+}
+
+.stackboost-contact-widget .wpsc-widget-body div:last-child {
+    margin-bottom: 0;
+}

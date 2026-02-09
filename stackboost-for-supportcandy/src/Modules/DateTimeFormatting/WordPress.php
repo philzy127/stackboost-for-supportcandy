@@ -212,7 +212,13 @@ class WordPress extends Module {
 	public function format_date_time_callback( $value, $cf, $ticket, $module ) {
 
 		// CONTEXT CHECK
-		$is_admin_list    = is_admin() && function_exists( 'get_current_screen' ) && get_current_screen() && get_current_screen()->id === 'toplevel_page_wpsc-tickets';
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$screen_id = $screen ? $screen->id : '';
+
+		$is_admin_list = is_admin() && $screen && (
+			$screen_id === 'toplevel_page_wpsc-tickets' ||
+			strpos( $screen_id, 'wpsc-tickets' ) !== false
+		);
 
 		$action_req = Request::get_request( 'action', '', 'key' );
 		$is_frontend_list = $action_req === 'wpsc_get_tickets'; // Approximate check for frontend AJAX list

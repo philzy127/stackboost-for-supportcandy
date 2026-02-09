@@ -20,7 +20,7 @@
 
     // Specific User Search Component
     var UserSearchControl = function( props ) {
-        var specificUsers = props.specificUsers; // Array of { id, value }
+        var specificUsers = props.specificUsers || []; // Array of { id, value }
         var setAttributes = props.setAttributes;
 
         var [ searchTerm, setSearchTerm ] = useState( '' );
@@ -346,6 +346,7 @@
                     el( 'hr', {} ),
                     el( 'p', {}, __( 'Or Filter by Department:', 'stackboost-for-supportcandy' ) ),
                     ( ! departments ) ? el( 'p', {}, __( 'Loading departments...', 'stackboost-for-supportcandy' ) ) :
+                    ( ! Array.isArray( departments ) ) ? el( 'p', {}, __( 'Error loading departments.', 'stackboost-for-supportcandy' ) ) :
                     ( departments.length === 0 ) ? el( 'p', {}, __( 'No departments found.', 'stackboost-for-supportcandy' ) ) :
                     departments.map( function( dept ) {
                         var decodedTitle = decodeHTML( dept.title.rendered );
