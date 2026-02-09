@@ -38,12 +38,20 @@ class TicketService {
 		// 1. Fetch All Active Onboarding Tickets
 		// Using WPSC_Ticket::find to filter at database level for performance
 		$args = [
-			'items_per_page' => 0, // All
+			'items_per_page' => 9999, // Use large number instead of 0 to avoid potential SC bugs
+			'page_no'        => 1,
 			'is_active'      => 1, // Only active tickets
 		];
 
-		$tickets_result = \WPSC_Ticket::find( $args );
-		$all_active_tickets = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+		try {
+			$tickets_result = \WPSC_Ticket::find( $args );
+			$all_active_tickets = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+		} catch ( \Throwable $e ) {
+			stackboost_log( 'TicketService: Error fetching tickets: ' . $e->getMessage(), 'error' );
+			$all_active_tickets = [];
+			// If critical, return WP_Error, but trying empty list is safer for UI
+			// return new \WP_Error( 'db_error', $e->getMessage() );
+		}
 
 		// Filter by Request Type (PHP-side to avoid SQL errors with meta_query)
 		$all_tickets_objects = [];

@@ -125,16 +125,16 @@
         var setAttributes = props.setAttributes;
         var departments = props.departments; // From withSelect
 
-        // Robustness: Ensure array attributes are initialized
-        attributes.visibleColumns = attributes.visibleColumns || [];
-        attributes.departmentFilter = attributes.departmentFilter || [];
-        attributes.specificUsers = attributes.specificUsers || [];
+        // Robustness: Use local variables with defaults (Do not mutate props.attributes)
+        var visibleColumns = attributes.visibleColumns || [];
+        var departmentFilter = attributes.departmentFilter || [];
+        var specificUsers = attributes.specificUsers || [];
 
         var blockProps = useBlockProps();
 
         // Helper to handle multi-select for visible columns
         var toggleColumn = function( column ) {
-            var newColumns = attributes.visibleColumns.slice();
+            var newColumns = visibleColumns.slice();
             var index = newColumns.indexOf( column );
             if ( index !== -1 ) {
                 newColumns.splice( index, 1 );
@@ -146,7 +146,7 @@
 
         // Helper to handle department filter
         var toggleDepartment = function( deptName ) {
-             var newDepts = attributes.departmentFilter.slice();
+             var newDepts = departmentFilter.slice();
              var index = newDepts.indexOf( deptName );
              if ( index !== -1 ) {
                  newDepts.splice( index, 1 );
@@ -251,32 +251,32 @@
                     el( 'p', { className: 'components-base-control__label' }, __( 'Visible Fields', 'stackboost-for-supportcandy' ) ),
                     el( CheckboxControl, {
                         label: __( 'Photo', 'stackboost-for-supportcandy' ),
-                        checked: attributes.visibleColumns.indexOf( 'photo' ) !== -1,
+                        checked: visibleColumns.indexOf( 'photo' ) !== -1,
                         onChange: function() { toggleColumn( 'photo' ); },
                         __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Name', 'stackboost-for-supportcandy' ),
-                        checked: attributes.visibleColumns.indexOf( 'name' ) !== -1,
+                        checked: visibleColumns.indexOf( 'name' ) !== -1,
                         onChange: function() { toggleColumn( 'name' ); },
                         disabled: true, // Name should probably always be visible
                         __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Email', 'stackboost-for-supportcandy' ),
-                        checked: attributes.visibleColumns.indexOf( 'email' ) !== -1,
+                        checked: visibleColumns.indexOf( 'email' ) !== -1,
                         onChange: function() { toggleColumn( 'email' ); },
                         help: __( 'Displayed below the name.', 'stackboost-for-supportcandy' ),
                         __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Phone', 'stackboost-for-supportcandy' ),
-                        checked: attributes.visibleColumns.indexOf( 'phone' ) !== -1,
+                        checked: visibleColumns.indexOf( 'phone' ) !== -1,
                         onChange: function() { toggleColumn( 'phone' ); },
                         __nextHasNoMarginBottom: true
                     } ),
                     // Phone granular options - only show if Phone is checked
-                    attributes.visibleColumns.indexOf( 'phone' ) !== -1 && el( 'div', { style: { marginLeft: '20px', marginBottom: '10px' } },
+                    visibleColumns.indexOf( 'phone' ) !== -1 && el( 'div', { style: { marginLeft: '20px', marginBottom: '10px' } },
                         el( ToggleControl, {
                             label: __( 'Show Office Phone', 'stackboost-for-supportcandy' ),
                             checked: attributes.showOfficePhone,
@@ -292,25 +292,25 @@
                     ),
                     el( CheckboxControl, {
                         label: __( 'Department', 'stackboost-for-supportcandy' ),
-                        checked: attributes.visibleColumns.indexOf( 'department' ) !== -1,
+                        checked: visibleColumns.indexOf( 'department' ) !== -1,
                         onChange: function() { toggleColumn( 'department' ); },
                         __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Title', 'stackboost-for-supportcandy' ),
-                        checked: attributes.visibleColumns.indexOf( 'title' ) !== -1,
+                        checked: visibleColumns.indexOf( 'title' ) !== -1,
                         onChange: function() { toggleColumn( 'title' ); },
                         __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Location', 'stackboost-for-supportcandy' ),
-                        checked: attributes.visibleColumns.indexOf( 'location' ) !== -1,
+                        checked: visibleColumns.indexOf( 'location' ) !== -1,
                         onChange: function() { toggleColumn( 'location' ); },
                         __nextHasNoMarginBottom: true
                     } ),
                     el( CheckboxControl, {
                         label: __( 'Room Number', 'stackboost-for-supportcandy' ),
-                        checked: attributes.visibleColumns.indexOf( 'room_number' ) !== -1,
+                        checked: visibleColumns.indexOf( 'room_number' ) !== -1,
                         onChange: function() { toggleColumn( 'room_number' ); },
                         __nextHasNoMarginBottom: true
                     } ),
@@ -345,7 +345,7 @@
                 el( PanelBody, { title: __( 'Filters', 'stackboost-for-supportcandy' ), initialOpen: false },
                     el( 'p', {}, __( 'Specific Users Override:', 'stackboost-for-supportcandy' ) ),
                     el( UserSearchControl, {
-                        specificUsers: attributes.specificUsers,
+                        specificUsers: specificUsers,
                         setAttributes: setAttributes
                     } ),
                     el( 'hr', {} ),
@@ -358,7 +358,7 @@
                         return el( CheckboxControl, {
                             key: dept.id,
                             label: decodedTitle,
-                            checked: attributes.departmentFilter.indexOf( decodedTitle ) !== -1,
+                            checked: departmentFilter.indexOf( decodedTitle ) !== -1,
                             onChange: function() { toggleDepartment( decodedTitle ); },
                             __nextHasNoMarginBottom: true
                         } );
