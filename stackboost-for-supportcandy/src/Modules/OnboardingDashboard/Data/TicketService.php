@@ -40,20 +40,40 @@ class TicketService {
 		$args = [
 			'items_per_page' => 0, // All
 			'is_active'      => 1, // Only active tickets
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
-			'meta_query'     => [
-				'relation' => 'AND',
-				[
-					'slug'    => $request_type_key,
-					'compare' => 'IN',
-					'val'     => $onboarding_type_ids,
-				]
-			]
 		];
 
 		$tickets_result = \WPSC_Ticket::find( $args );
-		$all_tickets_objects = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
-		stackboost_log( 'TicketService: Found ' . count( $all_tickets_objects ) . ' active onboarding tickets.', 'onboarding' );
+		$all_active_tickets = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+
+		// Filter by Request Type (PHP-side to avoid SQL errors with meta_query)
+		$all_tickets_objects = [];
+		foreach ( $all_active_tickets as $ticket_obj ) {
+			$val = $ticket_obj->$request_type_key ?? null;
+			$matches = false;
+
+			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
+				$matches = true;
+			} elseif ( is_array($val) ) {
+				foreach($val as $v) {
+					if ( is_object($v) && isset($v->id) && in_array($v->id, $onboarding_type_ids) ) {
+						$matches = true;
+						break;
+					}
+					if ( is_scalar($v) && in_array($v, $onboarding_type_ids) ) {
+						$matches = true;
+						break;
+					}
+				}
+			} elseif ( is_scalar($val) && in_array($val, $onboarding_type_ids) ) {
+				$matches = true;
+			}
+
+			if ( $matches ) {
+				$all_tickets_objects[] = $ticket_obj;
+			}
+		}
+
+		stackboost_log( 'TicketService: Found ' . count( $all_tickets_objects ) . ' matching onboarding tickets after filtering.', 'onboarding' );
 
 		// Convert objects to array structure expected by consumers
 		$all_tickets = [];

@@ -212,28 +212,33 @@ class WordPress extends Module {
 	public function format_date_time_callback( $value, $cf, $ticket, $module ) {
 
 		// CONTEXT CHECK
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		$screen_id = $screen ? $screen->id : '';
-
-		$is_admin_list = is_admin() && $screen && (
-			$screen_id === 'toplevel_page_wpsc-tickets' ||
-			strpos( $screen_id, 'wpsc-tickets' ) !== false
-		);
+		// We want to apply formatting in:
+		// 1. Admin Ticket Lists (AJAX or direct)
+		// 2. Frontend Ticket Lists (AJAX)
+		// 3. Ticket Details (AJAX)
+		// But NOT in edit forms where raw DB value is needed.
 
 		$action_req = Request::get_request( 'action', '', 'key' );
-		$is_frontend_list = $action_req === 'wpsc_get_tickets'; // Approximate check for frontend AJAX list
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		// Also check strict frontend context param if sent by custom scripts
-		$is_frontend_explicit = Request::get_post( 'is_frontend', '0', 'text' ) === '1';
+		$is_target_context = false;
 
-		// We apply formatting in admin lists and potentially frontend lists.
-		// The reference implementation was strict about contexts.
-		// If neither, return original.
-		// Note: We might want this on the ticket detail page too?
-		// The requirement says "SupportCandy ticket list".
-		// I will stick to the reference implementation's logic.
+		// Check 1: Known AJAX actions for displaying tickets
+		if ( in_array( $action_req, [ 'wpsc_get_tickets', 'wpsc_get_individual_ticket' ], true ) ) {
+			$is_target_context = true;
+		}
 
-		if ( ! $is_admin_list && ! $is_frontend_list && ! $is_frontend_explicit ) {
+		// Check 2: Explicit frontend flag
+		if ( Request::get_post( 'is_frontend', '0', 'text' ) === '1' ) {
+			$is_target_context = true;
+		}
+
+		// Check 3: Admin Screen (if not AJAX)
+		if ( is_admin() && $screen && strpos( $screen->id, 'wpsc-tickets' ) !== false ) {
+			$is_target_context = true;
+		}
+
+		if ( ! $is_target_context ) {
 			return $value;
 		}
 

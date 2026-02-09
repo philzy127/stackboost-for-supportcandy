@@ -125,6 +125,11 @@
         var setAttributes = props.setAttributes;
         var departments = props.departments; // From withSelect
 
+        // Robustness: Ensure array attributes are initialized
+        attributes.visibleColumns = attributes.visibleColumns || [];
+        attributes.departmentFilter = attributes.departmentFilter || [];
+        attributes.specificUsers = attributes.specificUsers || [];
+
         var blockProps = useBlockProps();
 
         // Helper to handle multi-select for visible columns
