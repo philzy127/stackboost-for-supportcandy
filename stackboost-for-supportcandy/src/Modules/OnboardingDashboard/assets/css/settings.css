@@ -112,3 +112,15 @@
     margin: 0;
     vertical-align: middle;
 }
+
+/* Fix SelectWoo/Select2 Dropdown Width in Settings Table */
+/* The select2 container should fill the table cell */
+.form-table .select2-container {
+    width: 100% !important;
+    max-width: 400px; /* Optional: Prevent it from becoming excessively wide on huge screens, but match regular text inputs */
+}
+
+/* Fix for specific ID if needed */
+#stkb_req_id + .select2-container {
+    width: 100% !important;
+}
