@@ -167,7 +167,7 @@ class WordPress extends Module {
 	 * Apply the date/time formatting rules.
 	 */
 	public function apply_date_time_formats() {
-		$options = get_option( 'stackboost_settings', [] );
+		$options = get_option( 'stackboost_date_time_settings', [] );
 		if ( empty( $options['enable_date_time_formatting'] ) ) {
 			return;
 		}
