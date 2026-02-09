@@ -43,13 +43,30 @@ class Settings {
 		}
 
 		// Check if field has options
-		// Relaxed check: Trust get_options() first, as some fields might have incorrect static flags.
 		$options = [];
-		if ( method_exists( $cf, 'get_options' ) ) {
+
+		// Specific Handling for Standard Fields that don't use generic options
+		if ( 'df_category' === $cf->type::$slug ) {
+			if ( class_exists( '\WPSC_Category' ) ) {
+				$options = \WPSC_Category::find( [ 'items_per_page' => 0 ] )['results'];
+			}
+		} elseif ( 'df_priority' === $cf->type::$slug ) {
+			if ( class_exists( '\WPSC_Priority' ) ) {
+				$options = \WPSC_Priority::find( [ 'items_per_page' => 0 ] )['results'];
+			}
+		} elseif ( 'df_status' === $cf->type::$slug ) {
+			if ( class_exists( '\WPSC_Status' ) ) {
+				$options = \WPSC_Status::find( [ 'items_per_page' => 0 ] )['results'];
+			}
+		} elseif ( method_exists( $cf, 'get_options' ) ) {
+			// Relaxed check: Trust get_options() first, as some fields might have incorrect static flags.
 			$options = $cf->get_options();
 		}
 
-		if ( empty( $options ) && ( ! isset( $cf->type::$has_options ) || ! $cf->type::$has_options ) ) {
+		// Ensure we don't error out on valid standard fields even if options are empty (though unlikely for active setup)
+		$is_standard_option_field = in_array( $cf->type::$slug, [ 'df_category', 'df_priority', 'df_status' ], true );
+
+		if ( empty( $options ) && ! $is_standard_option_field && ( ! isset( $cf->type::$has_options ) || ! $cf->type::$has_options ) ) {
 			wp_send_json_error( __( 'This field type does not support options.', 'stackboost-for-supportcandy' ) );
 		}
 

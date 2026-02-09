@@ -22,7 +22,7 @@ class Staff {
 
 		// Check configuration first
 		$config = Settings::get_config();
-		if ( empty( $config['request_type_field'] ) || empty( $config['request_type_id'] ) ) {
+		if ( empty( $config['request_type_field'] ) || empty( $config['request_type_id'] ) || empty( $config['field_staff_name'] ) || empty( $config['field_onboarding_date'] ) || empty( $config['field_cleared'] ) ) {
 			?>
 			<div class="stackboost-card stackboost-card-connected">
 				<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
@@ -31,7 +31,7 @@ class Staff {
 						<?php
 						printf(
 							/* translators: %s: settings url */
-							wp_kses_post( __( 'Please configure the Onboarding settings (Request Type, ID, and Column Mapping) in the <strong><a href="%s">Settings</a></strong> tab to view the staff list.', 'stackboost-for-supportcandy' ) ),
+							wp_kses_post( __( 'Please fully configure the Onboarding settings (Request Type, Onboarding Options, Staff Name, Onboarding Date, and Cleared Field) in the <strong><a href="%s">Settings</a></strong> tab to view the staff list.', 'stackboost-for-supportcandy' ) ),
 							esc_url( admin_url( 'admin.php?page=stackboost-onboarding-dashboard&tab=settings' ) )
 						);
 						?>
