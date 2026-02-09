@@ -43,11 +43,16 @@ class Settings {
 		}
 
 		// Check if field has options
-		if ( ! $cf->type::$has_options ) {
+		// Relaxed check: Trust get_options() first, as some fields might have incorrect static flags.
+		$options = [];
+		if ( method_exists( $cf, 'get_options' ) ) {
+			$options = $cf->get_options();
+		}
+
+		if ( empty( $options ) && ( ! isset( $cf->type::$has_options ) || ! $cf->type::$has_options ) ) {
 			wp_send_json_error( __( 'This field type does not support options.', 'stackboost-for-supportcandy' ) );
 		}
 
-		$options = $cf->get_options();
 		$response_data = [];
 		foreach ( $options as $option ) {
 			// option is likely an object or array with id/name
