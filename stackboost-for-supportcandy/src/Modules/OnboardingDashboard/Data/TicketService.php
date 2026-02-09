@@ -132,22 +132,38 @@ class TicketService {
 		}
 
 		foreach ( $all_tickets_objects as $ticket_obj ) {
-			// Convert WPSC_Ticket object to associative array
-			$t_array = $ticket_obj->to_array();
+			// Manual construction to avoid to_array() triggering warnings on corrupt fields
+			$t_array = [
+				'id'           => $ticket_obj->id,
+				'subject'      => $ticket_obj->subject,
+				'date_created' => $ticket_obj->date_created,
+				'date_updated' => $ticket_obj->date_updated,
+				'date_closed'  => $ticket_obj->date_closed,
+				'status'       => $ticket_obj->status, // Object or ID? Usually Object in SC models
+				'priority'     => $ticket_obj->priority,
+				'category'     => $ticket_obj->category,
+				'customer'     => $ticket_obj->customer,
+			];
 
-            // Manually hydrate custom fields
+			// Handle Status ID for filtering later
+			if ( is_object( $ticket_obj->status ) && isset( $ticket_obj->status->id ) ) {
+				$t_array['status'] = $ticket_obj->status->id; // Normalize to ID for inactive check
+			} elseif ( is_array( $ticket_obj->status ) && isset( $ticket_obj->status['id'] ) ) {
+				$t_array['status'] = $ticket_obj->status['id'];
+			}
+
+            // Manually hydrate configured custom fields
             foreach ( $fields_to_hydrate as $cf ) {
-                if ( ! isset( $t_array[ $cf ] ) ) {
-                    // Try retrieving via magic property
-                    $t_array[ $cf ] = $ticket_obj->$cf ?? null;
-                }
+				// Use magic getter, but suppress warnings if field definition is missing in SC
+				try {
+					$t_array[ $cf ] = $ticket_obj->$cf ?? null;
+				} catch ( \Throwable $e ) {
+					$t_array[ $cf ] = null;
+				}
             }
 
             // Hydrate certificate status
             $t_array['has_certificate'] = isset( $certificates_map[ $ticket_obj->id ] );
-			if ( $t_array['has_certificate'] ) {
-				stackboost_log( "TicketService: Ticket ID {$ticket_obj->id} has a certificate.", 'onboarding' );
-			}
 
 			$all_tickets[] = $t_array;
 		}
