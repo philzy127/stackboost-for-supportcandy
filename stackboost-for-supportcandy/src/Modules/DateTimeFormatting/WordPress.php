@@ -293,13 +293,30 @@ class WordPress extends Module {
 
 		// If the date object is a string (raw DB format), convert it to DateTime.
 		if ( is_string( $date_object ) && ! empty( $date_object ) ) {
+			$date_str = $date_object;
 			try {
-				$date_object = new DateTime( $date_object );
+				$date_object = new DateTime( $date_str );
 				$date_object->setTimezone( wp_timezone() );
 				stackboost_log( "format_date_time_callback: Successfully converted string to DateTime.", 'date_time_formatting' );
 			} catch ( \Exception $e ) {
 				stackboost_log( "format_date_time_callback: Failed to convert string to DateTime. Error: " . $e->getMessage(), 'date_time_formatting' );
-				return $value;
+
+				// Fallback: SupportCandy might format dates as 'm-d-Y' (US format with dashes)
+				// PHP's DateTime assumes dashes = European (d-m-y), so '01-30-2024' fails (Month 30).
+				// We try replacing dashes with slashes to force 'm/d/y' parsing.
+				if ( strpos( $date_str, '-' ) !== false ) {
+					$fallback_str = str_replace( '-', '/', $date_str );
+					try {
+						$date_object = new DateTime( $fallback_str );
+						$date_object->setTimezone( wp_timezone() );
+						stackboost_log( "format_date_time_callback: Successfully converted fallback string (slashes) to DateTime.", 'date_time_formatting' );
+					} catch ( \Exception $e2 ) {
+						stackboost_log( "format_date_time_callback: Fallback conversion failed. Returning original value.", 'date_time_formatting' );
+						return $value;
+					}
+				} else {
+					return $value;
+				}
 			}
 		}
 
