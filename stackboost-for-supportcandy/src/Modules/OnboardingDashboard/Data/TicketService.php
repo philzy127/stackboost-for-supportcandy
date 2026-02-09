@@ -156,7 +156,8 @@ class TicketService {
             foreach ( $fields_to_hydrate as $cf ) {
 				// Use magic getter, but suppress warnings if field definition is missing in SC
 				try {
-					$t_array[ $cf ] = $ticket_obj->$cf ?? null;
+					// Use silence operator @ to catch PHP Warnings (like Undefined array key) which are not caught by try-catch
+					$t_array[ $cf ] = @$ticket_obj->$cf ?? null;
 				} catch ( \Throwable $e ) {
 					$t_array[ $cf ] = null;
 				}
