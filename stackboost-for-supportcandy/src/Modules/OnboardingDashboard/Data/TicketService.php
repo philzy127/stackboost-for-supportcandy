@@ -83,57 +83,63 @@ class TicketService {
 		}
 
 		// Filter by Request Type (PHP-side to avoid SQL errors with meta_query)
-		// We re-filter the merged list
 		$filtered_tickets_objects = [];
 		foreach ( $all_tickets_objects as $ticket_obj ) {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
-			// Robust Checking Logic (Handling Magic Properties)
-			// Check if object and try to get ID safely (even if magic)
-			if ( is_object( $val ) ) {
-				// Force access to magic property. isset() returns false for properties not in public scope or handled by __get without __isset.
-				// WPSC_Option stores data in private array, so we must access directly.
-				$obj_id = null;
+			// Helper to extract ID robustly from objects (handles WPSC_Option with magic getters or private props)
+			$get_object_id = function( $obj ) {
+				// 1. Try standard access
 				try {
-					$obj_id = $val->id;
+					if ( isset( $obj->id ) ) {
+						return $obj->id;
+					}
+					// 2. Try direct access (bypass isset)
+					return @$obj->id;
 				} catch ( \Throwable $e ) {
-					// Property doesn't exist or access error
+					// Fallthrough
 				}
 
-				// Loose comparison or casing to string for array_search/in_array to handle '69' vs 69
+				// 3. Reflection fallback for private data array (e.g. WPSC_Option)
+				if ( class_exists( '\ReflectionClass' ) ) {
+					try {
+						$reflector = new \ReflectionClass( $obj );
+						if ( $reflector->hasProperty( 'data' ) ) {
+							$prop = $reflector->getProperty( 'data' );
+							$prop->setAccessible( true );
+							$data = $prop->getValue( $obj );
+							if ( is_array( $data ) && isset( $data['id'] ) ) {
+								return $data['id'];
+							}
+						}
+					} catch ( \Throwable $e ) {
+						// Ignore
+					}
+				}
+				return null;
+			};
+
+			if ( is_object($val) ) {
+				$obj_id = $get_object_id($val);
 				if ( $obj_id && in_array( (string)$obj_id, array_map('strval', $onboarding_type_ids) ) ) {
 					$matches = true;
-				} else {
-                    // Log failure to extract or match
-                    // Useful to see if $obj_id is null or just mismatched
-                    if ( $obj_id ) {
-                       // Mismatch
-                    } else {
-                       // Extraction failed
-                    }
-                }
-			} elseif ( is_array( $val ) ) {
-				foreach( $val as $v ) {
-					if ( is_object( $v ) ) {
-						$obj_id = null;
-						if ( isset( $v->id ) ) {
-							$obj_id = $v->id;
-						} elseif ( ! empty( $v->id ) ) {
-							$obj_id = $v->id;
-						}
-
-						if ( $obj_id && in_array( $obj_id, $onboarding_type_ids ) ) {
+				}
+			} elseif ( is_array($val) ) {
+				foreach($val as $v) {
+					if ( is_object($v) ) {
+						$obj_id = $get_object_id($v);
+						if ( $obj_id && in_array( (string)$obj_id, array_map('strval', $onboarding_type_ids) ) ) {
 							$matches = true;
 							break;
 						}
 					}
-					if ( is_scalar( $v ) && in_array( $v, $onboarding_type_ids ) ) {
+					if ( is_scalar($v) && in_array($v, $onboarding_type_ids) ) {
 						$matches = true;
 						break;
 					}
 				}
-			} elseif ( is_scalar( $val ) && in_array( $val, $onboarding_type_ids ) ) {
+			} elseif ( is_scalar($val) && in_array($val, $onboarding_type_ids) ) {
 				$matches = true;
 			}
 
@@ -261,7 +267,9 @@ class TicketService {
 
 			if ( $is_cleared && ! empty( $date_str ) ) {
 				try {
+					// Handle cases where date is already a DateTime object
 					$date = ( $date_str instanceof \DateTime ) ? $date_str : new \DateTime( $date_str );
+
 					if ( $date < $start_week ) {
 						$sorted['previous_onboarding'][] = $ticket;
 					} elseif ( $date >= $start_week && $date <= $end_week ) {
