@@ -39,6 +39,35 @@ class TicketService {
 			$onboarding_type_ids = [ $onboarding_type_ids ];
 		}
 
+		// ==========================================
+		// DIRECT PROBE FOR TICKET #1352
+		// ==========================================
+		stackboost_log( 'TicketService: Attempting to fetch Ticket #1352 directly...', 'onboarding' );
+		try {
+			$probe_ticket = new \WPSC_Ticket( 1352 );
+			if ( $probe_ticket->id ) {
+				stackboost_log( 'TicketService: PROBE SUCCESS. Ticket #1352 found.', 'onboarding' );
+				stackboost_log( 'TicketService: PROBE DUMP: ' . print_r( $probe_ticket, true ), 'onboarding' );
+
+				// Check Request Type specifically
+				$req_val = $probe_ticket->$request_type_key ?? 'NOT SET';
+				stackboost_log( "TicketService: PROBE Request Type ($request_type_key): " . print_r( $req_val, true ), 'onboarding' );
+
+				// Check Active Status
+				$is_active_check = $probe_ticket->active ?? 'UNKNOWN';
+				stackboost_log( "TicketService: PROBE Active Status: " . print_r( $is_active_check, true ), 'onboarding' );
+
+				// Check Status Object
+				$status_obj = $probe_ticket->status;
+				stackboost_log( "TicketService: PROBE Status Object: " . print_r( $status_obj, true ), 'onboarding' );
+			} else {
+				stackboost_log( 'TicketService: PROBE FAILED. Ticket #1352 returned ID 0 or null.', 'onboarding' );
+			}
+		} catch ( \Throwable $e ) {
+			stackboost_log( 'TicketService: PROBE CRITICAL ERROR: ' . $e->getMessage(), 'onboarding' );
+		}
+		// ==========================================
+
 		// 1. Fetch All Active Onboarding Tickets
 		// Using WPSC_Ticket::find to filter at database level for performance
 		$args = [
