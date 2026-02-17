@@ -89,6 +89,10 @@ class TicketService {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
+			// Detailed Logging for Debugging
+			$debug_val_type = gettype($val);
+			$debug_val_content = is_scalar($val) ? $val : (is_object($val) ? 'Object(' . get_class($val) . ')' : json_encode($val));
+
 			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
 				$matches = true;
 			} elseif ( is_array($val) ) {
@@ -108,6 +112,18 @@ class TicketService {
 
 			if ( $matches ) {
 				$filtered_tickets_objects[] = $ticket_obj;
+			} else {
+				stackboost_log(
+					sprintf(
+						'TicketService: Ticket %s excluded. Key: %s. Value Type: %s. Value: %s. Expected IDs: %s.',
+						$ticket_obj->id,
+						$request_type_key,
+						$debug_val_type,
+						$debug_val_content,
+						implode(',', $onboarding_type_ids)
+					),
+					'onboarding'
+				);
 			}
 		}
 
