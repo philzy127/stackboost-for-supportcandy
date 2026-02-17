@@ -92,27 +92,50 @@ class TicketService {
 			// Detailed Logging using print_r for absolute clarity
 			// Get human-readable field name early for context
 			$field_label = $request_type_key;
-			if ( class_exists( '\WPSC_Custom_Field' ) ) {
-				$cf = \WPSC_Custom_Field::get_cf_by_slug( $request_type_key );
-				if ( $cf && isset( $cf->name ) ) {
-					$field_label = $cf->name . ' (' . $request_type_key . ')';
+			// Use Plugin instance to get columns safely
+			if ( class_exists( 'StackBoost\ForSupportCandy\WordPress\Plugin' ) ) {
+				$columns = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance()->get_supportcandy_columns();
+				if ( isset( $columns[ $request_type_key ] ) ) {
+					$field_label = $columns[ $request_type_key ] . ' (' . $request_type_key . ')';
 				}
 			}
 
-			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
-				$matches = true;
-			} elseif ( is_array($val) ) {
-				foreach($val as $v) {
-					if ( is_object($v) && isset($v->id) && in_array($v->id, $onboarding_type_ids) ) {
-						$matches = true;
-						break;
+			// Robust Checking Logic (Handling Magic Properties)
+			// Check if object and try to get ID safely (even if magic)
+			if ( is_object( $val ) ) {
+				// Try standard property or magic getter access
+				$obj_id = null;
+				if ( isset( $val->id ) ) {
+					$obj_id = $val->id;
+				} elseif ( ! empty( $val->id ) ) {
+					// Fallback for magic getters where isset might return false but value exists
+					$obj_id = $val->id;
+				}
+
+				if ( $obj_id && in_array( $obj_id, $onboarding_type_ids ) ) {
+					$matches = true;
+				}
+			} elseif ( is_array( $val ) ) {
+				foreach( $val as $v ) {
+					if ( is_object( $v ) ) {
+						$obj_id = null;
+						if ( isset( $v->id ) ) {
+							$obj_id = $v->id;
+						} elseif ( ! empty( $v->id ) ) {
+							$obj_id = $v->id;
+						}
+
+						if ( $obj_id && in_array( $obj_id, $onboarding_type_ids ) ) {
+							$matches = true;
+							break;
+						}
 					}
-					if ( is_scalar($v) && in_array($v, $onboarding_type_ids) ) {
+					if ( is_scalar( $v ) && in_array( $v, $onboarding_type_ids ) ) {
 						$matches = true;
 						break;
 					}
 				}
-			} elseif ( is_scalar($val) && in_array($val, $onboarding_type_ids) ) {
+			} elseif ( is_scalar( $val ) && in_array( $val, $onboarding_type_ids ) ) {
 				$matches = true;
 			}
 
@@ -120,9 +143,9 @@ class TicketService {
 				$filtered_tickets_objects[] = $ticket_obj;
 			} else {
 				// Use print_r to reveal full structure (useful if id is hidden or nested)
-				$raw_content = print_r($val, true);
+				$raw_content = print_r( $val, true );
 				// Trim to prevent log explosion if huge, but keep enough context
-				$raw_content = substr($raw_content, 0, 500);
+				$raw_content = substr( $raw_content, 0, 500 );
 
 				stackboost_log(
 					sprintf(
@@ -130,7 +153,7 @@ class TicketService {
 						$ticket_obj->id,
 						$field_label,
 						$raw_content,
-						implode(',', $onboarding_type_ids)
+						implode( ',', $onboarding_type_ids )
 					),
 					'onboarding'
 				);
