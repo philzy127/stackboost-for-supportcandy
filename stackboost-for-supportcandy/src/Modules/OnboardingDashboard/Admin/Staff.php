@@ -326,6 +326,21 @@ class Staff {
 									}
 								}
 
+								// Safety: Convert any objects (like DateTime) to string before display to prevent crashes
+								if ( is_object( $display_value ) ) {
+									if ( $display_value instanceof \DateTime ) {
+										$display_value = $display_value->format( 'Y-m-d H:i:s' );
+									} else {
+										// Try standard string cast or fallback
+										if ( method_exists( $display_value, '__toString' ) ) {
+											$display_value = (string) $display_value;
+										} else {
+											// Last resort: JSON or generic label
+											$display_value = json_encode( $display_value );
+										}
+									}
+								}
+
 								?>
 								<td><?php echo wp_kses_post( $display_value ); ?></td>
 							<?php endforeach; ?>
