@@ -288,7 +288,7 @@ class TicketService {
 
 			if ( $is_cleared && ! empty( $date_str ) ) {
 				try {
-					$date = new \DateTime( $date_str );
+					$date = ( $date_str instanceof \DateTime ) ? $date_str : new \DateTime( $date_str );
 					if ( $date < $start_week ) {
 						$sorted['previous_onboarding'][] = $ticket;
 					} elseif ( $date >= $start_week && $date <= $end_week ) {
