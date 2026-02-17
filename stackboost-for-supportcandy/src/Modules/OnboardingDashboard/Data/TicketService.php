@@ -89,21 +89,14 @@ class TicketService {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
-			// Detailed Logging for Debugging
-			$debug_val_type = gettype($val);
-			$debug_val_content = '';
-			if ( is_scalar($val) ) {
-				$debug_val_content = (string) $val;
-				if ( '' === $debug_val_content ) {
-					$debug_val_content = '(empty)';
+			// Detailed Logging using print_r for absolute clarity
+			// Get human-readable field name early for context
+			$field_label = $request_type_key;
+			if ( class_exists( '\WPSC_Custom_Field' ) ) {
+				$cf = \WPSC_Custom_Field::get_cf_by_slug( $request_type_key );
+				if ( $cf && isset( $cf->name ) ) {
+					$field_label = $cf->name . ' (' . $request_type_key . ')';
 				}
-			} elseif ( is_object($val) ) {
-				$class_name = get_class($val);
-				$id_val = isset($val->id) ? $val->id : 'no_id';
-				$name_val = isset($val->name) ? $val->name : 'no_name';
-				$debug_val_content = "Object($class_name) [id: $id_val, name: $name_val]";
-			} else {
-				$debug_val_content = json_encode($val);
 			}
 
 			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
@@ -126,22 +119,17 @@ class TicketService {
 			if ( $matches ) {
 				$filtered_tickets_objects[] = $ticket_obj;
 			} else {
-				// Get human-readable field name
-				$field_label = $request_type_key;
-				if ( class_exists( '\WPSC_Custom_Field' ) ) {
-					$cf = \WPSC_Custom_Field::get_cf_by_slug( $request_type_key );
-					if ( $cf && isset( $cf->name ) ) {
-						$field_label = $cf->name . ' (' . $request_type_key . ')';
-					}
-				}
+				// Use print_r to reveal full structure (useful if id is hidden or nested)
+				$raw_content = print_r($val, true);
+				// Trim to prevent log explosion if huge, but keep enough context
+				$raw_content = substr($raw_content, 0, 500);
 
 				stackboost_log(
 					sprintf(
-						'TicketService: Ticket %s excluded. Field: %s. Value Type: %s. Value: %s. Expected IDs: %s.',
+						'TicketService: Checking Ticket %s. Field \'%s\'. Value: %s. Expected IDs: %s. Match: NO.',
 						$ticket_obj->id,
 						$field_label,
-						$debug_val_type,
-						$debug_val_content,
+						$raw_content,
 						implode(',', $onboarding_type_ids)
 					),
 					'onboarding'
