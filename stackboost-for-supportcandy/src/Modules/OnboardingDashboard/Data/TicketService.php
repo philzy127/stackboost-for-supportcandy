@@ -37,25 +37,55 @@ class TicketService {
 
 		// 1. Fetch All Active Onboarding Tickets
 		// Using WPSC_Ticket::find to filter at database level for performance
-		$args = [
+		$args_active = [
 			'items_per_page' => 9999, // Use large number instead of 0 to avoid potential SC bugs
 			'page_no'        => 1,
 			'is_active'      => 1, // Only active tickets
 		];
 
+		$all_tickets_objects = [];
+
 		try {
-			$tickets_result = \WPSC_Ticket::find( $args );
-			$all_active_tickets = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+			$tickets_result = \WPSC_Ticket::find( $args_active );
+			$active_tickets = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+			$all_tickets_objects = array_merge( $all_tickets_objects, $active_tickets );
 		} catch ( \Throwable $e ) {
-			stackboost_log( 'TicketService: Error fetching tickets: ' . $e->getMessage(), 'error' );
-			$all_active_tickets = [];
-			// If critical, return WP_Error, but trying empty list is safer for UI
-			// return new \WP_Error( 'db_error', $e->getMessage() );
+			stackboost_log( 'TicketService: Error fetching active tickets: ' . $e->getMessage(), 'error' );
+		}
+
+		// 2. Fetch Inactive Tickets that are "Cleared"
+		// This handles cases where a ticket is closed (inactive) but should still appear in "Previous" or "This Week".
+		$args_cleared = [
+			'items_per_page' => 9999,
+			'page_no'        => 1,
+			'is_active'      => 0, // Only inactive tickets
+			'meta_query'     => [
+				[
+					'key'     => $cleared_key,
+					'value'   => '',
+					'compare' => '!=' // Assuming not empty means cleared
+				]
+			]
+		];
+
+		try {
+			$tickets_result_cleared = \WPSC_Ticket::find( $args_cleared );
+			$cleared_tickets = isset( $tickets_result_cleared['results'] ) ? $tickets_result_cleared['results'] : [];
+
+			if ( ! empty( $cleared_tickets ) ) {
+				stackboost_log( 'TicketService: Found ' . count( $cleared_tickets ) . ' inactive cleared tickets.', 'onboarding' );
+				// Merging objects directly
+				$all_tickets_objects = array_merge( $all_tickets_objects, $cleared_tickets );
+			}
+		} catch ( \Throwable $e ) {
+			// If meta_query fails, log it but proceed with what we have
+			stackboost_log( 'TicketService: Error fetching cleared inactive tickets (meta_query might not be supported): ' . $e->getMessage(), 'error' );
 		}
 
 		// Filter by Request Type (PHP-side to avoid SQL errors with meta_query)
-		$all_tickets_objects = [];
-		foreach ( $all_active_tickets as $ticket_obj ) {
+		// We re-filter the merged list
+		$filtered_tickets_objects = [];
+		foreach ( $all_tickets_objects as $ticket_obj ) {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
@@ -77,9 +107,12 @@ class TicketService {
 			}
 
 			if ( $matches ) {
-				$all_tickets_objects[] = $ticket_obj;
+				$filtered_tickets_objects[] = $ticket_obj;
 			}
 		}
+
+		// Re-assign filtered objects to main variable
+		$all_tickets_objects = $filtered_tickets_objects;
 
 		stackboost_log( 'TicketService: Found ' . count( $all_tickets_objects ) . ' matching onboarding tickets after filtering.', 'onboarding' );
 
@@ -184,16 +217,16 @@ class TicketService {
 
 		foreach ( $all_tickets as $ticket ) {
 			$status_id = $ticket['status'] ?? null;
+			$cleared_val = $ticket[$cleared_key] ?? null;
+			$is_cleared = ! empty( $cleared_val );
 
 			// Check against inactive statuses
-			if ( in_array( $status_id, $inactive_ids ) ) {
+			// Skip inactive check if the ticket is cleared (user wants to see completed onboardings)
+			if ( ! $is_cleared && in_array( $status_id, $inactive_ids ) ) {
 				continue;
 			}
 
-			$cleared_val = $ticket[$cleared_key] ?? null;
 			$date_str = $ticket[$onboarding_date_key] ?? null;
-
-			$is_cleared = ! empty( $cleared_val );
 
 			if ( $is_cleared && ! empty( $date_str ) ) {
 				try {
@@ -205,10 +238,8 @@ class TicketService {
 					} else {
 						$sorted['future_onboarding'][] = $ticket;
 					}
-				} catch ( \Throwable $e ) {
-					// Date error, treat as unscheduled/problematic but do not drop
-					stackboost_log( 'TicketService: Error parsing date for ticket ' . ($ticket['id'] ?? 'unknown') . ': ' . $e->getMessage(), 'error' );
-					$sorted['uncleared_or_unscheduled'][] = $ticket;
+				} catch ( \Exception $e ) {
+					// Ignore date error, treat as unscheduled/problematic
 				}
 			} else {
 				$sorted['uncleared_or_unscheduled'][] = $ticket;
