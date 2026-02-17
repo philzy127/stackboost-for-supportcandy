@@ -89,17 +89,6 @@ class TicketService {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
-			// Detailed Logging using print_r for absolute clarity
-			// Get human-readable field name early for context
-			$field_label = $request_type_key;
-			// Use Plugin instance to get columns safely
-			if ( class_exists( 'StackBoost\ForSupportCandy\WordPress\Plugin' ) ) {
-				$columns = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance()->get_supportcandy_columns();
-				if ( isset( $columns[ $request_type_key ] ) ) {
-					$field_label = $columns[ $request_type_key ] . ' (' . $request_type_key . ')';
-				}
-			}
-
 			// Robust Checking Logic (Handling Magic Properties)
 			// Check if object and try to get ID safely (even if magic)
 			if ( is_object( $val ) ) {
@@ -150,22 +139,6 @@ class TicketService {
 
 			if ( $matches ) {
 				$filtered_tickets_objects[] = $ticket_obj;
-			} else {
-				// Use print_r to reveal full structure (useful if id is hidden or nested)
-				$raw_content = print_r( $val, true );
-				// Trim to prevent log explosion if huge, but keep enough context
-				$raw_content = substr( $raw_content, 0, 500 );
-
-				stackboost_log(
-					sprintf(
-						'TicketService: Checking Ticket %s. Field \'%s\'. Value: %s. Expected IDs: %s. Match: NO.',
-						$ticket_obj->id,
-						$field_label,
-						$raw_content,
-						implode( ',', $onboarding_type_ids )
-					),
-					'onboarding'
-				);
 			}
 		}
 
