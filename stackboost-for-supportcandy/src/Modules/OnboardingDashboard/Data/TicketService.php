@@ -103,18 +103,27 @@ class TicketService {
 			// Robust Checking Logic (Handling Magic Properties)
 			// Check if object and try to get ID safely (even if magic)
 			if ( is_object( $val ) ) {
-				// Try standard property or magic getter access
+				// Force access to magic property. isset() returns false for properties not in public scope or handled by __get without __isset.
+				// WPSC_Option stores data in private array, so we must access directly.
 				$obj_id = null;
-				if ( isset( $val->id ) ) {
+				try {
 					$obj_id = $val->id;
-				} elseif ( ! empty( $val->id ) ) {
-					// Fallback for magic getters where isset might return false but value exists
-					$obj_id = $val->id;
+				} catch ( \Throwable $e ) {
+					// Property doesn't exist or access error
 				}
 
-				if ( $obj_id && in_array( $obj_id, $onboarding_type_ids ) ) {
+				// Loose comparison or casing to string for array_search/in_array to handle '69' vs 69
+				if ( $obj_id && in_array( (string)$obj_id, array_map('strval', $onboarding_type_ids) ) ) {
 					$matches = true;
-				}
+				} else {
+                    // Log failure to extract or match
+                    // Useful to see if $obj_id is null or just mismatched
+                    if ( $obj_id ) {
+                       // Mismatch
+                    } else {
+                       // Extraction failed
+                    }
+                }
 			} elseif ( is_array( $val ) ) {
 				foreach( $val as $v ) {
 					if ( is_object( $v ) ) {
