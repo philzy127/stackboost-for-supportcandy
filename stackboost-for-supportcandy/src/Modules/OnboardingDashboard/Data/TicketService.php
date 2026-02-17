@@ -94,6 +94,9 @@ class TicketService {
 			$debug_val_content = '';
 			if ( is_scalar($val) ) {
 				$debug_val_content = (string) $val;
+				if ( '' === $debug_val_content ) {
+					$debug_val_content = '(empty)';
+				}
 			} elseif ( is_object($val) ) {
 				$class_name = get_class($val);
 				$id_val = isset($val->id) ? $val->id : 'no_id';
@@ -123,11 +126,20 @@ class TicketService {
 			if ( $matches ) {
 				$filtered_tickets_objects[] = $ticket_obj;
 			} else {
+				// Get human-readable field name
+				$field_label = $request_type_key;
+				if ( class_exists( '\WPSC_Custom_Field' ) ) {
+					$cf = \WPSC_Custom_Field::get_cf_by_slug( $request_type_key );
+					if ( $cf && isset( $cf->name ) ) {
+						$field_label = $cf->name . ' (' . $request_type_key . ')';
+					}
+				}
+
 				stackboost_log(
 					sprintf(
 						'TicketService: Ticket %s excluded. Field: %s. Value Type: %s. Value: %s. Expected IDs: %s.',
 						$ticket_obj->id,
-						$request_type_key,
+						$field_label,
 						$debug_val_type,
 						$debug_val_content,
 						implode(',', $onboarding_type_ids)
