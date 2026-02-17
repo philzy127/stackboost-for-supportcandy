@@ -20,6 +20,9 @@ class TicketService {
 
 		$config = Settings::get_config();
 
+		stackboost_log( 'TicketService: Config loaded. Request Type IDs: ' . print_r( $config['request_type_id'], true ), 'onboarding' );
+		stackboost_log( 'TicketService: Inactive Statuses: ' . print_r( $config['inactive_statuses'], true ), 'onboarding' );
+
 		$request_type_key   = $config['request_type_field'];
 		$onboarding_type_ids = $config['request_type_id']; // This is now an array
 		$inactive_ids       = $config['inactive_statuses']; // Array
@@ -27,6 +30,7 @@ class TicketService {
 		$cleared_key        = $config['field_cleared'];
 
 		if ( empty( $request_type_key ) || empty( $onboarding_type_ids ) ) {
+			stackboost_log( 'TicketService: Missing configuration. Aborting.', 'onboarding' );
 			return new \WP_Error( 'missing_config', 'Onboarding Settings not configured.' );
 		}
 
@@ -59,21 +63,33 @@ class TicketService {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
+			// Log detailed inspection for debugging
+			stackboost_log( sprintf( 'TicketService: Inspecting Ticket #%d for Request Type match.', $ticket_obj->id ), 'onboarding' );
+			stackboost_log( 'TicketService: Value on ticket: ' . print_r( $val, true ), 'onboarding' );
+
 			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
 				$matches = true;
+				stackboost_log( 'TicketService: Match found (Object ID check).', 'onboarding' );
 			} elseif ( is_array($val) ) {
 				foreach($val as $v) {
 					if ( is_object($v) && isset($v->id) && in_array($v->id, $onboarding_type_ids) ) {
 						$matches = true;
+						stackboost_log( 'TicketService: Match found inside array (Object ID check).', 'onboarding' );
 						break;
 					}
 					if ( is_scalar($v) && in_array($v, $onboarding_type_ids) ) {
 						$matches = true;
+						stackboost_log( 'TicketService: Match found inside array (Scalar check).', 'onboarding' );
 						break;
 					}
 				}
 			} elseif ( is_scalar($val) && in_array($val, $onboarding_type_ids) ) {
 				$matches = true;
+				stackboost_log( 'TicketService: Match found (Scalar check).', 'onboarding' );
+			}
+
+			if ( ! $matches ) {
+				stackboost_log( 'TicketService: No match found for Ticket #' . $ticket_obj->id, 'onboarding' );
 			}
 
 			if ( $matches ) {
@@ -187,6 +203,7 @@ class TicketService {
 
 			// Check against inactive statuses
 			if ( in_array( $status_id, $inactive_ids ) ) {
+				stackboost_log( sprintf( 'TicketService: Skipping Ticket #%d due to inactive status (ID: %s).', $ticket['id'], $status_id ), 'onboarding' );
 				continue;
 			}
 
@@ -206,6 +223,7 @@ class TicketService {
 						$sorted['future_onboarding'][] = $ticket;
 					}
 				} catch ( \Exception $e ) {
+					stackboost_log( sprintf( 'TicketService: Date parsing error for Ticket #%d: %s', $ticket['id'], $e->getMessage() ), 'onboarding' );
 					// Ignore date error, treat as unscheduled/problematic
 				}
 			} else {

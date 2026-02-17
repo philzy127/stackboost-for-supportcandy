@@ -147,6 +147,8 @@ class Settings {
 		// Flush the cache whenever settings are saved.
 		delete_transient( 'stackboost_onboarding_tickets_cache' );
 
+		stackboost_log( 'Onboarding Settings: Sanitize started. Input: ' . print_r( $input, true ), 'onboarding' );
+
 		// Merge with existing options to prevent overwriting missing keys (e.g., from different tabs)
 		$existing_options = get_option( self::OPTION_NAME, [] );
 		$output = is_array( $existing_options ) ? $existing_options : [];
@@ -204,6 +206,7 @@ class Settings {
 				}
 			}
 		}
+		stackboost_log( 'Onboarding Settings: Sanitize complete. Output: ' . print_r( $output, true ), 'onboarding' );
 		return $output;
 	}
 
@@ -212,6 +215,7 @@ class Settings {
 	 */
 	public static function get_config() {
 		$options = get_option( self::OPTION_NAME, [] );
+		stackboost_log( 'Onboarding Settings: Raw options from DB: ' . print_r( $options, true ), 'onboarding' );
 
 		// Defaults for new structure
 		$defaults = [
