@@ -179,6 +179,27 @@
                         onChange: function( val ) { setAttributes( { showSearch: val } ); },
                         __nextHasNoMarginBottom: true
                     } ),
+                    el( TextControl, {
+                        label: __( 'Search Bar Width', 'stackboost-for-supportcandy' ),
+                        help: __( 'Enter a width (e.g., "300px" or "50%"). Leave empty for default.', 'stackboost-for-supportcandy' ),
+                        value: attributes.searchBarWidth,
+                        onChange: function( val ) { setAttributes( { searchBarWidth: val } ); },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
+                    } ),
+                    el( SelectControl, {
+                        label: __( 'Controls Alignment', 'stackboost-for-supportcandy' ),
+                        value: attributes.headerAlignment,
+                        options: [
+                            { label: __( 'Split (Space Between)', 'stackboost-for-supportcandy' ), value: 'space-between' },
+                            { label: __( 'Left', 'stackboost-for-supportcandy' ), value: 'flex-start' },
+                            { label: __( 'Center', 'stackboost-for-supportcandy' ), value: 'center' },
+                            { label: __( 'Right', 'stackboost-for-supportcandy' ), value: 'flex-end' }
+                        ],
+                        onChange: function( val ) { setAttributes( { headerAlignment: val } ); },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
+                    } ),
                     el( 'p', { className: 'components-base-control__label' }, __( 'Photo Options', 'stackboost-for-supportcandy' ) ),
                     el( SelectControl, {
                         label: __( 'Photo Shape', 'stackboost-for-supportcandy' ),

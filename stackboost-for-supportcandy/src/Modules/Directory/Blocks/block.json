@@ -78,6 +78,14 @@
         "showMobilePhone": {
             "type": "boolean",
             "default": true
+        },
+        "searchBarWidth": {
+            "type": "string",
+            "default": ""
+        },
+        "headerAlignment": {
+            "type": "string",
+            "default": "space-between"
         }
     }
 }

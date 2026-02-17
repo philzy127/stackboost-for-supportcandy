@@ -58,6 +58,8 @@ class DirectoryShortcode {
                 'specificUsers'         => array(), // Array of objects { id, value } or just IDs
                 'showOfficePhone'       => true,
                 'showMobilePhone'       => true,
+                'searchBarWidth'        => '',
+                'headerAlignment'       => 'space-between',
 			),
 			$atts,
 			'stackboost_directory'
@@ -77,6 +79,8 @@ class DirectoryShortcode {
 
         $show_office_phone       = filter_var( $atts['showOfficePhone'], FILTER_VALIDATE_BOOLEAN );
         $show_mobile_phone       = filter_var( $atts['showMobilePhone'], FILTER_VALIDATE_BOOLEAN );
+        $search_bar_width        = ! empty( $atts['searchBarWidth'] ) ? sanitize_text_field( $atts['searchBarWidth'] ) : '';
+        $header_alignment        = in_array( $atts['headerAlignment'], [ 'space-between', 'flex-start', 'center', 'flex-end' ], true ) ? $atts['headerAlignment'] : 'space-between';
 
         // Sanitize Specific Users
         // Ideally comes as array of objects from block, but might be array of IDs or comma-separated string if used manually in shortcode
@@ -169,11 +173,18 @@ class DirectoryShortcode {
         }
 
 		ob_start();
+
+        // Prepare CSS variables for inline style
+        $container_style = '';
+        if ( ! empty( $search_bar_width ) ) {
+            $container_style .= '--sb-dir-search-width: ' . esc_attr( $search_bar_width ) . ';';
+        }
+        $container_style .= '--sb-dir-header-justify: ' . esc_attr( $header_alignment ) . ';';
 		?>
-		<div class="stackboost-staff-directory-container stackboost-theme-<?php echo esc_attr( $theme ); ?>">
+		<div class="stackboost-staff-directory-container stackboost-theme-<?php echo esc_attr( $theme ); ?>" style="<?php echo $container_style; ?>">
             <?php if ( defined( 'REST_REQUEST' ) && REST_REQUEST && wp_is_json_request() ) : ?>
                 <!-- Editor Preview Controls (Visual Only) -->
-                 <div class="stackboost-directory-editor-controls" style="display: flex; justify-content: space-between; margin-bottom: 10px; opacity: 0.6; pointer-events: none;">
+                 <div class="stackboost-directory-editor-controls stackboost-directory-header" style="display: flex; justify-content: <?php echo esc_attr( $header_alignment ); ?>; align-items: center; margin-bottom: 15px; gap: 20px; opacity: 0.8; pointer-events: none;">
                     <?php if ( $allow_page_length_change ) : ?>
                         <div class="dataTables_length">
                             <label>
@@ -184,15 +195,13 @@ class DirectoryShortcode {
                                 <?php esc_html_e( 'entries', 'stackboost-for-supportcandy' ); ?>
                             </label>
                         </div>
-                    <?php else: ?>
-                        <div></div>
                     <?php endif; ?>
 
                     <?php if ( $show_search ) : ?>
                         <div class="dataTables_filter">
                             <label>
                                 <?php esc_html_e( 'Search:', 'stackboost-for-supportcandy' ); ?>
-                                <input type="search" placeholder="" aria-controls="stackboostStaffDirectoryTable" style="margin-left: 5px; border: 1px solid #ddd; padding: 2px 5px;">
+                                <input type="search" placeholder="" aria-controls="stackboostStaffDirectoryTable" style="margin-left: 5px; border: 1px solid #ddd; padding: 2px 5px; width: <?php echo !empty($search_bar_width) ? esc_attr($search_bar_width) : 'auto'; ?>;">
                             </label>
                         </div>
                     <?php endif; ?>

@@ -655,3 +655,43 @@
 span.dashicons.dashicons-smartphone {
 	transform: scale(1.4);
 }
+
+/* --- New Header Layout for Search and Length Selector --- */
+/* Placed at end to override generic DataTables styles */
+
+.stackboost-directory-header {
+    display: flex;
+    align-items: center;
+    justify-content: var(--sb-dir-header-justify, space-between);
+    flex-wrap: nowrap;
+    width: 100%;
+    margin-bottom: 15px;
+    gap: 20px;
+}
+
+/* Ensure controls don't float and respect flex layout */
+.stackboost-directory-header .dataTables_length,
+.stackboost-directory-header .dataTables_filter {
+    float: none !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center;
+}
+
+/* Ensure the filter container doesn't force a width/float */
+.dataTables_wrapper .stackboost-directory-header .dataTables_filter {
+    float: none !important;
+    display: flex !important;
+}
+
+/* Allow search bar width control */
+.stackboost-directory-header .dataTables_filter input {
+    width: var(--sb-dir-search-width, auto) !important;
+    max-width: none !important; /* Override default max-width if custom width is set */
+    margin-left: 10px; /* Space between label and input */
+}
+
+/* Ensure Length Selector fits well */
+.stackboost-directory-header .dataTables_length select {
+    margin: 0 5px;
+}

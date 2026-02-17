@@ -104,7 +104,7 @@ jQuery(document).ready(function($) {
             }
 
             var opts = {
-                "dom": "lfrtip",
+                "dom": '<"stackboost-directory-header"lf>rtip',
                 "searching": searching,
                 "pageLength": customPageLength,
                 "lengthChange": lengthChange,
