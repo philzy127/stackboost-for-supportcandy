@@ -91,7 +91,17 @@ class TicketService {
 
 			// Detailed Logging for Debugging
 			$debug_val_type = gettype($val);
-			$debug_val_content = is_scalar($val) ? $val : (is_object($val) ? 'Object(' . get_class($val) . ')' : json_encode($val));
+			$debug_val_content = '';
+			if ( is_scalar($val) ) {
+				$debug_val_content = (string) $val;
+			} elseif ( is_object($val) ) {
+				$class_name = get_class($val);
+				$id_val = isset($val->id) ? $val->id : 'no_id';
+				$name_val = isset($val->name) ? $val->name : 'no_name';
+				$debug_val_content = "Object($class_name) [id: $id_val, name: $name_val]";
+			} else {
+				$debug_val_content = json_encode($val);
+			}
 
 			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
 				$matches = true;
@@ -115,7 +125,7 @@ class TicketService {
 			} else {
 				stackboost_log(
 					sprintf(
-						'TicketService: Ticket %s excluded. Key: %s. Value Type: %s. Value: %s. Expected IDs: %s.',
+						'TicketService: Ticket %s excluded. Field: %s. Value Type: %s. Value: %s. Expected IDs: %s.',
 						$ticket_obj->id,
 						$request_type_key,
 						$debug_val_type,
