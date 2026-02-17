@@ -63,10 +63,6 @@ class TicketService {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
-			// Log detailed inspection for debugging
-			stackboost_log( sprintf( 'TicketService: Inspecting Ticket #%d for Request Type match.', $ticket_obj->id ), 'onboarding' );
-			stackboost_log( 'TicketService: Value on ticket: ' . print_r( $val, true ), 'onboarding' );
-
 			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
 				$matches = true;
 				stackboost_log( 'TicketService: Match found (Object ID check).', 'onboarding' );
@@ -88,11 +84,8 @@ class TicketService {
 				stackboost_log( 'TicketService: Match found (Scalar check).', 'onboarding' );
 			}
 
-			if ( ! $matches ) {
-				stackboost_log( 'TicketService: No match found for Ticket #' . $ticket_obj->id, 'onboarding' );
-			}
-
 			if ( $matches ) {
+				stackboost_log( 'TicketService: Ticket #' . $ticket_obj->id . ' matched Request Type logic. Value on ticket: ' . print_r( $val, true ), 'onboarding' );
 				$all_tickets_objects[] = $ticket_obj;
 			}
 		}
