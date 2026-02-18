@@ -326,6 +326,19 @@ class Staff {
 									}
 								}
 
+								// Handle Objects before passing to wp_kses_post (specifically DateTime)
+								if ( $display_value instanceof \DateTime ) {
+									$display_value = $display_value->format( 'Y-m-d H:i:s' );
+								} elseif ( is_object( $display_value ) ) {
+									// Fallback for other objects to string conversion or empty
+									if ( method_exists( $display_value, '__toString' ) ) {
+										$display_value = (string) $display_value;
+									} else {
+										// Cannot display generic object, set to empty to avoid fatal error
+										$display_value = '';
+									}
+								}
+
 								?>
 								<td><?php echo wp_kses_post( $display_value ); ?></td>
 							<?php endforeach; ?>
