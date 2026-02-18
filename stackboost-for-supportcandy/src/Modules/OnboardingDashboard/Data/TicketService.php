@@ -69,6 +69,16 @@ class TicketService {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
+			// DIAGNOSTIC PROBE FOR #1352 INSIDE LOOP
+			if ( 1352 == $ticket_obj->id ) {
+				stackboost_log( 'TicketService: Found Ticket #1352 in loop. Inspecting...', 'onboarding' );
+				stackboost_log( 'TicketService: RAW Object: ' . print_r( $ticket_obj, true ), 'onboarding' );
+				stackboost_log( 'TicketService: Request Type Key: ' . $request_type_key, 'onboarding' );
+				stackboost_log( 'TicketService: Value ($val): ' . print_r( $val, true ), 'onboarding' );
+				stackboost_log( 'TicketService: Type ($val): ' . gettype( $val ), 'onboarding' );
+			}
+			// END PROBE
+
 			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
 				$matches = true;
 			} elseif ( is_array($val) ) {
