@@ -72,10 +72,14 @@ class TicketService {
 			// DIAGNOSTIC PROBE FOR #1352 INSIDE LOOP
 			if ( 1352 == $ticket_obj->id ) {
 				stackboost_log( 'TicketService: Found Ticket #1352 in loop. Inspecting...', 'onboarding' );
-				stackboost_log( 'TicketService: RAW Object: ' . print_r( $ticket_obj, true ), 'onboarding' );
-				stackboost_log( 'TicketService: Request Type Key: ' . $request_type_key, 'onboarding' );
-				stackboost_log( 'TicketService: Value ($val): ' . print_r( $val, true ), 'onboarding' );
-				stackboost_log( 'TicketService: Type ($val): ' . gettype( $val ), 'onboarding' );
+				// Test Access Methods
+				stackboost_log( 'TicketService: TEST 1: isset($val->id) -> ' . ( isset($val->id) ? 'TRUE' : 'FALSE' ), 'onboarding' );
+				stackboost_log( 'TicketService: TEST 2: Direct Access $val->id -> ' . ( $val->id ?? 'NULL/ERROR' ), 'onboarding' );
+				try {
+					stackboost_log( 'TicketService: TEST 3: Int Cast (int)$val -> ' . (int)$val, 'onboarding' );
+				} catch (\Throwable $e) {
+					stackboost_log( 'TicketService: TEST 3 Failed: ' . $e->getMessage(), 'onboarding' );
+				}
 			}
 			// END PROBE
 
