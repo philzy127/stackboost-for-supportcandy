@@ -39,82 +39,55 @@ class TicketService {
 			$onboarding_type_ids = [ $onboarding_type_ids ];
 		}
 
-		// ==========================================
-		// DIRECT PROBE FOR TICKET #1352
-		// ==========================================
-		stackboost_log( 'TicketService: Attempting to fetch Ticket #1352 directly...', 'onboarding' );
-		try {
-			$probe_ticket = new \WPSC_Ticket( 1352 );
-			if ( $probe_ticket->id ) {
-				stackboost_log( 'TicketService: PROBE SUCCESS. Ticket #1352 found.', 'onboarding' );
-				stackboost_log( 'TicketService: PROBE DUMP: ' . print_r( $probe_ticket, true ), 'onboarding' );
-
-				// Check Request Type specifically
-				$req_val = $probe_ticket->$request_type_key ?? 'NOT SET';
-				stackboost_log( "TicketService: PROBE Request Type ($request_type_key): " . print_r( $req_val, true ), 'onboarding' );
-
-				// Check Active Status
-				$is_active_check = $probe_ticket->active ?? 'UNKNOWN';
-				stackboost_log( "TicketService: PROBE Active Status: " . print_r( $is_active_check, true ), 'onboarding' );
-
-				// Check Status Object
-				$status_obj = $probe_ticket->status;
-				stackboost_log( "TicketService: PROBE Status Object: " . print_r( $status_obj, true ), 'onboarding' );
-			} else {
-				stackboost_log( 'TicketService: PROBE FAILED. Ticket #1352 returned ID 0 or null.', 'onboarding' );
-			}
-		} catch ( \Throwable $e ) {
-			stackboost_log( 'TicketService: PROBE CRITICAL ERROR: ' . $e->getMessage(), 'onboarding' );
-		}
-		// ==========================================
-
-		// 1. Fetch All Active Onboarding Tickets
-		// Using WPSC_Ticket::find to filter at database level for performance
+		// 1. Fetch ALL Tickets (Active & Inactive)
+		// We fetch everything to ensure we don't miss tickets due to active/inactive filter quirks.
+		// Filtering for status happens in PHP.
 		$args = [
-			'items_per_page' => 9999, // Use large number instead of 0 to avoid potential SC bugs
-			'page_no'        => 1,
-			'is_active'      => 1, // Only active tickets
+			'items_per_page' => 0, // 0 = All items in SupportCandy
 		];
 
 		try {
 			$tickets_result = \WPSC_Ticket::find( $args );
-			$all_active_tickets = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+			$all_tickets_raw = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
 		} catch ( \Throwable $e ) {
 			stackboost_log( 'TicketService: Error fetching tickets: ' . $e->getMessage(), 'error' );
-			$all_active_tickets = [];
+			$all_tickets_raw = [];
 			// If critical, return WP_Error, but trying empty list is safer for UI
 			// return new \WP_Error( 'db_error', $e->getMessage() );
 		}
 
+		stackboost_log( 'TicketService: WPSC_Ticket::find returned ' . count($all_tickets_raw) . ' total tickets (Active + Inactive).', 'onboarding' );
+
 		// Filter by Request Type (PHP-side to avoid SQL errors with meta_query)
 		$all_tickets_objects = [];
-		foreach ( $all_active_tickets as $ticket_obj ) {
+		foreach ( $all_tickets_raw as $ticket_obj ) {
+
+			// Optional: Re-apply "Active" filter here if we ONLY want active tickets for non-cleared items
+			// But user logic implies we want Cleared tickets regardless of status.
+			// Let's filter purely on request type first.
+
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
 			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
 				$matches = true;
-				stackboost_log( 'TicketService: Match found (Object ID check).', 'onboarding' );
 			} elseif ( is_array($val) ) {
 				foreach($val as $v) {
 					if ( is_object($v) && isset($v->id) && in_array($v->id, $onboarding_type_ids) ) {
 						$matches = true;
-						stackboost_log( 'TicketService: Match found inside array (Object ID check).', 'onboarding' );
 						break;
 					}
 					if ( is_scalar($v) && in_array($v, $onboarding_type_ids) ) {
 						$matches = true;
-						stackboost_log( 'TicketService: Match found inside array (Scalar check).', 'onboarding' );
 						break;
 					}
 				}
 			} elseif ( is_scalar($val) && in_array($val, $onboarding_type_ids) ) {
 				$matches = true;
-				stackboost_log( 'TicketService: Match found (Scalar check).', 'onboarding' );
 			}
 
 			if ( $matches ) {
-				stackboost_log( 'TicketService: Ticket #' . $ticket_obj->id . ' matched Request Type logic. Value on ticket: ' . print_r( $val, true ), 'onboarding' );
+				stackboost_log( 'TicketService: Ticket #' . $ticket_obj->id . ' matched Request Type logic.', 'onboarding' );
 				$all_tickets_objects[] = $ticket_obj;
 			}
 		}
