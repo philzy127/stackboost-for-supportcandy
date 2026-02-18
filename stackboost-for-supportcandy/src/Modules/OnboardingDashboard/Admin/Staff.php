@@ -244,7 +244,11 @@ class Staff {
 								if ( $slug === $onboarding_date_field_key ) {
 									if ( ! empty( $raw_value ) ) {
 										try {
-											$date = new \DateTime( $raw_value );
+											if ( $raw_value instanceof \DateTime ) {
+												$date = $raw_value;
+											} else {
+												$date = new \DateTime( $raw_value );
+											}
 											$display_value = $date->format( 'Y-m-d' );
 										} catch ( \Exception $e ) {
 											$display_value = $raw_value;
