@@ -69,28 +69,24 @@ class TicketService {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
-			// DIAGNOSTIC PROBE FOR #1352 INSIDE LOOP
-			if ( 1352 == $ticket_obj->id ) {
-				stackboost_log( 'TicketService: Found Ticket #1352 in loop. Inspecting...', 'onboarding' );
-				// Test Access Methods
-				stackboost_log( 'TicketService: TEST 1: isset($val->id) -> ' . ( isset($val->id) ? 'TRUE' : 'FALSE' ), 'onboarding' );
-				stackboost_log( 'TicketService: TEST 2: Direct Access $val->id -> ' . ( $val->id ?? 'NULL/ERROR' ), 'onboarding' );
-				try {
-					stackboost_log( 'TicketService: TEST 3: Int Cast (int)$val -> ' . (int)$val, 'onboarding' );
-				} catch (\Throwable $e) {
-					stackboost_log( 'TicketService: TEST 3 Failed: ' . $e->getMessage(), 'onboarding' );
+			// Handle WPSC_Option objects where isset($val->id) fails due to magic getters
+			if ( is_object($val) ) {
+				// Direct access is required because isset() returns false for magic properties
+				$id_check = $val->id;
+				if ( $id_check && in_array( $id_check, $onboarding_type_ids ) ) {
+					$matches = true;
 				}
-			}
-			// END PROBE
-
-			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
-				$matches = true;
 			} elseif ( is_array($val) ) {
 				foreach($val as $v) {
-					if ( is_object($v) && isset($v->id) && in_array($v->id, $onboarding_type_ids) ) {
-						$matches = true;
-						break;
+					// Check object inside array
+					if ( is_object($v) ) {
+						$id_check = $v->id;
+						if ( $id_check && in_array( $id_check, $onboarding_type_ids ) ) {
+							$matches = true;
+							break;
+						}
 					}
+					// Check scalar inside array
 					if ( is_scalar($v) && in_array($v, $onboarding_type_ids) ) {
 						$matches = true;
 						break;
@@ -101,7 +97,7 @@ class TicketService {
 			}
 
 			if ( $matches ) {
-				stackboost_log( 'TicketService: Ticket #' . $ticket_obj->id . ' matched Request Type logic.', 'onboarding' );
+				// stackboost_log( 'TicketService: Ticket #' . $ticket_obj->id . ' matched Request Type logic.', 'onboarding' );
 				$all_tickets_objects[] = $ticket_obj;
 			}
 		}
