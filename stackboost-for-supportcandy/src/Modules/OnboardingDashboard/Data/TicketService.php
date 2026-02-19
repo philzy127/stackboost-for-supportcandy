@@ -20,8 +20,8 @@ class TicketService {
 
 		$config = Settings::get_config();
 
-		stackboost_log( 'TicketService: Config loaded. Request Type IDs: ' . print_r( $config['request_type_id'], true ), 'onboarding' );
-		stackboost_log( 'TicketService: Inactive Statuses: ' . print_r( $config['inactive_statuses'], true ), 'onboarding' );
+		stackboost_log( 'TicketService: Config loaded. Request Type IDs: ' . json_encode( $config['request_type_id'] ), 'onboarding' );
+		stackboost_log( 'TicketService: Inactive Statuses: ' . json_encode( $config['inactive_statuses'] ), 'onboarding' );
 
 		$request_type_key   = $config['request_type_field'];
 		$onboarding_type_ids = $config['request_type_id']; // This is now an array

@@ -384,7 +384,11 @@ class Staff {
 		$last_updated_timestamp = $cached_data['timestamp'] ?? null;
 		if ( $last_updated_timestamp ) {
 			$last_updated_string = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last_updated_timestamp );
-			echo '<p style="margin-bottom: 15px;"><em>' . sprintf( esc_html__( 'Data current as of: %s', 'stackboost-for-supportcandy' ), esc_html( $last_updated_string ) ) . '</em></p>';
+			echo '<p style="margin-bottom: 15px;"><em>' . sprintf(
+				/* translators: %s: timestamp string */
+				esc_html__( 'Data current as of: %s', 'stackboost-for-supportcandy' ),
+				esc_html( $last_updated_string )
+			) . '</em></p>';
 		}
 
 		echo '<hr style="margin: 20px 0;">';
