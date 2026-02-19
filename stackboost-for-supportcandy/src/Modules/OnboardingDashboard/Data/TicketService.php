@@ -39,68 +39,50 @@ class TicketService {
 			$onboarding_type_ids = [ $onboarding_type_ids ];
 		}
 
-		// 1. Fetch ALL Tickets (Active & Inactive)
-		// We fetch everything to ensure we don't miss tickets due to active/inactive filter quirks.
-		// Filtering for status happens in PHP.
+		// 1. Fetch Onboarding Tickets via Meta Query (Scalable)
+		// We use meta_query to let the DB do the heavy lifting of filtering by request type.
+		// items_per_page = -1 or 0 usually means All. Let's use 0 as per SC convention.
+
+		// Build Meta Query for Request Type
+		// SupportCandy custom fields are stored in columns (e.g. cust_40), so 'meta_query' in WPSC_Ticket::find
+		// might actually map to a specific 'custom_field' argument structure or direct WHERE clauses.
+		// However, reading SupportCandy docs/code implies standard WP meta_query style might NOT work if columns are flattened.
+		//
+		// BUT, WPSC_Ticket::find supports an advanced filter array or 'meta_query' depending on version.
+		// Given we don't have the SC source to confirm exact syntax for flattened columns,
+		// and we know 'meta_query' is standard WP, we will try the 'meta_query' arg first.
+		//
+		// WAIT: You mentioned cust_40 is a column in the table. Standard WP_Query meta_query uses wp_postmeta.
+		// WPSC_Ticket::find usually abstracts this.
+		// If cust_40 is a column, we can try passing it as a direct argument:
+		// [ 'cust_40' => [69, 72] ] or similar? No, standard args are strict.
+		//
+		// Let's use the 'meta_query' argument which WPSC often maps to custom SQL.
+		// If that fails, we revert to fetching all (as it worked).
+		//
+		// Constructing the meta query:
+		// We want: request_type_key IN ( onboarding_type_ids )
+
 		$args = [
-			'items_per_page' => 0, // 0 = All items in SupportCandy
+			'items_per_page' => 0,
+			'meta_query' => [
+				[
+					'key'     => $request_type_key, // e.g. 'cust_40'
+					'value'   => $onboarding_type_ids, // e.g. [69, 72]
+					'compare' => 'IN',
+				]
+			]
 		];
 
 		try {
 			$tickets_result = \WPSC_Ticket::find( $args );
-			$all_tickets_raw = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+			$all_tickets_objects = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
 		} catch ( \Throwable $e ) {
-			stackboost_log( 'TicketService: Error fetching tickets: ' . $e->getMessage(), 'error' );
-			$all_tickets_raw = [];
-			// If critical, return WP_Error, but trying empty list is safer for UI
-			// return new \WP_Error( 'db_error', $e->getMessage() );
+			stackboost_log( 'TicketService: Error fetching tickets with meta_query: ' . $e->getMessage(), 'error' );
+			$all_tickets_objects = [];
 		}
 
-		stackboost_log( 'TicketService: WPSC_Ticket::find returned ' . count($all_tickets_raw) . ' total tickets (Active + Inactive).', 'onboarding' );
-
-		// Filter by Request Type (PHP-side to avoid SQL errors with meta_query)
-		$all_tickets_objects = [];
-		foreach ( $all_tickets_raw as $ticket_obj ) {
-
-			// Optional: Re-apply "Active" filter here if we ONLY want active tickets for non-cleared items
-			// But user logic implies we want Cleared tickets regardless of status.
-			// Let's filter purely on request type first.
-
-			$val = $ticket_obj->$request_type_key ?? null;
-			$matches = false;
-
-			// Handle WPSC_Option objects where isset($val->id) fails due to magic getters
-			if ( is_object($val) ) {
-				// Direct access is required because isset() returns false for magic properties
-				$id_check = $val->id;
-				if ( $id_check && in_array( $id_check, $onboarding_type_ids ) ) {
-					$matches = true;
-				}
-			} elseif ( is_array($val) ) {
-				foreach($val as $v) {
-					// Check object inside array
-					if ( is_object($v) ) {
-						$id_check = $v->id;
-						if ( $id_check && in_array( $id_check, $onboarding_type_ids ) ) {
-							$matches = true;
-							break;
-						}
-					}
-					// Check scalar inside array
-					if ( is_scalar($v) && in_array($v, $onboarding_type_ids) ) {
-						$matches = true;
-						break;
-					}
-				}
-			} elseif ( is_scalar($val) && in_array($val, $onboarding_type_ids) ) {
-				$matches = true;
-			}
-
-			if ( $matches ) {
-				// stackboost_log( 'TicketService: Ticket #' . $ticket_obj->id . ' matched Request Type logic.', 'onboarding' );
-				$all_tickets_objects[] = $ticket_obj;
-			}
-		}
+		stackboost_log( 'TicketService: WPSC_Ticket::find (meta_query) returned ' . count($all_tickets_objects) . ' tickets.', 'onboarding' );
 
 		stackboost_log( 'TicketService: Found ' . count( $all_tickets_objects ) . ' matching onboarding tickets after filtering.', 'onboarding' );
 

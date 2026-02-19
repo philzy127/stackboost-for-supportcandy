@@ -47,7 +47,7 @@ class Staff {
 			<div class="stackboost-card stackboost-card-connected">
 				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
 					<h2 style="margin:0; padding:0;"><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
-					<div style="margin-right: 5px;">
+					<div style="margin-right: 5px; margin-top: 10px;">
 						<button id="stkb-force-refresh" class="button"><?php esc_html_e( 'Update Now', 'stackboost-for-supportcandy' ); ?></button>
 						<span id="stkb-refresh-status" style="margin-left: 10px; display: none; vertical-align: middle;"></span>
 					</div>
