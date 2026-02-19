@@ -167,8 +167,9 @@ class TicketService {
 			];
 
 			// Handle Status ID for filtering later
-			if ( is_object( $ticket_obj->status ) && isset( $ticket_obj->status->id ) ) {
-				$t_array['status'] = $ticket_obj->status->id; // Normalize to ID for inactive check
+			if ( is_object( $ticket_obj->status ) ) {
+				// Direct access required for SupportCandy objects (isset fails)
+				$t_array['status'] = $ticket_obj->status->id;
 			} elseif ( is_array( $ticket_obj->status ) && isset( $ticket_obj->status['id'] ) ) {
 				$t_array['status'] = $ticket_obj->status['id'];
 			}
