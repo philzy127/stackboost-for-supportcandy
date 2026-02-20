@@ -129,6 +129,7 @@ def sanitize_plugin_file(filepath):
         r'StackBoost\\ForSupportCandy\\Modules\\Directory\\WordPress',
         r'StackBoost\\ForSupportCandy\\Modules\\Directory\\Admin\\TicketWidgetSettings',
         r'StackBoost\\ForSupportCandy\\Modules\\OnboardingDashboard\\OnboardingDashboard',
+        r'StackBoost\\ForSupportCandy\\Modules\\ChatBubbles\\WordPress',
     ]
 
     for module in modules_to_remove:
@@ -142,7 +143,8 @@ def sanitize_plugin_file(filepath):
         'after_ticket_survey',
         'unified_ticket_macro',
         'staff_directory',
-        'onboarding_dashboard'
+        'onboarding_dashboard',
+        'chat_bubbles'
     ]
 
     for key in keys_to_remove:
