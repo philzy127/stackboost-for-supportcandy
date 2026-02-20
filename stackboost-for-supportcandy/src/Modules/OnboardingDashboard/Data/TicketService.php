@@ -46,6 +46,7 @@ class TicketService {
 		// Build Meta Query for Request Type
 		$args = [
 			'items_per_page' => 0,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query' => [
 				[
 					'key'     => $request_type_key, // e.g. 'cust_40'
