@@ -167,7 +167,7 @@ class WordPress extends Module {
 	 * Apply the date/time formatting rules.
 	 */
 	public function apply_date_time_formats() {
-		$options = get_option( 'stackboost_settings', [] );
+		$options = get_option( 'stackboost_date_time_settings', [] );
 		if ( empty( $options['enable_date_time_formatting'] ) ) {
 			return;
 		}
@@ -212,22 +212,33 @@ class WordPress extends Module {
 	public function format_date_time_callback( $value, $cf, $ticket, $module ) {
 
 		// CONTEXT CHECK
-		$is_admin_list    = is_admin() && function_exists( 'get_current_screen' ) && get_current_screen() && get_current_screen()->id === 'toplevel_page_wpsc-tickets';
+		// We want to apply formatting in:
+		// 1. Admin Ticket Lists (AJAX or direct)
+		// 2. Frontend Ticket Lists (AJAX)
+		// 3. Ticket Details (AJAX)
+		// But NOT in edit forms where raw DB value is needed.
 
 		$action_req = Request::get_request( 'action', '', 'key' );
-		$is_frontend_list = $action_req === 'wpsc_get_tickets'; // Approximate check for frontend AJAX list
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		// Also check strict frontend context param if sent by custom scripts
-		$is_frontend_explicit = Request::get_post( 'is_frontend', '0', 'text' ) === '1';
+		$is_target_context = false;
 
-		// We apply formatting in admin lists and potentially frontend lists.
-		// The reference implementation was strict about contexts.
-		// If neither, return original.
-		// Note: We might want this on the ticket detail page too?
-		// The requirement says "SupportCandy ticket list".
-		// I will stick to the reference implementation's logic.
+		// Check 1: Known AJAX actions for displaying tickets
+		if ( in_array( $action_req, [ 'wpsc_get_tickets', 'wpsc_get_individual_ticket' ], true ) ) {
+			$is_target_context = true;
+		}
 
-		if ( ! $is_admin_list && ! $is_frontend_list && ! $is_frontend_explicit ) {
+		// Check 2: Explicit frontend flag
+		if ( Request::get_post( 'is_frontend', '0', 'text' ) === '1' ) {
+			$is_target_context = true;
+		}
+
+		// Check 3: Admin Screen (if not AJAX)
+		if ( is_admin() && $screen && strpos( $screen->id, 'wpsc-tickets' ) !== false ) {
+			$is_target_context = true;
+		}
+
+		if ( ! $is_target_context ) {
 			return $value;
 		}
 
@@ -282,13 +293,30 @@ class WordPress extends Module {
 
 		// If the date object is a string (raw DB format), convert it to DateTime.
 		if ( is_string( $date_object ) && ! empty( $date_object ) ) {
+			$date_str = $date_object;
 			try {
-				$date_object = new DateTime( $date_object );
+				$date_object = new DateTime( $date_str );
 				$date_object->setTimezone( wp_timezone() );
 				stackboost_log( "format_date_time_callback: Successfully converted string to DateTime.", 'date_time_formatting' );
 			} catch ( \Exception $e ) {
 				stackboost_log( "format_date_time_callback: Failed to convert string to DateTime. Error: " . $e->getMessage(), 'date_time_formatting' );
-				return $value;
+
+				// Fallback: SupportCandy might format dates as 'm-d-Y' (US format with dashes)
+				// PHP's DateTime assumes dashes = European (d-m-y), so '01-30-2024' fails (Month 30).
+				// We try replacing dashes with slashes to force 'm/d/y' parsing.
+				if ( strpos( $date_str, '-' ) !== false ) {
+					$fallback_str = str_replace( '-', '/', $date_str );
+					try {
+						$date_object = new DateTime( $fallback_str );
+						$date_object->setTimezone( wp_timezone() );
+						stackboost_log( "format_date_time_callback: Successfully converted fallback string (slashes) to DateTime.", 'date_time_formatting' );
+					} catch ( \Exception $e2 ) {
+						stackboost_log( "format_date_time_callback: Fallback conversion failed. Returning original value.", 'date_time_formatting' );
+						return $value;
+					}
+				} else {
+					return $value;
+				}
 			}
 		}
 

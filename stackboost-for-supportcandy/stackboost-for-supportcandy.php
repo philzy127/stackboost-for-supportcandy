@@ -2,7 +2,7 @@
 /**
  * Plugin Name: StackBoost - For SupportCandy
  * Description: Advanced flexibility for SupportCandy. StackBoost provides a modular suite of tools including role-based logic, directory integration, and workflow automation to streamline your support operations.
- * Version: 1.6.0
+ * Version: 1.6.1
  * Author: StackBoost
  * Author URI: https://stackboost.net
  * Text Domain: stackboost-for-supportcandy
@@ -17,11 +17,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'STACKBOOST_VERSION', '1.6.0' );
+define( 'STACKBOOST_VERSION', '1.6.1' );
 define( 'STACKBOOST_PLUGIN_FILE', __FILE__ );
 define( 'STACKBOOST_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'STACKBOOST_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'STACKBOOST_REQUIRED_UPDATE_TIMESTAMP', '202601130000' );
+define( 'STACKBOOST_REQUIRED_UPDATE_TIMESTAMP', '202501270000' );
 
 /**
  * Handles one-time upgrade routines.
@@ -39,7 +39,7 @@ function stackboost_upgrade_routine() {
 
 	if ( STACKBOOST_REQUIRED_UPDATE_TIMESTAMP > $last_update ) {
 		flush_rewrite_rules();
-		update_option( 'stackboost_last_update_completed_timestamp', time() );
+		update_option( 'stackboost_last_update_completed_timestamp', STACKBOOST_REQUIRED_UPDATE_TIMESTAMP );
 	}
 }
 add_action( 'admin_init', 'stackboost_upgrade_routine' );

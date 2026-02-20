@@ -11,7 +11,7 @@ class Staff {
 	 * Initialize Staff page.
 	 */
 	public static function init() {
-		add_action( 'wp_ajax_stackboost_onboarding_refresh_cache', [ __CLASS__, 'ajax_force_refresh_cache' ] );
+		add_action( 'wp_ajax_stackboost_onboarding_load_staff_data', [ __CLASS__, 'ajax_load_staff_data' ] );
 	}
 
 	/**
@@ -22,7 +22,7 @@ class Staff {
 
 		// Check configuration first
 		$config = Settings::get_config();
-		if ( empty( $config['request_type_field'] ) || empty( $config['request_type_id'] ) ) {
+		if ( empty( $config['request_type_field'] ) || empty( $config['request_type_id'] ) || empty( $config['field_staff_name'] ) || empty( $config['field_onboarding_date'] ) || empty( $config['field_cleared'] ) ) {
 			?>
 			<div class="stackboost-card stackboost-card-connected">
 				<h2 style="margin-top: 0; padding-top: 10px;"><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
@@ -31,7 +31,7 @@ class Staff {
 						<?php
 						printf(
 							/* translators: %s: settings url */
-							wp_kses_post( __( 'Please configure the Onboarding settings (Request Type, ID, and Column Mapping) in the <strong><a href="%s">Settings</a></strong> tab to view the staff list.', 'stackboost-for-supportcandy' ) ),
+							wp_kses_post( __( 'Please fully configure the Onboarding settings (Request Type, Onboarding Options, Staff Name, Onboarding Date, and Cleared Field) in the <strong><a href="%s">Settings</a></strong> tab to view the staff list.', 'stackboost-for-supportcandy' ) ),
 							esc_url( admin_url( 'admin.php?page=stackboost-onboarding-dashboard&tab=settings' ) )
 						);
 						?>
@@ -41,123 +41,67 @@ class Staff {
 			<?php
 			return;
 		}
-
-		$transient_key = 'stackboost_onboarding_tickets_cache';
-
 		?>
 		<div>
 			<!-- Header & Controls -->
 			<div class="stackboost-card stackboost-card-connected">
 				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
 					<h2 style="margin:0; padding:0;"><?php esc_html_e( 'Staff Management - Onboarding Tickets', 'stackboost-for-supportcandy' ); ?></h2>
-					<div>
+					<div style="margin-right: 5px; margin-top: 10px;">
+						<span id="stkb-refresh-status" style="margin-right: 10px; display: none; vertical-align: middle;"></span>
 						<button id="stkb-force-refresh" class="button"><?php esc_html_e( 'Update Now', 'stackboost-for-supportcandy' ); ?></button>
-						<span id="stkb-refresh-status" style="margin-left: 10px; display: none; vertical-align: middle;"></span>
 					</div>
 				</div>
 
-			<?php
-			$cached_data = get_transient( $transient_key );
-
-			if ( false === $cached_data ) {
-				$onboarding_tickets = self::get_sorted_tickets_internal();
-				if ( ! is_wp_error( $onboarding_tickets ) ) {
-					$data_to_cache = [
-						'data'      => $onboarding_tickets,
-						'timestamp' => time(),
-					];
-					set_transient( $transient_key, $data_to_cache, 10 * MINUTE_IN_SECONDS );
-					$cached_data = $data_to_cache;
-				} else {
-					$onboarding_tickets = $onboarding_tickets;
-				}
-			}
-
-			$onboarding_tickets = is_wp_error( $cached_data ) ? $cached_data : ( $cached_data['data'] ?? [] );
-			// Handle case where $onboarding_tickets is a WP_Error if fetch failed and not cached
-			if ( ! isset( $onboarding_tickets ) && is_wp_error( $cached_data ) ) {
-				$onboarding_tickets = $cached_data;
-			} elseif ( ! isset( $onboarding_tickets ) ) {
-				// If neither (fresh fetch failed), try to fetch fresh one last time
-				$onboarding_tickets = self::get_sorted_tickets_internal();
-			}
-
-
-			$last_updated_timestamp = $cached_data['timestamp'] ?? null;
-
-			if ( $last_updated_timestamp ) {
-				$last_updated_string = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last_updated_timestamp );
-				/* translators: %s: timestamp string */
-				echo '<p style="margin-bottom: 15px;"><em>' . sprintf( esc_html__( 'Data current as of: %s', 'stackboost-for-supportcandy' ), esc_html( $last_updated_string ) ) . '</em></p>';
-			}
-
-			if ( is_wp_error( $onboarding_tickets ) ) {
-				?>
-				<div class="notice notice-error">
-					<p><?php
-					/* translators: %s: error message */
-					printf( esc_html__( 'Failed to retrieve tickets: %s', 'stackboost-for-supportcandy' ), esc_html( $onboarding_tickets->get_error_message() ) );
-					?></p>
+				<div id="stackboost-staff-content">
+					<div style="text-align: center; padding: 40px;">
+						<span class="spinner is-active" style="float: none; margin: 0 10px 0 0;"></span>
+						<?php esc_html_e( 'Loading Staff Data...', 'stackboost-for-supportcandy' ); ?>
+					</div>
 				</div>
-				<?php
-				return;
-			}
 
-			// Render Tables
-
-			// Table 1: Previous (Inside connected card)
-			// Nesting strategy: We keep the main card wrapper open.
-			// The content inside the main card is just structured divs or h2s.
-			// The user wants "three cards inside of the main card".
-			// Since we are already inside a card (.stackboost-card-connected), we can just use <div class="stackboost-card"> for visual separation if desired,
-			// BUT .stackboost-card has a white background and shadow. Inside another white card, it might look odd unless the outer card is transparent?
-			// The outer card (.stackboost-card-connected) HAS white background.
-			// If we put cards inside cards, we get borders inside borders.
-			// Let's assume the user wants visual grouping.
-			// "Staff needs a big card with the three cards inside of the main card".
-			// This implies the outer container IS the card, and inner sections are just blocks.
-			// OR it implies nested cards.
-			// I will use a simple divider approach for now as standard nesting doubles up styling.
-			// Wait, the previous implementation closed the connected card and opened new ones.
-			// The requirement is "inside of the main card".
-			// So I will NOT close the connected card.
-
-			echo '<hr style="margin: 20px 0;">';
-			self::render_table( $onboarding_tickets['previous_onboarding'] ?? [], __( 'Previous Onboarding Tickets', 'stackboost-for-supportcandy' ) );
-
-			echo '<hr style="margin: 20px 0;">';
-			self::render_table( $onboarding_tickets['this_week_onboarding'] ?? [], __( 'Onboarding Tickets for This Week', 'stackboost-for-supportcandy' ) );
-
-			echo '<hr style="margin: 20px 0;">';
-			self::render_table( $onboarding_tickets['future_onboarding'] ?? [], __( 'Future Onboarding Tickets', 'stackboost-for-supportcandy' ) );
-
-			echo '<hr style="margin: 20px 0;">';
-			self::render_table( $onboarding_tickets['uncleared_or_unscheduled'] ?? [], __( 'Onboarding Tickets Not Yet Scheduled or Cleared', 'stackboost-for-supportcandy' ) );
-
-			echo '</div>'; // Close Main Connected Card
-			?>
+			</div> <!-- Close Main Connected Card -->
 
 			<script type="text/javascript">
 				jQuery(document).ready(function($) {
-					$('#stkb-force-refresh').on('click', function() {
-						var $button = $(this);
-						var $status = $('#stkb-refresh-status');
+					var $content = $('#stackboost-staff-content');
+					var $status = $('#stkb-refresh-status');
+					var $button = $('#stkb-force-refresh');
 
+					function loadData(forceRefresh) {
+						$status.text('<?php echo esc_js( __( 'Loading ticket data...', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'black').show();
 						$button.prop('disabled', true);
-						$status.text('<?php echo esc_js( __( 'Updating...', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'black').show();
+
+						if (forceRefresh) {
+							$content.html('<div style="text-align: center; padding: 40px;"><span class="spinner is-active" style="float: none; margin: 0 10px 0 0;"></span> <?php echo esc_js( __( 'Refreshing data...', 'stackboost-for-supportcandy' ) ); ?></div>');
+						}
 
 						$.post(ajaxurl, {
-							action: 'stackboost_onboarding_refresh_cache',
-							nonce: '<?php echo esc_js( wp_create_nonce( "stkb_refresh_cache_nonce" ) ); ?>'
+							action: 'stackboost_onboarding_load_staff_data',
+							nonce: '<?php echo esc_js( wp_create_nonce( "stkb_load_staff_nonce" ) ); ?>',
+							force_refresh: forceRefresh ? 1 : 0
 						}, function(response) {
 							if (response.success) {
-								$status.text('<?php echo esc_js( __( 'Data updated! Reloading...', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'green');
-								setTimeout(function() { location.reload(); }, 1000);
+								$content.html(response.data.html);
+								$status.text('<?php echo esc_js( __( 'Data loaded.', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'green').fadeOut(3000);
 							} else {
-								$status.text('<?php echo esc_js( __( 'Update failed.', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'red');
-								$button.prop('disabled', false);
+								$content.html('<div class="notice notice-error inline"><p>' + (response.data.message || 'Unknown error') + '</p></div>');
+								$status.text('<?php echo esc_js( __( 'Load failed.', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'red');
 							}
+							$button.prop('disabled', false);
+						}).fail(function() {
+							$content.html('<div class="notice notice-error inline"><p><?php echo esc_js( __( 'Server error. Please try again.', 'stackboost-for-supportcandy' ) ); ?></p></div>');
+							$status.text('<?php echo esc_js( __( 'Server error.', 'stackboost-for-supportcandy' ) ); ?>').css('color', 'red');
+							$button.prop('disabled', false);
 						});
+					}
+
+					// Initial Load
+					loadData(false);
+
+					// Button Click
+					$button.on('click', function() {
+						loadData(true);
 					});
 				});
 			</script>
@@ -244,13 +188,25 @@ class Staff {
 								if ( $slug === $onboarding_date_field_key ) {
 									if ( ! empty( $raw_value ) ) {
 										try {
-											$date = new \DateTime( $raw_value );
-											$display_value = $date->format( 'Y-m-d' );
+											if ( $raw_value instanceof \DateTime ) {
+												$date = $raw_value;
+											} else {
+												$date = new \DateTime( $raw_value );
+											}
+
+											// Check for the "empty date" artifacts (e.g. year < 0 or year < 1000)
+											// The user specifically reported '-0001-11-30'.
+											// We check if the year is less than 1900 to be safe for modern onboarding.
+											if ( (int) $date->format( 'Y' ) < 1900 ) {
+												$display_value = __( 'Not Set', 'stackboost-for-supportcandy' );
+											} else {
+												$display_value = $date->format( 'Y-m-d' );
+											}
 										} catch ( \Exception $e ) {
 											$display_value = $raw_value;
 										}
 									} else {
-										$display_value = 'N/A';
+										$display_value = __( 'Not Set', 'stackboost-for-supportcandy' );
 									}
 								}
 
@@ -326,6 +282,19 @@ class Staff {
 									}
 								}
 
+								// Handle Objects before passing to wp_kses_post (specifically DateTime)
+								if ( $display_value instanceof \DateTime ) {
+									$display_value = $display_value->format( 'Y-m-d H:i:s' );
+								} elseif ( is_object( $display_value ) ) {
+									// Fallback for other objects to string conversion or empty
+									if ( method_exists( $display_value, '__toString' ) ) {
+										$display_value = (string) $display_value;
+									} else {
+										// Cannot display generic object, set to empty to avoid fatal error
+										$display_value = '';
+									}
+								}
+
 								?>
 								<td><?php echo wp_kses_post( $display_value ); ?></td>
 							<?php endforeach; ?>
@@ -365,7 +334,10 @@ class Staff {
 	 * Format Phone.
 	 */
 	private static function format_phone( $phone ) {
-		$phone = preg_replace('/[^0-9]/', '', $phone);
+		if ( ! is_string( $phone ) && ! is_numeric( $phone ) ) {
+			return $phone;
+		}
+		$phone = preg_replace('/[^0-9]/', '', (string) $phone);
 		if (strlen($phone) === 10) {
 			return preg_replace('/(\d{3})(\d{3})(\d{4})/', '($1) $2-$3', $phone);
 		}
@@ -373,11 +345,74 @@ class Staff {
 	}
 
 	/**
-	 * AJAX: Refresh Cache.
+	 * AJAX: Load Staff Data.
 	 */
-	public static function ajax_force_refresh_cache() {
-		check_ajax_referer( 'stkb_refresh_cache_nonce', 'nonce' );
-		delete_transient( 'stackboost_onboarding_tickets_cache' );
-		wp_send_json_success();
+	public static function ajax_load_staff_data() {
+		check_ajax_referer( 'stkb_load_staff_nonce', 'nonce' );
+
+		$force_refresh = isset( $_POST['force_refresh'] ) && '1' === $_POST['force_refresh'];
+		$transient_key = 'stackboost_onboarding_tickets_cache';
+
+		if ( $force_refresh ) {
+			delete_transient( $transient_key );
+		}
+
+		$cached_data = get_transient( $transient_key );
+
+		if ( false === $cached_data ) {
+			$onboarding_tickets = self::get_sorted_tickets_internal();
+			if ( ! is_wp_error( $onboarding_tickets ) ) {
+				$data_to_cache = [
+					'data'      => $onboarding_tickets,
+					'timestamp' => time(),
+				];
+				set_transient( $transient_key, $data_to_cache, 10 * MINUTE_IN_SECONDS );
+				$cached_data = $data_to_cache;
+			} else {
+				$onboarding_tickets = $onboarding_tickets; // Keep WP_Error
+			}
+		}
+
+		// Process Result
+		$result = is_wp_error( $cached_data ) ? $cached_data : ( $cached_data['data'] ?? [] );
+		if ( ! isset( $result ) && is_wp_error( $cached_data ) ) {
+			$result = $cached_data; // Propagate error
+		} elseif ( ! isset( $result ) ) {
+			// Emergency fallback if cache structure is weird
+			$result = self::get_sorted_tickets_internal();
+		}
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+		}
+
+		// Buffer Output
+		ob_start();
+
+		$last_updated_timestamp = $cached_data['timestamp'] ?? null;
+		if ( $last_updated_timestamp ) {
+			$last_updated_string = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last_updated_timestamp );
+			echo '<p style="margin-bottom: 15px;"><em>' . sprintf(
+				/* translators: %s: timestamp string */
+				esc_html__( 'Data current as of: %s', 'stackboost-for-supportcandy' ),
+				esc_html( $last_updated_string )
+			) . '</em></p>';
+		}
+
+		echo '<hr style="margin: 20px 0;">';
+		self::render_table( $result['previous_onboarding'] ?? [], __( 'Previous Onboarding Tickets', 'stackboost-for-supportcandy' ) );
+
+		echo '<hr style="margin: 20px 0;">';
+		self::render_table( $result['this_week_onboarding'] ?? [], __( 'Onboarding Tickets for This Week', 'stackboost-for-supportcandy' ) );
+
+		echo '<hr style="margin: 20px 0;">';
+		self::render_table( $result['future_onboarding'] ?? [], __( 'Future Onboarding Tickets', 'stackboost-for-supportcandy' ) );
+
+		echo '<hr style="margin: 20px 0;">';
+		self::render_table( $result['uncleared_or_unscheduled'] ?? [], __( 'Onboarding Tickets Not Yet Scheduled or Cleared', 'stackboost-for-supportcandy' ) );
+
+		$html = ob_get_clean();
+
+		wp_send_json_success( [ 'html' => $html ] );
 	}
 }

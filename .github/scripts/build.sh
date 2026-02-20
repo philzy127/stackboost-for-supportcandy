@@ -37,6 +37,7 @@ rm -rf "$REPO_DIR/src/Modules/OnboardingDashboard"
 rm -rf "$REPO_DIR/src/Modules/QueueMacro"
 rm -rf "$REPO_DIR/src/Modules/UnifiedTicketMacro"
 rm -rf "$REPO_DIR/src/Modules/AfterTicketSurvey"
+rm -rf "$REPO_DIR/src/Modules/ChatBubbles"
 rm -rf "$REPO_DIR/includes/libraries/dompdf"
 rm -rf "$REPO_DIR/assets/libraries/datatables"
 
