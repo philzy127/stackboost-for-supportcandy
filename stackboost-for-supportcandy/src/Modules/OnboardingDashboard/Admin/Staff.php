@@ -193,12 +193,20 @@ class Staff {
 											} else {
 												$date = new \DateTime( $raw_value );
 											}
-											$display_value = $date->format( 'Y-m-d' );
+
+											// Check for the "empty date" artifacts (e.g. year < 0 or year < 1000)
+											// The user specifically reported '-0001-11-30'.
+											// We check if the year is less than 1900 to be safe for modern onboarding.
+											if ( (int) $date->format( 'Y' ) < 1900 ) {
+												$display_value = __( 'Not Set', 'stackboost-for-supportcandy' );
+											} else {
+												$display_value = $date->format( 'Y-m-d' );
+											}
 										} catch ( \Exception $e ) {
 											$display_value = $raw_value;
 										}
 									} else {
-										$display_value = 'N/A';
+										$display_value = __( 'Not Set', 'stackboost-for-supportcandy' );
 									}
 								}
 
