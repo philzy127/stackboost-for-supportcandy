@@ -20,6 +20,9 @@ class TicketService {
 
 		$config = Settings::get_config();
 
+		stackboost_log( 'TicketService: Config loaded. Request Type IDs: ' . json_encode( $config['request_type_id'] ), 'onboarding' );
+		stackboost_log( 'TicketService: Inactive Statuses: ' . json_encode( $config['inactive_statuses'] ), 'onboarding' );
+
 		$request_type_key   = $config['request_type_field'];
 		$onboarding_type_ids = $config['request_type_id']; // This is now an array
 		$inactive_ids       = $config['inactive_statuses']; // Array
@@ -27,6 +30,7 @@ class TicketService {
 		$cleared_key        = $config['field_cleared'];
 
 		if ( empty( $request_type_key ) || empty( $onboarding_type_ids ) ) {
+			stackboost_log( 'TicketService: Missing configuration. Aborting.', 'onboarding' );
 			return new \WP_Error( 'missing_config', 'Onboarding Settings not configured.' );
 		}
 
@@ -35,37 +39,57 @@ class TicketService {
 			$onboarding_type_ids = [ $onboarding_type_ids ];
 		}
 
-		// 1. Fetch All Active Onboarding Tickets
-		// Using WPSC_Ticket::find to filter at database level for performance
+		// 1. Fetch Onboarding Tickets via Meta Query (Scalable)
+		// We use meta_query to let the DB do the heavy lifting of filtering by request type.
+		// items_per_page = -1 or 0 usually means All. Let's use 0 as per SC convention.
+
+		// Build Meta Query for Request Type
 		$args = [
-			'items_per_page' => 9999, // Use large number instead of 0 to avoid potential SC bugs
-			'page_no'        => 1,
-			'is_active'      => 1, // Only active tickets
+			'items_per_page' => 0,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			'meta_query' => [
+				[
+					'key'     => $request_type_key, // e.g. 'cust_40'
+					'value'   => $onboarding_type_ids, // e.g. [69, 72]
+					'compare' => 'IN',
+				]
+			]
 		];
+
+		stackboost_log( 'TicketService: Attempting DB-level filtering via meta_query for ' . $request_type_key, 'onboarding' );
 
 		try {
 			$tickets_result = \WPSC_Ticket::find( $args );
-			$all_active_tickets = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
+			$all_tickets_raw = isset( $tickets_result['results'] ) ? $tickets_result['results'] : [];
 		} catch ( \Throwable $e ) {
-			stackboost_log( 'TicketService: Error fetching tickets: ' . $e->getMessage(), 'error' );
-			$all_active_tickets = [];
-			// If critical, return WP_Error, but trying empty list is safer for UI
-			// return new \WP_Error( 'db_error', $e->getMessage() );
+			stackboost_log( 'TicketService: Error fetching tickets with meta_query: ' . $e->getMessage(), 'error' );
+			$all_tickets_raw = [];
 		}
 
-		// Filter by Request Type (PHP-side to avoid SQL errors with meta_query)
+		stackboost_log( 'TicketService: WPSC_Ticket::find (meta_query) returned ' . count($all_tickets_raw) . ' tickets.', 'onboarding' );
+
+		// 2. PHP-Side Verification (Safety Net)
+		// We iterate through results to ensure they actually match.
+		// This handles cases where SupportCandy might ignore the meta_query for custom table columns.
 		$all_tickets_objects = [];
-		foreach ( $all_active_tickets as $ticket_obj ) {
+		foreach ( $all_tickets_raw as $ticket_obj ) {
 			$val = $ticket_obj->$request_type_key ?? null;
 			$matches = false;
 
-			if ( is_object($val) && isset($val->id) && in_array($val->id, $onboarding_type_ids) ) {
-				$matches = true;
+			// Handle WPSC_Option objects where isset($val->id) fails due to magic getters
+			if ( is_object($val) ) {
+				$id_check = $val->id;
+				if ( $id_check && in_array( $id_check, $onboarding_type_ids ) ) {
+					$matches = true;
+				}
 			} elseif ( is_array($val) ) {
 				foreach($val as $v) {
-					if ( is_object($v) && isset($v->id) && in_array($v->id, $onboarding_type_ids) ) {
-						$matches = true;
-						break;
+					if ( is_object($v) ) {
+						$id_check = $v->id;
+						if ( $id_check && in_array( $id_check, $onboarding_type_ids ) ) {
+							$matches = true;
+							break;
+						}
 					}
 					if ( is_scalar($v) && in_array($v, $onboarding_type_ids) ) {
 						$matches = true;
@@ -81,7 +105,7 @@ class TicketService {
 			}
 		}
 
-		stackboost_log( 'TicketService: Found ' . count( $all_tickets_objects ) . ' matching onboarding tickets after filtering.', 'onboarding' );
+		stackboost_log( 'TicketService: Found ' . count( $all_tickets_objects ) . ' matching onboarding tickets after PHP verification.', 'onboarding' );
 
 		// Convert objects to array structure expected by consumers
 		$all_tickets = [];
@@ -146,8 +170,9 @@ class TicketService {
 			];
 
 			// Handle Status ID for filtering later
-			if ( is_object( $ticket_obj->status ) && isset( $ticket_obj->status->id ) ) {
-				$t_array['status'] = $ticket_obj->status->id; // Normalize to ID for inactive check
+			if ( is_object( $ticket_obj->status ) ) {
+				// Direct access required for SupportCandy objects (isset fails)
+				$t_array['status'] = $ticket_obj->status->id;
 			} elseif ( is_array( $ticket_obj->status ) && isset( $ticket_obj->status['id'] ) ) {
 				$t_array['status'] = $ticket_obj->status['id'];
 			}
@@ -187,6 +212,7 @@ class TicketService {
 
 			// Check against inactive statuses
 			if ( in_array( $status_id, $inactive_ids ) ) {
+				stackboost_log( sprintf( 'TicketService: Skipping Ticket #%d due to inactive status (ID: %s).', $ticket['id'], $status_id ), 'onboarding' );
 				continue;
 			}
 
@@ -197,7 +223,12 @@ class TicketService {
 
 			if ( $is_cleared && ! empty( $date_str ) ) {
 				try {
-					$date = new \DateTime( $date_str );
+					if ( $date_str instanceof \DateTime ) {
+						$date = $date_str;
+					} else {
+						$date = new \DateTime( $date_str );
+					}
+
 					if ( $date < $start_week ) {
 						$sorted['previous_onboarding'][] = $ticket;
 					} elseif ( $date >= $start_week && $date <= $end_week ) {
@@ -206,6 +237,7 @@ class TicketService {
 						$sorted['future_onboarding'][] = $ticket;
 					}
 				} catch ( \Exception $e ) {
+					stackboost_log( sprintf( 'TicketService: Date parsing error for Ticket #%d: %s', $ticket['id'], $e->getMessage() ), 'onboarding' );
 					// Ignore date error, treat as unscheduled/problematic
 				}
 			} else {
