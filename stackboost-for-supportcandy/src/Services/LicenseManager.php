@@ -23,6 +23,13 @@ class LicenseManager {
      * Variant IDs for Pro Tier.
      */
     const PRO_VARIANTS = [
+        // Live
+        1317596, // Pro 1 Site (Annual)
+        1317597, // Pro 5 Sites (Annual)
+        1317600, // Pro Unlimited (Annual)
+        1317599, // Pro Lifetime
+
+        // Test
         1147440, // Pro 1 Site (Annual)
         1147463, // Pro 5 Sites (Annual)
         1147434, // Pro Unlimited (Annual)
@@ -33,6 +40,13 @@ class LicenseManager {
      * Variant IDs for Business Tier.
      */
     const BIZ_VARIANTS = [
+        // Live
+        1317595, // Business 1 Site (Annual)
+        1317592, // Business 5 Sites (Annual)
+        1317593, // Business Unlimited (Annual)
+        1317594, // Business Lifetime
+
+        // Test
         1147459, // Business 1 Site (Annual)
         1147441, // Business 5 Sites (Annual)
         1147442, // Business Unlimited (Annual)

@@ -152,26 +152,13 @@ class WordPress extends Module {
 			// If we only want description but it's already in UTM, we skip everything.
 			if ( 'with_description' === $content_type && $description_in_utm ) {
 				// Do nothing, description is already shown.
-			} elseif ( class_exists( 'StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core' ) ) {
-				$include_private = $current_user->is_agent; // Bonus point logic
+			} else {
+				// We removed the class_exists check for UTM here because we now use a local renderer.
+				$include_private = $current_user->is_agent;
 
 				if ( 'with_description' === $content_type ) {
 					$desc_thread = $ticket->get_description_thread();
 					if ( $desc_thread ) {
-						// Reuse logic? Or manually render?
-						// Let's use a temporary ticket object or modify parameters? No.
-						// Let's just manually render the description using the same style as `render_ticket_threads`.
-						// OR better: Update `render_ticket_threads` to accept a 'limit' or 'type' filter.
-						// But I already wrote `render_ticket_threads`.
-						// Let's just use it and filter strictly by type 'report' if needed?
-						// No, `render_ticket_threads` is built to fetch all.
-
-						// Let's implement a simple render for single thread here to avoid modifying Core again if not needed.
-						// Wait, consistency is key. I'll use `render_ticket_threads` but I need to make sure it only returns what I want.
-						// I'll update `render_ticket_threads` in the next step if I need to, but for now,
-						// let's just use it for 'with_history'.
-						// For 'with_description', I can just fetch the body.
-
 						// We sanitize FIRST to ensure the content is safe.
 						$body = wp_kses_post( $desc_thread->body );
 
@@ -213,9 +200,9 @@ class WordPress extends Module {
 
 					}
 				} elseif ( 'with_history' === $content_type ) {
-					// Render threads but strip the internal header from Core since we wrap it here
+					// Render threads utilizing local method
 					// Pass $description_in_utm as $exclude_description to avoid duplicate description.
-					$threads_html = \StackBoost\ForSupportCandy\Modules\UnifiedTicketMacro\Core::get_instance()->render_ticket_threads( $ticket, $include_private, $image_handling, $limit, $description_in_utm, $chat_bubbles );
+					$threads_html = $this->render_ticket_threads( $ticket, $include_private, $image_handling, $limit, $description_in_utm, $chat_bubbles );
 
 					if ( ! empty( $threads_html ) ) {
 						$history_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
@@ -463,12 +450,13 @@ class WordPress extends Module {
 		add_settings_field(
 			'stackboost_ticket_details_chat_bubbles',
 			__( 'Enable Chat Bubbles', 'stackboost-for-supportcandy' ) . ' <span class="stackboost-badge-pro">PRO</span>',
-			[ $this, 'render_checkbox_field' ],
+			[ $this, 'render_pro_checkbox_field' ],
 			$page_slug,
 			'stackboost_ticket_details_card_section',
 			[
-				'id'   => 'ticket_details_chat_bubbles',
-				'desc' => 'Display conversation history as chat bubbles (Requires Pro Plan).',
+				'id'      => 'ticket_details_chat_bubbles',
+				'desc'    => 'Display conversation history as chat bubbles (Requires Pro Plan).',
+				'feature' => 'unified_ticket_macro',
 			]
 		);
 
@@ -537,6 +525,28 @@ class WordPress extends Module {
 		echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="1" ' . esc_attr( $checked ) . '>';
 		if ( ! empty( $args['desc'] ) ) {
 			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+		}
+	}
+
+	/**
+	 * Renders a checkbox field that is disabled if a Pro feature is not active.
+	 */
+	public function render_pro_checkbox_field( array $args ) {
+		$options = get_option( 'stackboost_settings' );
+		$id      = $args['id'];
+		$feature = $args['feature'] ?? 'unified_ticket_macro';
+
+		$is_active = stackboost_is_feature_active( $feature );
+		// If active, check if option is set. If not active, force unchecked.
+		$checked  = $is_active && ! empty( $options[ $id ] ) ? 'checked' : '';
+		$disabled = $is_active ? '' : 'disabled';
+
+		echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="1" ' . esc_attr( $checked ) . ' ' . esc_attr( $disabled ) . '>';
+		if ( ! empty( $args['desc'] ) ) {
+			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+		}
+		if ( ! $is_active ) {
+			echo '<p class="description" style="color: #d63638;">' . esc_html__( 'This feature is available in the Pro version.', 'stackboost-for-supportcandy' ) . '</p>';
 		}
 	}
 
@@ -674,4 +684,143 @@ class WordPress extends Module {
 	public function render_hr_separator() {
 		echo '<hr>';
 	}
+
+	/**
+	 * Renders a number field for a settings page.
+	 */
+	public function render_number_field( array $args ) {
+		$options = get_option( 'stackboost_settings' );
+		$id      = $args['id'];
+		$value   = isset( $options[ $id ] ) ? $options[ $id ] : ( $args['default'] ?? '0' );
+		echo '<input type="number" id="' . esc_attr( $id ) . '" name="stackboost_settings[' . esc_attr( $id ) . ']" value="' . esc_attr( $value ) . '" class="regular-text" style="width: 80px;">';
+		if ( ! empty( $args['desc'] ) ) {
+			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+		}
+	}
+
+	/**
+	 * Renders the conversation threads for a ticket.
+	 *
+	 * Ported from UnifiedTicketMacro\Core to allow availability in Free/Lite version.
+	 *
+	 * @param \WPSC_Ticket $ticket              The ticket object.
+	 * @param bool         $include_private     Whether to include private notes (for agents).
+	 * @param string       $image_handling      How to handle images ('fit', 'strip', 'placeholder').
+	 * @param int          $limit               Maximum number of threads to return (0 for unlimited).
+	 * @param bool         $exclude_description Whether to exclude the initial report thread.
+	 * @param bool         $chat_bubbles        Whether to render as chat bubbles (Pro).
+	 * @return string HTML of the threads.
+	 */
+	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0, bool $exclude_description = false, bool $chat_bubbles = false ): string {
+		// Define which thread types to fetch
+		// Public always gets 'report' and 'reply'.
+		$types = [ 'report', 'reply' ];
+		if ( $include_private ) {
+			$types[] = 'note';
+		}
+
+		// Fetch threads using SupportCandy's method:
+		// get_threads( $page_no = 1, $items_per_page = 0, $types = array(), $orderby = 'date_created', $order = 'DESC' )
+		// If limit is 0, we want all threads.
+		$threads = $ticket->get_threads( 1, $limit, $types, 'date_created', 'ASC' );
+
+		if ( empty( $threads ) ) {
+			return '';
+		}
+
+		$wrapper_classes = 'stackboost-ticket-history';
+		if ( $exclude_description ) {
+			$wrapper_classes .= ' stackboost-no-border';
+		}
+
+		$html = '<div class="' . esc_attr( $wrapper_classes ) . '">';
+
+		foreach ( $threads as $thread ) {
+			// Skip description if requested (typically 'report' type)
+			if ( $exclude_description && 'report' === $thread->type ) {
+				continue;
+			}
+
+			// Body content processing
+			// We sanitize FIRST to ensure the content is safe.
+			$body = wp_kses_post( $thread->body );
+
+			// Handle Images
+			// We apply our trusted regex replacements AFTER sanitization so our onclick attributes are not stripped.
+			if ( 'strip' === $image_handling ) {
+				$body = preg_replace( '/<img[^>]+\>/i', '', $body );
+			} elseif ( 'placeholder' === $image_handling ) {
+				// Replace image tags with a clickable [Image] link that opens the Lightbox
+				$body = preg_replace(
+					'/<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>/i',
+					'<a href="$1" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="font-style:italic; color:#0073aa; cursor:pointer;">[' . __( 'Image', 'stackboost-for-supportcandy' ) . ']</a>',
+					$body
+				);
+			} else {
+				// 'fit' (default) - inject max-width style AND lightbox link
+				// Wrap images in a link that opens the Lightbox
+				$body = preg_replace(
+					'/(<img\s+[^>]*?src=["\']([^"\']+)["\'][^>]*?>)/i',
+					'<a href="$2" onclick="if(window.stackboostOpenWidgetModal) { stackboostOpenWidgetModal(event, this.href); return false; } else { return true; }" style="cursor:pointer;">$1</a>',
+					$body
+				);
+
+				// Ensure max-width style is present (backup to CSS)
+				$body = preg_replace( '/(<img\s+[^>]*?style=["\'])([^"\']*?)(["\'])/i', '$1$2; max-width:100%; height:auto;$3', $body );
+				$body = preg_replace( '/(<img\s+)(?![^>]*?style=)([^>]*?)(\/?>)/i', '$1$2 style="max-width:100%; height:auto;"$3', $body );
+			}
+
+			// Common Data
+			$author_name = $thread->customer ? $thread->customer->name : __( 'Unknown', 'stackboost-for-supportcandy' );
+			$date_str = $thread->date_created->setTimezone( wp_timezone() )->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
+
+			// Render
+			if ( $chat_bubbles ) {
+				// Alignment logic
+				$align_class = 'stackboost-chat-left'; // Default to Left (Customer)
+				$is_note = 'note' === $thread->type;
+
+				if ( $is_note ) {
+					$align_class = 'stackboost-chat-right stackboost-chat-note';
+				} elseif ( isset( $thread->customer ) && property_exists( $thread->customer, 'is_agent' ) && $thread->customer->is_agent ) {
+					$align_class = 'stackboost-chat-right';
+				} elseif ( isset( $thread->customer ) && isset( $thread->customer->user ) && in_array( 'administrator', $thread->customer->user->roles ?? [] ) ) {
+					// Fallback for admins
+					$align_class = 'stackboost-chat-right';
+				}
+
+				$html .= '<div class="stackboost-chat-row ' . esc_attr( $align_class ) . '">';
+				$html .= '<div class="stackboost-chat-bubble">';
+				$html .= '<div class="stackboost-chat-meta"><strong>' . esc_html( $author_name ) . '</strong> &bull; ' . esc_html( $date_str ) . '</div>';
+				$html .= '<div class="stackboost-thread-body">' . $body . '</div>';
+				$html .= '</div>';
+				$html .= '</div>';
+
+			} else {
+				// Standard List View
+				$html .= '<div class="stackboost-thread-item">';
+
+				$type_label = '';
+				switch ( $thread->type ) {
+					case 'report': $type_label = __( 'Reported', 'stackboost-for-supportcandy' ); break;
+					case 'reply': $type_label = __( 'Replied', 'stackboost-for-supportcandy' ); break;
+					case 'note': $type_label = __( 'Private Note', 'stackboost-for-supportcandy' ); break;
+				}
+
+				$style_bg = ( 'note' === $thread->type ) ? 'background: #fff8e1;' : 'background: #f9f9f9;';
+				$style_border = ( 'note' === $thread->type ) ? 'border-left: 4px solid #fbc02d;' : 'border-left: 4px solid #ddd;';
+
+				$html .= '<div style="padding: 8px; margin-bottom: 10px; ' . $style_bg . $style_border . '">';
+				$html .= '<strong>' . esc_html( $author_name ) . '</strong> <span style="color:#777; font-size: 0.9em;">(' . esc_html( $type_label ) . ')</span>';
+				$html .= '<div style="font-size: 0.8em; color: #999;">' . esc_html( $date_str ) . '</div>';
+				$html .= '<div class="stackboost-thread-body" style="margin-top: 5px;">' . $body . '</div>';
+				$html .= '</div>'; // End container
+				$html .= '</div>'; // End item
+			}
+		}
+		$html .= '</div>';
+
+		return $html;
+	}
+
 }
