@@ -147,7 +147,7 @@ class WordPress {
         $valid_themes = [
             'sb-theme-wordpress-sync',
             'sb-theme-supportcandy-sync',
-            'sb-theme-cloud-dancer',
+            'sb-theme-cloud-walker',
             'sb-theme-heroic',
             'sb-theme-clean-tech',
             'sb-theme-hudson-valley-eco'
