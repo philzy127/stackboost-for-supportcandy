@@ -1000,27 +1000,32 @@ class Settings {
 		$options = get_option( 'stackboost_settings', [] );
 
 		$modules = [
-			'enable_log_general'           => __( 'General Settings', 'stackboost-for-supportcandy' ),
-			'enable_log_ticket_view'       => __( 'Ticket View', 'stackboost-for-supportcandy' ),
-			'enable_log_conditional_options' => __( 'Conditional Options', 'stackboost-for-supportcandy' ),
-			'enable_log_date_time'         => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ),
-			'enable_log_after_hours'       => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ),
-			'enable_log_chat_bubbles'      => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ),
-			'enable_log_conditional_views' => __( 'Conditional Views', 'stackboost-for-supportcandy' ),
-			'enable_log_queue_macro'       => __( 'Queue Macro', 'stackboost-for-supportcandy' ),
-			'enable_log_utm'               => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ),
-			'enable_log_ats'               => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ),
-			'enable_log_directory'         => __( 'Company Directory', 'stackboost-for-supportcandy' ),
-			'enable_log_onboarding'        => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ),
-			'enable_log_appearance'        => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ),
+			'enable_log_general'           => [ 'label' => __( 'General Settings', 'stackboost-for-supportcandy' ), 'feature' => '' ],
+			'enable_log_ticket_view'       => [ 'label' => __( 'Ticket View', 'stackboost-for-supportcandy' ), 'feature' => '' ],
+			'enable_log_conditional_options' => [ 'label' => __( 'Conditional Options', 'stackboost-for-supportcandy' ), 'feature' => 'conditional_options' ],
+			'enable_log_date_time'         => [ 'label' => __( 'Date & Time Formatting', 'stackboost-for-supportcandy' ), 'feature' => 'date_time_formatting' ],
+			'enable_log_after_hours'       => [ 'label' => __( 'After-Hours Notice', 'stackboost-for-supportcandy' ), 'feature' => 'after_hours_notice' ],
+			'enable_log_chat_bubbles'      => [ 'label' => __( 'Chat Bubbles', 'stackboost-for-supportcandy' ), 'feature' => 'chat_bubbles' ],
+			'enable_log_conditional_views' => [ 'label' => __( 'Conditional Views', 'stackboost-for-supportcandy' ), 'feature' => 'conditional_views' ],
+			'enable_log_queue_macro'       => [ 'label' => __( 'Queue Macro', 'stackboost-for-supportcandy' ), 'feature' => 'queue_macro' ],
+			'enable_log_utm'               => [ 'label' => __( 'Unified Ticket Macro', 'stackboost-for-supportcandy' ), 'feature' => 'unified_ticket_macro' ],
+			'enable_log_ats'               => [ 'label' => __( 'After Ticket Survey', 'stackboost-for-supportcandy' ), 'feature' => 'after_ticket_survey' ],
+			'enable_log_directory'         => [ 'label' => __( 'Company Directory', 'stackboost-for-supportcandy' ), 'feature' => 'staff_directory' ],
+			'enable_log_onboarding'        => [ 'label' => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ), 'feature' => 'onboarding_dashboard' ],
+			'enable_log_appearance'        => [ 'label' => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ), 'feature' => '' ],
 		];
 
-		foreach ( $modules as $key => $label ) {
+		foreach ( $modules as $key => $data ) {
+			// Skip if feature is defined but not active
+			if ( ! empty( $data['feature'] ) && ! stackboost_is_feature_active( $data['feature'] ) ) {
+				continue;
+			}
+
 			$is_enabled = ! empty( $options[ $key ] );
 			?>
 			<label style="display: block; margin-bottom: 5px;">
 				<input type="checkbox" name="stackboost_settings[<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( $is_enabled ); ?> />
-				<?php echo esc_html( $label ); ?>
+				<?php echo esc_html( $data['label'] ); ?>
 			</label>
 			<?php
 		}

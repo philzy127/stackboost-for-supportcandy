@@ -20,7 +20,7 @@ class Page {
         $themes = [
             'sb-theme-wordpress-sync'      => 'WordPress Sync',
             'sb-theme-supportcandy-sync'   => 'SupportCandy Sync',
-            'sb-theme-cloud-dancer'        => 'Cloud Dancer',
+            'sb-theme-cloud-walker'        => 'Cloud Walker',
             'sb-theme-heroic'              => 'Heroic',
             'sb-theme-clean-tech'          => 'Clean Tech (Default)',
             'sb-theme-hudson-valley-eco'   => 'Hudson Valley Eco',

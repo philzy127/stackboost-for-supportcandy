@@ -460,7 +460,7 @@ class Core {
 				'text_on_accent' => '#ffffff',
 				'bg_main' => '#f6f7f7',
 			],
-			'sb-theme-cloud-dancer' => [
+			'sb-theme-cloud-walker' => [
 				'accent' => '#722ed1',
 				'text_on_accent' => '#ffffff',
 				'bg_main' => '#F0EEE9',
