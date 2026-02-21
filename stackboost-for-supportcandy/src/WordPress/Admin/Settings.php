@@ -572,7 +572,13 @@ class Settings {
 			</div>
 
 			<p class="description stackboost-uninstall-desc">
-				<?php esc_html_e( 'By default, deleting this plugin keeps your Staff Directory and Settings in the database so you can reinstall later without losing work.', 'stackboost-for-supportcandy' ); ?>
+				<?php
+				if ( stackboost_is_feature_active( 'staff_directory' ) ) {
+					esc_html_e( 'By default, deleting this plugin keeps your Staff Directory and Settings in the database so you can reinstall later without losing work.', 'stackboost-for-supportcandy' );
+				} else {
+					esc_html_e( 'By default, deleting this plugin keeps your Settings in the database so you can reinstall later without losing work.', 'stackboost-for-supportcandy' );
+				}
+				?>
 			</p>
 
 			<?php if ( $is_authorized ) : ?>
@@ -603,8 +609,12 @@ class Settings {
 						</p>
 						<ul style="text-align: left; display: inline-block; margin-bottom: 20px;">
 							<li>- <?php esc_html_e( 'All General Settings', 'stackboost-for-supportcandy' ); ?></li>
-							<li>- <?php esc_html_e( 'The entire Staff Directory (Staff, Locations, Departments)', 'stackboost-for-supportcandy' ); ?></li>
-							<li>- <?php esc_html_e( 'Onboarding Dashboard progress', 'stackboost-for-supportcandy' ); ?></li>
+							<?php if ( stackboost_is_feature_active( 'staff_directory' ) ) : ?>
+								<li>- <?php esc_html_e( 'The entire Staff Directory (Staff, Locations, Departments)', 'stackboost-for-supportcandy' ); ?></li>
+							<?php endif; ?>
+							<?php if ( stackboost_is_feature_active( 'onboarding_dashboard' ) ) : ?>
+								<li>- <?php esc_html_e( 'Onboarding Dashboard progress', 'stackboost-for-supportcandy' ); ?></li>
+							<?php endif; ?>
 						</ul>
 						<p><?php esc_html_e( 'You will have 5 minutes to delete the plugin after clicking Yes.', 'stackboost-for-supportcandy' ); ?></p>
 					</div>
