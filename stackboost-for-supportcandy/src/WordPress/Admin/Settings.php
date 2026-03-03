@@ -768,6 +768,7 @@ class Settings {
 				'ticket_details_view_type',
 				'ticket_details_content',
 				'ticket_details_history_limit',
+				'ticket_details_history_order',
 				'ticket_details_image_handling',
 				'enable_hide_empty_columns',
 				'enable_hide_priority_column',
