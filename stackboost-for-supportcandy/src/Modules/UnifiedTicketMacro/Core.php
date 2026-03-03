@@ -304,9 +304,10 @@ class Core {
 	 * @param int          $limit Maximum number of threads to return (0 for unlimited).
 	 * @param bool         $exclude_description Whether to exclude the initial report thread.
 	 * @param bool         $chat_bubbles Whether to render as chat bubbles (Pro).
+	 * @param string       $order Sort order ('ASC' or 'DESC').
 	 * @return string HTML of the threads.
 	 */
-	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0, bool $exclude_description = false, bool $chat_bubbles = false ): string {
+	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0, bool $exclude_description = false, bool $chat_bubbles = false, string $order = 'ASC' ): string {
 		// Define which thread types to fetch
 		// Public always gets 'report' and 'reply'.
 		$types = [ 'report', 'reply' ];
@@ -319,7 +320,7 @@ class Core {
 		// If limit is 0, we want all threads.
 		// Note: WPSC's get_threads pagination might expect items_per_page > 0 for limiting.
 		// If 0 is passed, it returns all.
-		$threads = $ticket->get_threads( 1, $limit, $types, 'date_created', 'ASC' );
+		$threads = $ticket->get_threads( 1, $limit, $types, 'date_created', $order );
 
 		if ( empty( $threads ) ) {
 			return '';

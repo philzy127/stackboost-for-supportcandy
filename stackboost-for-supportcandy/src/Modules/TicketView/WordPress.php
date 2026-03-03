@@ -103,6 +103,7 @@ class WordPress extends Module {
 		$content_type = $options['ticket_details_content'] ?? 'details_only';
 		$image_handling = $options['ticket_details_image_handling'] ?? 'fit';
 		$limit = isset( $options['ticket_details_history_limit'] ) ? intval( $options['ticket_details_history_limit'] ) : 0;
+		$order = $options['ticket_details_history_order'] ?? 'ASC';
 		$chat_bubbles = ! empty( $options['ticket_details_chat_bubbles'] );
 
 		// Enforce Pro Check for Chat Bubbles
@@ -202,7 +203,7 @@ class WordPress extends Module {
 				} elseif ( 'with_history' === $content_type ) {
 					// Render threads utilizing local method
 					// Pass $description_in_utm as $exclude_description to avoid duplicate description.
-					$threads_html = $this->render_ticket_threads( $ticket, $include_private, $image_handling, $limit, $description_in_utm, $chat_bubbles );
+					$threads_html = $this->render_ticket_threads( $ticket, $include_private, $image_handling, $limit, $description_in_utm, $chat_bubbles, $order );
 
 					if ( ! empty( $threads_html ) ) {
 						$history_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
@@ -431,6 +432,22 @@ class WordPress extends Module {
 		);
 
 		add_settings_field(
+			'stackboost_ticket_details_history_order',
+			__( 'Conversation History Order', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_select_field' ],
+			$page_slug,
+			'stackboost_ticket_details_card_section',
+			[
+				'id' => 'ticket_details_history_order',
+				'choices' => [
+					'ASC'  => __( 'Oldest First (Old to New)', 'stackboost-for-supportcandy' ),
+					'DESC' => __( 'Newest First (New to Old)', 'stackboost-for-supportcandy' ),
+				],
+				'desc' => 'Select the order of the conversation history.'
+			]
+		);
+
+		add_settings_field(
 			'stackboost_ticket_details_image_handling',
 			__( 'Image Handling in Notes', 'stackboost-for-supportcandy' ),
 			[ $this, 'render_select_field' ],
@@ -618,6 +635,7 @@ class WordPress extends Module {
 
 			// Conditional Logic for Content Options
 			var $limitRow = $('#ticket_details_history_limit').closest('tr');
+			var $orderRow = $('#ticket_details_history_order').closest('tr');
 			var $imageHandlingRow = $('#ticket_details_image_handling').closest('tr');
 			var $contentSelect = $('#ticket_details_content');
 
@@ -626,14 +644,17 @@ class WordPress extends Module {
 				if (val === 'details_only') {
 					// Hide both
 					$limitRow.hide();
+					$orderRow.hide();
 					$imageHandlingRow.hide();
 				} else if (val === 'with_description') {
 					// Show Image Handling, Hide Limit
 					$limitRow.hide();
+					$orderRow.hide();
 					$imageHandlingRow.show();
 				} else if (val === 'with_history') {
 					// Show Both
 					$limitRow.show();
+					$orderRow.show();
 					$imageHandlingRow.show();
 				}
 			}
@@ -709,9 +730,10 @@ class WordPress extends Module {
 	 * @param int          $limit               Maximum number of threads to return (0 for unlimited).
 	 * @param bool         $exclude_description Whether to exclude the initial report thread.
 	 * @param bool         $chat_bubbles        Whether to render as chat bubbles (Pro).
+	 * @param string       $order               Sort order ('ASC' or 'DESC').
 	 * @return string HTML of the threads.
 	 */
-	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0, bool $exclude_description = false, bool $chat_bubbles = false ): string {
+	public function render_ticket_threads( \WPSC_Ticket $ticket, bool $include_private = false, string $image_handling = 'fit', int $limit = 0, bool $exclude_description = false, bool $chat_bubbles = false, string $order = 'ASC' ): string {
 		// Define which thread types to fetch
 		// Public always gets 'report' and 'reply'.
 		$types = [ 'report', 'reply' ];
@@ -722,7 +744,7 @@ class WordPress extends Module {
 		// Fetch threads using SupportCandy's method:
 		// get_threads( $page_no = 1, $items_per_page = 0, $types = array(), $orderby = 'date_created', $order = 'DESC' )
 		// If limit is 0, we want all threads.
-		$threads = $ticket->get_threads( 1, $limit, $types, 'date_created', 'ASC' );
+		$threads = $ticket->get_threads( 1, $limit, $types, 'date_created', $order );
 
 		if ( empty( $threads ) ) {
 			return '';
