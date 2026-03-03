@@ -209,7 +209,12 @@ class WordPress extends Module {
 						$history_html .= '<div class="stackboost-dashboard ' . esc_attr( $theme_class ) . '" style="background:none; padding:0; box-shadow:none; border:none; margin-top:0;">';
 						$history_html .= '<div class="wpsc-it-widget stackboost-ticket-card-extension" style="margin-top: 10px;">';
 						$history_html .= '<div class="wpsc-widget-header">';
-						$history_html .= '<h2>' . __( 'Conversation History', 'stackboost-for-supportcandy' ) . '</h2>';
+
+						$order_text = ( 'DESC' === $order ) ? __( 'desc', 'stackboost-for-supportcandy' ) : __( 'asc', 'stackboost-for-supportcandy' );
+						/* translators: %s is the conversation sort order (asc or desc) */
+						$heading_text = sprintf( __( 'Conversation History - %s', 'stackboost-for-supportcandy' ), $order_text );
+						$history_html .= '<h2>' . esc_html( $heading_text ) . '</h2>';
+
 						$history_html .= '<span class="wpsc-itw-toggle dashicons dashicons-arrow-up-alt2" data-widget="stackboost-history"></span>';
 						$history_html .= '</div>';
 						$history_html .= '<div class="wpsc-widget-body" style="display: block;">';
