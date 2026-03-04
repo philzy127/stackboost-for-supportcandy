@@ -334,24 +334,8 @@ class WordPress extends Module {
 					true
 				);
 			}
-			$utm_enabled = stackboost_is_feature_active( 'unified_ticket_macro' ) ? 'true' : 'false';
-			$utm_inactive_msg = esc_js( __( 'The Unified Ticket Macro feature is not active on your plan.', 'stackboost-for-supportcandy' ) );
-			$utm_reminder_msg = esc_js( __( 'Reminder: Please ensure the Unified Ticket Macro module is enabled and configured in its settings page for this view to function correctly.', 'stackboost-for-supportcandy' ) );
-
 			$inline_script = "
 			jQuery(document).ready(function($) {
-				// UTM Alert Logic
-				var utmEnabled = {$utm_enabled};
-				$('#ticket_details_view_type').on('change', function() {
-					if ($(this).val() === 'utm') {
-						if (!utmEnabled) {
-							alert('{$utm_inactive_msg}');
-						} else {
-							alert('{$utm_reminder_msg}');
-						}
-					}
-				});
-
 				// Conditional Logic for Content Options
 				var \$limitRow = $('#ticket_details_history_limit').closest('tr');
 				var \$orderRow = $('#ticket_details_history_order').closest('tr');
@@ -458,14 +442,6 @@ class WordPress extends Module {
 		add_settings_field( 'stackboost_enable_ticket_details_card', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'enable_ticket_details_card', 'desc' => 'Shows a card with ticket details on right-click.' ] );
 
 		// New Options for Ticket Details Card
-		add_settings_field(
-			'stackboost_ticket_details_view_type',
-			__( 'Card View Type', 'stackboost-for-supportcandy' ),
-			[ $this, 'render_view_type_select' ], // Custom renderer for Pro badge
-			$page_slug,
-			'stackboost_ticket_details_card_section',
-			[ 'id' => 'ticket_details_view_type', 'desc' => 'Choose how the ticket details are displayed.' ]
-		);
 
 		add_settings_field(
 			'stackboost_ticket_details_content',
@@ -527,19 +503,6 @@ class WordPress extends Module {
 					'placeholder' => __( '[Image] Placeholder', 'stackboost-for-supportcandy' ),
 				],
 				'desc' => 'How to handle images within the description and notes.'
-			]
-		);
-
-		add_settings_field(
-			'stackboost_ticket_details_chat_bubbles',
-			__( 'Enable Chat Bubbles', 'stackboost-for-supportcandy' ) . ' <span class="stackboost-badge-pro">PRO</span>',
-			[ $this, 'render_pro_checkbox_field' ],
-			$page_slug,
-			'stackboost_ticket_details_card_section',
-			[
-				'id'      => 'ticket_details_chat_bubbles',
-				'desc'    => 'Display conversation history as chat bubbles (Requires Pro Plan).',
-				'feature' => 'unified_ticket_macro',
 			]
 		);
 

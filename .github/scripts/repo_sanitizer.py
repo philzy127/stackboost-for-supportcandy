@@ -219,6 +219,32 @@ def sanitize_settings_file(filepath):
     with open(filepath, 'w') as f:
         f.write(content)
 
+def sanitize_ticket_view(filepath):
+    if not os.path.exists(filepath):
+        print(f"File not found: {filepath}")
+        return
+
+    with open(filepath, 'r') as f:
+        content = f.read()
+
+    # Use state machine logic or non-greedy regex that matches blocks robustly if nested braces exist.
+    # Since regex fails with deeply nested braces, let's target the known block signatures and remove them manually,
+    # or implement a simpler block remover.
+
+    # 1. Remove the Chat Bubbles settings field registration
+    content = re.sub(r"\s*if\s*\(\s*stackboost_is_feature_active\s*\(\s*'unified_ticket_macro'\s*\)\s*\)\s*\{\s*add_settings_field\(\s*'stackboost_ticket_details_chat_bubbles'.*?\);\s*\}", "", content, flags=re.MULTILINE | re.DOTALL)
+
+    # 2. Remove the View Type settings field registration
+    content = re.sub(r"\s*if\s*\(\s*stackboost_is_feature_active\s*\(\s*'unified_ticket_macro'\s*\)\s*\)\s*\{\s*add_settings_field\(\s*'stackboost_ticket_details_view_type'.*?\);\s*\}", "", content, flags=re.MULTILINE | re.DOTALL)
+
+    # 3. Remove the unified_ticket_macro inline JS block appended to the common script
+    js_block_pattern = r"\s*if\s*\(\s*stackboost_is_feature_active\s*\(\s*'unified_ticket_macro'\s*\)\s*\)\s*\{\s*\$utm_enabled\s*=\s*'true';.*?\$inline_script\s*\.=\s*\$utm_script;\s*\}"
+    content = re.sub(js_block_pattern, "", content, flags=re.MULTILINE | re.DOTALL)
+
+    with open(filepath, 'w') as f:
+        f.write(content)
+
+
 def sanitize_uninstall_service(filepath):
     if not os.path.exists(filepath):
         print(f"File not found: {filepath}")
@@ -261,8 +287,10 @@ if __name__ == "__main__":
     functions_file = os.path.join(base_dir, 'includes/functions.php')
     settings_file = os.path.join(base_dir, 'src/WordPress/Admin/Settings.php')
     uninstall_file = os.path.join(base_dir, 'src/Services/UninstallService.php')
+    ticket_view_file = os.path.join(base_dir, 'src/Modules/TicketView/WordPress.php')
 
     sanitize_plugin_file(plugin_file)
     sanitize_functions_file(functions_file)
     sanitize_settings_file(settings_file)
     sanitize_uninstall_service(uninstall_file)
+    sanitize_ticket_view(ticket_view_file)

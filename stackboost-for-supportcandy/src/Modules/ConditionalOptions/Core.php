@@ -161,15 +161,6 @@ class Core {
 	 * @return bool|\WP_Error True on success, WP_Error on failure.
 	 */
 	public function save_config( array $new_rules, bool $is_enabled ) {
-		// Check limit
-		$limit = 5; // Free/Lite Limit
-
-		$tier = stackboost_get_license_tier();
-		if ( 'lite' === $tier && count( $new_rules ) > $limit ) {
-			/* translators: %d: limit number of rules */
-			return new \WP_Error( 'limit_exceeded', sprintf( __( 'You have reached the limit of %d rules for the Free version.', 'stackboost-for-supportcandy' ), $limit ) );
-		}
-
 		// Construct payload to pass through Settings::sanitize_settings
 		$payload = [
 			'page_slug'                   => 'stackboost-conditional-options',

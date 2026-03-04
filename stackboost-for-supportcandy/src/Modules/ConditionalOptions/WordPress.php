@@ -109,9 +109,6 @@ class WordPress extends Module {
 				<div id="stackboost-co-rules-card" class="stackboost-card <?php echo $is_enabled ? '' : 'stackboost-disabled-ui'; ?>">
 					<div class="pm-header">
 						<h2><?php esc_html_e( 'Manage Rules', 'stackboost-for-supportcandy' ); ?></h2>
-						<div class="pm-limit-counter">
-							<!-- Populated by JS -->
-						</div>
 					</div>
 
 					<div class="pm-controls">
@@ -255,7 +252,6 @@ class WordPress extends Module {
 			'tier'            => stackboost_get_license_tier(),
 			'i18n'            => [
 				'confirm_delete' => __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ),
-				'limit_reached'  => __( 'Limit Reached: Upgrade to Pro for unlimited rules.', 'stackboost-for-supportcandy' ),
 				'toggle_all'     => __( 'Select All / None', 'stackboost-for-supportcandy' ),
 			]
 		] );
