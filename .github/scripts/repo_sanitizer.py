@@ -10,7 +10,7 @@ def remove_method_by_name(content, method_name):
     """
     # Regex to find the method definition ONLY.
     # We do NOT try to match the docblock here to avoid catastrophic backtracking.
-    pattern = re.compile(r"(public function " + re.escape(method_name) + r"\s*\(.*?\)\s*\{)", re.DOTALL)
+    pattern = re.compile(r"((?:public|private|protected)\s+function\s+" + re.escape(method_name) + r"\s*\(.*?\)\s*(?::\s*[A-Za-z0-9_\\]+\s*)?\{)", re.DOTALL)
 
     match = pattern.search(content)
     if not match:
@@ -130,6 +130,7 @@ def sanitize_plugin_file(filepath):
         r'StackBoost\\ForSupportCandy\\Modules\\Directory\\Admin\\TicketWidgetSettings',
         r'StackBoost\\ForSupportCandy\\Modules\\OnboardingDashboard\\OnboardingDashboard',
         r'StackBoost\\ForSupportCandy\\Modules\\ChatBubbles\\WordPress',
+        r'StackBoost\\ForSupportCandy\\Modules\\ChatBubbles',
     ]
 
     for module in modules_to_remove:
@@ -212,7 +213,7 @@ def sanitize_settings_file(filepath):
         content = remove_method_by_name(content, method)
 
     # Remove the License Card HTML Block
-    card_pattern = r'<!-- Card 2: License -->\s*<div class="stackboost-card">.*?do_settings_sections\( \'stackboost-for-supportcandy\' \);\s*\?>\s*</form>\s*</div>'
+    card_pattern = r'<!-- Card 2: License -->\s*<div class="stackboost-card">.*?do_settings_sections\(\s*\'stackboost-for-supportcandy\'\s*\);\s*\?>\s*</form>\s*</div>'
     content = re.sub(card_pattern, '', content, flags=re.DOTALL)
 
     with open(filepath, 'w') as f:
