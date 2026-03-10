@@ -14,14 +14,12 @@
         isEnabled: stackboostCO.enabled,
         fieldOptionsCache: {},
         rolesCache: { wp: [], sc: [] },
-        limit: 999, // Unlimited rules
         currentEditingSlug: null,
         isNewRule: false
     };
 
     $(document).ready(function() {
         renderRulesTable();
-        updateCounter();
         initModalEvents();
         initToggle();
 
@@ -118,7 +116,6 @@
                 $tbody.append(row);
             });
         }
-        updateCounter();
     }
 
     // --- Modal Logic ---
@@ -490,8 +487,5 @@
         return stackboostCO.fields[slug] || slug;
     }
 
-    function updateCounter() {
-        // Feature rule limit removed.
-    }
 
 })(jQuery);

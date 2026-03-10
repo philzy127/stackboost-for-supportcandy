@@ -219,30 +219,29 @@ def sanitize_settings_file(filepath):
     with open(filepath, 'w') as f:
         f.write(content)
 
-def sanitize_ticket_view(filepath):
+def strip_pro_tags(filepath):
+    """
+    Strips any code found between // <stackboost-pro-only> and // </stackboost-pro-only>
+    """
     if not os.path.exists(filepath):
-        print(f"File not found: {filepath}")
         return
 
     with open(filepath, 'r') as f:
         content = f.read()
 
-    # Use state machine logic or non-greedy regex that matches blocks robustly if nested braces exist.
-    # Since regex fails with deeply nested braces, let's target the known block signatures and remove them manually,
-    # or implement a simpler block remover.
+    # Regex to capture the tags and everything in between
+    # Uses \s* to capture surrounding whitespace up to the tag
+    pattern = r"[ \t]*//\s*<stackboost-pro-only>.*?//\s*</stackboost-pro-only>[ \t]*\n?"
 
-    # 1. Remove the Chat Bubbles settings field registration
-    content = re.sub(r"\s*if\s*\(\s*stackboost_is_feature_active\s*\(\s*'unified_ticket_macro'\s*\)\s*\)\s*\{\s*add_settings_field\(\s*'stackboost_ticket_details_chat_bubbles'.*?\);\s*\}", "", content, flags=re.MULTILINE | re.DOTALL)
+    new_content = re.sub(pattern, '', content, flags=re.MULTILINE | re.DOTALL)
 
-    # 2. Remove the View Type settings field registration
-    content = re.sub(r"\s*if\s*\(\s*stackboost_is_feature_active\s*\(\s*'unified_ticket_macro'\s*\)\s*\)\s*\{\s*add_settings_field\(\s*'stackboost_ticket_details_view_type'.*?\);\s*\}", "", content, flags=re.MULTILINE | re.DOTALL)
+    if new_content != content:
+        with open(filepath, 'w') as f:
+            f.write(new_content)
 
-    # 3. Remove the unified_ticket_macro inline JS block appended to the common script
-    js_block_pattern = r"\s*if\s*\(\s*stackboost_is_feature_active\s*\(\s*'unified_ticket_macro'\s*\)\s*\)\s*\{\s*\$utm_enabled\s*=\s*'true';.*?\$inline_script\s*\.=\s*\$utm_script;\s*\}"
-    content = re.sub(js_block_pattern, "", content, flags=re.MULTILINE | re.DOTALL)
-
-    with open(filepath, 'w') as f:
-        f.write(content)
+def sanitize_ticket_view(filepath):
+    # Relies on the new tag stripping method
+    strip_pro_tags(filepath)
 
 
 def sanitize_uninstall_service(filepath):

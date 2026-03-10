@@ -334,6 +334,7 @@ class WordPress extends Module {
 					true
 				);
 			}
+
 			$inline_script = "
 			jQuery(document).ready(function($) {
 				// Conditional Logic for Content Options
@@ -363,6 +364,7 @@ class WordPress extends Module {
 				\$contentSelect.on('change', toggleFields);
 			});
 			";
+
 
 			wp_add_inline_script( 'stackboost-admin-common', $inline_script );
 		}
@@ -505,6 +507,7 @@ class WordPress extends Module {
 				'desc' => 'How to handle images within the description and notes.'
 			]
 		);
+
 
 		// Section: General Cleanup
 		add_settings_section( 'stackboost_general_cleanup_section', __( 'General Cleanup', 'stackboost-for-supportcandy' ), null, $page_slug );

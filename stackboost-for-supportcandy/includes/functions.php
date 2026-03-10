@@ -2,8 +2,6 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-use StackBoost\ForSupportCandy\Core\License;
-
 /**
  * Retrieves the current license tier.
  *
@@ -12,7 +10,7 @@ use StackBoost\ForSupportCandy\Core\License;
  * @return string The current tier ('lite', 'pro', or 'business').
  */
 function stackboost_get_license_tier(): string {
-    return License::get_tier();
+    return 'lite';
 }
 
 /**
