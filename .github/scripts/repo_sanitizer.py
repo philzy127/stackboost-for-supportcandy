@@ -221,7 +221,8 @@ def sanitize_settings_file(filepath):
 
 def strip_pro_tags(filepath):
     """
-    Strips any code found between // <stackboost-pro-only> and // </stackboost-pro-only>
+    Strips any code found between <stackboost-pro-only> tags.
+    Supports both PHP (// <stackboost-pro-only>) and HTML (<!-- <stackboost-pro-only> -->) comment styles.
     """
     if not os.path.exists(filepath):
         return
@@ -230,8 +231,8 @@ def strip_pro_tags(filepath):
         content = f.read()
 
     # Regex to capture the tags and everything in between
-    # Uses \s* to capture surrounding whitespace up to the tag
-    pattern = r"[ \t]*//\s*<stackboost-pro-only>.*?//\s*</stackboost-pro-only>[ \t]*\n?"
+    # Handles both // and <!-- --> comment styles
+    pattern = r"[ \t]*(?://|<!--)\s*<stackboost-pro-only>\s*(?:-->)?.*?(?://|<!--)\s*</stackboost-pro-only>\s*(?:-->)?[ \t]*\n?"
 
     new_content = re.sub(pattern, '', content, flags=re.MULTILINE | re.DOTALL)
 
@@ -240,7 +241,6 @@ def strip_pro_tags(filepath):
             f.write(new_content)
 
 def sanitize_ticket_view(filepath):
-    # Relies on the new tag stripping method
     strip_pro_tags(filepath)
 
 
@@ -288,8 +288,13 @@ if __name__ == "__main__":
     uninstall_file = os.path.join(base_dir, 'src/Services/UninstallService.php')
     ticket_view_file = os.path.join(base_dir, 'src/Modules/TicketView/WordPress.php')
 
+    # The core sanitization function that handles all tagged blocks
+    strip_pro_tags(plugin_file)
+    strip_pro_tags(functions_file)
+    strip_pro_tags(settings_file)
+    strip_pro_tags(ticket_view_file)
+
     sanitize_plugin_file(plugin_file)
     sanitize_functions_file(functions_file)
     sanitize_settings_file(settings_file)
     sanitize_uninstall_service(uninstall_file)
-    sanitize_ticket_view(ticket_view_file)

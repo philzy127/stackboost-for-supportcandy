@@ -22,8 +22,6 @@ function stackboost_get_license_tier(): string {
  * @return bool True if the feature is available, false otherwise.
  */
 function stackboost_is_feature_active( string $feature_slug ): bool {
-    $current_tier = stackboost_get_license_tier();
-
     // Define features exclusive to each tier.
     // Logic below will handle inheritance (Pro gets Lite features, etc.)
 
@@ -33,6 +31,9 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
         'date_time_formatting',
         'conditional_options',
     ];
+
+    // <stackboost-pro-only>
+    $current_tier = stackboost_get_license_tier();
 
     $features_pro = [
         'conditional_views',
@@ -46,6 +47,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
         'onboarding_dashboard',
         'staff_directory',
     ];
+    // </stackboost-pro-only>
 
     // Build the list of active features based on the current tier.
     $active_features = [];
@@ -53,6 +55,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
     // Lite Tier (Base)
     $active_features = array_merge( $active_features, $features_lite );
 
+    // <stackboost-pro-only>
     // Pro Tier (Includes Lite)
     if ( in_array( $current_tier, [ 'pro', 'business' ], true ) ) {
         $active_features = array_merge( $active_features, $features_pro );
@@ -62,9 +65,11 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
     if ( 'business' === $current_tier ) {
         $active_features = array_merge( $active_features, $features_business );
     }
+    // </stackboost-pro-only>
 
     $is_active = in_array( $feature_slug, $active_features, true );
 
+    // <stackboost-pro-only>
     // Diagnostic Logging
     if ( function_exists( 'stackboost_log' ) ) {
         stackboost_log(
@@ -72,6 +77,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
             'core'
         );
     }
+    // </stackboost-pro-only>
 
     return $is_active;
 }
