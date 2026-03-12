@@ -67,9 +67,7 @@ final class Plugin {
 		// or handle their own internal checks. However, for stricter control, we can wrap them.
 
 		// Lite Features
-		if ( stackboost_is_feature_active( 'qol_enhancements' ) ) {
-			$this->modules['qol_enhancements'] = QolEnhancements\WordPress::get_instance();
-		}
+		$this->modules['qol_enhancements'] = QolEnhancements\WordPress::get_instance();
 
 		// Appearance Module (Always Active)
         stackboost_log( 'Loading Appearance Module...', 'appearance' );
@@ -80,22 +78,17 @@ final class Plugin {
 		// For now, assuming it's part of the base package.
 		$this->modules['ticket_view'] = TicketView\WordPress::get_instance();
 
-		if ( stackboost_is_feature_active( 'after_hours_notice' ) ) {
-			$this->modules['after_hours_notice'] = AfterHoursNotice\WordPress::get_instance();
-		}
+		$this->modules['after_hours_notice'] = AfterHoursNotice\WordPress::get_instance();
 
-		if ( stackboost_is_feature_active( 'date_time_formatting' ) ) {
-			$this->modules['date_time_formatting'] = DateTimeFormatting\WordPress::get_instance();
-		}
+		$this->modules['date_time_formatting'] = DateTimeFormatting\WordPress::get_instance();
 
 		// Conditional Options (Lite)
-		if ( stackboost_is_feature_active( 'conditional_options' ) ) {
-			$class = 'StackBoost\ForSupportCandy\Modules\ConditionalOptions\WordPress';
-			if ( class_exists( $class ) ) {
-				$this->modules['conditional_options'] = $class::get_instance();
-			}
+		$class = 'StackBoost\ForSupportCandy\Modules\ConditionalOptions\WordPress';
+		if ( class_exists( $class ) ) {
+			$this->modules['conditional_options'] = $class::get_instance();
 		}
 
+		// <stackboost-pro-only>
 		// Pro Features
 		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
 			$class = 'StackBoost\ForSupportCandy\Modules\ConditionalViews\WordPress';
@@ -146,6 +139,7 @@ final class Plugin {
 				$this->modules['onboarding_dashboard'] = $class::get_instance();
 			}
 		}
+		// </stackboost-pro-only>
 	}
 
 	/**
@@ -341,16 +335,15 @@ final class Plugin {
 		];
 
 		// Gather data from QOL Enhancements module
-		if ( stackboost_is_feature_active( 'qol_enhancements' ) ) {
-			$qol_core                       = new QolEnhancements\Core();
-			$features_data['ticket_details_card']    = [ 'enabled' => ! empty( $options['enable_ticket_details_card'] ) ];
-			$features_data['hide_empty_columns'] = [
-				'enabled'       => ! empty( $options['enable_hide_empty_columns'] ),
-				'hide_priority' => ! empty( $options['enable_hide_priority_column'] ),
-			];
-			// Removed legacy ticket_type_hiding logic
-		}
+		$qol_core                       = new QolEnhancements\Core();
+		$features_data['ticket_details_card']    = [ 'enabled' => ! empty( $options['enable_ticket_details_card'] ) ];
+		$features_data['hide_empty_columns'] = [
+			'enabled'       => ! empty( $options['enable_hide_empty_columns'] ),
+			'hide_priority' => ! empty( $options['enable_hide_priority_column'] ),
+		];
+		// Removed legacy ticket_type_hiding logic
 
+		// <stackboost-pro-only>
 		// Gather data from Conditional Views module
 		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
 			// Check if ConditionalViews Core exists before usage
@@ -363,6 +356,7 @@ final class Plugin {
 				];
 			}
 		}
+		// </stackboost-pro-only>
 
 		if ( ! empty( $features_data ) ) {
 			$localized_data['features'] = $features_data;

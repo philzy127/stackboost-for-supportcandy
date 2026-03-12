@@ -321,6 +321,53 @@ class WordPress extends Module {
 				'is_agent' => $is_agent,
 			] );
 		}
+
+		// Enqueue inline script for Ticket View settings page logic
+		if ( 'stackboost-for-supportcandy_page_stackboost-ticket-view' === $hook_suffix || 'stackboost_page_stackboost-ticket-view' === $hook_suffix ) {
+			// Ensure stackboost-admin-common is available
+			if ( ! wp_script_is( 'stackboost-admin-common', 'enqueued' ) ) {
+				wp_enqueue_script(
+					'stackboost-admin-common',
+					STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-admin-common.js',
+					[ 'jquery' ],
+					STACKBOOST_VERSION,
+					true
+				);
+			}
+
+			$inline_script = "
+			jQuery(document).ready(function($) {
+				// Conditional Logic for Content Options
+				var \$limitRow = $('#ticket_details_history_limit').closest('tr');
+				var \$orderRow = $('#ticket_details_history_order').closest('tr');
+				var \$imageHandlingRow = $('#ticket_details_image_handling').closest('tr');
+				var \$contentSelect = $('#ticket_details_content');
+
+				function toggleFields() {
+					var val = \$contentSelect.val();
+					if (val === 'details_only') {
+						\$limitRow.hide();
+						\$orderRow.hide();
+						\$imageHandlingRow.hide();
+					} else if (val === 'with_description') {
+						\$limitRow.hide();
+						\$orderRow.hide();
+						\$imageHandlingRow.show();
+					} else if (val === 'with_history') {
+						\$limitRow.show();
+						\$orderRow.show();
+						\$imageHandlingRow.show();
+					}
+				}
+
+				toggleFields();
+				\$contentSelect.on('change', toggleFields);
+			});
+			";
+
+
+			wp_add_inline_script( 'stackboost-admin-common', $inline_script );
+		}
 	}
 
 	/**
@@ -397,14 +444,6 @@ class WordPress extends Module {
 		add_settings_field( 'stackboost_enable_ticket_details_card', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'enable_ticket_details_card', 'desc' => 'Shows a card with ticket details on right-click.' ] );
 
 		// New Options for Ticket Details Card
-		add_settings_field(
-			'stackboost_ticket_details_view_type',
-			__( 'Card View Type', 'stackboost-for-supportcandy' ),
-			[ $this, 'render_view_type_select' ], // Custom renderer for Pro badge
-			$page_slug,
-			'stackboost_ticket_details_card_section',
-			[ 'id' => 'ticket_details_view_type', 'desc' => 'Choose how the ticket details are displayed.' ]
-		);
 
 		add_settings_field(
 			'stackboost_ticket_details_content',
@@ -469,18 +508,6 @@ class WordPress extends Module {
 			]
 		);
 
-		add_settings_field(
-			'stackboost_ticket_details_chat_bubbles',
-			__( 'Enable Chat Bubbles', 'stackboost-for-supportcandy' ) . ' <span class="stackboost-badge-pro">PRO</span>',
-			[ $this, 'render_pro_checkbox_field' ],
-			$page_slug,
-			'stackboost_ticket_details_card_section',
-			[
-				'id'      => 'ticket_details_chat_bubbles',
-				'desc'    => 'Display conversation history as chat bubbles (Requires Pro Plan).',
-				'feature' => 'unified_ticket_macro',
-			]
-		);
 
 		// Section: General Cleanup
 		add_settings_section( 'stackboost_general_cleanup_section', __( 'General Cleanup', 'stackboost-for-supportcandy' ), null, $page_slug );
@@ -621,57 +648,6 @@ class WordPress extends Module {
 		if ( ! $is_pro_active ) {
 			echo ' <span class="stackboost-badge-pro" title="' . esc_attr__( 'Upgrade to Pro or Business to enable this feature.', 'stackboost-for-supportcandy' ) . '">PRO</span>';
 		}
-
-		// Inline script to warn about UTM configuration AND toggle limit field
-		?>
-		<script>
-		jQuery(document).ready(function($) {
-			// UTM Alert Logic
-			var utmEnabled = <?php echo stackboost_is_feature_active( 'unified_ticket_macro' ) ? 'true' : 'false'; ?>;
-			$('#ticket_details_view_type').on('change', function() {
-				if ($(this).val() === 'utm') {
-					if (!utmEnabled) {
-						alert('<?php echo esc_js( __( 'The Unified Ticket Macro feature is not active on your plan.', 'stackboost-for-supportcandy' ) ); ?>');
-					} else {
-						alert('<?php echo esc_js( __( 'Reminder: Please ensure the Unified Ticket Macro module is enabled and configured in its settings page for this view to function correctly.', 'stackboost-for-supportcandy' ) ); ?>');
-					}
-				}
-			});
-
-			// Conditional Logic for Content Options
-			var $limitRow = $('#ticket_details_history_limit').closest('tr');
-			var $orderRow = $('#ticket_details_history_order').closest('tr');
-			var $imageHandlingRow = $('#ticket_details_image_handling').closest('tr');
-			var $contentSelect = $('#ticket_details_content');
-
-			function toggleFields() {
-				var val = $contentSelect.val();
-				if (val === 'details_only') {
-					// Hide both
-					$limitRow.hide();
-					$orderRow.hide();
-					$imageHandlingRow.hide();
-				} else if (val === 'with_description') {
-					// Show Image Handling, Hide Limit
-					$limitRow.hide();
-					$orderRow.hide();
-					$imageHandlingRow.show();
-				} else if (val === 'with_history') {
-					// Show Both
-					$limitRow.show();
-					$orderRow.show();
-					$imageHandlingRow.show();
-				}
-			}
-
-			// Initial State
-			toggleFields();
-
-			// Change Listener
-			$contentSelect.on('change', toggleFields);
-		});
-		</script>
-		<?php
 
 		if ( ! empty( $args['desc'] ) ) {
 			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';

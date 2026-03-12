@@ -67,11 +67,7 @@ class UninstallService {
             'stackboost_directory_settings',
             'stackboost_directory_widget_settings',
             'stackboost_onboarding_config',
-            'stackboost_license_key',
-            'stackboost_license_instance_id',
-            'stackboost_license_tier',
-            'stackboost_license_variant_id',
-            'sb_last_verified_at',
+
             'stackboost_last_update_completed_timestamp',
             'stackboost_phone_migration_complete',
         ];
@@ -94,7 +90,7 @@ class UninstallService {
      */
     private static function delete_transients() {
         $transients = [
-            'stackboost_license_error_msg',
+
             'stackboost_onboarding_tickets_cache',
         ];
 

@@ -68,10 +68,61 @@ class WordPress extends Module {
 	 */
 	public function init_hooks() {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'wpsc_before_create_ticket_form', [ $this, 'display_notice' ] );
 		add_filter( 'wpsc_create_ticket_email_data', [ $this, 'add_after_hours_notice_to_email' ] );
 		add_filter( 'wpsc_agent_reply_email_data', [ $this, 'add_after_hours_notice_to_email' ] );
 		add_filter( 'wpsc_cust_reply_email_data', [ $this, 'add_after_hours_notice_to_email' ] );
+	}
+
+	/**
+	 * Enqueue admin scripts.
+	 *
+	 * @param string $hook_suffix The current admin page.
+	 */
+	public function enqueue_admin_scripts( $hook_suffix ) {
+		if ( 'stackboost-for-supportcandy_page_stackboost-after-hours' === $hook_suffix || 'stackboost_page_stackboost-after-hours' === $hook_suffix ) {
+			// Ensure stackboost-admin-common is available
+			if ( ! wp_script_is( 'stackboost-admin-common', 'enqueued' ) ) {
+				wp_enqueue_script(
+					'stackboost-admin-common',
+					STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-admin-common.js',
+					[ 'jquery' ],
+					STACKBOOST_VERSION,
+					true
+				);
+			}
+			$inline_script = "
+			jQuery(document).ready(function($) {
+				function toggleVisibility() {
+					var useSCWorkingHours = $('#use_sc_working_hours').is(':checked');
+					var useSCHolidays = $('#use_sc_holidays').is(':checked');
+
+					if (useSCWorkingHours) {
+						$('#stackboost-after-hours-schedule-card').hide();
+					} else {
+						$('#stackboost-after-hours-schedule-card').show();
+					}
+
+					if (useSCHolidays) {
+						$('#stackboost-after-hours-holidays-card').hide();
+					} else {
+						$('#stackboost-after-hours-holidays-card').show();
+					}
+				}
+
+				// Initial check
+				toggleVisibility();
+
+				// Change listeners
+				$('#use_sc_working_hours, #use_sc_holidays').change(function() {
+					toggleVisibility();
+				});
+			});
+			";
+
+			wp_add_inline_script( 'stackboost-admin-common', $inline_script );
+		}
 	}
 
 	/**
@@ -176,34 +227,6 @@ class WordPress extends Module {
 
 				<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
 			</form>
-            <script type="text/javascript">
-                jQuery(document).ready(function($) {
-                    function toggleVisibility() {
-                        var useSCWorkingHours = $('#use_sc_working_hours').is(':checked');
-                        var useSCHolidays = $('#use_sc_holidays').is(':checked');
-
-                        if (useSCWorkingHours) {
-                            $('#stackboost-after-hours-schedule-card').hide();
-                        } else {
-                            $('#stackboost-after-hours-schedule-card').show();
-                        }
-
-                        if (useSCHolidays) {
-                            $('#stackboost-after-hours-holidays-card').hide();
-                        } else {
-                            $('#stackboost-after-hours-holidays-card').show();
-                        }
-                    }
-
-                    // Initial check
-                    toggleVisibility();
-
-                    // Change listeners
-                    $('#use_sc_working_hours, #use_sc_holidays').change(function() {
-                        toggleVisibility();
-                    });
-                });
-            </script>
 		</div>
 		<?php
 	}

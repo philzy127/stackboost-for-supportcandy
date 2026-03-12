@@ -34,11 +34,15 @@ class Settings {
 		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_init', [ $this, 'handle_log_actions' ] );
+		// <stackboost-pro-only>
         add_action( 'admin_notices', [ $this, 'display_license_notices' ] );
+		// </stackboost-pro-only>
 		add_action( 'wp_ajax_stackboost_clear_log', [ $this, 'ajax_clear_log' ] );
 		add_action( 'wp_ajax_stackboost_save_settings', [ $this, 'ajax_save_settings' ] );
+		// <stackboost-pro-only>
 		add_action( 'wp_ajax_stackboost_activate_license', [ $this, 'ajax_activate_license' ] );
 		add_action( 'wp_ajax_stackboost_deactivate_license', [ $this, 'ajax_deactivate_license' ] );
+		// </stackboost-pro-only>
 		add_action( 'wp_ajax_stackboost_authorize_uninstall', [ $this, 'ajax_authorize_uninstall' ] );
 		add_action( 'wp_ajax_stackboost_cancel_uninstall', [ $this, 'ajax_cancel_uninstall' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
@@ -354,6 +358,7 @@ class Settings {
                         </div>
                     </div>
 
+					<!-- <stackboost-pro-only> -->
                     <!-- Card 2: License -->
                     <div class="stackboost-card">
                         <!-- Form wrapper is needed for options.php submission logic if we add normal fields here later,
@@ -367,6 +372,7 @@ class Settings {
                             ?>
                         </form>
                     </div>
+					<!-- </stackboost-pro-only> -->
 
                     <!-- Card 3: Resources -->
                     <div class="stackboost-card">
@@ -467,6 +473,7 @@ class Settings {
 			}
 		}
 
+		// <stackboost-pro-only>
         // License Settings (General Page)
         add_settings_section(
             'stackboost_license_section',
@@ -482,6 +489,7 @@ class Settings {
             'stackboost-for-supportcandy',
             'stackboost_license_section'
         );
+		// </stackboost-pro-only>
 
 		// Diagnostic Log Settings Section
 		add_settings_section(
@@ -630,6 +638,7 @@ class Settings {
 		<?php
 	}
 
+	// <stackboost-pro-only>
     /**
      * Render the License Key input and activation controls.
      */
@@ -737,6 +746,7 @@ class Settings {
             // For now, we leave it until the user takes action or it expires (12 hours) to ensure visibility.
         }
     }
+	// </stackboost-pro-only>
 
 	/**
 	 * Sanitize all settings.
@@ -1368,6 +1378,7 @@ class Settings {
 		return array_values( $pool ); // Re-index array
 	}
 
+	// <stackboost-pro-only>
     /**
      * AJAX handler to activate a license.
      */
@@ -1437,6 +1448,7 @@ class Settings {
 
         wp_send_json_success();
     }
+	// </stackboost-pro-only>
 
 	/**
 	 * AJAX Handler: Authorize Clean Uninstall.
