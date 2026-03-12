@@ -34,6 +34,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
         'after_hours_notice',
         'date_time_formatting',
         'conditional_options',
+        'ticket_metrics',
     ];
 
     $features_pro = [

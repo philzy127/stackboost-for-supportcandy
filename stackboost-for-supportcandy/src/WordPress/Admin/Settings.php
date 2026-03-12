@@ -259,7 +259,19 @@ class Settings {
 			];
 		}
 
-		// 11. Appearance (Themification)
+		// 11. Ticket Metrics (New Module) - Lite
+		if ( stackboost_is_feature_active( 'ticket_metrics' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\TicketMetrics\Admin\Page' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-ticket-metrics',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Ticket Metrics', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Metrics', 'stackboost-for-supportcandy' ),
+				'capability'  => STACKBOOST_CAP_MANAGE_SETTINGS,
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketMetrics\Admin\Page::class, 'render_page' ],
+			];
+		}
+
+		// 12. Appearance (Themification)
 		$menu_config[] = [
 			'slug'        => 'stackboost-appearance',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -269,7 +281,7 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page::class, 'render' ], // Using static call for consistency, though class is not static
 		];
 
-		// 12. Tools / Diagnostics
+		// 13. Tools / Diagnostics
 		$menu_config[] = [
 			'slug'        => 'stackboost-tools',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -784,6 +796,7 @@ class Settings {
 			'stackboost-conditional-options' => ['conditional_options_rules', 'conditional_options_enabled'], // Whitelisted
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
+			'stackboost-ticket-metrics'     => [], // No settings to save currently
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
@@ -1199,6 +1212,7 @@ class Settings {
 			case 'stackboost-directory': $capability = STACKBOOST_CAP_MANAGE_DIRECTORY; break;
 			case 'stackboost-onboarding-dashboard': $capability = STACKBOOST_CAP_MANAGE_ONBOARDING; break;
 			case 'stackboost-appearance': $capability = STACKBOOST_CAP_MANAGE_APPEARANCE; break;
+			case 'stackboost-ticket-metrics': $capability = STACKBOOST_CAP_MANAGE_SETTINGS; break;
 		}
 
 		if ( ! current_user_can( $capability ) ) {
