@@ -133,6 +133,10 @@ class Page {
 						<p style="font-size:2em; font-weight:bold;" id="stkb_metric_total">0</p>
 					</div>
 					<div class="stackboost-card" style="text-align:center;">
+						<h3><?php esc_html_e( 'Total Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
+						<p style="font-size:2em; font-weight:bold;" id="stkb_metric_total_closed">0</p>
+					</div>
+					<div class="stackboost-card" style="text-align:center;">
 						<h3><?php esc_html_e( 'Average Time Open', 'stackboost-for-supportcandy' ); ?></h3>
 						<p style="font-size:2em; font-weight:bold;" id="stkb_metric_avg_open">0</p>
 					</div>
@@ -234,6 +238,7 @@ class Page {
 							if (response.success) {
 								let data = response.data;
 								$('#stkb_metric_total').text(data.total_created);
+								$('#stkb_metric_total_closed').text(data.total_closed);
 								$('#stkb_metric_avg_open').text(data.avg_open_time);
 								$('#stkb_metric_avg_response').text(data.avg_initial_response);
 

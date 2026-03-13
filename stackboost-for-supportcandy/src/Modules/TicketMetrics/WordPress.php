@@ -85,6 +85,10 @@ class WordPress extends Module {
 			$options_table = $wpdb->prefix . 'psmsc_options';
 		}
 
+		// Is `date_closed` explicitly available?
+		$has_date_closed = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'date_closed'") === 'date_closed';
+		$close_date_column = $has_date_closed ? 'date_closed' : 'date_updated';
+
 		// Total Tickets Created
 		$total_created = (int) $wpdb->get_var( $wpdb->prepare(
 			"SELECT COUNT(id) FROM {$tickets_table} WHERE date_created >= %s AND date_created <= %s",
@@ -92,13 +96,20 @@ class WordPress extends Module {
 		) );
 		$metrics['total_created'] = $total_created;
 
+		// Total Tickets Closed
+		$total_closed = (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(id) FROM {$tickets_table} WHERE is_active = 0 AND {$close_date_column} >= %s AND {$close_date_column} <= %s",
+			$start_dt, $end_dt
+		) );
+		$metrics['total_closed'] = $total_closed;
+
 		// Average Time Ticket was Open
 		// SupportCandy relies on `is_active = 0` directly on the tickets table to mark a ticket as closed.
 		$avg_open_query = $wpdb->prepare(
-			"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, date_updated))
+			"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, {$close_date_column}))
 			 FROM {$tickets_table}
 			 WHERE is_active = 0
-			 AND date_updated >= %s AND date_updated <= %s",
+			 AND {$close_date_column} >= %s AND {$close_date_column} <= %s",
 			$start_dt, $end_dt
 		);
 
