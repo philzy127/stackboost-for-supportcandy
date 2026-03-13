@@ -93,20 +93,17 @@ class WordPress extends Module {
 		$metrics['total_created'] = $total_created;
 
 		// Average Time Ticket was Open
-		// For tickets closed within the range
-		$closed_status_query = "SELECT id FROM {$status_table} WHERE is_active = 0";
-		$closed_statuses = $wpdb->get_col($closed_status_query);
+		// SupportCandy relies on `is_active = 0` directly on the tickets table to mark a ticket as closed.
+		$avg_open_query = $wpdb->prepare(
+			"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, date_updated))
+			 FROM {$tickets_table}
+			 WHERE is_active = 0
+			 AND date_updated >= %s AND date_updated <= %s",
+			$start_dt, $end_dt
+		);
+		$avg_open_seconds = (int) $wpdb->get_var($avg_open_query);
 
-		if ( ! empty($closed_statuses) ) {
-			$closed_in = implode(',', array_map('intval', $closed_statuses));
-			$avg_open_query = $wpdb->prepare(
-				"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, date_updated))
-				 FROM {$tickets_table}
-				 WHERE status IN ($closed_in)
-				 AND date_updated >= %s AND date_updated <= %s",
-				$start_dt, $end_dt
-			);
-			$avg_open_seconds = (int) $wpdb->get_var($avg_open_query);
+		if ( $avg_open_seconds > 0 ) {
 			$metrics['avg_open_time'] = $this->format_seconds($avg_open_seconds);
 		} else {
 			$metrics['avg_open_time'] = 'N/A';
