@@ -72,7 +72,7 @@ class Page {
 
 		$options = get_option( 'stackboost_settings', [] );
 		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
-		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'pie';
+		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'multi_pie';
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
 
 		?>
@@ -250,6 +250,8 @@ class Page {
 										<select name="stackboost_settings[ticket_metrics_chart_type_agent]" id="stkb_chart_type_agent">
 											<option value="pie" <?php selected( $chart_type_agent, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="doughnut" <?php selected( $chart_type_agent, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="multi_pie" <?php selected( $chart_type_agent, 'multi_pie' ); ?>><?php esc_html_e( 'Multi-series Pie', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="multi_doughnut" <?php selected( $chart_type_agent, 'multi_doughnut' ); ?>><?php esc_html_e( 'Multi-series Doughnut', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="bar" <?php selected( $chart_type_agent, 'bar' ); ?>><?php esc_html_e( 'Bar', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="line" <?php selected( $chart_type_agent, 'line' ); ?>><?php esc_html_e( 'Line', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="radar" <?php selected( $chart_type_agent, 'radar' ); ?>><?php esc_html_e( 'Radar', 'stackboost-for-supportcandy' ); ?></option>
@@ -478,28 +480,46 @@ class Page {
 									const agentCtx = document.getElementById('stkb_agent_chart').getContext('2d');
 									const typeCtx = document.getElementById('stkb_type_chart').getContext('2d');
 
-									let agentChartType = '<?php echo esc_js( $chart_type_agent ); ?>';
+									let agentChartTypeRaw = '<?php echo esc_js( $chart_type_agent ); ?>';
 									let typeChartType = '<?php echo esc_js( $chart_type_type ); ?>';
+
+									// Determine actual chart.js type and if it's multi-series
+									let agentChartType = agentChartTypeRaw;
+									let isMultiSeriesPie = false;
+									if ( agentChartTypeRaw === 'multi_pie' ) {
+										agentChartType = 'pie';
+										isMultiSeriesPie = true;
+									} else if ( agentChartTypeRaw === 'multi_doughnut' ) {
+										agentChartType = 'doughnut';
+										isMultiSeriesPie = true;
+									}
+
+									// Setup base datasets
+									let datasets = [
+										{
+											label: '<?php esc_html_e( 'Assigned', 'stackboost-for-supportcandy' ); ?>',
+											data: agentAssignedData,
+											backgroundColor: chartColors,
+											borderWidth: 1
+										}
+									];
+
+									// Add closed dataset for multi-series types
+									if ( isMultiSeriesPie || agentChartType === 'bar' || agentChartType === 'line' || agentChartType === 'radar' ) {
+										datasets.push({
+											label: '<?php esc_html_e( 'Closed', 'stackboost-for-supportcandy' ); ?>',
+											data: agentClosedData,
+											backgroundColor: chartColors.map(c => c + '99'), // Default: slightly transparent map
+											borderWidth: 1
+										});
+									}
 
 									// Setup agent chart config
 									let agentConfig = {
 										type: agentChartType,
 										data: {
 											labels: agentLabels,
-											datasets: [
-												{
-													label: '<?php esc_html_e( 'Assigned', 'stackboost-for-supportcandy' ); ?>',
-													data: agentAssignedData,
-													backgroundColor: chartColors,
-													borderWidth: 1
-												},
-												{
-													label: '<?php esc_html_e( 'Closed', 'stackboost-for-supportcandy' ); ?>',
-													data: agentClosedData,
-													backgroundColor: chartColors.map(c => c + '99'), // Make closed dataset slightly transparent
-													borderWidth: 1
-												}
-											]
+											datasets: datasets
 										},
 										options: {
 											responsive: true,
