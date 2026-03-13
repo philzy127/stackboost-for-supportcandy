@@ -48,15 +48,10 @@ class WordPress extends Module {
 		$end_date   = isset( $_POST['end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['end_date'] ) ) : '';
 		$type_field = isset( $_POST['type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['type_field'] ) ) : 'category';
 
-		// Save preference
-		$options = get_option('stackboost_settings', []);
-		$settings_changed = false;
-		if ( ! isset( $options['ticket_metrics_type_field'] ) || $options['ticket_metrics_type_field'] !== $type_field ) {
-			$options['ticket_metrics_type_field'] = $type_field;
-			$settings_changed = true;
-		}
-		if ( $settings_changed ) {
-			update_option( 'stackboost_settings', $options );
+		// Save preference securely using a standalone option to bypass the central settings sanitizer
+		// which would otherwise reject programmatic updates missing a page_slug.
+		if ( get_option( 'stackboost_ticket_metrics_type_field' ) !== $type_field ) {
+			update_option( 'stackboost_ticket_metrics_type_field', $type_field );
 		}
 
 		if ( function_exists( 'stackboost_log' ) ) {

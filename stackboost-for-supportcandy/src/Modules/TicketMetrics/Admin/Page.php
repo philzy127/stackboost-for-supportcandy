@@ -70,8 +70,7 @@ class Page {
 		$all_type_fields = array_merge( $default_fields, $custom_fields );
 		asort( $all_type_fields );
 
-		$options = get_option('stackboost_settings', []);
-		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
+		$saved_type_field = get_option( 'stackboost_ticket_metrics_type_field', 'category' );
 
 		?>
 		<style>
