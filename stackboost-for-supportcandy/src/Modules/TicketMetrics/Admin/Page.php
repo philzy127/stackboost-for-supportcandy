@@ -84,6 +84,17 @@ class Page {
 			.stkb-breakdown-col { flex: 1; min-width: 300px; background: #fff; border: 1px solid #c3c4c7; padding: 15px; border-radius: 4px; }
 			.stkb-clickable-row { cursor: pointer; transition: background-color 0.2s; }
 			.stkb-clickable-row:hover { background-color: #f0f0f1 !important; }
+
+			/* Modal Scrolling Fixes */
+			#stkb-metrics-modal .stackboost-modal-content {
+				max-height: 90vh;
+				display: flex;
+				flex-direction: column;
+			}
+			#stkb-metrics-modal-body {
+				overflow-y: auto;
+				padding-right: 10px; /* Leave space for scrollbar */
+			}
 		</style>
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php esc_html_e( 'Ticket Metrics', 'stackboost-for-supportcandy' ); ?></h1>
