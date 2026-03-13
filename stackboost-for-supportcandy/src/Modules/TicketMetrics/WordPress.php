@@ -46,17 +46,12 @@ class WordPress extends Module {
 
 		$start_date = isset( $_POST['start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['start_date'] ) ) : '';
 		$end_date   = isset( $_POST['end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['end_date'] ) ) : '';
-		$breakdown  = isset( $_POST['breakdown'] ) ? sanitize_text_field( wp_unslash( $_POST['breakdown'] ) ) : 'none';
 		$type_field = isset( $_POST['type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['type_field'] ) ) : 'category';
 
 		// Save preference
 		$options = get_option('stackboost_settings', []);
 		$settings_changed = false;
-		if ( ! isset( $options['ticket_metrics_breakdown'] ) || $options['ticket_metrics_breakdown'] !== $breakdown ) {
-			$options['ticket_metrics_breakdown'] = $breakdown;
-			$settings_changed = true;
-		}
-		if ( $breakdown === 'type' && ( ! isset( $options['ticket_metrics_type_field'] ) || $options['ticket_metrics_type_field'] !== $type_field ) ) {
+		if ( ! isset( $options['ticket_metrics_type_field'] ) || $options['ticket_metrics_type_field'] !== $type_field ) {
 			$options['ticket_metrics_type_field'] = $type_field;
 			$settings_changed = true;
 		}
@@ -65,7 +60,7 @@ class WordPress extends Module {
 		}
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "Ticket Metrics Request - Start: {$start_date}, End: {$end_date}, Breakdown: {$breakdown}, Type Field: {$type_field}", 'ticket_metrics' );
+			stackboost_log( "Ticket Metrics Request - Start: {$start_date}, End: {$end_date}, Type Field: {$type_field}", 'ticket_metrics' );
 		}
 
 		if ( empty( $start_date ) || empty( $end_date ) ) {
@@ -180,7 +175,9 @@ class WordPress extends Module {
 
 		// Average Initial Response Time
 		// For tickets created in the range
-		// First reply from a user who is not the creator, and is not internal
+		// User clarified: ANY change (assignment, status change, internal note) counts as a response.
+		// Since ticket creation also creates a thread at the exact same timestamp, we look for the first thread
+		// that occurred strictly AFTER the ticket creation time.
 		$avg_response_query = $wpdb->prepare(
 			"SELECT AVG(response_time) FROM (
 				SELECT t.id,
@@ -188,8 +185,7 @@ class WordPress extends Module {
 				FROM {$tickets_table} t
 				JOIN {$threads_table} th ON t.id = th.ticket
 				WHERE t.date_created >= %s AND t.date_created <= %s
-				AND th.customer != t.customer
-				AND th.is_internal = 0
+				AND th.date_created > t.date_created
 				GROUP BY t.id
 			) as response_times",
 			$start_dt, $end_dt
@@ -198,67 +194,64 @@ class WordPress extends Module {
 		$avg_response_seconds = (int) $wpdb->get_var($avg_response_query);
 		$metrics['avg_initial_response'] = $this->format_seconds($avg_response_seconds);
 
-		// Breakdown
-		$metrics['breakdown_data'] = [];
-		if ( $breakdown === 'agent' ) {
-			// Breakdown by assigned agent
-			// Note: SupportCandy stores assigned_agent as a string, sometimes piped '4|12'.
-			// We will query the raw strings and parse them in PHP to correctly tally tickets assigned to multiple agents.
-			$agent_query = $wpdb->prepare(
-				"SELECT assigned_agent, id
-				 FROM {$tickets_table}
-				 WHERE date_created >= %s AND date_created <= %s
-				 AND assigned_agent IS NOT NULL AND assigned_agent != ''",
-				$start_dt, $end_dt
-			);
-			$agent_results = $wpdb->get_results($agent_query);
-			$agent_map = $this->get_agent_map($wpdb, $customer_table);
+		// Agent Breakdown
+		$metrics['agent_breakdown'] = [];
+		// SupportCandy stores assigned_agent as a string, sometimes piped '4|12'.
+		$agent_query = $wpdb->prepare(
+			"SELECT assigned_agent, id
+			 FROM {$tickets_table}
+			 WHERE date_created >= %s AND date_created <= %s
+			 AND assigned_agent IS NOT NULL AND assigned_agent != ''",
+			$start_dt, $end_dt
+		);
+		$agent_results = $wpdb->get_results($agent_query);
+		$agent_map = $this->get_agent_map($wpdb, $customer_table);
 
-			$agent_tallies = [];
+		$agent_tallies = [];
 
-			if ( is_array( $agent_results ) ) {
-				foreach ( $agent_results as $row ) {
-					// Agents are stored as a pipe-separated string like '4' or '4|12'
-					$agent_ids = explode('|', $row->assigned_agent);
-					foreach ( $agent_ids as $a_id ) {
-						$clean_id = (int) $a_id;
-						if ( $clean_id > 0 ) {
-							if ( ! isset( $agent_tallies[ $clean_id ] ) ) {
-								$agent_tallies[ $clean_id ] = 0;
-							}
-							$agent_tallies[ $clean_id ]++;
+		if ( is_array( $agent_results ) ) {
+			foreach ( $agent_results as $row ) {
+				$agent_ids = explode('|', $row->assigned_agent);
+				foreach ( $agent_ids as $a_id ) {
+					$clean_id = (int) $a_id;
+					if ( $clean_id > 0 ) {
+						if ( ! isset( $agent_tallies[ $clean_id ] ) ) {
+							$agent_tallies[ $clean_id ] = 0;
 						}
+						$agent_tallies[ $clean_id ]++;
 					}
 				}
 			}
+		}
 
-			// Sort by tally descending
-			arsort($agent_tallies);
+		arsort($agent_tallies);
 
-			foreach ( $agent_tallies as $a_id => $count ) {
-				$name = $agent_map[$a_id] ?? 'Agent ' . $a_id;
-				$metrics['breakdown_data'][] = [
-					'label' => $name,
-					'value' => $count
-				];
-			}
-		} elseif ( $breakdown === 'type' ) {
-			// Validate field name to prevent SQL injection
-			if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
-				$type_query = $wpdb->prepare(
-					"SELECT `{$type_field}` as type_id, COUNT(id) as count
-					 FROM {$tickets_table}
-					 WHERE date_created >= %s AND date_created <= %s
-					 GROUP BY `{$type_field}`",
-					$start_dt, $end_dt
-				);
-				$type_results = $wpdb->get_results($type_query);
-				$type_map = $this->get_type_map($wpdb, $type_field, $categories_table, $priorities_table, $status_table, $options_table);
+		foreach ( $agent_tallies as $a_id => $count ) {
+			$name = $agent_map[$a_id] ?? 'Agent ' . $a_id;
+			$metrics['agent_breakdown'][] = [
+				'label' => $name,
+				'value' => $count
+			];
+		}
 
+		// Type Breakdown
+		$metrics['type_breakdown'] = [];
+		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
+			$type_query = $wpdb->prepare(
+				"SELECT `{$type_field}` as type_id, COUNT(id) as count
+				 FROM {$tickets_table}
+				 WHERE date_created >= %s AND date_created <= %s
+				 GROUP BY `{$type_field}`",
+				$start_dt, $end_dt
+			);
+			$type_results = $wpdb->get_results($type_query);
+			$type_map = $this->get_type_map($wpdb, $type_field, $categories_table, $priorities_table, $status_table, $options_table);
+
+			if ( is_array($type_results) ) {
 				foreach ( $type_results as $row ) {
 					$name = $type_map[$row->type_id] ?? $row->type_id;
 					if(empty($name)) $name = 'Unassigned';
-					$metrics['breakdown_data'][] = [
+					$metrics['type_breakdown'][] = [
 						'label' => $name,
 						'value' => $row->count
 					];
