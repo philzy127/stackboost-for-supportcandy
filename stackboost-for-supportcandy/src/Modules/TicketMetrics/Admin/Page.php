@@ -99,6 +99,11 @@ class Page {
 								<option value="last_week"><?php esc_html_e( 'Last Week', 'stackboost-for-supportcandy' ); ?></option>
 								<option value="this_month"><?php esc_html_e( 'This Month', 'stackboost-for-supportcandy' ); ?></option>
 								<option value="last_month"><?php esc_html_e( 'Last Month', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="last_30_days"><?php esc_html_e( 'Last 30 Days', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="last_60_days"><?php esc_html_e( 'Last 60 Days', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="last_90_days"><?php esc_html_e( 'Last 90 Days', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="this_year"><?php esc_html_e( 'This Year (to date)', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="last_year"><?php esc_html_e( 'Last Year', 'stackboost-for-supportcandy' ); ?></option>
 								<option value="custom"><?php esc_html_e( 'Custom', 'stackboost-for-supportcandy' ); ?></option>
 							</select>
 						</div>
@@ -226,6 +231,21 @@ class Page {
 						} else if (preset === 'last_month') {
 							start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
 							end = new Date(today.getFullYear(), today.getMonth(), 0);
+						} else if (preset === 'last_30_days') {
+							start = new Date(today.setDate(today.getDate() - 30));
+							end = new Date();
+						} else if (preset === 'last_60_days') {
+							start = new Date(today.setDate(today.getDate() - 60));
+							end = new Date();
+						} else if (preset === 'last_90_days') {
+							start = new Date(today.setDate(today.getDate() - 90));
+							end = new Date();
+						} else if (preset === 'this_year') {
+							start = new Date(today.getFullYear(), 0, 1);
+							end = new Date();
+						} else if (preset === 'last_year') {
+							start = new Date(today.getFullYear() - 1, 0, 1);
+							end = new Date(today.getFullYear() - 1, 11, 31);
 						}
 
 						// Adjust to local timezone format
