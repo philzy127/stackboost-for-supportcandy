@@ -1,0 +1,12 @@
+Site files stored at: /home/jules/.wordpress-playground/sites/f53b52ad6d21cceb72dfa78fb67614fe14f110c58e68412b01508d6a485501c3
+
+WordPress Playground CLI
+
+PHP 8.3  WordPress latest
+Extensions intl
+Mount /app/stackboost-for-supportcandy → /wordpress/wp-content/plugins/stackboost-for-supportcandy (auto-mount)
+Mount /home/jules/.wordpress-playground/sites/f53b52ad6d21cceb72dfa78fb67614fe14f110c58e68412b01508d6a485501c3 → /wordpress
+Blueprint blueprint.json
+
+
+Ready! WordPress is running on http://127.0.0.1:9400 (6 workers)

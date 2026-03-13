@@ -31,15 +31,22 @@ class Page {
 		if ( class_exists( '\WPSC_Custom_Field' ) ) {
 			$cf_results = \WPSC_Custom_Field::find( [ 'items_per_page' => 0 ] )['results'];
 			foreach ( $cf_results as $cf ) {
-				// Include fields that have options OR are known choice types
-				if ( ( isset( $cf->type::$has_options ) && $cf->type::$has_options ) || method_exists( $cf, 'get_options' ) || in_array( $cf->type::$slug, [ 'df_category', 'df_priority', 'df_status' ] ) ) {
-					// Also, check if it's a field that would actually be useful for a breakdown.
+				// Check if the type class exists before trying to access its static properties
+				$type_class = $cf->type;
+				$is_choice_field = false;
+
+				if ( is_string( $type_class ) && class_exists( $type_class ) ) {
+					if ( isset( $type_class::$has_options ) && $type_class::$has_options ) {
+						$is_choice_field = true;
+					} elseif ( isset( $type_class::$slug ) && in_array( $type_class::$slug, [ 'df_category', 'df_priority', 'df_status', 'df_usergroups', 'df_multi_choice', 'df_checkbox', 'df_radio' ] ) ) {
+						$is_choice_field = true;
+					}
+				}
+
+				if ( $is_choice_field || method_exists( $cf, 'get_options' ) ) {
 					$custom_fields[ $cf->slug ] = $cf->name;
 				}
 			}
-		} else {
-			// Fallback if SC classes aren't loaded here (rare)
-			$custom_fields = $plugin_instance->get_supportcandy_columns();
 		}
 
 		$default_fields = [
