@@ -89,14 +89,21 @@ class Page {
 			.stkb-clickable-row:hover { background-color: #f0f0f1 !important; }
 
 			/* Modal Scrolling Fixes */
+			.stackboost-modal {
+				overflow: hidden; /* Prevent background scroll */
+			}
 			#stkb-metrics-modal .stackboost-modal-content {
-				max-height: 90vh;
+				max-height: 80vh; /* Leave some margin */
 				display: flex;
 				flex-direction: column;
 			}
 			#stkb-metrics-modal-body {
 				overflow-y: auto;
+				overflow-x: hidden;
 				padding-right: 10px; /* Leave space for scrollbar */
+				/* Flex shrink allows the body to shrink and scroll while header stays fixed */
+				flex-shrink: 1;
+				min-height: 0;
 			}
 			.stkb-chart-container {
 				margin-top: 20px;
@@ -267,10 +274,10 @@ class Page {
 			</div>
 
 			<!-- Dynamic Modal Container -->
-			<div id="stkb-metrics-modal" class="stackboost-modal" style="display:none;">
-				<div class="stackboost-modal-content" style="max-width: 600px;">
-					<span class="stackboost-modal-close-button">&times;</span>
-					<div id="stkb-metrics-modal-body" class="stackboost-modal-body"></div>
+			<div id="stkb-metrics-modal" class="stackboost-modal" style="display:none; align-items:center; justify-content:center;">
+				<div class="stackboost-modal-content" style="max-width: 600px; width:100%; max-height: 80vh; display:flex; flex-direction:column;">
+					<span class="stackboost-modal-close-button" style="align-self: flex-end;">&times;</span>
+					<div id="stkb-metrics-modal-body" class="stackboost-modal-body" style="overflow-y:auto; flex-grow:1; padding-right:15px;"></div>
 				</div>
 			</div>
 
@@ -543,7 +550,7 @@ class Page {
 						let html = $(this).attr('data-modal-html');
 						if ( html ) {
 							$('#stkb-metrics-modal-body').html(html);
-							$('#stkb-metrics-modal').show();
+							$('#stkb-metrics-modal').css('display', 'flex'); // Use flex to center the modal content
 						}
 					});
 
