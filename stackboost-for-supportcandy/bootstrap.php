@@ -22,6 +22,7 @@ define( 'STACKBOOST_CAP_MANAGE_QUEUE_MACRO', 'manage_stackboost_queue_macro' );
 define( 'STACKBOOST_CAP_MANAGE_UTM', 'manage_stackboost_utm' );
 define( 'STACKBOOST_CAP_MANAGE_ATS', 'manage_stackboost_ats' );
 define( 'STACKBOOST_CAP_MANAGE_APPEARANCE', 'manage_stackboost_appearance' );
+define( 'STACKBOOST_CAP_MANAGE_TICKET_METRICS', 'manage_stackboost_ticket_metrics' );
 
 /**
  * Autoloader for the plugin.
@@ -194,6 +195,7 @@ function stackboost_grant_admin_caps( $allcaps ) {
             STACKBOOST_CAP_MANAGE_UTM,
             STACKBOOST_CAP_MANAGE_ATS,
             STACKBOOST_CAP_MANAGE_APPEARANCE,
+            STACKBOOST_CAP_MANAGE_TICKET_METRICS,
         ];
 
         foreach ( $stackboost_caps as $cap ) {
@@ -233,6 +235,7 @@ function stackboost_register_caps_for_role_manager() {
         STACKBOOST_CAP_MANAGE_UTM,
         STACKBOOST_CAP_MANAGE_ATS,
         STACKBOOST_CAP_MANAGE_APPEARANCE,
+        STACKBOOST_CAP_MANAGE_TICKET_METRICS,
     ];
 
     foreach ( $stackboost_caps as $cap ) {

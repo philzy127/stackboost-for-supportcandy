@@ -40,7 +40,7 @@ class WordPress extends Module {
 	public function ajax_get_metrics() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_METRICS ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
@@ -64,6 +64,23 @@ class WordPress extends Module {
 		$tickets_table = $wpdb->prefix . 'psmsc_tickets';
 		$threads_table = $wpdb->prefix . 'psmsc_ticket_threads';
 
+		// Check if the old prefix is used or the new prefix is used
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$tickets_table}'") !== $tickets_table ) {
+			$tickets_table = $wpdb->prefix . 'wpsc_tickets';
+			$threads_table = $wpdb->prefix . 'wpsc_ticket_threads';
+			$status_table  = $wpdb->prefix . 'wpsc_statuses';
+			$customer_table = $wpdb->prefix . 'wpsc_customers';
+			$categories_table = $wpdb->prefix . 'wpsc_categories';
+			$priorities_table = $wpdb->prefix . 'wpsc_priorities';
+			$options_table = $wpdb->prefix . 'wpsc_options';
+		} else {
+			$status_table  = $wpdb->prefix . 'psmsc_statuses';
+			$customer_table = $wpdb->prefix . 'psmsc_customers';
+			$categories_table = $wpdb->prefix . 'psmsc_categories';
+			$priorities_table = $wpdb->prefix . 'psmsc_priorities';
+			$options_table = $wpdb->prefix . 'psmsc_options';
+		}
+
 		// Total Tickets Created
 		$total_created = (int) $wpdb->get_var( $wpdb->prepare(
 			"SELECT COUNT(id) FROM {$tickets_table} WHERE date_created >= %s AND date_created <= %s",
@@ -73,7 +90,7 @@ class WordPress extends Module {
 
 		// Average Time Ticket was Open
 		// For tickets closed within the range
-		$closed_status_query = "SELECT id FROM {$wpdb->prefix}psmsc_statuses WHERE is_active = 0";
+		$closed_status_query = "SELECT id FROM {$status_table} WHERE is_active = 0";
 		$closed_statuses = $wpdb->get_col($closed_status_query);
 
 		if ( ! empty($closed_statuses) ) {
@@ -124,7 +141,7 @@ class WordPress extends Module {
 				$start_dt, $end_dt
 			);
 			$agent_results = $wpdb->get_results($agent_query);
-			$agent_map = $this->get_agent_map($wpdb);
+			$agent_map = $this->get_agent_map($wpdb, $customer_table);
 
 			foreach ( $agent_results as $row ) {
 				$name = $agent_map[$row->agent] ?? 'Agent ' . $row->agent;
@@ -144,7 +161,7 @@ class WordPress extends Module {
 					$start_dt, $end_dt
 				);
 				$type_results = $wpdb->get_results($type_query);
-				$type_map = $this->get_type_map($wpdb, $type_field);
+				$type_map = $this->get_type_map($wpdb, $type_field, $categories_table, $priorities_table, $status_table, $options_table);
 
 				foreach ( $type_results as $row ) {
 					$name = $type_map[$row->type_id] ?? $row->type_id;
@@ -177,21 +194,21 @@ class WordPress extends Module {
 		return implode(' ', $parts);
 	}
 
-	private function get_agent_map( $wpdb ) {
+	private function get_agent_map( $wpdb, $customer_table ) {
 		$map = [];
-		$results = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}psmsc_customers WHERE is_agent = 1");
+		$results = $wpdb->get_results("SELECT id, name FROM {$customer_table} WHERE is_agent = 1");
 		foreach ( $results as $r ) {
 			$map[$r->id] = $r->name;
 		}
 		return $map;
 	}
 
-	private function get_type_map( $wpdb, $type_field ) {
+	private function get_type_map( $wpdb, $type_field, $categories_table, $priorities_table, $status_table, $options_table ) {
 		$map = [];
 		$table_name = '';
-		if ( $type_field === 'category' ) $table_name = $wpdb->prefix . 'psmsc_categories';
-		if ( $type_field === 'priority' ) $table_name = $wpdb->prefix . 'psmsc_priorities';
-		if ( $type_field === 'status' ) $table_name = $wpdb->prefix . 'psmsc_statuses';
+		if ( $type_field === 'category' ) $table_name = $categories_table;
+		if ( $type_field === 'priority' ) $table_name = $priorities_table;
+		if ( $type_field === 'status' ) $table_name = $status_table;
 
 		if ( $table_name ) {
 			$results = $wpdb->get_results("SELECT id, name FROM {$table_name}");
@@ -200,7 +217,7 @@ class WordPress extends Module {
 			}
 		} else {
 			// Custom field options
-			$results = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}psmsc_options");
+			$results = $wpdb->get_results("SELECT id, name FROM {$options_table}");
 			foreach ( $results as $r ) {
 				$map[$r->id] = $r->name;
 			}

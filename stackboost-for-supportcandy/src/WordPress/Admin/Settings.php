@@ -266,7 +266,7 @@ class Settings {
 				'parent'      => 'stackboost-for-supportcandy',
 				'page_title'  => __( 'Ticket Metrics', 'stackboost-for-supportcandy' ),
 				'menu_title'  => __( 'Metrics', 'stackboost-for-supportcandy' ),
-				'capability'  => STACKBOOST_CAP_MANAGE_SETTINGS,
+				'capability'  => STACKBOOST_CAP_MANAGE_TICKET_METRICS,
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketMetrics\Admin\Page::class, 'render_page' ],
 			];
 		}
@@ -1212,7 +1212,7 @@ class Settings {
 			case 'stackboost-directory': $capability = STACKBOOST_CAP_MANAGE_DIRECTORY; break;
 			case 'stackboost-onboarding-dashboard': $capability = STACKBOOST_CAP_MANAGE_ONBOARDING; break;
 			case 'stackboost-appearance': $capability = STACKBOOST_CAP_MANAGE_APPEARANCE; break;
-			case 'stackboost-ticket-metrics': $capability = STACKBOOST_CAP_MANAGE_SETTINGS; break;
+			case 'stackboost-ticket-metrics': $capability = STACKBOOST_CAP_MANAGE_TICKET_METRICS; break;
 		}
 
 		if ( ! current_user_can( $capability ) ) {
