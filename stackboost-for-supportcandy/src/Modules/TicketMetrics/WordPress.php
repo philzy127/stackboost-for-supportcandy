@@ -291,36 +291,91 @@ class WordPress extends Module {
 			foreach ( $agent_data as $a_id => $data ) {
 				$name = $agent_map[$a_id] ?? 'Agent ' . $a_id;
 
-				// Build HTML for tooltip/modal
-				$tooltip_rows = '';
+				// Deep metric calculation for the Agent's overall stats (Tooltip)
+				// Using FIND_IN_SET to safely handle pipe-separated ID arrays in the string
+				$agent_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", $a_id);
+				$agent_metrics = $this->calculate_metric_set(
+					$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
+					$closed_condition, $open_condition, $close_date_col,
+					$active_in_period_sql, $agent_where
+				);
+
+				$tooltip_html = sprintf(
+					'<div style="text-align:left; font-size: 13px; line-height: 1.5;">
+						<strong>%s</strong><br><hr style="margin:5px 0; border: 0; border-top: 1px solid #ccc;">
+						Assigned: <strong>%s</strong><br>
+						Closed: <strong>%s</strong><br>
+						Avg Time to Close: <strong>%s</strong><br>
+						Avg Age (Open): <strong>%s</strong><br>
+						Avg Initial Response: <strong>%s</strong><br><br>
+						<em>Click row to view Ticket Type distribution</em>
+					</div>',
+					esc_html($name),
+					(int)$data['assigned'],
+					(int)$data['closed'],
+					esc_html($agent_metrics['avg_open_time']),
+					esc_html($agent_metrics['avg_age_open']),
+					esc_html($agent_metrics['avg_initial_response'])
+				);
+
+				// Build HTML for Modal (Deep stats per type)
+				$modal_rows = '';
 				foreach ( $data['types'] as $t_val => $t_counts ) {
 					$t_name = $type_map[$t_val] ?? ($t_val ?: 'Unassigned');
-					$tooltip_rows .= sprintf(
-						'<tr><td>%s</td><td style="text-align:center;">%s</td><td style="text-align:center;">%s</td></tr>',
+
+					$agent_type_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0 AND t.`{$type_field}` = %s", $a_id, $t_val);
+					$agent_type_metrics = $this->calculate_metric_set(
+						$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
+						$closed_condition, $open_condition, $close_date_col,
+						$active_in_period_sql, $agent_type_where
+					);
+
+					$modal_rows .= sprintf(
+						'<tr>
+							<td><strong>%s</strong></td>
+							<td style="text-align:center;">%s</td>
+							<td style="text-align:center;">%s</td>
+							<td style="text-align:center;">%s</td>
+							<td style="text-align:center;">%s</td>
+							<td style="text-align:center;">%s</td>
+						</tr>',
 						esc_html($t_name),
 						(int)$t_counts['assigned'],
-						(int)$t_counts['closed']
+						(int)$t_counts['closed'],
+						esc_html($agent_type_metrics['avg_open_time']),
+						esc_html($agent_type_metrics['avg_age_open']),
+						esc_html($agent_type_metrics['avg_initial_response'])
 					);
 				}
 
 				$modal_html = sprintf(
 					'<div class="stackboost-dashboard" style="text-align:left;">
-						<h3 style="margin-top:0;">%s - Ticket Breakdown</h3>
-						<div class="stackboost-card">
+						<h3 style="margin-top:0;">%s - Performance by Ticket Type</h3>
+						<div class="stackboost-card" style="padding: 15px; overflow-x: auto;">
 							<table class="wp-list-table widefat striped" style="margin-top:10px;">
-								<thead><tr><th>Type</th><th style="text-align:center;">Assigned</th><th style="text-align:center;">Closed</th></tr></thead>
+								<thead>
+									<tr>
+										<th>Type</th>
+										<th style="text-align:center;">Assigned</th>
+										<th style="text-align:center;">Closed</th>
+										<th style="text-align:center;">Avg Close Time</th>
+										<th style="text-align:center;">Avg Age (Open)</th>
+										<th style="text-align:center;">Avg Initial Response</th>
+									</tr>
+								</thead>
 								<tbody>%s</tbody>
 							</table>
 						</div>
 					</div>',
 					esc_html($name),
-					$tooltip_rows ?: '<tr><td colspan="3">No type data available</td></tr>'
+					$modal_rows ?: '<tr><td colspan="6">No type data available</td></tr>'
 				);
 
 				$metrics['agent_breakdown'][] = [
 					'label' => $name,
 					'assigned' => $data['assigned'],
 					'closed' => $data['closed'],
+					'tooltip' => $tooltip_html,
 					'modal_html' => $modal_html
 				];
 			}
@@ -349,6 +404,24 @@ class WordPress extends Module {
 						(int)$a_count
 					);
 				}
+
+				$tooltip_html = sprintf(
+					'<div style="text-align:left; font-size: 13px; line-height: 1.5;">
+						<strong>%s</strong><br><hr style="margin:5px 0; border: 0; border-top: 1px solid #ccc;">
+						Created: <strong>%s</strong><br>
+						Closed: <strong>%s</strong><br>
+						Avg Time to Close: <strong>%s</strong><br>
+						Avg Age (Open): <strong>%s</strong><br>
+						Avg Initial Response: <strong>%s</strong><br><br>
+						<em>Click row to view Agent distribution</em>
+					</div>',
+					esc_html($name),
+					esc_html($type_metrics['total_created']),
+					esc_html($type_metrics['total_closed']),
+					esc_html($type_metrics['avg_open_time']),
+					esc_html($type_metrics['avg_age_open']),
+					esc_html($type_metrics['avg_initial_response'])
+				);
 
 				$modal_html = sprintf(
 					'<div class="stackboost-dashboard" style="text-align:left;">
@@ -387,6 +460,7 @@ class WordPress extends Module {
 				$metrics['type_breakdown'][] = [
 					'label' => $name,
 					'value' => $data['count'],
+					'tooltip' => $tooltip_html,
 					'modal_html' => $modal_html
 				];
 			}

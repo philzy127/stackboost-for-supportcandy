@@ -280,9 +280,12 @@ class Page {
 
 										$tdLabel.append(label);
 
+										if ( item.tooltip ) {
+											$tr.attr('data-tippy-content', item.tooltip);
+										}
+
 										if ( item.modal_html ) {
 											$tr.attr('data-modal-html', item.modal_html);
-											$tdLabel.attr('title', 'Click to view details');
 										}
 
 										$tr.append($tdLabel).append($tdAssigned).append($tdClosed);
@@ -305,9 +308,12 @@ class Page {
 
 										$tdLabel.append(label);
 
+										if ( item.tooltip ) {
+											$tr.attr('data-tippy-content', item.tooltip);
+										}
+
 										if ( item.modal_html ) {
 											$tr.attr('data-modal-html', item.modal_html);
-											$tdLabel.attr('title', 'Click to view details');
 										}
 
 										$tr.append($tdLabel).append($tdValue);
@@ -319,6 +325,16 @@ class Page {
 
 								$('#stkb_metrics_results').show();
 
+								// Initialize Tippy if available
+								// Using placement: 'right' ensuring it opens cleanly on the edge of the row, not randomly.
+								if (typeof tippy !== 'undefined') {
+									tippy('[data-tippy-content]', {
+										allowHTML: true,
+										placement: 'right',
+										theme: 'light-border',
+										maxWidth: 350
+									});
+								}
 							} else {
 								alert(response.data);
 							}
