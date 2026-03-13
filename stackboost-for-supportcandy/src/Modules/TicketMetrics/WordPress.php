@@ -231,7 +231,7 @@ class WordPress extends Module {
 		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
 			$raw_tickets_query = $wpdb->prepare(
 				"SELECT t.id, t.assigned_agent, t.`{$type_field}` as type_val,
-						IF(t.{$closed_condition} AND t.{$close_date_col} >= %s AND t.{$close_date_col} <= %s, 1, 0) as is_closed_in_range
+						IF({$closed_condition} AND {$close_date_col} >= %s AND {$close_date_col} <= %s, 1, 0) as is_closed_in_range
 				 FROM {$tickets_table} t
 				 WHERE {$active_in_period_sql}",
 				$start_dt, $end_dt, $end_dt, $start_dt
