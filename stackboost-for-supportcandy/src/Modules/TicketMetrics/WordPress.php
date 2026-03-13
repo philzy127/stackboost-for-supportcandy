@@ -50,8 +50,10 @@ class WordPress extends Module {
 
 		// Save preference securely using a standalone option to bypass the central settings sanitizer
 		// which would otherwise reject programmatic updates missing a page_slug.
-		if ( get_option( 'stackboost_ticket_metrics_type_field' ) !== $type_field ) {
-			update_option( 'stackboost_ticket_metrics_type_field', $type_field );
+		$options = get_option( 'stackboost_settings', [] );
+		if ( ! isset( $options['ticket_metrics_type_field'] ) || $options['ticket_metrics_type_field'] !== $type_field ) {
+			$options['ticket_metrics_type_field'] = $type_field;
+			update_option( 'stackboost_settings', $options );
 		}
 
 		if ( function_exists( 'stackboost_log' ) ) {

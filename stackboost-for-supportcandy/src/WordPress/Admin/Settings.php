@@ -796,7 +796,7 @@ class Settings {
 			'stackboost-conditional-options' => ['conditional_options_rules', 'conditional_options_enabled'], // Whitelisted
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
-			'stackboost-ticket-metrics'     => [], // No settings to save currently
+			'stackboost-ticket-metrics'     => ['ticket_metrics_type_field', 'ticket_metrics_chart_type_agent', 'ticket_metrics_chart_type_type'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
@@ -891,6 +891,15 @@ class Settings {
 					case 'chat_bubbles_shadow_enable':
 					case 'chat_bubbles_image_box':
 						$saved_settings[$key] = intval($value);
+						break;
+
+					case 'ticket_metrics_chart_type_agent':
+					case 'ticket_metrics_chart_type_type':
+						$saved_settings[$key] = in_array( $value, [ 'pie', 'doughnut', 'bar' ], true ) ? $value : 'pie';
+						break;
+
+					case 'ticket_metrics_type_field':
+						$saved_settings[$key] = sanitize_text_field($value);
 						break;
 
 					case 'holidays':

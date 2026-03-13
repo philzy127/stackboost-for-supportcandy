@@ -70,7 +70,10 @@ class Page {
 		$all_type_fields = array_merge( $default_fields, $custom_fields );
 		asort( $all_type_fields );
 
-		$saved_type_field = get_option( 'stackboost_ticket_metrics_type_field', 'category' );
+		$options = get_option( 'stackboost_settings', [] );
+		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
+		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'pie';
+		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
 
 		?>
 		<style>
@@ -95,109 +98,172 @@ class Page {
 				overflow-y: auto;
 				padding-right: 10px; /* Leave space for scrollbar */
 			}
+			.stkb-chart-container {
+				margin-top: 20px;
+				position: relative;
+				height: 300px;
+				width: 100%;
+				display: flex;
+				justify-content: center;
+			}
 		</style>
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php esc_html_e( 'Ticket Metrics', 'stackboost-for-supportcandy' ); ?></h1>
 
-			<div class="stackboost-dashboard-grid">
-				<div class="stackboost-card" style="margin-bottom: 20px;">
-					<h2><?php esc_html_e( 'Metrics Configuration', 'stackboost-for-supportcandy' ); ?></h2>
-					<div style="display:flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
-						<div>
-							<label for="stkb_date_preset" style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Date Range', 'stackboost-for-supportcandy' ); ?></label>
-							<select id="stkb_date_preset">
-								<option value="this_week"><?php esc_html_e( 'This Week', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="last_week"><?php esc_html_e( 'Last Week', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="this_month"><?php esc_html_e( 'This Month', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="last_month"><?php esc_html_e( 'Last Month', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="last_30_days"><?php esc_html_e( 'Last 30 Days', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="last_60_days"><?php esc_html_e( 'Last 60 Days', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="last_90_days"><?php esc_html_e( 'Last 90 Days', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="this_year"><?php esc_html_e( 'This Year (to date)', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="last_year"><?php esc_html_e( 'Last Year', 'stackboost-for-supportcandy' ); ?></option>
-								<option value="custom"><?php esc_html_e( 'Custom', 'stackboost-for-supportcandy' ); ?></option>
-							</select>
+			<h2 class="nav-tab-wrapper stackboost-nav-tabs">
+				<a href="#dashboard" class="nav-tab nav-tab-active"><?php esc_html_e( 'Dashboard', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="#settings" class="nav-tab"><?php esc_html_e( 'Settings', 'stackboost-for-supportcandy' ); ?></a>
+			</h2>
+
+			<div id="tab-dashboard" class="stackboost-tab-content" style="display: block;">
+				<div class="stackboost-dashboard-grid">
+					<div class="stackboost-card" style="margin-bottom: 20px;">
+						<h2><?php esc_html_e( 'Metrics Filter', 'stackboost-for-supportcandy' ); ?></h2>
+						<div style="display:flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+							<div>
+								<label for="stkb_date_preset" style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Date Range', 'stackboost-for-supportcandy' ); ?></label>
+								<select id="stkb_date_preset">
+									<option value="this_week"><?php esc_html_e( 'This Week', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="last_week"><?php esc_html_e( 'Last Week', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="this_month"><?php esc_html_e( 'This Month', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="last_month"><?php esc_html_e( 'Last Month', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="last_30_days"><?php esc_html_e( 'Last 30 Days', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="last_60_days"><?php esc_html_e( 'Last 60 Days', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="last_90_days"><?php esc_html_e( 'Last 90 Days', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="this_year"><?php esc_html_e( 'This Year (to date)', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="last_year"><?php esc_html_e( 'Last Year', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="custom"><?php esc_html_e( 'Custom', 'stackboost-for-supportcandy' ); ?></option>
+								</select>
+							</div>
+							<div id="stkb_custom_dates" style="display:none;">
+								<label style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Custom Dates', 'stackboost-for-supportcandy' ); ?></label>
+								<input type="date" id="stkb_start_date" /> - <input type="date" id="stkb_end_date" />
+							</div>
+							<div>
+								<button type="button" class="button button-primary" id="stkb_generate_metrics"><?php esc_html_e( 'Generate Metrics', 'stackboost-for-supportcandy' ); ?></button>
+							</div>
 						</div>
-						<div id="stkb_custom_dates" style="display:none;">
-							<label style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Custom Dates', 'stackboost-for-supportcandy' ); ?></label>
-							<input type="date" id="stkb_start_date" /> - <input type="date" id="stkb_end_date" />
+					</div>
+				</div>
+
+				<div id="stkb_metrics_results" style="display:none;">
+					<div class="stkb-metrics-row">
+						<!-- Column 1: Counts -->
+						<div class="stkb-metric-col">
+							<div class="stkb-metric-card">
+								<h3><?php esc_html_e( 'Tickets Created', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_total">0</p>
+							</div>
+							<div class="stkb-metric-card">
+								<h3><?php esc_html_e( 'Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_total_closed">0</p>
+							</div>
 						</div>
-						<div>
-							<label for="stkb_type_field" style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Ticket Type Field (For Breakdown)', 'stackboost-for-supportcandy' ); ?></label>
-							<select id="stkb_type_field">
-								<?php foreach ( $all_type_fields as $key => $label ) : ?>
-									<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $saved_type_field, $key ); ?>><?php echo esc_html( $label ); ?></option>
-								<?php endforeach; ?>
-							</select>
+
+						<!-- Column 2: Averages -->
+						<div class="stkb-metric-col">
+							<div class="stkb-metric-card">
+								<h3><?php esc_html_e( 'Average Time to Close (Closed Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_avg_open">0</p>
+							</div>
+							<div class="stkb-metric-card">
+								<h3><?php esc_html_e( 'Average Age (Open Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_avg_age_open">0</p>
+							</div>
+							<div class="stkb-metric-card">
+								<h3><?php esc_html_e( 'Average Initial Response Time', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_avg_response">0</p>
+							</div>
 						</div>
-						<div>
-							<button type="button" class="button button-primary" id="stkb_generate_metrics"><?php esc_html_e( 'Generate Metrics', 'stackboost-for-supportcandy' ); ?></button>
+					</div>
+
+					<!-- Breakdowns (Always generated) -->
+					<div class="stkb-breakdown-wrapper">
+						<div class="stkb-breakdown-col">
+							<h3><?php esc_html_e( 'Agent Breakdown', 'stackboost-for-supportcandy' ); ?></h3>
+							<table class="wp-list-table widefat fixed striped">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="text-align:center; width:120px;"><?php esc_html_e( 'Assigned', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="text-align:center; width:120px;"><?php esc_html_e( 'Closed', 'stackboost-for-supportcandy' ); ?></th>
+									</tr>
+								</thead>
+								<tbody id="stkb_agent_breakdown_body">
+								</tbody>
+							</table>
+							<div class="stkb-chart-container">
+								<canvas id="stkb_agent_chart"></canvas>
+							</div>
+						</div>
+						<div class="stkb-breakdown-col">
+							<h3><?php esc_html_e( 'Type Breakdown', 'stackboost-for-supportcandy' ); ?></h3>
+							<table class="wp-list-table widefat fixed striped">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Type', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="text-align:center; width:120px;"><?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?></th>
+									</tr>
+								</thead>
+								<tbody id="stkb_type_breakdown_body">
+								</tbody>
+							</table>
+							<div class="stkb-chart-container">
+								<canvas id="stkb_type_chart"></canvas>
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div id="stkb_metrics_results" style="display:none;">
-				<div class="stkb-metrics-row">
-					<!-- Column 1: Counts -->
-					<div class="stkb-metric-col">
-						<div class="stkb-metric-card">
-							<h3><?php esc_html_e( 'Tickets Created', 'stackboost-for-supportcandy' ); ?></h3>
-							<p id="stkb_metric_total">0</p>
-						</div>
-						<div class="stkb-metric-card">
-							<h3><?php esc_html_e( 'Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
-							<p id="stkb_metric_total_closed">0</p>
-						</div>
-					</div>
-
-					<!-- Column 2: Averages -->
-					<div class="stkb-metric-col">
-						<div class="stkb-metric-card">
-							<h3><?php esc_html_e( 'Average Time to Close (Closed Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
-							<p id="stkb_metric_avg_open">0</p>
-						</div>
-						<div class="stkb-metric-card">
-							<h3><?php esc_html_e( 'Average Age (Open Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
-							<p id="stkb_metric_avg_age_open">0</p>
-						</div>
-						<div class="stkb-metric-card">
-							<h3><?php esc_html_e( 'Average Initial Response Time', 'stackboost-for-supportcandy' ); ?></h3>
-							<p id="stkb_metric_avg_response">0</p>
-						</div>
-					</div>
-				</div>
-
-				<!-- Breakdowns (Always generated) -->
-				<div class="stkb-breakdown-wrapper">
-					<div class="stkb-breakdown-col">
-						<h3><?php esc_html_e( 'Agent Breakdown', 'stackboost-for-supportcandy' ); ?></h3>
-						<table class="wp-list-table widefat fixed striped">
-							<thead>
+			<div id="tab-settings" class="stackboost-tab-content" style="display: none;">
+				<form action="options.php" method="post">
+					<?php
+					settings_fields( 'stackboost_settings' );
+					echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-ticket-metrics">';
+					?>
+					<div class="stackboost-dashboard-grid">
+						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'Configuration', 'stackboost-for-supportcandy' ); ?></h2>
+							<table class="form-table">
 								<tr>
-									<th><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></th>
-									<th style="text-align:center; width:120px;"><?php esc_html_e( 'Assigned', 'stackboost-for-supportcandy' ); ?></th>
-									<th style="text-align:center; width:120px;"><?php esc_html_e( 'Closed', 'stackboost-for-supportcandy' ); ?></th>
+									<th scope="row"><label for="stkb_type_field_setting"><?php esc_html_e( 'Ticket Type Field', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select name="stackboost_settings[ticket_metrics_type_field]" id="stkb_type_field_setting">
+											<?php foreach ( $all_type_fields as $key => $label ) : ?>
+												<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $saved_type_field, $key ); ?>><?php echo esc_html( $label ); ?></option>
+											<?php endforeach; ?>
+										</select>
+										<p class="description"><?php esc_html_e( 'Select the field used to generate the Type Breakdown.', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
 								</tr>
-							</thead>
-							<tbody id="stkb_agent_breakdown_body">
-							</tbody>
-						</table>
-					</div>
-					<div class="stkb-breakdown-col">
-						<h3><?php esc_html_e( 'Type Breakdown', 'stackboost-for-supportcandy' ); ?></h3>
-						<table class="wp-list-table widefat fixed striped">
-							<thead>
 								<tr>
-									<th><?php esc_html_e( 'Type', 'stackboost-for-supportcandy' ); ?></th>
-									<th style="text-align:center; width:120px;"><?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?></th>
+									<th scope="row"><label for="stkb_chart_type_agent"><?php esc_html_e( 'Agent Chart Type', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select name="stackboost_settings[ticket_metrics_chart_type_agent]" id="stkb_chart_type_agent">
+											<option value="pie" <?php selected( $chart_type_agent, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="doughnut" <?php selected( $chart_type_agent, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="bar" <?php selected( $chart_type_agent, 'bar' ); ?>><?php esc_html_e( 'Bar', 'stackboost-for-supportcandy' ); ?></option>
+										</select>
+									</td>
 								</tr>
-							</thead>
-							<tbody id="stkb_type_breakdown_body">
-							</tbody>
-						</table>
+								<tr>
+									<th scope="row"><label for="stkb_chart_type_type"><?php esc_html_e( 'Type Chart Type', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select name="stackboost_settings[ticket_metrics_chart_type_type]" id="stkb_chart_type_type">
+											<option value="pie" <?php selected( $chart_type_type, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="doughnut" <?php selected( $chart_type_type, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="bar" <?php selected( $chart_type_type, 'bar' ); ?>><?php esc_html_e( 'Bar', 'stackboost-for-supportcandy' ); ?></option>
+										</select>
+									</td>
+								</tr>
+							</table>
+							<p class="submit">
+								<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ), 'primary', 'submit', false ); ?>
+							</p>
+						</div>
 					</div>
-				</div>
+				</form>
 			</div>
 
 			<!-- Dynamic Modal Container -->
@@ -210,6 +276,25 @@ class Page {
 
 			<script>
 				jQuery(document).ready(function($) {
+					let agentChart = null;
+					let typeChart = null;
+
+					// Basic color palette that matches typical admin themes
+					const chartColors = [
+						'#2271b1', '#d63638', '#00a32a', '#dba617', '#72aee6',
+						'#f8c43d', '#ed5e60', '#68de7c', '#b32d2e', '#135e96'
+					];
+
+					// Tab handling logic
+					$('.nav-tab').on('click', function(e) {
+						e.preventDefault();
+						$('.nav-tab').removeClass('nav-tab-active');
+						$(this).addClass('nav-tab-active');
+						var target = $(this).attr('href');
+						$('.stackboost-tab-content').hide();
+						$('#tab-' + target.substring(1)).show();
+					});
+
 					$('#stkb_date_preset').on('change', function() {
 						if ($(this).val() === 'custom') {
 							$('#stkb_custom_dates').show();
@@ -276,7 +361,7 @@ class Page {
 
 						let start_date = $('#stkb_start_date').val();
 						let end_date = $('#stkb_end_date').val();
-						let type_field = $('#stkb_type_field').val();
+						let type_field = $('#stkb_type_field_setting').val();
 
 						$.post(ajaxurl, {
 							action: 'stackboost_get_ticket_metrics',
@@ -298,8 +383,17 @@ class Page {
 								// Render Agent Breakdown
 								let agentTbody = $('#stkb_agent_breakdown_body');
 								agentTbody.empty();
+
+								let agentLabels = [];
+								let agentAssignedData = [];
+								let agentClosedData = [];
+
 								if (data.agent_breakdown && data.agent_breakdown.length > 0) {
 									data.agent_breakdown.forEach(function(item) {
+										agentLabels.push($('<div>').text(item.label).html());
+										agentAssignedData.push(item.assigned);
+										agentClosedData.push(item.closed);
+
 										let label = $('<div>').text(item.label).html();
 										let assigned = $('<div>').text(item.assigned).html();
 										let closed = $('<div>').text(item.closed).html();
@@ -329,8 +423,15 @@ class Page {
 								// Render Type Breakdown
 								let typeTbody = $('#stkb_type_breakdown_body');
 								typeTbody.empty();
+
+								let typeLabels = [];
+								let typeData = [];
+
 								if (data.type_breakdown && data.type_breakdown.length > 0) {
 									data.type_breakdown.forEach(function(item) {
+										typeLabels.push($('<div>').text(item.label).html());
+										typeData.push(item.value);
+
 										let label = $('<div>').text(item.label).html();
 										let value = $('<div>').text(item.value).html();
 										let $tr = $('<tr class="stkb-clickable-row"></tr>');
@@ -355,6 +456,71 @@ class Page {
 								}
 
 								$('#stkb_metrics_results').show();
+
+								// Render Charts
+								if (typeof Chart !== 'undefined') {
+									if (agentChart) { agentChart.destroy(); }
+									if (typeChart) { typeChart.destroy(); }
+
+									const agentCtx = document.getElementById('stkb_agent_chart').getContext('2d');
+									const typeCtx = document.getElementById('stkb_type_chart').getContext('2d');
+
+									let agentChartType = '<?php echo esc_js( $chart_type_agent ); ?>';
+									let typeChartType = '<?php echo esc_js( $chart_type_type ); ?>';
+
+									// Setup agent chart config
+									let agentConfig = {
+										type: agentChartType,
+										data: {
+											labels: agentLabels,
+											datasets: [
+												{
+													label: '<?php esc_html_e( 'Assigned', 'stackboost-for-supportcandy' ); ?>',
+													data: agentAssignedData,
+													backgroundColor: chartColors,
+													borderWidth: 1
+												},
+												{
+													label: '<?php esc_html_e( 'Closed', 'stackboost-for-supportcandy' ); ?>',
+													data: agentClosedData,
+													backgroundColor: chartColors.map(c => c + '99'), // Make closed dataset slightly transparent
+													borderWidth: 1
+												}
+											]
+										},
+										options: {
+											responsive: true,
+											maintainAspectRatio: false,
+											plugins: { legend: { position: 'right' } }
+										}
+									};
+
+									// If bar chart, adjust legend position and use solid distinct colors for the datasets instead of array
+									if (agentChartType === 'bar') {
+										agentConfig.data.datasets[0].backgroundColor = '#2271b1';
+										agentConfig.data.datasets[1].backgroundColor = '#00a32a';
+										agentConfig.options.plugins.legend.position = 'top';
+									}
+
+									agentChart = new Chart(agentCtx, agentConfig);
+
+									typeChart = new Chart(typeCtx, {
+										type: typeChartType,
+										data: {
+											labels: typeLabels,
+											datasets: [{
+												data: typeData,
+												backgroundColor: chartColors,
+												borderWidth: 1
+											}]
+										},
+										options: {
+											responsive: true,
+											maintainAspectRatio: false,
+											plugins: { legend: { position: 'right' } }
+										}
+									});
+								}
 
 								// Initialize Tippy if available
 								// Using placement: 'right' ensuring it opens cleanly on the edge of the row, not randomly.

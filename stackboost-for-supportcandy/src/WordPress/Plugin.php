@@ -240,6 +240,15 @@ final class Plugin {
 			[],
 			'1.0.8'
 		);
+
+		// Chart.js
+		wp_register_script(
+			'stackboost-chartjs',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/chartjs/chart.umd.js',
+			[],
+			'4.4.7',
+			true
+		);
 	}
 
 	/**
@@ -435,6 +444,7 @@ final class Plugin {
 		// Enqueue Tooltip scripts specifically for Ticket Metrics
 		if ( 'stackboost_page_stackboost-ticket-metrics' === $hook_suffix || 'stackboost-for-supportcandy_page_stackboost-ticket-metrics' === $hook_suffix ) {
 			wp_enqueue_script( 'stackboost-tippy' );
+			wp_enqueue_script( 'stackboost-chartjs' );
 		}
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
