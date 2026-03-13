@@ -94,16 +94,7 @@ class WordPress extends Module {
 		$has_date_closed = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'date_closed'") === 'date_closed';
 		$close_date_column = $has_date_closed ? 'date_closed' : 'date_updated';
 
-		// Total Tickets Created
-		$total_created = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(id) FROM {$tickets_table} WHERE date_created >= %s AND date_created <= %s",
-			$start_dt, $end_dt
-		) );
-		$metrics['total_created'] = $total_created;
-
 		// Define the "Closed" logic dynamically based on schema capabilities.
-		// User data proves `is_active` is NOT reliable for closure state on modern SC, but `date_closed` is.
-		// We define these with the `t.` table alias pre-applied because they are injected into JOINs and complex WHERE clauses.
 		if ( $has_date_closed ) {
 			$closed_condition = "t.date_closed IS NOT NULL AND t.date_closed != '0000-00-00 00:00:00'";
 			$open_condition   = "(t.date_closed IS NULL OR t.date_closed = '0000-00-00 00:00:00')";
@@ -280,9 +271,44 @@ class WordPress extends Module {
 				foreach ( $type_results as $row ) {
 					$name = $type_map[$row->type_id] ?? $row->type_id;
 					if(empty($name)) $name = 'Unassigned';
+
+					// Calculate specifics for this type
+					$type_where = $wpdb->prepare("AND t.`{$type_field}` = %s", $row->type_id);
+					$type_metrics = $this->calculate_metric_set(
+						$wpdb,
+						$tickets_table,
+						$threads_table,
+						$start_dt,
+						$end_dt,
+						$closed_condition,
+						$open_condition,
+						$close_date_col,
+						$active_in_period_sql,
+						$type_where
+					);
+
+					// Build HTML tooltip string inline to pass via JSON
+					$tooltip_html = sprintf(
+						'<div style="text-align:left; font-size: 13px; line-height: 1.5;">
+							<strong>%s</strong><br><hr style="margin:5px 0; border: 0; border-top: 1px solid #ccc;">
+							Created: <strong>%s</strong><br>
+							Closed: <strong>%s</strong><br>
+							Avg Time to Close: <strong>%s</strong><br>
+							Avg Age (Open): <strong>%s</strong><br>
+							Avg Initial Response: <strong>%s</strong>
+						</div>',
+						esc_html($name),
+						esc_html($type_metrics['total_created']),
+						esc_html($type_metrics['total_closed']),
+						esc_html($type_metrics['avg_open_time']),
+						esc_html($type_metrics['avg_age_open']),
+						esc_html($type_metrics['avg_initial_response'])
+					);
+
 					$metrics['type_breakdown'][] = [
 						'label' => $name,
-						'value' => $row->count
+						'value' => $row->count,
+						'tooltip' => $tooltip_html
 					];
 				}
 			}
@@ -293,6 +319,61 @@ class WordPress extends Module {
 		}
 
 		wp_send_json_success( $metrics );
+	}
+
+	private function calculate_metric_set( $wpdb, $tickets_table, $threads_table, $start_dt, $end_dt, $closed_condition, $open_condition, $close_date_col, $active_in_period_sql, $extra_where = '' ) {
+		$metrics = [];
+
+		// Since $extra_where may contain literal percentage signs (e.g. from user input like "100% Complete"),
+		// appending it into $wpdb->prepare WILL cause prepare to fail if it thinks those are unreplaced placeholders.
+		// Instead, we compile the prepared string *first*, and then append the strictly prepared $extra_where.
+
+		// Total Tickets Created
+		$query = $wpdb->prepare( "SELECT COUNT(t.id) FROM {$tickets_table} t WHERE t.date_created >= %s AND t.date_created <= %s", $start_dt, $end_dt ) . " " . $extra_where;
+		$metrics['total_created'] = (int) $wpdb->get_var( $query );
+
+		// Total Tickets Closed
+		$query = $wpdb->prepare(
+			"SELECT COUNT(t.id) FROM {$tickets_table} t
+			 WHERE {$closed_condition}
+			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
+			$start_dt, $end_dt
+		) . " " . $extra_where;
+		$metrics['total_closed'] = (int) $wpdb->get_var( $query );
+
+		// Average Time Ticket was Open (For Closed Tickets)
+		$query = $wpdb->prepare(
+			"SELECT AVG(TIMESTAMPDIFF(SECOND, t.date_created, {$close_date_col}))
+			 FROM {$tickets_table} t
+			 WHERE {$closed_condition}
+			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
+			$start_dt, $end_dt
+		) . " " . $extra_where;
+		$metrics['avg_open_time'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : 'N/A';
+
+		// Average Age of Open Tickets
+		$query = $wpdb->prepare(
+			"SELECT AVG(TIMESTAMPDIFF(SECOND, t.date_created, UTC_TIMESTAMP()))
+			 FROM {$tickets_table} t
+			 WHERE {$open_condition}
+			 AND {$active_in_period_sql}",
+			$end_dt, $start_dt
+		) . " " . $extra_where;
+		$metrics['avg_age_open'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : 'N/A';
+
+		// Average Initial Response Time
+		$query = $wpdb->prepare(
+			"SELECT AVG(response_time) FROM (
+				SELECT t.id,
+				TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
+				FROM {$tickets_table} t
+				JOIN {$threads_table} th ON t.id = th.ticket
+				WHERE {$active_in_period_sql}",
+			$end_dt, $start_dt
+		) . " {$extra_where} AND th.date_created > t.date_created GROUP BY t.id ) as response_times";
+		$metrics['avg_initial_response'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : '0s';
+
+		return $metrics;
 	}
 
 	private function format_seconds( $seconds ) {

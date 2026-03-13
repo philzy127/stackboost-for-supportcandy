@@ -273,13 +273,37 @@ class Page {
 									data.type_breakdown.forEach(function(item) {
 										let label = $('<div>').text(item.label).html();
 										let value = $('<div>').text(item.value).html();
-										typeTbody.append(`<tr><td>${label}</td><td>${value}</td></tr>`);
+										let $tr = $('<tr></tr>');
+										let $tdLabel = $('<td></td>');
+										let $tdValue = $('<td></td>').text(value);
+
+										$tdLabel.append(label);
+
+										if ( item.tooltip ) {
+											let $icon = $('<span class="dashicons dashicons-info-outline" style="font-size:16px; width:16px; height:16px; color:#2271b1; vertical-align:middle; margin-left:5px;"></span>');
+											$tdLabel.attr('data-tippy-content', item.tooltip);
+											$tdLabel.css('cursor', 'help');
+											$tdLabel.append($icon);
+										}
+
+										$tr.append($tdLabel).append($tdValue);
+										typeTbody.append($tr);
 									});
 								} else {
 									typeTbody.append(`<tr><td colspan="2" style="text-align:center;"><?php esc_html_e( 'No tickets found for this type.', 'stackboost-for-supportcandy' ); ?></td></tr>`);
 								}
 
 								$('#stkb_metrics_results').show();
+
+								// Initialize Tippy if available
+								if (typeof tippy !== 'undefined') {
+									tippy('[data-tippy-content]', {
+										allowHTML: true,
+										placement: 'right',
+										theme: 'light-border',
+										maxWidth: 350
+									});
+								}
 							} else {
 								alert(response.data);
 							}
