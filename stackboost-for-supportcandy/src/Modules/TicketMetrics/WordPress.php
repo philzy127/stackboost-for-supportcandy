@@ -49,6 +49,21 @@ class WordPress extends Module {
 		$breakdown  = isset( $_POST['breakdown'] ) ? sanitize_text_field( wp_unslash( $_POST['breakdown'] ) ) : 'none';
 		$type_field = isset( $_POST['type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['type_field'] ) ) : 'category';
 
+		// Save preference
+		$options = get_option('stackboost_settings', []);
+		$settings_changed = false;
+		if ( ! isset( $options['ticket_metrics_breakdown'] ) || $options['ticket_metrics_breakdown'] !== $breakdown ) {
+			$options['ticket_metrics_breakdown'] = $breakdown;
+			$settings_changed = true;
+		}
+		if ( $breakdown === 'type' && ( ! isset( $options['ticket_metrics_type_field'] ) || $options['ticket_metrics_type_field'] !== $type_field ) ) {
+			$options['ticket_metrics_type_field'] = $type_field;
+			$settings_changed = true;
+		}
+		if ( $settings_changed ) {
+			update_option( 'stackboost_settings', $options );
+		}
+
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( "Ticket Metrics Request - Start: {$start_date}, End: {$end_date}, Breakdown: {$breakdown}, Type Field: {$type_field}", 'ticket_metrics' );
 		}

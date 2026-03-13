@@ -70,6 +70,10 @@ class Page {
 		$all_type_fields = array_merge( $default_fields, $custom_fields );
 		asort( $all_type_fields );
 
+		$options = get_option('stackboost_settings', []);
+		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
+		$saved_breakdown = $options['ticket_metrics_breakdown'] ?? 'none';
+
 		?>
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php esc_html_e( 'Ticket Metrics', 'stackboost-for-supportcandy' ); ?></h1>
@@ -100,18 +104,18 @@ class Page {
 							<th><label for="stkb_breakdown"><?php esc_html_e( 'Breakdown By', 'stackboost-for-supportcandy' ); ?></label></th>
 							<td>
 								<select id="stkb_breakdown">
-									<option value="none"><?php esc_html_e( 'None', 'stackboost-for-supportcandy' ); ?></option>
-									<option value="agent"><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></option>
-									<option value="type"><?php esc_html_e( 'Ticket Type', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="none" <?php selected( $saved_breakdown, 'none' ); ?>><?php esc_html_e( 'None', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="agent" <?php selected( $saved_breakdown, 'agent' ); ?>><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="type" <?php selected( $saved_breakdown, 'type' ); ?>><?php esc_html_e( 'Ticket Type', 'stackboost-for-supportcandy' ); ?></option>
 								</select>
 							</td>
 						</tr>
-						<tr id="stkb_type_field_row" style="display:none;">
+						<tr id="stkb_type_field_row" style="<?php echo $saved_breakdown === 'type' ? '' : 'display:none;'; ?>">
 							<th><label for="stkb_type_field"><?php esc_html_e( 'Ticket Type Field', 'stackboost-for-supportcandy' ); ?></label></th>
 							<td>
 								<select id="stkb_type_field">
 									<?php foreach ( $all_type_fields as $key => $label ) : ?>
-										<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
+										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $saved_type_field, $key ); ?>><?php echo esc_html( $label ); ?></option>
 									<?php endforeach; ?>
 								</select>
 							</td>
