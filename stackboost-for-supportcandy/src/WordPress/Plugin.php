@@ -96,6 +96,13 @@ final class Plugin {
 			}
 		}
 
+		if ( stackboost_is_feature_active( 'ticket_metrics' ) ) {
+			$class = 'StackBoost\ForSupportCandy\Modules\TicketMetrics\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['ticket_metrics'] = $class::get_instance();
+			}
+		}
+
 		// Pro Features
 		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
 			$class = 'StackBoost\ForSupportCandy\Modules\ConditionalViews\WordPress';
@@ -413,6 +420,8 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-appearance',
             'stackboost-for-supportcandy_page_stackboost-chat-bubbles',
             'stackboost-for-supportcandy_page_stackboost-conditional-options',
+            'stackboost-for-supportcandy_page_stackboost-ticket-metrics',
+            'stackboost_page_stackboost-ticket-metrics',
             // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
             'stackboost_page_stackboost-date-time',
 		];

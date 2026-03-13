@@ -22,12 +22,37 @@ class Page {
 		}
 
 		$plugin_instance = Plugin::get_instance();
-		$custom_fields = $plugin_instance->get_supportcandy_columns();
+
+		// Fetch ONLY fields that have options (multiple choice)
+		// We'll use SupportCandy's classes to filter out non-choice fields if possible,
+		// or at least fetch the known ones.
+		// Since we need to know if a field is multiple choice, we must check WPSC_Custom_Field.
+		$custom_fields = [];
+		if ( class_exists( '\WPSC_Custom_Field' ) ) {
+			$cf_results = \WPSC_Custom_Field::find( [ 'items_per_page' => 0 ] )['results'];
+			foreach ( $cf_results as $cf ) {
+				// Include fields that have options OR are known choice types
+				if ( ( isset( $cf->type::$has_options ) && $cf->type::$has_options ) || method_exists( $cf, 'get_options' ) || in_array( $cf->type::$slug, [ 'df_category', 'df_priority', 'df_status' ] ) ) {
+					// Also, check if it's a field that would actually be useful for a breakdown.
+					$custom_fields[ $cf->slug ] = $cf->name;
+				}
+			}
+		} else {
+			// Fallback if SC classes aren't loaded here (rare)
+			$custom_fields = $plugin_instance->get_supportcandy_columns();
+		}
+
 		$default_fields = [
 			'category' => __( 'Category', 'stackboost-for-supportcandy' ),
 			'priority' => __( 'Priority', 'stackboost-for-supportcandy' ),
 			'status'   => __( 'Status', 'stackboost-for-supportcandy' ),
 		];
+
+		// Remove duplicates that SC might return via WPSC_Custom_Field (df_category, etc)
+		unset($custom_fields['df_category']);
+		unset($custom_fields['df_priority']);
+		unset($custom_fields['df_status']);
+
 		$all_type_fields = array_merge( $default_fields, $custom_fields );
 		asort( $all_type_fields );
 
@@ -184,7 +209,7 @@ class Page {
 
 						$.post(ajaxurl, {
 							action: 'stackboost_get_ticket_metrics',
-							nonce: '<?php echo esc_js( wp_create_nonce('stackboost_admin_nonce') ); ?>',
+							nonce: stackboost_admin_ajax.nonce,
 							start_date: start_date,
 							end_date: end_date,
 							breakdown: breakdown,
