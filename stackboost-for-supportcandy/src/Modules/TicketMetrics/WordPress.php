@@ -153,14 +153,14 @@ class WordPress extends Module {
 		// A ticket is considered active during the selected timeframe if:
 		// 1. It was created before the timeframe ended.
 		// AND 2. It is EITHER still open, OR it was closed AFTER the timeframe started.
-		$active_in_period_sql = "date_created <= %s AND ( {$open_condition} OR {$close_date_col} >= %s )";
+		$active_in_period_sql = "t.date_created <= %s AND ( t.{$open_condition} OR t.{$close_date_col} >= %s )";
 
 		// Average Age of Open Tickets
 		// For tickets that are still open AND were active during the selected date range.
 		$avg_age_query = $wpdb->prepare(
-			"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, UTC_TIMESTAMP()))
-			 FROM {$tickets_table}
-			 WHERE {$open_condition}
+			"SELECT AVG(TIMESTAMPDIFF(SECOND, t.date_created, UTC_TIMESTAMP()))
+			 FROM {$tickets_table} t
+			 WHERE t.{$open_condition}
 			 AND {$active_in_period_sql}",
 			$end_dt, $start_dt
 		);
@@ -189,11 +189,34 @@ class WordPress extends Module {
 			$end_dt, $start_dt
 		);
 
-		$avg_response_seconds = (int) $wpdb->get_var($avg_response_query);
+		$raw_avg_response = $wpdb->get_var($avg_response_query);
+		$avg_response_seconds = (int) $raw_avg_response;
 
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( "Avg Response Time Query: " . $avg_response_query, 'ticket_metrics' );
-			stackboost_log( "Avg Response Time Raw Result: " . $avg_response_seconds, 'ticket_metrics' );
+			stackboost_log( "Avg Response Time Raw Result: " . var_export($raw_avg_response, true), 'ticket_metrics' );
+
+			if ( ! empty( $wpdb->last_error ) ) {
+				stackboost_log( "SQL Error: " . $wpdb->last_error, 'ticket_metrics' );
+			}
+
+			// Deep diagnostic: Check threads table structure
+			if ( empty( $raw_avg_response ) ) {
+				$threads_check = $wpdb->get_col("SHOW TABLES LIKE '%threads%'");
+				stackboost_log( "Available Thread Tables: " . json_encode($threads_check), 'ticket_metrics' );
+
+				// Run a test query against the assumed threads table to see if it works
+				$test_join_query = "SELECT t.id, th.id as thread_id, th.date_created as thread_date
+									FROM {$tickets_table} t
+									JOIN {$threads_table} th ON t.id = th.ticket
+									LIMIT 1";
+				$test_res = $wpdb->get_results($test_join_query);
+				if ( ! empty( $wpdb->last_error ) ) {
+					stackboost_log( "Test Join Error: " . $wpdb->last_error, 'ticket_metrics' );
+				} else {
+					stackboost_log( "Test Join Success. Sample data: " . json_encode($test_res), 'ticket_metrics' );
+				}
+			}
 		}
 
 		$metrics['avg_initial_response'] = $avg_response_seconds > 0 ? $this->format_seconds($avg_response_seconds) : '0s';
@@ -202,10 +225,10 @@ class WordPress extends Module {
 		$metrics['agent_breakdown'] = [];
 		// SupportCandy stores assigned_agent as a string, sometimes piped '4|12'.
 		$agent_query = $wpdb->prepare(
-			"SELECT assigned_agent, id
-			 FROM {$tickets_table}
+			"SELECT t.assigned_agent, t.id
+			 FROM {$tickets_table} t
 			 WHERE {$active_in_period_sql}
-			 AND assigned_agent IS NOT NULL AND assigned_agent != ''",
+			 AND t.assigned_agent IS NOT NULL AND t.assigned_agent != ''",
 			$end_dt, $start_dt
 		);
 		$agent_results = $wpdb->get_results($agent_query);
@@ -242,10 +265,10 @@ class WordPress extends Module {
 		$metrics['type_breakdown'] = [];
 		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
 			$type_query = $wpdb->prepare(
-				"SELECT `{$type_field}` as type_id, COUNT(id) as count
-				 FROM {$tickets_table}
+				"SELECT t.`{$type_field}` as type_id, COUNT(t.id) as count
+				 FROM {$tickets_table} t
 				 WHERE {$active_in_period_sql}
-				 GROUP BY `{$type_field}`",
+				 GROUP BY t.`{$type_field}`",
 				$end_dt, $start_dt
 			);
 			$type_results = $wpdb->get_results($type_query);

@@ -136,16 +136,16 @@ class Page {
 					<!-- Column 2: Averages -->
 					<div class="stkb-metric-col">
 						<div class="stkb-metric-card">
-							<h3><?php esc_html_e( 'Average Initial Response Time', 'stackboost-for-supportcandy' ); ?></h3>
-							<p id="stkb_metric_avg_response">0</p>
-						</div>
-						<div class="stkb-metric-card">
 							<h3><?php esc_html_e( 'Average Time to Close (Closed Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
 							<p id="stkb_metric_avg_open">0</p>
 						</div>
 						<div class="stkb-metric-card">
 							<h3><?php esc_html_e( 'Average Age (Open Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
 							<p id="stkb_metric_avg_age_open">0</p>
+						</div>
+						<div class="stkb-metric-card">
+							<h3><?php esc_html_e( 'Average Initial Response Time', 'stackboost-for-supportcandy' ); ?></h3>
+							<p id="stkb_metric_avg_response">0</p>
 						</div>
 					</div>
 				</div>
