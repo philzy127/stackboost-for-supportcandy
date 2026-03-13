@@ -542,24 +542,27 @@ class WordPress extends Module {
 				WHERE {$active_in_period_sql}",
 			$end_dt, $start_dt
 		) . " {$extra_where} AND th.date_created > t.date_created GROUP BY t.id ) as response_times";
-		$metrics['avg_initial_response'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : '0s';
+		$metrics['avg_initial_response'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : '0m';
 
 		return $metrics;
 	}
 
 	private function format_seconds( $seconds ) {
-		if ( ! $seconds ) return '0s';
+		if ( ! $seconds ) return '0m';
 
 		$parts = [];
 		$days = floor($seconds / 86400);
 		$hours = floor(($seconds % 86400) / 3600);
 		$minutes = floor(($seconds % 3600) / 60);
-		$secs = $seconds % 60;
 
 		if ( $days > 0 ) $parts[] = $days . 'd';
 		if ( $hours > 0 ) $parts[] = $hours . 'h';
 		if ( $minutes > 0 ) $parts[] = $minutes . 'm';
-		if ( empty($parts) || $secs > 0 ) $parts[] = $secs . 's';
+
+		// If the action took less than 60 seconds total, display a clean indicator rather than empty string.
+		if ( empty($parts) && $seconds > 0 ) {
+			return '< 1m';
+		}
 
 		return implode(' ', $parts);
 	}
