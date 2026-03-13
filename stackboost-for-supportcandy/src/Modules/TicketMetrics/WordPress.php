@@ -71,12 +71,12 @@ class WordPress extends Module {
 		$metrics = [];
 
 		$tickets_table = $wpdb->prefix . 'psmsc_tickets';
-		$threads_table = $wpdb->prefix . 'psmsc_ticket_threads';
+		$threads_table = $wpdb->prefix . 'psmsc_threads';
 
 		// Check if the old prefix is used or the new prefix is used
 		if ( $wpdb->get_var("SHOW TABLES LIKE '{$tickets_table}'") !== $tickets_table ) {
 			$tickets_table = $wpdb->prefix . 'wpsc_tickets';
-			$threads_table = $wpdb->prefix . 'wpsc_ticket_threads';
+			$threads_table = $wpdb->prefix . 'wpsc_threads';
 			$status_table  = $wpdb->prefix . 'wpsc_statuses';
 			$customer_table = $wpdb->prefix . 'wpsc_customers';
 			$categories_table = $wpdb->prefix . 'wpsc_categories';
@@ -103,20 +103,21 @@ class WordPress extends Module {
 
 		// Define the "Closed" logic dynamically based on schema capabilities.
 		// User data proves `is_active` is NOT reliable for closure state on modern SC, but `date_closed` is.
+		// We define these with the `t.` table alias pre-applied because they are injected into JOINs and complex WHERE clauses.
 		if ( $has_date_closed ) {
-			$closed_condition = "date_closed IS NOT NULL AND date_closed != '0000-00-00 00:00:00'";
-			$open_condition   = "(date_closed IS NULL OR date_closed = '0000-00-00 00:00:00')";
-			$close_date_col   = "date_closed";
+			$closed_condition = "t.date_closed IS NOT NULL AND t.date_closed != '0000-00-00 00:00:00'";
+			$open_condition   = "(t.date_closed IS NULL OR t.date_closed = '0000-00-00 00:00:00')";
+			$close_date_col   = "t.date_closed";
 		} else {
-			$closed_condition = "is_active = 0";
-			$open_condition   = "is_active = 1";
-			$close_date_col   = "date_updated";
+			$closed_condition = "t.is_active = 0";
+			$open_condition   = "t.is_active = 1";
+			$close_date_col   = "t.date_updated";
 		}
 
 		// Total Tickets Closed
 		// A ticket is considered closed in this range if its close date falls within the range.
 		$total_closed = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(id) FROM {$tickets_table}
+			"SELECT COUNT(t.id) FROM {$tickets_table} t
 			 WHERE {$closed_condition}
 			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
 			$start_dt, $end_dt
@@ -125,8 +126,8 @@ class WordPress extends Module {
 
 		// Average Time Ticket was Open (For Closed Tickets)
 		$avg_open_query = $wpdb->prepare(
-			"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, {$close_date_col}))
-			 FROM {$tickets_table}
+			"SELECT AVG(TIMESTAMPDIFF(SECOND, t.date_created, {$close_date_col}))
+			 FROM {$tickets_table} t
 			 WHERE {$closed_condition}
 			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
 			$start_dt, $end_dt
@@ -153,14 +154,15 @@ class WordPress extends Module {
 		// A ticket is considered active during the selected timeframe if:
 		// 1. It was created before the timeframe ended.
 		// AND 2. It is EITHER still open, OR it was closed AFTER the timeframe started.
-		$active_in_period_sql = "t.date_created <= %s AND ( t.{$open_condition} OR t.{$close_date_col} >= %s )";
+		// Variables already contain 't.' prefixes.
+		$active_in_period_sql = "t.date_created <= %s AND ( {$open_condition} OR {$close_date_col} >= %s )";
 
 		// Average Age of Open Tickets
 		// For tickets that are still open AND were active during the selected date range.
 		$avg_age_query = $wpdb->prepare(
 			"SELECT AVG(TIMESTAMPDIFF(SECOND, t.date_created, UTC_TIMESTAMP()))
 			 FROM {$tickets_table} t
-			 WHERE t.{$open_condition}
+			 WHERE {$open_condition}
 			 AND {$active_in_period_sql}",
 			$end_dt, $start_dt
 		);
