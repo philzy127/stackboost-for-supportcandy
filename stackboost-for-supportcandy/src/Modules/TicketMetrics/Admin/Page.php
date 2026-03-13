@@ -137,8 +137,12 @@ class Page {
 						<p style="font-size:2em; font-weight:bold;" id="stkb_metric_total_closed">0</p>
 					</div>
 					<div class="stackboost-card" style="text-align:center;">
-						<h3><?php esc_html_e( 'Average Time Open', 'stackboost-for-supportcandy' ); ?></h3>
+						<h3><?php esc_html_e( 'Average Time to Close (Closed Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
 						<p style="font-size:2em; font-weight:bold;" id="stkb_metric_avg_open">0</p>
+					</div>
+					<div class="stackboost-card" style="text-align:center;">
+						<h3><?php esc_html_e( 'Average Age (Open Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
+						<p style="font-size:2em; font-weight:bold;" id="stkb_metric_avg_age_open">0</p>
 					</div>
 					<div class="stackboost-card" style="text-align:center;">
 						<h3><?php esc_html_e( 'Average Initial Response Time', 'stackboost-for-supportcandy' ); ?></h3>
@@ -240,6 +244,7 @@ class Page {
 								$('#stkb_metric_total').text(data.total_created);
 								$('#stkb_metric_total_closed').text(data.total_closed);
 								$('#stkb_metric_avg_open').text(data.avg_open_time);
+								$('#stkb_metric_avg_age_open').text(data.avg_age_open);
 								$('#stkb_metric_avg_response').text(data.avg_initial_response);
 
 								if (data.breakdown_data && data.breakdown_data.length > 0) {

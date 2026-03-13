@@ -96,20 +96,34 @@ class WordPress extends Module {
 		) );
 		$metrics['total_created'] = $total_created;
 
+		// Define the "Closed" logic dynamically based on schema capabilities.
+		// User data proves `is_active` is NOT reliable for closure state on modern SC, but `date_closed` is.
+		if ( $has_date_closed ) {
+			$closed_condition = "date_closed IS NOT NULL AND date_closed != '0000-00-00 00:00:00'";
+			$open_condition   = "(date_closed IS NULL OR date_closed = '0000-00-00 00:00:00')";
+			$close_date_col   = "date_closed";
+		} else {
+			$closed_condition = "is_active = 0";
+			$open_condition   = "is_active = 1";
+			$close_date_col   = "date_updated";
+		}
+
 		// Total Tickets Closed
+		// A ticket is considered closed in this range if its close date falls within the range.
 		$total_closed = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(id) FROM {$tickets_table} WHERE is_active = 0 AND {$close_date_column} >= %s AND {$close_date_column} <= %s",
+			"SELECT COUNT(id) FROM {$tickets_table}
+			 WHERE {$closed_condition}
+			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
 			$start_dt, $end_dt
 		) );
 		$metrics['total_closed'] = $total_closed;
 
-		// Average Time Ticket was Open
-		// SupportCandy relies on `is_active = 0` directly on the tickets table to mark a ticket as closed.
+		// Average Time Ticket was Open (For Closed Tickets)
 		$avg_open_query = $wpdb->prepare(
-			"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, {$close_date_column}))
+			"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, {$close_date_col}))
 			 FROM {$tickets_table}
-			 WHERE is_active = 0
-			 AND {$close_date_column} >= %s AND {$close_date_column} <= %s",
+			 WHERE {$closed_condition}
+			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
 			$start_dt, $end_dt
 		);
 
@@ -128,6 +142,25 @@ class WordPress extends Module {
 			$metrics['avg_open_time'] = $this->format_seconds($avg_open_seconds);
 		} else {
 			$metrics['avg_open_time'] = 'N/A';
+		}
+
+		// Average Age of Open Tickets
+		// For tickets that are still open and were created in the selected date range.
+		$avg_age_query = $wpdb->prepare(
+			"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, UTC_TIMESTAMP()))
+			 FROM {$tickets_table}
+			 WHERE {$open_condition}
+			 AND date_created >= %s AND date_created <= %s",
+			$start_dt, $end_dt
+		);
+
+		$raw_avg_age_result = $wpdb->get_var($avg_age_query);
+		$avg_age_seconds = (int) $raw_avg_age_result;
+
+		if ( $avg_age_seconds > 0 ) {
+			$metrics['avg_age_open'] = $this->format_seconds($avg_age_seconds);
+		} else {
+			$metrics['avg_age_open'] = 'N/A';
 		}
 
 		// Average Initial Response Time
@@ -154,22 +187,44 @@ class WordPress extends Module {
 		$metrics['breakdown_data'] = [];
 		if ( $breakdown === 'agent' ) {
 			// Breakdown by assigned agent
+			// Note: SupportCandy stores assigned_agent as a string, sometimes piped '4|12'.
+			// We will query the raw strings and parse them in PHP to correctly tally tickets assigned to multiple agents.
 			$agent_query = $wpdb->prepare(
-				"SELECT agent, COUNT(id) as count
+				"SELECT assigned_agent, id
 				 FROM {$tickets_table}
 				 WHERE date_created >= %s AND date_created <= %s
-				 AND agent > 0
-				 GROUP BY agent",
+				 AND assigned_agent IS NOT NULL AND assigned_agent != ''",
 				$start_dt, $end_dt
 			);
 			$agent_results = $wpdb->get_results($agent_query);
 			$agent_map = $this->get_agent_map($wpdb, $customer_table);
 
-			foreach ( $agent_results as $row ) {
-				$name = $agent_map[$row->agent] ?? 'Agent ' . $row->agent;
+			$agent_tallies = [];
+
+			if ( is_array( $agent_results ) ) {
+				foreach ( $agent_results as $row ) {
+					// Agents are stored as a pipe-separated string like '4' or '4|12'
+					$agent_ids = explode('|', $row->assigned_agent);
+					foreach ( $agent_ids as $a_id ) {
+						$clean_id = (int) $a_id;
+						if ( $clean_id > 0 ) {
+							if ( ! isset( $agent_tallies[ $clean_id ] ) ) {
+								$agent_tallies[ $clean_id ] = 0;
+							}
+							$agent_tallies[ $clean_id ]++;
+						}
+					}
+				}
+			}
+
+			// Sort by tally descending
+			arsort($agent_tallies);
+
+			foreach ( $agent_tallies as $a_id => $count ) {
+				$name = $agent_map[$a_id] ?? 'Agent ' . $a_id;
 				$metrics['breakdown_data'][] = [
 					'label' => $name,
-					'value' => $row->count
+					'value' => $count
 				];
 			}
 		} elseif ( $breakdown === 'type' ) {
