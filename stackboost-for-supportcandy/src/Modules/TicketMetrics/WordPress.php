@@ -174,10 +174,9 @@ class WordPress extends Module {
 		}
 
 		// Average Initial Response Time
-		// For tickets created in the range
-		// User clarified: ANY change (assignment, status change, internal note) counts as a response.
-		// Since ticket creation also creates a thread at the exact same timestamp, we look for the first thread
-		// that occurred strictly AFTER the ticket creation time.
+		// The user explicitly requested that *any* system change (assignment, status change, note) counts as a response.
+		// SupportCandy's native `frd` column only counts actual replies. Therefore, we must use the `threads` table
+		// to find the exact first record chronologically that occurred after the ticket creation.
 		$avg_response_query = $wpdb->prepare(
 			"SELECT AVG(response_time) FROM (
 				SELECT t.id,
@@ -192,7 +191,13 @@ class WordPress extends Module {
 		);
 
 		$avg_response_seconds = (int) $wpdb->get_var($avg_response_query);
-		$metrics['avg_initial_response'] = $this->format_seconds($avg_response_seconds);
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "Avg Response Time Query: " . $avg_response_query, 'ticket_metrics' );
+			stackboost_log( "Avg Response Time Raw Result: " . $avg_response_seconds, 'ticket_metrics' );
+		}
+
+		$metrics['avg_initial_response'] = $avg_response_seconds > 0 ? $this->format_seconds($avg_response_seconds) : '0s';
 
 		// Agent Breakdown
 		$metrics['agent_breakdown'] = [];
@@ -301,14 +306,43 @@ class WordPress extends Module {
 
 		if ( $table_name ) {
 			$results = $wpdb->get_results("SELECT id, name FROM {$table_name}");
-			foreach ( $results as $r ) {
-				$map[$r->id] = $r->name;
+			if ( is_array($results) ) {
+				foreach ( $results as $r ) {
+					$map[$r->id] = $r->name;
+				}
 			}
 		} else {
-			// Custom field options
-			$results = $wpdb->get_results("SELECT id, name FROM {$options_table}");
-			foreach ( $results as $r ) {
-				$map[$r->id] = $r->name;
+			// Custom field options are stored in the custom fields table, not a generic options table in newer versions.
+			// However, rather than query raw tables for custom field option maps (which is incredibly fragile as the schema changes heavily between versions),
+			// we will use SupportCandy's native classes if available.
+			if ( class_exists( '\WPSC_Custom_Field' ) ) {
+				$cfs = \WPSC_Custom_Field::find( [ 'items_per_page' => 0 ] )['results'];
+				foreach ( $cfs as $cf ) {
+					if ( $cf->slug === $type_field && method_exists( $cf, 'get_options' ) ) {
+						$options = $cf->get_options();
+						if ( is_array( $options ) ) {
+							foreach ( $options as $opt ) {
+								$id = is_object( $opt ) ? $opt->id : ( $opt['id'] ?? '' );
+								$name = is_object( $opt ) ? $opt->name : ( $opt['name'] ?? '' );
+								if ( $id ) {
+									$map[$id] = $name;
+								}
+							}
+						}
+						break;
+					}
+				}
+			} else {
+				// Fallback if class doesn't exist: attempt the raw table query but ensure it doesn't fatal error if table is missing.
+				$table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$options_table}'") === $options_table;
+				if ( $table_exists ) {
+					$results = $wpdb->get_results("SELECT id, name FROM {$options_table}");
+					if ( is_array($results) ) {
+						foreach ( $results as $r ) {
+							$map[$r->id] = $r->name;
+						}
+					}
+				}
 			}
 		}
 		return $map;
