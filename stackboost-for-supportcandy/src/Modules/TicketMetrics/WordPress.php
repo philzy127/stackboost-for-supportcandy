@@ -49,6 +49,10 @@ class WordPress extends Module {
 		$breakdown  = isset( $_POST['breakdown'] ) ? sanitize_text_field( wp_unslash( $_POST['breakdown'] ) ) : 'none';
 		$type_field = isset( $_POST['type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['type_field'] ) ) : 'category';
 
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "Ticket Metrics Request - Start: {$start_date}, End: {$end_date}, Breakdown: {$breakdown}, Type Field: {$type_field}", 'ticket_metrics' );
+		}
+
 		if ( empty( $start_date ) || empty( $end_date ) ) {
 			wp_send_json_error( __( 'Start and End dates are required.', 'stackboost-for-supportcandy' ) );
 		}
@@ -172,6 +176,10 @@ class WordPress extends Module {
 					];
 				}
 			}
+		}
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "Ticket Metrics Generated: " . json_encode($metrics), 'ticket_metrics' );
 		}
 
 		wp_send_json_success( $metrics );

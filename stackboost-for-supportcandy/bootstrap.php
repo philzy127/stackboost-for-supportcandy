@@ -121,6 +121,7 @@ function stackboost_log( $message, $context = 'general' ) {
         'appearance'           => 'enable_log_appearance',
         'chat_bubbles'         => 'enable_log_chat_bubbles',
         'conditional_options'  => 'enable_log_conditional_options',
+        'ticket_metrics'       => 'enable_log_ticket_metrics',
 
         // Directory (handles multiple contexts)
         'directory-import'     => 'enable_log_directory',

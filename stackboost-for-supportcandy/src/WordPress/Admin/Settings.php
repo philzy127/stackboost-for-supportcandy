@@ -259,7 +259,17 @@ class Settings {
 			];
 		}
 
-		// 11. Ticket Metrics (New Module) - Lite
+		// 11. Appearance (Themification)
+		$menu_config[] = [
+			'slug'        => 'stackboost-appearance',
+			'parent'      => 'stackboost-for-supportcandy',
+			'page_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
+			'menu_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
+			'capability'  => STACKBOOST_CAP_MANAGE_APPEARANCE,
+			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page::class, 'render' ], // Using static call for consistency, though class is not static
+		];
+
+		// 12. Ticket Metrics (New Module) - Lite
 		if ( stackboost_is_feature_active( 'ticket_metrics' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\TicketMetrics\Admin\Page' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-ticket-metrics',
@@ -270,16 +280,6 @@ class Settings {
 				'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketMetrics\Admin\Page::class, 'render_page' ],
 			];
 		}
-
-		// 12. Appearance (Themification)
-		$menu_config[] = [
-			'slug'        => 'stackboost-appearance',
-			'parent'      => 'stackboost-for-supportcandy',
-			'page_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
-			'menu_title'  => __( 'Appearance', 'stackboost-for-supportcandy' ),
-			'capability'  => STACKBOOST_CAP_MANAGE_APPEARANCE,
-			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page::class, 'render' ], // Using static call for consistency, though class is not static
-		];
 
 		// 13. Tools / Diagnostics
 		$menu_config[] = [
@@ -815,6 +815,7 @@ class Settings {
 				'enable_log_onboarding',
 				'enable_log_appearance', // Added Appearance Logging
 				'enable_log_chat_bubbles', // Added Chat Bubbles Logging
+				'enable_log_ticket_metrics',
 			],
 			// 'stackboost-date-time' removed - uses isolated option group via custom AJAX
 			'stackboost-chat-bubbles' => class_exists( 'StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings' ) ? \StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings::get_settings_keys() : [],
@@ -882,6 +883,7 @@ class Settings {
 					case 'enable_log_appearance':
 					case 'enable_log_chat_bubbles':
 					case 'enable_log_conditional_options':
+					case 'enable_log_ticket_metrics':
 					case 'conditional_options_enabled':
 					case 'ticket_details_chat_bubbles':
 					case 'chat_bubbles_enable_ticket':
@@ -1036,6 +1038,7 @@ class Settings {
 			'enable_log_directory'         => [ 'label' => __( 'Company Directory', 'stackboost-for-supportcandy' ), 'feature' => 'staff_directory' ],
 			'enable_log_onboarding'        => [ 'label' => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ), 'feature' => 'onboarding_dashboard' ],
 			'enable_log_appearance'        => [ 'label' => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ), 'feature' => '' ],
+			'enable_log_ticket_metrics'    => [ 'label' => __( 'Ticket Metrics', 'stackboost-for-supportcandy' ), 'feature' => 'ticket_metrics' ],
 		];
 
 		foreach ( $modules as $key => $data ) {
