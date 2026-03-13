@@ -154,14 +154,20 @@ class WordPress extends Module {
 			$metrics['avg_open_time'] = 'N/A';
 		}
 
+		// "Active in Period" Condition
+		// A ticket is considered active during the selected timeframe if:
+		// 1. It was created before the timeframe ended.
+		// AND 2. It is EITHER still open, OR it was closed AFTER the timeframe started.
+		$active_in_period_sql = "date_created <= %s AND ( {$open_condition} OR {$close_date_col} >= %s )";
+
 		// Average Age of Open Tickets
-		// For tickets that are still open and were created in the selected date range.
+		// For tickets that are still open AND were active during the selected date range.
 		$avg_age_query = $wpdb->prepare(
 			"SELECT AVG(TIMESTAMPDIFF(SECOND, date_created, UTC_TIMESTAMP()))
 			 FROM {$tickets_table}
 			 WHERE {$open_condition}
-			 AND date_created >= %s AND date_created <= %s",
-			$start_dt, $end_dt
+			 AND {$active_in_period_sql}",
+			$end_dt, $start_dt
 		);
 
 		$raw_avg_age_result = $wpdb->get_var($avg_age_query);
@@ -174,20 +180,18 @@ class WordPress extends Module {
 		}
 
 		// Average Initial Response Time
-		// The user explicitly requested that *any* system change (assignment, status change, note) counts as a response.
-		// SupportCandy's native `frd` column only counts actual replies. Therefore, we must use the `threads` table
-		// to find the exact first record chronologically that occurred after the ticket creation.
+		// For tickets OPEN/ACTIVE AT ANY POINT during the selected range.
 		$avg_response_query = $wpdb->prepare(
 			"SELECT AVG(response_time) FROM (
 				SELECT t.id,
 				TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
 				FROM {$tickets_table} t
 				JOIN {$threads_table} th ON t.id = th.ticket
-				WHERE t.date_created >= %s AND t.date_created <= %s
+				WHERE {$active_in_period_sql}
 				AND th.date_created > t.date_created
 				GROUP BY t.id
 			) as response_times",
-			$start_dt, $end_dt
+			$end_dt, $start_dt
 		);
 
 		$avg_response_seconds = (int) $wpdb->get_var($avg_response_query);
@@ -205,9 +209,9 @@ class WordPress extends Module {
 		$agent_query = $wpdb->prepare(
 			"SELECT assigned_agent, id
 			 FROM {$tickets_table}
-			 WHERE date_created >= %s AND date_created <= %s
+			 WHERE {$active_in_period_sql}
 			 AND assigned_agent IS NOT NULL AND assigned_agent != ''",
-			$start_dt, $end_dt
+			$end_dt, $start_dt
 		);
 		$agent_results = $wpdb->get_results($agent_query);
 		$agent_map = $this->get_agent_map($wpdb, $customer_table);
@@ -245,9 +249,9 @@ class WordPress extends Module {
 			$type_query = $wpdb->prepare(
 				"SELECT `{$type_field}` as type_id, COUNT(id) as count
 				 FROM {$tickets_table}
-				 WHERE date_created >= %s AND date_created <= %s
+				 WHERE {$active_in_period_sql}
 				 GROUP BY `{$type_field}`",
-				$start_dt, $end_dt
+				$end_dt, $start_dt
 			);
 			$type_results = $wpdb->get_results($type_query);
 			$type_map = $this->get_type_map($wpdb, $type_field, $categories_table, $priorities_table, $status_table, $options_table);
