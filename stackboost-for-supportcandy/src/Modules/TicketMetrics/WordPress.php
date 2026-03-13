@@ -101,7 +101,17 @@ class WordPress extends Module {
 			 AND date_updated >= %s AND date_updated <= %s",
 			$start_dt, $end_dt
 		);
-		$avg_open_seconds = (int) $wpdb->get_var($avg_open_query);
+
+		$raw_avg_open_result = $wpdb->get_var($avg_open_query);
+		$avg_open_seconds = (int) $raw_avg_open_result;
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "Avg Open Time Query: " . $avg_open_query, 'ticket_metrics' );
+			stackboost_log( "Avg Open Time Raw Result: " . var_export($raw_avg_open_result, true), 'ticket_metrics' );
+			if ( ! empty( $wpdb->last_error ) ) {
+				stackboost_log( "SQL Error: " . $wpdb->last_error, 'ticket_metrics' );
+			}
+		}
 
 		if ( $avg_open_seconds > 0 ) {
 			$metrics['avg_open_time'] = $this->format_seconds($avg_open_seconds);
