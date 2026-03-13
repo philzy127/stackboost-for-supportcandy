@@ -304,12 +304,14 @@ class WordPress extends Module {
 				}
 
 				$modal_html = sprintf(
-					'<div style="text-align:left; font-size: 14px;">
+					'<div class="stackboost-dashboard" style="text-align:left;">
 						<h3 style="margin-top:0;">%s - Ticket Breakdown</h3>
-						<table class="wp-list-table widefat striped" style="margin-top:10px;">
-							<thead><tr><th>Type</th><th style="text-align:center;">Assigned</th><th style="text-align:center;">Closed</th></tr></thead>
-							<tbody>%s</tbody>
-						</table>
+						<div class="stackboost-card">
+							<table class="wp-list-table widefat striped" style="margin-top:10px;">
+								<thead><tr><th>Type</th><th style="text-align:center;">Assigned</th><th style="text-align:center;">Closed</th></tr></thead>
+								<tbody>%s</tbody>
+							</table>
+						</div>
 					</div>',
 					esc_html($name),
 					$tooltip_rows ?: '<tr><td colspan="3">No type data available</td></tr>'
@@ -319,7 +321,6 @@ class WordPress extends Module {
 					'label' => $name,
 					'assigned' => $data['assigned'],
 					'closed' => $data['closed'],
-					'tooltip' => 'Click to view breakdown by Ticket Type',
 					'modal_html' => $modal_html
 				];
 			}
@@ -349,36 +350,23 @@ class WordPress extends Module {
 					);
 				}
 
-				$tooltip_html = sprintf(
-					'<div style="text-align:left; font-size: 13px; line-height: 1.5;">
-						<strong>%s</strong><br><hr style="margin:5px 0; border: 0; border-top: 1px solid #ccc;">
-						Created: <strong>%s</strong><br>
-						Closed: <strong>%s</strong><br>
-						Avg Time to Close: <strong>%s</strong><br>
-						Avg Age (Open): <strong>%s</strong><br>
-						Avg Initial Response: <strong>%s</strong><br><br>
-						<em>Click row to view Agent distribution</em>
-					</div>',
-					esc_html($name),
-					esc_html($type_metrics['total_created']),
-					esc_html($type_metrics['total_closed']),
-					esc_html($type_metrics['avg_open_time']),
-					esc_html($type_metrics['avg_age_open']),
-					esc_html($type_metrics['avg_initial_response'])
-				);
-
 				$modal_html = sprintf(
-					'<div style="text-align:left; font-size: 14px;">
-						<h3 style="margin-top:0;">%s - Performance & Distribution</h3>
-						<div style="display:flex; gap: 20px; flex-wrap: wrap;">
-							<div style="flex:1; min-width: 200px; background:#f0f0f1; padding: 10px; border-radius: 4px;">
-								<p style="margin: 0 0 5px 0;">Created: <strong>%s</strong></p>
-								<p style="margin: 0 0 5px 0;">Closed: <strong>%s</strong></p>
-								<p style="margin: 0 0 5px 0;">Avg Time to Close: <strong>%s</strong></p>
-								<p style="margin: 0 0 5px 0;">Avg Age (Open): <strong>%s</strong></p>
-								<p style="margin: 0;">Avg Initial Response: <strong>%s</strong></p>
+					'<div class="stackboost-dashboard" style="text-align:left;">
+						<h2 style="margin-top:0;">%s - Performance & Distribution</h2>
+						<div class="stackboost-dashboard-grid" style="grid-template-columns: 1fr 2fr;">
+							<div class="stackboost-card" style="padding: 15px;">
+								<h3 style="margin-top:0; font-size:16px;">Lifecycle</h3>
+								<p style="margin: 0 0 5px 0; font-size:14px;">New (Created in range): <strong>%s</strong></p>
+								<p style="margin: 0 0 5px 0; font-size:14px;">Carried Over & Closed: <strong>%s</strong></p>
+								<p style="margin: 0 0 15px 0; font-size:14px;">Carried Over & Still Open: <strong>%s</strong></p>
+								<hr>
+								<h3 style="margin-bottom:5px; font-size:16px;">Averages</h3>
+								<p style="margin: 0 0 5px 0; font-size:14px;">Time to Close: <strong>%s</strong></p>
+								<p style="margin: 0 0 5px 0; font-size:14px;">Age (Open): <strong>%s</strong></p>
+								<p style="margin: 0; font-size:14px;">Initial Response: <strong>%s</strong></p>
 							</div>
-							<div style="flex:2; min-width: 300px;">
+							<div class="stackboost-card" style="padding: 15px;">
+								<h3 style="margin-top:0; font-size:16px;">Agent Distribution</h3>
 								<table class="wp-list-table widefat striped">
 									<thead><tr><th>Assigned Agent</th><th style="text-align:center;">Tickets</th></tr></thead>
 									<tbody>%s</tbody>
@@ -388,7 +376,8 @@ class WordPress extends Module {
 					</div>',
 					esc_html($name),
 					esc_html($type_metrics['total_created']),
-					esc_html($type_metrics['total_closed']),
+					esc_html($type_metrics['carried_closed']),
+					esc_html($type_metrics['carried_open']),
 					esc_html($type_metrics['avg_open_time']),
 					esc_html($type_metrics['avg_age_open']),
 					esc_html($type_metrics['avg_initial_response']),
@@ -398,7 +387,6 @@ class WordPress extends Module {
 				$metrics['type_breakdown'][] = [
 					'label' => $name,
 					'value' => $data['count'],
-					'tooltip' => $tooltip_html,
 					'modal_html' => $modal_html
 				];
 			}
@@ -430,6 +418,25 @@ class WordPress extends Module {
 			$start_dt, $end_dt
 		) . " " . $extra_where;
 		$metrics['total_closed'] = (int) $wpdb->get_var( $query );
+
+		// Lifecycle Bucket 2: Carried Over & Closed (Created before range, closed during range)
+		$query = $wpdb->prepare(
+			"SELECT COUNT(t.id) FROM {$tickets_table} t
+			 WHERE {$closed_condition}
+			 AND t.date_created < %s
+			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
+			$start_dt, $start_dt, $end_dt
+		) . " " . $extra_where;
+		$metrics['carried_closed'] = (int) $wpdb->get_var( $query );
+
+		// Lifecycle Bucket 3: Carried Over & Still Open (Created before range, and either open or closed AFTER range)
+		$query = $wpdb->prepare(
+			"SELECT COUNT(t.id) FROM {$tickets_table} t
+			 WHERE t.date_created < %s
+			 AND ( {$open_condition} OR {$close_date_col} > %s )",
+			$start_dt, $end_dt
+		) . " " . $extra_where;
+		$metrics['carried_open'] = (int) $wpdb->get_var( $query );
 
 		// Average Time Ticket was Open (For Closed Tickets)
 		$query = $wpdb->prepare(

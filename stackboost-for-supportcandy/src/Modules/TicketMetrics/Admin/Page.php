@@ -280,14 +280,9 @@ class Page {
 
 										$tdLabel.append(label);
 
-										if ( item.tooltip ) {
-											let $icon = $('<span class="dashicons dashicons-info-outline" style="font-size:16px; width:16px; height:16px; color:#2271b1; vertical-align:middle; margin-left:5px;"></span>');
-											$tdLabel.attr('data-tippy-content', item.tooltip);
-											$tdLabel.append($icon);
-										}
-
 										if ( item.modal_html ) {
 											$tr.attr('data-modal-html', item.modal_html);
+											$tdLabel.attr('title', 'Click to view details');
 										}
 
 										$tr.append($tdLabel).append($tdAssigned).append($tdClosed);
@@ -310,14 +305,9 @@ class Page {
 
 										$tdLabel.append(label);
 
-										if ( item.tooltip ) {
-											let $icon = $('<span class="dashicons dashicons-info-outline" style="font-size:16px; width:16px; height:16px; color:#2271b1; vertical-align:middle; margin-left:5px;"></span>');
-											$tdLabel.attr('data-tippy-content', item.tooltip);
-											$tdLabel.append($icon);
-										}
-
 										if ( item.modal_html ) {
 											$tr.attr('data-modal-html', item.modal_html);
+											$tdLabel.attr('title', 'Click to view details');
 										}
 
 										$tr.append($tdLabel).append($tdValue);
@@ -329,15 +319,6 @@ class Page {
 
 								$('#stkb_metrics_results').show();
 
-								// Initialize Tippy if available
-								if (typeof tippy !== 'undefined') {
-									tippy('[data-tippy-content]', {
-										allowHTML: true,
-										placement: 'right',
-										theme: 'light-border',
-										maxWidth: 350
-									});
-								}
 							} else {
 								alert(response.data);
 							}
