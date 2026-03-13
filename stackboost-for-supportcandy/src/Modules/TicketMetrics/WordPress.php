@@ -79,12 +79,14 @@ class WordPress extends Module {
 			$threads_table = $wpdb->prefix . 'wpsc_threads';
 			$status_table  = $wpdb->prefix . 'wpsc_statuses';
 			$customer_table = $wpdb->prefix . 'wpsc_customers';
+			$agents_table  = $wpdb->prefix . 'wpsc_agents';
 			$categories_table = $wpdb->prefix . 'wpsc_categories';
 			$priorities_table = $wpdb->prefix . 'wpsc_priorities';
 			$options_table = $wpdb->prefix . 'wpsc_options';
 		} else {
 			$status_table  = $wpdb->prefix . 'psmsc_statuses';
 			$customer_table = $wpdb->prefix . 'psmsc_customers';
+			$agents_table  = $wpdb->prefix . 'psmsc_agents';
 			$categories_table = $wpdb->prefix . 'psmsc_categories';
 			$priorities_table = $wpdb->prefix . 'psmsc_priorities';
 			$options_table = $wpdb->prefix . 'psmsc_options';
@@ -225,7 +227,7 @@ class WordPress extends Module {
 			$end_dt, $start_dt
 		);
 		$agent_results = $wpdb->get_results($agent_query);
-		$agent_map = $this->get_agent_map($wpdb, $customer_table);
+		$agent_map = $this->get_agent_map($wpdb, $agents_table);
 
 		$agent_tallies = [];
 
@@ -393,11 +395,14 @@ class WordPress extends Module {
 		return implode(' ', $parts);
 	}
 
-	private function get_agent_map( $wpdb, $customer_table ) {
+	private function get_agent_map( $wpdb, $agents_table ) {
 		$map = [];
-		$results = $wpdb->get_results("SELECT id, name FROM {$customer_table} WHERE is_agent = 1");
-		foreach ( $results as $r ) {
-			$map[$r->id] = $r->name;
+		// SupportCandy uses a dedicated agents table, not the customers table for assignment mappings.
+		$results = $wpdb->get_results("SELECT id, name FROM {$agents_table}");
+		if ( is_array($results) ) {
+			foreach ( $results as $r ) {
+				$map[$r->id] = $r->name;
+			}
 		}
 		return $map;
 	}
