@@ -251,6 +251,9 @@ class Page {
 											<option value="pie" <?php selected( $chart_type_agent, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="doughnut" <?php selected( $chart_type_agent, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="bar" <?php selected( $chart_type_agent, 'bar' ); ?>><?php esc_html_e( 'Bar', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="line" <?php selected( $chart_type_agent, 'line' ); ?>><?php esc_html_e( 'Line', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="radar" <?php selected( $chart_type_agent, 'radar' ); ?>><?php esc_html_e( 'Radar', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="polarArea" <?php selected( $chart_type_agent, 'polarArea' ); ?>><?php esc_html_e( 'Polar Area', 'stackboost-for-supportcandy' ); ?></option>
 										</select>
 									</td>
 								</tr>
@@ -261,6 +264,9 @@ class Page {
 											<option value="pie" <?php selected( $chart_type_type, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="doughnut" <?php selected( $chart_type_type, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="bar" <?php selected( $chart_type_type, 'bar' ); ?>><?php esc_html_e( 'Bar', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="line" <?php selected( $chart_type_type, 'line' ); ?>><?php esc_html_e( 'Line', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="radar" <?php selected( $chart_type_type, 'radar' ); ?>><?php esc_html_e( 'Radar', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="polarArea" <?php selected( $chart_type_type, 'polarArea' ); ?>><?php esc_html_e( 'Polar Area', 'stackboost-for-supportcandy' ); ?></option>
 										</select>
 									</td>
 								</tr>
@@ -503,10 +509,18 @@ class Page {
 									};
 
 									// If bar chart, adjust legend position and use solid distinct colors for the datasets instead of array
-									if (agentChartType === 'bar') {
-										agentConfig.data.datasets[0].backgroundColor = '#2271b1';
-										agentConfig.data.datasets[1].backgroundColor = '#00a32a';
+									if (agentChartType === 'bar' || agentChartType === 'line' || agentChartType === 'radar') {
+										agentConfig.data.datasets[0].backgroundColor = (agentChartType === 'bar') ? '#2271b1' : '#2271b133';
+										agentConfig.data.datasets[0].borderColor = '#2271b1';
+										agentConfig.data.datasets[1].backgroundColor = (agentChartType === 'bar') ? '#00a32a' : '#00a32a33';
+										agentConfig.data.datasets[1].borderColor = '#00a32a';
 										agentConfig.options.plugins.legend.position = 'top';
+
+										// Optional: add fill to line charts
+										if (agentChartType === 'line' || agentChartType === 'radar') {
+											agentConfig.data.datasets[0].fill = true;
+											agentConfig.data.datasets[1].fill = true;
+										}
 									}
 
 									agentChart = new Chart(agentCtx, agentConfig);
