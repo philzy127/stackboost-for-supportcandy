@@ -82,13 +82,15 @@ class Page {
 			.stkb-metric-card p { margin: 0; font-size: 24px; font-weight: 600; color: #1d2327; }
 			.stkb-breakdown-wrapper { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
 			.stkb-breakdown-col { flex: 1; min-width: 300px; background: #fff; border: 1px solid #c3c4c7; padding: 15px; border-radius: 4px; }
+			.stkb-clickable-row { cursor: pointer; transition: background-color 0.2s; }
+			.stkb-clickable-row:hover { background-color: #f0f0f1 !important; }
 		</style>
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php esc_html_e( 'Ticket Metrics', 'stackboost-for-supportcandy' ); ?></h1>
 
 			<div class="stackboost-dashboard-grid">
 				<div class="stackboost-card" style="margin-bottom: 20px;">
-					<h2 style="margin-top:0;"><?php esc_html_e( 'Metrics Configuration', 'stackboost-for-supportcandy' ); ?></h2>
+					<h2><?php esc_html_e( 'Metrics Configuration', 'stackboost-for-supportcandy' ); ?></h2>
 					<div style="display:flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
 						<div>
 							<label for="stkb_date_preset" style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Date Range', 'stackboost-for-supportcandy' ); ?></label>
@@ -153,12 +155,13 @@ class Page {
 				<!-- Breakdowns (Always generated) -->
 				<div class="stkb-breakdown-wrapper">
 					<div class="stkb-breakdown-col">
-						<h3 style="margin-top:0;"><?php esc_html_e( 'Agent Breakdown', 'stackboost-for-supportcandy' ); ?></h3>
+						<h3><?php esc_html_e( 'Agent Breakdown', 'stackboost-for-supportcandy' ); ?></h3>
 						<table class="wp-list-table widefat fixed striped">
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></th>
-									<th><?php esc_html_e( 'Tickets Assigned', 'stackboost-for-supportcandy' ); ?></th>
+									<th style="text-align:center; width:120px;"><?php esc_html_e( 'Assigned', 'stackboost-for-supportcandy' ); ?></th>
+									<th style="text-align:center; width:120px;"><?php esc_html_e( 'Closed', 'stackboost-for-supportcandy' ); ?></th>
 								</tr>
 							</thead>
 							<tbody id="stkb_agent_breakdown_body">
@@ -166,18 +169,26 @@ class Page {
 						</table>
 					</div>
 					<div class="stkb-breakdown-col">
-						<h3 style="margin-top:0;"><?php esc_html_e( 'Type Breakdown', 'stackboost-for-supportcandy' ); ?></h3>
+						<h3><?php esc_html_e( 'Type Breakdown', 'stackboost-for-supportcandy' ); ?></h3>
 						<table class="wp-list-table widefat fixed striped">
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Type', 'stackboost-for-supportcandy' ); ?></th>
-									<th><?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?></th>
+									<th style="text-align:center; width:120px;"><?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?></th>
 								</tr>
 							</thead>
 							<tbody id="stkb_type_breakdown_body">
 							</tbody>
 						</table>
 					</div>
+				</div>
+			</div>
+
+			<!-- Dynamic Modal Container -->
+			<div id="stkb-metrics-modal" class="stackboost-modal" style="display:none;">
+				<div class="stackboost-modal-content" style="max-width: 600px;">
+					<span class="stackboost-modal-close-button">&times;</span>
+					<div id="stkb-metrics-modal-body" class="stackboost-modal-body"></div>
 				</div>
 			</div>
 
@@ -259,11 +270,31 @@ class Page {
 								if (data.agent_breakdown && data.agent_breakdown.length > 0) {
 									data.agent_breakdown.forEach(function(item) {
 										let label = $('<div>').text(item.label).html();
-										let value = $('<div>').text(item.value).html();
-										agentTbody.append(`<tr><td>${label}</td><td>${value}</td></tr>`);
+										let assigned = $('<div>').text(item.assigned).html();
+										let closed = $('<div>').text(item.closed).html();
+
+										let $tr = $('<tr class="stkb-clickable-row"></tr>');
+										let $tdLabel = $('<td></td>');
+										let $tdAssigned = $('<td style="text-align:center;"></td>').text(assigned);
+										let $tdClosed = $('<td style="text-align:center;"></td>').text(closed);
+
+										$tdLabel.append(label);
+
+										if ( item.tooltip ) {
+											let $icon = $('<span class="dashicons dashicons-info-outline" style="font-size:16px; width:16px; height:16px; color:#2271b1; vertical-align:middle; margin-left:5px;"></span>');
+											$tdLabel.attr('data-tippy-content', item.tooltip);
+											$tdLabel.append($icon);
+										}
+
+										if ( item.modal_html ) {
+											$tr.attr('data-modal-html', item.modal_html);
+										}
+
+										$tr.append($tdLabel).append($tdAssigned).append($tdClosed);
+										agentTbody.append($tr);
 									});
 								} else {
-									agentTbody.append(`<tr><td colspan="2" style="text-align:center;"><?php esc_html_e( 'No agents found.', 'stackboost-for-supportcandy' ); ?></td></tr>`);
+									agentTbody.append(`<tr><td colspan="3" style="text-align:center;"><?php esc_html_e( 'No agents found.', 'stackboost-for-supportcandy' ); ?></td></tr>`);
 								}
 
 								// Render Type Breakdown
@@ -273,17 +304,20 @@ class Page {
 									data.type_breakdown.forEach(function(item) {
 										let label = $('<div>').text(item.label).html();
 										let value = $('<div>').text(item.value).html();
-										let $tr = $('<tr></tr>');
+										let $tr = $('<tr class="stkb-clickable-row"></tr>');
 										let $tdLabel = $('<td></td>');
-										let $tdValue = $('<td></td>').text(value);
+										let $tdValue = $('<td style="text-align:center;"></td>').text(value);
 
 										$tdLabel.append(label);
 
 										if ( item.tooltip ) {
 											let $icon = $('<span class="dashicons dashicons-info-outline" style="font-size:16px; width:16px; height:16px; color:#2271b1; vertical-align:middle; margin-left:5px;"></span>');
 											$tdLabel.attr('data-tippy-content', item.tooltip);
-											$tdLabel.css('cursor', 'help');
 											$tdLabel.append($icon);
+										}
+
+										if ( item.modal_html ) {
+											$tr.attr('data-modal-html', item.modal_html);
 										}
 
 										$tr.append($tdLabel).append($tdValue);
@@ -308,6 +342,19 @@ class Page {
 								alert(response.data);
 							}
 						});
+					});
+
+					// Modal Interactions
+					$(document).on('click', '.stkb-clickable-row', function() {
+						let html = $(this).attr('data-modal-html');
+						if ( html ) {
+							$('#stkb-metrics-modal-body').html(html);
+							$('#stkb-metrics-modal').show();
+						}
+					});
+
+					$('.stackboost-modal-close-button').on('click', function() {
+						$(this).closest('.stackboost-modal').hide();
 					});
 				});
 			</script>

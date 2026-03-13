@@ -216,103 +216,191 @@ class WordPress extends Module {
 
 		$metrics['avg_initial_response'] = $avg_response_seconds > 0 ? $this->format_seconds($avg_response_seconds) : '0s';
 
-		// Agent Breakdown
-		$metrics['agent_breakdown'] = [];
-		// SupportCandy stores assigned_agent as a string, sometimes piped '4|12'.
-		$agent_query = $wpdb->prepare(
-			"SELECT t.assigned_agent, t.id
-			 FROM {$tickets_table} t
-			 WHERE {$active_in_period_sql}
-			 AND t.assigned_agent IS NOT NULL AND t.assigned_agent != ''",
-			$end_dt, $start_dt
-		);
-		$agent_results = $wpdb->get_results($agent_query);
+		// Fetch maps first
 		$agent_map = $this->get_agent_map($wpdb, $agents_table);
+		$type_map = [];
+		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
+			$type_map = $this->get_type_map($wpdb, $type_field, $categories_table, $priorities_table, $status_table, $options_table);
+		}
 
-		$agent_tallies = [];
+		// Perform a unified raw fetch to build rich hierarchies for Tooltips and Modals
+		// We need: id, assigned_agent, type_field value, and whether it was closed in range.
+		$metrics['agent_breakdown'] = [];
+		$metrics['type_breakdown'] = [];
 
-		if ( is_array( $agent_results ) ) {
-			foreach ( $agent_results as $row ) {
-				$agent_ids = explode('|', $row->assigned_agent);
-				foreach ( $agent_ids as $a_id ) {
-					$clean_id = (int) $a_id;
-					if ( $clean_id > 0 ) {
-						if ( ! isset( $agent_tallies[ $clean_id ] ) ) {
-							$agent_tallies[ $clean_id ] = 0;
+		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
+			$raw_tickets_query = $wpdb->prepare(
+				"SELECT t.id, t.assigned_agent, t.`{$type_field}` as type_val,
+						IF(t.{$closed_condition} AND t.{$close_date_col} >= %s AND t.{$close_date_col} <= %s, 1, 0) as is_closed_in_range
+				 FROM {$tickets_table} t
+				 WHERE {$active_in_period_sql}",
+				$start_dt, $end_dt, $end_dt, $start_dt
+			);
+
+			$raw_tickets = $wpdb->get_results($raw_tickets_query);
+
+			$agent_data = [];
+			$type_data = [];
+
+			if ( is_array($raw_tickets) ) {
+				foreach ( $raw_tickets as $t ) {
+					$type_val = $t->type_val;
+					$is_closed = (bool) $t->is_closed_in_range;
+					$agents = array_filter( array_map( 'intval', explode( '|', $t->assigned_agent ) ) );
+
+					// Init Type Data
+					if ( ! isset( $type_data[$type_val] ) ) {
+						$type_data[$type_val] = ['count' => 0, 'agents' => []];
+					}
+					$type_data[$type_val]['count']++;
+
+					foreach ( $agents as $a_id ) {
+						if ( $a_id <= 0 ) continue;
+
+						// Init Agent Data
+						if ( ! isset( $agent_data[$a_id] ) ) {
+							$agent_data[$a_id] = ['assigned' => 0, 'closed' => 0, 'types' => []];
 						}
-						$agent_tallies[ $clean_id ]++;
+
+						// Agent Totals
+						$agent_data[$a_id]['assigned']++;
+						if ( $is_closed ) {
+							$agent_data[$a_id]['closed']++;
+						}
+
+						// Agent Type Breakdown
+						if ( ! isset( $agent_data[$a_id]['types'][$type_val] ) ) {
+							$agent_data[$a_id]['types'][$type_val] = ['assigned' => 0, 'closed' => 0];
+						}
+						$agent_data[$a_id]['types'][$type_val]['assigned']++;
+						if ( $is_closed ) {
+							$agent_data[$a_id]['types'][$type_val]['closed']++;
+						}
+
+						// Type Agent Breakdown
+						if ( ! isset( $type_data[$type_val]['agents'][$a_id] ) ) {
+							$type_data[$type_val]['agents'][$a_id] = 0;
+						}
+						$type_data[$type_val]['agents'][$a_id]++;
 					}
 				}
 			}
-		}
 
-		arsort($agent_tallies);
+			// Format Agent Breakdown
+			uasort($agent_data, function($a, $b) { return $b['assigned'] <=> $a['assigned']; });
+			foreach ( $agent_data as $a_id => $data ) {
+				$name = $agent_map[$a_id] ?? 'Agent ' . $a_id;
 
-		foreach ( $agent_tallies as $a_id => $count ) {
-			$name = $agent_map[$a_id] ?? 'Agent ' . $a_id;
-			$metrics['agent_breakdown'][] = [
-				'label' => $name,
-				'value' => $count
-			];
-		}
-
-		// Type Breakdown
-		$metrics['type_breakdown'] = [];
-		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
-			$type_query = $wpdb->prepare(
-				"SELECT t.`{$type_field}` as type_id, COUNT(t.id) as count
-				 FROM {$tickets_table} t
-				 WHERE {$active_in_period_sql}
-				 GROUP BY t.`{$type_field}`",
-				$end_dt, $start_dt
-			);
-			$type_results = $wpdb->get_results($type_query);
-			$type_map = $this->get_type_map($wpdb, $type_field, $categories_table, $priorities_table, $status_table, $options_table);
-
-			if ( is_array($type_results) ) {
-				foreach ( $type_results as $row ) {
-					$name = $type_map[$row->type_id] ?? $row->type_id;
-					if(empty($name)) $name = 'Unassigned';
-
-					// Calculate specifics for this type
-					$type_where = $wpdb->prepare("AND t.`{$type_field}` = %s", $row->type_id);
-					$type_metrics = $this->calculate_metric_set(
-						$wpdb,
-						$tickets_table,
-						$threads_table,
-						$start_dt,
-						$end_dt,
-						$closed_condition,
-						$open_condition,
-						$close_date_col,
-						$active_in_period_sql,
-						$type_where
+				// Build HTML for tooltip/modal
+				$tooltip_rows = '';
+				foreach ( $data['types'] as $t_val => $t_counts ) {
+					$t_name = $type_map[$t_val] ?? ($t_val ?: 'Unassigned');
+					$tooltip_rows .= sprintf(
+						'<tr><td>%s</td><td style="text-align:center;">%s</td><td style="text-align:center;">%s</td></tr>',
+						esc_html($t_name),
+						(int)$t_counts['assigned'],
+						(int)$t_counts['closed']
 					);
-
-					// Build HTML tooltip string inline to pass via JSON
-					$tooltip_html = sprintf(
-						'<div style="text-align:left; font-size: 13px; line-height: 1.5;">
-							<strong>%s</strong><br><hr style="margin:5px 0; border: 0; border-top: 1px solid #ccc;">
-							Created: <strong>%s</strong><br>
-							Closed: <strong>%s</strong><br>
-							Avg Time to Close: <strong>%s</strong><br>
-							Avg Age (Open): <strong>%s</strong><br>
-							Avg Initial Response: <strong>%s</strong>
-						</div>',
-						esc_html($name),
-						esc_html($type_metrics['total_created']),
-						esc_html($type_metrics['total_closed']),
-						esc_html($type_metrics['avg_open_time']),
-						esc_html($type_metrics['avg_age_open']),
-						esc_html($type_metrics['avg_initial_response'])
-					);
-
-					$metrics['type_breakdown'][] = [
-						'label' => $name,
-						'value' => $row->count,
-						'tooltip' => $tooltip_html
-					];
 				}
+
+				$modal_html = sprintf(
+					'<div style="text-align:left; font-size: 14px;">
+						<h3 style="margin-top:0;">%s - Ticket Breakdown</h3>
+						<table class="wp-list-table widefat striped" style="margin-top:10px;">
+							<thead><tr><th>Type</th><th style="text-align:center;">Assigned</th><th style="text-align:center;">Closed</th></tr></thead>
+							<tbody>%s</tbody>
+						</table>
+					</div>',
+					esc_html($name),
+					$tooltip_rows ?: '<tr><td colspan="3">No type data available</td></tr>'
+				);
+
+				$metrics['agent_breakdown'][] = [
+					'label' => $name,
+					'assigned' => $data['assigned'],
+					'closed' => $data['closed'],
+					'tooltip' => 'Click to view breakdown by Ticket Type',
+					'modal_html' => $modal_html
+				];
+			}
+
+			// Format Type Breakdown
+			uasort($type_data, function($a, $b) { return $b['count'] <=> $a['count']; });
+			foreach ( $type_data as $t_val => $data ) {
+				$name = $type_map[$t_val] ?? ($t_val ?: 'Unassigned');
+
+				// Deep metric calculation
+				$type_where = $wpdb->prepare("AND t.`{$type_field}` = %s", $t_val);
+				$type_metrics = $this->calculate_metric_set(
+					$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
+					$closed_condition, $open_condition, $close_date_col,
+					$active_in_period_sql, $type_where
+				);
+
+				// Build agent distribution HTML
+				$agent_rows = '';
+				arsort($data['agents']);
+				foreach ( $data['agents'] as $a_id => $a_count ) {
+					$a_name = $agent_map[$a_id] ?? 'Agent ' . $a_id;
+					$agent_rows .= sprintf(
+						'<tr><td>%s</td><td style="text-align:center;">%s</td></tr>',
+						esc_html($a_name),
+						(int)$a_count
+					);
+				}
+
+				$tooltip_html = sprintf(
+					'<div style="text-align:left; font-size: 13px; line-height: 1.5;">
+						<strong>%s</strong><br><hr style="margin:5px 0; border: 0; border-top: 1px solid #ccc;">
+						Created: <strong>%s</strong><br>
+						Closed: <strong>%s</strong><br>
+						Avg Time to Close: <strong>%s</strong><br>
+						Avg Age (Open): <strong>%s</strong><br>
+						Avg Initial Response: <strong>%s</strong><br><br>
+						<em>Click row to view Agent distribution</em>
+					</div>',
+					esc_html($name),
+					esc_html($type_metrics['total_created']),
+					esc_html($type_metrics['total_closed']),
+					esc_html($type_metrics['avg_open_time']),
+					esc_html($type_metrics['avg_age_open']),
+					esc_html($type_metrics['avg_initial_response'])
+				);
+
+				$modal_html = sprintf(
+					'<div style="text-align:left; font-size: 14px;">
+						<h3 style="margin-top:0;">%s - Performance & Distribution</h3>
+						<div style="display:flex; gap: 20px; flex-wrap: wrap;">
+							<div style="flex:1; min-width: 200px; background:#f0f0f1; padding: 10px; border-radius: 4px;">
+								<p style="margin: 0 0 5px 0;">Created: <strong>%s</strong></p>
+								<p style="margin: 0 0 5px 0;">Closed: <strong>%s</strong></p>
+								<p style="margin: 0 0 5px 0;">Avg Time to Close: <strong>%s</strong></p>
+								<p style="margin: 0 0 5px 0;">Avg Age (Open): <strong>%s</strong></p>
+								<p style="margin: 0;">Avg Initial Response: <strong>%s</strong></p>
+							</div>
+							<div style="flex:2; min-width: 300px;">
+								<table class="wp-list-table widefat striped">
+									<thead><tr><th>Assigned Agent</th><th style="text-align:center;">Tickets</th></tr></thead>
+									<tbody>%s</tbody>
+								</table>
+							</div>
+						</div>
+					</div>',
+					esc_html($name),
+					esc_html($type_metrics['total_created']),
+					esc_html($type_metrics['total_closed']),
+					esc_html($type_metrics['avg_open_time']),
+					esc_html($type_metrics['avg_age_open']),
+					esc_html($type_metrics['avg_initial_response']),
+					$agent_rows ?: '<tr><td colspan="2">No agents assigned</td></tr>'
+				);
+
+				$metrics['type_breakdown'][] = [
+					'label' => $name,
+					'value' => $data['count'],
+					'tooltip' => $tooltip_html,
+					'modal_html' => $modal_html
+				];
 			}
 		}
 
