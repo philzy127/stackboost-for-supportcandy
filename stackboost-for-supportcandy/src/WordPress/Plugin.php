@@ -432,6 +432,11 @@ final class Plugin {
 			$this->enqueue_and_localize_frontend_scripts();
 		}
 
+		// Enqueue Tooltip scripts specifically for Ticket Metrics
+		if ( 'stackboost_page_stackboost-ticket-metrics' === $hook_suffix || 'stackboost-for-supportcandy_page_stackboost-ticket-metrics' === $hook_suffix ) {
+			wp_enqueue_script( 'stackboost-tippy' );
+		}
+
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
             stackboost_log( "Common scripts (and nonce) enqueued for hook: " . $hook_suffix, 'core' );
 
