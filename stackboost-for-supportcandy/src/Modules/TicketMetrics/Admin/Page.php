@@ -35,15 +35,22 @@ class Page {
 				$type_class = $cf->type;
 				$is_choice_field = false;
 
-				if ( is_string( $type_class ) && class_exists( $type_class ) ) {
-					if ( isset( $type_class::$has_options ) && $type_class::$has_options ) {
-						$is_choice_field = true;
-					} elseif ( isset( $type_class::$slug ) && in_array( $type_class::$slug, [ 'df_category', 'df_priority', 'df_status', 'df_usergroups', 'df_multi_choice', 'df_checkbox', 'df_radio' ] ) ) {
+				// The type is typically a string representing the class name.
+				if ( is_string( $type_class ) ) {
+					if ( class_exists( $type_class ) ) {
+						if ( isset( $type_class::$has_options ) && $type_class::$has_options ) {
+							$is_choice_field = true;
+						} elseif ( isset( $type_class::$slug ) && in_array( $type_class::$slug, [ 'df_category', 'df_priority', 'df_status', 'df_usergroups', 'df_dropdown', 'df_multi_choice', 'df_checkbox', 'df_radio' ] ) ) {
+							$is_choice_field = true;
+						}
+					} elseif ( in_array( $type_class, [ 'WPSC_Dropdown', 'WPSC_Radio', 'WPSC_Checkbox', 'df_dropdown', 'df_category', 'df_priority', 'df_status', 'df_usergroups', 'df_multi_choice', 'df_checkbox', 'df_radio' ] ) ) {
+						// Fallback if class isn't loaded but we know the type slug
 						$is_choice_field = true;
 					}
 				}
 
-				if ( $is_choice_field || method_exists( $cf, 'get_options' ) ) {
+				// Only add it if we are sure it's a choice field.
+				if ( $is_choice_field ) {
 					$custom_fields[ $cf->slug ] = $cf->name;
 				}
 			}
