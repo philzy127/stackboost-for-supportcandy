@@ -378,11 +378,11 @@ class WordPress extends Module {
 							$agent_data[$a_id]['types'][$type_val]['closed']++;
 						}
 
-						// Type Agent Breakdown (we keep the raw agent ID here for detailed type distribution if needed, but display will map to 'Other' too if requested. For now, keep as raw so the Type modal is accurate).
-						if ( ! isset( $type_data[$type_val]['agents'][$a_id_raw] ) ) {
-							$type_data[$type_val]['agents'][$a_id_raw] = 0;
+						// Type Agent Breakdown
+						if ( ! isset( $type_data[$type_val]['agents'][$a_id] ) ) {
+							$type_data[$type_val]['agents'][$a_id] = 0;
 						}
-						$type_data[$type_val]['agents'][$a_id_raw]++;
+						$type_data[$type_val]['agents'][$a_id]++;
 					}
 				}
 			}
@@ -563,7 +563,7 @@ class WordPress extends Module {
 				$agent_rows = '';
 				arsort($data['agents']);
 				foreach ( $data['agents'] as $a_id => $a_count ) {
-					$a_name = $agent_map[$a_id] ?? 'Agent ' . $a_id;
+					$a_name = ($a_id === 'other') ? __( 'Other Agents', 'stackboost-for-supportcandy' ) : ($agent_map[$a_id] ?? 'Agent ' . $a_id);
 					$agent_rows .= sprintf(
 						'<tr><td>%s</td><td style="text-align:center;">%s</td></tr>',
 						esc_html($a_name),
