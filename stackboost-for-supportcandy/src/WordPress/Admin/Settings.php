@@ -754,22 +754,30 @@ class Settings {
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
+		error_log( '==== STACKBOOST DIAGNOSTIC: sanitize_settings() INITIATED ====' );
+		error_log( 'RAW INPUT RECEIVED BY SANITIZER: ' . print_r( $input, true ) );
+
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( 'Settings::sanitize_settings called.', 'core' );
 			stackboost_log( 'Input Data: ' . json_encode( $input ), 'core' );
 		}
 
 		$saved_settings = get_option('stackboost_settings', []);
+		error_log( 'CURRENT DB SAVED SETTINGS BEFORE MERGE: ' . print_r( $saved_settings, true ) );
 		if (!is_array($saved_settings)) {
 			$saved_settings = [];
 		}
 
 		$page_slug = isset( $input['page_slug'] ) ? sanitize_key( $input['page_slug'] ) : '';
+
+		error_log( 'PAGE SLUG EXTRACTED: ' . $page_slug );
+
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( "Processing page_slug: {$page_slug}", 'core' );
 		}
 
 		if (empty($page_slug)) {
+			error_log( 'FATAL ABORT IN SANITIZER: $page_slug is empty. Returning DB settings without changes.' );
 			return $saved_settings;
 		}
 
@@ -828,13 +836,18 @@ class Settings {
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
+
+		error_log( "WHITELIST KEYS FOR SLUG '{$page_slug}': " . print_r( $current_page_options, true ) );
+
 		if (empty($current_page_options)) {
+			error_log( "FATAL ABORT IN SANITIZER: Whitelist array for '{$page_slug}' is empty. Check apply_filters." );
 			return $saved_settings;
 		}
 
 		foreach ($current_page_options as $key) {
 			// Determine if the key exists in the input or if it's a checkbox that was unchecked.
 			if (array_key_exists($key, $input)) {
+				error_log( "PROCESSING KEY: {$key} - Found in \$input." );
 				$value = $input[$key];
 
 				// Sanitize based on the key. This is the crucial step.
@@ -913,11 +926,13 @@ class Settings {
 						break;
 
 					case 'ticket_metrics_excluded_agents':
+						error_log( "SANITIZING: ticket_metrics_excluded_agents. Raw Val: " . print_r($value, true) );
 						// Handle comma-separated string from hidden input
 						if ( is_string( $value ) ) {
 							$value = array_filter( explode( ',', $value ) );
 						}
 						$saved_settings[$key] = array_map('intval', (array) $value);
+						error_log( "RESULT for ticket_metrics_excluded_agents: " . print_r($saved_settings[$key], true) );
 						break;
 
 					case 'holidays':
@@ -1016,16 +1031,22 @@ class Settings {
 						break;
 				}
 			} else {
+				error_log( "PROCESSING KEY: {$key} - NOT found in \$input. Applying fallback logic." );
 				// Handle unchecked checkboxes, which are not present in the form submission.
 				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled') {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses') || $key === 'ticket_metrics_excluded_agents') {
 					$saved_settings[$key] = [];
+					if ($key === 'ticket_metrics_excluded_agents') error_log("FALLBACK APPLIED: ticket_metrics_excluded_agents set to []");
 				} elseif ($key === 'ticket_metrics_agent_filter_mode') {
 					$saved_settings[$key] = 'exclude'; // default if missing
+					if ($key === 'ticket_metrics_agent_filter_mode') error_log("FALLBACK APPLIED: ticket_metrics_agent_filter_mode set to 'exclude'");
 				}
 			}
 		}
+
+		error_log( '==== STACKBOOST DIAGNOSTIC: sanitize_settings() FINISHED ====' );
+		error_log( 'FINAL ARRAY TO BE SAVED: ' . print_r( $saved_settings, true ) );
 
 		return $saved_settings;
 	}
@@ -1213,6 +1234,9 @@ class Settings {
 	public function ajax_save_settings() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
+		error_log('==== STACKBOOST DIAGNOSTIC: ajax_save_settings() ENDPOINT HIT ====');
+		error_log('RAW ENTIRE $_POST PAYLOAD: ' . print_r($_POST, true));
+
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( 'AJAX Save Settings Called', 'core' );
 			stackboost_log( 'POST Data: ' . json_encode( $_POST ), 'core' );
@@ -1265,7 +1289,10 @@ class Settings {
 
 		$settings_data = Request::get_post( 'stackboost_settings', null, 'raw' );
 
+		error_log('DATA EXTRACTED FROM Request::get_post for stackboost_settings: ' . print_r($settings_data, true));
+
 		if ( ! $settings_data || ! is_array( $settings_data ) ) {
+			error_log('FATAL ABORT IN AJAX: $settings_data is either null or not an array!');
             if ( function_exists( 'stackboost_log' ) ) {
                 stackboost_log( 'Invalid settings data structure.', 'core' );
             }
@@ -1291,7 +1318,9 @@ class Settings {
         }
 
 		// Update the option.
-		update_option( 'stackboost_settings', $sanitized_settings );
+		$update_result = update_option( 'stackboost_settings', $sanitized_settings );
+
+		error_log('update_option() RETURN VALUE: ' . ($update_result ? 'TRUE (Changes saved to DB)' : 'FALSE (Identical to DB or Failed)'));
 
 		wp_send_json_success( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) );
 	}
