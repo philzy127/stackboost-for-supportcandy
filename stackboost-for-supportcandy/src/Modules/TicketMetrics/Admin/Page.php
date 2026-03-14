@@ -812,7 +812,19 @@ class Page {
 						let html = $(this).attr('data-modal-html');
 						if ( html ) {
 							$('#stkb-metrics-modal-body').html(html);
-							$('#stkb-metrics-modal').css('display', 'flex'); // Use flex to center the modal content
+							$('#stkb-metrics-modal').hide().css('display', 'flex').hide().fadeIn(200); // Use flex to center the modal content
+
+							// Re-initialize tippy for newly added modal elements
+							if (typeof tippy !== 'undefined') {
+								setTimeout(function() {
+									tippy(document.querySelectorAll('#stkb-metrics-modal-body [data-tippy-content]'), {
+										allowHTML: true,
+										placement: 'top',
+										theme: 'light-border',
+										maxWidth: 350
+									});
+								}, 50);
+							}
 						}
 					});
 

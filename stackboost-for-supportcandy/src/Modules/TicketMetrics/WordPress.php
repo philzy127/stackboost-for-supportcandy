@@ -592,13 +592,13 @@ class WordPress extends Module {
 					$a_closed   = $agent_data[$a_id]['types'][$t_val]['closed'] ?? 0;
 
 					$agent_tippy = sprintf(
-						"Assigned: %d<br>Closed: %d",
+						"Assigned: %d | Closed: %d",
 						$a_assigned,
 						$a_closed
 					);
 
 					$agent_rows .= sprintf(
-						'<tr data-tippy-content="%s" style="cursor:help;"><td>%s</td><td style="text-align:center;">%s</td></tr>',
+						'<tr><td><span data-tippy-content="%s" style="cursor:help; border-bottom: 1px dotted #ccc; display:inline-block; padding-bottom: 2px;">%s</span></td><td style="text-align:center;">%s</td></tr>',
 						esc_attr($agent_tippy),
 						esc_html($a_name),
 						(int)$a_count
