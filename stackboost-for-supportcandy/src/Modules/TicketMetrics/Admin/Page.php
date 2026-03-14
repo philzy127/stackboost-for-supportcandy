@@ -237,7 +237,7 @@ class Page {
 								<input type="date" id="stkb_start_date" /> - <input type="date" id="stkb_end_date" />
 							</div>
 							<div>
-								<button type="button" class="button button-primary" id="stkb_generate_metrics"><?php esc_html_e( 'Generate Metrics', 'stackboost-for-supportcandy' ); ?></button>
+								<button type="button" class="button button-primary" id="stkb_generate_metrics"><?php esc_html_e( 'Update Metrics', 'stackboost-for-supportcandy' ); ?></button>
 							</div>
 						</div>
 					</div>
@@ -586,7 +586,7 @@ class Page {
 
 					$('#stkb_generate_metrics').on('click', function() {
 						let btn = $(this);
-						btn.prop('disabled', true).text('<?php esc_html_e( 'Generating...', 'stackboost-for-supportcandy' ); ?>');
+						btn.prop('disabled', true).text('<?php esc_html_e( 'Updating...', 'stackboost-for-supportcandy' ); ?>');
 
 						let start_date = $('#stkb_start_date').val();
 						let end_date = $('#stkb_end_date').val();
@@ -599,7 +599,7 @@ class Page {
 							end_date: end_date,
 							type_field: type_field
 						}, function(response) {
-							btn.prop('disabled', false).text('<?php esc_html_e( 'Generate Metrics', 'stackboost-for-supportcandy' ); ?>');
+							btn.prop('disabled', false).text('<?php esc_html_e( 'Update Metrics', 'stackboost-for-supportcandy' ); ?>');
 
 							if (response.success) {
 								let data = response.data;
@@ -831,6 +831,12 @@ class Page {
 					$('.stackboost-modal-close-button').on('click', function() {
 						$(this).closest('.stackboost-modal').hide();
 					});
+
+					// Trigger initial load on "This week"
+					setTimeout(function() {
+						$('#stkb_date_preset').val('this_week').trigger('change');
+						$('#stkb_generate_metrics').trigger('click');
+					}, 100);
 				});
 			</script>
 		</div>

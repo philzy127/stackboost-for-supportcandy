@@ -320,6 +320,20 @@ class WordPress extends Module {
 		$metrics['agent_breakdown'] = [];
 		$metrics['type_breakdown'] = [];
 
+		// Overall Metrics
+		$overall_metrics = $this->calculate_metric_set(
+			$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
+			$closed_condition, $open_condition, $close_date_col,
+			$active_in_period_sql, '' // Empty extra where for root totals
+		);
+
+		// Manually append these root properties because JS expects them at the top level
+		$metrics['total_created']        = $overall_metrics['total_created'];
+		$metrics['total_closed']         = $overall_metrics['total_closed'];
+		$metrics['avg_open_time']        = $overall_metrics['avg_open_time'];
+		$metrics['avg_age_open']         = $overall_metrics['avg_age_open'];
+		$metrics['avg_initial_response'] = $overall_metrics['avg_initial_response'];
+
 		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
 			$raw_tickets_query = $wpdb->prepare(
 				"SELECT t.id, t.assigned_agent, t.`{$type_field}` as type_val,
@@ -591,17 +605,11 @@ class WordPress extends Module {
 					$a_assigned = $agent_data[$a_id]['types'][$t_val]['assigned'] ?? 0;
 					$a_closed   = $agent_data[$a_id]['types'][$t_val]['closed'] ?? 0;
 
-					$agent_tippy = sprintf(
-						"Assigned: %d | Closed: %d",
-						$a_assigned,
-						$a_closed
-					);
-
 					$agent_rows .= sprintf(
-						'<tr><td><span data-tippy-content="%s" style="cursor:help; border-bottom: 1px dotted #ccc; display:inline-block; padding-bottom: 2px;">%s</span></td><td style="text-align:center;">%s</td></tr>',
-						esc_attr($agent_tippy),
+						'<tr><td>%s</td><td style="text-align:center;">%s</td><td style="text-align:center;">%s</td></tr>',
 						esc_html($a_name),
-						(int)$a_count
+						(int)$a_assigned,
+						(int)$a_closed
 					);
 				}
 
@@ -644,7 +652,13 @@ class WordPress extends Module {
 							<div class="stackboost-card">
 								<h3>Agent Distribution</h3>
 								<table class="wp-list-table widefat striped">
-									<thead><tr><th>Assigned Agent</th><th style="text-align:center;">Tickets</th></tr></thead>
+									<thead>
+										<tr>
+											<th>Assigned Agent</th>
+											<th style="text-align:center;">Assigned</th>
+											<th style="text-align:center;">Closed</th>
+										</tr>
+									</thead>
 									<tbody>%s</tbody>
 								</table>
 							</div>
