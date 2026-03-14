@@ -228,9 +228,10 @@ class WordPress extends Module {
 		// Perform a unified raw fetch to build rich hierarchies for Tooltips and Modals
 		// We need: id, assigned_agent, type_field value, and whether it was closed in range.
 		$options = get_option( 'stackboost_settings', [] );
-		$excluded_agents = $options['ticket_metrics_excluded_agents'] ?? [];
-		if ( ! is_array( $excluded_agents ) ) {
-			$excluded_agents = [];
+		$agent_filter_mode = $options['ticket_metrics_agent_filter_mode'] ?? 'exclude';
+		$filtered_agents = $options['ticket_metrics_excluded_agents'] ?? [];
+		if ( ! is_array( $filtered_agents ) ) {
+			$filtered_agents = [];
 		}
 
 		$metrics['agent_breakdown'] = [];
@@ -265,8 +266,14 @@ class WordPress extends Module {
 					foreach ( $agents as $a_id ) {
 						if ( $a_id <= 0 ) continue;
 
-						// Skip if this agent is in the exclusion list
-						if ( in_array( $a_id, $excluded_agents ) ) continue;
+						// Apply Agent Filtering Logic
+						if ( $agent_filter_mode === 'include' ) {
+							// Strict include: If not in array, skip
+							if ( ! in_array( $a_id, $filtered_agents ) ) continue;
+						} else {
+							// Standard exclude: If in array, skip
+							if ( in_array( $a_id, $filtered_agents ) ) continue;
+						}
 
 						// Init Agent Data
 						if ( ! isset( $agent_data[$a_id] ) ) {

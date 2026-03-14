@@ -74,6 +74,7 @@ class Page {
 		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
 		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'multi_pie';
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
+		$agent_filter_mode = $options['ticket_metrics_agent_filter_mode'] ?? 'exclude';
 		$excluded_agents = $options['ticket_metrics_excluded_agents'] ?? [];
 
 		global $wpdb;
@@ -294,17 +295,26 @@ class Page {
 						</div>
 
 						<div class="stackboost-card">
-							<h2><?php esc_html_e( 'Exceptions & Exclusions', 'stackboost-for-supportcandy' ); ?></h2>
+							<h2><?php esc_html_e( 'Agent Filtering', 'stackboost-for-supportcandy' ); ?></h2>
 							<table class="form-table">
 								<tr>
-									<th scope="row"><label for="stkb_excluded_agents"><?php esc_html_e( 'Exclude Agents', 'stackboost-for-supportcandy' ); ?></label></th>
+									<th scope="row"><label for="stkb_agent_filter_mode"><?php esc_html_e( 'Filter Mode', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select name="stackboost_settings[ticket_metrics_agent_filter_mode]" id="stkb_agent_filter_mode">
+											<option value="exclude" <?php selected( $agent_filter_mode, 'exclude' ); ?>><?php esc_html_e( 'Exclude Selected', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="include" <?php selected( $agent_filter_mode, 'include' ); ?>><?php esc_html_e( 'Include ONLY Selected', 'stackboost-for-supportcandy' ); ?></option>
+										</select>
+										<p class="description"><?php esc_html_e( 'Choose whether to exclude specific agents (e.g., catch-all accounts) or strict-include only the ones you want to see.', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
+								<tr>
+									<th scope="row"><label for="stkb_excluded_agents"><?php esc_html_e( 'Select Agents', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
 										<select name="stackboost_settings[ticket_metrics_excluded_agents][]" id="stkb_excluded_agents" multiple="multiple" style="min-width: 300px;" class="stackboost-selectwoo">
 											<?php foreach ( $all_agents as $id => $name ) : ?>
 												<option value="<?php echo esc_attr( $id ); ?>" <?php echo in_array( $id, $excluded_agents ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( $name ); ?></option>
 											<?php endforeach; ?>
 										</select>
-										<p class="description"><?php esc_html_e( 'Select "catch-all" or system agents to exclude them from the Agent Breakdown reports.', 'stackboost-for-supportcandy' ); ?></p>
 									</td>
 								</tr>
 							</table>
