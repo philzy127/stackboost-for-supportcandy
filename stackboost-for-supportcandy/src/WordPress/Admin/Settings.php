@@ -754,30 +754,32 @@ class Settings {
 	 * Sanitize all settings.
 	 */
 	public function sanitize_settings( array $input ): array {
-		error_log( '==== STACKBOOST DIAGNOSTIC: sanitize_settings() INITIATED ====' );
-		error_log( 'RAW INPUT RECEIVED BY SANITIZER: ' . print_r( $input, true ) );
-
 		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( '==== STACKBOOST DIAGNOSTIC: sanitize_settings() INITIATED ====', 'core' );
+			stackboost_log( 'RAW INPUT RECEIVED BY SANITIZER: ' . print_r( $input, true ), 'core' );
 			stackboost_log( 'Settings::sanitize_settings called.', 'core' );
 			stackboost_log( 'Input Data: ' . json_encode( $input ), 'core' );
 		}
 
 		$saved_settings = get_option('stackboost_settings', []);
-		error_log( 'CURRENT DB SAVED SETTINGS BEFORE MERGE: ' . print_r( $saved_settings, true ) );
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'CURRENT DB SAVED SETTINGS BEFORE MERGE: ' . print_r( $saved_settings, true ), 'core' );
+		}
 		if (!is_array($saved_settings)) {
 			$saved_settings = [];
 		}
 
 		$page_slug = isset( $input['page_slug'] ) ? sanitize_key( $input['page_slug'] ) : '';
 
-		error_log( 'PAGE SLUG EXTRACTED: ' . $page_slug );
-
 		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'PAGE SLUG EXTRACTED: ' . $page_slug, 'core' );
 			stackboost_log( "Processing page_slug: {$page_slug}", 'core' );
 		}
 
 		if (empty($page_slug)) {
-			error_log( 'FATAL ABORT IN SANITIZER: $page_slug is empty. Returning DB settings without changes.' );
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( 'FATAL ABORT IN SANITIZER: $page_slug is empty. Returning DB settings without changes.', 'core' );
+			}
 			return $saved_settings;
 		}
 
@@ -1234,10 +1236,9 @@ class Settings {
 	public function ajax_save_settings() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
-		error_log('==== STACKBOOST DIAGNOSTIC: ajax_save_settings() ENDPOINT HIT ====');
-		error_log('RAW ENTIRE $_POST PAYLOAD: ' . print_r($_POST, true));
-
 		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( '==== STACKBOOST DIAGNOSTIC: ajax_save_settings() ENDPOINT HIT ====', 'core' );
+			stackboost_log( 'RAW ENTIRE $_POST PAYLOAD: ' . print_r($_POST, true), 'core' );
 			stackboost_log( 'AJAX Save Settings Called', 'core' );
 			stackboost_log( 'POST Data: ' . json_encode( $_POST ), 'core' );
 		}
@@ -1289,11 +1290,13 @@ class Settings {
 
 		$settings_data = Request::get_post( 'stackboost_settings', null, 'raw' );
 
-		error_log('DATA EXTRACTED FROM Request::get_post for stackboost_settings: ' . print_r($settings_data, true));
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'DATA EXTRACTED FROM Request::get_post for stackboost_settings: ' . print_r($settings_data, true), 'core' );
+		}
 
 		if ( ! $settings_data || ! is_array( $settings_data ) ) {
-			error_log('FATAL ABORT IN AJAX: $settings_data is either null or not an array!');
             if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( 'FATAL ABORT IN AJAX: $settings_data is either null or not an array!', 'core' );
                 stackboost_log( 'Invalid settings data structure.', 'core' );
             }
 			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
@@ -1320,7 +1323,9 @@ class Settings {
 		// Update the option.
 		$update_result = update_option( 'stackboost_settings', $sanitized_settings );
 
-		error_log('update_option() RETURN VALUE: ' . ($update_result ? 'TRUE (Changes saved to DB)' : 'FALSE (Identical to DB or Failed)'));
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'update_option() RETURN VALUE: ' . ($update_result ? 'TRUE (Changes saved to DB)' : 'FALSE (Identical to DB or Failed)'), 'core' );
+		}
 
 		wp_send_json_success( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) );
 	}

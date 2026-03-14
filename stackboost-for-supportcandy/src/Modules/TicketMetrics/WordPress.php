@@ -38,12 +38,16 @@ class WordPress extends Module {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
 		// START EXPLICIT LOGGING
-		error_log('=== STACKBOOST METRICS SETTINGS SAVE INIT ===');
-		error_log('RAW $_POST DATA RECEIVED:');
-		error_log(print_r($_POST, true));
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log('=== STACKBOOST METRICS SETTINGS SAVE INIT ===', 'ticket_metrics');
+			stackboost_log('RAW $_POST DATA RECEIVED:', 'ticket_metrics');
+			stackboost_log(print_r($_POST, true), 'ticket_metrics');
+		}
 
 		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_METRICS ) ) {
-			error_log('ABORT: Permission denied for current user.');
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log('ABORT: Permission denied for current user.', 'ticket_metrics');
+			}
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
@@ -77,13 +81,17 @@ class WordPress extends Module {
 		}
 		$options['ticket_metrics_excluded_agents'] = $agents;
 
-		error_log('PROCESSED $options ARRAY TO BE SAVED:');
-		error_log(print_r($options, true));
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log('PROCESSED $options ARRAY TO BE SAVED:', 'ticket_metrics');
+			stackboost_log(print_r($options, true), 'ticket_metrics');
+		}
 
 		$update_result = update_option( 'stackboost_settings', $options );
 
-		error_log('RESULT OF update_option(): ' . ($update_result ? 'TRUE (Rows changed)' : 'FALSE (Identical to DB or error)'));
-		error_log('=== END STACKBOOST METRICS SETTINGS SAVE ===');
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log('RESULT OF update_option(): ' . ($update_result ? 'TRUE (Rows changed)' : 'FALSE (Identical to DB or error)'), 'ticket_metrics');
+			stackboost_log('=== END STACKBOOST METRICS SETTINGS SAVE ===', 'ticket_metrics');
+		}
 
 		wp_send_json_success( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) );
 	}
