@@ -755,11 +755,12 @@ class Page {
 
 									agentChart = new Chart(agentCtx, agentConfig);
 
-									typeChart = new Chart(typeCtx, {
+									let typeConfig = {
 										type: typeChartType,
 										data: {
 											labels: typeLabels,
 											datasets: [{
+												label: '<?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?>',
 												data: typeData,
 												backgroundColor: chartColors,
 												borderWidth: 1
@@ -770,7 +771,19 @@ class Page {
 											maintainAspectRatio: false,
 											plugins: { legend: { position: 'right' } }
 										}
-									});
+									};
+
+									if (typeChartType === 'bar' || typeChartType === 'line' || typeChartType === 'radar') {
+										typeConfig.data.datasets[0].backgroundColor = (typeChartType === 'bar') ? '#2271b1' : '#2271b133';
+										typeConfig.data.datasets[0].borderColor = '#2271b1';
+										typeConfig.options.plugins.legend.position = 'top';
+
+										if (typeChartType === 'line' || typeChartType === 'radar') {
+											typeConfig.data.datasets[0].fill = true;
+										}
+									}
+
+									typeChart = new Chart(typeCtx, typeConfig);
 								}
 
 								// Initialize Tippy if available
