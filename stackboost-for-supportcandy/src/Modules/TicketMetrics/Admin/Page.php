@@ -74,6 +74,24 @@ class Page {
 		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
 		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'multi_pie';
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
+		$excluded_agents = $options['ticket_metrics_excluded_agents'] ?? [];
+
+		global $wpdb;
+		$agents_table = $wpdb->prefix . 'psmsc_agents';
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$agents_table}'") !== $agents_table ) {
+			$agents_table = $wpdb->prefix . 'wpsc_agents';
+		}
+
+		$all_agents = [];
+		$table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$agents_table}'") === $agents_table;
+		if ( $table_exists ) {
+			$agent_results = $wpdb->get_results("SELECT id, name FROM {$agents_table} ORDER BY name ASC");
+			if ( is_array($agent_results) ) {
+				foreach ( $agent_results as $a ) {
+					$all_agents[$a->id] = $a->name;
+				}
+			}
+		}
 
 		?>
 		<style>
@@ -270,6 +288,23 @@ class Page {
 											<option value="radar" <?php selected( $chart_type_type, 'radar' ); ?>><?php esc_html_e( 'Radar', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="polarArea" <?php selected( $chart_type_type, 'polarArea' ); ?>><?php esc_html_e( 'Polar Area', 'stackboost-for-supportcandy' ); ?></option>
 										</select>
+									</td>
+								</tr>
+							</table>
+						</div>
+
+						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'Exceptions & Exclusions', 'stackboost-for-supportcandy' ); ?></h2>
+							<table class="form-table">
+								<tr>
+									<th scope="row"><label for="stkb_excluded_agents"><?php esc_html_e( 'Exclude Agents', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select name="stackboost_settings[ticket_metrics_excluded_agents][]" id="stkb_excluded_agents" multiple="multiple" style="min-width: 300px;" class="stackboost-selectwoo">
+											<?php foreach ( $all_agents as $id => $name ) : ?>
+												<option value="<?php echo esc_attr( $id ); ?>" <?php echo in_array( $id, $excluded_agents ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( $name ); ?></option>
+											<?php endforeach; ?>
+										</select>
+										<p class="description"><?php esc_html_e( 'Select "catch-all" or system agents to exclude them from the Agent Breakdown reports.', 'stackboost-for-supportcandy' ); ?></p>
 									</td>
 								</tr>
 							</table>

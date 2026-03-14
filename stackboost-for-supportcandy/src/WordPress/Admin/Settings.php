@@ -796,7 +796,7 @@ class Settings {
 			'stackboost-conditional-options' => ['conditional_options_rules', 'conditional_options_enabled'], // Whitelisted
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
-			'stackboost-ticket-metrics'     => ['ticket_metrics_type_field', 'ticket_metrics_chart_type_agent', 'ticket_metrics_chart_type_type'],
+			'stackboost-ticket-metrics'     => ['ticket_metrics_type_field', 'ticket_metrics_chart_type_agent', 'ticket_metrics_chart_type_type', 'ticket_metrics_excluded_agents'],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
@@ -902,6 +902,10 @@ class Settings {
 						$saved_settings[$key] = sanitize_text_field($value);
 						break;
 
+					case 'ticket_metrics_excluded_agents':
+						$saved_settings[$key] = is_array($value) ? array_map('intval', $value) : [];
+						break;
+
 					case 'holidays':
 						$saved_settings[$key] = sanitize_textarea_field($value);
 						break;
@@ -1001,7 +1005,7 @@ class Settings {
 				// Handle unchecked checkboxes, which are not present in the form submission.
 				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled') {
 					$saved_settings[$key] = 0;
-				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
+				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses') || $key === 'ticket_metrics_excluded_agents') {
 					$saved_settings[$key] = [];
 				}
 			}
