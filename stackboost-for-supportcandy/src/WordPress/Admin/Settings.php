@@ -907,7 +907,7 @@ class Settings {
 						break;
 
 					case 'ticket_metrics_excluded_agents':
-						$saved_settings[$key] = is_array($value) ? array_map('intval', $value) : [];
+						$saved_settings[$key] = array_map('intval', (array) $value);
 						break;
 
 					case 'holidays':
@@ -915,7 +915,7 @@ class Settings {
 						break;
 
 					case 'utm_columns':
-						$saved_settings[$key] = is_array($value) ? array_map('sanitize_key', $value) : [];
+						$saved_settings[$key] = array_map('sanitize_key', (array) $value);
 						break;
 
 					case 'utm_rename_rules':
@@ -962,7 +962,7 @@ class Settings {
 						break;
 
 					case 'queue_macro_statuses':
-						$saved_settings[$key] = is_array($value) ? array_map('intval', $value) : [];
+						$saved_settings[$key] = array_map('intval', (array) $value);
 						break;
 
 					case 'conditional_hiding_rules':

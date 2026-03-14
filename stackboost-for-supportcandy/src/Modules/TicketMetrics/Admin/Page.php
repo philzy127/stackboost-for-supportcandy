@@ -76,6 +76,9 @@ class Page {
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
 		$agent_filter_mode = $options['ticket_metrics_agent_filter_mode'] ?? 'exclude';
 		$excluded_agents = $options['ticket_metrics_excluded_agents'] ?? [];
+		if ( ! is_array( $excluded_agents ) ) {
+			$excluded_agents = [];
+		}
 
 		global $wpdb;
 		$agents_table = $wpdb->prefix . 'psmsc_agents';
