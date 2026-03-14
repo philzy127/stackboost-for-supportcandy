@@ -310,6 +310,43 @@ class Page {
 						$('#tab-' + target.substring(1)).show();
 					});
 
+					// Intercept form submission to post success message
+					$('#tab-settings form').on('submit', function(e) {
+						e.preventDefault(); // Prevent standard POST
+
+						var form = $(this);
+						var btn = form.find('input[type="submit"]');
+						var originalText = btn.val();
+
+						btn.prop('disabled', true).val('<?php esc_html_e( 'Saving...', 'stackboost-for-supportcandy' ); ?>');
+
+						// Use the centralized stackboost_save_settings AJAX action
+						$.post(stackboost_admin_ajax.ajax_url, form.serialize() + '&action=stackboost_save_settings&nonce=' + stackboost_admin_ajax.nonce, function(response) {
+							if (response.success) {
+								if (typeof window.stackboost_show_toast !== 'undefined') {
+									window.stackboost_show_toast(response.data, 'success');
+								} else {
+									alert(response.data);
+								}
+								// Settings saved dynamically via AJAX, no page reload required.
+							} else {
+								if (typeof window.stackboost_show_toast !== 'undefined') {
+									window.stackboost_show_toast(response.data || 'Error saving settings.', 'error');
+								} else {
+									alert('Error: ' + (response.data || 'Unknown error'));
+								}
+							}
+						}).fail(function() {
+							if (typeof window.stackboost_show_toast !== 'undefined') {
+								window.stackboost_show_toast('An unexpected error occurred.', 'error');
+							} else {
+								alert('An unexpected error occurred.');
+							}
+						}).always(function() {
+							btn.prop('disabled', false).val(originalText);
+						});
+					});
+
 					$('#stkb_date_preset').on('change', function() {
 						if ($(this).val() === 'custom') {
 							$('#stkb_custom_dates').show();
@@ -480,8 +517,9 @@ class Page {
 									const agentCtx = document.getElementById('stkb_agent_chart').getContext('2d');
 									const typeCtx = document.getElementById('stkb_type_chart').getContext('2d');
 
-									let agentChartTypeRaw = '<?php echo esc_js( $chart_type_agent ); ?>';
-									let typeChartType = '<?php echo esc_js( $chart_type_type ); ?>';
+									// Fetch latest selected types from the DOM directly to reflect any newly saved settings
+									let agentChartTypeRaw = $('#stkb_chart_type_agent').val() || '<?php echo esc_js( $chart_type_agent ); ?>';
+									let typeChartType = $('#stkb_chart_type_type').val() || '<?php echo esc_js( $chart_type_type ); ?>';
 
 									// Determine actual chart.js type and if it's multi-series
 									let agentChartType = agentChartTypeRaw;
