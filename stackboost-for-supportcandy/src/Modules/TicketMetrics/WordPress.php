@@ -586,8 +586,20 @@ class WordPress extends Module {
 
 				foreach ( $data['agents'] as $a_id => $a_count ) {
 					$a_name = ($a_id === 'other') ? __( 'Other Agents', 'stackboost-for-supportcandy' ) : ($agent_map[$a_id] ?? 'Agent ' . $a_id);
+
+					// Calculate specific assigned/closed metrics for this agent+type combination to show in tooltip
+					$a_assigned = $agent_data[$a_id]['types'][$t_val]['assigned'] ?? 0;
+					$a_closed   = $agent_data[$a_id]['types'][$t_val]['closed'] ?? 0;
+
+					$agent_tippy = sprintf(
+						"Assigned: %d<br>Closed: %d",
+						$a_assigned,
+						$a_closed
+					);
+
 					$agent_rows .= sprintf(
-						'<tr><td>%s</td><td style="text-align:center;">%s</td></tr>',
+						'<tr data-tippy-content="%s" style="cursor:help;"><td>%s</td><td style="text-align:center;">%s</td></tr>',
+						esc_attr($agent_tippy),
 						esc_html($a_name),
 						(int)$a_count
 					);
@@ -614,18 +626,21 @@ class WordPress extends Module {
 				$modal_html = sprintf(
 					'<div class="stackboost-dashboard" style="text-align:left;">
 						<h2 style="margin-top:0;">%s - Performance & Distribution</h2>
-						<div class="stackboost-dashboard-grid" style="grid-template-columns: 1fr 2fr;">
-							<div class="stackboost-card" style="padding: 15px;">
+						<div class="stackboost-dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 20px;">
+							<div class="stackboost-card" style="padding: 15px; margin-bottom: 0;">
 								<h3 style="margin-top:0; font-size:16px;">Lifecycle</h3>
 								<p style="margin: 0 0 5px 0; font-size:14px;">New (Created in range): <strong>%s</strong></p>
 								<p style="margin: 0 0 5px 0; font-size:14px;">Carried Over & Closed: <strong>%s</strong></p>
-								<p style="margin: 0 0 15px 0; font-size:14px;">Carried Over & Still Open: <strong>%s</strong></p>
-								<hr>
-								<h3 style="margin-bottom:5px; font-size:16px;">Averages</h3>
+								<p style="margin: 0 0 5px 0; font-size:14px;">Carried Over & Still Open: <strong>%s</strong></p>
+							</div>
+							<div class="stackboost-card" style="padding: 15px; margin-bottom: 0;">
+								<h3 style="margin-top:0; font-size:16px;">Averages</h3>
 								<p style="margin: 0 0 5px 0; font-size:14px;">Time to Close: <strong>%s</strong></p>
 								<p style="margin: 0 0 5px 0; font-size:14px;">Age (Open): <strong>%s</strong></p>
-								<p style="margin: 0; font-size:14px;">Initial Response: <strong>%s</strong></p>
+								<p style="margin: 0 0 5px 0; font-size:14px;">Initial Response: <strong>%s</strong></p>
 							</div>
+						</div>
+						<div class="stackboost-dashboard-grid" style="grid-template-columns: 1fr;">
 							<div class="stackboost-card" style="padding: 15px;">
 								<h3 style="margin-top:0; font-size:16px;">Agent Distribution</h3>
 								<table class="wp-list-table widefat striped">

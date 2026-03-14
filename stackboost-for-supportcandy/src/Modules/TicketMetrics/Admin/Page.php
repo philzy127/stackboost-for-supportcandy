@@ -163,7 +163,7 @@ class Page {
 			}
 			.stkb-agent-filter-box select {
 				width: 100%;
-				height: 200px !important;
+				height: 250px !important;
 			}
 			.stkb-agent-filter-buttons {
 				display: flex;
@@ -180,16 +180,21 @@ class Page {
 				width: 40px;
 				height: 40px;
 				padding: 0;
-				border: 1px solid #2271b1;
+				border: 1px solid var(--sb-accent, #2271b1);
 				background: #fff;
 				cursor: pointer;
 				transition: all 0.15s ease-in-out;
-				color: #2271b1;
+				color: var(--sb-accent, #2271b1);
 			}
 			.stkb-agent-filter-buttons .button:hover {
-				background: #2271b1;
-				border-color: #2271b1;
+				background: var(--sb-accent, #2271b1);
+				border-color: var(--sb-accent, #2271b1);
 				color: #fff;
+			}
+			.stkb-agent-filter-buttons .button:active {
+				background: var(--sb-accent-dark, #122b40);
+				border-color: var(--sb-accent-dark, #122b40);
+				box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 			}
 			.stkb-agent-filter-buttons .button .dashicons {
 				font-size: 20px;
@@ -424,7 +429,7 @@ class Page {
 
 			<!-- Dynamic Modal Container -->
 			<div id="stkb-metrics-modal" class="stackboost-modal" style="display:none; align-items:center; justify-content:center;">
-				<div class="stackboost-modal-content" style="max-width: 600px; width:100%; max-height: 80vh; display:flex; flex-direction:column;">
+				<div class="stackboost-modal-content" style="max-width: 800px; width:100%; max-height: 80vh; display:flex; flex-direction:column;">
 					<span class="stackboost-modal-close-button" style="align-self: flex-end;">&times;</span>
 					<div id="stkb-metrics-modal-body" class="stackboost-modal-body" style="overflow-y:auto; flex-grow:1; padding-right:15px;"></div>
 				</div>
