@@ -88,6 +88,9 @@ class WordPress extends Module {
 		unset( $options['ticket_metrics_agent_filter_mode'] );
 		unset( $options['ticket_metrics_excluded_agents'] );
 
+		// Explicitly set the page_slug so the central Settings sanitizer accepts the update
+		$options['page_slug'] = 'stackboost-ticket-metrics';
+
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log('PROCESSED $options ARRAY TO BE SAVED:', 'ticket_metrics');
 			stackboost_log(print_r($options, true), 'ticket_metrics');
@@ -118,11 +121,12 @@ class WordPress extends Module {
 		$end_date   = isset( $_POST['end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['end_date'] ) ) : '';
 		$type_field = isset( $_POST['type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['type_field'] ) ) : 'category';
 
-		// Save preference securely using a standalone option to bypass the central settings sanitizer
-		// which would otherwise reject programmatic updates missing a page_slug.
+		// Save preference securely using a standalone option.
+		// Inject page_slug to satisfy central settings sanitizer.
 		$options = get_option( 'stackboost_settings', [] );
 		if ( ! isset( $options['ticket_metrics_type_field'] ) || $options['ticket_metrics_type_field'] !== $type_field ) {
 			$options['ticket_metrics_type_field'] = $type_field;
+			$options['page_slug'] = 'stackboost-ticket-metrics';
 			update_option( 'stackboost_settings', $options );
 		}
 
