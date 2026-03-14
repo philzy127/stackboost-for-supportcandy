@@ -31,6 +31,61 @@ class WordPress extends Module {
 
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'wp_ajax_stackboost_get_ticket_metrics', [ $this, 'ajax_get_metrics' ] );
+		add_action( 'wp_ajax_stackboost_save_ticket_metrics_settings', [ $this, 'ajax_save_ticket_metrics_settings' ] );
+	}
+
+	public function ajax_save_ticket_metrics_settings() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		// START EXPLICIT LOGGING
+		error_log('=== STACKBOOST METRICS SETTINGS SAVE INIT ===');
+		error_log('RAW $_POST DATA RECEIVED:');
+		error_log(print_r($_POST, true));
+
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_METRICS ) ) {
+			error_log('ABORT: Permission denied for current user.');
+			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$options = get_option( 'stackboost_settings', [] );
+		if ( ! is_array( $options ) ) {
+			$options = [];
+		}
+
+		// Read and sanitize raw POST data directly
+		$options['ticket_metrics_type_field']        = isset( $_POST['ticket_metrics_type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_type_field'] ) ) : 'category';
+
+		$agent_chart = isset( $_POST['ticket_metrics_chart_type_agent'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_agent'] ) ) : 'multi_pie';
+		$options['ticket_metrics_chart_type_agent']  = in_array( $agent_chart, [ 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $agent_chart : 'multi_pie';
+
+		$type_chart = isset( $_POST['ticket_metrics_chart_type_type'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_type'] ) ) : 'doughnut';
+		$options['ticket_metrics_chart_type_type']   = in_array( $type_chart, [ 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $type_chart : 'doughnut';
+
+		$filter_mode = isset( $_POST['ticket_metrics_agent_filter_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_agent_filter_mode'] ) ) : 'exclude';
+		$options['ticket_metrics_agent_filter_mode'] = in_array( $filter_mode, [ 'include', 'exclude' ] ) ? $filter_mode : 'exclude';
+
+		// Handle the array of excluded agents
+		$agents = [];
+		if ( isset( $_POST['ticket_metrics_excluded_agents'] ) ) {
+			$raw_agents = wp_unslash( $_POST['ticket_metrics_excluded_agents'] );
+			if ( is_array( $raw_agents ) ) {
+				$agents = array_map( 'intval', $raw_agents );
+			} else {
+				// Fallback if somehow sent as string (e.g. from Select2 without multiple)
+				$agents = [ intval( $raw_agents ) ];
+			}
+		}
+		$options['ticket_metrics_excluded_agents'] = $agents;
+
+		error_log('PROCESSED $options ARRAY TO BE SAVED:');
+		error_log(print_r($options, true));
+
+		$update_result = update_option( 'stackboost_settings', $options );
+
+		error_log('RESULT OF update_option(): ' . ($update_result ? 'TRUE (Rows changed)' : 'FALSE (Identical to DB or error)'));
+		error_log('=== END STACKBOOST METRICS SETTINGS SAVE ===');
+
+		wp_send_json_success( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) );
 	}
 
 	public function register_settings() {

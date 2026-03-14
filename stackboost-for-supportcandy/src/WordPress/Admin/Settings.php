@@ -913,6 +913,10 @@ class Settings {
 						break;
 
 					case 'ticket_metrics_excluded_agents':
+						// Handle comma-separated string from hidden input
+						if ( is_string( $value ) ) {
+							$value = array_filter( explode( ',', $value ) );
+						}
 						$saved_settings[$key] = array_map('intval', (array) $value);
 						break;
 

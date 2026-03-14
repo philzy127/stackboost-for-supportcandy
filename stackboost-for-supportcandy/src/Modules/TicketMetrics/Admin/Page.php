@@ -258,7 +258,7 @@ class Page {
 								<tr>
 									<th scope="row"><label for="stkb_type_field_setting"><?php esc_html_e( 'Ticket Type Field', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
-										<select name="stackboost_settings[ticket_metrics_type_field]" id="stkb_type_field_setting">
+										<select id="stkb_type_field_setting">
 											<?php foreach ( $all_type_fields as $key => $label ) : ?>
 												<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $saved_type_field, $key ); ?>><?php echo esc_html( $label ); ?></option>
 											<?php endforeach; ?>
@@ -269,7 +269,7 @@ class Page {
 								<tr>
 									<th scope="row"><label for="stkb_chart_type_agent"><?php esc_html_e( 'Agent Chart Type', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
-										<select name="stackboost_settings[ticket_metrics_chart_type_agent]" id="stkb_chart_type_agent">
+										<select id="stkb_chart_type_agent">
 											<option value="pie" <?php selected( $chart_type_agent, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="doughnut" <?php selected( $chart_type_agent, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="multi_pie" <?php selected( $chart_type_agent, 'multi_pie' ); ?>><?php esc_html_e( 'Multi-series Pie', 'stackboost-for-supportcandy' ); ?></option>
@@ -284,7 +284,7 @@ class Page {
 								<tr>
 									<th scope="row"><label for="stkb_chart_type_type"><?php esc_html_e( 'Type Chart Type', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
-										<select name="stackboost_settings[ticket_metrics_chart_type_type]" id="stkb_chart_type_type">
+										<select id="stkb_chart_type_type">
 											<option value="pie" <?php selected( $chart_type_type, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="doughnut" <?php selected( $chart_type_type, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="bar" <?php selected( $chart_type_type, 'bar' ); ?>><?php esc_html_e( 'Bar', 'stackboost-for-supportcandy' ); ?></option>
@@ -303,7 +303,7 @@ class Page {
 								<tr>
 									<th scope="row"><label for="stkb_agent_filter_mode"><?php esc_html_e( 'Filter Mode', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
-										<select name="stackboost_settings[ticket_metrics_agent_filter_mode]" id="stkb_agent_filter_mode">
+										<select id="stkb_agent_filter_mode">
 											<option value="exclude" <?php selected( $agent_filter_mode, 'exclude' ); ?>><?php esc_html_e( 'Exclude Selected', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="include" <?php selected( $agent_filter_mode, 'include' ); ?>><?php esc_html_e( 'Include ONLY Selected', 'stackboost-for-supportcandy' ); ?></option>
 										</select>
@@ -313,7 +313,7 @@ class Page {
 								<tr>
 									<th scope="row"><label for="stkb_excluded_agents"><?php esc_html_e( 'Select Agents', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
-										<select name="stackboost_settings[ticket_metrics_excluded_agents][]" id="stkb_excluded_agents" multiple="multiple" style="min-width: 300px;" class="stackboost-selectwoo">
+										<select id="stkb_excluded_agents" multiple="multiple" style="min-width: 300px;" class="stackboost-selectwoo">
 											<?php foreach ( $all_agents as $id => $name ) : ?>
 												<option value="<?php echo esc_attr( $id ); ?>" <?php echo in_array( $id, $excluded_agents ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( $name ); ?></option>
 											<?php endforeach; ?>
@@ -368,8 +368,19 @@ class Page {
 
 						btn.prop('disabled', true).val('<?php esc_html_e( 'Saving...', 'stackboost-for-supportcandy' ); ?>');
 
-						// Use the centralized stackboost_save_settings AJAX action
-						$.post(stackboost_admin_ajax.ajax_url, form.serialize() + '&action=stackboost_save_settings&nonce=' + stackboost_admin_ajax.nonce, function(response) {
+						// Build payload locally to bypass any serialization issues
+						var payload = {
+							action: 'stackboost_save_ticket_metrics_settings',
+							nonce: stackboost_admin_ajax.nonce,
+							ticket_metrics_type_field: $('#stkb_type_field_setting').val(),
+							ticket_metrics_chart_type_agent: $('#stkb_chart_type_agent').val(),
+							ticket_metrics_chart_type_type: $('#stkb_chart_type_type').val(),
+							ticket_metrics_agent_filter_mode: $('#stkb_agent_filter_mode').val(),
+							ticket_metrics_excluded_agents: $('#stkb_excluded_agents').val() || []
+						};
+
+						// Use dedicated endpoint
+						$.post(stackboost_admin_ajax.ajax_url, payload, function(response) {
 							if (response.success) {
 								if (typeof window.stackboost_show_toast !== 'undefined') {
 									window.stackboost_show_toast(response.data, 'success');
