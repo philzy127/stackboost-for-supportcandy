@@ -601,15 +601,46 @@ class WordPress extends Module {
 				foreach ( $data['agents'] as $a_id => $a_count ) {
 					$a_name = ($a_id === 'other') ? __( 'Other Agents', 'stackboost-for-supportcandy' ) : ($agent_map[$a_id] ?? 'Agent ' . $a_id);
 
-					// Calculate specific assigned/closed metrics for this agent+type combination to show in tooltip
+					// Calculate specific assigned/closed metrics for this agent+type combination
 					$a_assigned = $agent_data[$a_id]['types'][$t_val]['assigned'] ?? 0;
 					$a_closed   = $agent_data[$a_id]['types'][$t_val]['closed'] ?? 0;
 
+					// Calculate specific averages for this agent+type combination
+					if ($a_id === 'other') {
+						if (empty($agent_data['other']['agents_in_other'])) {
+							$agent_type_where = "AND 1=0"; // fallback if somehow empty
+						} else {
+							$find_in_set_parts = [];
+							foreach ($agent_data['other']['agents_in_other'] as $other_id) {
+								$find_in_set_parts[] = $wpdb->prepare("FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", $other_id);
+							}
+							$agent_type_where = "AND (" . implode(" OR ", $find_in_set_parts) . ") AND t.`{$type_field}` = " . $wpdb->prepare("%s", $t_val);
+						}
+					} else {
+						$agent_type_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0 AND t.`{$type_field}` = %s", $a_id, $t_val);
+					}
+
+					$agent_type_metrics = $this->calculate_metric_set(
+						$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
+						$closed_condition, $open_condition, $close_date_col,
+						$active_in_period_sql, $agent_type_where
+					);
+
 					$agent_rows .= sprintf(
-						'<tr><td>%s</td><td style="text-align:center;">%s</td><td style="text-align:center;">%s</td></tr>',
+						'<tr>
+							<td>%s</td>
+							<td style="text-align:center;">%s</td>
+							<td style="text-align:center;">%s</td>
+							<td style="text-align:center;">%s</td>
+							<td style="text-align:center;">%s</td>
+							<td style="text-align:center;">%s</td>
+						</tr>',
 						esc_html($a_name),
 						(int)$a_assigned,
-						(int)$a_closed
+						(int)$a_closed,
+						esc_html($agent_type_metrics['avg_open_time']),
+						esc_html($agent_type_metrics['avg_age_open']),
+						esc_html($agent_type_metrics['avg_initial_response'])
 					);
 				}
 
@@ -649,7 +680,7 @@ class WordPress extends Module {
 							</div>
 						</div>
 						<div style="display: block;">
-							<div class="stackboost-card">
+							<div class="stackboost-card" style="overflow-x: auto;">
 								<h3>Agent Distribution</h3>
 								<table class="wp-list-table widefat striped">
 									<thead>
@@ -657,6 +688,9 @@ class WordPress extends Module {
 											<th>Assigned Agent</th>
 											<th style="text-align:center;">Assigned</th>
 											<th style="text-align:center;">Closed</th>
+											<th style="text-align:center;">Avg Close Time</th>
+											<th style="text-align:center;">Avg Age (Open)</th>
+											<th style="text-align:center;">Avg Initial Response</th>
 										</tr>
 									</thead>
 									<tbody>%s</tbody>
@@ -671,7 +705,7 @@ class WordPress extends Module {
 					esc_html($type_metrics['avg_open_time']),
 					esc_html($type_metrics['avg_age_open']),
 					esc_html($type_metrics['avg_initial_response']),
-					$agent_rows ?: '<tr><td colspan="2">No agents assigned</td></tr>'
+					$agent_rows ?: '<tr><td colspan="6">No agents assigned</td></tr>'
 				);
 
 				$metrics['type_breakdown'][] = [
