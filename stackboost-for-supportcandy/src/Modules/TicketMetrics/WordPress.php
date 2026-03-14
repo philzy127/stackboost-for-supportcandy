@@ -83,6 +83,7 @@ class WordPress extends Module {
 		}
 
 		$options['ticket_metrics_tracked_agents'] = $agents;
+		$options['ticket_metrics_show_other_agents'] = isset( $_POST['ticket_metrics_show_other_agents'] ) ? (int) $_POST['ticket_metrics_show_other_agents'] : 0;
 
 		// Clean up legacy settings if present
 		unset( $options['ticket_metrics_agent_filter_mode'] );
@@ -314,6 +315,8 @@ class WordPress extends Module {
 
 		$is_track_none = (count($tracked_agents) === 1 && $tracked_agents[0] === -1);
 
+		$show_other_agents = isset( $options['ticket_metrics_show_other_agents'] ) ? (bool) $options['ticket_metrics_show_other_agents'] : true; // Default true if not set
+
 		$metrics['agent_breakdown'] = [];
 		$metrics['type_breakdown'] = [];
 
@@ -349,6 +352,9 @@ class WordPress extends Module {
 						// Grouping Logic
 						// If tracked_agents is empty, we track all. If not empty, we group unselected into 'other'
 						if ( $is_track_none || (!empty($tracked_agents) && !in_array($a_id_raw, $tracked_agents)) ) {
+							if ( ! $show_other_agents ) {
+								continue;
+							}
 							$a_id = 'other';
 						} else {
 							$a_id = $a_id_raw;
@@ -389,6 +395,14 @@ class WordPress extends Module {
 
 			// Format Agent Breakdown
 			uasort($agent_data, function($a, $b) { return $b['assigned'] <=> $a['assigned']; });
+
+			// Extract "other" to force it to the end if present
+			if ( isset($agent_data['other']) ) {
+				$other_data = $agent_data['other'];
+				unset($agent_data['other']);
+				$agent_data['other'] = $other_data;
+			}
+
 			foreach ( $agent_data as $a_id => $data ) {
 				$name = ($a_id === 'other') ? __( 'Other Agents', 'stackboost-for-supportcandy' ) : ($agent_map[$a_id] ?? 'Agent ' . $a_id);
 
@@ -562,6 +576,14 @@ class WordPress extends Module {
 				// Build agent distribution HTML
 				$agent_rows = '';
 				arsort($data['agents']);
+
+				// Extract "other" to force it to the end if present
+				if ( isset($data['agents']['other']) ) {
+					$other_count = $data['agents']['other'];
+					unset($data['agents']['other']);
+					$data['agents']['other'] = $other_count;
+				}
+
 				foreach ( $data['agents'] as $a_id => $a_count ) {
 					$a_name = ($a_id === 'other') ? __( 'Other Agents', 'stackboost-for-supportcandy' ) : ($agent_map[$a_id] ?? 'Agent ' . $a_id);
 					$agent_rows .= sprintf(

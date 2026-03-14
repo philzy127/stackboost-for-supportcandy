@@ -810,6 +810,7 @@ class Settings {
 				'ticket_metrics_type_field',
 				'ticket_metrics_chart_type_agent',
 				'ticket_metrics_chart_type_type',
+				'ticket_metrics_show_other_agents',
 				'ticket_metrics_tracked_agents'
 			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
@@ -1027,7 +1028,7 @@ class Settings {
 			} else {
 				error_log( "PROCESSING KEY: {$key} - NOT found in \$input. Applying fallback logic." );
 				// Handle unchecked checkboxes, which are not present in the form submission.
-				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled') {
+				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled' || $key === 'ticket_metrics_show_other_agents') {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses') || $key === 'ticket_metrics_tracked_agents') {
 					$saved_settings[$key] = [];

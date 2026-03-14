@@ -74,6 +74,7 @@ class Page {
 		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
 		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'multi_pie';
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
+		$show_other_agents = isset( $options['ticket_metrics_show_other_agents'] ) ? (bool) $options['ticket_metrics_show_other_agents'] : true;
 
 		// Map legacy setting if needed, or default to an empty array (which means ALL are tracked by default).
 		$tracked_agents = $options['ticket_metrics_tracked_agents'] ?? [];
@@ -364,6 +365,16 @@ class Page {
 							<p class="description"><?php esc_html_e( 'Select which agents to track individually. Unselected agents will be grouped together into a general "Other" category.', 'stackboost-for-supportcandy' ); ?></p>
 							<table class="form-table">
 								<tr>
+									<th scope="row"><label for="stkb_show_other_agents"><?php esc_html_e( 'Display "Other Agents"', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<label>
+											<input type="checkbox" name="stackboost_settings[ticket_metrics_show_other_agents]" id="stkb_show_other_agents" value="1" <?php checked( $show_other_agents ); ?> />
+											<?php esc_html_e( 'Show the "Other Agents" group slice on the metrics charts.', 'stackboost-for-supportcandy' ); ?>
+										</label>
+										<p class="description"><?php esc_html_e( 'If disabled, untracked agents will be completely hidden from the metrics entirely instead of being grouped.', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
+								<tr>
 									<th scope="row"><label for="stkb_tracked_agents"><?php esc_html_e( 'Tracked Agents', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
 										<div class="stkb-agent-filter-container">
@@ -477,6 +488,7 @@ class Page {
 							ticket_metrics_type_field: $('#stkb_type_field_setting').val(),
 							ticket_metrics_chart_type_agent: $('#stkb_chart_type_agent').val(),
 							ticket_metrics_chart_type_type: $('#stkb_chart_type_type').val(),
+							ticket_metrics_show_other_agents: $('#stkb_show_other_agents').is(':checked') ? 1 : 0,
 							ticket_metrics_tracked_agents: $('#stkb_tracked_agents').val() || []
 						};
 
