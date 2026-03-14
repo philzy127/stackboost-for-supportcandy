@@ -626,21 +626,21 @@ class WordPress extends Module {
 				$modal_html = sprintf(
 					'<div class="stackboost-dashboard" style="text-align:left;">
 						<h2 style="margin-top:0;">%s - Performance & Distribution</h2>
-						<div class="stackboost-dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 20px;">
-							<div class="stackboost-card" style="padding: 15px; margin-bottom: 0;">
+						<div style="display: flex; gap: 20px; margin-bottom: 20px;">
+							<div class="stackboost-card" style="flex: 1; margin-bottom: 0;">
 								<h3 style="margin-top:0; font-size:16px;">Lifecycle</h3>
 								<p style="margin: 0 0 5px 0; font-size:14px;">New (Created in range): <strong>%s</strong></p>
 								<p style="margin: 0 0 5px 0; font-size:14px;">Carried Over & Closed: <strong>%s</strong></p>
 								<p style="margin: 0 0 5px 0; font-size:14px;">Carried Over & Still Open: <strong>%s</strong></p>
 							</div>
-							<div class="stackboost-card" style="padding: 15px; margin-bottom: 0;">
+							<div class="stackboost-card" style="flex: 1; margin-bottom: 0;">
 								<h3 style="margin-top:0; font-size:16px;">Averages</h3>
 								<p style="margin: 0 0 5px 0; font-size:14px;">Time to Close: <strong>%s</strong></p>
 								<p style="margin: 0 0 5px 0; font-size:14px;">Age (Open): <strong>%s</strong></p>
 								<p style="margin: 0 0 5px 0; font-size:14px;">Initial Response: <strong>%s</strong></p>
 							</div>
 						</div>
-						<div class="stackboost-dashboard-grid" style="grid-template-columns: 1fr;">
+						<div style="display: block;">
 							<div class="stackboost-card" style="padding: 15px;">
 								<h3 style="margin-top:0; font-size:16px;">Agent Distribution</h3>
 								<table class="wp-list-table widefat striped">
