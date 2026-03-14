@@ -74,11 +74,19 @@ class Page {
 		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
 		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'multi_pie';
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
-		$agent_filter_mode = $options['ticket_metrics_agent_filter_mode'] ?? 'exclude';
-		$excluded_agents = $options['ticket_metrics_excluded_agents'] ?? [];
-		if ( ! is_array( $excluded_agents ) ) {
-			$excluded_agents = [];
+
+		// Map legacy setting if needed, or default to an empty array (which means ALL are tracked by default).
+		$tracked_agents = $options['ticket_metrics_tracked_agents'] ?? [];
+		if ( ! is_array( $tracked_agents ) ) {
+			$tracked_agents = [];
 		}
+
+		// For backward compatibility on first load if old legacy 'include' mode existed
+		if ( empty($tracked_agents) && isset($options['ticket_metrics_agent_filter_mode']) && $options['ticket_metrics_agent_filter_mode'] === 'include' && !empty($options['ticket_metrics_excluded_agents']) ) {
+			$tracked_agents = $options['ticket_metrics_excluded_agents'];
+		}
+
+		$is_track_none = (count($tracked_agents) === 1 && $tracked_agents[0] === -1);
 
 		global $wpdb;
 		$agents_table = $wpdb->prefix . 'psmsc_agents';
@@ -353,45 +361,42 @@ class Page {
 
 						<div class="stackboost-card">
 							<h2><?php esc_html_e( 'Agent Filtering', 'stackboost-for-supportcandy' ); ?></h2>
+							<p class="description"><?php esc_html_e( 'Select which agents to track individually. Unselected agents will be grouped together into a general "Other" category.', 'stackboost-for-supportcandy' ); ?></p>
 							<table class="form-table">
 								<tr>
-									<th scope="row"><label for="stkb_agent_filter_mode"><?php esc_html_e( 'Filter Mode', 'stackboost-for-supportcandy' ); ?></label></th>
-									<td>
-										<select name="stackboost_settings[ticket_metrics_agent_filter_mode]" id="stkb_agent_filter_mode">
-											<option value="exclude" <?php selected( $agent_filter_mode, 'exclude' ); ?>><?php esc_html_e( 'Exclude Selected', 'stackboost-for-supportcandy' ); ?></option>
-											<option value="include" <?php selected( $agent_filter_mode, 'include' ); ?>><?php esc_html_e( 'Include ONLY Selected', 'stackboost-for-supportcandy' ); ?></option>
-										</select>
-										<p class="description"><?php esc_html_e( 'Choose whether to exclude specific agents (e.g., catch-all accounts) or strict-include only the ones you want to see.', 'stackboost-for-supportcandy' ); ?></p>
-									</td>
-								</tr>
-								<tr>
-									<th scope="row"><label for="stkb_excluded_agents"><?php esc_html_e( 'Select Agents', 'stackboost-for-supportcandy' ); ?></label></th>
+									<th scope="row"><label for="stkb_tracked_agents"><?php esc_html_e( 'Tracked Agents', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
 										<div class="stkb-agent-filter-container">
 											<div class="stkb-agent-filter-box">
-												<h4><?php esc_html_e( 'Available Agents', 'stackboost-for-supportcandy' ); ?></h4>
-												<select multiple id="stkb_excluded_agents_available" size="10">
+												<h4><?php esc_html_e( 'Other Agents (Grouped)', 'stackboost-for-supportcandy' ); ?></h4>
+												<select multiple id="stkb_tracked_agents_available" size="10">
 													<?php foreach ( $all_agents as $id => $name ) : ?>
-														<?php if ( ! in_array( $id, $excluded_agents ) ) : ?>
+														<?php if ( $is_track_none || (! empty( $tracked_agents ) && ! in_array( $id, $tracked_agents )) ) : ?>
 															<option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $name ); ?></option>
 														<?php endif; ?>
 													<?php endforeach; ?>
 												</select>
 											</div>
 											<div class="stkb-agent-filter-buttons">
-												<button type="button" class="button" id="stkb_agent_add_all" title="<?php esc_attr_e( 'Add All', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-forward"></span></button>
-												<button type="button" class="button" id="stkb_agent_add" title="<?php esc_attr_e( 'Add Selected', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-right"></span></button>
-												<button type="button" class="button" id="stkb_agent_remove" title="<?php esc_attr_e( 'Remove Selected', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-left"></span></button>
-												<button type="button" class="button" id="stkb_agent_remove_all" title="<?php esc_attr_e( 'Remove All', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-back"></span></button>
+												<button type="button" class="button" id="stkb_agent_add_all" title="<?php esc_attr_e( 'Track All', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-forward"></span></button>
+												<button type="button" class="button" id="stkb_agent_add" title="<?php esc_attr_e( 'Track Selected', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-right"></span></button>
+												<button type="button" class="button" id="stkb_agent_remove" title="<?php esc_attr_e( 'Untrack Selected', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-arrow-left"></span></button>
+												<button type="button" class="button" id="stkb_agent_remove_all" title="<?php esc_attr_e( 'Untrack All', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-controls-back"></span></button>
 											</div>
 											<div class="stkb-agent-filter-box">
-												<h4><?php esc_html_e( 'Selected Agents', 'stackboost-for-supportcandy' ); ?></h4>
-												<select multiple name="stackboost_settings[ticket_metrics_excluded_agents][]" id="stkb_excluded_agents" size="10">
-													<?php foreach ( $excluded_agents as $id ) : ?>
-														<?php if ( isset( $all_agents[$id] ) ) : ?>
-															<option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $all_agents[$id] ); ?></option>
-														<?php endif; ?>
-													<?php endforeach; ?>
+												<h4><?php esc_html_e( 'Tracked Agents (Individual)', 'stackboost-for-supportcandy' ); ?></h4>
+												<select multiple name="stackboost_settings[ticket_metrics_tracked_agents][]" id="stkb_tracked_agents" size="10">
+													<?php if ( empty( $tracked_agents ) ) : ?>
+														<?php foreach ( $all_agents as $id => $name ) : ?>
+															<option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $name ); ?></option>
+														<?php endforeach; ?>
+													<?php elseif ( ! $is_track_none ): ?>
+														<?php foreach ( $tracked_agents as $id ) : ?>
+															<?php if ( isset( $all_agents[$id] ) ) : ?>
+																<option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $all_agents[$id] ); ?></option>
+															<?php endif; ?>
+														<?php endforeach; ?>
+													<?php endif; ?>
 												</select>
 											</div>
 										</div>
@@ -427,19 +432,19 @@ class Page {
 
 					// Agent Filter Two-Box Logic
 					$('#stkb_agent_add').on('click', function() {
-						$('#stkb_excluded_agents_available option:selected').appendTo('#stkb_excluded_agents');
+						$('#stkb_tracked_agents_available option:selected').appendTo('#stkb_tracked_agents');
 					});
 
 					$('#stkb_agent_remove').on('click', function() {
-						$('#stkb_excluded_agents option:selected').appendTo('#stkb_excluded_agents_available');
+						$('#stkb_tracked_agents option:selected').appendTo('#stkb_tracked_agents_available');
 					});
 
 					$('#stkb_agent_add_all').on('click', function() {
-						$('#stkb_excluded_agents_available option').appendTo('#stkb_excluded_agents');
+						$('#stkb_tracked_agents_available option').appendTo('#stkb_tracked_agents');
 					});
 
 					$('#stkb_agent_remove_all').on('click', function() {
-						$('#stkb_excluded_agents option').appendTo('#stkb_excluded_agents_available');
+						$('#stkb_tracked_agents option').appendTo('#stkb_tracked_agents_available');
 					});
 
 					// Tab handling logic
@@ -463,7 +468,7 @@ class Page {
 						btn.prop('disabled', true).val('<?php esc_html_e( 'Saving...', 'stackboost-for-supportcandy' ); ?>');
 
 						// Ensure all items in the selected box are actually selected before gathering values
-						$('#stkb_excluded_agents option').prop('selected', true);
+						$('#stkb_tracked_agents option').prop('selected', true);
 
 						// Build payload locally to bypass any serialization issues
 						var payload = {
@@ -472,8 +477,7 @@ class Page {
 							ticket_metrics_type_field: $('#stkb_type_field_setting').val(),
 							ticket_metrics_chart_type_agent: $('#stkb_chart_type_agent').val(),
 							ticket_metrics_chart_type_type: $('#stkb_chart_type_type').val(),
-							ticket_metrics_agent_filter_mode: $('#stkb_agent_filter_mode').val(),
-							ticket_metrics_excluded_agents: $('#stkb_excluded_agents').val() || []
+							ticket_metrics_tracked_agents: $('#stkb_tracked_agents').val() || []
 						};
 
 						// Use dedicated endpoint

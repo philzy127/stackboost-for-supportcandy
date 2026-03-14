@@ -65,21 +65,28 @@ class WordPress extends Module {
 		$type_chart = isset( $_POST['ticket_metrics_chart_type_type'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_type'] ) ) : 'doughnut';
 		$options['ticket_metrics_chart_type_type']   = in_array( $type_chart, [ 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $type_chart : 'doughnut';
 
-		$filter_mode = isset( $_POST['ticket_metrics_agent_filter_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_agent_filter_mode'] ) ) : 'exclude';
-		$options['ticket_metrics_agent_filter_mode'] = in_array( $filter_mode, [ 'include', 'exclude' ] ) ? $filter_mode : 'exclude';
-
-		// Handle the array of excluded agents
+		// Handle the array of tracked agents
 		$agents = [];
-		if ( isset( $_POST['ticket_metrics_excluded_agents'] ) ) {
-			$raw_agents = wp_unslash( $_POST['ticket_metrics_excluded_agents'] );
+		if ( isset( $_POST['ticket_metrics_tracked_agents'] ) ) {
+			$raw_agents = wp_unslash( $_POST['ticket_metrics_tracked_agents'] );
 			if ( is_array( $raw_agents ) ) {
 				$agents = array_map( 'intval', $raw_agents );
 			} else {
-				// Fallback if somehow sent as string (e.g. from Select2 without multiple)
+				// Fallback if somehow sent as string
 				$agents = [ intval( $raw_agents ) ];
 			}
 		}
-		$options['ticket_metrics_excluded_agents'] = $agents;
+
+		// If intentionally tracking no one, store a sentinel value so it's not confused with a fresh/unconfigured state
+		if ( empty( $agents ) ) {
+			$agents = [ -1 ];
+		}
+
+		$options['ticket_metrics_tracked_agents'] = $agents;
+
+		// Clean up legacy settings if present
+		unset( $options['ticket_metrics_agent_filter_mode'] );
+		unset( $options['ticket_metrics_excluded_agents'] );
 
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log('PROCESSED $options ARRAY TO BE SAVED:', 'ticket_metrics');
@@ -291,11 +298,17 @@ class WordPress extends Module {
 		// Perform a unified raw fetch to build rich hierarchies for Tooltips and Modals
 		// We need: id, assigned_agent, type_field value, and whether it was closed in range.
 		$options = get_option( 'stackboost_settings', [] );
-		$agent_filter_mode = $options['ticket_metrics_agent_filter_mode'] ?? 'exclude';
-		$filtered_agents = $options['ticket_metrics_excluded_agents'] ?? [];
-		if ( ! is_array( $filtered_agents ) ) {
-			$filtered_agents = [];
+		$tracked_agents = $options['ticket_metrics_tracked_agents'] ?? [];
+		if ( ! is_array( $tracked_agents ) ) {
+			$tracked_agents = [];
 		}
+
+		// For backward compatibility on first load if old legacy 'include' mode existed
+		if ( empty($tracked_agents) && isset($options['ticket_metrics_agent_filter_mode']) && $options['ticket_metrics_agent_filter_mode'] === 'include' && !empty($options['ticket_metrics_excluded_agents']) ) {
+			$tracked_agents = $options['ticket_metrics_excluded_agents'];
+		}
+
+		$is_track_none = (count($tracked_agents) === 1 && $tracked_agents[0] === -1);
 
 		$metrics['agent_breakdown'] = [];
 		$metrics['type_breakdown'] = [];
@@ -326,21 +339,24 @@ class WordPress extends Module {
 					}
 					$type_data[$type_val]['count']++;
 
-					foreach ( $agents as $a_id ) {
-						if ( $a_id <= 0 ) continue;
+					foreach ( $agents as $a_id_raw ) {
+						if ( $a_id_raw <= 0 ) continue;
 
-						// Apply Agent Filtering Logic
-						if ( $agent_filter_mode === 'include' ) {
-							// Strict include: If not in array, skip
-							if ( ! in_array( $a_id, $filtered_agents ) ) continue;
+						// Grouping Logic
+						// If tracked_agents is empty, we track all. If not empty, we group unselected into 'other'
+						if ( $is_track_none || (!empty($tracked_agents) && !in_array($a_id_raw, $tracked_agents)) ) {
+							$a_id = 'other';
 						} else {
-							// Standard exclude: If in array, skip
-							if ( in_array( $a_id, $filtered_agents ) ) continue;
+							$a_id = $a_id_raw;
 						}
 
 						// Init Agent Data
 						if ( ! isset( $agent_data[$a_id] ) ) {
-							$agent_data[$a_id] = ['assigned' => 0, 'closed' => 0, 'types' => []];
+							$agent_data[$a_id] = ['assigned' => 0, 'closed' => 0, 'types' => [], 'agents_in_other' => []];
+						}
+
+						if ( $a_id === 'other' && !in_array($a_id_raw, $agent_data[$a_id]['agents_in_other']) ) {
+							$agent_data[$a_id]['agents_in_other'][] = $a_id_raw;
 						}
 
 						// Agent Totals
@@ -358,11 +374,11 @@ class WordPress extends Module {
 							$agent_data[$a_id]['types'][$type_val]['closed']++;
 						}
 
-						// Type Agent Breakdown
-						if ( ! isset( $type_data[$type_val]['agents'][$a_id] ) ) {
-							$type_data[$type_val]['agents'][$a_id] = 0;
+						// Type Agent Breakdown (we keep the raw agent ID here for detailed type distribution if needed, but display will map to 'Other' too if requested. For now, keep as raw so the Type modal is accurate).
+						if ( ! isset( $type_data[$type_val]['agents'][$a_id_raw] ) ) {
+							$type_data[$type_val]['agents'][$a_id_raw] = 0;
 						}
-						$type_data[$type_val]['agents'][$a_id]++;
+						$type_data[$type_val]['agents'][$a_id_raw]++;
 					}
 				}
 			}
@@ -370,11 +386,23 @@ class WordPress extends Module {
 			// Format Agent Breakdown
 			uasort($agent_data, function($a, $b) { return $b['assigned'] <=> $a['assigned']; });
 			foreach ( $agent_data as $a_id => $data ) {
-				$name = $agent_map[$a_id] ?? 'Agent ' . $a_id;
+				$name = ($a_id === 'other') ? __( 'Other Agents', 'stackboost-for-supportcandy' ) : ($agent_map[$a_id] ?? 'Agent ' . $a_id);
 
 				// Deep metric calculation for the Agent's overall stats (Tooltip)
-				// Using FIND_IN_SET to safely handle pipe-separated ID arrays in the string
-				$agent_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", $a_id);
+				if ($a_id === 'other') {
+					if (empty($data['agents_in_other'])) {
+						$agent_where = "AND 1=0"; // fallback if somehow empty
+					} else {
+						$find_in_set_parts = [];
+						foreach ($data['agents_in_other'] as $other_id) {
+							$find_in_set_parts[] = $wpdb->prepare("FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", $other_id);
+						}
+						$agent_where = "AND (" . implode(" OR ", $find_in_set_parts) . ")";
+					}
+				} else {
+					$agent_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", $a_id);
+				}
+
 				$agent_metrics = $this->calculate_metric_set(
 					$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 					$closed_condition, $open_condition, $close_date_col,
@@ -389,68 +417,121 @@ class WordPress extends Module {
 						Avg Time to Close: <strong>%s</strong><br>
 						Avg Age (Open): <strong>%s</strong><br>
 						Avg Initial Response: <strong>%s</strong><br><br>
-						<em>Click row to view Ticket Type distribution</em>
+						<em>Click row to view %s</em>
 					</div>',
 					esc_html($name),
 					(int)$data['assigned'],
 					(int)$data['closed'],
 					esc_html($agent_metrics['avg_open_time']),
 					esc_html($agent_metrics['avg_age_open']),
-					esc_html($agent_metrics['avg_initial_response'])
+					esc_html($agent_metrics['avg_initial_response']),
+					($a_id === 'other') ? __( 'individual agent breakdown', 'stackboost-for-supportcandy' ) : __( 'Ticket Type distribution', 'stackboost-for-supportcandy' )
 				);
 
-				// Build HTML for Modal (Deep stats per type)
+				// Build HTML for Modal
 				$modal_rows = '';
-				foreach ( $data['types'] as $t_val => $t_counts ) {
-					$t_name = $type_map[$t_val] ?? ($t_val ?: 'Unassigned');
 
-					$agent_type_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0 AND t.`{$type_field}` = %s", $a_id, $t_val);
-					$agent_type_metrics = $this->calculate_metric_set(
-						$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
-						$closed_condition, $open_condition, $close_date_col,
-						$active_in_period_sql, $agent_type_where
+				if ($a_id === 'other') {
+					// For 'Other', the modal shows the breakdown of the individual users in 'Other'
+					foreach ( $data['agents_in_other'] as $other_id ) {
+						$o_name = $agent_map[$other_id] ?? 'Agent ' . $other_id;
+						$o_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", $other_id);
+						$o_metrics = $this->calculate_metric_set(
+							$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
+							$closed_condition, $open_condition, $close_date_col,
+							$active_in_period_sql, $o_where
+						);
+
+						$modal_rows .= sprintf(
+							'<tr>
+								<td><strong>%s</strong></td>
+								<td style="text-align:center;">%s</td>
+								<td style="text-align:center;">%s</td>
+								<td style="text-align:center;">%s</td>
+								<td style="text-align:center;">%s</td>
+							</tr>',
+							esc_html($o_name),
+							esc_html($o_metrics['total_created']),
+							esc_html($o_metrics['total_closed']),
+							esc_html($o_metrics['avg_open_time']),
+							esc_html($o_metrics['avg_initial_response'])
+						);
+					}
+
+					$modal_html = sprintf(
+						'<div class="stackboost-dashboard" style="text-align:left;">
+							<h3 style="margin-top:0;">%s - Individual Breakdown</h3>
+							<div class="stackboost-card" style="padding: 15px; overflow-x: auto;">
+								<table class="wp-list-table widefat striped" style="margin-top:10px;">
+									<thead>
+										<tr>
+											<th>Agent</th>
+											<th style="text-align:center;">Assigned</th>
+											<th style="text-align:center;">Closed</th>
+											<th style="text-align:center;">Avg Close Time</th>
+											<th style="text-align:center;">Avg Initial Response</th>
+										</tr>
+									</thead>
+									<tbody>%s</tbody>
+								</table>
+							</div>
+						</div>',
+						esc_html($name),
+						$modal_rows ?: '<tr><td colspan="5">No data available</td></tr>'
 					);
+				} else {
+					// Standard deep stats per type
+					foreach ( $data['types'] as $t_val => $t_counts ) {
+						$t_name = $type_map[$t_val] ?? ($t_val ?: 'Unassigned');
 
-					$modal_rows .= sprintf(
-						'<tr>
-							<td><strong>%s</strong></td>
-							<td style="text-align:center;">%s</td>
-							<td style="text-align:center;">%s</td>
-							<td style="text-align:center;">%s</td>
-							<td style="text-align:center;">%s</td>
-							<td style="text-align:center;">%s</td>
-						</tr>',
-						esc_html($t_name),
-						(int)$t_counts['assigned'],
-						(int)$t_counts['closed'],
-						esc_html($agent_type_metrics['avg_open_time']),
-						esc_html($agent_type_metrics['avg_age_open']),
-						esc_html($agent_type_metrics['avg_initial_response'])
+						$agent_type_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0 AND t.`{$type_field}` = %s", $a_id, $t_val);
+						$agent_type_metrics = $this->calculate_metric_set(
+							$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
+							$closed_condition, $open_condition, $close_date_col,
+							$active_in_period_sql, $agent_type_where
+						);
+
+						$modal_rows .= sprintf(
+							'<tr>
+								<td><strong>%s</strong></td>
+								<td style="text-align:center;">%s</td>
+								<td style="text-align:center;">%s</td>
+								<td style="text-align:center;">%s</td>
+								<td style="text-align:center;">%s</td>
+								<td style="text-align:center;">%s</td>
+							</tr>',
+							esc_html($t_name),
+							(int)$t_counts['assigned'],
+							(int)$t_counts['closed'],
+							esc_html($agent_type_metrics['avg_open_time']),
+							esc_html($agent_type_metrics['avg_age_open']),
+							esc_html($agent_type_metrics['avg_initial_response'])
+						);
+					}
+
+					$modal_html = sprintf(
+						'<div class="stackboost-dashboard" style="text-align:left;">
+							<h3 style="margin-top:0;">%s - Performance by Ticket Type</h3>
+							<div class="stackboost-card" style="padding: 15px; overflow-x: auto;">
+								<table class="wp-list-table widefat striped" style="margin-top:10px;">
+									<thead>
+										<tr>
+											<th>Type</th>
+											<th style="text-align:center;">Assigned</th>
+											<th style="text-align:center;">Closed</th>
+											<th style="text-align:center;">Avg Close Time</th>
+											<th style="text-align:center;">Avg Age (Open)</th>
+											<th style="text-align:center;">Avg Initial Response</th>
+										</tr>
+									</thead>
+									<tbody>%s</tbody>
+								</table>
+							</div>
+						</div>',
+						esc_html($name),
+						$modal_rows ?: '<tr><td colspan="6">No type data available</td></tr>'
 					);
 				}
-
-				$modal_html = sprintf(
-					'<div class="stackboost-dashboard" style="text-align:left;">
-						<h3 style="margin-top:0;">%s - Performance by Ticket Type</h3>
-						<div class="stackboost-card" style="padding: 15px; overflow-x: auto;">
-							<table class="wp-list-table widefat striped" style="margin-top:10px;">
-								<thead>
-									<tr>
-										<th>Type</th>
-										<th style="text-align:center;">Assigned</th>
-										<th style="text-align:center;">Closed</th>
-										<th style="text-align:center;">Avg Close Time</th>
-										<th style="text-align:center;">Avg Age (Open)</th>
-										<th style="text-align:center;">Avg Initial Response</th>
-									</tr>
-								</thead>
-								<tbody>%s</tbody>
-							</table>
-						</div>
-					</div>',
-					esc_html($name),
-					$modal_rows ?: '<tr><td colspan="6">No type data available</td></tr>'
-				);
 
 				$metrics['agent_breakdown'][] = [
 					'label' => $name,
