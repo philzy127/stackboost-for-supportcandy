@@ -796,7 +796,13 @@ class Settings {
 			'stackboost-conditional-options' => ['conditional_options_rules', 'conditional_options_enabled'], // Whitelisted
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
-			'stackboost-ticket-metrics'     => ['ticket_metrics_type_field', 'ticket_metrics_chart_type_agent', 'ticket_metrics_chart_type_type', 'ticket_metrics_agent_filter_mode', 'ticket_metrics_excluded_agents'],
+			'stackboost-ticket-metrics'     => [
+				'ticket_metrics_type_field',
+				'ticket_metrics_chart_type_agent',
+				'ticket_metrics_chart_type_type',
+				'ticket_metrics_agent_filter_mode',
+				'ticket_metrics_excluded_agents'
+			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
@@ -903,7 +909,7 @@ class Settings {
 						break;
 
 					case 'ticket_metrics_agent_filter_mode':
-						$saved_settings[$key] = in_array( $value, ['include', 'exclude'], true ) ? $value : 'exclude';
+						$saved_settings[$key] = in_array( trim((string) $value), ['include', 'exclude'] ) ? trim((string) $value) : 'exclude';
 						break;
 
 					case 'ticket_metrics_excluded_agents':
@@ -1011,6 +1017,8 @@ class Settings {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses') || $key === 'ticket_metrics_excluded_agents') {
 					$saved_settings[$key] = [];
+				} elseif ($key === 'ticket_metrics_agent_filter_mode') {
+					$saved_settings[$key] = 'exclude'; // default if missing
 				}
 			}
 		}

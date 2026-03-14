@@ -445,6 +445,8 @@ final class Plugin {
 		if ( 'stackboost_page_stackboost-ticket-metrics' === $hook_suffix || 'stackboost-for-supportcandy_page_stackboost-ticket-metrics' === $hook_suffix ) {
 			wp_enqueue_script( 'stackboost-tippy' );
 			wp_enqueue_script( 'stackboost-chartjs' );
+			wp_enqueue_script( 'stackboost-selectwoo' );
+			wp_enqueue_style( 'stackboost-selectwoo' );
 		}
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
