@@ -577,8 +577,9 @@ class WordPress extends Module {
 
 					$modal_html = sprintf(
 						'<div class="stackboost-dashboard" style="text-align:left;">
+							<h2>%s</h2>
 							<div class="stackboost-card" style="overflow-x: auto;">
-								<h3>%s - Performance by Ticket Type</h3>
+								<h3>Performance by Ticket Type</h3>
 								<table class="wp-list-table widefat striped">
 									<thead>
 										<tr>
