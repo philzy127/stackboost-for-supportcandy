@@ -255,8 +255,8 @@ class WordPress extends Module {
 		if ( $frt_mode === 'supportcandy' ) {
 			// SupportCandy Native FRT field
 			$avg_response_query = $wpdb->prepare(
-				"SELECT AVG(FRT) FROM {$tickets_table}
-				 WHERE FRT IS NOT NULL AND FRT > 0 AND {$active_in_period_sql}",
+				"SELECT AVG(frd) FROM {$tickets_table}
+				 WHERE frd IS NOT NULL AND frd > 0 AND {$active_in_period_sql}",
 				$end_dt, $start_dt
 			);
 		} else {
@@ -845,9 +845,9 @@ class WordPress extends Module {
 		if ( $frt_mode === 'supportcandy' ) {
 			// SupportCandy Native FRT field
 			$query = $wpdb->prepare(
-				"SELECT AVG(t.FRT)
+				"SELECT AVG(t.frd)
 				 FROM {$tickets_table} t
-				 WHERE t.FRT IS NOT NULL AND t.FRT > 0 AND {$active_in_period_sql}",
+				 WHERE t.frd IS NOT NULL AND t.frd > 0 AND {$active_in_period_sql}",
 				$end_dt, $start_dt
 			) . " " . $extra_where;
 		} else {
