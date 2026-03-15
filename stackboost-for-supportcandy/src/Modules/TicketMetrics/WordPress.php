@@ -255,8 +255,8 @@ class WordPress extends Module {
 		if ( $frt_mode === 'supportcandy' ) {
 			// SupportCandy Native FRT field
 			$avg_response_query = $wpdb->prepare(
-				"SELECT AVG(frd) FROM {$tickets_table}
-				 WHERE frd IS NOT NULL AND frd > 0 AND {$active_in_period_sql}",
+				"SELECT AVG(t.frd) FROM {$tickets_table} t
+				 WHERE t.frd IS NOT NULL AND t.frd > 0 AND {$active_in_period_sql}",
 				$end_dt, $start_dt
 			);
 		} else {
@@ -351,6 +351,9 @@ class WordPress extends Module {
 		$metrics['avg_open_time']        = $overall_metrics['avg_open_time'];
 		$metrics['avg_age_open']         = $overall_metrics['avg_age_open'];
 		$metrics['avg_initial_response'] = $overall_metrics['avg_initial_response'];
+		$metrics['resolution_rate']      = $overall_metrics['resolution_rate'];
+		$metrics['active_backlog']       = $overall_metrics['active_backlog'];
+		$metrics['touched_tickets']      = $overall_metrics['touched_tickets'];
 
 		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
 			$raw_tickets_query = $wpdb->prepare(
@@ -794,11 +797,26 @@ class WordPress extends Module {
 		// Total Tickets Closed
 		$query = $wpdb->prepare(
 			"SELECT COUNT(t.id) FROM {$tickets_table} t
-			 WHERE {$closed_condition}
-			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
+			 WHERE {$closed_condition} AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
 			$start_dt, $end_dt
 		) . " " . $extra_where;
 		$metrics['total_closed'] = (int) $wpdb->get_var( $query );
+
+		// Queue Health Metrics
+		if ($metrics['total_created'] > 0) {
+			$metrics['resolution_rate'] = round(($metrics['total_closed'] / $metrics['total_created']) * 100) . '%';
+		} else {
+			$metrics['resolution_rate'] = $metrics['total_closed'] > 0 ? '>100%' : '0%';
+		}
+
+		// Touched Tickets (Any ticket active or updated during this period)
+		$query = $wpdb->prepare( "SELECT COUNT(DISTINCT t.id) FROM {$tickets_table} t WHERE {$active_in_period_sql}", $end_dt, $start_dt ) . " " . $extra_where;
+		$metrics['touched_tickets'] = (int) $wpdb->get_var( $query );
+
+		// Active Backlog (Tickets Open at the exact end of the period, regardless of creation date)
+		// Active means: Created before the end date, AND (Not closed OR Closed after the end date)
+		$query = $wpdb->prepare( "SELECT COUNT(DISTINCT t.id) FROM {$tickets_table} t WHERE t.date_created <= %s AND (NOT ({$closed_condition}) OR {$close_date_col} > %s)", $end_dt, $end_dt ) . " " . $extra_where;
+		$metrics['active_backlog'] = (int) $wpdb->get_var( $query );
 
 		// Lifecycle Bucket 2: Carried Over & Closed (Created before range, closed during range)
 		$query = $wpdb->prepare(

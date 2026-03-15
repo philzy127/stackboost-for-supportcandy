@@ -257,6 +257,23 @@ class Page {
 								<h3><?php esc_html_e( 'Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
 								<p id="stkb_metric_total_closed">0</p>
 							</div>
+							<div class="stkb-metric-card">
+								<h3><?php esc_html_e( 'Queue Health', 'stackboost-for-supportcandy' ); ?></h3>
+								<div style="font-size: 14px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+									<div style="display: flex; justify-content: space-between;">
+										<span><?php esc_html_e( 'Resolution Rate:', 'stackboost-for-supportcandy' ); ?></span>
+										<strong id="stkb_metric_resolution_rate">0%</strong>
+									</div>
+									<div style="display: flex; justify-content: space-between;">
+										<span><?php esc_html_e( 'Active Backlog:', 'stackboost-for-supportcandy' ); ?></span>
+										<strong id="stkb_metric_active_backlog">0</strong>
+									</div>
+									<div style="display: flex; justify-content: space-between;">
+										<span><?php esc_html_e( 'Touched Tickets:', 'stackboost-for-supportcandy' ); ?></span>
+										<strong id="stkb_metric_touched_tickets">0</strong>
+									</div>
+								</div>
+							</div>
 						</div>
 
 						<!-- Column 2: Averages -->
@@ -638,6 +655,9 @@ class Page {
 								$('#stkb_metric_avg_open').text(data.avg_open_time);
 								$('#stkb_metric_avg_age_open').text(data.avg_age_open);
 								$('#stkb_metric_avg_response').text(data.avg_initial_response);
+								$('#stkb_metric_resolution_rate').text(data.resolution_rate);
+								$('#stkb_metric_active_backlog').text(data.active_backlog);
+								$('#stkb_metric_touched_tickets').text(data.touched_tickets);
 
 								// Render Agent Breakdown
 								let agentTbody = $('#stkb_agent_breakdown_body');
