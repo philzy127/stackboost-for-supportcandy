@@ -847,7 +847,7 @@ class Page {
 							// Re-initialize tippy for newly added modal elements
 							if (typeof tippy !== 'undefined') {
 								setTimeout(function() {
-									tippy(document.querySelectorAll('#stkb-metrics-modal-body [data-tippy-content]'), {
+									tippy('#stkb-metrics-modal-body [data-tippy-content]', {
 										allowHTML: true,
 										placement: 'top',
 										theme: 'light-border',
