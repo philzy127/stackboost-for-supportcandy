@@ -347,6 +347,7 @@ class WordPress extends Module {
 
 			$agent_data = [];
 			$type_data = [];
+			$agent_data_raw = [];
 
 			if ( is_array($raw_tickets) ) {
 				foreach ( $raw_tickets as $t ) {
@@ -381,6 +382,18 @@ class WordPress extends Module {
 
 						if ( $a_id === 'other' && !in_array($a_id_raw, $agent_data[$a_id]['agents_in_other']) ) {
 							$agent_data[$a_id]['agents_in_other'][] = $a_id_raw;
+						}
+
+						// Record raw individual agent counts for use in tooltips later
+						if ( ! isset( $agent_data_raw[$a_id_raw] ) ) {
+							$agent_data_raw[$a_id_raw] = ['types' => []];
+						}
+						if ( ! isset( $agent_data_raw[$a_id_raw]['types'][$type_val] ) ) {
+							$agent_data_raw[$a_id_raw]['types'][$type_val] = ['assigned' => 0, 'closed' => 0];
+						}
+						$agent_data_raw[$a_id_raw]['types'][$type_val]['assigned']++;
+						if ( $is_closed ) {
+							$agent_data_raw[$a_id_raw]['types'][$type_val]['closed']++;
 						}
 
 						// Agent Totals
@@ -611,13 +624,33 @@ class WordPress extends Module {
 							$agent_type_where = "AND 1=0"; // fallback if somehow empty
 						} else {
 							$find_in_set_parts = [];
+							$tooltip_lines = [];
 							foreach ($agent_data['other']['agents_in_other'] as $other_id) {
 								$find_in_set_parts[] = $wpdb->prepare("FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", $other_id);
+
+								// Compile tooltip lines for individual agents
+								$ind_assigned = $agent_data_raw[$other_id]['types'][$t_val]['assigned'] ?? 0;
+								$ind_closed   = $agent_data_raw[$other_id]['types'][$t_val]['closed'] ?? 0;
+
+								// Only show them in the tooltip if they actually had tickets of this type
+								if ( $ind_assigned > 0 || $ind_closed > 0 ) {
+									$ind_name = $agent_map[$other_id] ?? 'Agent ' . $other_id;
+									$tooltip_lines[] = sprintf( "<strong>%s:</strong> %d Assigned, %d Closed", esc_html($ind_name), $ind_assigned, $ind_closed );
+								}
 							}
+
 							$agent_type_where = "AND (" . implode(" OR ", $find_in_set_parts) . ") AND t.`{$type_field}` = " . $wpdb->prepare("%s", $t_val);
+
+							if ( !empty($tooltip_lines) ) {
+								$tooltip_content = implode( "<br>", $tooltip_lines );
+								$a_name = sprintf( '<span data-tippy-content="%s" style="cursor:help;">%s</span>', esc_attr($tooltip_content), esc_html($a_name) );
+							} else {
+								$a_name = esc_html($a_name); // Fallback
+							}
 						}
 					} else {
 						$agent_type_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0 AND t.`{$type_field}` = %s", $a_id, $t_val);
+						$a_name = esc_html($a_name); // Normal agents have no tooltip here
 					}
 
 					$agent_type_metrics = $this->calculate_metric_set(
@@ -635,7 +668,7 @@ class WordPress extends Module {
 							<td style="text-align:center;">%s</td>
 							<td style="text-align:center;">%s</td>
 						</tr>',
-						esc_html($a_name),
+						$a_name, // Output raw string since we optionally injected a span
 						(int)$a_assigned,
 						(int)$a_closed,
 						esc_html($agent_type_metrics['avg_open_time']),
