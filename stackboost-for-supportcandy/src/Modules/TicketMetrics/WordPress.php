@@ -84,6 +84,8 @@ class WordPress extends Module {
 
 		$options['ticket_metrics_tracked_agents'] = $agents;
 		$options['ticket_metrics_show_other_agents'] = isset( $_POST['ticket_metrics_show_other_agents'] ) ? (int) $_POST['ticket_metrics_show_other_agents'] : 0;
+		$options['ticket_metrics_frt_mode'] = isset( $_POST['ticket_metrics_frt_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_frt_mode'] ) ) : 'stackboost';
+		$options['ticket_metrics_verbose_logging'] = isset( $_POST['ticket_metrics_verbose_logging'] ) ? (int) $_POST['ticket_metrics_verbose_logging'] : 0;
 
 		// Clean up legacy settings if present
 		unset( $options['ticket_metrics_agent_filter_mode'] );
@@ -248,23 +250,37 @@ class WordPress extends Module {
 
 		// Average Initial Response Time
 		// For tickets OPEN/ACTIVE AT ANY POINT during the selected range.
-		$avg_response_query = $wpdb->prepare(
-			"SELECT AVG(response_time) FROM (
-				SELECT t.id,
-				TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
-				FROM {$tickets_table} t
-				JOIN {$threads_table} th ON t.id = th.ticket
-				WHERE {$active_in_period_sql}
-				AND th.date_created > t.date_created
-				GROUP BY t.id
-			) as response_times",
-			$end_dt, $start_dt
-		);
+		$options = get_option( 'stackboost_settings', [] );
+		$frt_mode = $options['ticket_metrics_frt_mode'] ?? 'stackboost';
+		if ( $frt_mode === 'supportcandy' ) {
+			// SupportCandy Native FRT field
+			$avg_response_query = $wpdb->prepare(
+				"SELECT AVG(FRT) FROM {$tickets_table}
+				 WHERE FRT IS NOT NULL AND FRT > 0 AND {$active_in_period_sql}",
+				$end_dt, $start_dt
+			);
+		} else {
+			// StackBoost "Everything Counts" strict timeline
+			$avg_response_query = $wpdb->prepare(
+				"SELECT AVG(response_time) FROM (
+					SELECT t.id,
+					TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
+					FROM {$tickets_table} t
+					JOIN {$threads_table} th ON t.id = th.ticket
+					WHERE {$active_in_period_sql}
+					AND th.date_created > t.date_created
+					GROUP BY t.id
+				) as response_times",
+				$end_dt, $start_dt
+			);
+		}
 
 		$raw_avg_response = $wpdb->get_var($avg_response_query);
 		$avg_response_seconds = (int) $raw_avg_response;
+		$verbose_logging = isset( $options['ticket_metrics_verbose_logging'] ) ? (bool) $options['ticket_metrics_verbose_logging'] : false;
 
 		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "Ticket Metrics Request - Start: {$start_dt}, End: {$end_dt}, Type Field: {$type_field}, FRT Mode: {$frt_mode}", 'ticket_metrics' );
 			stackboost_log( "Avg Response Time Query: " . $avg_response_query, 'ticket_metrics' );
 			stackboost_log( "Avg Response Time Raw Result: " . var_export($raw_avg_response, true), 'ticket_metrics' );
 
@@ -272,26 +288,28 @@ class WordPress extends Module {
 				stackboost_log( "SQL Error: " . $wpdb->last_error, 'ticket_metrics' );
 			}
 
-			// Deep diagnostic: Check threads table structure
-			if ( empty( $raw_avg_response ) ) {
-				$threads_check = $wpdb->get_col("SHOW TABLES LIKE '%threads%'");
-				stackboost_log( "Available Thread Tables: " . json_encode($threads_check), 'ticket_metrics' );
+			if ( $verbose_logging ) {
+				// Deep diagnostic: Check threads table structure
+				if ( empty( $raw_avg_response ) && $frt_mode === 'stackboost' ) {
+					$threads_check = $wpdb->get_col("SHOW TABLES LIKE '%threads%'");
+					stackboost_log( "Available Thread Tables: " . json_encode($threads_check), 'ticket_metrics' );
 
-				// Run a test query against the assumed threads table to see if it works
-				$test_join_query = "SELECT t.id, th.id as thread_id, th.date_created as thread_date
-									FROM {$tickets_table} t
-									JOIN {$threads_table} th ON t.id = th.ticket
-									LIMIT 1";
-				$test_res = $wpdb->get_results($test_join_query);
-				if ( ! empty( $wpdb->last_error ) ) {
-					stackboost_log( "Test Join Error: " . $wpdb->last_error, 'ticket_metrics' );
-				} else {
-					stackboost_log( "Test Join Success. Sample data: " . json_encode($test_res), 'ticket_metrics' );
+					// Run a test query against the assumed threads table to see if it works
+					$test_join_query = "SELECT t.id, th.id as thread_id, th.date_created as thread_date
+										FROM {$tickets_table} t
+										JOIN {$threads_table} th ON t.id = th.ticket
+										LIMIT 1";
+					$test_res = $wpdb->get_results($test_join_query);
+					if ( ! empty( $wpdb->last_error ) ) {
+						stackboost_log( "Test Join Error: " . $wpdb->last_error, 'ticket_metrics' );
+					} else {
+						stackboost_log( "Test Join Success. Sample data: " . json_encode($test_res), 'ticket_metrics' );
+					}
 				}
 			}
 		}
 
-		$metrics['avg_initial_response'] = $avg_response_seconds > 0 ? $this->format_seconds($avg_response_seconds) : '0s';
+		$metrics['avg_initial_response'] = $avg_response_seconds > 0 ? $this->format_seconds($avg_response_seconds) : '0m';
 
 		// Fetch maps first
 		$agent_map = $this->get_agent_map($wpdb, $agents_table);
@@ -751,7 +769,11 @@ class WordPress extends Module {
 		}
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "Ticket Metrics Generated: " . json_encode($metrics), 'ticket_metrics' );
+			if ( $verbose_logging ) {
+				stackboost_log( "Ticket Metrics Generated: " . json_encode($metrics), 'ticket_metrics' );
+			} else {
+				stackboost_log( "Ticket Metrics Generated. (Verbose JSON dump skipped)", 'ticket_metrics' );
+			}
 		}
 
 		wp_send_json_success( $metrics );
@@ -759,6 +781,7 @@ class WordPress extends Module {
 
 	private function calculate_metric_set( $wpdb, $tickets_table, $threads_table, $start_dt, $end_dt, $closed_condition, $open_condition, $close_date_col, $active_in_period_sql, $extra_where = '' ) {
 		$metrics = [];
+		$options = get_option( 'stackboost_settings', [] );
 
 		// Since $extra_where may contain literal percentage signs (e.g. from user input like "100% Complete"),
 		// appending it into $wpdb->prepare WILL cause prepare to fail if it thinks those are unreplaced placeholders.
@@ -817,15 +840,29 @@ class WordPress extends Module {
 		$metrics['avg_age_open'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : 'N/A';
 
 		// Average Initial Response Time
-		$query = $wpdb->prepare(
-			"SELECT AVG(response_time) FROM (
-				SELECT t.id,
-				TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
-				FROM {$tickets_table} t
-				JOIN {$threads_table} th ON t.id = th.ticket
-				WHERE {$active_in_period_sql}",
-			$end_dt, $start_dt
-		) . " {$extra_where} AND th.date_created > t.date_created GROUP BY t.id ) as response_times";
+		$frt_mode = $options['ticket_metrics_frt_mode'] ?? 'stackboost';
+
+		if ( $frt_mode === 'supportcandy' ) {
+			// SupportCandy Native FRT field
+			$query = $wpdb->prepare(
+				"SELECT AVG(t.FRT)
+				 FROM {$tickets_table} t
+				 WHERE t.FRT IS NOT NULL AND t.FRT > 0 AND {$active_in_period_sql}",
+				$end_dt, $start_dt
+			) . " " . $extra_where;
+		} else {
+			// StackBoost "Everything Counts" strict timeline
+			$query = $wpdb->prepare(
+				"SELECT AVG(response_time) FROM (
+					SELECT t.id,
+					TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
+					FROM {$tickets_table} t
+					JOIN {$threads_table} th ON t.id = th.ticket
+					WHERE {$active_in_period_sql}",
+				$end_dt, $start_dt
+			) . " {$extra_where} AND th.date_created > t.date_created GROUP BY t.id ) as response_times";
+		}
+
 		$metrics['avg_initial_response'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : '0m';
 
 		return $metrics;

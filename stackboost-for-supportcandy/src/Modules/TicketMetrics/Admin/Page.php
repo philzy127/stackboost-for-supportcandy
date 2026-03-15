@@ -75,6 +75,8 @@ class Page {
 		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'multi_pie';
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
 		$show_other_agents = isset( $options['ticket_metrics_show_other_agents'] ) ? (bool) $options['ticket_metrics_show_other_agents'] : true;
+		$frt_mode = $options['ticket_metrics_frt_mode'] ?? 'stackboost';
+		$verbose_logging = isset( $options['ticket_metrics_verbose_logging'] ) ? (bool) $options['ticket_metrics_verbose_logging'] : false;
 
 		// Map legacy setting if needed, or default to an empty array (which means ALL are tracked by default).
 		$tracked_agents = $options['ticket_metrics_tracked_agents'] ?? [];
@@ -366,6 +368,32 @@ class Page {
 						</div>
 
 						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'Metrics Computation', 'stackboost-for-supportcandy' ); ?></h2>
+							<table class="form-table">
+								<tr>
+									<th scope="row"><label for="stkb_frt_mode"><?php esc_html_e( 'First Response Calculation', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select name="stackboost_settings[ticket_metrics_frt_mode]" id="stkb_frt_mode">
+											<option value="stackboost" <?php selected( $frt_mode, 'stackboost' ); ?>><?php esc_html_e( 'StackBoost ("Everything Counts")', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="supportcandy" <?php selected( $frt_mode, 'supportcandy' ); ?>><?php esc_html_e( 'SupportCandy Native (FRT field)', 'stackboost-for-supportcandy' ); ?></option>
+										</select>
+										<p class="description"><?php esc_html_e( 'Choose whether to calculate Initial Response using StackBoost\'s strict thread timeline model or SupportCandy\'s native FRT database field (which respects clock gating/deferrals).', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
+								<tr>
+									<th scope="row"><label for="stkb_verbose_logging"><?php esc_html_e( 'Verbose Logging', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<label>
+											<input type="checkbox" name="stackboost_settings[ticket_metrics_verbose_logging]" id="stkb_verbose_logging" value="1" <?php checked( $verbose_logging ); ?> />
+											<?php esc_html_e( 'Enable deep diagnostic logging for metrics generation arrays.', 'stackboost-for-supportcandy' ); ?>
+										</label>
+										<p class="description"><?php esc_html_e( 'Requires the general Ticket Metrics diagnostic log toggle to be enabled in the Diagnostics tab.', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
+							</table>
+						</div>
+
+						<div class="stackboost-card">
 							<h2><?php esc_html_e( 'Agent Filtering', 'stackboost-for-supportcandy' ); ?></h2>
 							<p class="description"><?php esc_html_e( 'Select which agents to track individually. Unselected agents will be grouped together into a general "Other" category.', 'stackboost-for-supportcandy' ); ?></p>
 							<table class="form-table">
@@ -494,6 +522,8 @@ class Page {
 							ticket_metrics_chart_type_agent: $('#stkb_chart_type_agent').val(),
 							ticket_metrics_chart_type_type: $('#stkb_chart_type_type').val(),
 							ticket_metrics_show_other_agents: $('#stkb_show_other_agents').is(':checked') ? 1 : 0,
+							ticket_metrics_frt_mode: $('#stkb_frt_mode').val(),
+							ticket_metrics_verbose_logging: $('#stkb_verbose_logging').is(':checked') ? 1 : 0,
 							ticket_metrics_tracked_agents: $('#stkb_tracked_agents').val() || []
 						};
 
