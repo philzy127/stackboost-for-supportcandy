@@ -257,22 +257,23 @@ class Page {
 								<h3><?php esc_html_e( 'Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
 								<p id="stkb_metric_total_closed">0</p>
 							</div>
-							<div class="stkb-metric-card">
-								<h3><?php esc_html_e( 'Queue Health', 'stackboost-for-supportcandy' ); ?></h3>
-								<div style="font-size: 14px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-									<div style="display: flex; justify-content: space-between;">
-										<span><?php esc_html_e( 'Resolution Rate:', 'stackboost-for-supportcandy' ); ?></span>
-										<strong id="stkb_metric_resolution_rate">0%</strong>
-									</div>
-									<div style="display: flex; justify-content: space-between;">
-										<span><?php esc_html_e( 'Active Backlog:', 'stackboost-for-supportcandy' ); ?></span>
-										<strong id="stkb_metric_active_backlog">0</strong>
-									</div>
-									<div style="display: flex; justify-content: space-between;">
-										<span><?php esc_html_e( 'Touched Tickets:', 'stackboost-for-supportcandy' ); ?></span>
-										<strong id="stkb_metric_touched_tickets">0</strong>
-									</div>
-								</div>
+							<div class="stkb-metric-card" style="padding: 10px;">
+								<table style="width: 100%; border-collapse: collapse;">
+									<tr>
+										<td style="width: 33.33%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4); padding: 10px;">
+											<h3><?php esc_html_e( 'Resolution Rate', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_resolution_rate">0%</p>
+										</td>
+										<td style="width: 33.33%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4); padding: 10px;">
+											<h3><?php esc_html_e( 'Active Backlog', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_active_backlog">0</p>
+										</td>
+										<td style="width: 33.33%; text-align: center; padding: 10px;">
+											<h3><?php esc_html_e( 'Touched Tickets', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_touched_tickets">0</p>
+										</td>
+									</tr>
+								</table>
 							</div>
 						</div>
 
