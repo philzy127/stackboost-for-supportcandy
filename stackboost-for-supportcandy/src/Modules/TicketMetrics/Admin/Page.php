@@ -828,7 +828,8 @@ class Page {
 										allowHTML: true,
 										placement: 'right',
 										theme: 'light-border',
-										maxWidth: 350
+										maxWidth: 350,
+										zIndex: 999999
 									});
 								}
 							} else {
@@ -851,7 +852,9 @@ class Page {
 										allowHTML: true,
 										placement: 'top',
 										theme: 'light-border',
-										maxWidth: 350
+										maxWidth: 350,
+										appendTo: document.body,
+										zIndex: 999999
 									});
 								}, 50);
 							}

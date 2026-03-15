@@ -1,2 +1,3 @@
 stackboost-for-supportcandy/includes/vendor/dompdf/
 build/
+node_modules/
