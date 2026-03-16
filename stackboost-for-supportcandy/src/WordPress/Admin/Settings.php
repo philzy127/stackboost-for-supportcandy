@@ -756,14 +756,14 @@ class Settings {
 	public function sanitize_settings( array $input ): array {
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( '==== STACKBOOST DIAGNOSTIC: sanitize_settings() INITIATED ====', 'core' );
-			stackboost_log( 'RAW INPUT RECEIVED BY SANITIZER: ' . print_r( $input, true ), 'core' );
+			stackboost_log( 'RAW INPUT RECEIVED BY SANITIZER: ' . json_encode( $input ), 'core' );
 			stackboost_log( 'Settings::sanitize_settings called.', 'core' );
 			stackboost_log( 'Input Data: ' . json_encode( $input ), 'core' );
 		}
 
 		$saved_settings = get_option('stackboost_settings', []);
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'CURRENT DB SAVED SETTINGS BEFORE MERGE: ' . print_r( $saved_settings, true ), 'core' );
+			stackboost_log( 'CURRENT DB SAVED SETTINGS BEFORE MERGE: ' . json_encode( $saved_settings ), 'core' );
 		}
 		if (!is_array($saved_settings)) {
 			$saved_settings = [];
@@ -841,17 +841,23 @@ class Settings {
 
 		$current_page_options = $page_options[$page_slug] ?? [];
 
-		error_log( "WHITELIST KEYS FOR SLUG '{$page_slug}': " . print_r( $current_page_options, true ) );
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "WHITELIST KEYS FOR SLUG '{$page_slug}': " . json_encode( $current_page_options ), 'core' );
+		}
 
 		if (empty($current_page_options)) {
-			error_log( "FATAL ABORT IN SANITIZER: Whitelist array for '{$page_slug}' is empty. Check apply_filters." );
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "FATAL ABORT IN SANITIZER: Whitelist array for '{$page_slug}' is empty. Check apply_filters.", 'core' );
+			}
 			return $saved_settings;
 		}
 
 		foreach ($current_page_options as $key) {
 			// Determine if the key exists in the input or if it's a checkbox that was unchecked.
 			if (array_key_exists($key, $input)) {
-				error_log( "PROCESSING KEY: {$key} - Found in \$input." );
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "PROCESSING KEY: {$key} - Found in \$input.", 'core' );
+				}
 				$value = $input[$key];
 
 				// Sanitize based on the key. This is the crucial step.
@@ -1028,7 +1034,9 @@ class Settings {
 						break;
 				}
 			} else {
-				error_log( "PROCESSING KEY: {$key} - NOT found in \$input. Applying fallback logic." );
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "PROCESSING KEY: {$key} - NOT found in \$input. Applying fallback logic.", 'core' );
+				}
 				// Handle unchecked checkboxes, which are not present in the form submission.
 				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled' || $key === 'ticket_metrics_show_other_agents' || $key === 'ticket_metrics_verbose_logging') {
 					$saved_settings[$key] = 0;
@@ -1038,8 +1046,10 @@ class Settings {
 			}
 		}
 
-		error_log( '==== STACKBOOST DIAGNOSTIC: sanitize_settings() FINISHED ====' );
-		error_log( 'FINAL ARRAY TO BE SAVED: ' . print_r( $saved_settings, true ) );
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( '==== STACKBOOST DIAGNOSTIC: sanitize_settings() FINISHED ====', 'core' );
+			stackboost_log( 'FINAL ARRAY TO BE SAVED: ' . json_encode( $saved_settings ), 'core' );
+		}
 
 		return $saved_settings;
 	}
@@ -1229,7 +1239,7 @@ class Settings {
 
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( '==== STACKBOOST DIAGNOSTIC: ajax_save_settings() ENDPOINT HIT ====', 'core' );
-			stackboost_log( 'RAW ENTIRE $_POST PAYLOAD: ' . print_r($_POST, true), 'core' );
+			stackboost_log( 'RAW ENTIRE $_POST PAYLOAD: ' . json_encode($_POST), 'core' );
 			stackboost_log( 'AJAX Save Settings Called', 'core' );
 			stackboost_log( 'POST Data: ' . json_encode( $_POST ), 'core' );
 		}
@@ -1282,7 +1292,7 @@ class Settings {
 		$settings_data = Request::get_post( 'stackboost_settings', null, 'raw' );
 
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( 'DATA EXTRACTED FROM Request::get_post for stackboost_settings: ' . print_r($settings_data, true), 'core' );
+			stackboost_log( 'DATA EXTRACTED FROM Request::get_post for stackboost_settings: ' . json_encode($settings_data), 'core' );
 		}
 
 		if ( ! $settings_data || ! is_array( $settings_data ) ) {

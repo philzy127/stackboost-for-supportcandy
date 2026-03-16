@@ -93,13 +93,16 @@ class Page {
 
 		global $wpdb;
 		$agents_table = $wpdb->prefix . 'psmsc_agents';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( $wpdb->get_var("SHOW TABLES LIKE '{$agents_table}'") !== $agents_table ) {
 			$agents_table = $wpdb->prefix . 'wpsc_agents';
 		}
 
 		$all_agents = [];
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$agents_table}'") === $agents_table;
 		if ( $table_exists ) {
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$agent_results = $wpdb->get_results("SELECT id, name FROM {$agents_table} ORDER BY name ASC");
 			if ( is_array($agent_results) ) {
 				foreach ( $agent_results as $a ) {

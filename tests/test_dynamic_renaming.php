@@ -1,58 +1,64 @@
 <?php
-
-// Mock WordPress functions
-define( 'STACKBOOST_PLUGIN_FILE', '/var/www/html/wp-content/plugins/stackboost-for-supportcandy/stackboost-for-supportcandy.php' );
-
-function plugin_basename( $file ) {
-    return 'stackboost-for-supportcandy/stackboost-for-supportcandy.php';
+namespace StackBoost\ForSupportCandy\WordPress\Admin {
+    class Settings {
+        public static function get_instance() {}
+    }
 }
 
-$mock_options = [];
-function get_option( $key, $default = false ) {
-    global $mock_options;
-    return $mock_options[ $key ] ?? $default;
+namespace StackBoost\ForSupportCandy\Modules\QolEnhancements {
+    class WordPress {
+        public static function get_instance() {}
+    }
 }
 
-function add_action( $hook, $callback, $priority = 10, $accepted_args = 1 ) {}
-function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {}
-function wp_enqueue_script() {}
-function wp_register_script() {}
-function wp_enqueue_style() {}
-function wp_localize_script() {}
-function wp_create_nonce() {}
-function admin_url() {}
-function __() {}
-function stackboost_is_feature_active() { return false; }
-function stackboost_log() {}
-function get_current_screen() {}
-
-// Mock dependency classes
-namespace StackBoost\ForSupportCandy\WordPress\Admin;
-class Settings {
-    public static function get_instance() {}
+namespace StackBoost\ForSupportCandy\Modules\TicketView {
+    class WordPress {
+        public static function get_instance() {}
+    }
+}
+namespace StackBoost\ForSupportCandy\Modules\AfterHoursNotice {
+    class WordPress {
+        public static function get_instance() {}
+    }
+}
+namespace StackBoost\ForSupportCandy\Modules\DateTimeFormatting {
+    class WordPress {
+        public static function get_instance() {}
+    }
 }
 
-namespace StackBoost\ForSupportCandy\Modules\QolEnhancements;
-class WordPress {
-    public static function get_instance() {}
+namespace {
+	// Mock WordPress functions
+	define( 'STACKBOOST_PLUGIN_FILE', '/var/www/html/wp-content/plugins/stackboost-for-supportcandy/stackboost-for-supportcandy.php' );
+
+	function plugin_basename( $file ) {
+		return 'stackboost-for-supportcandy/stackboost-for-supportcandy.php';
+	}
+
+	$mock_options = [];
+	function get_option( $key, $default = false ) {
+		global $mock_options;
+		return $mock_options[ $key ] ?? $default;
+	}
+
+	function add_action( $hook, $callback, $priority = 10, $accepted_args = 1 ) {}
+	function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {}
+	function wp_enqueue_script() {}
+	function wp_register_script() {}
+	function wp_enqueue_style() {}
+	function wp_localize_script() {}
+	function wp_create_nonce() {}
+	function admin_url() {}
+	function __() {}
+	function stackboost_is_feature_active() { return false; }
+	function stackboost_log() {}
+	function get_current_screen() {}
+
+	// Load the class under test
+	require_once __DIR__ . '/../stackboost-for-supportcandy/src/WordPress/Plugin.php';
 }
 
-namespace StackBoost\ForSupportCandy\Modules\TicketView;
-class WordPress {
-    public static function get_instance() {}
-}
-namespace StackBoost\ForSupportCandy\Modules\AfterHoursNotice;
-class WordPress {
-    public static function get_instance() {}
-}
-namespace StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
-class WordPress {
-    public static function get_instance() {}
-}
-
-// Load the class under test
-require_once __DIR__ . '/../stackboost-for-supportcandy/src/WordPress/Plugin.php';
-
+namespace {
 use StackBoost\ForSupportCandy\WordPress\Plugin;
 
 // Access private/protected method via reflection or just make it public for test...
@@ -102,4 +108,6 @@ if ( $result['stackboost-for-supportcandy/stackboost-for-supportcandy.php']['Nam
     echo "[PASS] Business Tier: Name updated correctly.\n";
 } else {
     echo "[FAIL] Business Tier: Name is '{$result['stackboost-for-supportcandy/stackboost-for-supportcandy.php']['Name']}'\n";
+}
+
 }
