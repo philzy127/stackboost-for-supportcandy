@@ -153,7 +153,7 @@ class WordPress extends Module {
 		$threads_table = $wpdb->prefix . 'psmsc_threads';
 
 		// Check if the old prefix is used or the new prefix is used
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var("SHOW TABLES LIKE '{$tickets_table}'") !== $tickets_table ) {
 			$tickets_table = $wpdb->prefix . 'wpsc_tickets';
 			$threads_table = $wpdb->prefix . 'wpsc_threads';
@@ -173,7 +173,7 @@ class WordPress extends Module {
 		}
 
 		// Is `date_closed` explicitly available?
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$has_date_closed = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'date_closed'") === 'date_closed';
 		$close_date_column = $has_date_closed ? 'date_closed' : 'date_updated';
 
@@ -190,7 +190,7 @@ class WordPress extends Module {
 
 		// Total Tickets Closed
 		// A ticket is considered closed in this range if its close date falls within the range.
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$total_closed = (int) $wpdb->get_var( $wpdb->prepare(
 			"SELECT COUNT(t.id) FROM {$tickets_table} t
 			 WHERE {$closed_condition}
@@ -208,7 +208,7 @@ class WordPress extends Module {
 			$start_dt, $end_dt
 		);
 
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$raw_avg_open_result = $wpdb->get_var($avg_open_query);
 		$avg_open_seconds = (int) $raw_avg_open_result;
 
@@ -243,7 +243,7 @@ class WordPress extends Module {
 			$end_dt, $start_dt
 		);
 
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$raw_avg_age_result = $wpdb->get_var($avg_age_query);
 		$avg_age_seconds = (int) $raw_avg_age_result;
 
@@ -280,7 +280,7 @@ class WordPress extends Module {
 			);
 		}
 
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$raw_avg_response = $wpdb->get_var($avg_response_query);
 		$avg_response_seconds = (int) $raw_avg_response;
 		$verbose_logging = isset( $options['ticket_metrics_verbose_logging'] ) ? (bool) $options['ticket_metrics_verbose_logging'] : false;
@@ -297,6 +297,7 @@ class WordPress extends Module {
 			if ( $verbose_logging ) {
 				// Deep diagnostic: Check threads table structure
 				if ( empty( $raw_avg_response ) && $frt_mode === 'stackboost' ) {
+						// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$threads_check = $wpdb->get_col("SHOW TABLES LIKE '%threads%'");
 					stackboost_log( "Available Thread Tables: " . json_encode($threads_check), 'ticket_metrics' );
 
@@ -305,7 +306,7 @@ class WordPress extends Module {
 										FROM {$tickets_table} t
 										JOIN {$threads_table} th ON t.id = th.ticket
 										LIMIT 1";
-					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$test_res = $wpdb->get_results($test_join_query);
 					if ( ! empty( $wpdb->last_error ) ) {
 						stackboost_log( "Test Join Error: " . $wpdb->last_error, 'ticket_metrics' );
@@ -371,7 +372,7 @@ class WordPress extends Module {
 				$start_dt, $end_dt, $end_dt, $start_dt
 			);
 
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$raw_tickets = $wpdb->get_results($raw_tickets_query);
 
 			$agent_data = [];
@@ -801,7 +802,7 @@ class WordPress extends Module {
 
 		// Total Tickets Created
 		$query = $wpdb->prepare( "SELECT COUNT(t.id) FROM {$tickets_table} t WHERE t.date_created >= %s AND t.date_created <= %s", $start_dt, $end_dt ) . " " . $extra_where;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['total_created'] = (int) $wpdb->get_var( $query );
 
 		// Total Tickets Closed
@@ -810,7 +811,7 @@ class WordPress extends Module {
 			 WHERE {$closed_condition} AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
 			$start_dt, $end_dt
 		) . " " . $extra_where;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['total_closed'] = (int) $wpdb->get_var( $query );
 
 		// Queue Health Metrics
@@ -822,13 +823,13 @@ class WordPress extends Module {
 
 		// Touched Tickets (Any ticket active or updated during this period)
 		$query = $wpdb->prepare( "SELECT COUNT(DISTINCT t.id) FROM {$tickets_table} t WHERE {$active_in_period_sql}", $end_dt, $start_dt ) . " " . $extra_where;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['touched_tickets'] = (int) $wpdb->get_var( $query );
 
 		// Active Backlog (Tickets Open at the exact end of the period, regardless of creation date)
 		// Active means: Created before the end date, AND (Not closed OR Closed after the end date)
 		$query = $wpdb->prepare( "SELECT COUNT(DISTINCT t.id) FROM {$tickets_table} t WHERE t.date_created <= %s AND (NOT ({$closed_condition}) OR {$close_date_col} > %s)", $end_dt, $end_dt ) . " " . $extra_where;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['active_backlog'] = (int) $wpdb->get_var( $query );
 
 		// Lifecycle Bucket 2: Carried Over & Closed (Created before range, closed during range)
@@ -839,7 +840,7 @@ class WordPress extends Module {
 			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
 			$start_dt, $start_dt, $end_dt
 		) . " " . $extra_where;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['carried_closed'] = (int) $wpdb->get_var( $query );
 
 		// Lifecycle Bucket 3: Carried Over & Still Open (Created before range, and either open or closed AFTER range)
@@ -849,7 +850,7 @@ class WordPress extends Module {
 			 AND ( {$open_condition} OR {$close_date_col} > %s )",
 			$start_dt, $end_dt
 		) . " " . $extra_where;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['carried_open'] = (int) $wpdb->get_var( $query );
 
 		// Average Time Ticket was Open (For Closed Tickets)
@@ -860,7 +861,7 @@ class WordPress extends Module {
 			 AND {$close_date_col} >= %s AND {$close_date_col} <= %s",
 			$start_dt, $end_dt
 		) . " " . $extra_where;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['avg_open_time'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : 'N/A';
 
 		// Average Age of Open Tickets
@@ -871,7 +872,7 @@ class WordPress extends Module {
 			 AND {$active_in_period_sql}",
 			$end_dt, $start_dt
 		) . " " . $extra_where;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['avg_age_open'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : 'N/A';
 
 		// Average Initial Response Time
@@ -898,8 +899,7 @@ class WordPress extends Module {
 			) . " {$extra_where} AND th.date_created > t.date_created GROUP BY t.id ) as response_times";
 		}
 
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
-
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['avg_initial_response'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : '0m';
 
 		return $metrics;
@@ -928,7 +928,7 @@ class WordPress extends Module {
 	private function get_agent_map( $wpdb, $agents_table ) {
 		$map = [];
 		// SupportCandy uses a dedicated agents table, not the customers table for assignment mappings.
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results("SELECT id, name FROM {$agents_table}");
 		if ( is_array($results) ) {
 			foreach ( $results as $r ) {
@@ -946,7 +946,7 @@ class WordPress extends Module {
 		if ( $type_field === 'status' ) $table_name = $status_table;
 
 		if ( $table_name ) {
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$results = $wpdb->get_results("SELECT id, name FROM {$table_name}");
 			if ( is_array($results) ) {
 				foreach ( $results as $r ) {
@@ -976,10 +976,10 @@ class WordPress extends Module {
 				}
 			} else {
 				// Fallback if class doesn't exist: attempt the raw table query but ensure it doesn't fatal error if table is missing.
-				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$options_table}'") === $options_table;
 				if ( $table_exists ) {
-					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$results = $wpdb->get_results("SELECT id, name FROM {$options_table}");
 					if ( is_array($results) ) {
 						foreach ( $results as $r ) {
