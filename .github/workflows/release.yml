@@ -41,12 +41,12 @@ jobs:
         # Clone the destination repository
         git clone https://x-access-token:${{ secrets.PAT }}@github.com/StackBoost-Innovations/SBSC.git destination_repo
 
-        # Clear existing files in the destination repository (excluding .git)
         cd destination_repo
-        find . -maxdepth 1 ! -name '.' ! -name '.git' -exec rm -rf {} +
 
-        # Copy the newly built free plugin files
-        cp -a ../build/repo/stackboost-for-supportcandy/. .
+        # Sync the newly built free plugin files into the destination repository
+        # --delete ensures files removed from the source are also removed from the destination
+        # --exclude '.git' ensures we do not overwrite the destination's git history
+        rsync -a --delete --exclude '.git' ../build/repo/stackboost-for-supportcandy/ ./
 
         # Commit and push changes
         git add .
