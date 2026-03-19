@@ -240,9 +240,6 @@ def strip_pro_tags(filepath):
         with open(filepath, 'w') as f:
             f.write(new_content)
 
-def sanitize_ticket_view(filepath):
-    strip_pro_tags(filepath)
-
 
 def sanitize_uninstall_service(filepath):
     if not os.path.exists(filepath):
@@ -287,12 +284,14 @@ if __name__ == "__main__":
     settings_file = os.path.join(base_dir, 'src/WordPress/Admin/Settings.php')
     uninstall_file = os.path.join(base_dir, 'src/Services/UninstallService.php')
     ticket_view_file = os.path.join(base_dir, 'src/Modules/TicketView/WordPress.php')
+    readme_file = os.path.join(base_dir, 'README.md')
 
     # The core sanitization function that handles all tagged blocks
     strip_pro_tags(plugin_file)
     strip_pro_tags(functions_file)
     strip_pro_tags(settings_file)
     strip_pro_tags(ticket_view_file)
+    strip_pro_tags(readme_file)
 
     sanitize_plugin_file(plugin_file)
     sanitize_functions_file(functions_file)

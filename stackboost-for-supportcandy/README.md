@@ -31,6 +31,7 @@ Create powerful, context-aware rules to control column visibility in the ticket 
 
 *Example:* Show the "Billing Code" column *only* when the "Accounting" view is active.
 
+<!-- <stackboost-pro-only> -->
 ### Company Directory (Business Tier)
 A complete system to manage staff, locations, and departments.
 *   **Staff Profiles:** Detailed profiles with photo, contact info, and WordPress user linking.
@@ -53,6 +54,7 @@ Collect customer satisfaction feedback automatically.
 *   **Survey Builder:** Create custom surveys with various question types.
 *   **Automation:** Automatically email the survey link when a ticket is closed.
 *   **Highlander Rule:** Enforces a limit of one "Ticket Number" field per survey to prevent data conflicts.
+<!-- </stackboost-pro-only> -->
 
 ### Diagnostics & Logging
 A robust system for troubleshooting.
