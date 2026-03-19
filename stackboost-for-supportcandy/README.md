@@ -13,26 +13,64 @@ StackBoost enhances SupportCandy with advanced workflow, UI controls, and powerf
 
 StackBoost includes several modules that can be enabled or disabled based on your needs.
 
+### Ticket View Card
+Boost agent efficiency with a powerful, right-click "Details Card" popup directly from the ticket list.
+*   **Smart Layout:** Automatically adapts to a side-by-side view for longer tickets, maximizing screen real estate.
+*   **Interactive History:** Expand and collapse full conversation threads instantly without leaving the main dashboard.
+
 ### Core Enhancements
-*   **Ticket View Popup:** Right-click any ticket in the list to see a quick "Details Card" popup.
-    *   **Smart Layout:** Automatically switches to a side-by-side view if the content is too tall.
-    *   **Interactive History:** Expand and collapse conversation history directly within the popup.
-    *   **License Fallback:** gracefully degrades to standard fields if the PRO license is inactive.
-*   **General Cleanup:** Automatically hide empty columns or the priority column to reduce clutter in the ticket list.
-*   **Ticket Type Hiding:** Restrict which ticket types are visible to non-agent users in the submission form.
-*   **After Hours Notice:** Display a customizable warning notice on the ticket form when users attempt to submit a ticket outside of configured business hours.
+Take back control of your support dashboard and refine the user experience.
+*   **General Cleanup:** Automatically hide empty, unused columns or force-hide the priority column to reduce visual clutter.
+*   **After Hours Notice:** Display a clear, customizable warning banner on the ticket form when users attempt to submit requests outside of your configured business hours.
+*   **Prevent Premature Closing:** Hide the "Reply & Close" button for non-agent users to ensure tickets stay open until support has fully resolved the issue.
 
-### Conditional Column Hiding
+### Conditional Options
+Take granular control over your ticket forms by defining exactly which options are visible to specific user groups. Using an intuitive administration matrix, you can block specific WordPress or SupportCandy roles from seeing individual choices within multiple-choice fields (such as dropdowns, checkboxes, and radio buttons).
+*   **Smart Visibility Rules:** Tailor your forms based on WordPress roles or SupportCandy agent roles.
+*   **Broad Field Support:** Works seamlessly with standard fields (Category, Priority, Status) and custom option-based fields.
+*   **Zero Distortion:** Options are filtered in real-time on the frontend without requiring page reloads or slowing down the user experience.
+*   **Enterprise-Grade Security:** Unlike tools that only hide elements visually, StackBoost includes server-side enforcement. This ensures that restricted options are stripped out during submission, preventing unauthorized data from ever reaching your database.
+
+### Date & Time Formatting
+Enhance the user experience by enforcing unified Date and Time formats across your support desk.
+*   **Rules-Based Styling:** Create precise formatting rules that apply dynamically to target date/time columns in your ticket list.
+*   **Timezone Safe:** Correctly parses and applies local WordPress timezone offsets to all displayed timestamps to completely prevent confusion for international users and remote teams.
+
+<!-- <stackboost-pro-only> -->
+### Unified Ticket Macro (Pro Tier)
+Our most powerful feature! Generate consistent, professional ticket summaries for email notifications to drastically improve communication clarity.
+*   **Native GUI Integration:** Select the macro directly from the default SupportCandy email macro dropdown. No need to memorize complex shortcodes!
+*   **Customizable Fields:** Select exactly which fields to include in the email summary.
+
+### Conditional Views (Pro Tier)
 Create powerful, context-aware rules to control column visibility in the ticket list based on the active view (filter).
-
 *   **SHOW ONLY:** Make a column visible *only* in a specific view and hide it everywhere else by default.
 *   **HIDE:** Explicitly hide a column in a specific view.
 *   **SHOW:** Create exceptions to override implicit hiding rules.
 
-*Example:* Show the "Billing Code" column *only* when the "Accounting" view is active.
+### Metrics *(NEW)* (Pro Tier)
+Gain deep, actionable insights into your support desk performance.
+*   **Visual Dashboards:** Beautiful, interactive charts detailing ticket volume, resolution rates, and agent activity.
+*   **Agent Tracking:** Group agents into tracked vs untracked categories to prevent chart pollution.
+*   **Queue Health:** Monitor active backlogs and initial response times at a glance.
 
-<!-- <stackboost-pro-only> -->
-### Company Directory (Business Tier)
+### Queue Macro (Pro Tier)
+Manage user expectations instantly by calculating their place in line.
+*   **Dynamic Counting:** Automatically counts open tickets by type to accurately notify the recipient of their specific queue position upon new ticket submission.
+*   **Native GUI Integration:** Available directly inside the default SupportCandy workflow builder GUI. Just click and apply!
+
+### Chat Bubbles (Pro Tier)
+Transform standard ticket threads into a modern, easy-to-read chat bubble interface within the Ticket View Card.
+*   **Full Customization:** Completely customizable appearance allowing you to set the exact look and feel you desire.
+*   **Included Themes:** Instantly swap to one of the many professionally designed, pre-built theme options.
+
+### After Ticket Survey (Pro Tier)
+Collect customer satisfaction feedback automatically.
+*   **Survey Builder:** Create custom surveys with various question types.
+*   **Automation:** Automatically email the survey link when a ticket is closed.
+*   **Highlander Rule:** Enforces a limit of one "Ticket Number" field per survey to prevent data conflicts.
+
+### Contact Directory (Business Tier)
 A complete system to manage staff, locations, and departments.
 *   **Staff Profiles:** Detailed profiles with photo, contact info, and WordPress user linking.
 *   **Contact Widget:** A dashboard widget on the ticket view showing the contact details of the ticket requester (if they are in the directory).
@@ -43,17 +81,6 @@ Streamline your employee onboarding process.
 *   **Steps Sequence:** Define a drag-and-drop sequence of onboarding tasks.
 *   **Progress Tracking:** Track the progress of new hires through the dashboard.
 *   **PDF Certificates:** Automatically generate and email completion certificates.
-
-### Unified Ticket Macro (Pro Tier)
-Generate consistent, professional ticket summaries for email notifications.
-*   **Customizable Fields:** Select exactly which fields to include in the email summary.
-*   **Macro Support:** Use `{{stackboost_unified_ticket}}` in your SupportCandy email templates.
-
-### After Ticket Survey (Pro Tier)
-Collect customer satisfaction feedback automatically.
-*   **Survey Builder:** Create custom surveys with various question types.
-*   **Automation:** Automatically email the survey link when a ticket is closed.
-*   **Highlander Rule:** Enforces a limit of one "Ticket Number" field per survey to prevent data conflicts.
 <!-- </stackboost-pro-only> -->
 
 ### Diagnostics & Logging
@@ -66,7 +93,9 @@ A robust system for troubleshooting.
 
 This plugin utilizes the following 3rd-party open-source libraries:
 *   **SelectWoo (v1.0.8):** A fork of Select2 by WooCommerce, used for enhanced select boxes. [Repository](https://github.com/woocommerce/selectWoo)
+<!-- <stackboost-pro-only> -->
 *   **DataTables (v2.3.6):** Used for advanced table sorting and filtering in premium modules. [Website](https://datatables.net/)
+<!-- </stackboost-pro-only> -->
 *   **Tippy.js (v6.0):** Used for tooltips. [Website](https://atomiks.github.io/tippyjs/)
 *   **Popper.js (v2.0):** Used as a positioning engine for Tippy.js. [Website](https://popper.js.org/)
 *   **jQuery UI:** Used for date pickers and drag-and-drop interfaces. [Website](https://jqueryui.com/)
