@@ -96,6 +96,13 @@ final class Plugin {
 			}
 		}
 
+		if ( stackboost_is_feature_active( 'ticket_metrics' ) ) {
+			$class = 'StackBoost\ForSupportCandy\Modules\TicketMetrics\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['ticket_metrics'] = $class::get_instance();
+			}
+		}
+
 		// Pro Features
 		if ( stackboost_is_feature_active( 'conditional_views' ) ) {
 			$class = 'StackBoost\ForSupportCandy\Modules\ConditionalViews\WordPress';
@@ -232,6 +239,15 @@ final class Plugin {
 			STACKBOOST_PLUGIN_URL . 'assets/libraries/selectwoo/css/selectWoo.min.css',
 			[],
 			'1.0.8'
+		);
+
+		// Chart.js
+		wp_register_script(
+			'stackboost-chartjs',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/chartjs/chart.umd.js',
+			[],
+			'4.4.7',
+			true
 		);
 	}
 
@@ -413,6 +429,8 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-appearance',
             'stackboost-for-supportcandy_page_stackboost-chat-bubbles',
             'stackboost-for-supportcandy_page_stackboost-conditional-options',
+            'stackboost-for-supportcandy_page_stackboost-ticket-metrics',
+            'stackboost_page_stackboost-ticket-metrics',
             // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
             'stackboost_page_stackboost-date-time',
 		];
@@ -421,6 +439,14 @@ final class Plugin {
 		// This ensures features like the Ticket Details Card work for agents in the backend.
 		if ( 'supportcandy_page_wpsc-tickets' === $hook_suffix ) {
 			$this->enqueue_and_localize_frontend_scripts();
+		}
+
+		// Enqueue Tooltip scripts specifically for Ticket Metrics
+		if ( 'stackboost_page_stackboost-ticket-metrics' === $hook_suffix || 'stackboost-for-supportcandy_page_stackboost-ticket-metrics' === $hook_suffix ) {
+			wp_enqueue_script( 'stackboost-tippy' );
+			wp_enqueue_script( 'stackboost-chartjs' );
+			wp_enqueue_script( 'stackboost-selectwoo' );
+			wp_enqueue_style( 'stackboost-selectwoo' );
 		}
 
 		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {

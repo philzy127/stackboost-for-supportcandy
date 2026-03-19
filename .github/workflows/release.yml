@@ -31,3 +31,28 @@ jobs:
         files: |
           stackboost-for-supportcandy.zip
           stackboost-for-supportcandy-premium.zip
+
+    - name: Push Free Plugin to SBSC Repo
+      run: |
+        # Setup git configuration
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+        # Clone the destination repository
+        git clone https://x-access-token:${{ secrets.PAT }}@github.com/StackBoost-Innovations/SBSC.git destination_repo
+
+        cd destination_repo
+
+        # Sync the newly built free plugin files into the destination repository
+        # --delete ensures files removed from the source are also removed from the destination
+        # --exclude '.git' ensures we do not overwrite the destination's git history
+        rsync -a --delete --exclude '.git' ../build/repo/stackboost-for-supportcandy/ ./
+
+        # Commit and push changes
+        git add .
+        if git diff-index --quiet HEAD; then
+          echo "No changes to commit"
+        else
+          git commit -m "Auto-update free plugin from release ${{ github.ref_name }}"
+          git push origin main
+        fi

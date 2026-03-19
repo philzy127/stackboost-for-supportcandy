@@ -92,6 +92,8 @@ Jules must execute the following checklist upon code completion and before PR su
     *   **Inline Comments:** Review and update comments affected by changes.
     *   **TODO Review:** Remove resolved `// TODO` or `// FIXME` comments.
 4. **Build & Versioning:**
+    *   **Rolling Build Number (Development/Build Phase):** Every time you submit code for testing or review, you MUST increment the 4th digit of the `STACKBOOST_VERSION` constant in the main plugin file (e.g., `1.6.1.17` becomes `1.6.1.18`). This is considered a "Build".
+    *   **PR Versioning (Final Phase):** When the user explicitly instructs you to "Run this as a PR" or "Create a PR", you must DROP the 4th digit entirely and increment the PATCH (3rd digit) version number (e.g., `1.6.1.18` becomes `1.6.2`). PRs never have a 4th-digit build number.
     *   **Zip Validation:** Verify the build script output is installable.
     *   **Tagging:** Create a PATCH tag. Ask lead developer before MINOR/MAJOR increments.
 ## 🚫 5. The Exclusion Protocol (Strict - Fix Before Ignore)

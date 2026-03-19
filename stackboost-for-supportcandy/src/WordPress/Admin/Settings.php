@@ -269,7 +269,19 @@ class Settings {
 			'callback'    => [ \StackBoost\ForSupportCandy\Modules\Appearance\Admin\Page::class, 'render' ], // Using static call for consistency, though class is not static
 		];
 
-		// 12. Tools / Diagnostics
+		// 12. Ticket Metrics (New Module) - Lite
+		if ( stackboost_is_feature_active( 'ticket_metrics' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\TicketMetrics\Admin\Page' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-ticket-metrics',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Ticket Metrics', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Metrics', 'stackboost-for-supportcandy' ),
+				'capability'  => STACKBOOST_CAP_MANAGE_TICKET_METRICS,
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketMetrics\Admin\Page::class, 'render_page' ],
+			];
+		}
+
+		// 13. Tools / Diagnostics
 		$menu_config[] = [
 			'slug'        => 'stackboost-tools',
 			'parent'      => 'stackboost-for-supportcandy',
@@ -743,21 +755,31 @@ class Settings {
 	 */
 	public function sanitize_settings( array $input ): array {
 		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( '==== STACKBOOST DIAGNOSTIC: sanitize_settings() INITIATED ====', 'core' );
+			stackboost_log( 'RAW INPUT RECEIVED BY SANITIZER: ' . json_encode( $input ), 'core' );
 			stackboost_log( 'Settings::sanitize_settings called.', 'core' );
 			stackboost_log( 'Input Data: ' . json_encode( $input ), 'core' );
 		}
 
 		$saved_settings = get_option('stackboost_settings', []);
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'CURRENT DB SAVED SETTINGS BEFORE MERGE: ' . json_encode( $saved_settings ), 'core' );
+		}
 		if (!is_array($saved_settings)) {
 			$saved_settings = [];
 		}
 
 		$page_slug = isset( $input['page_slug'] ) ? sanitize_key( $input['page_slug'] ) : '';
+
 		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'PAGE SLUG EXTRACTED: ' . $page_slug, 'core' );
 			stackboost_log( "Processing page_slug: {$page_slug}", 'core' );
 		}
 
 		if (empty($page_slug)) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( 'FATAL ABORT IN SANITIZER: $page_slug is empty. Returning DB settings without changes.', 'core' );
+			}
 			return $saved_settings;
 		}
 
@@ -784,6 +806,15 @@ class Settings {
 			'stackboost-conditional-options' => ['conditional_options_rules', 'conditional_options_enabled'], // Whitelisted
 			'stackboost-conditional-views' => ['enable_conditional_hiding', 'conditional_hiding_rules'],
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
+			'stackboost-ticket-metrics'     => [
+				'ticket_metrics_type_field',
+				'ticket_metrics_chart_type_agent',
+				'ticket_metrics_chart_type_type',
+				'ticket_metrics_show_other_agents',
+				'ticket_metrics_frt_mode',
+				'ticket_metrics_verbose_logging',
+				'ticket_metrics_tracked_agents'
+			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
@@ -802,19 +833,31 @@ class Settings {
 				'enable_log_onboarding',
 				'enable_log_appearance', // Added Appearance Logging
 				'enable_log_chat_bubbles', // Added Chat Bubbles Logging
+				'enable_log_ticket_metrics',
 			],
 			// 'stackboost-date-time' removed - uses isolated option group via custom AJAX
 			'stackboost-chat-bubbles' => class_exists( 'StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings' ) ? \StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings::get_settings_keys() : [],
 		]);
 
 		$current_page_options = $page_options[$page_slug] ?? [];
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "WHITELIST KEYS FOR SLUG '{$page_slug}': " . json_encode( $current_page_options ), 'core' );
+		}
+
 		if (empty($current_page_options)) {
+			if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "FATAL ABORT IN SANITIZER: Whitelist array for '{$page_slug}' is empty. Check apply_filters.", 'core' );
+			}
 			return $saved_settings;
 		}
 
 		foreach ($current_page_options as $key) {
 			// Determine if the key exists in the input or if it's a checkbox that was unchecked.
 			if (array_key_exists($key, $input)) {
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "PROCESSING KEY: {$key} - Found in \$input.", 'core' );
+				}
 				$value = $input[$key];
 
 				// Sanitize based on the key. This is the crucial step.
@@ -869,6 +912,7 @@ class Settings {
 					case 'enable_log_appearance':
 					case 'enable_log_chat_bubbles':
 					case 'enable_log_conditional_options':
+					case 'enable_log_ticket_metrics':
 					case 'conditional_options_enabled':
 					case 'ticket_details_chat_bubbles':
 					case 'chat_bubbles_enable_ticket':
@@ -878,12 +922,28 @@ class Settings {
 						$saved_settings[$key] = intval($value);
 						break;
 
+					case 'ticket_metrics_chart_type_agent':
+					case 'ticket_metrics_chart_type_type':
+						$saved_settings[$key] = in_array( $value, [ 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ], true ) ? $value : 'pie';
+						break;
+
+					case 'ticket_metrics_type_field':
+						$saved_settings[$key] = sanitize_text_field($value);
+						break;
+
+					case 'ticket_metrics_tracked_agents':
+						if ( is_string( $value ) ) {
+							$value = array_filter( explode( ',', $value ) );
+						}
+						$saved_settings[$key] = array_map('intval', (array) $value);
+						break;
+
 					case 'holidays':
 						$saved_settings[$key] = sanitize_textarea_field($value);
 						break;
 
 					case 'utm_columns':
-						$saved_settings[$key] = is_array($value) ? array_map('sanitize_key', $value) : [];
+						$saved_settings[$key] = array_map('sanitize_key', (array) $value);
 						break;
 
 					case 'utm_rename_rules':
@@ -930,7 +990,7 @@ class Settings {
 						break;
 
 					case 'queue_macro_statuses':
-						$saved_settings[$key] = is_array($value) ? array_map('intval', $value) : [];
+						$saved_settings[$key] = array_map('intval', (array) $value);
 						break;
 
 					case 'conditional_hiding_rules':
@@ -974,13 +1034,21 @@ class Settings {
 						break;
 				}
 			} else {
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "PROCESSING KEY: {$key} - NOT found in \$input. Applying fallback logic.", 'core' );
+				}
 				// Handle unchecked checkboxes, which are not present in the form submission.
-				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled') {
+				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled' || $key === 'ticket_metrics_show_other_agents' || $key === 'ticket_metrics_verbose_logging') {
 					$saved_settings[$key] = 0;
-				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses')) {
+				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses') || $key === 'ticket_metrics_tracked_agents') {
 					$saved_settings[$key] = [];
 				}
 			}
+		}
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( '==== STACKBOOST DIAGNOSTIC: sanitize_settings() FINISHED ====', 'core' );
+			stackboost_log( 'FINAL ARRAY TO BE SAVED: ' . json_encode( $saved_settings ), 'core' );
 		}
 
 		return $saved_settings;
@@ -1023,6 +1091,7 @@ class Settings {
 			'enable_log_directory'         => [ 'label' => __( 'Company Directory', 'stackboost-for-supportcandy' ), 'feature' => 'staff_directory' ],
 			'enable_log_onboarding'        => [ 'label' => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ), 'feature' => 'onboarding_dashboard' ],
 			'enable_log_appearance'        => [ 'label' => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ), 'feature' => '' ],
+			'enable_log_ticket_metrics'    => [ 'label' => __( 'Ticket Metrics', 'stackboost-for-supportcandy' ), 'feature' => 'ticket_metrics' ],
 		];
 
 		foreach ( $modules as $key => $data ) {
@@ -1169,6 +1238,8 @@ class Settings {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
 		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( '==== STACKBOOST DIAGNOSTIC: ajax_save_settings() ENDPOINT HIT ====', 'core' );
+			stackboost_log( 'RAW ENTIRE $_POST PAYLOAD: ' . json_encode($_POST), 'core' );
 			stackboost_log( 'AJAX Save Settings Called', 'core' );
 			stackboost_log( 'POST Data: ' . json_encode( $_POST ), 'core' );
 		}
@@ -1199,6 +1270,7 @@ class Settings {
 			case 'stackboost-directory': $capability = STACKBOOST_CAP_MANAGE_DIRECTORY; break;
 			case 'stackboost-onboarding-dashboard': $capability = STACKBOOST_CAP_MANAGE_ONBOARDING; break;
 			case 'stackboost-appearance': $capability = STACKBOOST_CAP_MANAGE_APPEARANCE; break;
+			case 'stackboost-ticket-metrics': $capability = STACKBOOST_CAP_MANAGE_TICKET_METRICS; break;
 		}
 
 		if ( ! current_user_can( $capability ) ) {
@@ -1219,8 +1291,13 @@ class Settings {
 
 		$settings_data = Request::get_post( 'stackboost_settings', null, 'raw' );
 
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'DATA EXTRACTED FROM Request::get_post for stackboost_settings: ' . json_encode($settings_data), 'core' );
+		}
+
 		if ( ! $settings_data || ! is_array( $settings_data ) ) {
             if ( function_exists( 'stackboost_log' ) ) {
+				stackboost_log( 'FATAL ABORT IN AJAX: $settings_data is either null or not an array!', 'core' );
                 stackboost_log( 'Invalid settings data structure.', 'core' );
             }
 			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
@@ -1245,7 +1322,11 @@ class Settings {
         }
 
 		// Update the option.
-		update_option( 'stackboost_settings', $sanitized_settings );
+		$update_result = update_option( 'stackboost_settings', $sanitized_settings );
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( 'update_option() RETURN VALUE: ' . ($update_result ? 'TRUE (Changes saved to DB)' : 'FALSE (Identical to DB or Failed)'), 'core' );
+		}
 
 		wp_send_json_success( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) );
 	}

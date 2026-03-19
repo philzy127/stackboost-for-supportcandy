@@ -10,7 +10,7 @@ def remove_method_by_name(content, method_name):
     """
     # Regex to find the method definition ONLY.
     # We do NOT try to match the docblock here to avoid catastrophic backtracking.
-    pattern = re.compile(r"(public function " + re.escape(method_name) + r"\s*\(.*?\)\s*\{)", re.DOTALL)
+    pattern = re.compile(r"((?:public|private|protected)\s+function\s+" + re.escape(method_name) + r"\s*\(.*?\)\s*(?::\s*[A-Za-z0-9_\\]+\s*)?\{)", re.DOTALL)
 
     match = pattern.search(content)
     if not match:
@@ -130,6 +130,7 @@ def sanitize_plugin_file(filepath):
         r'StackBoost\\ForSupportCandy\\Modules\\Directory\\Admin\\TicketWidgetSettings',
         r'StackBoost\\ForSupportCandy\\Modules\\OnboardingDashboard\\OnboardingDashboard',
         r'StackBoost\\ForSupportCandy\\Modules\\ChatBubbles\\WordPress',
+        r'StackBoost\\ForSupportCandy\\Modules\\ChatBubbles',
     ]
 
     for module in modules_to_remove:
@@ -212,11 +213,33 @@ def sanitize_settings_file(filepath):
         content = remove_method_by_name(content, method)
 
     # Remove the License Card HTML Block
-    card_pattern = r'<!-- Card 2: License -->\s*<div class="stackboost-card">.*?do_settings_sections\( \'stackboost-for-supportcandy\' \);\s*\?>\s*</form>\s*</div>'
+    card_pattern = r'<!-- Card 2: License -->\s*<div class="stackboost-card">.*?do_settings_sections\(\s*\'stackboost-for-supportcandy\'\s*\);\s*\?>\s*</form>\s*</div>'
     content = re.sub(card_pattern, '', content, flags=re.DOTALL)
 
     with open(filepath, 'w') as f:
         f.write(content)
+
+def strip_pro_tags(filepath):
+    """
+    Strips any code found between <stackboost-pro-only> tags.
+    Supports both PHP (// <stackboost-pro-only>) and HTML (<!-- <stackboost-pro-only> -->) comment styles.
+    """
+    if not os.path.exists(filepath):
+        return
+
+    with open(filepath, 'r') as f:
+        content = f.read()
+
+    # Regex to capture the tags and everything in between
+    # Handles both // and <!-- --> comment styles
+    pattern = r"[ \t]*(?://|<!--)\s*<stackboost-pro-only>\s*(?:-->)?.*?(?://|<!--)\s*</stackboost-pro-only>\s*(?:-->)?[ \t]*\n?"
+
+    new_content = re.sub(pattern, '', content, flags=re.MULTILINE | re.DOTALL)
+
+    if new_content != content:
+        with open(filepath, 'w') as f:
+            f.write(new_content)
+
 
 def sanitize_uninstall_service(filepath):
     if not os.path.exists(filepath):
@@ -260,6 +283,15 @@ if __name__ == "__main__":
     functions_file = os.path.join(base_dir, 'includes/functions.php')
     settings_file = os.path.join(base_dir, 'src/WordPress/Admin/Settings.php')
     uninstall_file = os.path.join(base_dir, 'src/Services/UninstallService.php')
+    ticket_view_file = os.path.join(base_dir, 'src/Modules/TicketView/WordPress.php')
+    readme_file = os.path.join(base_dir, 'README.md')
+
+    # The core sanitization function that handles all tagged blocks
+    strip_pro_tags(plugin_file)
+    strip_pro_tags(functions_file)
+    strip_pro_tags(settings_file)
+    strip_pro_tags(ticket_view_file)
+    strip_pro_tags(readme_file)
 
     sanitize_plugin_file(plugin_file)
     sanitize_functions_file(functions_file)

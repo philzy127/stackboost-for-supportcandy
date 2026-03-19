@@ -1,6 +1,20 @@
 Change Log
 ==========
 
+1.6.2
+-----
+*   Added: Ticket Metrics - Replaced the include/exclude agent filter with a two-box "Tracked Agents" vs "Other Agents" interface.
+*   Added: Ticket Metrics - Grouped all untracked agents into an "Other" category to prevent chart pollution.
+*   Added: Ticket Metrics - Added a "Queue Health" 1-row card combining Resolution Rate, Tickets Created, and Tickets Closed into a single horizontal view.
+*   Added: Ticket Metrics - "Touched Tickets" and "Active Backlog" metrics to assess total support queue volume visually.
+*   Added: Ticket Metrics - Individual tooltips for the "Other Agents" category to display specific ticket breakdowns per agent.
+*   Added: Ticket Metrics - Dashboard auto-loads "This week" metrics upon initialization instead of requiring a manual click.
+*   Fixed: Ticket Metrics - Initial Response Calculation (FRT) now accurately queries the native `frd` SupportCandy column.
+*   Fixed: Ticket Metrics - "Tickets Created" metric calculation error returning 0.
+*   Fixed: Ticket Metrics - Tooltip missing initialization bug inside dynamically loaded Modals.
+*   Fixed: Ticket Metrics - "Undefined" label on bar/radar charts missing default datasets.
+*   Improved: Ticket Metrics - Refactored Modal layouts for 2-column flex grids, moved headings inside cards, and rearranged dashboard metric blocks.
+
 1.6.1
 -----
 *   Added: Ticket Details Card - "Chat Bubbles" view for conversation history (Pro Feature).
