@@ -14,15 +14,16 @@ StackBoost enhances SupportCandy with advanced workflow, UI controls, and powerf
 StackBoost includes several modules that can be enabled or disabled based on your needs.
 
 ### Ticket View Card
-Boost agent efficiency with a powerful, right-click "Details Card" popup directly from the ticket list.
-*   **Smart Layout:** Automatically adapts to a side-by-side view for longer tickets, maximizing screen real estate.
-*   **Interactive History:** Expand and collapse full conversation threads instantly without leaving the main dashboard.
+Eliminate "tab fatigue" and boost agent efficiency with a high-performance preview system accessible directly from the ticket list.
+*   **Instant Context:** Right-click any ticket to launch a "Details Card" containing essential info and conversation history without leaving the main dashboard.
+*   **Smart Responsive Layout:** The interface automatically adapts to a side-by-side view for longer tickets, maximizing screen real estate.
+*   **Interactive History:** Expand or collapse full conversation threads instantly via AJAX-powered triggers for a lightning-fast experience.
 
 ### Core Enhancements
-Take back control of your support dashboard and refine the user experience.
-*   **General Cleanup:** Automatically hide empty, unused columns or force-hide the priority column to reduce visual clutter.
-*   **After Hours Notice:** Display a clear, customizable warning banner on the ticket form when users attempt to submit requests outside of your configured business hours.
-*   **Prevent Premature Closing:** Hide the "Reply & Close" button for non-agent users to ensure tickets stay open until support has fully resolved the issue.
+Take back control of your support dashboard with essential Quality of Life (QoL) refinements.
+*   **Interface Cleanup:** Automatically declutter your workspace by hiding empty columns or force-hiding the Priority column.
+*   **After Hours Notice:** Set clear boundaries by displaying customizable warning banners on ticket forms when users attempt to submit requests outside of your business hours.
+*   **Enforced Resolution:** Hide the "Reply & Close" button for non-agents to ensure tickets only reach a 'Closed' status once your team has verified the solution.
 
 ### Conditional Options
 Take granular control over your ticket forms by defining exactly which options are visible to specific user groups. Using an intuitive administration matrix, you can block specific WordPress or SupportCandy roles from seeing individual choices within multiple-choice fields (such as dropdowns, checkboxes, and radio buttons).
@@ -43,32 +44,33 @@ Our most powerful feature! Generate consistent, professional ticket summaries fo
 *   **Customizable Fields:** Select exactly which fields to include in the email summary.
 
 ### Conditional Views (Pro Tier)
-Create powerful, context-aware rules to control column visibility in the ticket list based on the active view (filter).
-*   **SHOW ONLY:** Make a column visible *only* in a specific view and hide it everywhere else by default.
-*   **HIDE:** Explicitly hide a column in a specific view.
-*   **SHOW:** Create exceptions to override implicit hiding rules.
+Stop overwhelming agents with irrelevant data. Transform the ticket list into a context-aware workspace that adapts to the specific task at hand.
+*   **Contextual Intelligence:** Set columns to "Show Only" in specific views (e.g., show "Order ID" only in the 'Billing' filter) and hide them everywhere else automatically.
+*   **Precision Overrides:** Use HIDE and SHOW rules to create exceptions for specific workflows, ensuring the right data is always front and center.
+*   **Grid Optimization:** Drastically reduce horizontal scrolling and visual noise by tailoring the ticket list to the unique needs of every department.
 
 ### Metrics *(NEW)* (Pro Tier)
-Gain deep, actionable insights into your support desk performance.
-*   **Visual Dashboards:** Beautiful, interactive charts detailing ticket volume, resolution rates, and agent activity.
-*   **Agent Tracking:** Group agents into tracked vs untracked categories to prevent chart pollution.
-*   **Queue Health:** Monitor active backlogs and initial response times at a glance.
+Turn raw support data into a competitive advantage with deep, real-time visualization.
+*   **Actionable Dashboards:** High-performance interactive charts provide a bird's-eye view of ticket volume, resolution trends, and queue health.
+*   **Clean Data Reporting:** Filter out the noise by grouping agents into 'Tracked' vs 'Untracked' categories—perfect for keeping your charts focused on active support activity.
+*   **Queue Health Monitoring:** Track initial response times and backlog growth at a glance to identify bottlenecks before they impact customer satisfaction.
 
 ### Queue Macro (Pro Tier)
-Manage user expectations instantly by calculating their place in line.
-*   **Dynamic Counting:** Automatically counts open tickets by type to accurately notify the recipient of their specific queue position upon new ticket submission.
-*   **Native GUI Integration:** Available directly inside the default SupportCandy workflow builder GUI. Just click and apply!
+Manage customer expectations automatically by providing total transparency into your support volume.
+*   **Dynamic Place-in-Line:** Automatically calculates a user's position in the queue based on open tickets of the same type and notifies them instantly upon submission.
+*   **Workflow Integration:** Plugs directly into the SupportCandy workflow builder. No manual counting or complex math required—just click to apply the macro to your automated replies.
 
 ### Chat Bubbles (Pro Tier)
-Transform standard ticket threads into a modern, easy-to-read chat bubble interface within the Ticket View Card.
-*   **Full Customization:** Completely customizable appearance allowing you to set the exact look and feel you desire.
-*   **Included Themes:** Instantly swap to one of the many professionally designed, pre-built theme options.
+A complete UI overhaul for ticket conversations. This independent module replaces the traditional "email-style" thread with a modern, intuitive chat interface.
+*   **Thread Transformation:** Takes over the "Notes" and conversation sections of your tickets, turning long text blocks into easy-to-read interactive bubbles.
+*   **Universal Utility:** Once enabled, this sleek interface is utilized across the product, providing a consistent experience in both the main ticket view and the Ticket Details Card.
+*   **Customizable Themes:** Swap between several professionally designed themes or use the full styling suite to match your brand's exact aesthetic.
 
 ### After Ticket Survey (Pro Tier)
-Collect customer satisfaction feedback automatically.
-*   **Survey Builder:** Create custom surveys with various question types.
-*   **Automation:** Automatically email the survey link when a ticket is closed.
-*   **Conflict Prevention:** Automatically enforces structural limits (like one "Ticket Number" field per survey) to maintain data integrity and prevent submission conflicts.
+Close the loop on every interaction by automating your customer satisfaction (CSAT) feedback.
+*   **Advanced Survey Builder:** Create custom feedback forms with various question types directly within your WordPress admin.
+*   **Automated Dispatch:** StackBoost monitors your ticket statuses and automatically emails the survey link the moment a ticket is closed.
+*   **Conflict Prevention:** Intelligent logic ensures data integrity by preventing duplicate submissions and enforcing structural limits (like one survey per unique Ticket ID).
 
 ### Contact Directory (Business Tier)
 A complete system to manage staff, locations, and departments.
