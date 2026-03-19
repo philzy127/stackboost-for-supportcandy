@@ -68,7 +68,7 @@ Transform standard ticket threads into a modern, easy-to-read chat bubble interf
 Collect customer satisfaction feedback automatically.
 *   **Survey Builder:** Create custom surveys with various question types.
 *   **Automation:** Automatically email the survey link when a ticket is closed.
-*   **Highlander Rule:** Enforces a limit of one "Ticket Number" field per survey to prevent data conflicts.
+*   **Conflict Prevention:** Automatically enforces structural limits (like one "Ticket Number" field per survey) to maintain data integrity and prevent submission conflicts.
 
 ### Contact Directory (Business Tier)
 A complete system to manage staff, locations, and departments.
