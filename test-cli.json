@@ -1,0 +1,33 @@
+{
+    "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+    "steps": [
+        {
+            "step": "installPlugin",
+            "pluginData": {
+                "resource": "wordpress.org/plugins",
+                "slug": "supportcandy"
+            },
+            "options": {
+                "activate": true
+            }
+        },
+        {
+            "step": "installPlugin",
+            "pluginData": {
+                "resource": "wordpress.org/plugins",
+                "slug": "plugin-check"
+            },
+            "options": {
+                "activate": true
+            }
+        },
+        {
+            "step": "runPHP",
+            "code": "<?php require_once 'wp-load.php'; require_once 'wp-admin/includes/plugin.php'; activate_plugin( 'stackboost-for-supportcandy/stackboost-for-supportcandy.php' ); ?>"
+        },
+        {
+            "step": "wp-cli",
+            "command": "wp plugin check stackboost-for-supportcandy --format=json"
+        }
+    ]
+}
