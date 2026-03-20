@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'STACKBOOST_VERSION', '1.6.3.4' );
+define( 'STACKBOOST_VERSION', '1.6.3.5' );
 define( 'STACKBOOST_PLUGIN_FILE', __FILE__ );
 define( 'STACKBOOST_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'STACKBOOST_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
