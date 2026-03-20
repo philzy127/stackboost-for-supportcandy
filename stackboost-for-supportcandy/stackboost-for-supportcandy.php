@@ -2,7 +2,7 @@
 /**
  * Plugin Name: StackBoost - For SupportCandy
  * Description: Advanced flexibility for SupportCandy. StackBoost provides a modular suite of tools including role-based logic, directory integration, and workflow automation to streamline your support operations.
- * Version: 1.6.3.4
+ * Version: 1.6.3.5
  * Author: StackBoost
  * Author URI: https://stackboost.net
  * Text Domain: stackboost-for-supportcandy
