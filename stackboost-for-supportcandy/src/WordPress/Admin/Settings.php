@@ -1499,7 +1499,9 @@ class Settings {
 
         wp_send_json_success();
     }
+    // </stackboost-pro-only>
 
+    // <stackboost-pro-only>
     /**
      * AJAX handler to deactivate a license.
      */
