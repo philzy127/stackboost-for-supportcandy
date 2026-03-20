@@ -154,7 +154,6 @@ class Core {
 
 	/**
 	 * Save configuration (rules + enabled status).
-	 * Enforces the "Lite Limit" of 5 rules.
 	 *
 	 * @param array $new_rules The full array of rules to save.
 	 * @param bool  $is_enabled Whether the feature is enabled.
