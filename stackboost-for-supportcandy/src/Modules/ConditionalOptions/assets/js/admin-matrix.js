@@ -14,7 +14,7 @@
         isEnabled: stackboostCO.enabled,
         fieldOptionsCache: {},
         rolesCache: { wp: [], sc: [] },
-        limit: (stackboostCO.tier === 'lite') ? 5 : 999,
+        limit: 999,
         currentEditingSlug: null,
         isNewRule: false
     };
