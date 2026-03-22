@@ -1,0 +1,29 @@
+name: Release Build
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        path: 'stackboost-for-supportcandy'
+
+    - name: Build Artifact
+      run: |
+        # Zip the directory so the root folder inside the zip is 'stackboost-for-supportcandy'
+        zip -r stackboost-for-supportcandy.zip stackboost-for-supportcandy/ -x "*/.git/*" "*/.github/*"
+
+    - name: Upload Release Asset
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          stackboost-for-supportcandy.zip

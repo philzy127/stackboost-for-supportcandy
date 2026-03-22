@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+1.6.4
+-----
+*   Fixed: Compliance - Fully removes non-functional Pro settings ("Card View Type" and "Enable Chat Bubbles") from the free plugin build to comply with WordPress.org repository rules, while enforcing strict functional defaults.
+
 1.6.2
 -----
 *   Added: Ticket Metrics - Replaced the include/exclude agent filter with a two-box "Tracked Agents" vs "Other Agents" interface.

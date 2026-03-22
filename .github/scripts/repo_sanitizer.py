@@ -179,45 +179,9 @@ def sanitize_functions_file(filepath):
         f.write(content)
 
 def sanitize_settings_file(filepath):
-    if not os.path.exists(filepath):
-        print(f"File not found: {filepath}")
-        return
-
-    # print(f"Sanitizing {filepath}...")
-    with open(filepath, 'r') as f:
-        content = f.read()
-
-    # Remove Actions
-    actions_to_remove = [
-        'display_license_notices',
-        'ajax_activate_license',
-        'ajax_deactivate_license',
-    ]
-    for action in actions_to_remove:
-        # Regex to match add_action( 'hook', [ $this, 'method' ] );
-        pattern = r"^\s*add_action\s*\(\s*['\"][^'\"]+['\"]\s*,\s*\[\s*\$this\s*,\s*['\"]" + action + r"['\"]\s*\]\s*\);\s*$"
-        content = re.sub(pattern, '', content, flags=re.MULTILINE)
-
-    # Remove Settings Registration
-    content = re.sub(r"^\s*add_settings_section\s*\(\s*['\"]stackboost_license_section['\"].*?\);\s*$", "", content, flags=re.MULTILINE | re.DOTALL)
-    content = re.sub(r"^\s*add_settings_field\s*\(\s*['\"]stackboost_license_key['\"].*?\);\s*$", "", content, flags=re.MULTILINE | re.DOTALL)
-
-    # Remove Methods using robust parser
-    methods_to_remove = [
-        'display_license_notices',
-        'render_license_input',
-        'ajax_activate_license',
-        'ajax_deactivate_license',
-    ]
-    for method in methods_to_remove:
-        content = remove_method_by_name(content, method)
-
-    # Remove the License Card HTML Block
-    card_pattern = r'<!-- Card 2: License -->\s*<div class="stackboost-card">.*?do_settings_sections\(\s*\'stackboost-for-supportcandy\'\s*\);\s*\?>\s*</form>\s*</div>'
-    content = re.sub(card_pattern, '', content, flags=re.DOTALL)
-
-    with open(filepath, 'w') as f:
-        f.write(content)
+    # This function is largely obsolete now as the <stackboost-pro-only> tags
+    # handle removing the license sections in Settings.php more reliably.
+    pass
 
 def strip_pro_tags(filepath):
     """

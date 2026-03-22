@@ -65,6 +65,10 @@ echo "Sanitizing Code..."
 # Pass the root directory to the sanitizer
 python3 .github/scripts/repo_sanitizer.py "$REPO_DIR"
 
+echo "Configuring GitHub Actions for SBSC repository..."
+mkdir -p "$REPO_DIR/.github/workflows"
+cp .github/scripts/sbsc-release.yml "$REPO_DIR/.github/workflows/release.yml"
+
 cd "$BUILD_DIR/repo"
 zip -r -q ../../stackboost-for-supportcandy.zip .
 cd ../..

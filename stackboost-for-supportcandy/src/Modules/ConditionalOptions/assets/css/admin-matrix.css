@@ -12,18 +12,6 @@
     padding-bottom: 15px;
 }
 
-.pm-limit-counter {
-    font-weight: bold;
-    background: #f0f0f1;
-    padding: 5px 10px;
-    border-radius: 4px;
-}
-
-.pm-limit-counter.limit-reached {
-    color: #d63638;
-    background: #fbeaea;
-}
-
 /* Modal Specific Styles */
 .stackboost-modal-box {
     /* Ensure modal box has proper max-height scrolling if content is long */
