@@ -94,21 +94,31 @@ class WordPress extends Module {
 		}
 
 		// Determine View Type
-		$view_type = $options['ticket_details_view_type'] ?? 'standard';
-		if ( 'utm' === $view_type && ! stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
-			$view_type = 'standard'; // Fallback if Pro feature is disabled
+		$view_type = 'standard';
+		// <stackboost-pro-only>
+		if ( isset( $options['ticket_details_view_type'] ) ) {
+			$view_type = $options['ticket_details_view_type'];
+			if ( 'utm' === $view_type && ! stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
+				$view_type = 'standard'; // Fallback if Pro feature is disabled
+			}
 		}
+		// </stackboost-pro-only>
 
 		// Determine Content to Include
 		$content_type = $options['ticket_details_content'] ?? 'details_only';
 		$image_handling = $options['ticket_details_image_handling'] ?? 'fit';
 		$limit = isset( $options['ticket_details_history_limit'] ) ? intval( $options['ticket_details_history_limit'] ) : 0;
-		$chat_bubbles = ! empty( $options['ticket_details_chat_bubbles'] );
+		$chat_bubbles = false;
 
-		// Enforce Pro Check for Chat Bubbles
-		if ( $chat_bubbles && ! stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
-			$chat_bubbles = false;
+		// <stackboost-pro-only>
+		if ( ! empty( $options['ticket_details_chat_bubbles'] ) ) {
+			$chat_bubbles = true;
+			// Enforce Pro Check for Chat Bubbles
+			if ( $chat_bubbles && ! stackboost_is_feature_active( 'unified_ticket_macro' ) ) {
+				$chat_bubbles = false;
+			}
 		}
+		// </stackboost-pro-only>
 
 		$details_html = '';
 		$history_html = '';
@@ -391,6 +401,7 @@ class WordPress extends Module {
 		add_settings_field( 'stackboost_enable_ticket_details_card', __( 'Enable Feature', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_ticket_details_card_section', [ 'id' => 'enable_ticket_details_card', 'desc' => 'Shows a card with ticket details on right-click.' ] );
 
 		// New Options for Ticket Details Card
+		// <stackboost-pro-only>
 		add_settings_field(
 			'stackboost_ticket_details_view_type',
 			__( 'Card View Type', 'stackboost-for-supportcandy' ),
@@ -399,6 +410,7 @@ class WordPress extends Module {
 			'stackboost_ticket_details_card_section',
 			[ 'id' => 'ticket_details_view_type', 'desc' => 'Choose how the ticket details are displayed.' ]
 		);
+		// </stackboost-pro-only>
 
 		add_settings_field(
 			'stackboost_ticket_details_content',
@@ -447,6 +459,7 @@ class WordPress extends Module {
 			]
 		);
 
+		// <stackboost-pro-only>
 		add_settings_field(
 			'stackboost_ticket_details_chat_bubbles',
 			__( 'Enable Chat Bubbles', 'stackboost-for-supportcandy' ) . ' <span class="stackboost-badge-pro">PRO</span>',
@@ -459,6 +472,7 @@ class WordPress extends Module {
 				'feature' => 'unified_ticket_macro',
 			]
 		);
+		// </stackboost-pro-only>
 
 		// Section: General Cleanup
 		add_settings_section( 'stackboost_general_cleanup_section', __( 'General Cleanup', 'stackboost-for-supportcandy' ), null, $page_slug );
@@ -528,6 +542,7 @@ class WordPress extends Module {
 		}
 	}
 
+	// <stackboost-pro-only>
 	/**
 	 * Renders a checkbox field that is disabled if a Pro feature is not active.
 	 */
@@ -549,6 +564,7 @@ class WordPress extends Module {
 			echo '<p class="description" style="color: #d63638;">' . esc_html__( 'This feature is available in the Pro version.', 'stackboost-for-supportcandy' ) . '</p>';
 		}
 	}
+	// </stackboost-pro-only>
 
 	/**
 	 * Renders a select field for a settings page.
@@ -570,6 +586,7 @@ class WordPress extends Module {
 		}
 	}
 
+	// <stackboost-pro-only>
 	/**
 	 * Renders the view type select field with Pro logic.
 	 */
@@ -651,6 +668,7 @@ class WordPress extends Module {
 			echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
 		}
 	}
+	// </stackboost-pro-only>
 
 	/**
 	 * Renders a textarea field for a settings page.

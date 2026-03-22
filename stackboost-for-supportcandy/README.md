@@ -3,7 +3,7 @@ Contributors: StackBoost
 Tags: supportcandy, helpdesk, support, ticket system
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.6.3
+Stable tag: 1.6.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -88,7 +88,7 @@ Streamline your employee onboarding process.
 ### Diagnostics & Logging
 A robust system for troubleshooting.
 *   **Centralized Logging:** A master switch controls logging across all modules.
-*   **Module-Level Control:** Enable file logging for specific modules (e.g., UTM, Directory) while keeping others silent.
+*   **Module-Level Control:** Enable file logging for specific modules while keeping others silent.
 *   **Browser Console Logs:** View debug information directly in the browser console when enabled.
 
 ## 3rd-Party Libraries

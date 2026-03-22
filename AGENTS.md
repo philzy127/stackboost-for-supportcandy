@@ -78,7 +78,12 @@ Privacy must be architectural, not an afterthought. Adhere to these constraints 
     *   **Prohibited:** Linking to Google Fonts, CDNs (Bootstrap, FontAwesome), or external image hosts.
 *   **Consent Mechanisms:**
     *   **Exception Handling:** If a third-party resource is technically impossible to bundle (e.g., an external API widget), it must be wrapped in a strict "click-to-load" placeholder. The connection must not occur until the user explicitly consents via interaction.
-## 🚀 4. PR & Deployment Protocol
+## 🧪 4. Testing & Verification Environment
+Jules must verify code changes prior to completion using the standardized local environment:
+*   **WordPress Playground CLI:** Always utilize the WordPress Playground CLI (e.g., via `npx @wp-playground/cli` and `blueprint.json`) to verify that the plugin loads, initializes correctly, and functions as expected during testing without requiring a full local server stack.
+*   **WordPress Plugin Checker (PCP) Integration:** Within the Playground environment, ensure you run and evaluate the code against the official WordPress Plugin Checker to programmatically validate compliance, security, and repository guidelines.
+
+## 🚀 5. PR & Deployment Protocol
 Jules must execute the following checklist upon code completion and before PR submission:
 1. **Technical Housekeeping:**
     *   **Translation Sync:** Regenerate the plugin's `.pot` file to include any new strings.
@@ -96,14 +101,14 @@ Jules must execute the following checklist upon code completion and before PR su
     *   **PR Versioning (Final Phase):** When the user explicitly instructs you to "Run this as a PR" or "Create a PR", you must DROP the 4th digit entirely and increment the PATCH (3rd digit) version number (e.g., `1.6.1.18` becomes `1.6.2`). PRs never have a 4th-digit build number.
     *   **Zip Validation:** Verify the build script output is installable.
     *   **Tagging:** Create a PATCH tag. Ask lead developer before MINOR/MAJOR increments.
-## 🚫 5. The Exclusion Protocol (Strict - Fix Before Ignore)
+## 🚫 6. The Exclusion Protocol (Strict - Fix Before Ignore)
 You may only use `// phpcs:ignore` comments as a last resort.
 1. **Remedy First:** If a linter warning can be resolved by refactoring (e.g., creating a helper class for repetitive patterns, using a Repository pattern for DB access, or properly sanitizing input), you **MUST** fix the code rather than suppress the warning.
 2. **Exhaustion:** Only suppress if there is no secure/efficient architectural alternative.
 3. **Specificity:** Use specific codes (e.g., `WordPress.Security.NonceVerification.Missing`).
 4. **Proximity:** Place immediately preceding the line.
 5. **No Stacking:** Distribute ignores to the specific lines they apply to.
-## 🧪 6. Pre-Output Self-Correction Checklist
+## ✅ 7. Pre-Output Self-Correction Checklist
 1. Did I prefix every function and class?
 2. Is there a nonce check before saving data?
 3. Did I escape all HTML output (using `esc_html__` instead of `__`)?
