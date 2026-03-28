@@ -28,8 +28,8 @@ class CertificateHandler {
 			wp_send_json_error( 'Invalid Nonce' );
 		}
 
-		$message = Request::get_post( 'message', '', 'text' );
-		$context = Request::get_post( 'context', 'onboarding_js', 'text' );
+		$message = isset( $_POST['message'] ) ? sanitize_text_field( wp_unslash( $_POST['message'] ) ) : '';
+		$context = isset( $_POST['context'] ) ? sanitize_text_field( wp_unslash( $_POST['context'] ) ) : 'onboarding_js';
 
 		if ( ! empty( $message ) ) {
 			stackboost_log( "[Client] $message", $context );
@@ -45,7 +45,7 @@ class CertificateHandler {
 		stackboost_log( 'Certificate Generation Initiated.', 'onboarding' );
 		// Verify Nonce
 		if ( ! check_ajax_referer( 'stkb_onboarding_certificate_nonce', 'nonce', false ) ) {
-			$post_nonce = Request::get_post( 'nonce', 'NULL', 'text' );
+			$post_nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : 'NULL';
 			stackboost_log( 'Certificate Generation Failed: Invalid Nonce. POST nonce: ' . $post_nonce, 'error' );
 			wp_send_json_error( 'Security check failed. Please refresh the page and try again.' );
 		}
@@ -58,7 +58,7 @@ class CertificateHandler {
 			}
 		}
 
-		$raw_attendees = Request::get_post( 'present_attendees', '', 'raw' );
+		$raw_attendees = isset( $_POST['present_attendees'] ) ? wp_unslash( $_POST['present_attendees'] ) : '';
 		// Ensure it's unslashed before decoding if Request didn't (Request does if we use 'raw', but let's be sure).
 		// Request::get_post('raw') calls wp_unslash.
 		$present_attendees = isset( $raw_attendees ) ? json_decode( $raw_attendees, true ) : [];

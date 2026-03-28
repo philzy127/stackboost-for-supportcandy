@@ -49,7 +49,7 @@ class Page {
 			$tabs['import_export'] = __( 'Import / Export', 'stackboost-for-supportcandy' );
 		}
 
-		$active_tab = Request::get_get( 'tab', 'steps', 'key' );
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'steps';
 
 		// Security check: if user tries to access a restricted tab directly via URL
 		if ( in_array( $active_tab, [ 'certificate', 'settings', 'import_export' ], true ) && ! current_user_can( STACKBOOST_CAP_MANAGE_SETTINGS ) ) {

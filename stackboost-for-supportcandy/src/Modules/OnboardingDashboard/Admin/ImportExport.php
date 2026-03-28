@@ -276,7 +276,7 @@ class ImportExport {
 			wp_send_json_error( [ 'message' => 'Permission denied.' ] );
 		}
 
-		$file = Request::get_file( 'import_file' );
+		$file = isset( $_FILES['import_file'] ) ? $_FILES['import_file'] : null;
 
 		if ( empty( $file ) || empty( $file['name'] ) ) {
 			wp_send_json_error( [ 'message' => 'No file uploaded.' ] );
@@ -309,7 +309,7 @@ class ImportExport {
 		}
 
 		// Optional: Clear existing steps
-		if ( Request::has_post( 'clear_existing' ) ) {
+		if ( isset( $_POST['clear_existing'] ) ) {
 			$existing = get_posts( [
 				'post_type'      => 'stkb_onboarding_step',
 				'posts_per_page' => -1,
@@ -381,7 +381,7 @@ class ImportExport {
 		if ( ! empty( $new_sequence ) ) {
 			// If we cleared existing, or if we just want to append, we update the sequence.
 			// If we appended, we should merge.
-			if ( ! Request::has_post( 'clear_existing' ) ) {
+			if ( ! isset( $_POST['clear_existing'] ) ) {
 				$existing_sequence = get_option( 'stackboost_onboarding_sequence', [] );
 				$new_sequence = array_merge( $existing_sequence, $new_sequence );
 			}

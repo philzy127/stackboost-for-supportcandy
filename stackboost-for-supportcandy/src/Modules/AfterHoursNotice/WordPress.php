@@ -176,34 +176,6 @@ class WordPress extends Module {
 
 				<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
 			</form>
-            <script type="text/javascript">
-                jQuery(document).ready(function($) {
-                    function toggleVisibility() {
-                        var useSCWorkingHours = $('#use_sc_working_hours').is(':checked');
-                        var useSCHolidays = $('#use_sc_holidays').is(':checked');
-
-                        if (useSCWorkingHours) {
-                            $('#stackboost-after-hours-schedule-card').hide();
-                        } else {
-                            $('#stackboost-after-hours-schedule-card').show();
-                        }
-
-                        if (useSCHolidays) {
-                            $('#stackboost-after-hours-holidays-card').hide();
-                        } else {
-                            $('#stackboost-after-hours-holidays-card').show();
-                        }
-                    }
-
-                    // Initial check
-                    toggleVisibility();
-
-                    // Change listeners
-                    $('#use_sc_working_hours, #use_sc_holidays').change(function() {
-                        toggleVisibility();
-                    });
-                });
-            </script>
 		</div>
 		<?php
 	}

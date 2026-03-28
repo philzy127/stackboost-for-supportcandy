@@ -179,7 +179,7 @@ class WordPress {
 		if ( 'stackboost_page_stackboost-directory' === $screen->id ) {
 			// Dashicons is loaded by default in admin.
 
-			$active_tab = Request::has_get( 'tab' ) ? Request::get_get( 'tab', 'staff', 'key' ) : 'staff';
+			$active_tab = isset( $_GET['tab'] ) ? isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'staff' : 'staff';
 
 			// Enqueue scripts for the Contact Widget settings tab.
 			if ( 'contact_widget' === $active_tab ) {
@@ -370,7 +370,7 @@ class WordPress {
 	 * Render the admin page.
 	 */
 	public function render_admin_page() {
-		$active_tab = Request::has_get( 'tab' ) ? Request::get_get( 'tab', 'staff', 'key' ) : 'staff';
+		$active_tab = isset( $_GET['tab'] ) ? isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'staff' : 'staff';
 
 		$base_tabs = array(
 			'staff'           => __( 'Staff', 'stackboost-for-supportcandy' ),
@@ -575,7 +575,7 @@ class WordPress {
 		}
 
 		// translators: The user search term.
-		$term = Request::has_get( 'term' ) ? Request::get_get( 'term' ) : '';
+		$term = isset( $_GET['term'] ) ? isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '' : '';
 
 		if ( empty( $term ) ) {
 			wp_send_json_error( 'Missing search term.' );
@@ -637,9 +637,9 @@ class WordPress {
 			if ( isset( \WPSC_Individual_Ticket::$ticket ) && is_object( \WPSC_Individual_Ticket::$ticket ) && isset( \WPSC_Individual_Ticket::$ticket->id ) ) {
 				// Primary method for backend.
 				$current_ticket_id = \WPSC_Individual_Ticket::$ticket->id;
-			} elseif ( Request::has_request( 'ticket_id' ) ) {
+			} elseif ( isset( $_REQUEST['ticket_id'] ) ) {
 				// Fallback for frontend AJAX view, where the ID is in the REQUEST.
-				$current_ticket_id = absint( Request::get_request( 'ticket_id' ) );
+				$current_ticket_id = absint( isset( $_REQUEST['ticket_id'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['ticket_id'] ) ) : '' );
 			}
 
 			// If the passed $ticket is unreliable (frontend), create a new one.
@@ -971,8 +971,8 @@ class WordPress {
 		}
 
 		// Check for our custom query arg to determine the return link.
-		$from      = Request::has_get( 'from' ) ? Request::get_get( 'from', '', 'key' ) : '';
-		$ticket_id = Request::has_get( 'ticket_id' ) ? absint( Request::get_get( 'ticket_id' ) ) : 0;
+		$from      = isset( $_GET['from'] ) ? isset( $_GET['from'] ) ? sanitize_key( wp_unslash( $_GET['from'] ) ) : '' : '';
+		$ticket_id = isset( $_GET['ticket_id'] ) ? absint( isset( $_GET['ticket_id'] ) ? sanitize_text_field( wp_unslash( $_GET['ticket_id'] ) ) : '' ) : 0;
 
 		$return_link = '';
 		if ( 'ticket' === $from && $ticket_id > 0 ) {
@@ -984,8 +984,8 @@ class WordPress {
 			}
 
 			// 2. Fallback/Primary Method: Use the referer URL from the POST data if available.
-			if ( Request::has_post( '_wp_original_http_referer' ) ) {
-				$referer_url = esc_url_raw( Request::get_post( '_wp_original_http_referer' ) );
+			if ( isset( $_POST['_wp_original_http_referer'] ) ) {
+				$referer_url = esc_url_raw( isset( $_POST['_wp_original_http_referer'] ) ? sanitize_text_field( wp_unslash( $_POST['_wp_original_http_referer'] ) ) : '' );
 				// Security check: ensure the referer is for the correct ticket (frontend or backend).
 				$is_frontend_url = strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false;
 				$is_backend_url  = ( strpos( $referer_url, '/wp-admin/' ) !== false && strpos( $referer_url, '&id=' . $ticket_id ) !== false );
@@ -1014,9 +1014,9 @@ class WordPress {
 		}
 
 		$revision_msg = false;
-		if ( Request::has_get( 'revision' ) ) {
+		if ( isset( $_GET['revision'] ) ) {
 			// translators: %s: revision title
-			$revision_msg = sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) Request::get_get( 'revision' ), false ) );
+			$revision_msg = sprintf( __( 'Staff restored to revision from %s.', 'stackboost-for-supportcandy' ), wp_post_revision_title( (int) isset( $_GET['revision'] ) ? sanitize_text_field( wp_unslash( $_GET['revision'] ) ) : '', false ) );
 		}
 
 		$messages[ $this->core->cpts->post_type ] = array(
@@ -1102,8 +1102,8 @@ class WordPress {
 			}
 
 			// Check if the save was triggered from the ticket context, using $_POST from the hidden fields.
-			$from      = Request::has_post( 'from' ) ? Request::get_post( 'from', '', 'key' ) : '';
-			$ticket_id = Request::has_post( 'ticket_id' ) ? absint( Request::get_post( 'ticket_id' ) ) : 0;
+			$from      = isset( $_POST['from'] ) ? isset( $_POST['from'] ) ? sanitize_key( wp_unslash( $_POST['from'] ) ) : '' : '';
+			$ticket_id = isset( $_POST['ticket_id'] ) ? absint( isset( $_POST['ticket_id'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_id'] ) ) : '' ) : 0;
 
 			if ( 'ticket' === $from && $ticket_id > 0 ) {
 				$ticket_url = '';
@@ -1114,8 +1114,8 @@ class WordPress {
 				}
 
 				// 2. Fallback/Primary Method for All Contexts: Use the referer URL.
-				if ( Request::has_post( '_wp_original_http_referer' ) ) {
-					$referer_url = esc_url_raw( Request::get_post( '_wp_original_http_referer' ) );
+				if ( isset( $_POST['_wp_original_http_referer'] ) ) {
+					$referer_url = esc_url_raw( isset( $_POST['_wp_original_http_referer'] ) ? sanitize_text_field( wp_unslash( $_POST['_wp_original_http_referer'] ) ) : '' );
 
 					// Security check: ensure the referer is for the correct ticket (frontend or backend).
 					$is_frontend_url = strpos( $referer_url, 'ticket-id=' . $ticket_id ) !== false;

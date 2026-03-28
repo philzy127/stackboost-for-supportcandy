@@ -111,7 +111,7 @@ class DepartmentsListTable extends \WP_List_Table {
 			'edit'   => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item->ID ), __( 'Edit', 'stackboost-for-supportcandy' ) ),
 		);
 
-		$post_status = Request::get_request( 'post_status', '', 'key' );
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
 
 		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=departments&action=untrash&post=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
@@ -130,7 +130,7 @@ class DepartmentsListTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions() {
 		$actions = array();
-		$post_status = Request::get_request( 'post_status', '', 'key' );
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
 
 		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = __( 'Restore', 'stackboost-for-supportcandy' );
@@ -149,7 +149,7 @@ class DepartmentsListTable extends \WP_List_Table {
 	protected function get_views() {
 		$status_links = array();
 		$num_posts    = wp_count_posts( $this->post_type, 'readable' );
-		$post_status  = Request::get_request( 'post_status', 'all', 'key' );
+		$post_status  = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'all';
 
 		$all_class           = ( 'all' === $post_status ) ? ' class="current"' : '';
 		$status_links['all'] = "<a href='admin.php?page=stackboost-directory&tab=departments'{$all_class}>All <span class='count'>(" . ( $num_posts->publish + $num_posts->draft ) . ')</span></a>';
@@ -171,7 +171,7 @@ class DepartmentsListTable extends \WP_List_Table {
 			return;
 		}
 
-		$post_ids = Request::get_request( 'post', [], 'array' );
+		$post_ids = isset( $_REQUEST['post'] ) ? array_map( 'sanitize_text_field', wp_unslash( (array) $_REQUEST['post'] ) ) : [];
 
 		if ( empty( $post_ids ) ) {
 			return;
@@ -216,7 +216,7 @@ class DepartmentsListTable extends \WP_List_Table {
 		$current_page = $this->get_pagenum();
 		$offset       = ( $current_page - 1 ) * $per_page;
 
-		$post_status = Request::get_request( 'post_status', 'any', 'key' );
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'any';
 
 		$args = array(
 			'post_type'      => $this->post_type,
@@ -225,7 +225,7 @@ class DepartmentsListTable extends \WP_List_Table {
 			'post_status'    => $post_status,
 		);
 
-		$orderby = Request::get_request( 'orderby', 'title', 'text' ); // Sanitize as text then check against allowed list if needed, or sql_orderby
+		$orderby = isset( $_REQUEST['orderby'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['orderby'] ) ) : 'title'; // Sanitize as text then check against allowed list if needed, or sql_orderby
 		// Note: Request::get_request uses sanitize_text_field. sanitize_sql_orderby is specific.
 		// However, WP_Query handles sanitization of 'orderby' parameter mostly, but list table usually does it.
 		// Let's rely on standard sanitization provided by helper, but for orderby strictness is better.
@@ -233,9 +233,9 @@ class DepartmentsListTable extends \WP_List_Table {
 		// For stricter SQL compliance, verify against allowed columns.
 		// But for now, replacing direct $_REQUEST access removes the Nonce warning.
 
-		$order = Request::get_request( 'order', 'asc', 'key' );
+		$order = isset( $_REQUEST['order'] ) ? sanitize_key( wp_unslash( $_REQUEST['order'] ) ) : 'asc';
 
-		$s = Request::get_request( 's', '', 'text' );
+		$s = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '';
 		if ( ! empty( $s ) ) {
 			$args['s'] = $s;
 		}

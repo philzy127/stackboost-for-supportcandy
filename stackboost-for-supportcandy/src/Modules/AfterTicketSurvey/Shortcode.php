@@ -49,9 +49,9 @@ class Shortcode {
 
 		ob_start();
 		// Request::get_post() handles unslash/sanitization. wp_verify_nonce handles the rest.
-		$nonce = Request::get_post( 'stackboost_ats_survey_nonce' );
+		$nonce = isset( $_POST['stackboost_ats_survey_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['stackboost_ats_survey_nonce'] ) ) : '';
 
-		if ( ! is_admin() && Request::has_post( 'stackboost_ats_submit_survey' ) && ! empty( $nonce ) && wp_verify_nonce( $nonce, 'stackboost_ats_survey_form_nonce' ) ) {
+		if ( ! is_admin() && isset( $_POST['stackboost_ats_submit_survey'] ) && ! empty( $nonce ) && wp_verify_nonce( $nonce, 'stackboost_ats_survey_form_nonce' ) ) {
 			$this->handle_submission( $atts );
 		} else {
 			$this->display_form( $atts );
@@ -161,8 +161,8 @@ class Shortcode {
 		}
 
 		// Legacy support
-		$prefill_ticket_id = Request::get_get( 'ticket_id' );
-		$prefill_tech_name = Request::get_get( 'tech' );
+		$prefill_ticket_id = isset( $_GET['ticket_id'] ) ? sanitize_text_field( wp_unslash( $_GET['ticket_id'] ) ) : '';
+		$prefill_tech_name = isset( $_GET['tech'] ) ? sanitize_text_field( wp_unslash( $_GET['tech'] ) ) : '';
 
 		// Layout classes
 		$container_classes = 'stackboost-ats-survey-container';

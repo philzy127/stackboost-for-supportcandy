@@ -190,7 +190,7 @@ class Management {
 			'staff'       => array(),
 		);
 
-		$include_images = Request::get_post( 'include_images' );
+		$include_images = isset( $_POST['include_images'] ) ? sanitize_text_field( wp_unslash( $_POST['include_images'] ) ) : '';
 
 		// Helper to get posts with meta
 		$get_data = function ( $post_type ) use ( $include_images ) {
@@ -253,7 +253,7 @@ class Management {
 			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
 		}
 
-		$json_file = Request::get_file( 'json_file' );
+		$json_file = isset( $_FILES['json_file'] ) ? $_FILES['json_file'] : null;
 
 		if ( ! $json_file || ! file_exists( $json_file['tmp_name'] ) ) {
 			wp_send_json_error( array( 'message' => 'JSON file not found.' ), 400 );
@@ -532,7 +532,7 @@ class Management {
 			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
 		}
 
-		$csv_file = Request::get_file( 'csv_file' );
+		$csv_file = isset( $_FILES['csv_file'] ) ? $_FILES['csv_file'] : null;
 
 		if ( ! $csv_file || ! file_exists( $csv_file['tmp_name'] ) ) {
 			wp_send_json_error( array( 'message' => 'CSV file not found.' ), 400 );

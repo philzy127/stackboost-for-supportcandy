@@ -105,12 +105,12 @@ class WordPress extends Module {
 			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
 		}
 
-		if ( ! Request::has_post( 'stackboost_date_time_settings' ) ) {
+		if ( ! isset( $_POST['stackboost_date_time_settings'] ) ) {
 			wp_send_json_error( __( 'Invalid settings data.', 'stackboost-for-supportcandy' ) );
 		}
 
 		// Use 'array' type to handle nested array structure of settings
-		$input = Request::get_post( 'stackboost_date_time_settings', [], 'raw' );
+		$input = isset( $_POST['stackboost_date_time_settings'] ) ? wp_unslash( $_POST['stackboost_date_time_settings'] ) : [];
 		// Note: 'raw' is used because sanitize_settings expects the array structure.
 		// Since sanitize_settings() iterates and runs sanitize_text_field(), this is safe.
 
@@ -138,7 +138,7 @@ class WordPress extends Module {
 			stackboost_log( "DateTimeFormatting::enqueue_admin_scripts called. Hook: {$hook_suffix}", 'date_time_formatting' );
 		}
 
-		$current_page = Request::get_get( 'page', '', 'key' );
+		$current_page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 
 		if ( $current_page !== $page_slug ) {
 			if ( function_exists( 'stackboost_log' ) ) {
@@ -218,7 +218,7 @@ class WordPress extends Module {
 		// 3. Ticket Details (AJAX)
 		// But NOT in edit forms where raw DB value is needed.
 
-		$action_req = Request::get_request( 'action', '', 'key' );
+		$action_req = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
 		$is_target_context = false;
@@ -229,7 +229,7 @@ class WordPress extends Module {
 		}
 
 		// Check 2: Explicit frontend flag
-		if ( Request::get_post( 'is_frontend', '0', 'text' ) === '1' ) {
+		if ( isset( $_POST['is_frontend'] ) && sanitize_text_field( wp_unslash( $_POST['is_frontend'] ) ) === '1' ) {
 			$is_target_context = true;
 		}
 

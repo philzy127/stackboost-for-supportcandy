@@ -318,7 +318,7 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$field_slug = Request::get_post( 'field_slug', '', 'text' );
+		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['field_slug'] ) ) : '';
 		if ( empty( $field_slug ) ) {
 			wp_send_json_error( [ 'message' => 'Missing field slug' ] );
 		}
@@ -375,7 +375,7 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$context = Request::get_post( 'context', 'wp', 'text' );
+		$context = isset( $_POST['context'] ) ? sanitize_text_field( wp_unslash( $_POST['context'] ) ) : 'wp';
 		$roles   = Core::get_instance()->get_roles( $context );
 
 		wp_send_json_success( $roles );
@@ -391,9 +391,9 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 
-		$rules_json = Request::get_post( 'rules', '[]', 'raw' );
+		$rules_json = isset( $_POST['rules'] ) ? wp_unslash( $_POST['rules'] ) : '[]';
 		$rules      = json_decode( $rules_json, true );
-		$is_enabled = Request::get_post( 'enabled', '', 'text' ) === 'true';
+		$is_enabled = isset( $_POST['enabled'] ) ? sanitize_text_field( wp_unslash( $_POST['enabled'] ) ) : '' === 'true';
 
 		if ( ! is_array( $rules ) ) {
 			wp_send_json_error( [ 'message' => 'Invalid data format' ] );

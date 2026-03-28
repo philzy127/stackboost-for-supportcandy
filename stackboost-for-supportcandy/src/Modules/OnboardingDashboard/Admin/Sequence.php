@@ -31,7 +31,7 @@ class Sequence {
 			return;
 		}
 
-		$tab = Request::get_get( 'tab', 'steps', 'key' );
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'steps';
 		if ( 'steps' !== $tab ) {
 			return;
 		}
@@ -104,8 +104,8 @@ class Sequence {
 		}
 
 		// Nonce verification
-		if ( Request::has_post( 'stkb_sequence_nonce' ) && wp_verify_nonce( Request::get_post( 'stkb_sequence_nonce', '', 'text' ), 'stkb_save_sequence' ) ) {
-			$onboarding_sequence = Request::get_post( 'onboarding_sequence', [], 'array' );
+		if ( isset( $_POST['stkb_sequence_nonce'] ) && wp_verify_nonce( isset( $_POST['stkb_sequence_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['stkb_sequence_nonce'] ) ) : '', 'stkb_save_sequence' ) ) {
+			$onboarding_sequence = isset( $_POST['onboarding_sequence'] ) ? array_map( 'sanitize_text_field', wp_unslash( (array) $_POST['onboarding_sequence'] ) ) : [];
 			if ( ! empty( $onboarding_sequence ) ) {
 				stackboost_log( 'Saving new onboarding sequence...', 'onboarding' );
 				// map array values to int

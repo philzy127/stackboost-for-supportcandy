@@ -120,14 +120,14 @@ class WordPress extends Module {
      */
     public function enqueue_admin_assets(string $hook_suffix) {
         // Robust check for the admin page
-		$page = Request::get_get( 'page', '', 'text' );
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
         if ( 'stackboost-ats' !== $page ) {
             return;
         }
 
         wp_enqueue_style( 'stackboost-ats-admin', STACKBOOST_PLUGIN_URL . 'assets/admin/css/stackboost-ats-admin.css', [], STACKBOOST_VERSION );
 
-		$current_tab = Request::get_get( 'tab', 'questions', 'key' );
+		$current_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'questions';
         $options = get_option( 'stackboost_settings', [] );
         $diagnostic_log_enabled = ! empty( $options['diagnostic_log_enabled'] );
 

@@ -54,7 +54,7 @@ class WordPress {
 
         // Check if we are on a StackBoost page via GET param (more robust) or Screen ID
         $is_stackboost_page = false;
-		$page = Request::get_get( 'page', '', 'text' );
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 
         if ( ! empty( $page ) && strpos( $page, 'stackboost' ) !== false ) {
             $is_stackboost_page = true;
@@ -140,7 +140,7 @@ class WordPress {
             wp_send_json_error( 'Unauthorized' );
         }
 
-		$theme = Request::get_post( 'theme', '', 'text' );
+		$theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
         stackboost_log( 'Appearance: Saving theme: ' . $theme, 'appearance' );
 
         // Validate theme

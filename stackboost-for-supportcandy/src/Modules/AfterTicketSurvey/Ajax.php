@@ -30,8 +30,8 @@ class Ajax {
 		}
 		check_ajax_referer( 'stackboost_ats_results_nonce', 'nonce' );
 
-		$question_id    = Request::has_post( 'question_id' ) ? (int) Request::get_post( 'question_id' ) : 0;
-		$report_heading = Request::get_post( 'report_heading' );
+		$question_id    = isset( $_POST['question_id'] ) ? (int) isset( $_POST['question_id'] ) ? sanitize_text_field( wp_unslash( $_POST['question_id'] ) ) : '' : 0;
+		$report_heading = isset( $_POST['report_heading'] ) ? sanitize_text_field( wp_unslash( $_POST['report_heading'] ) ) : '';
 
 		if ( ! $question_id ) {
 			wp_send_json_error( 'Invalid question ID.' );
@@ -55,7 +55,7 @@ class Ajax {
 		}
 		check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
 
-		$question_id = Request::has_post( 'question_id' ) ? (int) Request::get_post( 'question_id' ) : 0;
+		$question_id = isset( $_POST['question_id'] ) ? (int) isset( $_POST['question_id'] ) ? sanitize_text_field( wp_unslash( $_POST['question_id'] ) ) : '' : 0;
 
 		stackboost_log( "ATS get_question requested for ID: {$question_id}", 'ats' );
 
@@ -90,7 +90,7 @@ class Ajax {
 		}
 		check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
 
-		$question_id = Request::has_post( 'question_id' ) ? (int) Request::get_post( 'question_id' ) : 0;
+		$question_id = isset( $_POST['question_id'] ) ? (int) isset( $_POST['question_id'] ) ? sanitize_text_field( wp_unslash( $_POST['question_id'] ) ) : '' : 0;
 
 		stackboost_log( "ATS save_question called. ID: {$question_id}", 'ats' );
 
@@ -100,17 +100,17 @@ class Ajax {
 			$current_max_order = $this->repository->get_max_sort_order();
 		}
 
-		$is_required = Request::get_post( 'is_required' ) === '1' ? 1 : 0;
-		$is_readonly = Request::get_post( 'is_readonly_prefill' ) === '1' ? 1 : 0;
-		$sort_order  = Request::has_post( 'sort_order' ) ? (int) Request::get_post( 'sort_order' ) : ( $question_id ? 0 : $current_max_order + 1 );
+		$is_required = isset( $_POST['is_required'] ) ? sanitize_text_field( wp_unslash( $_POST['is_required'] ) ) : '' === '1' ? 1 : 0;
+		$is_readonly = isset( $_POST['is_readonly_prefill'] ) ? sanitize_text_field( wp_unslash( $_POST['is_readonly_prefill'] ) ) : '' === '1' ? 1 : 0;
+		$sort_order  = isset( $_POST['sort_order'] ) ? (int) isset( $_POST['sort_order'] ) ? sanitize_text_field( wp_unslash( $_POST['sort_order'] ) ) : '' : ( $question_id ? 0 : $current_max_order + 1 );
 
 		$data = [
-			'question_text'       => Request::get_post( 'question_text' ),
-			'question_type'       => Request::get_post( 'question_type' ),
+			'question_text'       => isset( $_POST['question_text'] ) ? sanitize_text_field( wp_unslash( $_POST['question_text'] ) ) : '',
+			'question_type'       => isset( $_POST['question_type'] ) ? sanitize_text_field( wp_unslash( $_POST['question_type'] ) ) : '',
 			'is_required'         => $is_required,
 			'is_readonly_prefill' => $is_readonly,
 			'sort_order'          => $sort_order,
-			'prefill_key'         => Request::get_post( 'prefill_key' ),
+			'prefill_key'         => isset( $_POST['prefill_key'] ) ? sanitize_text_field( wp_unslash( $_POST['prefill_key'] ) ) : '',
 		];
 
 		if ( empty( $data['question_text'] ) ) {
@@ -150,9 +150,9 @@ class Ajax {
 		if ( $data['question_type'] === 'dropdown' ) {
 			$this->repository->delete_dropdown_options( $question_id );
 
-			if ( Request::has_post( 'dropdown_options' ) ) {
+			if ( isset( $_POST['dropdown_options'] ) ) {
 				// Request::get_post returns sanitized string.
-				$options_raw = Request::get_post( 'dropdown_options' );
+				$options_raw = isset( $_POST['dropdown_options'] ) ? sanitize_text_field( wp_unslash( $_POST['dropdown_options'] ) ) : '';
 				$options     = array_map( 'trim', explode( ',', $options_raw ) );
 
 				foreach ( $options as $index => $opt ) {
@@ -188,7 +188,7 @@ class Ajax {
 		}
 		check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
 
-		$question_id = Request::has_post( 'question_id' ) ? (int) Request::get_post( 'question_id' ) : 0;
+		$question_id = isset( $_POST['question_id'] ) ? (int) isset( $_POST['question_id'] ) ? sanitize_text_field( wp_unslash( $_POST['question_id'] ) ) : '' : 0;
 
 		stackboost_log( "ATS delete_question: {$question_id}", 'ats' );
 
@@ -214,7 +214,7 @@ class Ajax {
 		// Use Request::get_post with array mapping.
 		// $_POST['order'] is expected to be an array of IDs.
 		// Request::get_post('order') will sanitize it using sanitize_text_field by default for each element if it's an array.
-		$order = Request::get_post( 'order' );
+		$order = isset( $_POST['order'] ) ? sanitize_text_field( wp_unslash( $_POST['order'] ) ) : '';
 
 		if ( empty( $order ) || ! is_array( $order ) ) {
 			wp_send_json_error( 'Invalid order data.' );

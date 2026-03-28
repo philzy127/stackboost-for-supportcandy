@@ -32,7 +32,7 @@ class AdminController {
 	 * Render the main admin page with its tabbed interface.
 	 */
 	public function render_page() {
-		$current_tab = Request::get_get( 'tab', 'questions', 'key' );
+		$current_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'questions';
 
 		$theme_class = 'sb-theme-clean-tech';
 		if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -74,7 +74,7 @@ class AdminController {
 			return;
 		}
 
-		$post_action = Request::get_post( 'form_action', '', 'text' );
+		$post_action = isset( $_POST['form_action'] ) ? sanitize_text_field( wp_unslash( $_POST['form_action'] ) ) : '';
 
 		switch ( $post_action ) {
 			// Question management is now handled via AJAX in Ajax.php
@@ -86,7 +86,7 @@ class AdminController {
 	}
 
 	private function process_submissions_form() {
-		$selected_submissions = Request::get_post( 'selected_submissions', [], 'array' );
+		$selected_submissions = isset( $_POST['selected_submissions'] ) ? array_map( 'sanitize_text_field', wp_unslash( (array) $_POST['selected_submissions'] ) ) : [];
 
 		if ( ! empty( $selected_submissions ) ) {
 			$ids_array = array_map( 'absint', $selected_submissions );
@@ -102,9 +102,9 @@ class AdminController {
 	 * Display admin notices for this module.
 	 */
 	public function display_admin_notices() {
-		$page = Request::get_get( 'page', '', 'text' );
-		if ( 'stackboost-ats' === $page && Request::has_get( 'message' ) ) {
-			$message      = Request::get_get( 'message', '', 'text' );
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		if ( 'stackboost-ats' === $page && isset( $_GET['message'] ) ) {
+			$message      = isset( $_GET['message'] ) ? sanitize_text_field( wp_unslash( $_GET['message'] ) ) : '';
 			$type         = strpos( $message, 'fail' ) !== false || $message === 'error' ? 'error' : 'success';
 			$messages     = [
 				'submissions_deleted' => 'Selected submissions deleted!',

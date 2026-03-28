@@ -271,7 +271,7 @@ class MetaBoxes {
 	 * @param int $post_id The ID of the post being saved.
 	 */
 	public function save_directory_meta_box_data( $post_id ) {
-		$nonce = Request::get_post( 'sb_staff_dir_meta_box_nonce' );
+		$nonce = isset( $_POST['sb_staff_dir_meta_box_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['sb_staff_dir_meta_box_nonce'] ) ) : '';
 		if ( ! $nonce ) {
 			return;
 		}
@@ -343,12 +343,12 @@ class MetaBoxes {
 			}
 		}
 
-		if ( Request::has_post( 'location' ) ) {
-			$location_id = Request::get_post( 'location' );
+		if ( isset( $_POST['location'] ) ) {
+			$location_id = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
 			update_post_meta( $post_id, '_location_id', $location_id );
 
-			if ( Request::has_post( 'sb_staff_dir_location_name_hidden' ) ) {
-				$location_name = Request::get_post( 'sb_staff_dir_location_name_hidden' );
+			if ( isset( $_POST['sb_staff_dir_location_name_hidden'] ) ) {
+				$location_name = isset( $_POST['sb_staff_dir_location_name_hidden'] ) ? sanitize_text_field( wp_unslash( $_POST['sb_staff_dir_location_name_hidden'] ) ) : '';
 				update_post_meta( $post_id, '_location', $location_name );
 			}
 		}
@@ -357,18 +357,18 @@ class MetaBoxes {
 
 		if ( $is_new_post ) {
 			$active_status = 'Yes';
-		} elseif ( Request::has_post( 'active' ) && 'Yes' === Request::get_post( 'active' ) ) {
+		} elseif ( isset( $_POST['active'] ) && 'Yes' === sanitize_text_field( wp_unslash( $_POST['active'] ) ) ) {
 			$active_status = 'Yes';
 		}
 
 		$private_status = 'No';
-		if ( Request::has_post( 'private' ) && 'Yes' === Request::get_post( 'private' ) ) {
+		if ( isset( $_POST['private'] ) && 'Yes' === sanitize_text_field( wp_unslash( $_POST['private'] ) ) ) {
 			$private_status = 'Yes';
 		}
 		update_post_meta( $post_id, '_private', $private_status );
 
-		$active_as_of_date_str = Request::get_post( 'active_as_of_date' );
-		$planned_exit_date_str = Request::get_post( 'planned_exit_date' );
+		$active_as_of_date_str = isset( $_POST['active_as_of_date'] ) ? sanitize_text_field( wp_unslash( $_POST['active_as_of_date'] ) ) : '';
+		$planned_exit_date_str = isset( $_POST['planned_exit_date'] ) ? sanitize_text_field( wp_unslash( $_POST['planned_exit_date'] ) ) : '';
 
 		$current_timestamp = current_time( 'timestamp' );
 
@@ -403,7 +403,7 @@ class MetaBoxes {
 	 * @param int $post_id The ID of the post being saved.
 	 */
 	public function save_location_details_meta_box_data( $post_id ) {
-		$nonce = Request::get_post( 'sb_location_details_meta_box_nonce' );
+		$nonce = isset( $_POST['sb_location_details_meta_box_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['sb_location_details_meta_box_nonce'] ) ) : '';
 		if ( ! $nonce ) {
 			return;
 		}
@@ -420,21 +420,21 @@ class MetaBoxes {
 			return;
 		}
 
-		$address_line1 = Request::get_post( 'address_line1' );
-		$city          = Request::get_post( 'city' );
-		$state         = Request::get_post( 'state' );
-		$zip           = Request::get_post( 'zip' );
+		$address_line1 = isset( $_POST['address_line1'] ) ? sanitize_text_field( wp_unslash( $_POST['address_line1'] ) ) : '';
+		$city          = isset( $_POST['city'] ) ? sanitize_text_field( wp_unslash( $_POST['city'] ) ) : '';
+		$state         = isset( $_POST['state'] ) ? sanitize_text_field( wp_unslash( $_POST['state'] ) ) : '';
+		$zip           = isset( $_POST['zip'] ) ? sanitize_text_field( wp_unslash( $_POST['zip'] ) ) : '';
 
 		update_post_meta( $post_id, '_address_line1', $address_line1 );
 		update_post_meta( $post_id, '_city', $city );
 		update_post_meta( $post_id, '_state', $state );
 		update_post_meta( $post_id, '_zip', $zip );
 
-		if ( Request::has_post( 'location_phone_number' ) ) {
-			update_post_meta( $post_id, '_location_phone_number', Request::get_post( 'location_phone_number' ) );
+		if ( isset( $_POST['location_phone_number'] ) ) {
+			update_post_meta( $post_id, '_location_phone_number', isset( $_POST['location_phone_number'] ) ? sanitize_text_field( wp_unslash( $_POST['location_phone_number'] ) ) : '' );
 		}
-		if ( Request::has_post( 'location_department_program' ) ) {
-			update_post_meta( $post_id, '_location_department_program', Request::get_post( 'location_department_program' ) );
+		if ( isset( $_POST['location_department_program'] ) ) {
+			update_post_meta( $post_id, '_location_department_program', isset( $_POST['location_department_program'] ) ? sanitize_text_field( wp_unslash( $_POST['location_department_program'] ) ) : '' );
 		}
 
 		$is_complete             = ! empty( $address_line1 ) && ! empty( $city ) && ! empty( $state ) && ! empty( $zip );

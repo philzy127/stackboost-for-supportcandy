@@ -801,17 +801,17 @@ class WordPress extends Module {
 		// Instead, we compile the prepared string *first*, and then append the strictly prepared $extra_where.
 
 		// Total Tickets Created
-		$sql = "SELECT COUNT(t.id) FROM " . $tickets_table . " t WHERE t.date_created >= %s AND t.date_created <= %s";
+		$sql = "SELECT COUNT(t.id) FROM " . $tickets_table . " t WHERE t.date_created >= %s AND t.date_created <= %s " . $extra_where;
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = $wpdb->prepare( $sql, $start_dt, $end_dt ) . " " . $extra_where;
+		$query = $wpdb->prepare( $sql, $start_dt, $end_dt );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['total_created'] = (int) $wpdb->get_var( $query );
 
 		// Total Tickets Closed
 		$sql = "SELECT COUNT(t.id) FROM " . $tickets_table . " t
-			 WHERE " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
+			 WHERE " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s " . $extra_where;
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = $wpdb->prepare( $sql, $start_dt, $end_dt ) . " " . $extra_where;
+		$query = $wpdb->prepare( $sql, $start_dt, $end_dt );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['total_closed'] = (int) $wpdb->get_var( $query );
 
@@ -823,17 +823,17 @@ class WordPress extends Module {
 		}
 
 		// Touched Tickets (Any ticket active or updated during this period)
-		$sql = "SELECT COUNT(DISTINCT t.id) FROM " . $tickets_table . " t WHERE " . $active_in_period_sql;
+		$sql = "SELECT COUNT(DISTINCT t.id) FROM " . $tickets_table . " t WHERE " . $active_in_period_sql . " " . $extra_where;
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = $wpdb->prepare( $sql, $end_dt, $start_dt ) . " " . $extra_where;
+		$query = $wpdb->prepare( $sql, $end_dt, $start_dt );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['touched_tickets'] = (int) $wpdb->get_var( $query );
 
 		// Active Backlog (Tickets Open at the exact end of the period, regardless of creation date)
 		// Active means: Created before the end date, AND (Not closed OR Closed after the end date)
-		$sql = "SELECT COUNT(DISTINCT t.id) FROM " . $tickets_table . " t WHERE t.date_created <= %s AND (NOT (" . $closed_condition . ") OR " . $close_date_col . " > %s)";
+		$sql = "SELECT COUNT(DISTINCT t.id) FROM " . $tickets_table . " t WHERE t.date_created <= %s AND (NOT (" . $closed_condition . ") OR " . $close_date_col . " > %s) " . $extra_where;
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = $wpdb->prepare( $sql, $end_dt, $end_dt ) . " " . $extra_where;
+		$query = $wpdb->prepare( $sql, $end_dt, $end_dt );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['active_backlog'] = (int) $wpdb->get_var( $query );
 
@@ -841,18 +841,18 @@ class WordPress extends Module {
 		$sql = "SELECT COUNT(t.id) FROM " . $tickets_table . " t
 			 WHERE " . $closed_condition . "
 			 AND t.date_created < %s
-			 AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
+			 AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s " . $extra_where;
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = $wpdb->prepare( $sql, $start_dt, $start_dt, $end_dt ) . " " . $extra_where;
+		$query = $wpdb->prepare( $sql, $start_dt, $start_dt, $end_dt );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['carried_closed'] = (int) $wpdb->get_var( $query );
 
 		// Lifecycle Bucket 3: Carried Over & Still Open (Created before range, and either open or closed AFTER range)
 		$sql = "SELECT COUNT(t.id) FROM " . $tickets_table . " t
 			 WHERE t.date_created < %s
-			 AND ( " . $open_condition . " OR " . $close_date_col . " > %s )";
+			 AND ( " . $open_condition . " OR " . $close_date_col . " > %s ) " . $extra_where;
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = $wpdb->prepare( $sql, $start_dt, $end_dt ) . " " . $extra_where;
+		$query = $wpdb->prepare( $sql, $start_dt, $end_dt );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['carried_open'] = (int) $wpdb->get_var( $query );
 
@@ -860,9 +860,9 @@ class WordPress extends Module {
 		$sql = "SELECT AVG(TIMESTAMPDIFF(SECOND, t.date_created, " . $close_date_col . "))
 			 FROM " . $tickets_table . " t
 			 WHERE " . $closed_condition . "
-			 AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
+			 AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s " . $extra_where;
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = $wpdb->prepare( $sql, $start_dt, $end_dt ) . " " . $extra_where;
+		$query = $wpdb->prepare( $sql, $start_dt, $end_dt );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['avg_open_time'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : 'N/A';
 
@@ -870,9 +870,9 @@ class WordPress extends Module {
 		$sql = "SELECT AVG(TIMESTAMPDIFF(SECOND, t.date_created, UTC_TIMESTAMP()))
 			 FROM " . $tickets_table . " t
 			 WHERE " . $open_condition . "
-			 AND " . $active_in_period_sql;
+			 AND " . $active_in_period_sql . " " . $extra_where;
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = $wpdb->prepare( $sql, $end_dt, $start_dt ) . " " . $extra_where;
+		$query = $wpdb->prepare( $sql, $end_dt, $start_dt );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['avg_age_open'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : 'N/A';
 
@@ -883,9 +883,9 @@ class WordPress extends Module {
 			// SupportCandy Native FRT field
 			$sql = "SELECT AVG(t.frd)
 				 FROM " . $tickets_table . " t
-				 WHERE t.frd IS NOT NULL AND t.frd > 0 AND " . $active_in_period_sql;
+				 WHERE t.frd IS NOT NULL AND t.frd > 0 AND " . $active_in_period_sql . " " . $extra_where;
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$query = $wpdb->prepare( $sql, $end_dt, $start_dt ) . " " . $extra_where;
+			$query = $wpdb->prepare( $sql, $end_dt, $start_dt );
 		} else {
 			// StackBoost "Everything Counts" strict timeline
 			$sql = "SELECT AVG(response_time) FROM (
@@ -893,9 +893,9 @@ class WordPress extends Module {
 					TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
 					FROM " . $tickets_table . " t
 					JOIN " . $threads_table . " th ON t.id = th.ticket
-					WHERE " . $active_in_period_sql;
+					WHERE " . $active_in_period_sql . " " . $extra_where . " AND th.date_created > t.date_created GROUP BY t.id ) as response_times";
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$query = $wpdb->prepare( $sql, $end_dt, $start_dt ) . " " . $extra_where . " AND th.date_created > t.date_created GROUP BY t.id ) as response_times";
+			$query = $wpdb->prepare( $sql, $end_dt, $start_dt );
 		}
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

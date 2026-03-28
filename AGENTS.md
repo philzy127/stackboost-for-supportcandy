@@ -84,6 +84,13 @@ Jules must verify code changes prior to completion using the standardized local 
 *   **WordPress Plugin Checker (PCP) Integration:** Within the Playground environment, ensure you run and evaluate the code against the official WordPress Plugin Checker to programmatically validate compliance, security, and repository guidelines.
 
 ## 🚀 5. PR & Deployment Protocol
+*   **Readme Standards:** The plugin must include a properly formatted `readme.txt` file at the root. The content should mirror `README.md` but adhere strictly to the WordPress.org repository standards (including headers like Contributors, Tags, Requires at least, Tested up to, Stable tag, License, License URI, etc.).
+*   **Asset Enqueueing:** Do not use inline `<script>` or `<style>` tags. All JS and CSS must be stored in external files within the `assets/` directory and properly enqueued using `wp_enqueue_script` or `wp_enqueue_style` via appropriate hooks (e.g., `admin_enqueue_scripts`).
+*   **Core File Inclusions:** Never directly `require_once` WordPress core files (e.g., `wp-admin/includes/user.php`). Use native wrapper functions or hook at the proper action priority instead.
+*   **File Locations & Uploads:** Never write log files or save data directly within the plugin's folder structure. Always use `wp_upload_dir()` to place generated files in the WordPress `uploads` directory (preferably in a plugin-specific subfolder).
+*   **Input Processing:** Never blindly process or log the entirety of global input stacks (`$_POST`, `$_GET`, `$_REQUEST`). Only access specific, expected keys directly.
+*   **SQL Safety:** When using `$wpdb->prepare()`, never concatenate dynamic variables (like `$extra_where`) directly into the query string parameter *after* the `prepare` call. Always construct the complete SQL query string first, then pass it as the first argument to `$wpdb->prepare()`.
+
 Jules must execute the following checklist upon code completion and before PR submission:
 1. **Technical Housekeeping:**
     *   **Translation Sync:** Regenerate the plugin's `.pot` file to include any new strings.

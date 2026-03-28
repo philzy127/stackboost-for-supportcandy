@@ -58,7 +58,7 @@ class StaffListTable extends \WP_List_Table {
 	 * @return array
 	 */
 	public function get_columns() {
-		$current_filter = Request::get_request( 'stackboost_active_filter', 'yes', 'text' );
+		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
 
 		$columns = array(
 			'cb'                       => '<input type="checkbox" />',
@@ -172,7 +172,7 @@ class StaffListTable extends \WP_List_Table {
 			'view' => sprintf( '<a href="%s">%s</a>', get_permalink( $item->ID ), __( 'View', 'stackboost-for-supportcandy' ) ),
 		);
 
-		$post_status = Request::get_request( 'post_status', '', 'key' );
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
 
 		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=untrash&post=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
@@ -191,7 +191,7 @@ class StaffListTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions() {
 		$actions = array();
-		$post_status = Request::get_request( 'post_status', '', 'key' );
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
 
 		if ( 'trash' === $post_status ) {
 			$actions['untrash'] = __( 'Restore', 'stackboost-for-supportcandy' );
@@ -210,7 +210,7 @@ class StaffListTable extends \WP_List_Table {
 	protected function get_views() {
 		$status_links = array();
 		$num_posts    = wp_count_posts( $this->post_type, 'readable' );
-		$post_status  = Request::get_request( 'post_status', 'all', 'key' );
+		$post_status  = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'all';
 
 		$all_class           = ( 'all' === $post_status ) ? ' class="current"' : '';
 		$status_links['all'] = "<a href='admin.php?page=stackboost-directory&tab=staff'{$all_class}>All <span class='count'>(" . ( $num_posts->publish + $num_posts->draft ) . ')</span></a>';
@@ -238,11 +238,11 @@ class StaffListTable extends \WP_List_Table {
 	 * Adds a dropdown filter for active status.
 	 */
 	public function add_active_status_filter() {
-		$post_status = Request::get_request( 'post_status', '', 'key' );
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
 		if ( 'trash' === $post_status ) {
 			return;
 		}
-		$current_filter = Request::get_request( 'stackboost_active_filter', 'yes', 'text' );
+		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
 		?>
 		<div class="alignleft actions">
 			<label class="screen-reader-text" for="stackboost_active_filter"><?php esc_html_e( 'Filter by Active Status', 'stackboost-for-supportcandy' ); ?></label>
@@ -265,7 +265,7 @@ class StaffListTable extends \WP_List_Table {
 			return;
 		}
 
-		$post_ids = Request::get_request( 'post', [], 'array' );
+		$post_ids = isset( $_REQUEST['post'] ) ? array_map( 'sanitize_text_field', wp_unslash( (array) $_REQUEST['post'] ) ) : [];
 		if ( empty( $post_ids ) ) {
 			return;
 		}
@@ -309,7 +309,7 @@ class StaffListTable extends \WP_List_Table {
 		$current_page = $this->get_pagenum();
 		$offset       = ( $current_page - 1 ) * $per_page;
 
-		$post_status = Request::get_request( 'post_status', 'any', 'key' );
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : 'any';
 
 		$args = array(
 			'post_type'      => $this->post_type,
@@ -318,10 +318,10 @@ class StaffListTable extends \WP_List_Table {
 			'post_status'    => $post_status,
 		);
 
-		$orderby = Request::get_request( 'orderby', 'title', 'text' );
-		$order   = Request::get_request( 'order', 'asc', 'key' );
+		$orderby = isset( $_REQUEST['orderby'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['orderby'] ) ) : 'title';
+		$order   = isset( $_REQUEST['order'] ) ? sanitize_key( wp_unslash( $_REQUEST['order'] ) ) : 'asc';
 
-		$s = Request::get_request( 's', '', 'text' );
+		$s = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '';
 		if ( ! empty( $s ) ) {
 			$args['s'] = $s;
 		}
@@ -341,7 +341,7 @@ class StaffListTable extends \WP_List_Table {
 			$args['order'] = $order;
 		}
 
-		$current_filter = Request::get_request( 'stackboost_active_filter', 'yes', 'text' );
+		$current_filter = isset( $_REQUEST['stackboost_active_filter'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['stackboost_active_filter'] ) ) : 'yes';
 		if ( 'all' !== $current_filter ) {
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Inherently necessary for custom field filtering in this context.
 			$args['meta_query'] = array(

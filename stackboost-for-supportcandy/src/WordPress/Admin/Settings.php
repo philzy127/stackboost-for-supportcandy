@@ -1172,7 +1172,7 @@ class Settings {
 	 */
 	public function handle_log_actions() {
 		// Use Request::get_get for safe access
-		$action = Request::get_get( 'stackboost_action' );
+		$action = isset( $_GET['stackboost_action'] ) ? sanitize_text_field( wp_unslash( $_GET['stackboost_action'] ) ) : '';
 
 		if ( ! $action ) {
 			return;
@@ -1185,7 +1185,7 @@ class Settings {
 			case 'download_log':
 				// Manual nonce verification since it's a download action
 				// Use Request::get_get for nonce retrieval
-				$nonce = Request::get_get( '_wpnonce' );
+				$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
 				if ( ! empty( $nonce ) && wp_verify_nonce( $nonce, 'stackboost_download_log_nonce' ) ) {
 					global $wp_filesystem;
 					if ( empty( $wp_filesystem ) ) {
@@ -1265,7 +1265,8 @@ class Settings {
 		// Let's assume if you can manage settings, you can save them.
 		// If granular control over saving specific modules via this handler is needed, we'd inspect $_POST['page_slug'].
 
-		$page_slug = Request::get_post( 'stackboost_settings', [], 'raw' )['page_slug'] ?? '';
+		$stackboost_settings = isset( $_POST['stackboost_settings'] ) ? wp_unslash( $_POST['stackboost_settings'] ) : [];
+		$page_slug = is_array( $stackboost_settings ) && isset( $stackboost_settings['page_slug'] ) ? sanitize_text_field( $stackboost_settings['page_slug'] ) : '';
 		$capability = STACKBOOST_CAP_MANAGE_SETTINGS;
 
 		// Map slug to capability
@@ -1301,7 +1302,7 @@ class Settings {
 
 		// For now, let's use direct $_POST but remove the ignores by using explicit checks.
 
-		$settings_data = Request::get_post( 'stackboost_settings', null, 'raw' );
+		$settings_data = isset( $_POST['stackboost_settings'] ) ? wp_unslash( $_POST['stackboost_settings'] ) : null;
 
 		if ( function_exists( 'stackboost_log' ) ) {
 			stackboost_log( 'DATA EXTRACTED FROM Request::get_post for stackboost_settings: ' . json_encode($settings_data), 'core' );
@@ -1471,7 +1472,7 @@ class Settings {
             wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
         }
 
-        $license_key = Request::get_post( 'license_key' );
+        $license_key = isset( $_POST['license_key'] ) ? sanitize_text_field( wp_unslash( $_POST['license_key'] ) ) : '';
         if ( empty( $license_key ) ) {
             wp_send_json_error( __( 'Missing license key.', 'stackboost-for-supportcandy' ) );
         }
