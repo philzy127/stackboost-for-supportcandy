@@ -32,6 +32,7 @@ class WordPress extends Module {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'wp_ajax_stackboost_get_ticket_metrics', [ $this, 'ajax_get_metrics' ] );
 		add_action( 'wp_ajax_stackboost_save_ticket_metrics_settings', [ $this, 'ajax_save_ticket_metrics_settings' ] );
+		add_action( 'wp_ajax_stackboost_get_other_issues_csv', [ $this, 'ajax_get_other_issues_csv' ] );
 	}
 
 	public function ajax_save_ticket_metrics_settings() {
@@ -88,6 +89,20 @@ class WordPress extends Module {
 		$options['ticket_metrics_frt_mode'] = isset( $_POST['ticket_metrics_frt_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_frt_mode'] ) ) : 'stackboost';
 		$options['ticket_metrics_verbose_logging'] = isset( $_POST['ticket_metrics_verbose_logging'] ) ? (int) $_POST['ticket_metrics_verbose_logging'] : 0;
 
+		$other_issues_rules = [];
+		if ( isset( $_POST['ticket_metrics_other_issues_rules'] ) && is_array( $_POST['ticket_metrics_other_issues_rules'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$raw_rules = wp_unslash( $_POST['ticket_metrics_other_issues_rules'] );
+			foreach ( $raw_rules as $rule ) {
+				$other_issues_rules[] = [
+					'trigger_field' => isset( $rule['trigger_field'] ) ? sanitize_text_field( $rule['trigger_field'] ) : '',
+					'trigger_condition' => isset( $rule['trigger_condition'] ) ? sanitize_text_field( $rule['trigger_condition'] ) : '',
+					'text_field' => isset( $rule['text_field'] ) ? sanitize_text_field( $rule['text_field'] ) : 'subject',
+				];
+			}
+		}
+		$options['ticket_metrics_other_issues_rules'] = $other_issues_rules;
+
 		// Clean up legacy settings if present
 		unset( $options['ticket_metrics_agent_filter_mode'] );
 		unset( $options['ticket_metrics_excluded_agents'] );
@@ -112,6 +127,157 @@ class WordPress extends Module {
 
 	public function register_settings() {
 		// Basic setting if we ever want to toggle it or add preferences
+	}
+
+	public function ajax_get_other_issues_csv() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_METRICS ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$start_date = isset( $_GET['start_date'] ) ? sanitize_text_field( wp_unslash( $_GET['start_date'] ) ) : '';
+		$end_date   = isset( $_GET['end_date'] ) ? sanitize_text_field( wp_unslash( $_GET['end_date'] ) ) : '';
+
+		if ( empty( $start_date ) || empty( $end_date ) ) {
+			wp_die( esc_html__( 'Start and End dates are required.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$options = get_option( 'stackboost_settings', [] );
+		$rules = $options['ticket_metrics_other_issues_rules'] ?? [];
+
+		if ( empty( $rules ) ) {
+			wp_die( esc_html__( 'No "Other Issues" rules configured in settings.', 'stackboost-for-supportcandy' ) );
+		}
+
+		global $wpdb;
+		$start_dt = gmdate( 'Y-m-d 00:00:00', strtotime( $start_date ) );
+		$end_dt   = gmdate( 'Y-m-d 23:59:59', strtotime( $end_date ) );
+
+		$tickets_table = $wpdb->prefix . 'psmsc_tickets';
+		$threads_table = $wpdb->prefix . 'psmsc_threads';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$tickets_table}'") !== $tickets_table ) {
+			$tickets_table = $wpdb->prefix . 'wpsc_tickets';
+			$threads_table = $wpdb->prefix . 'wpsc_threads';
+		}
+
+		$csv_data = [];
+		$csv_data[] = [ 'Ticket ID', 'Issue / Excuse text', 'Trigger Field' ];
+
+		foreach ( $rules as $rule ) {
+			if ( empty( $rule['trigger_field'] ) ) {
+				continue;
+			}
+
+			$trigger_field = $rule['trigger_field'];
+			$trigger_cond  = $rule['trigger_condition'];
+			$text_field    = $rule['text_field'];
+
+			// We need to fetch tickets in the timeframe that match the condition.
+			// Similar to `active_in_period_sql` in regular metrics
+			// Is `date_closed` explicitly available?
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$has_date_closed = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'date_closed'") === 'date_closed';
+			$close_date_col = $has_date_closed ? 't.date_closed' : 't.date_updated';
+			$open_condition = $has_date_closed ? "(t.date_closed IS NULL OR t.date_closed = '0000-00-00 00:00:00')" : "t.is_active = 1";
+
+			$active_in_period_sql = "t.date_created <= %s AND ( " . $open_condition . " OR " . $close_date_col . " >= %s )";
+
+			// Build query for this rule
+			if ( preg_match( '/^[a-zA-Z0-9_]+$/', $trigger_field ) ) {
+				$sql = "SELECT t.id, t.`" . $trigger_field . "` as trigger_val ";
+
+				// Add select for text field if it's a native column
+				if ( in_array( $text_field, [ 'subject', 'description' ] ) ) {
+					// We will grab description from threads separately to avoid huge joins if many tickets.
+					// Subject is on tickets table usually. Let's verify.
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$has_subject = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'subject'") === 'subject';
+					if ( $has_subject && $text_field === 'subject' ) {
+						$sql .= ", t.subject as extracted_text ";
+					} else {
+						$sql .= ", '' as extracted_text "; // Will populate manually
+					}
+				} elseif ( preg_match( '/^[a-zA-Z0-9_]+$/', $text_field ) ) {
+					// Custom text field, usually stored in a column on the tickets table in modern SC.
+					$sql .= ", t.`" . $text_field . "` as extracted_text ";
+				} else {
+					$sql .= ", '' as extracted_text ";
+				}
+
+				$sql .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql;
+
+				if ( $trigger_cond !== '' ) {
+					$sql .= " AND t.`" . $trigger_field . "` = %s";
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					$query = $wpdb->prepare( $sql, $end_dt, $start_dt, $trigger_cond );
+				} else {
+					// If no condition specified, just get all where field is not empty? Or skip.
+					// Assume if condition is empty, it's misconfigured.
+					continue;
+				}
+
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$results = $wpdb->get_results( $query );
+
+				if ( is_array( $results ) ) {
+					foreach ( $results as $res ) {
+						$extracted_text = $res->extracted_text;
+
+						// If text field is description, fetch the first thread body.
+						if ( $text_field === 'description' ) {
+							$thread_sql = "SELECT body FROM {$threads_table} WHERE ticket = %d ORDER BY date_created ASC LIMIT 1";
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$thread_query = $wpdb->prepare( $thread_sql, $res->id );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$first_thread = $wpdb->get_var( $thread_query );
+							if ( $first_thread ) {
+								$extracted_text = wp_strip_all_tags( $first_thread );
+							}
+						} elseif ( $text_field === 'subject' && empty( $extracted_text ) ) {
+							// fallback if it wasn't returned in the main query for some reason
+							$subj_sql = "SELECT subject FROM {$tickets_table} WHERE id = %d";
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$subj_query = $wpdb->prepare( $subj_sql, $res->id );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$subj = $wpdb->get_var( $subj_query );
+							$extracted_text = $subj ? $subj : '';
+						}
+
+						// Clean up the text for CSV
+						$extracted_text = trim( $extracted_text );
+						if ( ! empty( $extracted_text ) ) {
+							$csv_data[] = [ $res->id, $extracted_text, $trigger_field . ' = ' . $trigger_cond ];
+						}
+					}
+				}
+			}
+		}
+
+		if ( count( $csv_data ) <= 1 ) {
+			wp_die( esc_html__( 'No data found matching the rules in this timeframe.', 'stackboost-for-supportcandy' ) );
+		}
+
+		// Generate CSV output
+		$filename = 'other-issues-report-' . date( 'Y-m-d' ) . '.csv';
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=' . $filename );
+
+		$output = fopen( 'php://output', 'w' );
+		if ( $output === false ) {
+			wp_die( esc_html__( 'Failed to generate CSV.', 'stackboost-for-supportcandy' ) );
+		}
+
+		// Output UTF-8 BOM for Excel compatibility
+		fprintf( $output, chr(0xEF).chr(0xBB).chr(0xBF) );
+
+		foreach ( $csv_data as $row ) {
+			fputcsv( $output, $row );
+		}
+		fclose( $output );
+		exit;
 	}
 
 	public function ajax_get_metrics() {

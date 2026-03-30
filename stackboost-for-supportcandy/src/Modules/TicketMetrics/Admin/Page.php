@@ -67,10 +67,42 @@ class Page {
 		unset($custom_fields['df_priority']);
 		unset($custom_fields['df_status']);
 
+		// Fetch ALL text fields for the Word Cloud "Breakdown Field"
+		$all_text_fields = [
+			'subject' => __( 'Subject', 'stackboost-for-supportcandy' ),
+			'description' => __( 'Description (First Message)', 'stackboost-for-supportcandy' )
+		];
+		if ( class_exists( '\WPSC_Custom_Field' ) ) {
+			if ( ! isset( $cf_results ) ) {
+				$cf_results = \WPSC_Custom_Field::find( [ 'items_per_page' => 0 ] )['results'];
+			}
+			foreach ( $cf_results as $cf ) {
+				$type_class = $cf->type;
+				$is_text_field = false;
+				if ( is_string( $type_class ) ) {
+					if ( class_exists( $type_class ) ) {
+						if ( isset( $type_class::$slug ) && in_array( $type_class::$slug, [ 'df_text', 'df_textarea' ] ) ) {
+							$is_text_field = true;
+						}
+					} elseif ( in_array( $type_class, [ 'WPSC_Text', 'WPSC_Textarea', 'df_text', 'df_textarea' ] ) ) {
+						$is_text_field = true;
+					}
+				}
+				if ( $is_text_field ) {
+					$all_text_fields[ $cf->slug ] = $cf->name;
+				}
+			}
+		}
+
 		$all_type_fields = array_merge( $default_fields, $custom_fields );
 		asort( $all_type_fields );
 
 		$options = get_option( 'stackboost_settings', [] );
+		$other_issues_rules = $options['ticket_metrics_other_issues_rules'] ?? [];
+		if ( ! is_array( $other_issues_rules ) ) {
+			$other_issues_rules = [];
+		}
+
 		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
 		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'multi_pie';
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
@@ -243,6 +275,12 @@ class Page {
 							</div>
 							<div>
 								<button type="button" class="button button-primary" id="stkb_generate_metrics"><?php esc_html_e( 'Update Metrics', 'stackboost-for-supportcandy' ); ?></button>
+							</div>
+							<div style="margin-left: auto;">
+								<button type="button" class="button" id="stkb_export_other_issues" style="display:flex; align-items:center; gap:5px;">
+									<span class="dashicons dashicons-download"></span>
+									<?php esc_html_e( 'Export "Other" Issues (CSV)', 'stackboost-for-supportcandy' ); ?>
+								</button>
 							</div>
 						</div>
 					</div>
@@ -468,6 +506,60 @@ class Page {
 									</td>
 								</tr>
 							</table>
+						</div>
+
+						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'Other Issues Report', 'stackboost-for-supportcandy' ); ?></h2>
+							<p class="description"><?php esc_html_e( 'Configure rules to define which tickets belong to the "Other" category for CSV exporting. You can create multiple rules to handle different "Other" options across various fields.', 'stackboost-for-supportcandy' ); ?></p>
+
+							<table class="form-table" id="stkb_other_issues_rules_table">
+								<thead>
+									<tr>
+										<th style="padding-bottom:10px;"><?php esc_html_e( 'Trigger Field', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="padding-bottom:10px;"><?php esc_html_e( 'Trigger Condition ("Other" Option)', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="padding-bottom:10px;"><?php esc_html_e( 'Text Breakdown Field (Word Cloud Source)', 'stackboost-for-supportcandy' ); ?></th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php
+									if ( empty( $other_issues_rules ) ) {
+										// Add one empty row as default
+										$other_issues_rules[] = [ 'trigger_field' => '', 'trigger_condition' => '', 'text_field' => 'subject' ];
+									}
+									foreach ( $other_issues_rules as $index => $rule ) :
+									?>
+									<tr class="stkb-rule-row">
+										<td>
+											<select class="stkb-rule-trigger-field" name="stackboost_settings[ticket_metrics_other_issues_rules][<?php echo $index; ?>][trigger_field]">
+												<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
+												<?php foreach ( $all_type_fields as $key => $label ) : ?>
+													<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $rule['trigger_field'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+												<?php endforeach; ?>
+											</select>
+										</td>
+										<td>
+											<input type="text" class="stkb-rule-trigger-condition regular-text" name="stackboost_settings[ticket_metrics_other_issues_rules][<?php echo $index; ?>][trigger_condition]" value="<?php echo esc_attr( $rule['trigger_condition'] ); ?>" placeholder="<?php esc_attr_e( 'e.g., Other, Misc, 15', 'stackboost-for-supportcandy' ); ?>" />
+											<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Enter the option value/ID', 'stackboost-for-supportcandy' ); ?></p>
+										</td>
+										<td>
+											<select class="stkb-rule-text-field" name="stackboost_settings[ticket_metrics_other_issues_rules][<?php echo $index; ?>][text_field]">
+												<?php foreach ( $all_text_fields as $key => $label ) : ?>
+													<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $rule['text_field'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+												<?php endforeach; ?>
+											</select>
+										</td>
+										<td>
+											<button type="button" class="button stkb-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
+										</td>
+									</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+							<p>
+								<button type="button" class="button" id="stkb_add_other_rule"><?php esc_html_e( '+ Add Rule', 'stackboost-for-supportcandy' ); ?></button>
+							</p>
+
 							<p class="submit">
 								<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ), 'primary', 'submit', false ); ?>
 							</p>
@@ -512,6 +604,35 @@ class Page {
 						$('#stkb_tracked_agents option').appendTo('#stkb_tracked_agents_available');
 					});
 
+					// Other Issues Rules Logic
+					let rulesTable = $('#stkb_other_issues_rules_table tbody');
+					$('#stkb_add_other_rule').on('click', function() {
+						let rowCount = rulesTable.find('tr').length;
+						let newRow = rulesTable.find('tr:first').clone();
+
+						// Update name attributes to reflect new index
+						newRow.find('select, input').each(function() {
+							let name = $(this).attr('name');
+							if (name) {
+								$(this).attr('name', name.replace(/\[\d+\]/, '[' + rowCount + ']'));
+							}
+							if ($(this).is('input')) {
+								$(this).val('');
+							}
+						});
+
+						rulesTable.append(newRow);
+					});
+
+					$(document).on('click', '.stkb-remove-rule', function() {
+						if (rulesTable.find('tr').length > 1) {
+							$(this).closest('tr').remove();
+						} else {
+							// Just clear the fields if it's the last row
+							$(this).closest('tr').find('select, input').val('');
+						}
+					});
+
 					// Tab handling logic
 					$('.nav-tab').on('click', function(e) {
 						e.preventDefault();
@@ -535,6 +656,23 @@ class Page {
 						// Ensure all items in the selected box are actually selected before gathering values
 						$('#stkb_tracked_agents option').prop('selected', true);
 
+						// Extract rules from table
+						var other_issues_rules = [];
+						$('#stkb_other_issues_rules_table tbody tr').each(function() {
+							let triggerField = $(this).find('.stkb-rule-trigger-field').val();
+							let triggerCondition = $(this).find('.stkb-rule-trigger-condition').val();
+							let textField = $(this).find('.stkb-rule-text-field').val();
+
+							// Only save if there's at least a trigger field or condition
+							if (triggerField || triggerCondition) {
+								other_issues_rules.push({
+									trigger_field: triggerField,
+									trigger_condition: triggerCondition,
+									text_field: textField
+								});
+							}
+						});
+
 						// Build payload locally to bypass any serialization issues
 						var payload = {
 							action: 'stackboost_save_ticket_metrics_settings',
@@ -545,7 +683,8 @@ class Page {
 							ticket_metrics_show_other_agents: $('#stkb_show_other_agents').is(':checked') ? 1 : 0,
 							ticket_metrics_frt_mode: $('#stkb_frt_mode').val(),
 							ticket_metrics_verbose_logging: $('#stkb_verbose_logging').is(':checked') ? 1 : 0,
-							ticket_metrics_tracked_agents: $('#stkb_tracked_agents').val() || []
+							ticket_metrics_tracked_agents: $('#stkb_tracked_agents').val() || [],
+							ticket_metrics_other_issues_rules: other_issues_rules
 						};
 
 						// Use dedicated endpoint
@@ -887,6 +1026,30 @@ class Page {
 
 					$('.stackboost-modal-close-button').on('click', function() {
 						$(this).closest('.stackboost-modal').hide();
+					});
+
+					$('#stkb_export_other_issues').on('click', function() {
+						let btn = $(this);
+						let originalContent = btn.html();
+						btn.prop('disabled', true).html('<span class="dashicons dashicons-update" style="animation: dashicons-spin 2s infinite linear;"></span> <?php esc_html_e( 'Exporting...', 'stackboost-for-supportcandy' ); ?>');
+
+						let start_date = $('#stkb_start_date').val();
+						let end_date = $('#stkb_end_date').val();
+
+						// Redirect to a specific URL that triggers the file download
+						let url = ajaxurl + '?action=stackboost_get_other_issues_csv&nonce=' + stackboost_admin_ajax.nonce + '&start_date=' + encodeURIComponent(start_date) + '&end_date=' + encodeURIComponent(end_date);
+
+						// Create a temporary iframe to trigger the download without leaving the page
+						let iframe = document.createElement('iframe');
+						iframe.style.display = 'none';
+						iframe.src = url;
+						document.body.appendChild(iframe);
+
+						// Re-enable button after a short delay
+						setTimeout(function() {
+							btn.prop('disabled', false).html(originalContent);
+							setTimeout(function() { document.body.removeChild(iframe); }, 5000);
+						}, 2000);
 					});
 
 					// Trigger initial load on "This week"
