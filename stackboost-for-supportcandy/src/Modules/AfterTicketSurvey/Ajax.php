@@ -100,9 +100,9 @@ class Ajax {
 			$current_max_order = $this->repository->get_max_sort_order();
 		}
 
-		$is_required = isset( $_POST['is_required'] ) ? sanitize_text_field( wp_unslash( $_POST['is_required'] ) ) : '' === '1' ? 1 : 0;
-		$is_readonly = isset( $_POST['is_readonly_prefill'] ) ? sanitize_text_field( wp_unslash( $_POST['is_readonly_prefill'] ) ) : '' === '1' ? 1 : 0;
-		$sort_order  = isset( $_POST['sort_order'] ) ? (int) isset( $_POST['sort_order'] ) ? sanitize_text_field( wp_unslash( $_POST['sort_order'] ) ) : '' : ( $question_id ? 0 : $current_max_order + 1 );
+		$is_required = ( isset( $_POST['is_required'] ) && sanitize_text_field( wp_unslash( $_POST['is_required'] ) ) === '1' ) ? 1 : 0;
+		$is_readonly = ( isset( $_POST['is_readonly_prefill'] ) && sanitize_text_field( wp_unslash( $_POST['is_readonly_prefill'] ) ) === '1' ) ? 1 : 0;
+		$sort_order  = isset( $_POST['sort_order'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['sort_order'] ) ) : ( $question_id ? 0 : $current_max_order + 1 );
 
 		$data = [
 			'question_text'       => isset( $_POST['question_text'] ) ? sanitize_text_field( wp_unslash( $_POST['question_text'] ) ) : '',
