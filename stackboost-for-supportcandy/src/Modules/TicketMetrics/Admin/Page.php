@@ -276,12 +276,6 @@ class Page {
 							<div>
 								<button type="button" class="button button-primary" id="stkb_generate_metrics"><?php esc_html_e( 'Update Metrics', 'stackboost-for-supportcandy' ); ?></button>
 							</div>
-							<div style="margin-left: auto;">
-								<button type="button" class="button" id="stkb_export_other_issues" style="display:flex; align-items:center; gap:5px;">
-									<span class="dashicons dashicons-download"></span>
-									<?php esc_html_e( 'Export "Other" Issues (CSV)', 'stackboost-for-supportcandy' ); ?>
-								</button>
-							</div>
 						</div>
 					</div>
 				</div>
@@ -1201,7 +1195,7 @@ class Page {
 						$(this).closest('.stackboost-modal').hide();
 					});
 
-					$('#stkb_export_other_issues').on('click', function() {
+					$(document).on('click', '.stkb-export-other-issues', function() {
 						let btn = $(this);
 						let originalContent = btn.html();
 						btn.prop('disabled', true).html('<span class="dashicons dashicons-update" style="animation: dashicons-spin 2s infinite linear;"></span> <?php esc_html_e( 'Exporting...', 'stackboost-for-supportcandy' ); ?>');

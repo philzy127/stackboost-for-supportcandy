@@ -825,7 +825,8 @@ class Settings {
 				'ticket_metrics_show_other_agents',
 				'ticket_metrics_frt_mode',
 				'ticket_metrics_verbose_logging',
-				'ticket_metrics_tracked_agents'
+				'ticket_metrics_tracked_agents',
+				'ticket_metrics_other_issues_rules'
 			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],

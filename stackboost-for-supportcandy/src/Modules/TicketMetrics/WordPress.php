@@ -579,10 +579,31 @@ class WordPress extends Module {
 		$metrics['touched_tickets']      = $overall_metrics['touched_tickets'];
 
 		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
+			// Check if any rule targets the currently selected type field
+			$other_rules = $options['ticket_metrics_other_issues_rules'] ?? [];
+			$matched_rule = null;
+			foreach ( $other_rules as $rule ) {
+				if ( isset( $rule['trigger_field'] ) && $rule['trigger_field'] === $type_field && ! empty( $rule['text_field'] ) ) {
+					$matched_rule = $rule;
+					break;
+				}
+			}
+
 			$sql_raw_tickets = "SELECT t.id, t.assigned_agent, t.`" . $type_field . "` as type_val,
-						IF(" . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s, 1, 0) as is_closed_in_range
-				 FROM " . $tickets_table . " t
-				 WHERE " . $active_in_period_sql;
+						IF(" . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s, 1, 0) as is_closed_in_range";
+
+			// If we matched a rule and the subcategory is a native/custom text column on the ticket, fetch it inline
+			$subcat_field = $matched_rule ? $matched_rule['text_field'] : null;
+			$fetch_subcat_inline = false;
+			if ( $subcat_field && $subcat_field !== 'description' ) {
+				if ( preg_match( '/^[a-zA-Z0-9_]+$/', $subcat_field ) ) {
+					$sql_raw_tickets .= ", t.`" . $subcat_field . "` as subcat_val";
+					$fetch_subcat_inline = true;
+				}
+			}
+
+			$sql_raw_tickets .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql;
+
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$raw_tickets_query = $wpdb->prepare( $sql_raw_tickets, $start_dt, $end_dt, $end_dt, $start_dt );
 
@@ -601,7 +622,46 @@ class WordPress extends Module {
 
 					// Init Type Data
 					if ( ! isset( $type_data[$type_val] ) ) {
-						$type_data[$type_val] = ['count' => 0, 'agents' => []];
+						$type_data[$type_val] = ['count' => 0, 'agents' => [], 'subcats' => [], 'is_other' => false];
+					}
+
+					// Process Subcategory if applicable
+					if ( $matched_rule ) {
+						$trigger_cond = $matched_rule['trigger_condition'];
+						$is_other_match = false;
+						if ( is_array( $trigger_cond ) && in_array( $type_val, $trigger_cond ) ) {
+							$is_other_match = true;
+						} elseif ( ! is_array( $trigger_cond ) && (string)$type_val === (string)$trigger_cond ) {
+							$is_other_match = true;
+						}
+
+						if ( $is_other_match ) {
+							$type_data[$type_val]['is_other'] = true;
+							$subcat_text = '';
+
+							if ( $subcat_field === 'description' ) {
+								// Fetch from threads (inefficient if many, but necessary for description)
+								$thread_sql = "SELECT body FROM {$threads_table} WHERE ticket = %d ORDER BY date_created ASC LIMIT 1";
+								// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+								$thread_query = $wpdb->prepare( $thread_sql, $t->id );
+								// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+								$first_thread = $wpdb->get_var( $thread_query );
+								if ( $first_thread ) {
+									$subcat_text = trim(wp_strip_all_tags( $first_thread ));
+								}
+							} elseif ( $fetch_subcat_inline ) {
+								$subcat_text = trim((string) $t->subcat_val);
+							}
+
+							if ( empty( $subcat_text ) ) {
+								$subcat_text = __( 'None provided', 'stackboost-for-supportcandy' );
+							}
+
+							if ( ! isset( $type_data[$type_val]['subcats'][$subcat_text] ) ) {
+								$type_data[$type_val]['subcats'][$subcat_text] = 0;
+							}
+							$type_data[$type_val]['subcats'][$subcat_text]++;
+						}
 					}
 					$type_data[$type_val]['count']++;
 
@@ -946,6 +1006,56 @@ class WordPress extends Module {
 					esc_html($type_metrics['avg_initial_response'])
 				);
 
+				$subcat_html = '';
+				if ( ! empty( $data['subcats'] ) ) {
+					arsort($data['subcats']);
+					$subcat_rows = '';
+					foreach ( $data['subcats'] as $subcat_name => $subcat_count ) {
+						$subcat_rows .= sprintf(
+							'<tr>
+								<td>%s</td>
+								<td style="text-align:center;"><strong>%d</strong></td>
+							</tr>',
+							esc_html($subcat_name),
+							$subcat_count
+						);
+					}
+
+					$export_btn = '';
+					if ( $data['is_other'] ) {
+						$export_btn = sprintf(
+							'<button type="button" class="button stkb-export-other-issues" style="display:flex; align-items:center; gap:5px;" data-trigger="%s">
+								<span class="dashicons dashicons-download"></span> %s
+							</button>',
+							esc_attr( $type_field ),
+							esc_html__( 'Export Issues (CSV)', 'stackboost-for-supportcandy' )
+						);
+					}
+
+					$subcat_html = sprintf(
+						'<div class="stackboost-card" style="overflow-x: auto; margin-bottom: 20px;">
+							<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+								<h3 style="margin:0;">%s</h3>
+								%s
+							</div>
+							<table class="wp-list-table widefat striped">
+								<thead>
+									<tr>
+										<th>%s</th>
+										<th style="text-align:center; width:100px;">%s</th>
+									</tr>
+								</thead>
+								<tbody>%s</tbody>
+							</table>
+						</div>',
+						esc_html__( 'Issue Breakdown (Subcategories)', 'stackboost-for-supportcandy' ),
+						$export_btn,
+						esc_html__( 'Subcategory / Issue Text', 'stackboost-for-supportcandy' ),
+						esc_html__( 'Count', 'stackboost-for-supportcandy' ),
+						$subcat_rows
+					);
+				}
+
 				$modal_html = sprintf(
 					'<div class="stackboost-dashboard" style="text-align:left;">
 						<h2>%s - Performance & Distribution</h2>
@@ -963,6 +1073,7 @@ class WordPress extends Module {
 								<p>Initial Response: <strong>%s</strong></p>
 							</div>
 						</div>
+						%s
 						<div style="display: block;">
 							<div class="stackboost-card" style="overflow-x: auto;">
 								<h3>Agent Distribution</h3>
@@ -989,6 +1100,7 @@ class WordPress extends Module {
 					esc_html($type_metrics['avg_open_time']),
 					esc_html($type_metrics['avg_age_open']),
 					esc_html($type_metrics['avg_initial_response']),
+					$subcat_html,
 					$agent_rows ?: '<tr><td colspan="6">No agents assigned</td></tr>'
 				);
 
