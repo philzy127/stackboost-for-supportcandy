@@ -33,6 +33,39 @@ class WordPress extends Module {
 		add_action( 'wp_ajax_stackboost_get_ticket_metrics', [ $this, 'ajax_get_metrics' ] );
 		add_action( 'wp_ajax_stackboost_save_ticket_metrics_settings', [ $this, 'ajax_save_ticket_metrics_settings' ] );
 		add_action( 'wp_ajax_stackboost_get_other_issues_csv', [ $this, 'ajax_get_other_issues_csv' ] );
+		add_action( 'wp_ajax_stackboost_get_field_options', [ $this, 'ajax_get_field_options' ] );
+	}
+
+	public function ajax_get_field_options() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_METRICS ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['field_slug'] ) ) : '';
+
+		if ( empty( $field_slug ) ) {
+			wp_send_json_error( __( 'No field selected.', 'stackboost-for-supportcandy' ) );
+		}
+
+		global $wpdb;
+		$categories_table = $wpdb->prefix . 'psmsc_categories';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$categories_table}'") !== $categories_table ) {
+			$categories_table = $wpdb->prefix . 'wpsc_categories';
+			$priorities_table = $wpdb->prefix . 'wpsc_priorities';
+			$status_table     = $wpdb->prefix . 'wpsc_statuses';
+			$options_table    = $wpdb->prefix . 'wpsc_options';
+		} else {
+			$priorities_table = $wpdb->prefix . 'psmsc_priorities';
+			$status_table     = $wpdb->prefix . 'psmsc_statuses';
+			$options_table    = $wpdb->prefix . 'psmsc_options';
+		}
+
+		$map = $this->get_type_map($wpdb, $field_slug, $categories_table, $priorities_table, $status_table, $options_table);
+
+		wp_send_json_success( $map );
 	}
 
 	public function ajax_save_ticket_metrics_settings() {
@@ -94,9 +127,23 @@ class WordPress extends Module {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$raw_rules = wp_unslash( $_POST['ticket_metrics_other_issues_rules'] );
 			foreach ( $raw_rules as $rule ) {
+				// Handle both string representations and arrays for trigger conditions from the JS payload
+				$trigger_condition = [];
+				if ( isset( $rule['trigger_condition'] ) ) {
+					if ( is_array( $rule['trigger_condition'] ) ) {
+						$trigger_condition = array_map('sanitize_text_field', $rule['trigger_condition']);
+					} elseif ( is_string( $rule['trigger_condition'] ) ) {
+						$decoded = json_decode($rule['trigger_condition'], true);
+						if ( is_array($decoded) ) {
+							$trigger_condition = array_map('sanitize_text_field', $decoded);
+						} else {
+							$trigger_condition = [ sanitize_text_field( $rule['trigger_condition'] ) ];
+						}
+					}
+				}
 				$other_issues_rules[] = [
 					'trigger_field' => isset( $rule['trigger_field'] ) ? sanitize_text_field( $rule['trigger_field'] ) : '',
-					'trigger_condition' => isset( $rule['trigger_condition'] ) ? sanitize_text_field( $rule['trigger_condition'] ) : '',
+					'trigger_condition' => $trigger_condition,
 					'text_field' => isset( $rule['text_field'] ) ? sanitize_text_field( $rule['text_field'] ) : 'subject',
 				];
 			}
@@ -208,13 +255,19 @@ class WordPress extends Module {
 
 				$sql .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql;
 
-				if ( $trigger_cond !== '' ) {
-					$sql .= " AND t.`" . $trigger_field . "` = %s";
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-					$query = $wpdb->prepare( $sql, $end_dt, $start_dt, $trigger_cond );
+				if ( ! empty( $trigger_cond ) ) {
+					if ( is_array( $trigger_cond ) ) {
+						$placeholders = implode( ',', array_fill( 0, count( $trigger_cond ), '%s' ) );
+						$sql .= " AND t.`" . $trigger_field . "` IN ($placeholders)";
+						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+						$query = $wpdb->prepare( $sql, array_merge( [ $end_dt, $start_dt ], $trigger_cond ) );
+					} else {
+						$sql .= " AND t.`" . $trigger_field . "` = %s";
+						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+						$query = $wpdb->prepare( $sql, $end_dt, $start_dt, $trigger_cond );
+					}
 				} else {
-					// If no condition specified, just get all where field is not empty? Or skip.
-					// Assume if condition is empty, it's misconfigured.
+					// If no condition specified, assume it's misconfigured.
 					continue;
 				}
 
@@ -248,7 +301,8 @@ class WordPress extends Module {
 						// Clean up the text for CSV
 						$extracted_text = trim( $extracted_text );
 						if ( ! empty( $extracted_text ) ) {
-							$csv_data[] = [ $res->id, $extracted_text, $trigger_field . ' = ' . $trigger_cond ];
+							$cond_str = is_array($trigger_cond) ? implode(', ', $trigger_cond) : $trigger_cond;
+							$csv_data[] = [ $res->id, $extracted_text, $trigger_field . ' = ' . $cond_str ];
 						}
 					}
 				}

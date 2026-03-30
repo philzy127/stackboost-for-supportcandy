@@ -509,56 +509,54 @@ class Page {
 						</div>
 
 						<div class="stackboost-card">
-							<h2><?php esc_html_e( 'Other Issues Report', 'stackboost-for-supportcandy' ); ?></h2>
+							<div style="display:flex; justify-content:space-between; align-items:center;">
+								<h2><?php esc_html_e( 'Other Issues Report Rules', 'stackboost-for-supportcandy' ); ?></h2>
+								<button type="button" class="button button-primary" id="stkb_add_other_rule"><?php esc_html_e( '+ Add Rule', 'stackboost-for-supportcandy' ); ?></button>
+							</div>
 							<p class="description"><?php esc_html_e( 'Configure rules to define which tickets belong to the "Other" category for CSV exporting. You can create multiple rules to handle different "Other" options across various fields.', 'stackboost-for-supportcandy' ); ?></p>
 
-							<table class="form-table" id="stkb_other_issues_rules_table">
+							<table class="wp-list-table widefat fixed striped" id="stkb_other_issues_rules_table" style="margin-top: 15px;">
 								<thead>
 									<tr>
-										<th style="padding-bottom:10px;"><?php esc_html_e( 'Trigger Field', 'stackboost-for-supportcandy' ); ?></th>
-										<th style="padding-bottom:10px;"><?php esc_html_e( 'Trigger Condition ("Other" Option)', 'stackboost-for-supportcandy' ); ?></th>
-										<th style="padding-bottom:10px;"><?php esc_html_e( 'Text Breakdown Field (Word Cloud Source)', 'stackboost-for-supportcandy' ); ?></th>
-										<th></th>
+										<th><?php esc_html_e( 'Trigger Field', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Trigger Condition ("Other" Options)', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Text Breakdown Field (Word Cloud Source)', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="width: 100px; text-align:right;"><?php esc_html_e( 'Actions', 'stackboost-for-supportcandy' ); ?></th>
 									</tr>
 								</thead>
 								<tbody>
-									<?php
-									if ( empty( $other_issues_rules ) ) {
-										// Add one empty row as default
-										$other_issues_rules[] = [ 'trigger_field' => '', 'trigger_condition' => '', 'text_field' => 'subject' ];
-									}
-									foreach ( $other_issues_rules as $index => $rule ) :
-									?>
-									<tr class="stkb-rule-row">
-										<td>
-											<select class="stkb-rule-trigger-field" name="stackboost_settings[ticket_metrics_other_issues_rules][<?php echo $index; ?>][trigger_field]">
-												<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
-												<?php foreach ( $all_type_fields as $key => $label ) : ?>
-													<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $rule['trigger_field'], $key ); ?>><?php echo esc_html( $label ); ?></option>
-												<?php endforeach; ?>
-											</select>
-										</td>
-										<td>
-											<input type="text" class="stkb-rule-trigger-condition regular-text" name="stackboost_settings[ticket_metrics_other_issues_rules][<?php echo $index; ?>][trigger_condition]" value="<?php echo esc_attr( $rule['trigger_condition'] ); ?>" placeholder="<?php esc_attr_e( 'e.g., Other, Misc, 15', 'stackboost-for-supportcandy' ); ?>" />
-											<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Enter the option value/ID', 'stackboost-for-supportcandy' ); ?></p>
-										</td>
-										<td>
-											<select class="stkb-rule-text-field" name="stackboost_settings[ticket_metrics_other_issues_rules][<?php echo $index; ?>][text_field]">
-												<?php foreach ( $all_text_fields as $key => $label ) : ?>
-													<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $rule['text_field'], $key ); ?>><?php echo esc_html( $label ); ?></option>
-												<?php endforeach; ?>
-											</select>
-										</td>
-										<td>
-											<button type="button" class="button stkb-remove-rule" title="<?php esc_attr_e( 'Remove Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
-										</td>
-									</tr>
-									<?php endforeach; ?>
+									<?php if ( empty( $other_issues_rules ) ) : ?>
+										<tr class="stkb-no-rules-row"><td colspan="4" style="text-align:center;"><?php esc_html_e( 'No rules configured. Click "Add Rule" to get started.', 'stackboost-for-supportcandy' ); ?></td></tr>
+									<?php else : ?>
+										<?php foreach ( $other_issues_rules as $index => $rule ) : ?>
+											<tr class="stkb-rule-row" data-index="<?php echo esc_attr($index); ?>">
+												<td>
+													<span class="stkb-display-trigger-field"><?php echo esc_html( $all_type_fields[$rule['trigger_field']] ?? $rule['trigger_field'] ); ?></span>
+													<input type="hidden" class="stkb-rule-trigger-field" value="<?php echo esc_attr( $rule['trigger_field'] ); ?>" />
+												</td>
+												<td>
+													<span class="stkb-display-trigger-condition">
+														<?php
+															$conds = is_array($rule['trigger_condition']) ? $rule['trigger_condition'] : explode(',', $rule['trigger_condition']);
+															$conds = array_map('trim', array_filter($conds));
+															echo esc_html( implode(', ', $conds) );
+														?>
+													</span>
+													<input type="hidden" class="stkb-rule-trigger-condition" value="<?php echo esc_attr( is_array($rule['trigger_condition']) ? json_encode($rule['trigger_condition']) : $rule['trigger_condition'] ); ?>" />
+												</td>
+												<td>
+													<span class="stkb-display-text-field"><?php echo esc_html( $all_text_fields[$rule['text_field']] ?? $rule['text_field'] ); ?></span>
+													<input type="hidden" class="stkb-rule-text-field" value="<?php echo esc_attr( $rule['text_field'] ); ?>" />
+												</td>
+												<td style="text-align:right;">
+													<button type="button" class="button stkb-edit-rule" style="color:#d68a00; border-color:#d68a00;" title="<?php esc_attr_e( 'Edit Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-edit"></span></button>
+													<button type="button" class="button stkb-remove-rule" style="color:#d63638; border-color:#d63638;" title="<?php esc_attr_e( 'Delete Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
+												</td>
+											</tr>
+										<?php endforeach; ?>
+									<?php endif; ?>
 								</tbody>
 							</table>
-							<p>
-								<button type="button" class="button" id="stkb_add_other_rule"><?php esc_html_e( '+ Add Rule', 'stackboost-for-supportcandy' ); ?></button>
-							</p>
 
 							<p class="submit">
 								<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ), 'primary', 'submit', false ); ?>
@@ -566,6 +564,56 @@ class Page {
 						</div>
 					</div>
 				</form>
+			</div>
+
+			<!-- Dynamic Modal Container for Rules -->
+			<div id="stkb-rule-modal" class="stackboost-modal" style="display:none; align-items:center; justify-content:center; z-index:99999;">
+				<div class="stackboost-modal-content" style="max-width: 500px; width:100%; display:flex; flex-direction:column; padding: 20px;">
+					<h3 id="stkb-rule-modal-title" style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom:10px;"><?php esc_html_e( 'Add Rule', 'stackboost-for-supportcandy' ); ?></h3>
+					<div class="stackboost-modal-body" style="padding: 15px 0;">
+						<input type="hidden" id="stkb-rule-modal-index" value="" />
+						<table class="form-table">
+							<tr>
+								<th scope="row"><label for="stkb-modal-trigger-field"><?php esc_html_e( 'Trigger Field', 'stackboost-for-supportcandy' ); ?></label></th>
+								<td>
+									<select id="stkb-modal-trigger-field" style="width:100%;">
+										<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
+										<?php foreach ( $all_type_fields as $key => $label ) : ?>
+											<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="stkb-modal-trigger-condition"><?php esc_html_e( 'Trigger Condition ("Other")', 'stackboost-for-supportcandy' ); ?></label>
+									<span class="dashicons dashicons-update" id="stkb-modal-cond-spinner" style="display:none; animation: dashicons-spin 2s infinite linear; font-size: 16px; line-height: 24px;"></span>
+								</th>
+								<td>
+									<select id="stkb-modal-trigger-condition" multiple="multiple" style="width:100%;" disabled>
+										<!-- Options dynamically populated via AJAX based on trigger field -->
+									</select>
+									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Select the options that represent "Other".', 'stackboost-for-supportcandy' ); ?></p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><label for="stkb-modal-text-field"><?php esc_html_e( 'Text Breakdown Field', 'stackboost-for-supportcandy' ); ?></label></th>
+								<td>
+									<select id="stkb-modal-text-field" style="width:100%;">
+										<?php foreach ( $all_text_fields as $key => $label ) : ?>
+											<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
+										<?php endforeach; ?>
+									</select>
+									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'This field contains the text/excuse exported for the Word Cloud.', 'stackboost-for-supportcandy' ); ?></p>
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div style="display:flex; justify-content:flex-end; gap:10px; border-top: 1px solid #ccc; padding-top:15px;">
+						<button type="button" class="button" id="stkb-rule-modal-cancel"><?php esc_html_e( 'Cancel', 'stackboost-for-supportcandy' ); ?></button>
+						<button type="button" class="button button-primary" id="stkb-rule-modal-save"><?php esc_html_e( 'Save Rule', 'stackboost-for-supportcandy' ); ?></button>
+					</div>
+				</div>
 			</div>
 
 			<!-- Dynamic Modal Container -->
@@ -606,30 +654,155 @@ class Page {
 
 					// Other Issues Rules Logic
 					let rulesTable = $('#stkb_other_issues_rules_table tbody');
-					$('#stkb_add_other_rule').on('click', function() {
-						let rowCount = rulesTable.find('tr').length;
-						let newRow = rulesTable.find('tr:first').clone();
+					let ruleModal = $('#stkb-rule-modal');
 
-						// Update name attributes to reflect new index
-						newRow.find('select, input').each(function() {
-							let name = $(this).attr('name');
-							if (name) {
-								$(this).attr('name', name.replace(/\[\d+\]/, '[' + rowCount + ']'));
-							}
-							if ($(this).is('input')) {
-								$(this).val('');
+					// Helper function to safely init SelectWoo/Select2 depending on environment availability
+					function initSelect(element, options = {}) {
+						if ($.fn.selectWoo) {
+							$(element).selectWoo(options);
+						} else if ($.fn.select2) {
+							$(element).select2(options);
+						}
+					}
+
+					// Initialize static select on modal load
+					initSelect('#stkb-modal-trigger-field');
+					initSelect('#stkb-modal-text-field');
+					initSelect('#stkb-modal-trigger-condition', { width: '100%', placeholder: '<?php esc_attr_e('Select options', 'stackboost-for-supportcandy'); ?>' });
+
+					function openRuleModal(index, triggerField = '', triggerCondition = '[]', textField = 'subject') {
+						$('#stkb-rule-modal-index').val(index);
+
+						// Try to parse the condition if it's a JSON string
+						let conds = [];
+						try {
+							conds = JSON.parse(triggerCondition);
+						} catch (e) {
+							conds = triggerCondition ? [triggerCondition] : [];
+						}
+
+						$('#stkb-modal-trigger-field').val(triggerField).trigger('change');
+						$('#stkb-modal-text-field').val(textField).trigger('change');
+
+						// Store conditions temporarily so they can be set after AJAX loads the options
+						$('#stkb-modal-trigger-condition').data('selected', conds);
+
+						if (index === 'new') {
+							$('#stkb-rule-modal-title').text('<?php esc_html_e( 'Add Rule', 'stackboost-for-supportcandy' ); ?>');
+						} else {
+							$('#stkb-rule-modal-title').text('<?php esc_html_e( 'Edit Rule', 'stackboost-for-supportcandy' ); ?>');
+						}
+
+						ruleModal.hide().css('display', 'flex').hide().fadeIn(200);
+					}
+
+					$('#stkb_add_other_rule').on('click', function() {
+						openRuleModal('new');
+					});
+
+					$(document).on('click', '.stkb-edit-rule', function() {
+						let row = $(this).closest('tr');
+						let index = row.attr('data-index');
+						let triggerField = row.find('.stkb-rule-trigger-field').val();
+						let triggerCondition = row.find('.stkb-rule-trigger-condition').val();
+						let textField = row.find('.stkb-rule-text-field').val();
+
+						openRuleModal(index, triggerField, triggerCondition, textField);
+					});
+
+					$('#stkb-rule-modal-cancel').on('click', function() {
+						ruleModal.fadeOut(200);
+					});
+
+					$('#stkb-modal-trigger-field').on('change', function() {
+						let field_slug = $(this).val();
+						let conditionSelect = $('#stkb-modal-trigger-condition');
+						let spinner = $('#stkb-modal-cond-spinner');
+
+						conditionSelect.empty().prop('disabled', true).trigger('change');
+
+						if (!field_slug) return;
+
+						spinner.show();
+
+						$.post(ajaxurl, {
+							action: 'stackboost_get_field_options',
+							nonce: stackboost_admin_ajax.nonce,
+							field_slug: field_slug
+						}, function(response) {
+							spinner.hide();
+							if (response.success && response.data) {
+								$.each(response.data, function(id, text) {
+									let newOption = new Option(text, id, false, false);
+									conditionSelect.append(newOption);
+								});
+
+								// Re-apply selected values
+								let selectedVals = conditionSelect.data('selected') || [];
+								conditionSelect.val(selectedVals);
+
+								conditionSelect.prop('disabled', false).trigger('change');
 							}
 						});
+					});
 
-						rulesTable.append(newRow);
+					$('#stkb-rule-modal-save').on('click', function() {
+						let index = $('#stkb-rule-modal-index').val();
+						let tField = $('#stkb-modal-trigger-field').val();
+						let tFieldText = $('#stkb-modal-trigger-field option:selected').text();
+						let tCond = $('#stkb-modal-trigger-condition').val() || [];
+
+						// Get the text representations of the selected options for display
+						let tCondTexts = [];
+						$('#stkb-modal-trigger-condition option:selected').each(function() {
+							tCondTexts.push($(this).text());
+						});
+
+						let txtField = $('#stkb-modal-text-field').val();
+						let txtFieldText = $('#stkb-modal-text-field option:selected').text();
+
+						if (!tField || tCond.length === 0) {
+							alert('<?php esc_attr_e( 'Please select a Trigger Field and at least one Trigger Condition.', 'stackboost-for-supportcandy' ); ?>');
+							return;
+						}
+
+						if (index === 'new') {
+							// Determine new index based on highest existing index or 0
+							let maxIndex = -1;
+							rulesTable.find('tr.stkb-rule-row').each(function() {
+								let idx = parseInt($(this).attr('data-index'));
+								if (idx > maxIndex) maxIndex = idx;
+							});
+							index = maxIndex + 1;
+
+							let tr = $('<tr class="stkb-rule-row" data-index="'+index+'"></tr>');
+							tr.append('<td><span class="stkb-display-trigger-field"></span><input type="hidden" class="stkb-rule-trigger-field" value="" /></td>');
+							tr.append('<td><span class="stkb-display-trigger-condition"></span><input type="hidden" class="stkb-rule-trigger-condition" value="" /></td>');
+							tr.append('<td><span class="stkb-display-text-field"></span><input type="hidden" class="stkb-rule-text-field" value="" /></td>');
+							tr.append('<td style="text-align:right;">' +
+								'<button type="button" class="button stkb-edit-rule" style="color:#d68a00; border-color:#d68a00;" title="<?php esc_attr_e( 'Edit Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-edit"></span></button> ' +
+								'<button type="button" class="button stkb-remove-rule" style="color:#d63638; border-color:#d63638;" title="<?php esc_attr_e( 'Delete Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>' +
+							'</td>');
+
+							rulesTable.find('.stkb-no-rules-row').remove();
+							rulesTable.append(tr);
+						}
+
+						let row = rulesTable.find('tr[data-index="' + index + '"]');
+						row.find('.stkb-display-trigger-field').text(tFieldText);
+						row.find('.stkb-rule-trigger-field').val(tField);
+						row.find('.stkb-display-trigger-condition').text(tCondTexts.join(', '));
+						row.find('.stkb-rule-trigger-condition').val(JSON.stringify(tCond));
+						row.find('.stkb-display-text-field').text(txtFieldText);
+						row.find('.stkb-rule-text-field').val(txtField);
+
+						ruleModal.fadeOut(200);
 					});
 
 					$(document).on('click', '.stkb-remove-rule', function() {
-						if (rulesTable.find('tr').length > 1) {
-							$(this).closest('tr').remove();
-						} else {
-							// Just clear the fields if it's the last row
-							$(this).closest('tr').find('select, input').val('');
+						$(this).closest('tr').remove();
+						if (rulesTable.find('tr.stkb-rule-row').length === 0) {
+							rulesTable.append('<tr class="stkb-no-rules-row"><td colspan="4" style="text-align:center;"><?php esc_html_e( 'No rules configured. Click "Add Rule" to get started.', 'stackboost-for-supportcandy' ); ?></td></tr>');
 						}
 					});
 
