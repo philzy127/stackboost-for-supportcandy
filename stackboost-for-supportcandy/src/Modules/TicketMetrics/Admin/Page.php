@@ -536,17 +536,17 @@ class Page {
 
 						<div class="stackboost-card">
 							<div style="display:flex; justify-content:space-between; align-items:center;">
-								<h2><?php esc_html_e( 'Other Issues Report Rules', 'stackboost-for-supportcandy' ); ?></h2>
+								<h2><?php esc_html_e( 'Subcategory Breakdown & Report Rules', 'stackboost-for-supportcandy' ); ?></h2>
 								<button type="button" class="button button-primary" id="stkb_add_other_rule"><?php esc_html_e( '+ Add Rule', 'stackboost-for-supportcandy' ); ?></button>
 							</div>
-							<p class="description"><?php esc_html_e( 'Configure rules to define which tickets belong to the "Other" category for CSV exporting. You can create multiple rules to handle different "Other" options across various fields.', 'stackboost-for-supportcandy' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Configure which fields should display a subcategory breakdown table in the dashboard modal. You can also optionally specify "Other" conditions to generate downloadable word cloud CSV reports.', 'stackboost-for-supportcandy' ); ?></p>
 
 							<table class="wp-list-table widefat fixed striped" id="stkb_other_issues_rules_table" style="margin-top: 15px;">
 								<thead>
 									<tr>
-										<th><?php esc_html_e( 'Trigger Field', 'stackboost-for-supportcandy' ); ?></th>
-										<th><?php esc_html_e( 'Trigger Condition ("Other" Options)', 'stackboost-for-supportcandy' ); ?></th>
-										<th><?php esc_html_e( 'Text Breakdown Field (Word Cloud Source)', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Breakdown Field', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( '"Other" Options (Optional)', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Word Cloud Source Field (Optional)', 'stackboost-for-supportcandy' ); ?></th>
 										<th style="width: 100px; text-align:center;"><?php esc_html_e( 'Actions', 'stackboost-for-supportcandy' ); ?></th>
 									</tr>
 								</thead>
@@ -608,7 +608,7 @@ class Page {
 						<input type="hidden" id="stkb-rule-modal-index" value="" />
 						<table class="form-table">
 							<tr>
-								<th scope="row"><label for="stkb-modal-trigger-field"><?php esc_html_e( 'Trigger Field', 'stackboost-for-supportcandy' ); ?></label></th>
+								<th scope="row"><label for="stkb-modal-trigger-field"><?php esc_html_e( 'Breakdown Field', 'stackboost-for-supportcandy' ); ?></label></th>
 								<td>
 									<select id="stkb-modal-trigger-field" style="width:100%;">
 										<option value=""><?php esc_html_e( '-- Select Field --', 'stackboost-for-supportcandy' ); ?></option>
@@ -620,25 +620,26 @@ class Page {
 							</tr>
 							<tr>
 								<th scope="row">
-									<label for="stkb-modal-trigger-condition"><?php esc_html_e( 'Trigger Condition ("Other")', 'stackboost-for-supportcandy' ); ?></label>
+									<label for="stkb-modal-trigger-condition"><?php esc_html_e( '"Other" Options (Optional)', 'stackboost-for-supportcandy' ); ?></label>
 									<span class="dashicons dashicons-update" id="stkb-modal-cond-spinner" style="display:none; animation: dashicons-spin 2s infinite linear; font-size: 16px; line-height: 24px;"></span>
 								</th>
 								<td>
 									<select id="stkb-modal-trigger-condition" multiple="multiple" style="width:100%;" disabled>
 										<!-- Options dynamically populated via AJAX based on trigger field -->
 									</select>
-									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Select the options that represent "Other".', 'stackboost-for-supportcandy' ); ?></p>
+									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Optional. Select the options that represent "Other" to enable Word Cloud CSV exports.', 'stackboost-for-supportcandy' ); ?></p>
 								</td>
 							</tr>
 							<tr>
-								<th scope="row"><label for="stkb-modal-text-field"><?php esc_html_e( 'Text Breakdown Field', 'stackboost-for-supportcandy' ); ?></label></th>
+								<th scope="row"><label for="stkb-modal-text-field"><?php esc_html_e( 'Word Cloud Source Field (Optional)', 'stackboost-for-supportcandy' ); ?></label></th>
 								<td>
 									<select id="stkb-modal-text-field" style="width:100%;">
+										<option value=""><?php esc_html_e( '-- Select Text Field --', 'stackboost-for-supportcandy' ); ?></option>
 										<?php foreach ( $all_text_fields as $key => $label ) : ?>
 											<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
 										<?php endforeach; ?>
 									</select>
-									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'This field contains the text/excuse exported for the Word Cloud.', 'stackboost-for-supportcandy' ); ?></p>
+									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Optional. The field containing the text/excuse exported for the Word Cloud. Required if "Other" options are selected.', 'stackboost-for-supportcandy' ); ?></p>
 								</td>
 							</tr>
 						</table>
@@ -795,8 +796,13 @@ class Page {
 						let txtField = $('#stkb-modal-text-field').val();
 						let txtFieldText = $('#stkb-modal-text-field option:selected').text();
 
-						if (!tField || tCond.length === 0) {
-							alert('<?php esc_attr_e( 'Please select a Trigger Field and at least one Trigger Condition.', 'stackboost-for-supportcandy' ); ?>');
+						if (!tField) {
+							alert('<?php esc_attr_e( 'Please select a Breakdown Field.', 'stackboost-for-supportcandy' ); ?>');
+							return;
+						}
+
+						if ((tCond.length > 0 && !txtField) || (txtField && tCond.length === 0)) {
+							alert('<?php esc_attr_e( 'If configuring an "Other" option for Word Cloud exports, you must select both the "Other" condition and the Source Field.', 'stackboost-for-supportcandy' ); ?>');
 							return;
 						}
 

@@ -607,7 +607,7 @@ class WordPress extends Module {
 
 			// Ensure we fetch all fields that have a rule defined so we can show breakdowns regardless of the main grouped $type_field
 			foreach ( $other_rules as $rule ) {
-				if ( ! empty( $rule['trigger_field'] ) && ! empty( $rule['text_field'] ) ) {
+				if ( ! empty( $rule['trigger_field'] ) ) {
 					$tf = $rule['trigger_field'];
 					if ( preg_match( '/^[a-zA-Z0-9_]+$/', $tf ) ) {
 						$trigger_fields_to_fetch[$tf] = $rule;
@@ -676,26 +676,7 @@ class WordPress extends Module {
 							$is_other_match = true;
 						}
 
-						$subcat_text = '';
-						$subcat_field = $rule['text_field'];
-
-						if ( $subcat_field === 'description' ) {
-							// Fetch from threads
-							$thread_sql = "SELECT body FROM {$threads_table} WHERE ticket = %d ORDER BY date_created ASC LIMIT 1";
-							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-							$thread_query = $wpdb->prepare( $thread_sql, $t->id );
-							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-							$first_thread = $wpdb->get_var( $thread_query );
-							if ( $first_thread ) {
-								$subcat_text = trim(wp_strip_all_tags( $first_thread ));
-							}
-						} else {
-							$subcat_text = trim((string) $t->{"subcat_" . $tf});
-						}
-
-						if ( empty( $subcat_text ) ) {
-							$subcat_text = __( 'None provided', 'stackboost-for-supportcandy' );
-						}
+						$subcat_field = isset( $rule['text_field'] ) ? $rule['text_field'] : '';
 
 						// Initialize the table array for this trigger field if not exists
 						if ( ! isset( $type_data[$type_val]['breakdown_tables'][$tf] ) ) {
@@ -706,17 +687,15 @@ class WordPress extends Module {
 						}
 
 						if ( ! isset( $type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val] ) ) {
-							$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val] = ['count' => 0, 'subcats' => []];
+							$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val] = ['count' => 0, 'has_subcat' => false];
 						}
 
 						$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['count']++;
 
-						if ( ! isset( $type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['subcats'][$subcat_text] ) ) {
-							$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['subcats'][$subcat_text] = 0;
-						}
-						$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['subcats'][$subcat_text]++;
+						// We only record that a subcat field is available if the rule defines one
+						if ( ! empty( $subcat_field ) && $is_other_match ) {
+							$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['has_subcat'] = true;
 
-						if ( $is_other_match ) {
 							if ( ! in_array( $tf_val, $type_data[$type_val]['breakdown_tables'][$tf]['other_matches'] ) ) {
 								$type_data[$type_val]['breakdown_tables'][$tf]['other_matches'][] = $tf_val;
 							}
@@ -1127,7 +1106,7 @@ class WordPress extends Module {
 						$subcat_html .= sprintf(
 							'<div class="stackboost-card" style="overflow-x: auto; margin-bottom: 20px;">
 								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-									<h3 style="margin:0;">%s</h3>
+									<h3>%s</h3>
 								</div>
 								<table class="wp-list-table widefat striped">
 									<thead>
