@@ -1124,21 +1124,6 @@ class WordPress extends Module {
 								$resp_name,
 								$resp_data['count']
 							);
-
-							// If it's the "Other" option, also list the subcategories underneath it
-							if ( $is_this_other && ! empty( $resp_data['subcats'] ) ) {
-								arsort($resp_data['subcats']);
-								foreach ( $resp_data['subcats'] as $subcat_name => $subcat_count ) {
-									$subcat_rows .= sprintf(
-										'<tr style="background-color: #f9f9f9;">
-											<td style="padding-left: 30px; font-size: 0.9em; color: #555;">&#8627; %s</td>
-											<td style="text-align:center; font-size: 0.9em; color: #555;">%d</td>
-										</tr>',
-										esc_html($subcat_name),
-										$subcat_count
-									);
-								}
-							}
 						}
 
 						$subcat_html .= sprintf(
