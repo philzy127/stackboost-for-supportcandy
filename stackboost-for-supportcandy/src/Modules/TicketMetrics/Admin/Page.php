@@ -630,7 +630,7 @@ class Page {
 									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Optional. Select the options that represent "Other" to enable Word Cloud CSV exports.', 'stackboost-for-supportcandy' ); ?></p>
 								</td>
 							</tr>
-							<tr>
+							<tr id="stkb-modal-text-field-row" style="display:none;">
 								<th scope="row"><label for="stkb-modal-text-field"><?php esc_html_e( 'Word Cloud Source Field (Optional)', 'stackboost-for-supportcandy' ); ?></label></th>
 								<td>
 									<select id="stkb-modal-text-field" style="width:100%;">
@@ -717,7 +717,14 @@ class Page {
 						}
 
 						$('#stkb-modal-trigger-field').val(triggerField).trigger('change');
-						$('#stkb-modal-text-field').val(textField).trigger('change');
+
+						if (conds.length > 0) {
+							$('#stkb-modal-text-field-row').show();
+							$('#stkb-modal-text-field').val(textField).trigger('change');
+						} else {
+							$('#stkb-modal-text-field-row').hide();
+							$('#stkb-modal-text-field').val('').trigger('change');
+						}
 
 						// Store conditions temporarily so they can be set after AJAX loads the options
 						$('#stkb-modal-trigger-condition').data('selected', conds);
@@ -747,6 +754,16 @@ class Page {
 
 					$('#stkb-rule-modal-cancel').on('click', function() {
 						ruleModal.fadeOut(200);
+					});
+
+					$('#stkb-modal-trigger-condition').on('change', function() {
+						let vals = $(this).val() || [];
+						if (vals.length > 0) {
+							$('#stkb-modal-text-field-row').show();
+						} else {
+							$('#stkb-modal-text-field-row').hide();
+							$('#stkb-modal-text-field').val('').trigger('change');
+						}
 					});
 
 					$('#stkb-modal-trigger-field').on('change', function() {
@@ -797,12 +814,12 @@ class Page {
 						let txtFieldText = $('#stkb-modal-text-field option:selected').text();
 
 						if (!tField) {
-							alert('<?php esc_attr_e( 'Please select a Breakdown Field.', 'stackboost-for-supportcandy' ); ?>');
+							alert('<?php echo esc_js( __( 'Please select a Breakdown Field.', 'stackboost-for-supportcandy' ) ); ?>');
 							return;
 						}
 
 						if ((tCond.length > 0 && !txtField) || (txtField && tCond.length === 0)) {
-							alert('<?php esc_attr_e( 'If configuring an "Other" option for Word Cloud exports, you must select both the "Other" condition and the Source Field.', 'stackboost-for-supportcandy' ); ?>');
+							alert('<?php echo esc_js( __( 'If configuring an "Other" option for Word Cloud exports, you must select both the "Other" condition and the Source Field.', 'stackboost-for-supportcandy' ) ); ?>');
 							return;
 						}
 
