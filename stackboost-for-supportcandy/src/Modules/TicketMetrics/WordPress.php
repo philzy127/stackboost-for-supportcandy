@@ -213,7 +213,6 @@ class WordPress extends Module {
 		}
 
 		$csv_data = [];
-		$csv_data[] = [ 'Ticket ID', 'Issue / Excuse text', 'Trigger Field' ];
 
 		foreach ( $rules as $rule ) {
 			if ( empty( $rule['trigger_field'] ) ) {
@@ -316,15 +315,14 @@ class WordPress extends Module {
 						// Clean up the text for CSV
 						$extracted_text = trim( $extracted_text );
 						if ( ! empty( $extracted_text ) ) {
-							$cond_str = is_array($trigger_cond) ? implode(', ', $trigger_cond) : $trigger_cond;
-							$csv_data[] = [ $res->id, $extracted_text, $trigger_field . ' = ' . $cond_str ];
+							$csv_data[] = [ $extracted_text ];
 						}
 					}
 				}
 			}
 		}
 
-		if ( count( $csv_data ) <= 1 ) {
+		if ( empty( $csv_data ) ) {
 			wp_die( esc_html__( 'No data found matching the rules in this timeframe.', 'stackboost-for-supportcandy' ) );
 		}
 
