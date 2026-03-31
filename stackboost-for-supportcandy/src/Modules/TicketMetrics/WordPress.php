@@ -186,6 +186,8 @@ class WordPress extends Module {
 		$start_date = isset( $_GET['start_date'] ) ? sanitize_text_field( wp_unslash( $_GET['start_date'] ) ) : '';
 		$end_date   = isset( $_GET['end_date'] ) ? sanitize_text_field( wp_unslash( $_GET['end_date'] ) ) : '';
 		$trigger_field_filter = isset( $_GET['trigger_field'] ) ? sanitize_text_field( wp_unslash( $_GET['trigger_field'] ) ) : '';
+		$parent_field = isset( $_GET['parent_field'] ) ? sanitize_text_field( wp_unslash( $_GET['parent_field'] ) ) : '';
+		$parent_val   = isset( $_GET['parent_val'] ) ? sanitize_text_field( wp_unslash( $_GET['parent_val'] ) ) : '';
 
 		if ( empty( $start_date ) || empty( $end_date ) ) {
 			wp_die( esc_html__( 'Start and End dates are required.', 'stackboost-for-supportcandy' ) );
@@ -260,21 +262,29 @@ class WordPress extends Module {
 
 				$sql .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql;
 
+				$query_args = [ $end_dt, $start_dt ];
+
+				if ( ! empty( $parent_field ) && ! empty( $parent_val ) && preg_match( '/^[a-zA-Z0-9_]+$/', $parent_field ) ) {
+					$sql .= " AND t.`" . $parent_field . "` = %s";
+					$query_args[] = $parent_val;
+				}
+
 				if ( ! empty( $trigger_cond ) ) {
 					if ( is_array( $trigger_cond ) ) {
 						$placeholders = implode( ',', array_fill( 0, count( $trigger_cond ), '%s' ) );
 						$sql .= " AND t.`" . $trigger_field . "` IN ($placeholders)";
-						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-						$query = $wpdb->prepare( $sql, array_merge( [ $end_dt, $start_dt ], $trigger_cond ) );
+						$query_args = array_merge( $query_args, $trigger_cond );
 					} else {
 						$sql .= " AND t.`" . $trigger_field . "` = %s";
-						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-						$query = $wpdb->prepare( $sql, $end_dt, $start_dt, $trigger_cond );
+						$query_args[] = $trigger_cond;
 					}
 				} else {
 					// If no condition specified, assume it's misconfigured.
 					continue;
 				}
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query = $wpdb->prepare( $sql, $query_args );
 
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$results = $wpdb->get_results( $query );
@@ -584,26 +594,36 @@ class WordPress extends Module {
 		$metrics['touched_tickets']      = $overall_metrics['touched_tickets'];
 
 		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
-			// Check if any rule targets the currently selected type field
+			// Check for ALL rules to see if we need to fetch multiple trigger fields for breakdown tracking
 			$other_rules = $options['ticket_metrics_other_issues_rules'] ?? [];
-			$matched_rule = null;
+			$trigger_fields_to_fetch = [];
+
+			// Ensure we fetch all fields that have a rule defined so we can show breakdowns regardless of the main grouped $type_field
 			foreach ( $other_rules as $rule ) {
-				if ( isset( $rule['trigger_field'] ) && $rule['trigger_field'] === $type_field && ! empty( $rule['text_field'] ) ) {
-					$matched_rule = $rule;
-					break;
+				if ( ! empty( $rule['trigger_field'] ) && ! empty( $rule['text_field'] ) ) {
+					$tf = $rule['trigger_field'];
+					if ( preg_match( '/^[a-zA-Z0-9_]+$/', $tf ) ) {
+						$trigger_fields_to_fetch[$tf] = $rule;
+					}
 				}
 			}
 
 			$sql_raw_tickets = "SELECT t.id, t.assigned_agent, t.`" . $type_field . "` as type_val,
 						IF(" . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s, 1, 0) as is_closed_in_range";
 
-			// If we matched a rule and the subcategory is a native/custom text column on the ticket, fetch it inline
-			$subcat_field = $matched_rule ? $matched_rule['text_field'] : null;
-			$fetch_subcat_inline = false;
-			if ( $subcat_field && $subcat_field !== 'description' ) {
-				if ( preg_match( '/^[a-zA-Z0-9_]+$/', $subcat_field ) ) {
-					$sql_raw_tickets .= ", t.`" . $subcat_field . "` as subcat_val";
-					$fetch_subcat_inline = true;
+			// Append all valid trigger fields so we can track if the ticket matches any configured rules
+			foreach ( $trigger_fields_to_fetch as $tf => $rule ) {
+				if ( $tf !== $type_field ) { // avoid double querying the main group field
+					$sql_raw_tickets .= ", t.`" . $tf . "` as trigger_" . $tf;
+				}
+
+				// If a rule exists for this trigger field and the subcategory is a native/custom text column on the ticket, fetch it inline
+				$subcat_field = $rule['text_field'];
+				if ( $subcat_field && $subcat_field !== 'description' ) {
+					if ( preg_match( '/^[a-zA-Z0-9_]+$/', $subcat_field ) ) {
+						// Alias it distinctively so we don't collide if multiple rules use the same subcat field
+						$sql_raw_tickets .= ", t.`" . $subcat_field . "` as subcat_" . $tf;
+					}
 				}
 			}
 
@@ -627,22 +647,33 @@ class WordPress extends Module {
 
 					// Init Type Data
 					if ( ! isset( $type_data[$type_val] ) ) {
-						$type_data[$type_val] = ['count' => 0, 'agents' => [], 'subcats' => [], 'is_other' => false];
+						$type_data[$type_val] = ['count' => 0, 'agents' => [], 'breakdown_tables' => []];
 					}
 
-					// Process Subcategory if applicable
-					if ( $matched_rule ) {
-						$trigger_cond = $matched_rule['trigger_condition'];
+					// Process Trigger Fields for Subcategory Breakdown Tables
+					foreach ( $trigger_fields_to_fetch as $tf => $rule ) {
+						// Retrieve the ticket's value for this trigger field
+						$tf_val = ($tf === $type_field) ? $type_val : $t->{"trigger_" . $tf};
+
+						// Skip if this ticket does not have a value for this trigger field
+						if ( empty( $tf_val ) ) {
+							continue;
+						}
+
+						// Determine if this value is the "Other" condition
+						$trigger_cond = $rule['trigger_condition'];
 						$is_other_match = false;
-						if ( is_array( $trigger_cond ) && in_array( $type_val, $trigger_cond ) ) {
+						if ( is_array( $trigger_cond ) && in_array( $tf_val, $trigger_cond ) ) {
 							$is_other_match = true;
-						} elseif ( ! is_array( $trigger_cond ) && (string)$type_val === (string)$trigger_cond ) {
+						} elseif ( ! is_array( $trigger_cond ) && (string)$tf_val === (string)$trigger_cond ) {
 							$is_other_match = true;
 						}
 
 						$subcat_text = '';
+						$subcat_field = $rule['text_field'];
+
 						if ( $subcat_field === 'description' ) {
-							// Fetch from threads (inefficient if many, but necessary for description)
+							// Fetch from threads
 							$thread_sql = "SELECT body FROM {$threads_table} WHERE ticket = %d ORDER BY date_created ASC LIMIT 1";
 							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 							$thread_query = $wpdb->prepare( $thread_sql, $t->id );
@@ -651,21 +682,37 @@ class WordPress extends Module {
 							if ( $first_thread ) {
 								$subcat_text = trim(wp_strip_all_tags( $first_thread ));
 							}
-						} elseif ( $fetch_subcat_inline ) {
-							$subcat_text = trim((string) $t->subcat_val);
+						} else {
+							$subcat_text = trim((string) $t->{"subcat_" . $tf});
 						}
 
 						if ( empty( $subcat_text ) ) {
 							$subcat_text = __( 'None provided', 'stackboost-for-supportcandy' );
 						}
 
-						if ( ! isset( $type_data[$type_val]['subcats'][$subcat_text] ) ) {
-							$type_data[$type_val]['subcats'][$subcat_text] = 0;
+						// Initialize the table array for this trigger field if not exists
+						if ( ! isset( $type_data[$type_val]['breakdown_tables'][$tf] ) ) {
+							$type_data[$type_val]['breakdown_tables'][$tf] = [
+								'responses' => [],
+								'other_matches' => [] // Store the exact "Other" values encountered
+							];
 						}
-						$type_data[$type_val]['subcats'][$subcat_text]++;
+
+						if ( ! isset( $type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val] ) ) {
+							$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val] = ['count' => 0, 'subcats' => []];
+						}
+
+						$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['count']++;
+
+						if ( ! isset( $type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['subcats'][$subcat_text] ) ) {
+							$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['subcats'][$subcat_text] = 0;
+						}
+						$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['subcats'][$subcat_text]++;
 
 						if ( $is_other_match ) {
-							$type_data[$type_val]['is_other'] = true;
+							if ( ! in_array( $tf_val, $type_data[$type_val]['breakdown_tables'][$tf]['other_matches'] ) ) {
+								$type_data[$type_val]['breakdown_tables'][$tf]['other_matches'][] = $tf_val;
+							}
 						}
 					}
 					$type_data[$type_val]['count']++;
@@ -1012,56 +1059,93 @@ class WordPress extends Module {
 				);
 
 				$subcat_html = '';
-				if ( ! empty( $data['subcats'] ) ) {
-					arsort($data['subcats']);
-					$subcat_rows = '';
-					foreach ( $data['subcats'] as $subcat_name => $subcat_count ) {
-						$subcat_rows .= sprintf(
-							'<tr>
-								<td>%s</td>
-								<td style="text-align:center;"><strong>%d</strong></td>
-							</tr>',
-							esc_html($subcat_name),
-							$subcat_count
+				if ( ! empty( $data['breakdown_tables'] ) ) {
+					foreach ( $data['breakdown_tables'] as $tf => $tf_data ) {
+						// Only render a breakdown table if there are actually multiple responses, or if it's a direct rule match we need to show
+						if ( empty( $tf_data['responses'] ) ) {
+							continue;
+						}
+
+						// Sort responses by count descending
+						uasort($tf_data['responses'], function($a, $b) { return $b['count'] <=> $a['count']; });
+
+						$tf_name = $all_type_fields[$tf] ?? $tf; // Fallback in case type_map doesn't have it, though UI should have it
+
+						$subcat_rows = '';
+						foreach ( $tf_data['responses'] as $resp_val => $resp_data ) {
+							$is_this_other = in_array( $resp_val, $tf_data['other_matches'] );
+
+							// Map response value to friendly name if possible
+							$resp_name = $resp_val;
+							if ( isset($trigger_condition_maps[$tf][$resp_val]) ) {
+								$resp_name = $trigger_condition_maps[$tf][$resp_val];
+							}
+
+							// If this is an 'other' condition, make the name a link to the CSV
+							if ( $is_this_other ) {
+								$resp_name = sprintf(
+									'<a href="#" class="stkb-export-other-issues" style="text-decoration:none; font-weight:bold; color: var(--sb-accent, #2271b1);" data-trigger="%s" data-trigger-val="%s" title="%s">%s <span class="dashicons dashicons-download" style="vertical-align:middle;"></span></a>',
+									esc_attr( $tf ),
+									esc_attr( $resp_val ),
+									esc_attr__( 'Export Issues (CSV)', 'stackboost-for-supportcandy' ),
+									esc_html( $resp_name )
+								);
+							} else {
+								$resp_name = esc_html($resp_name);
+							}
+
+							$subcat_rows .= sprintf(
+								'<tr>
+									<td>%s</td>
+									<td style="text-align:center;"><strong>%d</strong></td>
+								</tr>',
+								$resp_name,
+								$resp_data['count']
+							);
+
+							// If it's the "Other" option, also list the subcategories underneath it
+							if ( $is_this_other && ! empty( $resp_data['subcats'] ) ) {
+								arsort($resp_data['subcats']);
+								foreach ( $resp_data['subcats'] as $subcat_name => $subcat_count ) {
+									$subcat_rows .= sprintf(
+										'<tr style="background-color: #f9f9f9;">
+											<td style="padding-left: 30px; font-size: 0.9em; color: #555;">&#8627; %s</td>
+											<td style="text-align:center; font-size: 0.9em; color: #555;">%d</td>
+										</tr>',
+										esc_html($subcat_name),
+										$subcat_count
+									);
+								}
+							}
+						}
+
+						$subcat_html .= sprintf(
+							'<div class="stackboost-card" style="overflow-x: auto; margin-bottom: 20px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+									<h3 style="margin:0;">%s</h3>
+								</div>
+								<table class="wp-list-table widefat striped">
+									<thead>
+										<tr>
+											<th>%s</th>
+											<th style="text-align:center; width:100px;">%s</th>
+										</tr>
+									</thead>
+									<tbody>%s</tbody>
+								</table>
+							</div>',
+							sprintf( esc_html__( 'Issue Breakdown: %s', 'stackboost-for-supportcandy' ), esc_html($tf_name) ),
+							esc_html__( 'Response / Subcategory', 'stackboost-for-supportcandy' ),
+							esc_html__( 'Count', 'stackboost-for-supportcandy' ),
+							$subcat_rows
 						);
 					}
-
-					$subcat_html = sprintf(
-						'<div class="stackboost-card" style="overflow-x: auto; margin-bottom: 20px;">
-							<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-								<h3 style="margin:0;">%s</h3>
-							</div>
-							<table class="wp-list-table widefat striped">
-								<thead>
-									<tr>
-										<th>%s</th>
-										<th style="text-align:center; width:100px;">%s</th>
-									</tr>
-								</thead>
-								<tbody>%s</tbody>
-							</table>
-						</div>',
-						esc_html__( 'Issue Breakdown (Subcategories)', 'stackboost-for-supportcandy' ),
-						esc_html__( 'Subcategory / Issue Text', 'stackboost-for-supportcandy' ),
-						esc_html__( 'Count', 'stackboost-for-supportcandy' ),
-						$subcat_rows
-					);
 				}
 
-				// Make the title itself a link if it's the "Other" category
 				$modal_title = esc_html($name) . ' - ' . esc_html__( 'Performance & Distribution', 'stackboost-for-supportcandy' );
-				if ( $data['is_other'] ) {
-					$modal_title = sprintf(
-						'<a href="#" class="stkb-export-other-issues" style="text-decoration:none; color:inherit;" data-trigger="%s">%s <span class="dashicons dashicons-download" style="font-size:24px; width:24px; height:24px; vertical-align:middle; color: var(--sb-accent, #2271b1);" title="%s"></span></a> - %s',
-						esc_attr( $type_field ),
-						esc_html($name),
-						esc_attr__( 'Export Issues (CSV)', 'stackboost-for-supportcandy' ),
-						esc_html__( 'Performance & Distribution', 'stackboost-for-supportcandy' )
-					);
-				}
 
 				$modal_html = sprintf(
-					'<div class="stackboost-dashboard" style="text-align:left;">
+					'<div class="stackboost-dashboard" style="text-align:left;" data-stkb-category-val="%s">
 						<h2>%s</h2>
 						<div style="display: flex; gap: 20px; margin-bottom: 20px;">
 							<div class="stackboost-card" style="flex: 1;">
@@ -1097,6 +1181,7 @@ class WordPress extends Module {
 							</div>
 						</div>
 					</div>',
+					esc_attr($t_val),
 					$modal_title, // Allowed raw HTML from sprintf above
 					esc_html($type_metrics['total_created']),
 					esc_html($type_metrics['carried_closed']),

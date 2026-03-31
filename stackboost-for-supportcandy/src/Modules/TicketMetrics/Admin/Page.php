@@ -547,7 +547,7 @@ class Page {
 										<th><?php esc_html_e( 'Trigger Field', 'stackboost-for-supportcandy' ); ?></th>
 										<th><?php esc_html_e( 'Trigger Condition ("Other" Options)', 'stackboost-for-supportcandy' ); ?></th>
 										<th><?php esc_html_e( 'Text Breakdown Field (Word Cloud Source)', 'stackboost-for-supportcandy' ); ?></th>
-										<th style="width: 100px; text-align:right;"><?php esc_html_e( 'Actions', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="width: 100px; text-align:center;"><?php esc_html_e( 'Actions', 'stackboost-for-supportcandy' ); ?></th>
 									</tr>
 								</thead>
 								<tbody>
@@ -582,9 +582,9 @@ class Page {
 													<span class="stkb-display-text-field"><?php echo esc_html( $all_text_fields[$rule['text_field']] ?? $rule['text_field'] ); ?></span>
 													<input type="hidden" class="stkb-rule-text-field" value="<?php echo esc_attr( $rule['text_field'] ); ?>" />
 												</td>
-												<td style="text-align:right;">
-													<button type="button" class="button stkb-edit-rule" style="color:#d68a00; border-color:#d68a00;" title="<?php esc_attr_e( 'Edit Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-edit"></span></button>
-													<button type="button" class="button stkb-remove-rule" style="color:#d63638; border-color:#d63638;" title="<?php esc_attr_e( 'Delete Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
+												<td style="text-align:center;">
+													<button type="button" class="stkb-edit-rule" style="color:#d68a00; background:none; border:none; box-shadow:none; cursor:pointer;" title="<?php esc_attr_e( 'Edit Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-edit"></span></button>
+													<button type="button" class="stkb-remove-rule" style="color:#d63638; background:none; border:none; box-shadow:none; cursor:pointer;" title="<?php esc_attr_e( 'Delete Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>
 												</td>
 											</tr>
 										<?php endforeach; ?>
@@ -813,9 +813,9 @@ class Page {
 							tr.append('<td><span class="stkb-display-trigger-field"></span><input type="hidden" class="stkb-rule-trigger-field" value="" /></td>');
 							tr.append('<td><span class="stkb-display-trigger-condition"></span><input type="hidden" class="stkb-rule-trigger-condition" value="" /></td>');
 							tr.append('<td><span class="stkb-display-text-field"></span><input type="hidden" class="stkb-rule-text-field" value="" /></td>');
-							tr.append('<td style="text-align:right;">' +
-								'<button type="button" class="button stkb-edit-rule" style="color:#d68a00; border-color:#d68a00;" title="<?php esc_attr_e( 'Edit Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-edit"></span></button> ' +
-								'<button type="button" class="button stkb-remove-rule" style="color:#d63638; border-color:#d63638;" title="<?php esc_attr_e( 'Delete Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>' +
+							tr.append('<td style="text-align:center;">' +
+								'<button type="button" class="stkb-edit-rule" style="color:#d68a00; background:none; border:none; box-shadow:none; cursor:pointer;" title="<?php esc_attr_e( 'Edit Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-edit"></span></button> ' +
+								'<button type="button" class="stkb-remove-rule" style="color:#d63638; background:none; border:none; box-shadow:none; cursor:pointer;" title="<?php esc_attr_e( 'Delete Rule', 'stackboost-for-supportcandy' ); ?>"><span class="dashicons dashicons-trash"></span></button>' +
 							'</td>');
 
 							rulesTable.find('.stkb-no-rules-row').remove();
@@ -1240,6 +1240,8 @@ class Page {
 						let btn = $(this);
 						let originalContent = btn.html();
 						let triggerField = btn.attr('data-trigger');
+						let parentField = $('#stkb_type_field_setting').val();
+						let parentVal = btn.closest('.stackboost-modal').data('stkb-category-val');
 
 						btn.prop('disabled', true).css('opacity', '0.5');
 
@@ -1248,6 +1250,9 @@ class Page {
 
 						// Redirect to a specific URL that triggers the file download
 						let url = ajaxurl + '?action=stackboost_get_other_issues_csv&nonce=' + stackboost_admin_ajax.nonce + '&start_date=' + encodeURIComponent(start_date) + '&end_date=' + encodeURIComponent(end_date) + '&trigger_field=' + encodeURIComponent(triggerField);
+						if ( parentField && parentVal ) {
+							url += '&parent_field=' + encodeURIComponent(parentField) + '&parent_val=' + encodeURIComponent(parentVal);
+						}
 
 						// Create a temporary iframe to trigger the download without leaving the page
 						let iframe = document.createElement('iframe');
