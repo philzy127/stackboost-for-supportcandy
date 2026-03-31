@@ -549,6 +549,10 @@ class WordPress extends Module {
 
 		$metrics['avg_initial_response'] = $avg_response_seconds > 0 ? $this->format_seconds($avg_response_seconds) : '0m';
 
+		// Perform a unified raw fetch to build rich hierarchies for Tooltips and Modals
+		// We need: id, assigned_agent, type_field value, and whether it was closed in range.
+		$options = get_option( 'stackboost_settings', [] );
+
 		// Fetch maps first
 		$agent_map = $this->get_agent_map($wpdb, $agents_table);
 		$type_map = [];
@@ -556,9 +560,14 @@ class WordPress extends Module {
 			$type_map = $this->get_type_map($wpdb, $type_field, $categories_table, $priorities_table, $status_table, $options_table);
 		}
 
-		// Perform a unified raw fetch to build rich hierarchies for Tooltips and Modals
-		// We need: id, assigned_agent, type_field value, and whether it was closed in range.
-		$options = get_option( 'stackboost_settings', [] );
+		$other_rules = $options['ticket_metrics_other_issues_rules'] ?? [];
+		$trigger_condition_maps = [];
+		foreach ( $other_rules as $rule ) {
+			if ( ! empty( $rule['trigger_field'] ) && ! isset( $trigger_condition_maps[$rule['trigger_field']] ) ) {
+				$trigger_condition_maps[$rule['trigger_field']] = $this->get_type_map($wpdb, $rule['trigger_field'], $categories_table, $priorities_table, $status_table, $options_table);
+			}
+		}
+
 		$tracked_agents = $options['ticket_metrics_tracked_agents'] ?? [];
 		if ( ! is_array( $tracked_agents ) ) {
 			$tracked_agents = [];
@@ -1060,6 +1069,19 @@ class WordPress extends Module {
 
 				$subcat_html = '';
 				if ( ! empty( $data['breakdown_tables'] ) ) {
+					// We need to fetch the names of the custom fields themselves for the table title
+					$all_type_fields = [
+						'category' => __( 'Category', 'stackboost-for-supportcandy' ),
+						'priority' => __( 'Priority', 'stackboost-for-supportcandy' ),
+						'status'   => __( 'Status', 'stackboost-for-supportcandy' ),
+					];
+					if ( class_exists( '\WPSC_Custom_Field' ) ) {
+						$cfs = \WPSC_Custom_Field::find( [ 'items_per_page' => 0 ] )['results'];
+						foreach ( $cfs as $cf ) {
+							$all_type_fields[ $cf->slug ] = $cf->name;
+						}
+					}
+
 					foreach ( $data['breakdown_tables'] as $tf => $tf_data ) {
 						// Only render a breakdown table if there are actually multiple responses, or if it's a direct rule match we need to show
 						if ( empty( $tf_data['responses'] ) ) {
