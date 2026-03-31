@@ -951,6 +951,10 @@ class Settings {
 						$saved_settings[$key] = array_map('intval', (array) $value);
 						break;
 
+					case 'ticket_metrics_other_issues_rules':
+						$saved_settings[$key] = is_array($value) ? $value : [];
+						break;
+
 					case 'holidays':
 						$saved_settings[$key] = sanitize_textarea_field($value);
 						break;
