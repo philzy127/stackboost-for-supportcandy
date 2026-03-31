@@ -185,6 +185,7 @@ class WordPress extends Module {
 
 		$start_date = isset( $_GET['start_date'] ) ? sanitize_text_field( wp_unslash( $_GET['start_date'] ) ) : '';
 		$end_date   = isset( $_GET['end_date'] ) ? sanitize_text_field( wp_unslash( $_GET['end_date'] ) ) : '';
+		$trigger_field_filter = isset( $_GET['trigger_field'] ) ? sanitize_text_field( wp_unslash( $_GET['trigger_field'] ) ) : '';
 
 		if ( empty( $start_date ) || empty( $end_date ) ) {
 			wp_die( esc_html__( 'Start and End dates are required.', 'stackboost-for-supportcandy' ) );
@@ -215,6 +216,10 @@ class WordPress extends Module {
 		foreach ( $rules as $rule ) {
 			if ( empty( $rule['trigger_field'] ) ) {
 				continue;
+			}
+
+			if ( ! empty( $trigger_field_filter ) && $rule['trigger_field'] !== $trigger_field_filter ) {
+				continue; // Skip rules that do not match the explicitly requested trigger field
 			}
 
 			$trigger_field = $rule['trigger_field'];
@@ -635,32 +640,32 @@ class WordPress extends Module {
 							$is_other_match = true;
 						}
 
+						$subcat_text = '';
+						if ( $subcat_field === 'description' ) {
+							// Fetch from threads (inefficient if many, but necessary for description)
+							$thread_sql = "SELECT body FROM {$threads_table} WHERE ticket = %d ORDER BY date_created ASC LIMIT 1";
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$thread_query = $wpdb->prepare( $thread_sql, $t->id );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$first_thread = $wpdb->get_var( $thread_query );
+							if ( $first_thread ) {
+								$subcat_text = trim(wp_strip_all_tags( $first_thread ));
+							}
+						} elseif ( $fetch_subcat_inline ) {
+							$subcat_text = trim((string) $t->subcat_val);
+						}
+
+						if ( empty( $subcat_text ) ) {
+							$subcat_text = __( 'None provided', 'stackboost-for-supportcandy' );
+						}
+
+						if ( ! isset( $type_data[$type_val]['subcats'][$subcat_text] ) ) {
+							$type_data[$type_val]['subcats'][$subcat_text] = 0;
+						}
+						$type_data[$type_val]['subcats'][$subcat_text]++;
+
 						if ( $is_other_match ) {
 							$type_data[$type_val]['is_other'] = true;
-							$subcat_text = '';
-
-							if ( $subcat_field === 'description' ) {
-								// Fetch from threads (inefficient if many, but necessary for description)
-								$thread_sql = "SELECT body FROM {$threads_table} WHERE ticket = %d ORDER BY date_created ASC LIMIT 1";
-								// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-								$thread_query = $wpdb->prepare( $thread_sql, $t->id );
-								// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-								$first_thread = $wpdb->get_var( $thread_query );
-								if ( $first_thread ) {
-									$subcat_text = trim(wp_strip_all_tags( $first_thread ));
-								}
-							} elseif ( $fetch_subcat_inline ) {
-								$subcat_text = trim((string) $t->subcat_val);
-							}
-
-							if ( empty( $subcat_text ) ) {
-								$subcat_text = __( 'None provided', 'stackboost-for-supportcandy' );
-							}
-
-							if ( ! isset( $type_data[$type_val]['subcats'][$subcat_text] ) ) {
-								$type_data[$type_val]['subcats'][$subcat_text] = 0;
-							}
-							$type_data[$type_val]['subcats'][$subcat_text]++;
 						}
 					}
 					$type_data[$type_val]['count']++;
@@ -1021,22 +1026,10 @@ class WordPress extends Module {
 						);
 					}
 
-					$export_btn = '';
-					if ( $data['is_other'] ) {
-						$export_btn = sprintf(
-							'<button type="button" class="button stkb-export-other-issues" style="display:flex; align-items:center; gap:5px;" data-trigger="%s">
-								<span class="dashicons dashicons-download"></span> %s
-							</button>',
-							esc_attr( $type_field ),
-							esc_html__( 'Export Issues (CSV)', 'stackboost-for-supportcandy' )
-						);
-					}
-
 					$subcat_html = sprintf(
 						'<div class="stackboost-card" style="overflow-x: auto; margin-bottom: 20px;">
 							<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 								<h3 style="margin:0;">%s</h3>
-								%s
 							</div>
 							<table class="wp-list-table widefat striped">
 								<thead>
@@ -1049,16 +1042,27 @@ class WordPress extends Module {
 							</table>
 						</div>',
 						esc_html__( 'Issue Breakdown (Subcategories)', 'stackboost-for-supportcandy' ),
-						$export_btn,
 						esc_html__( 'Subcategory / Issue Text', 'stackboost-for-supportcandy' ),
 						esc_html__( 'Count', 'stackboost-for-supportcandy' ),
 						$subcat_rows
 					);
 				}
 
+				// Make the title itself a link if it's the "Other" category
+				$modal_title = esc_html($name) . ' - ' . esc_html__( 'Performance & Distribution', 'stackboost-for-supportcandy' );
+				if ( $data['is_other'] ) {
+					$modal_title = sprintf(
+						'<a href="#" class="stkb-export-other-issues" style="text-decoration:none; color:inherit;" data-trigger="%s">%s <span class="dashicons dashicons-download" style="font-size:24px; width:24px; height:24px; vertical-align:middle; color: var(--sb-accent, #2271b1);" title="%s"></span></a> - %s',
+						esc_attr( $type_field ),
+						esc_html($name),
+						esc_attr__( 'Export Issues (CSV)', 'stackboost-for-supportcandy' ),
+						esc_html__( 'Performance & Distribution', 'stackboost-for-supportcandy' )
+					);
+				}
+
 				$modal_html = sprintf(
 					'<div class="stackboost-dashboard" style="text-align:left;">
-						<h2>%s - Performance & Distribution</h2>
+						<h2>%s</h2>
 						<div style="display: flex; gap: 20px; margin-bottom: 20px;">
 							<div class="stackboost-card" style="flex: 1;">
 								<h3>Lifecycle</h3>
@@ -1093,7 +1097,7 @@ class WordPress extends Module {
 							</div>
 						</div>
 					</div>',
-					esc_html($name),
+					$modal_title, // Allowed raw HTML from sprintf above
 					esc_html($type_metrics['total_created']),
 					esc_html($type_metrics['carried_closed']),
 					esc_html($type_metrics['carried_open']),

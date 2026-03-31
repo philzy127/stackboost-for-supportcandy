@@ -143,6 +143,38 @@ class Page {
 			}
 		}
 
+		// Helper to pre-fetch friendly names for the other issues rules
+		$trigger_condition_maps = [];
+		if ( ! empty( $other_issues_rules ) ) {
+			$metrics_instance = \StackBoost\ForSupportCandy\Modules\TicketMetrics\WordPress::get_instance();
+
+			$categories_table = $wpdb->prefix . 'psmsc_categories';
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			if ( $wpdb->get_var("SHOW TABLES LIKE '{$categories_table}'") !== $categories_table ) {
+				$categories_table = $wpdb->prefix . 'wpsc_categories';
+				$priorities_table = $wpdb->prefix . 'wpsc_priorities';
+				$status_table     = $wpdb->prefix . 'wpsc_statuses';
+				$options_table    = $wpdb->prefix . 'wpsc_options';
+			} else {
+				$priorities_table = $wpdb->prefix . 'psmsc_priorities';
+				$status_table     = $wpdb->prefix . 'psmsc_statuses';
+				$options_table    = $wpdb->prefix . 'psmsc_options';
+			}
+
+			// Expose private get_type_map via reflection, or since it's just a helper we can fetch it.
+			// Actually, it's easier to make get_type_map public or just query here.
+			// Let's use a reflection method to access it safely without changing access modifier.
+			$reflector = new \ReflectionClass($metrics_instance);
+			$method = $reflector->getMethod('get_type_map');
+			$method->setAccessible(true);
+
+			foreach ( $other_issues_rules as $rule ) {
+				if ( ! empty( $rule['trigger_field'] ) && ! isset( $trigger_condition_maps[$rule['trigger_field']] ) ) {
+					$trigger_condition_maps[$rule['trigger_field']] = $method->invoke($metrics_instance, $wpdb, $rule['trigger_field'], $categories_table, $priorities_table, $status_table, $options_table);
+				}
+			}
+		}
+
 		?>
 		<style>
 			/* Custom grid styles for smaller metric cards as requested */
@@ -533,7 +565,15 @@ class Page {
 														<?php
 															$conds = is_array($rule['trigger_condition']) ? $rule['trigger_condition'] : explode(',', $rule['trigger_condition']);
 															$conds = array_map('trim', array_filter($conds));
-															echo esc_html( implode(', ', $conds) );
+
+															// Map to friendly names if possible
+															$friendly_conds = [];
+															$map = $trigger_condition_maps[$rule['trigger_field']] ?? [];
+															foreach ($conds as $c) {
+																$friendly_conds[] = $map[$c] ?? $c;
+															}
+
+															echo esc_html( implode(', ', $friendly_conds) );
 														?>
 													</span>
 													<input type="hidden" class="stkb-rule-trigger-condition" value="<?php echo esc_attr( is_array($rule['trigger_condition']) ? json_encode($rule['trigger_condition']) : $rule['trigger_condition'] ); ?>" />
@@ -1195,16 +1235,19 @@ class Page {
 						$(this).closest('.stackboost-modal').hide();
 					});
 
-					$(document).on('click', '.stkb-export-other-issues', function() {
+					$(document).on('click', '.stkb-export-other-issues', function(e) {
+						e.preventDefault();
 						let btn = $(this);
 						let originalContent = btn.html();
-						btn.prop('disabled', true).html('<span class="dashicons dashicons-update" style="animation: dashicons-spin 2s infinite linear;"></span> <?php esc_html_e( 'Exporting...', 'stackboost-for-supportcandy' ); ?>');
+						let triggerField = btn.attr('data-trigger');
+
+						btn.prop('disabled', true).css('opacity', '0.5');
 
 						let start_date = $('#stkb_start_date').val();
 						let end_date = $('#stkb_end_date').val();
 
 						// Redirect to a specific URL that triggers the file download
-						let url = ajaxurl + '?action=stackboost_get_other_issues_csv&nonce=' + stackboost_admin_ajax.nonce + '&start_date=' + encodeURIComponent(start_date) + '&end_date=' + encodeURIComponent(end_date);
+						let url = ajaxurl + '?action=stackboost_get_other_issues_csv&nonce=' + stackboost_admin_ajax.nonce + '&start_date=' + encodeURIComponent(start_date) + '&end_date=' + encodeURIComponent(end_date) + '&trigger_field=' + encodeURIComponent(triggerField);
 
 						// Create a temporary iframe to trigger the download without leaving the page
 						let iframe = document.createElement('iframe');
@@ -1214,7 +1257,7 @@ class Page {
 
 						// Re-enable button after a short delay
 						setTimeout(function() {
-							btn.prop('disabled', false).html(originalContent);
+							btn.prop('disabled', false).css('opacity', '1');
 							setTimeout(function() { document.body.removeChild(iframe); }, 5000);
 						}, 2000);
 					});
