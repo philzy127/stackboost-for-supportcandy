@@ -1085,11 +1085,14 @@ class WordPress extends Module {
 							// If this is an 'other' condition, make the name a link to the CSV
 							if ( $is_this_other ) {
 								$resp_name = sprintf(
-									'<a href="#" class="stkb-export-other-issues" style="text-decoration:none; font-weight:bold; color: var(--sb-accent, #2271b1);" data-trigger="%s" data-trigger-val="%s" title="%s">%s <span class="dashicons dashicons-download" style="vertical-align:middle;"></span></a>',
+									'<a href="#" class="stkb-export-other-issues" style="text-decoration:none; font-weight:bold; color: var(--sb-accent, #2271b1);" data-trigger="%s" data-trigger-val="%s" title="%s">%s <span class="dashicons dashicons-download" style="vertical-align:middle;"></span></a> <a href="#" class="stkb-trend-analysis-ai" style="text-decoration:none; font-weight:bold; color: #ffb900;" data-trigger="%s" data-trigger-val="%s" title="%s"><span class="dashicons dashicons-lightbulb" style="vertical-align:middle;"></span></a>',
 									esc_attr( $tf ),
 									esc_attr( $resp_val ),
 									esc_attr__( 'Export Issues (CSV)', 'stackboost-for-supportcandy' ),
-									esc_html( $resp_name )
+									esc_html( $resp_name ),
+									esc_attr( $tf ),
+									esc_attr( $resp_val ),
+									esc_attr__( 'Generate Trend Analysis (AI)', 'stackboost-for-supportcandy' )
 								);
 							} else {
 								$resp_name = esc_html($resp_name);
