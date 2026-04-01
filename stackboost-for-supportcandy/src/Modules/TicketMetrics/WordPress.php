@@ -494,8 +494,35 @@ class WordPress extends Module {
 			wp_send_json_error( esc_html__( 'No text data found to analyze for this timeframe/rule.', 'stackboost-for-supportcandy' ) );
 		}
 
+		// Fetch existing options for this field to provide context to Gemini
+		$categories_table = $wpdb->prefix . 'psmsc_categories';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$categories_table}'") !== $categories_table ) {
+			$categories_table = $wpdb->prefix . 'wpsc_categories';
+			$priorities_table = $wpdb->prefix . 'wpsc_priorities';
+			$status_table     = $wpdb->prefix . 'wpsc_statuses';
+			$options_table    = $wpdb->prefix . 'wpsc_options';
+		} else {
+			$priorities_table = $wpdb->prefix . 'psmsc_priorities';
+			$status_table     = $wpdb->prefix . 'psmsc_statuses';
+			$options_table    = $wpdb->prefix . 'psmsc_options';
+		}
+
+		// Use the first rule's trigger field as the context (assuming the button clicked was for a specific trigger field, though we use a filter to narrow it down above)
+		$context_field = ! empty( $trigger_field_filter ) ? $trigger_field_filter : ( $rules[0]['trigger_field'] ?? 'category' );
+		$existing_options_map = $this->get_type_map( $wpdb, $context_field, $categories_table, $priorities_table, $status_table, $options_table );
+
+		$existing_options_list = "None";
+		if ( ! empty( $existing_options_map ) ) {
+			$existing_options_list = implode( ', ', array_values( $existing_options_map ) );
+		}
+
 		// Prepare the prompt for Gemini
-		$prompt_intro = "You are a helpful customer support trend analyst. I will provide you with a list of ticket issues or subjects submitted by customers over a specific period. Please read through these items and provide a succinct summary of the main trends, common questions, or recurring complaints. Do not mention that you are an AI. Provide the analysis in clean HTML format using only standard tags (<h3>, <ul>, <li>, <strong>, <p>) so it can be directly embedded into an admin dashboard modal. Avoid Markdown formatting in your final output, just raw HTML. Do not wrap the response in ```html ``` blocks.\n\nHere are the ticket excerpts:\n\n";
+		$prompt_intro = "You are a helpful customer support trend analyst. I will provide you with a list of ticket issues or subjects submitted by customers over a specific period. These tickets were categorized as 'Other' or similar catch-all options because they didn't fit existing categories.\n\n";
+		$prompt_intro .= "Please read through these items and provide a succinct summary of the main trends, common questions, or recurring complaints.\n\n";
+		$prompt_intro .= "Additionally, you MUST include a specific section proposing 2-3 NEW ticket categories or subcategories that we should add to our system to help reduce the volume of these 'Other' tickets in the future. \n\n";
+		$prompt_intro .= "For context, here are the categories/options that ALREADY exist in the system for this field: [" . $existing_options_list . "]. Do not suggest these exact existing options.\n\n";
+		$prompt_intro .= "Do not mention that you are an AI. Provide the analysis in clean HTML format using only standard tags (<h3>, <ul>, <li>, <strong>, <p>, <br>). Ensure all text and elements are left-aligned using inline CSS where necessary (e.g., <div style=\"text-align: left;\">). Include extra line breaks (<br><br>) between major sections for readability so it can be directly embedded into an admin dashboard modal. Avoid Markdown formatting in your final output, just raw HTML. Do not wrap the response in ```html ``` blocks.\n\nHere are the ticket excerpts:\n\n";
 
 		// Limit the texts to prevent exceeding token limits if there are thousands
 		$texts_to_analyze = array_slice( $texts_to_analyze, 0, 1000 );
