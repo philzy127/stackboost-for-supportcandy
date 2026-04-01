@@ -501,7 +501,7 @@ class WordPress extends Module {
 		$texts_to_analyze = array_slice( $texts_to_analyze, 0, 1000 );
 		$prompt = $prompt_intro . implode( "\n- ", $texts_to_analyze );
 
-		$api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $api_key;
+		$api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash:generateContent?key=" . $api_key;
 
 		$body = [
 			'contents' => [
