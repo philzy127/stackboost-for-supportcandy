@@ -100,6 +100,9 @@ class WordPress extends Module {
 		$type_chart = isset( $_POST['ticket_metrics_chart_type_type'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_type'] ) ) : 'doughnut';
 		$options['ticket_metrics_chart_type_type']   = in_array( $type_chart, [ 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $type_chart : 'doughnut';
 
+		$secondary_chart = isset( $_POST['ticket_metrics_chart_type_secondary'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_secondary'] ) ) : 'bar';
+		$options['ticket_metrics_chart_type_secondary']   = in_array( $secondary_chart, [ 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $secondary_chart : 'bar';
+
 		// Handle the array of tracked agents
 		$agents = [];
 		if ( isset( $_POST['ticket_metrics_tracked_agents'] ) ) {
@@ -1325,14 +1328,18 @@ class WordPress extends Module {
 						$tf_name = $all_type_fields[$tf] ?? $tf; // Fallback in case type_map doesn't have it, though UI should have it
 
 						$subcat_rows = '';
+						$chart_labels = [];
+						$chart_data = [];
+
 						foreach ( $tf_data['responses'] as $resp_val => $resp_data ) {
 							$is_this_other = in_array( $resp_val, $tf_data['other_matches'] );
 
 							// Map response value to friendly name if possible
-							$resp_name = $resp_val;
-							if ( isset($trigger_condition_maps[$tf][$resp_val]) ) {
-								$resp_name = $trigger_condition_maps[$tf][$resp_val];
-							}
+							$raw_resp_name = isset($trigger_condition_maps[$tf][$resp_val]) ? $trigger_condition_maps[$tf][$resp_val] : $resp_val;
+							$resp_name = $raw_resp_name;
+
+							$chart_labels[] = $raw_resp_name;
+							$chart_data[] = $resp_data['count'];
 
 							// If this is an 'other' condition, make the name a link to the CSV
 							if ( $is_this_other ) {
@@ -1360,25 +1367,41 @@ class WordPress extends Module {
 							);
 						}
 
+						$chart_json = json_encode([
+							'labels' => $chart_labels,
+							'data'   => $chart_data,
+							'title'  => $tf_name
+						]);
+
 						$subcat_html .= sprintf(
-							'<div class="stackboost-card" style="overflow-x: auto; margin-bottom: 20px;">
+							'<div class="stackboost-card" style="margin-bottom: 20px;">
 								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 									<h3>%s</h3>
 								</div>
-								<table class="wp-list-table widefat striped">
-									<thead>
-										<tr>
-											<th>%s</th>
-											<th style="text-align:center; width:100px;">%s</th>
-										</tr>
-									</thead>
-									<tbody>%s</tbody>
-								</table>
+								<div style="display: flex; gap: 20px; flex-wrap: wrap;">
+									<div style="flex: 1; min-width: 300px; overflow-x: auto;">
+										<table class="wp-list-table widefat striped">
+											<thead>
+												<tr>
+													<th>%s</th>
+													<th style="text-align:center; width:100px;">%s</th>
+												</tr>
+											</thead>
+											<tbody>%s</tbody>
+										</table>
+									</div>
+									<div style="flex: 1; min-width: 300px;">
+										<div class="stkb-chart-container" style="height: 300px;">
+											<canvas class="stkb-secondary-chart" data-chart-config="%s"></canvas>
+										</div>
+									</div>
+								</div>
 							</div>',
 							sprintf( esc_html__( 'Issue Breakdown: %s', 'stackboost-for-supportcandy' ), esc_html($tf_name) ),
 							esc_html__( 'Response / Subcategory', 'stackboost-for-supportcandy' ),
 							esc_html__( 'Count', 'stackboost-for-supportcandy' ),
-							$subcat_rows
+							$subcat_rows,
+							esc_attr($chart_json)
 						);
 					}
 				}

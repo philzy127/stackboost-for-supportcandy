@@ -106,6 +106,7 @@ class Page {
 		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
 		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'multi_pie';
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
+		$chart_type_secondary = $options['ticket_metrics_chart_type_secondary'] ?? 'bar';
 		$show_other_agents = isset( $options['ticket_metrics_show_other_agents'] ) ? (bool) $options['ticket_metrics_show_other_agents'] : true;
 		$frt_mode = $options['ticket_metrics_frt_mode'] ?? 'stackboost';
 		$verbose_logging = isset( $options['ticket_metrics_verbose_logging'] ) ? (bool) $options['ticket_metrics_verbose_logging'] : false;
@@ -449,6 +450,20 @@ class Page {
 										</select>
 									</td>
 								</tr>
+								<tr>
+									<th scope="row"><label for="stkb_chart_type_secondary"><?php esc_html_e( 'Secondary Breakdowns Chart Type', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select name="stackboost_settings[ticket_metrics_chart_type_secondary]" id="stkb_chart_type_secondary">
+											<option value="pie" <?php selected( $chart_type_secondary, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="doughnut" <?php selected( $chart_type_secondary, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="bar" <?php selected( $chart_type_secondary, 'bar' ); ?>><?php esc_html_e( 'Bar', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="line" <?php selected( $chart_type_secondary, 'line' ); ?>><?php esc_html_e( 'Line', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="radar" <?php selected( $chart_type_secondary, 'radar' ); ?>><?php esc_html_e( 'Radar', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="polarArea" <?php selected( $chart_type_secondary, 'polarArea' ); ?>><?php esc_html_e( 'Polar Area', 'stackboost-for-supportcandy' ); ?></option>
+										</select>
+										<p class="description"><?php esc_html_e( 'Controls the chart style displayed for "Other Issues" subcategory breakdowns inside modals.', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
 							</table>
 						</div>
 
@@ -684,8 +699,11 @@ class Page {
 					// Basic color palette that matches typical admin themes
 					const chartColors = [
 						'#2271b1', '#d63638', '#00a32a', '#dba617', '#72aee6',
-						'#f8c43d', '#ed5e60', '#68de7c', '#b32d2e', '#135e96'
+						'#f8c43d', '#ed5e60', '#68de7c', '#b32d2e', '#135e96',
+						'#ff8a65', '#ba68c8', '#4db6ac', '#aed581', '#f06292'
 					];
+
+					let secondaryCharts = [];
 
 					// Agent Filter Two-Box Logic
 					$('#stkb_agent_add').on('click', function() {
@@ -927,6 +945,7 @@ class Page {
 							ticket_metrics_type_field: $('#stkb_type_field_setting').val(),
 							ticket_metrics_chart_type_agent: $('#stkb_chart_type_agent').val(),
 							ticket_metrics_chart_type_type: $('#stkb_chart_type_type').val(),
+							ticket_metrics_chart_type_secondary: $('#stkb_chart_type_secondary').val(),
 							ticket_metrics_show_other_agents: $('#stkb_show_other_agents').is(':checked') ? 1 : 0,
 							ticket_metrics_frt_mode: $('#stkb_frt_mode').val(),
 							ticket_metrics_verbose_logging: $('#stkb_verbose_logging').is(':checked') ? 1 : 0,
@@ -1269,11 +1288,68 @@ class Page {
 									});
 								}, 50);
 							}
+
+							// Render Secondary Charts in Modal
+							if (typeof Chart !== 'undefined') {
+								// Destroy any existing secondary charts
+								secondaryCharts.forEach(c => c.destroy());
+								secondaryCharts = [];
+
+								let secondaryChartType = $('#stkb_chart_type_secondary').val() || 'bar';
+
+								$('.stkb-secondary-chart').each(function() {
+									let canvas = $(this)[0];
+									let ctx = canvas.getContext('2d');
+									let rawConfig = $(this).attr('data-chart-config');
+									if (!rawConfig) return;
+
+									let configData = JSON.parse(rawConfig);
+
+									let typeType = secondaryChartType;
+									let isMultiPie = false;
+									if ( typeType === 'multi_pie' ) { typeType = 'pie'; isMultiPie = true; }
+									if ( typeType === 'multi_doughnut' ) { typeType = 'doughnut'; isMultiPie = true; }
+
+									let config = {
+										type: typeType,
+										data: {
+											labels: configData.labels,
+											datasets: [{
+												label: '<?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?>',
+												data: configData.data,
+												backgroundColor: chartColors,
+												borderWidth: 1
+											}]
+										},
+										options: {
+											responsive: true,
+											maintainAspectRatio: false,
+											plugins: { legend: { position: 'right' } }
+										}
+									};
+
+									if (typeType === 'bar' || typeType === 'line' || typeType === 'radar') {
+										config.data.datasets[0].backgroundColor = (typeType === 'bar') ? '#2271b1' : '#2271b133';
+										config.data.datasets[0].borderColor = '#2271b1';
+										config.options.plugins.legend.position = 'top';
+
+										if (typeType === 'line' || typeType === 'radar') {
+											config.data.datasets[0].fill = true;
+										}
+									}
+
+									let c = new Chart(ctx, config);
+									secondaryCharts.push(c);
+								});
+							}
 						}
 					});
 
 					$('.stackboost-modal-close-button').on('click', function() {
 						$(this).closest('.stackboost-modal').hide();
+						// Clear charts to free memory when modal closes
+						secondaryCharts.forEach(c => c.destroy());
+						secondaryCharts = [];
 					});
 
 					$(document).on('click', '.stkb-export-other-issues', function(e) {
