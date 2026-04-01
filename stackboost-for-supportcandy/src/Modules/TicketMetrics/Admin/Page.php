@@ -1308,6 +1308,45 @@ class Page {
 						}, 2000);
 					});
 
+					$(document).on('click', '.stkb-trend-analysis-ai', function(e) {
+						e.preventDefault();
+						let btn = $(this);
+						let triggerField = btn.attr('data-trigger');
+						let parentField = $('#stkb_type_field_setting').val();
+						let parentVal = btn.closest('.stackboost-modal').data('stkb-category-val');
+
+						let start_date = $('#stkb_start_date').val();
+						let end_date = $('#stkb_end_date').val();
+
+						btn.html('<span class="dashicons dashicons-update" style="animation: dashicons-spin 2s infinite linear; vertical-align:middle;"></span>').css('opacity', '0.5');
+
+						$.post(ajaxurl, {
+							action: 'stackboost_get_trend_analysis_ai',
+							nonce: stackboost_admin_ajax.nonce,
+							start_date: start_date,
+							end_date: end_date,
+							trigger_field: triggerField,
+							parent_field: parentField,
+							parent_val: parentVal
+						}, function(response) {
+							btn.html('<span class="dashicons dashicons-lightbulb" style="vertical-align:middle;"></span>').css('opacity', '1');
+
+							if (response.success) {
+								let htmlContent = '<div style="padding: 20px;"><h2><?php esc_html_e( 'AI Trend Analysis', 'stackboost-for-supportcandy' ); ?></h2><div style="background: #f0f0f1; padding: 15px; border-radius: 4px;">' + response.data + '</div></div>';
+
+								// Hide the main metrics modal to show the AI one, but this can be handled by creating a new modal or replacing content.
+								// We'll replace the content and show it
+								$('#stkb-metrics-modal-body').html(htmlContent);
+								$('#stkb-metrics-modal').hide().css('display', 'flex').hide().fadeIn(200);
+							} else {
+								alert(response.data);
+							}
+						}).fail(function() {
+							btn.html('<span class="dashicons dashicons-lightbulb" style="vertical-align:middle;"></span>').css('opacity', '1');
+							alert('<?php esc_html_e( 'An error occurred while generating the trend analysis.', 'stackboost-for-supportcandy' ); ?>');
+						});
+					});
+
 					// Trigger initial load on "This week"
 					setTimeout(function() {
 						$('#stkb_date_preset').val('this_week').trigger('change');

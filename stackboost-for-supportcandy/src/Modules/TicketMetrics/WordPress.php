@@ -34,6 +34,7 @@ class WordPress extends Module {
 		add_action( 'wp_ajax_stackboost_save_ticket_metrics_settings', [ $this, 'ajax_save_ticket_metrics_settings' ] );
 		add_action( 'wp_ajax_stackboost_get_other_issues_csv', [ $this, 'ajax_get_other_issues_csv' ] );
 		add_action( 'wp_ajax_stackboost_get_field_options', [ $this, 'ajax_get_field_options' ] );
+		add_action( 'wp_ajax_stackboost_get_trend_analysis_ai', [ $this, 'ajax_get_trend_analysis_ai' ] );
 	}
 
 	public function ajax_get_field_options() {
@@ -347,6 +348,230 @@ class WordPress extends Module {
 		}
 		fclose( $output );
 		exit;
+	}
+
+	public function ajax_get_trend_analysis_ai() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_METRICS ) ) {
+			wp_send_json_error( esc_html__( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$options = get_option( 'stackboost_settings', [] );
+		$api_key = $options['ticket_metrics_gemini_api_key'] ?? '';
+
+		if ( empty( $api_key ) ) {
+			wp_send_json_error( esc_html__( 'Gemini API Key is not configured. Please add it in the settings tab.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$start_date = isset( $_POST['start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['start_date'] ) ) : '';
+		$end_date   = isset( $_POST['end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['end_date'] ) ) : '';
+		$trigger_field_filter = isset( $_POST['trigger_field'] ) ? sanitize_text_field( wp_unslash( $_POST['trigger_field'] ) ) : '';
+		$parent_field = isset( $_POST['parent_field'] ) ? sanitize_text_field( wp_unslash( $_POST['parent_field'] ) ) : '';
+		$parent_val   = isset( $_POST['parent_val'] ) ? sanitize_text_field( wp_unslash( $_POST['parent_val'] ) ) : '';
+
+		if ( empty( $start_date ) || empty( $end_date ) ) {
+			wp_send_json_error( esc_html__( 'Start and End dates are required.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$rules = $options['ticket_metrics_other_issues_rules'] ?? [];
+
+		if ( empty( $rules ) ) {
+			wp_send_json_error( esc_html__( 'No "Other Issues" rules configured in settings.', 'stackboost-for-supportcandy' ) );
+		}
+
+		global $wpdb;
+		$start_dt = gmdate( 'Y-m-d 00:00:00', strtotime( $start_date ) );
+		$end_dt   = gmdate( 'Y-m-d 23:59:59', strtotime( $end_date ) );
+
+		$tickets_table = $wpdb->prefix . 'psmsc_tickets';
+		$threads_table = $wpdb->prefix . 'psmsc_threads';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$tickets_table}'") !== $tickets_table ) {
+			$tickets_table = $wpdb->prefix . 'wpsc_tickets';
+			$threads_table = $wpdb->prefix . 'wpsc_threads';
+		}
+
+		$texts_to_analyze = [];
+
+		foreach ( $rules as $rule ) {
+			if ( empty( $rule['trigger_field'] ) ) {
+				continue;
+			}
+
+			if ( ! empty( $trigger_field_filter ) && $rule['trigger_field'] !== $trigger_field_filter ) {
+				continue; // Skip rules that do not match the explicitly requested trigger field
+			}
+
+			$trigger_field = $rule['trigger_field'];
+			$trigger_cond  = $rule['trigger_condition'];
+			$text_field    = $rule['text_field'];
+
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$has_date_closed = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'date_closed'") === 'date_closed';
+			$close_date_col = $has_date_closed ? 't.date_closed' : 't.date_updated';
+			$open_condition = $has_date_closed ? "(t.date_closed IS NULL OR t.date_closed = '0000-00-00 00:00:00')" : "t.is_active = 1";
+
+			$active_in_period_sql = "t.date_created <= %s AND ( " . $open_condition . " OR " . $close_date_col . " >= %s )";
+
+			if ( preg_match( '/^[a-zA-Z0-9_]+$/', $trigger_field ) ) {
+				$sql = "SELECT t.id, t.`" . $trigger_field . "` as trigger_val ";
+
+				if ( in_array( $text_field, [ 'subject', 'description' ] ) ) {
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$has_subject = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'subject'") === 'subject';
+					if ( $has_subject && $text_field === 'subject' ) {
+						$sql .= ", t.subject as extracted_text ";
+					} else {
+						$sql .= ", '' as extracted_text ";
+					}
+				} elseif ( preg_match( '/^[a-zA-Z0-9_]+$/', $text_field ) ) {
+					$sql .= ", t.`" . $text_field . "` as extracted_text ";
+				} else {
+					$sql .= ", '' as extracted_text ";
+				}
+
+				$sql .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql;
+
+				$query_args = [ $end_dt, $start_dt ];
+
+				if ( ! empty( $parent_field ) && ! empty( $parent_val ) && preg_match( '/^[a-zA-Z0-9_]+$/', $parent_field ) ) {
+					$sql .= " AND t.`" . $parent_field . "` = %s";
+					$query_args[] = $parent_val;
+				}
+
+				if ( ! empty( $trigger_cond ) ) {
+					if ( is_array( $trigger_cond ) ) {
+						$placeholders = implode( ',', array_fill( 0, count( $trigger_cond ), '%s' ) );
+						$sql .= " AND t.`" . $trigger_field . "` IN ($placeholders)";
+						$query_args = array_merge( $query_args, $trigger_cond );
+					} else {
+						$sql .= " AND t.`" . $trigger_field . "` = %s";
+						$query_args[] = $trigger_cond;
+					}
+				} else {
+					continue;
+				}
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query = $wpdb->prepare( $sql, $query_args );
+
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$results = $wpdb->get_results( $query );
+
+				if ( is_array( $results ) ) {
+					foreach ( $results as $res ) {
+						$extracted_text = $res->extracted_text;
+
+						if ( $text_field === 'description' ) {
+							$thread_sql = "SELECT body FROM {$threads_table} WHERE ticket = %d ORDER BY date_created ASC LIMIT 1";
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$thread_query = $wpdb->prepare( $thread_sql, $res->id );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$first_thread = $wpdb->get_var( $thread_query );
+							if ( $first_thread ) {
+								$extracted_text = wp_strip_all_tags( $first_thread );
+							}
+						} elseif ( $text_field === 'subject' && empty( $extracted_text ) ) {
+							$subj_sql = "SELECT subject FROM {$tickets_table} WHERE id = %d";
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$subj_query = $wpdb->prepare( $subj_sql, $res->id );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$subj = $wpdb->get_var( $subj_query );
+							$extracted_text = $subj ? $subj : '';
+						}
+
+						$extracted_text = trim( $extracted_text );
+						if ( ! empty( $extracted_text ) ) {
+							$texts_to_analyze[] = $extracted_text;
+						}
+					}
+				}
+			}
+		}
+
+		if ( empty( $texts_to_analyze ) ) {
+			wp_send_json_error( esc_html__( 'No text data found to analyze for this timeframe/rule.', 'stackboost-for-supportcandy' ) );
+		}
+
+		// Prepare the prompt for Gemini
+		$prompt_intro = "You are a helpful customer support trend analyst. I will provide you with a list of ticket issues or subjects submitted by customers over a specific period. Please read through these items and provide a succinct summary of the main trends, common questions, or recurring complaints. Do not mention that you are an AI. Provide the analysis in clean HTML format using only standard tags (<h3>, <ul>, <li>, <strong>, <p>) so it can be directly embedded into an admin dashboard modal. Avoid Markdown formatting in your final output, just raw HTML. Do not wrap the response in ```html ``` blocks.\n\nHere are the ticket excerpts:\n\n";
+
+		// Limit the texts to prevent exceeding token limits if there are thousands
+		$texts_to_analyze = array_slice( $texts_to_analyze, 0, 1000 );
+		$prompt = $prompt_intro . implode( "\n- ", $texts_to_analyze );
+
+		$api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $api_key;
+
+		$body = [
+			'contents' => [
+				[
+					'parts' => [
+						[ 'text' => $prompt ]
+					]
+				]
+			]
+		];
+
+		$response = wp_remote_post( $api_url, [
+			'headers'     => [
+				'Content-Type' => 'application/json',
+			],
+			'body'        => json_encode( $body ),
+			'method'      => 'POST',
+			'data_format' => 'body',
+			'timeout'     => 45, // AI requests can take a moment
+		] );
+
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( esc_html__( 'Failed to connect to Gemini API: ', 'stackboost-for-supportcandy' ) . $response->get_error_message() );
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( $status_code !== 200 ) {
+			$error_msg = isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown API error';
+			wp_send_json_error( esc_html__( 'Gemini API Error: ', 'stackboost-for-supportcandy' ) . $error_msg );
+		}
+
+		if ( ! isset( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
+			wp_send_json_error( esc_html__( 'Invalid response format from Gemini API.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$ai_response_html = $data['candidates'][0]['content']['parts'][0]['text'];
+
+		// Clean up the response if Gemini still wrapped it in markdown code blocks despite instructions
+		$ai_response_html = preg_replace('/^```html\s*$/m', '', $ai_response_html);
+		$ai_response_html = preg_replace('/^```\s*$/m', '', $ai_response_html);
+		$ai_response_html = trim($ai_response_html);
+
+		// Basic safety sanitization (kses allows basic HTML)
+		$allowed_html = array(
+			'h2' => array(),
+			'h3' => array(),
+			'h4' => array(),
+			'p' => array(),
+			'ul' => array(),
+			'ol' => array(),
+			'li' => array(),
+			'strong' => array(),
+			'em' => array(),
+			'br' => array(),
+			'span' => array(
+				'style' => array(),
+				'class' => array(),
+			),
+			'div' => array(
+				'style' => array(),
+				'class' => array(),
+			),
+		);
+
+		$sanitized_html = wp_kses( $ai_response_html, $allowed_html );
+
+		wp_send_json_success( $sanitized_html );
 	}
 
 	public function ajax_get_metrics() {
