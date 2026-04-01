@@ -67,7 +67,7 @@ class Page {
 		unset($custom_fields['df_priority']);
 		unset($custom_fields['df_status']);
 
-		// Fetch ALL text fields for the Word Cloud "Breakdown Field"
+		// Fetch ALL text fields for the Trend Analysis "Breakdown Field"
 		$all_text_fields = [
 			'subject' => __( 'Subject', 'stackboost-for-supportcandy' ),
 			'description' => __( 'Description (First Message)', 'stackboost-for-supportcandy' )
@@ -546,7 +546,7 @@ class Page {
 									<tr>
 										<th><?php esc_html_e( 'Breakdown Field', 'stackboost-for-supportcandy' ); ?></th>
 										<th><?php esc_html_e( '"Other" Options (Optional)', 'stackboost-for-supportcandy' ); ?></th>
-										<th><?php esc_html_e( 'Word Cloud Source Field (Optional)', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Trend Analysis Source Field (Optional)', 'stackboost-for-supportcandy' ); ?></th>
 										<th style="width: 100px; text-align:center;"><?php esc_html_e( 'Actions', 'stackboost-for-supportcandy' ); ?></th>
 									</tr>
 								</thead>
@@ -592,6 +592,23 @@ class Page {
 								</tbody>
 							</table>
 
+							<hr style="margin: 30px 0;">
+
+							<h3 style="margin-bottom:10px;"><?php esc_html_e( 'Trend Analysis AI Settings', 'stackboost-for-supportcandy' ); ?></h3>
+							<p class="description" style="margin-top:0; margin-bottom:15px;"><?php esc_html_e( 'Configure the AI connection used to generate Trend Analysis reports from ticket data.', 'stackboost-for-supportcandy' ); ?></p>
+
+							<table class="form-table" role="presentation">
+								<tbody>
+									<tr>
+										<th scope="row"><label for="stkb_gemini_api_key"><?php esc_html_e( 'Gemini API Key', 'stackboost-for-supportcandy' ); ?></label></th>
+										<td>
+											<input type="password" name="ticket_metrics_gemini_api_key" id="stkb_gemini_api_key" value="<?php echo esc_attr( $options['ticket_metrics_gemini_api_key'] ?? '' ); ?>" class="regular-text" autocomplete="new-password">
+											<p class="description"><?php esc_html_e( 'Enter your Google Gemini API key to enable AI-powered trend analysis.', 'stackboost-for-supportcandy' ); ?></p>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+
 							<p class="submit">
 								<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ), 'primary', 'submit', false ); ?>
 							</p>
@@ -627,11 +644,11 @@ class Page {
 									<select id="stkb-modal-trigger-condition" multiple="multiple" style="width:100%;" disabled>
 										<!-- Options dynamically populated via AJAX based on trigger field -->
 									</select>
-									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Optional. Select the options that represent "Other" to enable Word Cloud CSV exports.', 'stackboost-for-supportcandy' ); ?></p>
+									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Optional. Select the options that represent "Other" to enable Trend Analysis CSV exports.', 'stackboost-for-supportcandy' ); ?></p>
 								</td>
 							</tr>
 							<tr id="stkb-modal-text-field-row" style="display:none;">
-								<th scope="row"><label for="stkb-modal-text-field"><?php esc_html_e( 'Word Cloud Source Field (Optional)', 'stackboost-for-supportcandy' ); ?></label></th>
+								<th scope="row"><label for="stkb-modal-text-field"><?php esc_html_e( 'Trend Analysis Source Field (Optional)', 'stackboost-for-supportcandy' ); ?></label></th>
 								<td>
 									<select id="stkb-modal-text-field" style="width:100%;">
 										<option value=""><?php esc_html_e( '-- Select Text Field --', 'stackboost-for-supportcandy' ); ?></option>
@@ -639,7 +656,7 @@ class Page {
 											<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
 										<?php endforeach; ?>
 									</select>
-									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Optional. The field containing the text/excuse exported for the Word Cloud. Required if "Other" options are selected.', 'stackboost-for-supportcandy' ); ?></p>
+									<p class="description" style="margin-top:2px; font-size:11px;"><?php esc_html_e( 'Optional. The field containing the text/excuse exported for the Trend Analysis. Required if "Other" options are selected.', 'stackboost-for-supportcandy' ); ?></p>
 								</td>
 							</tr>
 						</table>
@@ -819,7 +836,7 @@ class Page {
 						}
 
 						if ((tCond.length > 0 && !txtField) || (txtField && tCond.length === 0)) {
-							alert('<?php echo esc_js( __( 'If configuring an "Other" option for Word Cloud exports, you must select both the "Other" condition and the Source Field.', 'stackboost-for-supportcandy' ) ); ?>');
+							alert('<?php echo esc_js( __( 'If configuring an "Other" option for Trend Analysis exports, you must select both the "Other" condition and the Source Field.', 'stackboost-for-supportcandy' ) ); ?>');
 							return;
 						}
 
@@ -914,7 +931,8 @@ class Page {
 							ticket_metrics_frt_mode: $('#stkb_frt_mode').val(),
 							ticket_metrics_verbose_logging: $('#stkb_verbose_logging').is(':checked') ? 1 : 0,
 							ticket_metrics_tracked_agents: $('#stkb_tracked_agents').val() || [],
-							ticket_metrics_other_issues_rules: other_issues_rules
+							ticket_metrics_other_issues_rules: other_issues_rules,
+							ticket_metrics_gemini_api_key: $('#stkb_gemini_api_key').val()
 						};
 
 						// Use dedicated endpoint
