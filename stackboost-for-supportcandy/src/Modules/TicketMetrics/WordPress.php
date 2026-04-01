@@ -150,6 +150,8 @@ class WordPress extends Module {
 		}
 		$options['ticket_metrics_other_issues_rules'] = $other_issues_rules;
 
+		$options['ticket_metrics_gemini_api_key'] = isset( $_POST['ticket_metrics_gemini_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_gemini_api_key'] ) ) : '';
+
 		// Clean up legacy settings if present
 		unset( $options['ticket_metrics_agent_filter_mode'] );
 		unset( $options['ticket_metrics_excluded_agents'] );
