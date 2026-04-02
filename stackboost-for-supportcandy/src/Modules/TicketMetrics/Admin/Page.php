@@ -335,18 +335,18 @@ class Page {
 								<h3><?php esc_html_e( 'Active Backlog', 'stackboost-for-supportcandy' ); ?></h3>
 								<p id="stkb_metric_active_backlog">0</p>
 							</div>
-							<div class="stkb-metric-card" style="padding: 10px;">
+							<div class="stkb-metric-card">
 								<table style="width: 100%; border-collapse: collapse;">
 									<tr>
-										<td style="width: 33.33%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4); padding-top: 10px;">
+										<td style="width: 33.33%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
 											<h3><?php esc_html_e( 'Tickets Created', 'stackboost-for-supportcandy' ); ?></h3>
 											<p id="stkb_metric_total">0</p>
 										</td>
-										<td style="width: 33.33%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4); padding-top: 10px;">
+										<td style="width: 33.33%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
 											<h3><?php esc_html_e( 'Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
 											<p id="stkb_metric_total_closed">0</p>
 										</td>
-										<td style="width: 33.33%; text-align: center; padding-top: 10px;">
+										<td style="width: 33.33%; text-align: center;">
 											<h3><?php esc_html_e( 'Resolution Rate', 'stackboost-for-supportcandy' ); ?></h3>
 											<p id="stkb_metric_resolution_rate">0%</p>
 										</td>
@@ -1183,19 +1183,20 @@ class Page {
 								$('#stkb_metric_sla_frt_breach').text(data.sla_frt_breach_rate);
 								$('#stkb_metric_sla_resolution_breach').text(data.sla_resolution_breach_rate);
 
-								if (data.sla_frt_breach_rate === 'N/A' && data.sla_resolution_breach_rate === 'N/A') {
+								// The initial load might happen before charts can render correctly if the card toggles from display:none
+								if ((!data.sla_frt_breach_rate || String(data.sla_frt_breach_rate).trim() === 'N/A') && (!data.sla_resolution_breach_rate || String(data.sla_resolution_breach_rate).trim() === 'N/A')) {
 									$('#stkb_metric_sla_card').hide();
 								} else {
-									$('#stkb_metric_sla_card').show();
+									$('#stkb_metric_sla_card').css('display', 'block');
 								}
 
 								$('#stkb_metric_survey_rate').text(data.survey_response_rate);
 								$('#stkb_metric_survey_csat').text(data.survey_avg_csat);
 
-								if (data.survey_response_rate === 'N/A' && data.survey_avg_csat === 'N/A') {
+								if ((!data.survey_response_rate || String(data.survey_response_rate).trim() === 'N/A') && (!data.survey_avg_csat || String(data.survey_avg_csat).trim() === 'N/A')) {
 									$('#stkb_metric_survey_card').hide();
 								} else {
-									$('#stkb_metric_survey_card').show();
+									$('#stkb_metric_survey_card').css('display', 'block');
 								}
 
 								// Render Agent Breakdown
