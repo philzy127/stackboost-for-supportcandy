@@ -1184,19 +1184,19 @@ class Page {
 								$('#stkb_metric_sla_resolution_breach').text(data.sla_resolution_breach_rate);
 
 								// The initial load might happen before charts can render correctly if the card toggles from display:none
-								if ((!data.sla_frt_breach_rate || String(data.sla_frt_breach_rate).trim() === 'N/A') && (!data.sla_resolution_breach_rate || String(data.sla_resolution_breach_rate).trim() === 'N/A')) {
-									$('#stkb_metric_sla_card').hide();
-								} else {
+								if (data.is_sla_configured) {
 									$('#stkb_metric_sla_card').css('display', 'block');
+								} else {
+									$('#stkb_metric_sla_card').hide();
 								}
 
 								$('#stkb_metric_survey_rate').text(data.survey_response_rate);
 								$('#stkb_metric_survey_csat').text(data.survey_avg_csat);
 
-								if ((!data.survey_response_rate || String(data.survey_response_rate).trim() === 'N/A') && (!data.survey_avg_csat || String(data.survey_avg_csat).trim() === 'N/A')) {
-									$('#stkb_metric_survey_card').hide();
-								} else {
+								if (data.is_survey_configured) {
 									$('#stkb_metric_survey_card').css('display', 'block');
+								} else {
+									$('#stkb_metric_survey_card').hide();
 								}
 
 								// Render Agent Breakdown

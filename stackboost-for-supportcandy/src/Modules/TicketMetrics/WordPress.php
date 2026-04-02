@@ -863,6 +863,10 @@ class WordPress extends Module {
 		$metrics['avg_touches']          = $overall_metrics['avg_touches'];
 		$metrics['sla_frt_breach_rate']  = $overall_metrics['sla_frt_breach_rate'];
 		$metrics['sla_resolution_breach_rate'] = $overall_metrics['sla_resolution_breach_rate'];
+		$metrics['survey_response_rate'] = $overall_metrics['survey_response_rate'];
+		$metrics['survey_avg_csat']      = $overall_metrics['survey_avg_csat'];
+		$metrics['is_sla_configured']    = $overall_metrics['is_sla_configured'];
+		$metrics['is_survey_configured'] = $overall_metrics['is_survey_configured'];
 
 		// Heatmap Data (Ticket Creation Volume by Day of Week and Hour of Day)
 		// We use DAYOFWEEK where 1=Sunday, 2=Monday, etc. and HOUR 0-23
@@ -1641,6 +1645,9 @@ class WordPress extends Module {
 		$metrics['survey_response_rate'] = 'N/A';
 		$metrics['survey_avg_csat'] = 'N/A';
 
+		$metrics['is_sla_configured'] = ($sla_frt_hours > 0 || $sla_resolution_hours > 0);
+		$metrics['is_survey_configured'] = false;
+
 		// Resolution SLA (Closed Tickets in Period)
 		if ( $sla_resolution_hours > 0 && $metrics['total_closed'] > 0 ) {
 			$resolution_seconds_limit = $sla_resolution_hours * 3600;
@@ -1705,6 +1712,7 @@ class WordPress extends Module {
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var("SHOW TABLES LIKE '{$submissions_table}'") === $submissions_table ) {
+			$metrics['is_survey_configured'] = true;
 			// Find total completed surveys linked to tickets closed during this exact period
 			// A survey response is counted towards the metrics of the period the *ticket* was closed, to align with total_closed count.
 			$sql_surveys = "SELECT COUNT(s.id) FROM " . $submissions_table . " s
