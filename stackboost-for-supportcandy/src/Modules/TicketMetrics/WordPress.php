@@ -842,6 +842,7 @@ class WordPress extends Module {
 
 		$metrics['agent_breakdown'] = [];
 		$metrics['type_breakdown'] = [];
+		$metrics['heatmap_data'] = [];
 
 		// Overall Metrics
 		$overall_metrics = $this->calculate_metric_set(
@@ -862,6 +863,27 @@ class WordPress extends Module {
 		$metrics['avg_touches']          = $overall_metrics['avg_touches'];
 		$metrics['sla_frt_breach_rate']  = $overall_metrics['sla_frt_breach_rate'];
 		$metrics['sla_resolution_breach_rate'] = $overall_metrics['sla_resolution_breach_rate'];
+
+		// Heatmap Data (Ticket Creation Volume by Day of Week and Hour of Day)
+		// We use DAYOFWEEK where 1=Sunday, 2=Monday, etc. and HOUR 0-23
+		$sql_heatmap = "SELECT DAYOFWEEK(date_created) as dow, HOUR(date_created) as hod, COUNT(id) as count
+						FROM " . $tickets_table . "
+						WHERE date_created >= %s AND date_created <= %s
+						GROUP BY dow, hod";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$query_heatmap = $wpdb->prepare( $sql_heatmap, $start_dt, $end_dt );
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$heatmap_results = $wpdb->get_results( $query_heatmap );
+
+		if ( is_array( $heatmap_results ) ) {
+			foreach ( $heatmap_results as $row ) {
+				$metrics['heatmap_data'][] = [
+					'dow'   => (int) $row->dow,
+					'hod'   => (int) $row->hod,
+					'count' => (int) $row->count,
+				];
+			}
+		}
 
 		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
 			// Check for ALL rules to see if we need to fetch multiple trigger fields for breakdown tracking
@@ -1616,6 +1638,9 @@ class WordPress extends Module {
 		$metrics['sla_frt_breach_rate'] = 'N/A';
 		$metrics['sla_resolution_breach_rate'] = 'N/A';
 
+		$metrics['survey_response_rate'] = 'N/A';
+		$metrics['survey_avg_csat'] = 'N/A';
+
 		// Resolution SLA (Closed Tickets in Period)
 		if ( $sla_resolution_hours > 0 && $metrics['total_closed'] > 0 ) {
 			$resolution_seconds_limit = $sla_resolution_hours * 3600;
@@ -1671,6 +1696,46 @@ class WordPress extends Module {
 
 			if ( $total_responded > 0 ) {
 				$metrics['sla_frt_breach_rate'] = round(($breached_frt / $total_responded) * 100, 1) . '%';
+			}
+		}
+
+		// Survey Tracking
+		$submissions_table = $wpdb->prefix . 'stackboost_ats_survey_submissions';
+		$answers_table     = $wpdb->prefix . 'stackboost_ats_survey_answers';
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$submissions_table}'") === $submissions_table ) {
+			// Find total completed surveys linked to tickets closed during this exact period
+			// A survey response is counted towards the metrics of the period the *ticket* was closed, to align with total_closed count.
+			$sql_surveys = "SELECT COUNT(s.id) FROM " . $submissions_table . " s
+							JOIN " . $tickets_table . " t ON s.ticket_id = t.id
+							WHERE " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$query_surveys = $wpdb->prepare( $sql_surveys, $start_dt, $end_dt ) . " " . $extra_where;
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$total_surveys = (int) $wpdb->get_var( $query_surveys );
+
+			if ( $metrics['total_closed'] > 0 ) {
+				$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
+			}
+
+			// CSAT Average (Calculate average of numeric responses, assuming 1-5 or 1-10 scales like stars/numbers)
+			if ( $total_surveys > 0 ) {
+				$sql_csat = "SELECT AVG(CAST(a.answer_value AS DECIMAL(10,2))) FROM " . $answers_table . " a
+							JOIN " . $submissions_table . " s ON a.submission_id = s.id
+							JOIN " . $tickets_table . " t ON s.ticket_id = t.id
+							WHERE " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s
+							AND a.answer_value REGEXP '^[0-9]+(\.[0-9]+)?$'";
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_csat = $wpdb->prepare( $sql_csat, $start_dt, $end_dt ) . " " . $extra_where;
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$avg_csat = $wpdb->get_var( $query_csat );
+
+				if ( $avg_csat !== null ) {
+					$metrics['survey_avg_csat'] = round($avg_csat, 2);
+				}
+			} else {
+				$metrics['survey_response_rate'] = '0%';
 			}
 		}
 

@@ -192,6 +192,12 @@ class Page {
 			.stkb-clickable-row { cursor: pointer; transition: background-color 0.2s; }
 			.stkb-clickable-row:hover { background-color: #f0f0f1 !important; }
 
+			.stkb-heatmap-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+			.stkb-heatmap-table th, .stkb-heatmap-table td { border: 1px solid #ccd0d4; padding: 4px; text-align: center; }
+			.stkb-heatmap-table th { background: #f0f0f1; font-weight: 600; color: #50575e; }
+			.stkb-heatmap-cell { cursor: default; transition: transform 0.1s; position: relative; }
+			.stkb-heatmap-cell:hover { transform: scale(1.1); z-index: 2; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+
 			/* Modal Scrolling Fixes */
 			.stackboost-modal {
 				overflow: hidden; /* Prevent background scroll */
@@ -351,7 +357,7 @@ class Page {
 
 						<!-- Column 2: Averages & SLAs -->
 						<div class="stkb-metric-col">
-							<div class="stkb-metric-card">
+							<div class="stkb-metric-card" id="stkb_metric_sla_card" style="display:none;">
 								<table style="width: 100%; border-collapse: collapse;">
 									<tr>
 										<td style="width: 50%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
@@ -393,6 +399,20 @@ class Page {
 									</tr>
 								</table>
 							</div>
+							<div class="stkb-metric-card" id="stkb_metric_survey_card" style="display:none;">
+								<table style="width: 100%; border-collapse: collapse;">
+									<tr>
+										<td style="width: 50%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+											<h3><?php esc_html_e( 'Survey Response Rate', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_survey_rate" style="font-size:18px;">N/A</p>
+										</td>
+										<td style="width: 50%; text-align: center;">
+											<h3><?php esc_html_e( 'Avg CSAT Score', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_survey_csat" style="font-size:18px;">N/A</p>
+										</td>
+									</tr>
+								</table>
+							</div>
 						</div>
 					</div>
 
@@ -430,6 +450,24 @@ class Page {
 							<div class="stkb-chart-container">
 								<canvas id="stkb_type_chart"></canvas>
 							</div>
+						</div>
+					</div>
+
+					<div class="stackboost-card" style="margin-top: 20px;">
+						<h3><?php esc_html_e( 'Ticket Submission Heatmap (Time of Day)', 'stackboost-for-supportcandy' ); ?></h3>
+						<p class="description" style="margin-top: 0; margin-bottom: 10px;"><?php esc_html_e( 'Displays the density of new tickets created during the selected date range. Darker cells indicate higher volume.', 'stackboost-for-supportcandy' ); ?></p>
+						<div style="overflow-x: auto;">
+							<table class="stkb-heatmap-table" id="stkb_heatmap_table">
+								<thead>
+									<tr>
+										<th style="width: 80px;"><?php esc_html_e( 'Day / Hour', 'stackboost-for-supportcandy' ); ?></th>
+										<!-- Hours 0-23 will be injected by JS -->
+									</tr>
+								</thead>
+								<tbody>
+									<!-- Days will be injected by JS -->
+								</tbody>
+							</table>
 						</div>
 					</div>
 				</div>
@@ -1145,6 +1183,21 @@ class Page {
 								$('#stkb_metric_sla_frt_breach').text(data.sla_frt_breach_rate);
 								$('#stkb_metric_sla_resolution_breach').text(data.sla_resolution_breach_rate);
 
+								if (data.sla_frt_breach_rate === 'N/A' && data.sla_resolution_breach_rate === 'N/A') {
+									$('#stkb_metric_sla_card').hide();
+								} else {
+									$('#stkb_metric_sla_card').show();
+								}
+
+								$('#stkb_metric_survey_rate').text(data.survey_response_rate);
+								$('#stkb_metric_survey_csat').text(data.survey_avg_csat);
+
+								if (data.survey_response_rate === 'N/A' && data.survey_avg_csat === 'N/A') {
+									$('#stkb_metric_survey_card').hide();
+								} else {
+									$('#stkb_metric_survey_card').show();
+								}
+
 								// Render Agent Breakdown
 								let agentTbody = $('#stkb_agent_breakdown_body');
 								agentTbody.empty();
@@ -1191,6 +1244,77 @@ class Page {
 
 								let typeLabels = [];
 								let typeData = [];
+
+								// Render Heatmap
+								if (data.heatmap_data) {
+									let days = ['<?php esc_html_e( 'Sunday', 'stackboost-for-supportcandy' ); ?>', '<?php esc_html_e( 'Monday', 'stackboost-for-supportcandy' ); ?>', '<?php esc_html_e( 'Tuesday', 'stackboost-for-supportcandy' ); ?>', '<?php esc_html_e( 'Wednesday', 'stackboost-for-supportcandy' ); ?>', '<?php esc_html_e( 'Thursday', 'stackboost-for-supportcandy' ); ?>', '<?php esc_html_e( 'Friday', 'stackboost-for-supportcandy' ); ?>', '<?php esc_html_e( 'Saturday', 'stackboost-for-supportcandy' ); ?>'];
+									// MySQL DAYOFWEEK is 1=Sun, 2=Mon... We map index 1-7 to array index 0-6.
+									let tableHead = $('#stkb_heatmap_table thead tr');
+									let tableBody = $('#stkb_heatmap_table tbody');
+
+									tableHead.empty();
+									tableBody.empty();
+
+									tableHead.append('<th style="width: 80px;"><?php esc_html_e( 'Day / Hour', 'stackboost-for-supportcandy' ); ?></th>');
+									for (let h = 0; h < 24; h++) {
+										let label = h === 0 ? '12a' : (h < 12 ? h + 'a' : (h === 12 ? '12p' : (h - 12) + 'p'));
+										tableHead.append('<th>' + label + '</th>');
+									}
+
+									// Build matrix
+									let matrix = {};
+									let maxCount = 0;
+									for (let d = 1; d <= 7; d++) {
+										matrix[d] = {};
+										for (let h = 0; h < 24; h++) {
+											matrix[d][h] = 0;
+										}
+									}
+
+									data.heatmap_data.forEach(function(point) {
+										matrix[point.dow][point.hod] = point.count;
+										if (point.count > maxCount) maxCount = point.count;
+									});
+
+									// Note: If no tickets exist, maxCount is 0, so avoid division by zero.
+									let maxOpacity = 0.9;
+									let minOpacity = 0.05; // Base color for 0
+
+									for (let d = 1; d <= 7; d++) {
+										// We want Monday (2) to be first, Sunday (1) to be last usually for standard business weeks, but we'll follow DB 1-7 (Sun-Sat) for simplicity, or we can adjust:
+										// DB: 1=Sun, 2=Mon, 3=Tue, 4=Wed, 5=Thu, 6=Fri, 7=Sat
+										let rowTr = $('<tr></tr>');
+										rowTr.append('<th>' + days[d-1] + '</th>');
+
+										for (let h = 0; h < 24; h++) {
+											let val = matrix[d][h];
+											let opacity = minOpacity;
+
+											if (maxCount > 0 && val > 0) {
+												// Scale opacity based on max value
+												opacity = minOpacity + ((val / maxCount) * (maxOpacity - minOpacity));
+												// Floor the opacity at something visible if it's > 0
+												if (opacity < 0.2) opacity = 0.2;
+											}
+
+											let bgColor = 'rgba(34, 113, 177, ' + opacity + ')';
+											let textColor = opacity > 0.6 ? '#ffffff' : '#1d2327';
+
+											let cell = $('<td class="stkb-heatmap-cell" style="background-color: ' + bgColor + '; color: ' + textColor + ';">' + (val > 0 ? val : '') + '</td>');
+
+											if (val > 0) {
+												cell.attr('title', val + ' tickets on ' + days[d-1] + ' at ' + h + ':00');
+											}
+
+											rowTr.append(cell);
+										}
+										tableBody.append(rowTr);
+									}
+
+									// Re-order rows so Monday is first (DB 2) and Sunday is last (DB 1)
+									let sunRow = tableBody.find('tr:first').detach();
+									tableBody.append(sunRow);
+								}
 
 								if (data.type_breakdown && data.type_breakdown.length > 0) {
 									data.type_breakdown.forEach(function(item) {
