@@ -126,6 +126,9 @@ class WordPress extends Module {
 		$options['ticket_metrics_frt_mode'] = isset( $_POST['ticket_metrics_frt_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_frt_mode'] ) ) : 'stackboost';
 		$options['ticket_metrics_verbose_logging'] = isset( $_POST['ticket_metrics_verbose_logging'] ) ? (int) $_POST['ticket_metrics_verbose_logging'] : 0;
 
+		$options['ticket_metrics_sla_frt_hours'] = isset( $_POST['ticket_metrics_sla_frt_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_frt_hours'] ) : 0;
+		$options['ticket_metrics_sla_resolution_hours'] = isset( $_POST['ticket_metrics_sla_resolution_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_resolution_hours'] ) : 0;
+
 		$other_issues_rules = [];
 		if ( isset( $_POST['ticket_metrics_other_issues_rules'] ) && is_array( $_POST['ticket_metrics_other_issues_rules'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -856,6 +859,9 @@ class WordPress extends Module {
 		$metrics['resolution_rate']      = $overall_metrics['resolution_rate'];
 		$metrics['active_backlog']       = $overall_metrics['active_backlog'];
 		$metrics['touched_tickets']      = $overall_metrics['touched_tickets'];
+		$metrics['avg_touches']          = $overall_metrics['avg_touches'];
+		$metrics['sla_frt_breach_rate']  = $overall_metrics['sla_frt_breach_rate'];
+		$metrics['sla_resolution_breach_rate'] = $overall_metrics['sla_resolution_breach_rate'];
 
 		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
 			// Check for ALL rules to see if we need to fetch multiple trigger fields for breakdown tracking
@@ -1561,6 +1567,23 @@ class WordPress extends Module {
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['avg_age_open'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : 'N/A';
 
+		// Average Touches per Ticket
+		// Total messages in threads for the touched tickets divided by the number of touched tickets
+		if ($metrics['touched_tickets'] > 0) {
+			$sql = "SELECT COUNT(th.id) FROM " . $threads_table . " th
+					JOIN " . $tickets_table . " t ON th.ticket = t.id
+					WHERE " . $active_in_period_sql;
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$query = $wpdb->prepare( $sql, $end_dt, $start_dt ) . " " . $extra_where;
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$total_threads = (int) $wpdb->get_var( $query );
+
+			// Format as float to 1 decimal place
+			$metrics['avg_touches'] = number_format($total_threads / $metrics['touched_tickets'], 1);
+		} else {
+			$metrics['avg_touches'] = '0.0';
+		}
+
 		// Average Initial Response Time
 		$frt_mode = $options['ticket_metrics_frt_mode'] ?? 'stackboost';
 
@@ -1585,6 +1608,71 @@ class WordPress extends Module {
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['avg_initial_response'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : '0m';
+
+		// SLA Calculations
+		$sla_frt_hours = isset( $options['ticket_metrics_sla_frt_hours'] ) ? (float) $options['ticket_metrics_sla_frt_hours'] : 0;
+		$sla_resolution_hours = isset( $options['ticket_metrics_sla_resolution_hours'] ) ? (float) $options['ticket_metrics_sla_resolution_hours'] : 0;
+
+		$metrics['sla_frt_breach_rate'] = 'N/A';
+		$metrics['sla_resolution_breach_rate'] = 'N/A';
+
+		// Resolution SLA (Closed Tickets in Period)
+		if ( $sla_resolution_hours > 0 && $metrics['total_closed'] > 0 ) {
+			$resolution_seconds_limit = $sla_resolution_hours * 3600;
+
+			$sql = "SELECT COUNT(t.id) FROM " . $tickets_table . " t
+				 WHERE " . $closed_condition . "
+				 AND TIMESTAMPDIFF(SECOND, t.date_created, " . $close_date_col . ") > %d
+				 AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$query = $wpdb->prepare( $sql, $resolution_seconds_limit, $start_dt, $end_dt ) . " " . $extra_where;
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$breached_resolution = (int) $wpdb->get_var( $query );
+
+			$metrics['sla_resolution_breach_rate'] = round(($breached_resolution / $metrics['total_closed']) * 100, 1) . '%';
+		}
+
+		// FRT SLA (Touched Tickets in Period)
+		// We calculate this based on the tickets that HAD a first response during this period.
+		if ( $sla_frt_hours > 0 ) {
+			$frt_seconds_limit = $sla_frt_hours * 3600;
+
+			if ( $frt_mode === 'supportcandy' ) {
+				// Base it on tickets touched in period where FRD > limit
+				$sql_total = "SELECT COUNT(t.id) FROM " . $tickets_table . " t WHERE t.frd IS NOT NULL AND t.frd > 0 AND " . $active_in_period_sql;
+				$sql_breach = "SELECT COUNT(t.id) FROM " . $tickets_table . " t WHERE t.frd IS NOT NULL AND t.frd > %d AND " . $active_in_period_sql;
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_total = $wpdb->prepare( $sql_total, $end_dt, $start_dt ) . " " . $extra_where;
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_breach = $wpdb->prepare( $sql_breach, $frt_seconds_limit, $end_dt, $start_dt ) . " " . $extra_where;
+			} else {
+				$sql_total = "SELECT COUNT(t.id) FROM (
+						SELECT t.id, TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
+						FROM " . $tickets_table . " t JOIN " . $threads_table . " th ON t.id = th.ticket
+						WHERE " . $active_in_period_sql . " " . $extra_where . " AND th.date_created > t.date_created GROUP BY t.id ) as response_times";
+
+				$sql_breach = "SELECT COUNT(t.id) FROM (
+						SELECT t.id, TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
+						FROM " . $tickets_table . " t JOIN " . $threads_table . " th ON t.id = th.ticket
+						WHERE " . $active_in_period_sql . " " . $extra_where . " AND th.date_created > t.date_created GROUP BY t.id
+					) as response_times WHERE response_time > %d";
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_total = $wpdb->prepare( $sql_total, $end_dt, $start_dt );
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_breach = $wpdb->prepare( $sql_breach, $end_dt, $start_dt, $frt_seconds_limit );
+			}
+
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$total_responded = (int) $wpdb->get_var( $query_total );
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$breached_frt = (int) $wpdb->get_var( $query_breach );
+
+			if ( $total_responded > 0 ) {
+				$metrics['sla_frt_breach_rate'] = round(($breached_frt / $total_responded) * 100, 1) . '%';
+			}
+		}
 
 		return $metrics;
 	}

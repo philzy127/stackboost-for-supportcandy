@@ -825,6 +825,8 @@ class Settings {
 				'ticket_metrics_chart_type_secondary',
 				'ticket_metrics_show_other_agents',
 				'ticket_metrics_frt_mode',
+				'ticket_metrics_sla_frt_hours',
+				'ticket_metrics_sla_resolution_hours',
 				'ticket_metrics_verbose_logging',
 				'ticket_metrics_tracked_agents',
 				'ticket_metrics_other_issues_rules',
@@ -947,7 +949,13 @@ class Settings {
 
 					case 'ticket_metrics_type_field':
 					case 'ticket_metrics_gemini_api_key':
+					case 'ticket_metrics_frt_mode':
 						$saved_settings[$key] = sanitize_text_field($value);
+						break;
+
+					case 'ticket_metrics_sla_frt_hours':
+					case 'ticket_metrics_sla_resolution_hours':
+						$saved_settings[$key] = max( 0, (float) $value );
 						break;
 
 					case 'ticket_metrics_tracked_agents':

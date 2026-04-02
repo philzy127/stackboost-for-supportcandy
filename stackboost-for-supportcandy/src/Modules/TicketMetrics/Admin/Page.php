@@ -111,6 +111,9 @@ class Page {
 		$frt_mode = $options['ticket_metrics_frt_mode'] ?? 'stackboost';
 		$verbose_logging = isset( $options['ticket_metrics_verbose_logging'] ) ? (bool) $options['ticket_metrics_verbose_logging'] : false;
 
+		$sla_frt_hours = isset( $options['ticket_metrics_sla_frt_hours'] ) ? (float) $options['ticket_metrics_sla_frt_hours'] : 0;
+		$sla_resolution_hours = isset( $options['ticket_metrics_sla_resolution_hours'] ) ? (float) $options['ticket_metrics_sla_resolution_hours'] : 0;
+
 		// Map legacy setting if needed, or default to an empty array (which means ALL are tracked by default).
 		$tracked_agents = $options['ticket_metrics_tracked_agents'] ?? [];
 		if ( ! is_array( $tracked_agents ) ) {
@@ -280,6 +283,7 @@ class Page {
 			<h2 class="nav-tab-wrapper stackboost-nav-tabs">
 				<a href="#dashboard" class="nav-tab nav-tab-active"><?php esc_html_e( 'Dashboard', 'stackboost-for-supportcandy' ); ?></a>
 				<a href="#settings" class="nav-tab"><?php esc_html_e( 'Settings', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="#sla" class="nav-tab"><?php esc_html_e( 'SLA Config', 'stackboost-for-supportcandy' ); ?></a>
 			</h2>
 
 			<div id="tab-dashboard" class="stackboost-tab-content" style="display: block;">
@@ -345,19 +349,49 @@ class Page {
 							</div>
 						</div>
 
-						<!-- Column 2: Averages -->
+						<!-- Column 2: Averages & SLAs -->
 						<div class="stkb-metric-col">
 							<div class="stkb-metric-card">
-								<h3><?php esc_html_e( 'Average Time to Close (Closed Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
-								<p id="stkb_metric_avg_open">0</p>
+								<table style="width: 100%; border-collapse: collapse;">
+									<tr>
+										<td style="width: 50%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+											<h3><?php esc_html_e( 'Avg Time to Close', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_avg_open" style="font-size:18px;">0</p>
+										</td>
+										<td style="width: 50%; text-align: center;">
+											<h3><?php esc_html_e( 'Avg Age (Open)', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_avg_age_open" style="font-size:18px;">0</p>
+										</td>
+									</tr>
+								</table>
 							</div>
 							<div class="stkb-metric-card">
-								<h3><?php esc_html_e( 'Average Age (Open Tickets)', 'stackboost-for-supportcandy' ); ?></h3>
-								<p id="stkb_metric_avg_age_open">0</p>
+								<table style="width: 100%; border-collapse: collapse;">
+									<tr>
+										<td style="width: 50%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+											<h3><?php esc_html_e( 'Avg Initial Response', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_avg_response" style="font-size:18px;">0</p>
+										</td>
+										<td style="width: 50%; text-align: center;">
+											<h3><?php esc_html_e( 'Avg Touches/Ticket', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_avg_touches" style="font-size:18px;">0</p>
+										</td>
+									</tr>
+								</table>
 							</div>
 							<div class="stkb-metric-card">
-								<h3><?php esc_html_e( 'Average Initial Response Time', 'stackboost-for-supportcandy' ); ?></h3>
-								<p id="stkb_metric_avg_response">0</p>
+								<table style="width: 100%; border-collapse: collapse;">
+									<tr>
+										<td style="width: 50%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+											<h3 style="color:#d63638;"><?php esc_html_e( 'FRT SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_sla_frt_breach" style="font-size:18px; color:#d63638;">N/A</p>
+										</td>
+										<td style="width: 50%; text-align: center;">
+											<h3 style="color:#d63638;"><?php esc_html_e( 'Resolution SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
+											<p id="stkb_metric_sla_resolution_breach" style="font-size:18px; color:#d63638;">N/A</p>
+										</td>
+									</tr>
+								</table>
 							</div>
 						</div>
 					</div>
@@ -629,6 +663,40 @@ class Page {
 
 							<p class="submit">
 								<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ), 'primary', 'submit', false ); ?>
+							</p>
+						</div>
+					</div>
+				</form>
+			</div>
+
+			<div id="tab-sla" class="stackboost-tab-content" style="display: none;">
+				<form action="options.php" method="post" id="stkb_sla_form">
+					<?php
+					settings_fields( 'stackboost_settings' );
+					echo '<input type="hidden" name="stackboost_settings[page_slug]" value="stackboost-ticket-metrics">';
+					?>
+					<div class="stackboost-dashboard-grid">
+						<div class="stackboost-card">
+							<h2><?php esc_html_e( 'SLA Threshold Configuration', 'stackboost-for-supportcandy' ); ?></h2>
+							<p class="description"><?php esc_html_e( 'Configure your Service Level Agreement (SLA) targets in hours. Enter 0 to disable tracking for that metric. These targets are used to calculate the SLA Breach Percentage in your dashboard metrics.', 'stackboost-for-supportcandy' ); ?></p>
+							<table class="form-table">
+								<tr>
+									<th scope="row"><label for="stkb_sla_frt_hours"><?php esc_html_e( 'First Response Time (Hours)', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<input type="number" step="0.5" min="0" name="stackboost_settings[ticket_metrics_sla_frt_hours]" id="stkb_sla_frt_hours" value="<?php echo esc_attr( $sla_frt_hours ); ?>" class="small-text">
+										<p class="description"><?php esc_html_e( 'The target number of hours an agent has to initially respond to a new ticket.', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
+								<tr>
+									<th scope="row"><label for="stkb_sla_resolution_hours"><?php esc_html_e( 'Resolution Time (Hours)', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<input type="number" step="0.5" min="0" name="stackboost_settings[ticket_metrics_sla_resolution_hours]" id="stkb_sla_resolution_hours" value="<?php echo esc_attr( $sla_resolution_hours ); ?>" class="small-text">
+										<p class="description"><?php esc_html_e( 'The target number of hours an agent has to fully resolve (close) a ticket.', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
+							</table>
+							<p class="submit">
+								<?php submit_button( __( 'Save SLA Settings', 'stackboost-for-supportcandy' ), 'primary', 'submit', false ); ?>
 							</p>
 						</div>
 					</div>
@@ -912,7 +980,7 @@ class Page {
 					});
 
 					// Intercept form submission to post success message
-					$('#tab-settings form').on('submit', function(e) {
+					$('#tab-settings form, #stkb_sla_form').on('submit', function(e) {
 						e.preventDefault(); // Prevent standard POST
 
 						var form = $(this);
@@ -954,7 +1022,9 @@ class Page {
 							ticket_metrics_verbose_logging: $('#stkb_verbose_logging').is(':checked') ? 1 : 0,
 							ticket_metrics_tracked_agents: $('#stkb_tracked_agents').val() || [],
 							ticket_metrics_other_issues_rules: other_issues_rules,
-							ticket_metrics_gemini_api_key: $('#stkb_gemini_api_key').val()
+							ticket_metrics_gemini_api_key: $('#stkb_gemini_api_key').val(),
+							ticket_metrics_sla_frt_hours: $('#stkb_sla_frt_hours').val(),
+							ticket_metrics_sla_resolution_hours: $('#stkb_sla_resolution_hours').val()
 						};
 
 						// Use dedicated endpoint
@@ -1071,6 +1141,9 @@ class Page {
 								$('#stkb_metric_resolution_rate').text(data.resolution_rate);
 								$('#stkb_metric_active_backlog').text(data.active_backlog);
 								$('#stkb_metric_touched_tickets').text(data.touched_tickets);
+								$('#stkb_metric_avg_touches').text(data.avg_touches);
+								$('#stkb_metric_sla_frt_breach').text(data.sla_frt_breach_rate);
+								$('#stkb_metric_sla_resolution_breach').text(data.sla_resolution_breach_rate);
 
 								// Render Agent Breakdown
 								let agentTbody = $('#stkb_agent_breakdown_body');
