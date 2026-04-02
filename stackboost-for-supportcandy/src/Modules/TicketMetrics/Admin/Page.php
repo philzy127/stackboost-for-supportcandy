@@ -327,91 +327,71 @@ class Page {
 					<div class="stkb-metrics-row">
 						<!-- Column 1: Counts -->
 						<div class="stkb-metric-col">
-							<div class="stkb-metric-card">
+							<div class="stkb-metric-card" style="padding: 15px;">
 								<h3><?php esc_html_e( 'Touched Tickets', 'stackboost-for-supportcandy' ); ?></h3>
 								<p id="stkb_metric_touched_tickets">0</p>
 							</div>
-							<div class="stkb-metric-card">
+							<div class="stkb-metric-card" style="padding: 15px;">
 								<h3><?php esc_html_e( 'Active Backlog', 'stackboost-for-supportcandy' ); ?></h3>
 								<p id="stkb_metric_active_backlog">0</p>
 							</div>
-							<div class="stkb-metric-card" style="padding: 10px;">
-								<table style="width: 100%; border-collapse: collapse;">
-									<tr>
-										<td style="width: 33.33%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4); padding-top: 10px;">
-											<h3><?php esc_html_e( 'Tickets Created', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_total">0</p>
-										</td>
-										<td style="width: 33.33%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4); padding-top: 10px;">
-											<h3><?php esc_html_e( 'Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_total_closed">0</p>
-										</td>
-										<td style="width: 33.33%; text-align: center; padding-top: 10px;">
-											<h3><?php esc_html_e( 'Resolution Rate', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_resolution_rate">0%</p>
-										</td>
-									</tr>
-								</table>
+							<div class="stkb-metric-card" style="padding: 15px; display: flex; justify-content: space-between;">
+								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+									<h3><?php esc_html_e( 'Tickets Created', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_total">0</p>
+								</div>
+								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+									<h3><?php esc_html_e( 'Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_total_closed">0</p>
+								</div>
+								<div style="flex: 1; text-align: center;">
+									<h3><?php esc_html_e( 'Resolution Rate', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_resolution_rate">0%</p>
+								</div>
 							</div>
 						</div>
 
 						<!-- Column 2: Averages & SLAs -->
 						<div class="stkb-metric-col">
-							<div class="stkb-metric-card">
-								<table style="width: 100%; border-collapse: collapse;">
-									<tr>
-										<td style="width: 50%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-											<h3><?php esc_html_e( 'Avg Time to Close', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_avg_open" style="font-size:18px;">0</p>
-										</td>
-										<td style="width: 50%; text-align: center;">
-											<h3><?php esc_html_e( 'Avg Age (Open)', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_avg_age_open" style="font-size:18px;">0</p>
-										</td>
-									</tr>
-								</table>
+							<div class="stkb-metric-card" style="padding: 15px; display: flex; justify-content: space-between;">
+								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+									<h3><?php esc_html_e( 'Avg Time to Close', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_avg_open">0</p>
+								</div>
+								<div style="flex: 1; text-align: center;">
+									<h3><?php esc_html_e( 'Avg Age (Open)', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_avg_age_open">0</p>
+								</div>
 							</div>
-							<div class="stkb-metric-card">
-								<table style="width: 100%; border-collapse: collapse;">
-									<tr>
-										<td style="width: 50%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-											<h3><?php esc_html_e( 'Avg Initial Response', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_avg_response" style="font-size:18px;">0</p>
-										</td>
-										<td style="width: 50%; text-align: center;">
-											<h3><?php esc_html_e( 'Avg Touches/Ticket', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_avg_touches" style="font-size:18px;">0</p>
-										</td>
-									</tr>
-								</table>
+							<div class="stkb-metric-card" style="padding: 15px; display: flex; justify-content: space-between;">
+								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+									<h3><?php esc_html_e( 'Avg Initial Response', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_avg_response">0</p>
+								</div>
+								<div style="flex: 1; text-align: center;">
+									<h3><?php esc_html_e( 'Avg Touches/Ticket', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_avg_touches">0</p>
+								</div>
 							</div>
-							<div class="stkb-metric-card" id="stkb_metric_sla_card" style="display:none;">
-								<table style="width: 100%; border-collapse: collapse;">
-									<tr>
-										<td style="width: 50%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-											<h3 style="color:#d63638;"><?php esc_html_e( 'FRT SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_sla_frt_breach" style="font-size:18px; color:#d63638;">N/A</p>
-										</td>
-										<td style="width: 50%; text-align: center;">
-											<h3 style="color:#d63638;"><?php esc_html_e( 'Resolution SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_sla_resolution_breach" style="font-size:18px; color:#d63638;">N/A</p>
-										</td>
-									</tr>
-								</table>
+							<div class="stkb-metric-card" id="stkb_metric_sla_card" style="display:none; padding: 15px; justify-content: space-between;">
+								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+									<h3 style="color:#d63638;"><?php esc_html_e( 'FRT SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_sla_frt_breach" style="color:#d63638;">N/A</p>
+								</div>
+								<div style="flex: 1; text-align: center;">
+									<h3 style="color:#d63638;"><?php esc_html_e( 'Resolution SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_sla_resolution_breach" style="color:#d63638;">N/A</p>
+								</div>
 							</div>
-							<div class="stkb-metric-card" id="stkb_metric_survey_card" style="display:none;">
-								<table style="width: 100%; border-collapse: collapse;">
-									<tr>
-										<td style="width: 50%; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-											<h3><?php esc_html_e( 'Survey Response Rate', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_survey_rate" style="font-size:18px;">N/A</p>
-										</td>
-										<td style="width: 50%; text-align: center;">
-											<h3><?php esc_html_e( 'Avg CSAT Score', 'stackboost-for-supportcandy' ); ?></h3>
-											<p id="stkb_metric_survey_csat" style="font-size:18px;">N/A</p>
-										</td>
-									</tr>
-								</table>
+							<div class="stkb-metric-card" id="stkb_metric_survey_card" style="display:none; padding: 15px; justify-content: space-between;">
+								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+									<h3><?php esc_html_e( 'Survey Response Rate', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_survey_rate">N/A</p>
+								</div>
+								<div style="flex: 1; text-align: center;">
+									<h3><?php esc_html_e( 'Avg CSAT Score', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_survey_csat">N/A</p>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -1184,7 +1164,7 @@ class Page {
 								$('#stkb_metric_sla_resolution_breach').text(data.sla_resolution_breach_rate);
 
 								if (data.is_sla_configured === true || data.is_sla_configured === 1 || data.is_sla_configured === '1') {
-									$('#stkb_metric_sla_card').css('display', 'block');
+									$('#stkb_metric_sla_card').css('display', 'flex');
 								} else {
 									$('#stkb_metric_sla_card').css('display', 'none');
 								}
@@ -1193,7 +1173,7 @@ class Page {
 								$('#stkb_metric_survey_csat').text(data.survey_avg_csat);
 
 								if (data.is_survey_configured === true || data.is_survey_configured === 1 || data.is_survey_configured === '1') {
-									$('#stkb_metric_survey_card').css('display', 'block');
+									$('#stkb_metric_survey_card').css('display', 'flex');
 								} else {
 									$('#stkb_metric_survey_card').css('display', 'none');
 								}
