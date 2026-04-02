@@ -95,13 +95,13 @@ class WordPress extends Module {
 		$options['ticket_metrics_type_field']        = isset( $_POST['ticket_metrics_type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_type_field'] ) ) : 'category';
 
 		$agent_chart = isset( $_POST['ticket_metrics_chart_type_agent'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_agent'] ) ) : 'multi_pie';
-		$options['ticket_metrics_chart_type_agent']  = in_array( $agent_chart, [ 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $agent_chart : 'multi_pie';
+		$options['ticket_metrics_chart_type_agent']  = in_array( $agent_chart, [ 'none', 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $agent_chart : 'multi_pie';
 
 		$type_chart = isset( $_POST['ticket_metrics_chart_type_type'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_type'] ) ) : 'doughnut';
-		$options['ticket_metrics_chart_type_type']   = in_array( $type_chart, [ 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $type_chart : 'doughnut';
+		$options['ticket_metrics_chart_type_type']   = in_array( $type_chart, [ 'none', 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $type_chart : 'doughnut';
 
 		$secondary_chart = isset( $_POST['ticket_metrics_chart_type_secondary'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_secondary'] ) ) : 'bar';
-		$options['ticket_metrics_chart_type_secondary']   = in_array( $secondary_chart, [ 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $secondary_chart : 'bar';
+		$options['ticket_metrics_chart_type_secondary']   = in_array( $secondary_chart, [ 'none', 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $secondary_chart : 'bar';
 
 		// Handle the array of tracked agents
 		$agents = [];

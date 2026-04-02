@@ -426,6 +426,7 @@ class Page {
 									<th scope="row"><label for="stkb_chart_type_agent"><?php esc_html_e( 'Agent Chart Type', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
 										<select name="stackboost_settings[ticket_metrics_chart_type_agent]" id="stkb_chart_type_agent">
+											<option value="none" <?php selected( $chart_type_agent, 'none' ); ?>><?php esc_html_e( 'None (Hide Chart)', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="pie" <?php selected( $chart_type_agent, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="doughnut" <?php selected( $chart_type_agent, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="multi_pie" <?php selected( $chart_type_agent, 'multi_pie' ); ?>><?php esc_html_e( 'Multi-series Pie', 'stackboost-for-supportcandy' ); ?></option>
@@ -441,6 +442,7 @@ class Page {
 									<th scope="row"><label for="stkb_chart_type_type"><?php esc_html_e( 'Type Chart Type', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
 										<select name="stackboost_settings[ticket_metrics_chart_type_type]" id="stkb_chart_type_type">
+											<option value="none" <?php selected( $chart_type_type, 'none' ); ?>><?php esc_html_e( 'None (Hide Chart)', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="pie" <?php selected( $chart_type_type, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="doughnut" <?php selected( $chart_type_type, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="bar" <?php selected( $chart_type_type, 'bar' ); ?>><?php esc_html_e( 'Bar', 'stackboost-for-supportcandy' ); ?></option>
@@ -454,6 +456,7 @@ class Page {
 									<th scope="row"><label for="stkb_chart_type_secondary"><?php esc_html_e( 'Secondary Breakdowns Chart Type', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
 										<select name="stackboost_settings[ticket_metrics_chart_type_secondary]" id="stkb_chart_type_secondary">
+											<option value="none" <?php selected( $chart_type_secondary, 'none' ); ?>><?php esc_html_e( 'None (Hide Chart)', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="pie" <?php selected( $chart_type_secondary, 'pie' ); ?>><?php esc_html_e( 'Pie', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="doughnut" <?php selected( $chart_type_secondary, 'doughnut' ); ?>><?php esc_html_e( 'Doughnut', 'stackboost-for-supportcandy' ); ?></option>
 											<option value="bar" <?php selected( $chart_type_secondary, 'bar' ); ?>><?php esc_html_e( 'Bar', 'stackboost-for-supportcandy' ); ?></option>
@@ -1158,97 +1161,107 @@ class Page {
 									let agentChartTypeRaw = $('#stkb_chart_type_agent').val() || '<?php echo esc_js( $chart_type_agent ); ?>';
 									let typeChartType = $('#stkb_chart_type_type').val() || '<?php echo esc_js( $chart_type_type ); ?>';
 
-									// Determine actual chart.js type and if it's multi-series
-									let agentChartType = agentChartTypeRaw;
-									let isMultiSeriesPie = false;
-									if ( agentChartTypeRaw === 'multi_pie' ) {
-										agentChartType = 'pie';
-										isMultiSeriesPie = true;
-									} else if ( agentChartTypeRaw === 'multi_doughnut' ) {
-										agentChartType = 'doughnut';
-										isMultiSeriesPie = true;
-									}
-
-									// Setup base datasets
-									let datasets = [
-										{
-											label: '<?php esc_html_e( 'Assigned', 'stackboost-for-supportcandy' ); ?>',
-											data: agentAssignedData,
-											backgroundColor: chartColors,
-											borderWidth: 1
+									if (agentChartTypeRaw === 'none') {
+										$('#stkb_agent_chart').parent('.stkb-chart-container').hide();
+									} else {
+										$('#stkb_agent_chart').parent('.stkb-chart-container').show();
+										// Determine actual chart.js type and if it's multi-series
+										let agentChartType = agentChartTypeRaw;
+										let isMultiSeriesPie = false;
+										if ( agentChartTypeRaw === 'multi_pie' ) {
+											agentChartType = 'pie';
+											isMultiSeriesPie = true;
+										} else if ( agentChartTypeRaw === 'multi_doughnut' ) {
+											agentChartType = 'doughnut';
+											isMultiSeriesPie = true;
 										}
-									];
 
-									// Add closed dataset for multi-series types
-									if ( isMultiSeriesPie || agentChartType === 'bar' || agentChartType === 'line' || agentChartType === 'radar' ) {
-										datasets.push({
-											label: '<?php esc_html_e( 'Closed', 'stackboost-for-supportcandy' ); ?>',
-											data: agentClosedData,
-											backgroundColor: chartColors.map(c => c + '99'), // Default: slightly transparent map
-											borderWidth: 1
-										});
-									}
-
-									// Setup agent chart config
-									let agentConfig = {
-										type: agentChartType,
-										data: {
-											labels: agentLabels,
-											datasets: datasets
-										},
-										options: {
-											responsive: true,
-											maintainAspectRatio: false,
-											plugins: { legend: { position: 'right' } }
-										}
-									};
-
-									// If bar chart, adjust legend position and use solid distinct colors for the datasets instead of array
-									if (agentChartType === 'bar' || agentChartType === 'line' || agentChartType === 'radar') {
-										agentConfig.data.datasets[0].backgroundColor = (agentChartType === 'bar') ? '#2271b1' : '#2271b133';
-										agentConfig.data.datasets[0].borderColor = '#2271b1';
-										agentConfig.data.datasets[1].backgroundColor = (agentChartType === 'bar') ? '#00a32a' : '#00a32a33';
-										agentConfig.data.datasets[1].borderColor = '#00a32a';
-										agentConfig.options.plugins.legend.position = 'top';
-
-										// Optional: add fill to line charts
-										if (agentChartType === 'line' || agentChartType === 'radar') {
-											agentConfig.data.datasets[0].fill = true;
-											agentConfig.data.datasets[1].fill = true;
-										}
-									}
-
-									agentChart = new Chart(agentCtx, agentConfig);
-
-									let typeConfig = {
-										type: typeChartType,
-										data: {
-											labels: typeLabels,
-											datasets: [{
-												label: '<?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?>',
-												data: typeData,
+										// Setup base datasets
+										let datasets = [
+											{
+												label: '<?php esc_html_e( 'Assigned', 'stackboost-for-supportcandy' ); ?>',
+												data: agentAssignedData,
 												backgroundColor: chartColors,
 												borderWidth: 1
-											}]
-										},
-										options: {
-											responsive: true,
-											maintainAspectRatio: false,
-											plugins: { legend: { position: 'right' } }
-										}
-									};
+											}
+										];
 
-									if (typeChartType === 'bar' || typeChartType === 'line' || typeChartType === 'radar') {
-										typeConfig.data.datasets[0].backgroundColor = (typeChartType === 'bar') ? '#2271b1' : '#2271b133';
-										typeConfig.data.datasets[0].borderColor = '#2271b1';
-										typeConfig.options.plugins.legend.position = 'top';
-
-										if (typeChartType === 'line' || typeChartType === 'radar') {
-											typeConfig.data.datasets[0].fill = true;
+										// Add closed dataset for multi-series types
+										if ( isMultiSeriesPie || agentChartType === 'bar' || agentChartType === 'line' || agentChartType === 'radar' ) {
+											datasets.push({
+												label: '<?php esc_html_e( 'Closed', 'stackboost-for-supportcandy' ); ?>',
+												data: agentClosedData,
+												backgroundColor: chartColors.map(c => c + '99'), // Default: slightly transparent map
+												borderWidth: 1
+											});
 										}
+
+										// Setup agent chart config
+										let agentConfig = {
+											type: agentChartType,
+											data: {
+												labels: agentLabels,
+												datasets: datasets
+											},
+											options: {
+												responsive: true,
+												maintainAspectRatio: false,
+												plugins: { legend: { position: 'right' } }
+											}
+										};
+
+										// If bar chart, adjust legend position and use solid distinct colors for the datasets instead of array
+										if (agentChartType === 'bar' || agentChartType === 'line' || agentChartType === 'radar') {
+											agentConfig.data.datasets[0].backgroundColor = (agentChartType === 'bar') ? '#2271b1' : '#2271b133';
+											agentConfig.data.datasets[0].borderColor = '#2271b1';
+											agentConfig.data.datasets[1].backgroundColor = (agentChartType === 'bar') ? '#00a32a' : '#00a32a33';
+											agentConfig.data.datasets[1].borderColor = '#00a32a';
+											agentConfig.options.plugins.legend.position = 'top';
+
+											// Optional: add fill to line charts
+											if (agentChartType === 'line' || agentChartType === 'radar') {
+												agentConfig.data.datasets[0].fill = true;
+												agentConfig.data.datasets[1].fill = true;
+											}
+										}
+
+										agentChart = new Chart(agentCtx, agentConfig);
 									}
 
-									typeChart = new Chart(typeCtx, typeConfig);
+									if (typeChartType === 'none') {
+										$('#stkb_type_chart').parent('.stkb-chart-container').hide();
+									} else {
+										$('#stkb_type_chart').parent('.stkb-chart-container').show();
+										let typeConfig = {
+											type: typeChartType,
+											data: {
+												labels: typeLabels,
+												datasets: [{
+													label: '<?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?>',
+													data: typeData,
+													backgroundColor: chartColors,
+													borderWidth: 1
+												}]
+											},
+											options: {
+												responsive: true,
+												maintainAspectRatio: false,
+												plugins: { legend: { position: 'right' } }
+											}
+										};
+
+										if (typeChartType === 'bar' || typeChartType === 'line' || typeChartType === 'radar') {
+											typeConfig.data.datasets[0].backgroundColor = (typeChartType === 'bar') ? '#2271b1' : '#2271b133';
+											typeConfig.data.datasets[0].borderColor = '#2271b1';
+											typeConfig.options.plugins.legend.position = 'top';
+
+											if (typeChartType === 'line' || typeChartType === 'radar') {
+												typeConfig.data.datasets[0].fill = true;
+											}
+										}
+
+										typeChart = new Chart(typeCtx, typeConfig);
+									}
 								}
 
 								// Initialize Tippy if available
@@ -1297,50 +1310,54 @@ class Page {
 
 								let secondaryChartType = $('#stkb_chart_type_secondary').val() || 'bar';
 
-								$('.stkb-secondary-chart').each(function() {
-									let canvas = $(this)[0];
-									let ctx = canvas.getContext('2d');
-									let rawConfig = $(this).attr('data-chart-config');
-									if (!rawConfig) return;
+								if (secondaryChartType === 'none') {
+									$('.stkb-secondary-chart').closest('.stkb-chart-container').hide();
+								} else {
+									$('.stkb-secondary-chart').each(function() {
+										let canvas = $(this)[0];
+										let ctx = canvas.getContext('2d');
+										let rawConfig = $(this).attr('data-chart-config');
+										if (!rawConfig) return;
 
-									let configData = JSON.parse(rawConfig);
+										let configData = JSON.parse(rawConfig);
 
-									let typeType = secondaryChartType;
-									let isMultiPie = false;
-									if ( typeType === 'multi_pie' ) { typeType = 'pie'; isMultiPie = true; }
-									if ( typeType === 'multi_doughnut' ) { typeType = 'doughnut'; isMultiPie = true; }
+										let typeType = secondaryChartType;
+										let isMultiPie = false;
+										if ( typeType === 'multi_pie' ) { typeType = 'pie'; isMultiPie = true; }
+										if ( typeType === 'multi_doughnut' ) { typeType = 'doughnut'; isMultiPie = true; }
 
-									let config = {
-										type: typeType,
-										data: {
-											labels: configData.labels,
-											datasets: [{
-												label: '<?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?>',
-												data: configData.data,
-												backgroundColor: chartColors,
-												borderWidth: 1
-											}]
-										},
-										options: {
-											responsive: true,
-											maintainAspectRatio: false,
-											plugins: { legend: { position: 'right' } }
+										let config = {
+											type: typeType,
+											data: {
+												labels: configData.labels,
+												datasets: [{
+													label: '<?php esc_html_e( 'Tickets', 'stackboost-for-supportcandy' ); ?>',
+													data: configData.data,
+													backgroundColor: chartColors,
+													borderWidth: 1
+												}]
+											},
+											options: {
+												responsive: true,
+												maintainAspectRatio: false,
+												plugins: { legend: { position: 'right' } }
+											}
+										};
+
+										if (typeType === 'bar' || typeType === 'line' || typeType === 'radar') {
+											config.data.datasets[0].backgroundColor = (typeType === 'bar') ? '#2271b1' : '#2271b133';
+											config.data.datasets[0].borderColor = '#2271b1';
+											config.options.plugins.legend.position = 'top';
+
+											if (typeType === 'line' || typeType === 'radar') {
+												config.data.datasets[0].fill = true;
+											}
 										}
-									};
 
-									if (typeType === 'bar' || typeType === 'line' || typeType === 'radar') {
-										config.data.datasets[0].backgroundColor = (typeType === 'bar') ? '#2271b1' : '#2271b133';
-										config.data.datasets[0].borderColor = '#2271b1';
-										config.options.plugins.legend.position = 'top';
-
-										if (typeType === 'line' || typeType === 'radar') {
-											config.data.datasets[0].fill = true;
-										}
-									}
-
-									let c = new Chart(ctx, config);
-									secondaryCharts.push(c);
-								});
+										let c = new Chart(ctx, config);
+										secondaryCharts.push(c);
+									});
+								}
 							}
 						}
 					});

@@ -939,10 +939,10 @@ class Settings {
 
 					case 'ticket_metrics_chart_type_agent':
 					case 'ticket_metrics_chart_type_type':
-						$saved_settings[$key] = in_array( $value, [ 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ], true ) ? $value : 'pie';
+						$saved_settings[$key] = in_array( $value, [ 'none', 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ], true ) ? $value : 'pie';
 						break;
 					case 'ticket_metrics_chart_type_secondary':
-						$saved_settings[$key] = in_array( $value, [ 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ], true ) ? $value : 'bar';
+						$saved_settings[$key] = in_array( $value, [ 'none', 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ], true ) ? $value : 'bar';
 						break;
 
 					case 'ticket_metrics_type_field':
