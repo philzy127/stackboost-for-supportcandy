@@ -1735,6 +1735,13 @@ class WordPress extends Module {
 			$ats_options = get_option( 'stackboost_settings', [] );
 			$ticket_question_id = isset( $ats_options['ats_ticket_question_id'] ) ? (int) $ats_options['ats_ticket_question_id'] : 0;
 
+			if ( $ticket_question_id === 0 ) {
+				// Auto-detect the ticket ID question if the user hasn't explicitly configured it in ATS settings.
+				// ATS uses the `question_type = 'ticket_number'` to designate which input receives the `ticket_id`.
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$ticket_question_id = (int) $wpdb->get_var("SELECT id FROM {$questions_table} WHERE question_type = 'ticket_number' LIMIT 1");
+			}
+
 			if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
 				stackboost_log( "ATS Ticket Question ID Mapping: {$ticket_question_id}", 'ticket_metrics' );
 			}
