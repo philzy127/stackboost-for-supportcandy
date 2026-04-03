@@ -1740,11 +1740,12 @@ class WordPress extends Module {
 
 			// CSAT Average (Calculate average of numeric responses, assuming 1-5 or 1-10 scales like stars/numbers)
 			if ( $total_surveys > 0 ) {
-				$sql_csat = "SELECT AVG(CAST(a.answer_value AS DECIMAL(10,2))) FROM " . $answers_table . " a
+				// Use a more permissive regex '^[0-9]+' so that an answer like "5 - Excellent" or " 5 " gets safely CAST to 5.00
+				$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
 							JOIN " . $submissions_table . " s ON a.submission_id = s.id
 							JOIN " . $tickets_table . " t ON s.ticket_id = t.id
 							WHERE " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s
-							AND a.answer_value REGEXP '^[0-9]+(\.[0-9]+)?$'";
+							AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				$query_csat = $wpdb->prepare( $sql_csat, $start_dt, $end_dt ) . " " . $extra_where;
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
