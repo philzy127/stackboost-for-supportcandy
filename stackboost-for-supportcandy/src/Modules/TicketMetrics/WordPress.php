@@ -1720,6 +1720,7 @@ class WordPress extends Module {
 		// Survey Tracking
 		$submissions_table = $wpdb->prefix . 'stackboost_ats_survey_submissions';
 		$answers_table     = $wpdb->prefix . 'stackboost_ats_survey_answers';
+		$questions_table   = $wpdb->prefix . 'stackboost_ats_questions';
 		$verbose_logging = isset( $options['ticket_metrics_verbose_logging'] ) ? (bool) $options['ticket_metrics_verbose_logging'] : false;
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1753,16 +1754,17 @@ class WordPress extends Module {
 				}
 
 				// CSAT Average (Calculate average of numeric responses, assuming 1-5 or 1-10 scales like stars/numbers)
-				// We join twice: once to link the submission to the ticket timeframe, and once to get all other answers for the CSAT average.
+				// Target ONLY questions where question_type = 'rating' via a join to the questions table
 				if ( $total_surveys > 0 ) {
 					$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
 								JOIN " . $submissions_table . " s ON a.submission_id = s.id
 								JOIN " . $answers_table . " a_ticket ON s.id = a_ticket.submission_id
 								JOIN " . $tickets_table . " t ON a_ticket.answer_value = t.id
-								WHERE a_ticket.question_id = %d AND a.question_id != %d AND " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s
+								JOIN " . $questions_table . " q ON a.question_id = q.id
+								WHERE a_ticket.question_id = %d AND q.question_type = 'rating' AND " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s
 								AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
 					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-					$query_csat = $wpdb->prepare( $sql_csat, $ticket_question_id, $ticket_question_id, $start_dt, $end_dt ) . " " . $extra_where;
+					$query_csat = $wpdb->prepare( $sql_csat, $ticket_question_id, $start_dt, $end_dt ) . " " . $extra_where;
 					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$avg_csat = $wpdb->get_var( $query_csat );
 
@@ -1798,7 +1800,8 @@ class WordPress extends Module {
 				if ( $total_surveys > 0 ) {
 					$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
 								JOIN " . $submissions_table . " s ON a.submission_id = s.id
-								WHERE s.submission_date >= %s AND s.submission_date <= %s
+								JOIN " . $questions_table . " q ON a.question_id = q.id
+								WHERE q.question_type = 'rating' AND s.submission_date >= %s AND s.submission_date <= %s
 								AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
 					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 					$query_csat = $wpdb->prepare( $sql_csat, $start_dt, $end_dt );
