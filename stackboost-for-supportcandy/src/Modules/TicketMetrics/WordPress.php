@@ -128,6 +128,7 @@ class WordPress extends Module {
 
 		$options['ticket_metrics_sla_frt_hours'] = isset( $_POST['ticket_metrics_sla_frt_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_frt_hours'] ) : 0;
 		$options['ticket_metrics_sla_resolution_hours'] = isset( $_POST['ticket_metrics_sla_resolution_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_resolution_hours'] ) : 0;
+		$options['ticket_metrics_survey_max_score'] = isset( $_POST['ticket_metrics_survey_max_score'] ) ? max( 0, (float) $_POST['ticket_metrics_survey_max_score'] ) : 0;
 
 		$other_issues_rules = [];
 		if ( isset( $_POST['ticket_metrics_other_issues_rules'] ) && is_array( $_POST['ticket_metrics_other_issues_rules'] ) ) {
@@ -1786,45 +1787,63 @@ class WordPress extends Module {
 				}
 			} else {
 				// If the user hasn't configured which survey question maps to the Ticket ID, we can't link them accurately.
-				// Fallback: Just calculate global survey stats for surveys submitted in the timeframe regardless of what ticket they apply to.
-				$sql_surveys = "SELECT COUNT(id) FROM " . $submissions_table . " WHERE submission_date >= %s AND submission_date <= %s";
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-				$query_surveys = $wpdb->prepare( $sql_surveys, $start_dt, $end_dt );
-				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$total_surveys = (int) $wpdb->get_var( $query_surveys );
-
-				if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
-					stackboost_log( "ATS Total Surveys Unlinked Query: {$query_surveys}", 'ticket_metrics' );
-					stackboost_log( "ATS Total Surveys Unlinked Result: {$total_surveys}", 'ticket_metrics' );
-				}
-
-				if ( $metrics['total_closed'] > 0 ) {
-					$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
-				}
-
-				if ( $total_surveys > 0 ) {
-					$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
-								JOIN " . $submissions_table . " s ON a.submission_id = s.id
-								JOIN " . $questions_table . " q ON a.question_id = q.id
-								WHERE q.question_type = 'rating' AND s.submission_date >= %s AND s.submission_date <= %s
-								AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+				// We CANNOT apply $extra_where here because we have no ticket to join against to check the assigned agent or category.
+				// Therefore, if $extra_where is NOT empty (meaning this is a query for a specific agent or ticket type), we MUST return N/A
+				// to prevent the global average from overwriting the specific agent's distinct metric.
+				if ( ! empty( $extra_where ) ) {
+					$metrics['survey_response_rate'] = 'N/A';
+					$metrics['survey_avg_csat'] = 'N/A';
+				} else {
+					// Fallback: Just calculate global survey stats for surveys submitted in the timeframe regardless of what ticket they apply to.
+					$sql_surveys = "SELECT COUNT(id) FROM " . $submissions_table . " WHERE submission_date >= %s AND submission_date <= %s";
 					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-					$query_csat = $wpdb->prepare( $sql_csat, $start_dt, $end_dt );
+					$query_surveys = $wpdb->prepare( $sql_surveys, $start_dt, $end_dt );
 					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-					$avg_csat = $wpdb->get_var( $query_csat );
+					$total_surveys = (int) $wpdb->get_var( $query_surveys );
 
 					if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
-						stackboost_log( "ATS CSAT Unlinked Average Query: {$query_csat}", 'ticket_metrics' );
-						stackboost_log( "ATS CSAT Unlinked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
+						stackboost_log( "ATS Total Surveys Unlinked Query: {$query_surveys}", 'ticket_metrics' );
+						stackboost_log( "ATS Total Surveys Unlinked Result: {$total_surveys}", 'ticket_metrics' );
 					}
 
-					if ( $avg_csat !== null ) {
-						$metrics['survey_avg_csat'] = round($avg_csat, 2);
+					if ( $metrics['total_closed'] > 0 ) {
+						$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
 					}
-				} else {
-					$metrics['survey_response_rate'] = '0%';
+
+					if ( $total_surveys > 0 ) {
+						$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
+									JOIN " . $submissions_table . " s ON a.submission_id = s.id
+									JOIN " . $questions_table . " q ON a.question_id = q.id
+									WHERE q.question_type = 'rating' AND s.submission_date >= %s AND s.submission_date <= %s
+									AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+						$query_csat = $wpdb->prepare( $sql_csat, $start_dt, $end_dt );
+						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+						$avg_csat = $wpdb->get_var( $query_csat );
+
+						if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+							stackboost_log( "ATS CSAT Unlinked Average Query: {$query_csat}", 'ticket_metrics' );
+							stackboost_log( "ATS CSAT Unlinked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
+						}
+
+						if ( $avg_csat !== null ) {
+							$metrics['survey_avg_csat'] = round($avg_csat, 2);
+						}
+					} else {
+						$metrics['survey_response_rate'] = '0%';
+					}
 				}
 			}
+		}
+
+		// Normalize CSAT against Max Score setting if configured to give it meaning (e.g., 4.2 / 5)
+		$survey_max_score = isset( $options['ticket_metrics_survey_max_score'] ) ? (float) $options['ticket_metrics_survey_max_score'] : 0;
+		if ( $survey_max_score > 0 && $metrics['survey_avg_csat'] !== 'N/A' ) {
+			$raw_csat = (float) $metrics['survey_avg_csat'];
+			// Optionally format it as a percentage if they want, but a string representation "X / Y" is generally clearer.
+			// The user can define max score = 5. Output: 4.2 / 5 (84%)
+			$percentage = round(($raw_csat / $survey_max_score) * 100);
+			$metrics['survey_avg_csat'] = "{$raw_csat} / {$survey_max_score} ({$percentage}%)";
 		}
 
 		return $metrics;
