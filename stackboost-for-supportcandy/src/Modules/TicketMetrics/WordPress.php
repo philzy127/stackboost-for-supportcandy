@@ -870,12 +870,17 @@ class WordPress extends Module {
 
 		// Heatmap Data (Ticket Creation Volume by Day of Week and Hour of Day)
 		// We use DAYOFWEEK where 1=Sunday, 2=Monday, etc. and HOUR 0-23
-		$sql_heatmap = "SELECT DAYOFWEEK(date_created) as dow, HOUR(date_created) as hod, COUNT(id) as count
+		// date_created is stored in UTC. Apply WP gmt_offset so the heatmap visually aligns with the local timezone.
+		$gmt_offset = (float) get_option( 'gmt_offset' );
+
+		$sql_heatmap = "SELECT DAYOFWEEK(DATE_ADD(date_created, INTERVAL %f HOUR)) as dow,
+							   HOUR(DATE_ADD(date_created, INTERVAL %f HOUR)) as hod,
+							   COUNT(id) as count
 						FROM " . $tickets_table . "
 						WHERE date_created >= %s AND date_created <= %s
 						GROUP BY dow, hod";
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query_heatmap = $wpdb->prepare( $sql_heatmap, $start_dt, $end_dt );
+		$query_heatmap = $wpdb->prepare( $sql_heatmap, $gmt_offset, $gmt_offset, $start_dt, $end_dt );
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$heatmap_results = $wpdb->get_results( $query_heatmap );
 
