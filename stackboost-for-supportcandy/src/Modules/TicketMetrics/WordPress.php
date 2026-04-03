@@ -1720,42 +1720,102 @@ class WordPress extends Module {
 		// Survey Tracking
 		$submissions_table = $wpdb->prefix . 'stackboost_ats_survey_submissions';
 		$answers_table     = $wpdb->prefix . 'stackboost_ats_survey_answers';
+		$verbose_logging = isset( $options['ticket_metrics_verbose_logging'] ) ? (bool) $options['ticket_metrics_verbose_logging'] : false;
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var("SHOW TABLES LIKE '{$submissions_table}'") === $submissions_table ) {
 			$metrics['is_survey_configured'] = true;
-			// Find total completed surveys linked to tickets closed during this exact period
-			// A survey response is counted towards the metrics of the period the *ticket* was closed, to align with total_closed count.
-			$sql_surveys = "SELECT COUNT(s.id) FROM " . $submissions_table . " s
-							JOIN " . $tickets_table . " t ON s.ticket_id = t.id
-							WHERE " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$query_surveys = $wpdb->prepare( $sql_surveys, $start_dt, $end_dt ) . " " . $extra_where;
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$total_surveys = (int) $wpdb->get_var( $query_surveys );
+			$ats_options = get_option( 'stackboost_settings', [] );
+			$ticket_question_id = isset( $ats_options['ats_ticket_question_id'] ) ? (int) $ats_options['ats_ticket_question_id'] : 0;
 
-			if ( $metrics['total_closed'] > 0 ) {
-				$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
+			if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ATS Ticket Question ID Mapping: {$ticket_question_id}", 'ticket_metrics' );
 			}
 
-			// CSAT Average (Calculate average of numeric responses, assuming 1-5 or 1-10 scales like stars/numbers)
-			if ( $total_surveys > 0 ) {
-				// Use a more permissive regex '^[0-9]+' so that an answer like "5 - Excellent" or " 5 " gets safely CAST to 5.00
-				$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
-							JOIN " . $submissions_table . " s ON a.submission_id = s.id
-							JOIN " . $tickets_table . " t ON s.ticket_id = t.id
-							WHERE " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s
-							AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+			if ( $ticket_question_id > 0 ) {
+				// Find total completed surveys linked to tickets closed during this exact period via the dynamic ticket_id answer
+				$sql_surveys = "SELECT COUNT(DISTINCT s.id) FROM " . $submissions_table . " s
+								JOIN " . $answers_table . " a_ticket ON s.id = a_ticket.submission_id
+								JOIN " . $tickets_table . " t ON a_ticket.answer_value = t.id
+								WHERE a_ticket.question_id = %d AND " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-				$query_csat = $wpdb->prepare( $sql_csat, $start_dt, $end_dt ) . " " . $extra_where;
+				$query_surveys = $wpdb->prepare( $sql_surveys, $ticket_question_id, $start_dt, $end_dt ) . " " . $extra_where;
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$avg_csat = $wpdb->get_var( $query_csat );
+				$total_surveys = (int) $wpdb->get_var( $query_surveys );
 
-				if ( $avg_csat !== null ) {
-					$metrics['survey_avg_csat'] = round($avg_csat, 2);
+				if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ATS Total Surveys Linked Query: {$query_surveys}", 'ticket_metrics' );
+					stackboost_log( "ATS Total Surveys Linked Result: {$total_surveys}", 'ticket_metrics' );
+				}
+
+				if ( $metrics['total_closed'] > 0 ) {
+					$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
+				}
+
+				// CSAT Average (Calculate average of numeric responses, assuming 1-5 or 1-10 scales like stars/numbers)
+				// We join twice: once to link the submission to the ticket timeframe, and once to get all other answers for the CSAT average.
+				if ( $total_surveys > 0 ) {
+					$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
+								JOIN " . $submissions_table . " s ON a.submission_id = s.id
+								JOIN " . $answers_table . " a_ticket ON s.id = a_ticket.submission_id
+								JOIN " . $tickets_table . " t ON a_ticket.answer_value = t.id
+								WHERE a_ticket.question_id = %d AND a.question_id != %d AND " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s
+								AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					$query_csat = $wpdb->prepare( $sql_csat, $ticket_question_id, $ticket_question_id, $start_dt, $end_dt ) . " " . $extra_where;
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$avg_csat = $wpdb->get_var( $query_csat );
+
+					if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+						stackboost_log( "ATS CSAT Linked Average Query: {$query_csat}", 'ticket_metrics' );
+						stackboost_log( "ATS CSAT Linked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
+					}
+
+					if ( $avg_csat !== null ) {
+						$metrics['survey_avg_csat'] = round($avg_csat, 2);
+					}
+				} else {
+					$metrics['survey_response_rate'] = '0%';
 				}
 			} else {
-				$metrics['survey_response_rate'] = '0%';
+				// If the user hasn't configured which survey question maps to the Ticket ID, we can't link them accurately.
+				// Fallback: Just calculate global survey stats for surveys submitted in the timeframe regardless of what ticket they apply to.
+				$sql_surveys = "SELECT COUNT(id) FROM " . $submissions_table . " WHERE submission_date >= %s AND submission_date <= %s";
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_surveys = $wpdb->prepare( $sql_surveys, $start_dt, $end_dt );
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$total_surveys = (int) $wpdb->get_var( $query_surveys );
+
+				if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ATS Total Surveys Unlinked Query: {$query_surveys}", 'ticket_metrics' );
+					stackboost_log( "ATS Total Surveys Unlinked Result: {$total_surveys}", 'ticket_metrics' );
+				}
+
+				if ( $metrics['total_closed'] > 0 ) {
+					$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
+				}
+
+				if ( $total_surveys > 0 ) {
+					$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
+								JOIN " . $submissions_table . " s ON a.submission_id = s.id
+								WHERE s.submission_date >= %s AND s.submission_date <= %s
+								AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					$query_csat = $wpdb->prepare( $sql_csat, $start_dt, $end_dt );
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$avg_csat = $wpdb->get_var( $query_csat );
+
+					if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+						stackboost_log( "ATS CSAT Unlinked Average Query: {$query_csat}", 'ticket_metrics' );
+						stackboost_log( "ATS CSAT Unlinked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
+					}
+
+					if ( $avg_csat !== null ) {
+						$metrics['survey_avg_csat'] = round($avg_csat, 2);
+					}
+				} else {
+					$metrics['survey_response_rate'] = '0%';
+				}
 			}
 		}
 
