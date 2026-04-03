@@ -409,6 +409,7 @@ class Page {
 										<th><?php esc_html_e( 'Agent', 'stackboost-for-supportcandy' ); ?></th>
 										<th style="text-align:center; width:120px;"><?php esc_html_e( 'Assigned', 'stackboost-for-supportcandy' ); ?></th>
 										<th style="text-align:center; width:120px;"><?php esc_html_e( 'Closed', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="text-align:center; width:120px;"><?php esc_html_e( 'Avg CSAT', 'stackboost-for-supportcandy' ); ?></th>
 									</tr>
 								</thead>
 								<tbody id="stkb_agent_breakdown_body">
@@ -1230,6 +1231,7 @@ class Page {
 										let $tdLabel = $('<td></td>');
 										let $tdAssigned = $('<td style="text-align:center;"></td>').text(assigned);
 										let $tdClosed = $('<td style="text-align:center;"></td>').text(closed);
+										let $tdCsat = $('<td style="text-align:center;"></td>').text(item.csat || 'N/A');
 
 										$tdLabel.append(label);
 
@@ -1241,7 +1243,7 @@ class Page {
 											$tr.attr('data-modal-html', item.modal_html);
 										}
 
-										$tr.append($tdLabel).append($tdAssigned).append($tdClosed);
+										$tr.append($tdLabel).append($tdAssigned).append($tdClosed).append($tdCsat);
 										agentTbody.append($tr);
 									});
 								} else {

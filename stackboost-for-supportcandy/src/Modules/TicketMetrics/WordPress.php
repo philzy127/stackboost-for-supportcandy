@@ -1096,6 +1096,8 @@ class WordPress extends Module {
 					$active_in_period_sql, $agent_where
 				);
 
+				$csat_text = $agent_metrics['survey_avg_csat'] !== 'N/A' ? esc_html($agent_metrics['survey_avg_csat']) : 'N/A';
+
 				$tooltip_html = sprintf(
 					'<div style="text-align:left; font-size: 13px; line-height: 1.5;">
 						<strong>%s</strong><br><hr style="margin:5px 0; border: 0; border-top: 1px solid #ccc;">
@@ -1103,7 +1105,8 @@ class WordPress extends Module {
 						Closed: <strong>%s</strong><br>
 						Avg Time to Close: <strong>%s</strong><br>
 						Avg Age (Open): <strong>%s</strong><br>
-						Avg Initial Response: <strong>%s</strong><br><br>
+						Avg Initial Response: <strong>%s</strong><br>
+						Avg CSAT: <strong>%s</strong><br><br>
 						<em>Click row to view %s</em>
 					</div>',
 					esc_html($name),
@@ -1112,6 +1115,7 @@ class WordPress extends Module {
 					esc_html($agent_metrics['avg_open_time']),
 					esc_html($agent_metrics['avg_age_open']),
 					esc_html($agent_metrics['avg_initial_response']),
+					$csat_text,
 					($a_id === 'other') ? __( 'individual agent breakdown', 'stackboost-for-supportcandy' ) : __( 'Ticket Type distribution', 'stackboost-for-supportcandy' )
 				);
 
@@ -1227,6 +1231,7 @@ class WordPress extends Module {
 					'label' => $name,
 					'assigned' => $data['assigned'],
 					'closed' => $data['closed'],
+					'csat' => $csat_text,
 					'tooltip' => $tooltip_html,
 					'modal_html' => $modal_html
 				];
