@@ -157,7 +157,18 @@ class WordPress extends Module {
 		}
 		$options['ticket_metrics_other_issues_rules'] = $other_issues_rules;
 
-		$options['ticket_metrics_gemini_api_key'] = isset( $_POST['ticket_metrics_gemini_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_gemini_api_key'] ) ) : '';
+		$incoming_key = isset( $_POST['ticket_metrics_gemini_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_gemini_api_key'] ) ) : '';
+		$incoming_locked = isset( $_POST['ticket_metrics_gemini_api_key_locked'] ) ? (int) $_POST['ticket_metrics_gemini_api_key_locked'] : 0;
+
+		if ( $incoming_locked === 1 ) {
+			if ( $incoming_key !== '********' && ! empty( $incoming_key ) ) {
+				$options['ticket_metrics_gemini_api_key'] = $incoming_key;
+			}
+			$options['ticket_metrics_gemini_api_key_locked'] = 1;
+		} else {
+			$options['ticket_metrics_gemini_api_key'] = '';
+			$options['ticket_metrics_gemini_api_key_locked'] = 0;
+		}
 
 		// Clean up legacy settings if present
 		unset( $options['ticket_metrics_agent_filter_mode'] );
