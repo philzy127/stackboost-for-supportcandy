@@ -112,7 +112,7 @@ class Page {
 		$verbose_logging = isset( $options['ticket_metrics_verbose_logging'] ) ? (bool) $options['ticket_metrics_verbose_logging'] : false;
 
 		$api_key = $options['ticket_metrics_gemini_api_key'] ?? '';
-		$api_key_locked = isset( $options['ticket_metrics_gemini_api_key_locked'] ) ? (bool) $options['ticket_metrics_gemini_api_key_locked'] : false;
+		$api_key_locked = ! empty( $api_key );
 
 		$sla_frt_hours = isset( $options['ticket_metrics_sla_frt_hours'] ) ? (float) $options['ticket_metrics_sla_frt_hours'] : 0;
 		$sla_resolution_hours = isset( $options['ticket_metrics_sla_resolution_hours'] ) ? (float) $options['ticket_metrics_sla_resolution_hours'] : 0;
@@ -675,7 +675,7 @@ class Page {
 									<tr>
 										<th scope="row"><label for="stkb_gemini_api_key"><?php esc_html_e( 'Gemini API Key', 'stackboost-for-supportcandy' ); ?></label></th>
 										<td>
-											<?php if ( $api_key_locked && ! empty( $api_key ) ) : ?>
+											<?php if ( $api_key_locked ) : ?>
 												<div style="display:flex; align-items:center; gap:10px;">
 													<input type="password" name="ticket_metrics_gemini_api_key" id="stkb_gemini_api_key" value="********" class="regular-text" readonly="readonly" style="background:#f0f0f1; border-color:#8c8f94; cursor:not-allowed;">
 													<button type="button" class="button" id="stkb_deactivate_api_key" style="color:#d63638; border-color:#d63638;"><?php esc_html_e( 'Deactivate / Remove Key', 'stackboost-for-supportcandy' ); ?></button>
@@ -683,11 +683,10 @@ class Page {
 												<p class="description" id="stkb_api_key_desc"><?php esc_html_e( 'Your API key is currently locked and active.', 'stackboost-for-supportcandy' ); ?></p>
 											<?php else : ?>
 												<div style="display:flex; align-items:center; gap:10px;">
-													<input type="password" name="ticket_metrics_gemini_api_key" id="stkb_gemini_api_key" value="<?php echo esc_attr( $api_key ); ?>" class="regular-text" autocomplete="new-password" placeholder="<?php esc_attr_e( 'Paste your API key here...', 'stackboost-for-supportcandy' ); ?>">
+													<input type="password" name="ticket_metrics_gemini_api_key" id="stkb_gemini_api_key" value="" class="regular-text" autocomplete="new-password" placeholder="<?php esc_attr_e( 'Paste your API key here...', 'stackboost-for-supportcandy' ); ?>">
 												</div>
 												<p class="description" id="stkb_api_key_desc"><?php esc_html_e( 'Enter your Google Gemini API key to enable AI-powered trend analysis. Once saved, the key will be locked to prevent accidental changes.', 'stackboost-for-supportcandy' ); ?></p>
 											<?php endif; ?>
-											<input type="hidden" name="ticket_metrics_gemini_api_key_locked" id="stkb_gemini_api_key_locked" value="<?php echo $api_key_locked ? '1' : '0'; ?>">
 										</td>
 									</tr>
 								</tbody>
@@ -1012,15 +1011,6 @@ class Page {
 					});
 
 					// API Key Lock/Unlock Handler
-					$('#stkb_gemini_api_key').on('input', function() {
-						let val = $(this).val();
-						if (val && val !== '********') {
-							$('#stkb_gemini_api_key_locked').val('1');
-						} else if (!val) {
-							$('#stkb_gemini_api_key_locked').val('0');
-						}
-					});
-
 					$('#stkb_deactivate_api_key').on('click', function() {
 						if (confirm('<?php esc_js( esc_html__( 'Are you sure you want to remove the API key?', 'stackboost-for-supportcandy' ) ); ?>')) {
 							$('#stkb_gemini_api_key').val('').removeAttr('readonly').css({
@@ -1029,7 +1019,6 @@ class Page {
 								'cursor': 'text'
 							}).attr('placeholder', '<?php esc_attr_e( 'Paste your API key here...', 'stackboost-for-supportcandy' ); ?>');
 
-							$('#stkb_gemini_api_key_locked').val('0');
 							$(this).hide();
 							$('#stkb_api_key_desc').text('<?php esc_js( esc_html__( 'Enter your Google Gemini API key to enable AI-powered trend analysis. Once saved, the key will be locked to prevent accidental changes.', 'stackboost-for-supportcandy' ) ); ?>');
 
@@ -1082,7 +1071,6 @@ class Page {
 							ticket_metrics_tracked_agents: $('#stkb_tracked_agents').val() || [],
 							ticket_metrics_other_issues_rules: other_issues_rules,
 							ticket_metrics_gemini_api_key: $('#stkb_gemini_api_key').val(),
-							ticket_metrics_gemini_api_key_locked: $('#stkb_gemini_api_key_locked').val(),
 							ticket_metrics_sla_frt_hours: $('#stkb_sla_frt_hours').val(),
 							ticket_metrics_sla_resolution_hours: $('#stkb_sla_resolution_hours').val()
 						};

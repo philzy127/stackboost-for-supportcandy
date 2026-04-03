@@ -954,10 +954,6 @@ class Settings {
 						$saved_settings[$key] = sanitize_text_field($value);
 						break;
 
-					case 'ticket_metrics_gemini_api_key_locked':
-						$saved_settings[$key] = (int) $value;
-						break;
-
 					case 'ticket_metrics_sla_frt_hours':
 					case 'ticket_metrics_sla_resolution_hours':
 						$saved_settings[$key] = max( 0, (float) $value );
