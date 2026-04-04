@@ -1506,7 +1506,11 @@ class Page {
 					});
 
 					// Modal Interactions
-					$(document).on('click', '.stkb-clickable-row', function() {
+					$(document).on('click', '.stkb-clickable-row', function(e) {
+						if ( $(e.target).closest('a').length ) {
+							return; // Do not open modal if an internal link (like CSAT) was clicked
+						}
+
 						let html = $(this).attr('data-modal-html');
 						if ( html ) {
 							$('#stkb-metrics-modal-body').html(html);
