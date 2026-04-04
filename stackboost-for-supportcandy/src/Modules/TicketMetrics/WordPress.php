@@ -1097,7 +1097,15 @@ class WordPress extends Module {
 					$active_in_period_sql, $agent_where
 				);
 
-				$csat_text = $agent_metrics['survey_avg_csat'] !== 'N/A' ? esc_html($agent_metrics['survey_avg_csat']) . ' (' . (int)$agent_metrics['survey_count'] . ' surveys)' : 'N/A';
+				$csat_text = 'N/A';
+				if ( $agent_metrics['survey_avg_csat'] !== 'N/A' ) {
+					if ( $a_id !== 'other' ) {
+						$filter_url = admin_url( 'admin.php?page=stackboost-ats&tab=results&agent_id=' . $a_id . '&start_date=' . urlencode( date('Y-m-d', strtotime($start_dt)) ) . '&end_date=' . urlencode( date('Y-m-d', strtotime($end_dt)) ) );
+						$csat_text = '<a href="' . esc_url( $filter_url ) . '" target="_blank">' . esc_html( $agent_metrics['survey_avg_csat'] ) . '</a> (' . (int)$agent_metrics['survey_count'] . ' surveys)';
+					} else {
+						$csat_text = esc_html($agent_metrics['survey_avg_csat']) . ' (' . (int)$agent_metrics['survey_count'] . ' surveys)';
+					}
+				}
 
 				$tooltip_html = sprintf(
 					'<div style="text-align:left; font-size: 13px; line-height: 1.5;">

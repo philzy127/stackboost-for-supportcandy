@@ -168,15 +168,61 @@ class Repository {
 	}
 
 	/**
-	 * Get submissions with user details.
+	 * Get submissions with user details, optionally filtered by date and agent.
 	 *
+	 * @param string $agent_id   Optional. Agent ID to filter by.
+	 * @param string $start_date Optional. Start date (YYYY-MM-DD).
+	 * @param string $end_date   Optional. End date (YYYY-MM-DD).
 	 * @return array List of submissions with display name.
 	 */
-	public function get_submissions_with_users(): array {
+	public function get_submissions_with_users( string $agent_id = '', string $start_date = '', string $end_date = '' ): array {
 		global $wpdb;
 		$safe_table = $this->survey_submissions_table_name;
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
-		return $wpdb->get_results( "SELECT s.*, u.display_name FROM `{$safe_table}` s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID ORDER BY submission_date DESC", ARRAY_A ) ?: [];
+		$safe_answers = $this->survey_answers_table_name;
+
+		$sql = "SELECT s.*, u.display_name FROM `{$safe_table}` s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID";
+		$where = [];
+		$args = [];
+
+		if ( ! empty( $start_date ) && ! empty( $end_date ) ) {
+			$start_dt = gmdate( 'Y-m-d 00:00:00', strtotime( $start_date ) );
+			$end_dt   = gmdate( 'Y-m-d 23:59:59', strtotime( $end_date ) );
+			$where[] = "s.submission_date >= %s AND s.submission_date <= %s";
+			$args[] = $start_dt;
+			$args[] = $end_dt;
+		}
+
+		if ( ! empty( $agent_id ) ) {
+			$ticket_question_id = $this->get_ticket_number_question_id();
+			if ( $ticket_question_id ) {
+				$tickets_table = $wpdb->prefix . 'psmsc_tickets';
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				if ( $wpdb->get_var("SHOW TABLES LIKE '{$tickets_table}'") !== $tickets_table ) {
+					$tickets_table = $wpdb->prefix . 'wpsc_tickets';
+				}
+
+				$sql .= " INNER JOIN `{$safe_answers}` a ON s.id = a.submission_id";
+				$sql .= " INNER JOIN `{$tickets_table}` t ON a.answer_value = t.id";
+				$where[] = "a.question_id = %d";
+				$args[] = $ticket_question_id;
+				$where[] = "FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0";
+				$args[] = $agent_id;
+			}
+		}
+
+		if ( ! empty( $where ) ) {
+			$sql .= " WHERE " . implode( " AND ", $where );
+		}
+
+		$sql .= " ORDER BY s.submission_date DESC";
+
+		if ( ! empty( $args ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$sql = $wpdb->prepare( $sql, $args );
+		}
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		return $wpdb->get_results( $sql, ARRAY_A ) ?: [];
 	}
 
 	/**

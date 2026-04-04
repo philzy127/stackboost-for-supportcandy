@@ -4,23 +4,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     const closeModal = modal.querySelector('.close-modal');
-    const questionTextSpan = document.getElementById('stackboost-ats-modal-question-text');
-    const questionIdInput = document.getElementById('stackboost-ats-modal-question-id');
-    const reportHeadingInput = document.getElementById('stackboost-ats-modal-report-heading');
     const form = document.getElementById('stackboost-ats-heading-form');
+    const openBtn = document.getElementById('stackboost-ats-open-headings-modal');
 
-    document.querySelectorAll('.stackboost-ats-edit-heading').forEach(editIcon => {
-        editIcon.addEventListener('click', function() {
-            const questionId = this.dataset.questionId;
-            const questionText = this.dataset.questionText;
-            const reportHeading = this.dataset.reportHeading;
-
-            questionIdInput.value = questionId;
-            questionTextSpan.textContent = questionText;
-            reportHeadingInput.value = reportHeading;
+    if (openBtn) {
+        openBtn.addEventListener('click', function() {
             modal.style.display = 'block';
         });
-    });
+    }
 
     closeModal.addEventListener('click', function() {
         modal.style.display = 'none';
@@ -35,12 +26,14 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        const questionId = questionIdInput.value;
-        const newHeading = reportHeadingInput.value;
-
         const formData = new FormData(this);
-        formData.append('action', 'stackboost_ats_update_report_heading');
+        formData.append('action', 'stackboost_ats_update_report_headings');
         formData.append('nonce', stackboost_ats_modal_ajax.nonce);
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
 
         fetch(stackboost_ats_modal_ajax.ajax_url, {
             method: 'POST',
@@ -51,19 +44,24 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 modal.style.display = 'none';
 
-                // Update the heading in the table
-                const headingElement = document.querySelector(`.stackboost-ats-edit-heading[data-question-id="${questionId}"]`).previousSibling;
-                headingElement.textContent = newHeading.trim() + ' '; // Add space to separate from icon
-
-                // Update the data attribute on the icon
-                const iconElement = document.querySelector(`.stackboost-ats-edit-heading[data-question-id="${questionId}"]`);
-                iconElement.dataset.reportHeading = newHeading;
+                // Update the headings in the table
+                for (let [key, value] of formData.entries()) {
+                    if (key.startsWith('report_headings[')) {
+                        const questionId = key.match(/\[(\d+)\]/)[1];
+                        const headingElement = document.querySelector(`.stackboost-ats-report-heading-${questionId}`);
+                        if (headingElement) {
+                            // If value is empty, fallback to placeholder (which is the question text)
+                            const inputElem = document.getElementById(`report_heading_${questionId}`);
+                            headingElement.textContent = value.trim() !== '' ? value.trim() : inputElem.placeholder;
+                        }
+                    }
+                }
 
                 // Show toast notification
                 const toast = document.createElement('div');
                 toast.id = 'stackboost-ats-toast';
                 toast.className = 'show';
-                toast.textContent = 'Heading updated successfully!';
+                toast.textContent = 'Headings updated successfully!';
                 document.body.appendChild(toast);
                 setTimeout(() => {
                     toast.className = toast.className.replace('show', '');
@@ -73,12 +71,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 3000);
 
             } else {
-                stackboostAlert('Error: ' + result.data, 'Error');
+                alert('Error: ' + result.data);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            stackboostAlert('An unexpected error occurred.', 'Error');
+            alert('An unexpected error occurred.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         });
     });
 });

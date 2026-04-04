@@ -128,8 +128,32 @@ class AdminController {
 	}
 
 	private function render_results_tab() {
+		$agent_id   = Request::get_get( 'agent_id', '', 'text' );
+		$start_date = Request::get_get( 'start_date', '', 'text' );
+		$end_date   = Request::get_get( 'end_date', '', 'text' );
+
+		global $wpdb;
+		$all_agents = [];
+		$agents_table = $wpdb->prefix . 'psmsc_agents';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$agents_table}'") !== $agents_table ) {
+			$agents_table = $wpdb->prefix . 'wpsc_agents';
+		}
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$agents_table}'") === $agents_table;
+		if ( $table_exists ) {
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$agent_results = $wpdb->get_results("SELECT id, name FROM {$agents_table} ORDER BY name ASC");
+			if ( is_array($agent_results) ) {
+				foreach ( $agent_results as $a ) {
+					$all_agents[$a->id] = $a->name;
+				}
+			}
+		}
+
 		$questions   = $this->repository->get_questions();
-		$submissions = $this->repository->get_submissions_with_users();
+		$submissions = $this->repository->get_submissions_with_users( $agent_id, $start_date, $end_date );
 		include __DIR__ . '/Admin/view-results-template.php';
 	}
 }

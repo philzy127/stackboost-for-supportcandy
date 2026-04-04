@@ -47,6 +47,39 @@ class Ajax {
 	}
 
 	/**
+	 * Handle the request to update multiple report headings at once.
+	 */
+	public function update_report_headings() {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
+			wp_send_json_error( 'Permission denied.' );
+		}
+		check_ajax_referer( 'stackboost_ats_results_nonce', 'nonce' );
+
+		$report_headings = Request::get_post( 'report_headings', [], 'array' );
+
+		if ( empty( $report_headings ) || ! is_array( $report_headings ) ) {
+			wp_send_json_error( 'No headings provided.' );
+		}
+
+		$has_error = false;
+		foreach ( $report_headings as $question_id => $heading ) {
+			$q_id = (int) $question_id;
+			if ( $q_id > 0 ) {
+				$result = $this->repository->update_question( $q_id, [ 'report_heading' => sanitize_text_field( $heading ) ] );
+				if ( false === $result ) {
+					$has_error = true;
+				}
+			}
+		}
+
+		if ( $has_error ) {
+			wp_send_json_error( 'Some headings failed to update.' );
+		} else {
+			wp_send_json_success( 'Headings updated successfully.' );
+		}
+	}
+
+	/**
 	 * Get a single question's data.
 	 */
 	public function get_question() {

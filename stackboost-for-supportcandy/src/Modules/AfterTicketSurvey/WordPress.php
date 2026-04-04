@@ -88,6 +88,7 @@ class WordPress extends Module {
 
 		// AJAX handlers
 		add_action( 'wp_ajax_stackboost_ats_update_report_heading', [ $this->ajax, 'update_report_heading' ] );
+		add_action( 'wp_ajax_stackboost_ats_update_report_headings', [ $this->ajax, 'update_report_headings' ] );
         add_action( 'wp_ajax_stackboost_ats_save_question', [ $this->ajax, 'save_question' ] );
         add_action( 'wp_ajax_stackboost_ats_get_question', [ $this->ajax, 'get_question' ] );
         add_action( 'wp_ajax_stackboost_ats_delete_question', [ $this->ajax, 'delete_question' ] );
