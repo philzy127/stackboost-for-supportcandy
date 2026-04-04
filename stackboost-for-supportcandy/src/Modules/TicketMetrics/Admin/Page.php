@@ -1246,7 +1246,7 @@ class Page {
 										let $tdLabel = $('<td></td>');
 										let $tdAssigned = $('<td style="text-align:center;"></td>').text(assigned);
 										let $tdClosed = $('<td style="text-align:center;"></td>').text(closed);
-										let $tdCsat = $('<td style="text-align:center;"></td>').text(item.csat || 'N/A');
+										let $tdCsat = $('<td style="text-align:center;"></td>').html(item.csat || 'N/A');
 
 										$tdLabel.append(label);
 
