@@ -1097,7 +1097,7 @@ class WordPress extends Module {
 					$active_in_period_sql, $agent_where
 				);
 
-				$csat_text = $agent_metrics['survey_avg_csat'] !== 'N/A' ? esc_html($agent_metrics['survey_avg_csat']) : 'N/A';
+				$csat_text = $agent_metrics['survey_avg_csat'] !== 'N/A' ? esc_html($agent_metrics['survey_avg_csat']) . ' (' . (int)$agent_metrics['survey_count'] . ' surveys)' : 'N/A';
 
 				$tooltip_html = sprintf(
 					'<div style="text-align:left; font-size: 13px; line-height: 1.5;">
@@ -1107,7 +1107,7 @@ class WordPress extends Module {
 						Avg Time to Close: <strong>%s</strong><br>
 						Avg Age (Open): <strong>%s</strong><br>
 						Avg Initial Response: <strong>%s</strong><br>
-						Avg CSAT: <strong>%s</strong><br><br>
+						CSAT: <strong>%s</strong><br><br>
 						<em>Click row to view %s</em>
 					</div>',
 					esc_html($name),
@@ -1661,6 +1661,7 @@ class WordPress extends Module {
 
 		$metrics['survey_response_rate'] = 'N/A';
 		$metrics['survey_avg_csat'] = 'N/A';
+		$metrics['survey_count'] = 0;
 
 		$metrics['is_sla_configured'] = ($sla_frt_hours > 0 || $sla_resolution_hours > 0);
 		$metrics['is_survey_configured'] = false;
@@ -1762,6 +1763,8 @@ class WordPress extends Module {
 					stackboost_log( "ATS Total Surveys Linked Result: {$total_surveys}", 'ticket_metrics' );
 				}
 
+				$metrics['survey_count'] = $total_surveys;
+
 				if ( $metrics['total_closed'] > 0 ) {
 					$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
 				}
@@ -1812,6 +1815,8 @@ class WordPress extends Module {
 						stackboost_log( "ATS Total Surveys Unlinked Query: {$query_surveys}", 'ticket_metrics' );
 						stackboost_log( "ATS Total Surveys Unlinked Result: {$total_surveys}", 'ticket_metrics' );
 					}
+
+					$metrics['survey_count'] = $total_surveys;
 
 					if ( $metrics['total_closed'] > 0 ) {
 						$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
