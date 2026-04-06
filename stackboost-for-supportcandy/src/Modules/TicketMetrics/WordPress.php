@@ -670,7 +670,9 @@ class WordPress extends Module {
 					if ( ! empty( $all_group_agents ) ) {
 						$find_in_set_parts = [];
 						foreach ( $all_group_agents as $a_id ) {
-							$find_in_set_parts[] = $wpdb->prepare( "FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", (int) $a_id );
+							// Use standard LIKE with wildcard padding because REGEXP with escaped pipes fails on some WPDB implementations
+							$a = (int) $a_id;
+							$find_in_set_parts[] = "(t.assigned_agent LIKE '%|" . $a . "|%' OR t.assigned_agent LIKE '" . $a . "|%' OR t.assigned_agent LIKE '%|" . $a . "' OR t.assigned_agent = '" . $a . "')";
 						}
 						$overall_extra_where = " AND (" . implode( " OR ", $find_in_set_parts ) . ")";
 					} else {
@@ -892,7 +894,7 @@ class WordPress extends Module {
 		// Set a specific flag so calculate_metric_set knows this $overall_extra_where is just an agent group wrapper,
 		// not an explicit agent/type breakdown filter that usually forces N/A on CSAT when a ticket question is missing.
 		$is_agent_group_wrapper = ( $overall_extra_where !== '' );
-		// Important: Pass false for the is_agent_group_wrapper in the root call so it attempts the full scope query normally.
+		// Pass $is_agent_group_wrapper to the root call so it falls back gracefully if unlinked
 		$overall_metrics = $this->calculate_metric_set(
 			$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 			$closed_condition, $open_condition, $close_date_col,
@@ -1811,7 +1813,7 @@ class WordPress extends Module {
 								JOIN " . $tickets_table . " t ON a_ticket.answer_value = t.id
 								WHERE a_ticket.question_id = %d AND " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-				$query_surveys = $wpdb->prepare( $sql_surveys, $ticket_question_id, $start_dt, $end_dt ) . " " . $extra_where;
+				$query_surveys = $wpdb->prepare( $sql_surveys, $ticket_question_id, $start_dt, $end_dt ) . " " . ltrim($extra_where);
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$total_surveys = (int) $wpdb->get_var( $query_surveys );
 
@@ -1852,7 +1854,7 @@ class WordPress extends Module {
 					$args[] = $end_dt;
 
 					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-					$query_csat = $wpdb->prepare( $sql_csat, $args ) . " " . $extra_where;
+					$query_csat = $wpdb->prepare( $sql_csat, $args ) . " " . ltrim($extra_where);
 					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$avg_csat = $wpdb->get_var( $query_csat );
 
@@ -1872,56 +1874,58 @@ class WordPress extends Module {
 				// We CANNOT apply $extra_where here because we have no ticket to join against to check the assigned agent or category.
 				// Therefore, if $extra_where is NOT empty (meaning this is a query for a specific agent or ticket type), we MUST return N/A
 				// to prevent the global average from overwriting the specific agent's distinct metric.
-				// However, if $is_agent_group_wrapper is true AND it's just the root total (no other specific agent/type logic appended),
-				// we can STILL calculate the unlinked global average if we ignore the agent group filter entirely for the unlinked surveys.
-				// Wait! The user actually wants to see the CSAT score. If ATS isn't linked, then we can't filter by agent group.
-				// We should just return the global unlinked CSAT score for the root total when it's just an agent group wrapper,
-				// or N/A if it's an explicit agent breakdown.
 				if ( ! empty( $extra_where ) && ! $is_agent_group_wrapper ) {
 					$metrics['survey_response_rate'] = 'N/A';
 					$metrics['survey_avg_csat'] = 'N/A';
 				} else {
-					// Fallback: Just calculate global survey stats for surveys submitted in the timeframe regardless of what ticket they apply to.
-					$sql_surveys = "SELECT COUNT(id) FROM " . $submissions_table . " WHERE submission_date >= %s AND submission_date <= %s";
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-					$query_surveys = $wpdb->prepare( $sql_surveys, $start_dt, $end_dt );
-					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-					$total_surveys = (int) $wpdb->get_var( $query_surveys );
-
-					if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
-						stackboost_log( "ATS Total Surveys Unlinked Query: {$query_surveys}", 'ticket_metrics' );
-						stackboost_log( "ATS Total Surveys Unlinked Result: {$total_surveys}", 'ticket_metrics' );
-					}
-
-					$metrics['survey_count'] = $total_surveys;
-
-					if ( $metrics['total_closed'] > 0 ) {
-						$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
-					}
-
-					if ( $total_surveys > 0 ) {
-						$survey_categories = $options['ticket_metrics_survey_categories'] ?? [];
-						$category_filter = "";
-						if ( ! empty( $survey_categories ) ) {
-							$placeholders = implode( ',', array_fill( 0, count( $survey_categories ), '%s' ) );
-							$category_filter = " AND q.category_id IN ($placeholders)";
-						}
-
-						$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
-									JOIN " . $submissions_table . " s ON a.submission_id = s.id
-									JOIN " . $questions_table . " q ON a.question_id = q.id
-									WHERE q.question_type = 'rating' " . $category_filter . " AND s.submission_date >= %s AND s.submission_date <= %s
-									AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
-
-						$args = [];
-						if ( ! empty( $survey_categories ) ) {
-							$args = array_merge( $args, $survey_categories );
-						}
-						$args[] = $start_dt;
-						$args[] = $end_dt;
-
+					// Fallback: Just calculate global survey stats for surveys submitted in the timeframe.
+					// If $is_agent_group_wrapper is true, the user is expecting stats for that group.
+					// Since we can't accurately link without a ticket ID map, we can't reliably scope the surveys.
+					// To avoid showing completely inaccurate (global) stats disguised as group stats, we must return N/A if a group is selected!
+					if ( $is_agent_group_wrapper ) {
+						$metrics['survey_response_rate'] = 'N/A';
+						$metrics['survey_avg_csat'] = 'N/A';
+					} else {
+						$sql_surveys = "SELECT COUNT(id) FROM " . $submissions_table . " WHERE submission_date >= %s AND submission_date <= %s";
 						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-						$query_csat = $wpdb->prepare( $sql_csat, $args );
+						$query_surveys = $wpdb->prepare( $sql_surveys, $start_dt, $end_dt );
+						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+						$total_surveys = (int) $wpdb->get_var( $query_surveys );
+
+						if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+							stackboost_log( "ATS Total Surveys Unlinked Query: {$query_surveys}", 'ticket_metrics' );
+							stackboost_log( "ATS Total Surveys Unlinked Result: {$total_surveys}", 'ticket_metrics' );
+						}
+
+						$metrics['survey_count'] = $total_surveys;
+
+						if ( $metrics['total_closed'] > 0 ) {
+							$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
+						}
+
+						if ( $total_surveys > 0 ) {
+							$survey_categories = $options['ticket_metrics_survey_categories'] ?? [];
+							$category_filter = "";
+							if ( ! empty( $survey_categories ) ) {
+								$placeholders = implode( ',', array_fill( 0, count( $survey_categories ), '%s' ) );
+								$category_filter = " AND q.category_id IN ($placeholders)";
+							}
+
+							$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
+										JOIN " . $submissions_table . " s ON a.submission_id = s.id
+										JOIN " . $questions_table . " q ON a.question_id = q.id
+										WHERE q.question_type = 'rating' " . $category_filter . " AND s.submission_date >= %s AND s.submission_date <= %s
+										AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+
+							$args = [];
+							if ( ! empty( $survey_categories ) ) {
+								$args = array_merge( $args, $survey_categories );
+							}
+							$args[] = $start_dt;
+							$args[] = $end_dt;
+
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$query_csat = $wpdb->prepare( $sql_csat, $args );
 						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 						$avg_csat = $wpdb->get_var( $query_csat );
 
@@ -1944,10 +1948,9 @@ class WordPress extends Module {
 		$survey_max_score = isset( $options['ticket_metrics_survey_max_score'] ) ? (float) $options['ticket_metrics_survey_max_score'] : 0;
 		if ( $survey_max_score > 0 && $metrics['survey_avg_csat'] !== 'N/A' ) {
 			$raw_csat = (float) $metrics['survey_avg_csat'];
-			// Optionally format it as a percentage if they want, but a string representation "X / Y" is generally clearer.
-			// The user can define max score = 5. Output: 4.2 / 5 (84%)
+			// Format as requested: "4.2 (84%)" without the / 5.
 			$percentage = round(($raw_csat / $survey_max_score) * 100);
-			$metrics['survey_avg_csat'] = "{$raw_csat} / {$survey_max_score} ({$percentage}%)";
+			$metrics['survey_avg_csat'] = "{$raw_csat} ({$percentage}%)";
 		}
 
 		return $metrics;
