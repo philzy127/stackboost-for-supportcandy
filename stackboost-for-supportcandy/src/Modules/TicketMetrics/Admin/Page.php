@@ -104,6 +104,7 @@ class Page {
 		}
 
 		$saved_type_field = $options['ticket_metrics_type_field'] ?? 'category';
+		$saved_department_field = $options['ticket_metrics_department_field'] ?? '';
 		$chart_type_agent = $options['ticket_metrics_chart_type_agent'] ?? 'multi_pie';
 		$chart_type_type = $options['ticket_metrics_chart_type_type'] ?? 'doughnut';
 		$chart_type_secondary = $options['ticket_metrics_chart_type_secondary'] ?? 'bar';
@@ -340,6 +341,35 @@ class Page {
 								<label style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Custom Dates', 'stackboost-for-supportcandy' ); ?></label>
 								<input type="date" id="stkb_start_date" /> - <input type="date" id="stkb_end_date" />
 							</div>
+							<?php if ( ! empty( $saved_department_field ) ) : ?>
+								<div id="stkb_department_filter_container">
+									<label for="stkb_department_filter" style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Department', 'stackboost-for-supportcandy' ); ?></label>
+									<select id="stkb_department_filter">
+										<option value=""><?php esc_html_e( 'All', 'stackboost-for-supportcandy' ); ?></option>
+										<?php
+										// Fetch options for the selected department field natively
+										if ( class_exists( '\WPSC_Custom_Field' ) ) {
+											$cfs = \WPSC_Custom_Field::find( [ 'items_per_page' => 0 ] )['results'];
+											foreach ( $cfs as $cf ) {
+												if ( $cf->slug === $saved_department_field && method_exists( $cf, 'get_options' ) ) {
+													$opts = $cf->get_options();
+													if ( is_array( $opts ) ) {
+														foreach ( $opts as $opt ) {
+															$id = is_object( $opt ) ? $opt->id : ( $opt['id'] ?? '' );
+															$name = is_object( $opt ) ? $opt->name : ( $opt['name'] ?? '' );
+															if ( $id ) {
+																echo '<option value="' . esc_attr( $id ) . '">' . esc_html( $name ) . '</option>';
+															}
+														}
+													}
+													break;
+												}
+											}
+										}
+										?>
+									</select>
+								</div>
+							<?php endif; ?>
 							<div>
 								<button type="button" class="button button-primary" id="stkb_generate_metrics"><?php esc_html_e( 'Update Metrics', 'stackboost-for-supportcandy' ); ?></button>
 							</div>
@@ -497,6 +527,18 @@ class Page {
 											<?php endforeach; ?>
 										</select>
 										<p class="description"><?php esc_html_e( 'Select the field used to generate the Type Breakdown.', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
+								<tr>
+									<th scope="row"><label for="stkb_department_field_setting"><?php esc_html_e( 'Department Filter Field', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select name="stackboost_settings[ticket_metrics_department_field]" id="stkb_department_field_setting">
+											<option value=""><?php esc_html_e( '-- None (Disabled) --', 'stackboost-for-supportcandy' ); ?></option>
+											<?php foreach ( $all_type_fields as $key => $label ) : ?>
+												<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $saved_department_field, $key ); ?>><?php echo esc_html( $label ); ?></option>
+											<?php endforeach; ?>
+										</select>
+										<p class="description"><?php esc_html_e( 'Optional. Select a field to enable a master department dropdown filter on the Dashboard view.', 'stackboost-for-supportcandy' ); ?></p>
 									</td>
 								</tr>
 								<tr>
@@ -1109,6 +1151,7 @@ class Page {
 							action: 'stackboost_save_ticket_metrics_settings',
 							nonce: stackboost_admin_ajax.nonce,
 							ticket_metrics_type_field: $('#stkb_type_field_setting').val(),
+							ticket_metrics_department_field: $('#stkb_department_field_setting').val(),
 							ticket_metrics_chart_type_agent: $('#stkb_chart_type_agent').val(),
 							ticket_metrics_chart_type_type: $('#stkb_chart_type_type').val(),
 							ticket_metrics_chart_type_secondary: $('#stkb_chart_type_secondary').val(),
@@ -1218,13 +1261,15 @@ class Page {
 						let start_date = $('#stkb_start_date').val();
 						let end_date = $('#stkb_end_date').val();
 						let type_field = $('#stkb_type_field_setting').val();
+						let department_val = $('#stkb_department_filter').length ? $('#stkb_department_filter').val() : '';
 
 						$.post(ajaxurl, {
 							action: 'stackboost_get_ticket_metrics',
 							nonce: stackboost_admin_ajax.nonce,
 							start_date: start_date,
 							end_date: end_date,
-							type_field: type_field
+							type_field: type_field,
+							department_val: department_val
 						}, function(response) {
 							btn.prop('disabled', false).text('<?php esc_html_e( 'Update Metrics', 'stackboost-for-supportcandy' ); ?>');
 
