@@ -341,30 +341,28 @@ class Page {
 								<label style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Custom Dates', 'stackboost-for-supportcandy' ); ?></label>
 								<input type="date" id="stkb_start_date" /> - <input type="date" id="stkb_end_date" />
 							</div>
-							<?php if ( $enable_agent_group_filter ) : ?>
-								<div id="stkb_agent_group_filter_container">
-									<label for="stkb_agent_group_filter" style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Department (Agent Group)', 'stackboost-for-supportcandy' ); ?></label>
-									<select id="stkb_agent_group_filter">
-										<option value=""><?php esc_html_e( 'All', 'stackboost-for-supportcandy' ); ?></option>
-										<?php
-										global $wpdb;
-										$table = $wpdb->prefix . 'psmsc_agentgroups';
-										if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) !== $table ) {
-											$table = $wpdb->prefix . 'wpsc_agentgroups'; // fallback
-										}
-										if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) === $table ) {
-											// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-											$groups = $wpdb->get_results( "SELECT id, name FROM $table ORDER BY name ASC" );
-											if ( $groups ) {
-												foreach ( $groups as $group ) {
-													echo '<option value="' . esc_attr( $group->id ) . '">' . esc_html( $group->name ) . '</option>';
-												}
+							<div id="stkb_agent_group_filter_container" style="display: <?php echo $enable_agent_group_filter ? 'block' : 'none'; ?>;">
+								<label for="stkb_agent_group_filter" style="display:block; margin-bottom:5px; font-weight:600;"><?php esc_html_e( 'Department (Agent Group)', 'stackboost-for-supportcandy' ); ?></label>
+								<select id="stkb_agent_group_filter">
+									<option value=""><?php esc_html_e( 'All', 'stackboost-for-supportcandy' ); ?></option>
+									<?php
+									global $wpdb;
+									$table = $wpdb->prefix . 'psmsc_agentgroups';
+									if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) !== $table ) {
+										$table = $wpdb->prefix . 'wpsc_agentgroups'; // fallback
+									}
+									if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) === $table ) {
+										// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+										$groups = $wpdb->get_results( "SELECT id, name FROM $table ORDER BY name ASC" );
+										if ( $groups ) {
+											foreach ( $groups as $group ) {
+												echo '<option value="' . esc_attr( $group->id ) . '">' . esc_html( $group->name ) . '</option>';
 											}
 										}
-										?>
-									</select>
-								</div>
-							<?php endif; ?>
+									}
+									?>
+								</select>
+							</div>
 							<div>
 								<button type="button" class="button button-primary" id="stkb_generate_metrics"><?php esc_html_e( 'Update Metrics', 'stackboost-for-supportcandy' ); ?></button>
 							</div>
@@ -1167,6 +1165,13 @@ class Page {
 									window.stackboost_show_toast(response.data, 'success');
 								} else {
 									alert(response.data);
+								}
+								// Update the UI filter visibility dynamically
+								if ($('#stkb_enable_agent_group_filter').is(':checked')) {
+									$('#stkb_agent_group_filter_container').show();
+								} else {
+									$('#stkb_agent_group_filter_container').hide();
+									$('#stkb_agent_group_filter').val(''); // Reset selection if disabled
 								}
 								// Settings saved dynamically via AJAX, no page reload required.
 							} else {
