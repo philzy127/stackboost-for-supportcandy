@@ -93,7 +93,6 @@ class WordPress extends Module {
 
 		// Read and sanitize raw POST data directly
 		$options['ticket_metrics_type_field']        = isset( $_POST['ticket_metrics_type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_type_field'] ) ) : 'category';
-		$options['ticket_metrics_department_field']  = isset( $_POST['ticket_metrics_department_field'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_department_field'] ) ) : '';
 
 		$agent_chart = isset( $_POST['ticket_metrics_chart_type_agent'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_agent'] ) ) : 'multi_pie';
 		$options['ticket_metrics_chart_type_agent']  = in_array( $agent_chart, [ 'none', 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $agent_chart : 'multi_pie';
@@ -631,7 +630,7 @@ class WordPress extends Module {
 		$start_date = isset( $_POST['start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['start_date'] ) ) : '';
 		$end_date   = isset( $_POST['end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['end_date'] ) ) : '';
 		$type_field = isset( $_POST['type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['type_field'] ) ) : 'category';
-		$department_val = isset( $_POST['department_val'] ) ? sanitize_text_field( wp_unslash( $_POST['department_val'] ) ) : '';
+		$agent_group_val = isset( $_POST['agent_group_val'] ) ? intval( wp_unslash( $_POST['agent_group_val'] ) ) : 0;
 
 		// Save preference securely using a standalone option.
 		// Inject page_slug to satisfy central settings sanitizer.
@@ -642,17 +641,8 @@ class WordPress extends Module {
 			update_option( 'stackboost_settings', $options );
 		}
 
-		global $wpdb;
-
-		$department_field = $options['ticket_metrics_department_field'] ?? '';
-		$overall_extra_where = '';
-		if ( ! empty( $department_field ) && ! empty( $department_val ) && preg_match( '/^[a-zA-Z0-9_]+$/', $department_field ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$overall_extra_where = $wpdb->prepare( " AND t.`{$department_field}` = %s", $department_val );
-		}
-
 		if ( function_exists( 'stackboost_log' ) ) {
-			stackboost_log( "Ticket Metrics Request - Start: {$start_date}, End: {$end_date}, Type Field: {$type_field}, Dept: {$department_val}", 'ticket_metrics' );
+			stackboost_log( "Ticket Metrics Request - Start: {$start_date}, End: {$end_date}, Type Field: {$type_field}", 'ticket_metrics' );
 		}
 
 		if ( empty( $start_date ) || empty( $end_date ) ) {
@@ -660,6 +650,35 @@ class WordPress extends Module {
 		}
 
 		global $wpdb;
+
+		$overall_extra_where = '';
+
+		if ( $agent_group_val > 0 && isset( $options['ticket_metrics_enable_agent_group_filter'] ) && filter_var( $options['ticket_metrics_enable_agent_group_filter'], FILTER_VALIDATE_BOOLEAN ) ) {
+			$agentgroups_table = $wpdb->prefix . 'psmsc_agentgroups';
+			if ( $wpdb->get_var( "SHOW TABLES LIKE '$agentgroups_table'" ) !== $agentgroups_table ) {
+				$agentgroups_table = $wpdb->prefix . 'wpsc_agentgroups'; // fallback
+			}
+			if ( $wpdb->get_var( "SHOW TABLES LIKE '$agentgroups_table'" ) === $agentgroups_table ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$group_record = $wpdb->get_row( $wpdb->prepare( "SELECT agents, supervisors FROM {$agentgroups_table} WHERE id = %d", $agent_group_val ) );
+				if ( $group_record ) {
+					$member_ids = array_filter( explode( '|', $group_record->agents ) );
+					$supervisor_ids = array_filter( explode( '|', $group_record->supervisors ) );
+					$all_group_agents = array_unique( array_merge( $member_ids, $supervisor_ids ) );
+
+					if ( ! empty( $all_group_agents ) ) {
+						$find_in_set_parts = [];
+						foreach ( $all_group_agents as $a_id ) {
+							$find_in_set_parts[] = $wpdb->prepare( "FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", (int) $a_id );
+						}
+						$overall_extra_where = " AND (" . implode( " OR ", $find_in_set_parts ) . ")";
+					} else {
+						// Group has no members, return empty dataset
+						$overall_extra_where = " AND 1=0";
+					}
+				}
+			}
+		}
 
 		// Convert dates to Y-m-d H:i:s range
 		$start_dt = gmdate( 'Y-m-d 00:00:00', strtotime( $start_date ) );
@@ -872,7 +891,7 @@ class WordPress extends Module {
 		$overall_metrics = $this->calculate_metric_set(
 			$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 			$closed_condition, $open_condition, $close_date_col,
-			$active_in_period_sql, $overall_extra_where // Pass the master department filter to root totals
+			$active_in_period_sql, $overall_extra_where
 		);
 
 		// Manually append these root properties because JS expects them at the top level
@@ -901,7 +920,7 @@ class WordPress extends Module {
 							   HOUR(DATE_ADD(t.date_created, INTERVAL %f HOUR)) as hod,
 							   COUNT(t.id) as count
 						FROM " . $tickets_table . " t
-						WHERE t.date_created >= %s AND t.date_created <= %s " . $overall_extra_where . "
+						WHERE t.date_created >= %s AND t.date_created <= %s" . $overall_extra_where . "
 						GROUP BY dow, hod";
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$query_heatmap = $wpdb->prepare( $sql_heatmap, $gmt_offset, $gmt_offset, $start_dt, $end_dt );
@@ -952,7 +971,7 @@ class WordPress extends Module {
 				}
 			}
 
-			$sql_raw_tickets .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql . " " . $overall_extra_where;
+			$sql_raw_tickets .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql . $overall_extra_where;
 
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$raw_tickets_query = $wpdb->prepare( $sql_raw_tickets, $start_dt, $end_dt, $end_dt, $start_dt );
@@ -1218,9 +1237,11 @@ class WordPress extends Module {
 								<td style="text-align:center;">%s</td>
 								<td style="text-align:center;">%s</td>
 								<td style="text-align:center;">%s</td>
+								<td style="text-align:center;">%s</td>
 							</tr>',
 							esc_html($t_name),
 							(int)$t_counts['assigned'],
+							(int)$agent_type_metrics['touched_tickets'],
 							(int)$t_counts['closed'],
 							esc_html($agent_type_metrics['avg_open_time']),
 							esc_html($agent_type_metrics['avg_age_open']),
@@ -1238,6 +1259,7 @@ class WordPress extends Module {
 										<tr>
 											<th>Type</th>
 											<th style="text-align:center;">Assigned</th>
+											<th style="text-align:center;">Touches</th>
 											<th style="text-align:center;">Closed</th>
 											<th style="text-align:center;">Avg Close Time</th>
 											<th style="text-align:center;">Avg Age (Open)</th>
@@ -1364,9 +1386,6 @@ class WordPress extends Module {
 						<strong>%s</strong><br><hr style="margin:5px 0; border: 0; border-top: 1px solid #ccc;">
 						Created: <strong>%s</strong><br>
 						Closed: <strong>%s</strong><br>
-						Active Backlog: <strong>%s</strong><br>
-						Resolution Rate: <strong>%s</strong><br>
-						Touches: <strong>%s</strong> (Avg <strong>%s</strong>)<br>
 						Avg Time to Close: <strong>%s</strong><br>
 						Avg Age (Open): <strong>%s</strong><br>
 						Avg Initial Response: <strong>%s</strong><br><br>
@@ -1375,10 +1394,6 @@ class WordPress extends Module {
 					esc_html($name),
 					esc_html($type_metrics['total_created']),
 					esc_html($type_metrics['total_closed']),
-					esc_html($type_metrics['active_backlog']),
-					esc_html($type_metrics['resolution_rate']),
-					esc_html($type_metrics['touched_tickets']),
-					esc_html($type_metrics['avg_touches']),
 					esc_html($type_metrics['avg_open_time']),
 					esc_html($type_metrics['avg_age_open']),
 					esc_html($type_metrics['avg_initial_response'])
@@ -1500,15 +1515,13 @@ class WordPress extends Module {
 								<p>New (Created in range): <strong>%s</strong></p>
 								<p>Carried Over & Closed: <strong>%s</strong></p>
 								<p>Carried Over & Still Open: <strong>%s</strong></p>
-								<p>Active Backlog: <strong>%s</strong></p>
-								<p>Resolution Rate: <strong>%s</strong></p>
 							</div>
 							<div class="stackboost-card" style="flex: 1;">
 								<h3>Averages</h3>
+								<p>Touches: <strong>%s</strong></p>
 								<p>Time to Close: <strong>%s</strong></p>
 								<p>Age (Open): <strong>%s</strong></p>
 								<p>Initial Response: <strong>%s</strong></p>
-								<p>Touches: <strong>%s</strong> (Avg <strong>%s</strong>)</p>
 							</div>
 						</div>
 						%s
@@ -1537,13 +1550,10 @@ class WordPress extends Module {
 					esc_html($type_metrics['total_created']),
 					esc_html($type_metrics['carried_closed']),
 					esc_html($type_metrics['carried_open']),
-					esc_html($type_metrics['active_backlog']),
-					esc_html($type_metrics['resolution_rate']),
+					esc_html($type_metrics['avg_touches']),
 					esc_html($type_metrics['avg_open_time']),
 					esc_html($type_metrics['avg_age_open']),
 					esc_html($type_metrics['avg_initial_response']),
-					esc_html($type_metrics['touched_tickets']),
-					esc_html($type_metrics['avg_touches']),
 					$subcat_html,
 					$agent_rows ?: '<tr><td colspan="7">No agents assigned</td></tr>'
 				);
@@ -1924,9 +1934,10 @@ class WordPress extends Module {
 		$survey_max_score = isset( $options['ticket_metrics_survey_max_score'] ) ? (float) $options['ticket_metrics_survey_max_score'] : 0;
 		if ( $survey_max_score > 0 && $metrics['survey_avg_csat'] !== 'N/A' ) {
 			$raw_csat = (float) $metrics['survey_avg_csat'];
-			// The user can define max score = 5. Output: 4.2 (84%)
+			// Optionally format it as a percentage if they want, but a string representation "X / Y" is generally clearer.
+			// The user can define max score = 5. Output: 4.2 / 5 (84%)
 			$percentage = round(($raw_csat / $survey_max_score) * 100);
-			$metrics['survey_avg_csat'] = "{$raw_csat} ({$percentage}%)";
+			$metrics['survey_avg_csat'] = "{$raw_csat} / {$survey_max_score} ({$percentage}%)";
 		}
 
 		return $metrics;

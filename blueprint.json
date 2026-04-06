@@ -11,14 +11,10 @@
     },
     {
       "step": "installPlugin",
-      "pluginData": {
-        "resource": "wordpress.org/plugins",
-        "slug": "supportcandy"
+      "pluginZipFile": {
+        "resource": "vfs",
+        "path": "/app/stackboost-for-supportcandy.zip"
       }
-    },
-    {
-      "step": "runPHP",
-      "code": "<?php require_once 'wp-load.php'; require_once 'wp-admin/includes/plugin.php'; activate_plugin( 'stackboost-for-supportcandy/stackboost-for-supportcandy.php' ); ?>"
     }
   ]
 }

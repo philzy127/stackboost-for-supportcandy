@@ -820,7 +820,7 @@ class Settings {
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-ticket-metrics'     => [
 				'ticket_metrics_type_field',
-				'ticket_metrics_department_field',
+				'ticket_metrics_enable_agent_group_filter',
 				'ticket_metrics_chart_type_agent',
 				'ticket_metrics_chart_type_type',
 				'ticket_metrics_chart_type_secondary',
@@ -950,8 +950,11 @@ class Settings {
 						$saved_settings[$key] = in_array( $value, [ 'none', 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ], true ) ? $value : 'bar';
 						break;
 
+					case 'ticket_metrics_enable_agent_group_filter':
+						$saved_settings[$key] = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+						break;
+
 					case 'ticket_metrics_type_field':
-					case 'ticket_metrics_department_field':
 					case 'ticket_metrics_gemini_api_key':
 					case 'ticket_metrics_frt_mode':
 						$saved_settings[$key] = sanitize_text_field($value);
