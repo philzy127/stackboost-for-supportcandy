@@ -889,10 +889,14 @@ class WordPress extends Module {
 		$metrics['heatmap_data'] = [];
 
 		// Overall Metrics
+		// Set a specific flag so calculate_metric_set knows this $overall_extra_where is just an agent group wrapper,
+		// not an explicit agent/type breakdown filter that usually forces N/A on CSAT when a ticket question is missing.
+		$is_agent_group_wrapper = ( $overall_extra_where !== '' );
+		// Important: Pass false for the is_agent_group_wrapper in the root call so it attempts the full scope query normally.
 		$overall_metrics = $this->calculate_metric_set(
 			$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 			$closed_condition, $open_condition, $close_date_col,
-			$active_in_period_sql, $overall_extra_where
+			$active_in_period_sql, $overall_extra_where, false
 		);
 
 		// Manually append these root properties because JS expects them at the top level
@@ -1579,7 +1583,7 @@ class WordPress extends Module {
 		wp_send_json_success( $metrics );
 	}
 
-	private function calculate_metric_set( $wpdb, $tickets_table, $threads_table, $start_dt, $end_dt, $closed_condition, $open_condition, $close_date_col, $active_in_period_sql, $extra_where = '' ) {
+	private function calculate_metric_set( $wpdb, $tickets_table, $threads_table, $start_dt, $end_dt, $closed_condition, $open_condition, $close_date_col, $active_in_period_sql, $extra_where = '', $is_agent_group_wrapper = false ) {
 		$metrics = [];
 		$options = get_option( 'stackboost_settings', [] );
 
@@ -1868,7 +1872,9 @@ class WordPress extends Module {
 				// We CANNOT apply $extra_where here because we have no ticket to join against to check the assigned agent or category.
 				// Therefore, if $extra_where is NOT empty (meaning this is a query for a specific agent or ticket type), we MUST return N/A
 				// to prevent the global average from overwriting the specific agent's distinct metric.
-				if ( ! empty( $extra_where ) ) {
+				// However, if $is_agent_group_wrapper is true AND it's just the root total (no other specific agent/type logic appended),
+				// we still have to return N/A because we can't join to the tickets table to filter the unlinked surveys by agent group!
+				if ( ! empty( $extra_where ) || $is_agent_group_wrapper ) {
 					$metrics['survey_response_rate'] = 'N/A';
 					$metrics['survey_avg_csat'] = 'N/A';
 				} else {
