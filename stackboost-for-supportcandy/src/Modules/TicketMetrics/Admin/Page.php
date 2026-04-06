@@ -118,6 +118,11 @@ class Page {
 		$sla_resolution_hours = isset( $options['ticket_metrics_sla_resolution_hours'] ) ? (float) $options['ticket_metrics_sla_resolution_hours'] : 0;
 		$survey_max_score = isset( $options['ticket_metrics_survey_max_score'] ) ? (float) $options['ticket_metrics_survey_max_score'] : 0;
 
+		$survey_categories = [];
+		if ( isset( $options['ticket_metrics_survey_categories'] ) && is_array( $options['ticket_metrics_survey_categories'] ) ) {
+			$survey_categories = $options['ticket_metrics_survey_categories'];
+		}
+
 		// Map legacy setting if needed, or default to an empty array (which means ALL are tracked by default).
 		$tracked_agents = $options['ticket_metrics_tracked_agents'] ?? [];
 		if ( ! is_array( $tracked_agents ) ) {
@@ -147,6 +152,21 @@ class Page {
 			if ( is_array($agent_results) ) {
 				foreach ( $agent_results as $a ) {
 					$all_agents[$a->id] = $a->name;
+				}
+			}
+		}
+
+		// Fetch survey categories
+		$all_survey_categories = [];
+		$categories_table = $wpdb->prefix . 'stackboost_ats_question_categories';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$cat_table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$categories_table}'") === $categories_table;
+		if ( $cat_table_exists ) {
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$cat_results = $wpdb->get_results("SELECT id, name FROM {$categories_table} ORDER BY name ASC");
+			if ( is_array($cat_results) ) {
+				foreach ( $cat_results as $c ) {
+					$all_survey_categories[$c->id] = $c->name;
 				}
 			}
 		}
@@ -729,14 +749,26 @@ class Page {
 								</tr>
 							</table>
 
-							<h2 style="margin-top: 30px;"><?php esc_html_e( 'Survey CSAT Normalization', 'stackboost-for-supportcandy' ); ?></h2>
-							<p class="description"><?php esc_html_e( 'Specify the maximum possible numeric rating your survey allows (e.g., 5 or 10). If configured, the metrics dashboard will automatically normalize the raw CSAT average into a percentage.', 'stackboost-for-supportcandy' ); ?></p>
+							<h2 style="margin-top: 30px;"><?php esc_html_e( 'Survey CSAT Integration', 'stackboost-for-supportcandy' ); ?></h2>
+							<p class="description"><?php esc_html_e( 'Configure how the Ticket Metrics dashboard calculates and displays Customer Satisfaction (CSAT) scores from the After Ticket Survey module.', 'stackboost-for-supportcandy' ); ?></p>
 							<table class="form-table">
+								<tr>
+									<th scope="row"><label for="stkb_survey_categories"><?php esc_html_e( 'Tracked Survey Categories', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select multiple name="stackboost_settings[ticket_metrics_survey_categories][]" id="stkb_survey_categories" style="width: 300px; height: 100px;">
+											<option value="0" <?php echo in_array('0', $survey_categories) ? 'selected' : ''; ?>><?php esc_html_e( '-- Uncategorized Questions --', 'stackboost-for-supportcandy' ); ?></option>
+											<?php foreach ( $all_survey_categories as $id => $name ) : ?>
+												<option value="<?php echo esc_attr( $id ); ?>" <?php echo in_array((string)$id, $survey_categories) ? 'selected' : ''; ?>><?php echo esc_html( $name ); ?></option>
+											<?php endforeach; ?>
+										</select>
+										<p class="description"><?php esc_html_e( 'Select which question categories should be mathematically tied to Agent CSAT scores. If none are selected, all rating questions are calculated.', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
 								<tr>
 									<th scope="row"><label for="stkb_survey_max_score"><?php esc_html_e( 'Maximum Survey Score', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
 										<input type="number" step="0.1" min="0" name="stackboost_settings[ticket_metrics_survey_max_score]" id="stkb_survey_max_score" value="<?php echo esc_attr( $survey_max_score ); ?>" class="small-text">
-										<p class="description"><?php esc_html_e( 'Leave as 0 to display the raw aggregate average without formatting.', 'stackboost-for-supportcandy' ); ?></p>
+										<p class="description"><?php esc_html_e( 'Specify the maximum possible numeric rating your survey allows (e.g., 5 or 10). If configured, the metrics dashboard will automatically normalize the raw CSAT average into a percentage. Leave as 0 to display the raw aggregate average without formatting.', 'stackboost-for-supportcandy' ); ?></p>
 									</td>
 								</tr>
 							</table>
@@ -1088,7 +1120,8 @@ class Page {
 							ticket_metrics_gemini_api_key: $('#stkb_gemini_api_key').val(),
 							ticket_metrics_sla_frt_hours: $('#stkb_sla_frt_hours').val(),
 							ticket_metrics_sla_resolution_hours: $('#stkb_sla_resolution_hours').val(),
-							ticket_metrics_survey_max_score: $('#stkb_survey_max_score').val()
+							ticket_metrics_survey_max_score: $('#stkb_survey_max_score').val(),
+							ticket_metrics_survey_categories: $('#stkb_survey_categories').val() || []
 						};
 
 						// Use dedicated endpoint

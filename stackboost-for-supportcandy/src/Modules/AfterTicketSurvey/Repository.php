@@ -25,11 +25,15 @@ class Repository {
 	/** @var string The name of the survey answers table. */
 	private string $survey_answers_table_name;
 
+	/** @var string The name of the question categories table. */
+	private string $question_categories_table_name;
+
 	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		global $wpdb;
+		$this->question_categories_table_name = $wpdb->prefix . 'stackboost_ats_question_categories';
 		$this->questions_table_name          = $wpdb->prefix . 'stackboost_ats_questions';
 		$this->dropdown_options_table_name   = $wpdb->prefix . 'stackboost_ats_dropdown_options';
 		$this->survey_submissions_table_name = $wpdb->prefix . 'stackboost_ats_survey_submissions';
@@ -44,8 +48,9 @@ class Repository {
 	public function get_questions(): array {
 		global $wpdb;
 		$safe_table = $this->questions_table_name;
+		$safe_categories_table = $this->question_categories_table_name;
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
-		return $wpdb->get_results( "SELECT * FROM `{$safe_table}` ORDER BY sort_order ASC", ARRAY_A ) ?: [];
+		return $wpdb->get_results( "SELECT q.*, c.name as category_name FROM `{$safe_table}` q LEFT JOIN `{$safe_categories_table}` c ON q.category_id = c.id ORDER BY q.sort_order ASC", ARRAY_A ) ?: [];
 	}
 
 	/**
@@ -57,8 +62,9 @@ class Repository {
 	public function get_question( int $id ): ?array {
 		global $wpdb;
 		$safe_table = $this->questions_table_name;
+		$safe_categories_table = $this->question_categories_table_name;
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM `{$safe_table}` WHERE id = %d", $id ), ARRAY_A );
+		return $wpdb->get_row( $wpdb->prepare( "SELECT q.*, c.name as category_name FROM `{$safe_table}` q LEFT JOIN `{$safe_categories_table}` c ON q.category_id = c.id WHERE q.id = %d", $id ), ARRAY_A );
 	}
 
 	/**
@@ -118,6 +124,66 @@ class Repository {
 	public function delete_question( int $id ) {
 		global $wpdb;
 		return $wpdb->delete( $this->questions_table_name, [ 'id' => $id ] );
+	}
+
+	/**
+	 * Get all categories.
+	 *
+	 * @return array List of categories.
+	 */
+	public function get_categories(): array {
+		global $wpdb;
+		$safe_table = $this->question_categories_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
+		return $wpdb->get_results( "SELECT * FROM `{$safe_table}` ORDER BY name ASC", ARRAY_A ) ?: [];
+	}
+
+	/**
+	 * Get specific category by ID.
+	 *
+	 * @param int $id Category ID.
+	 * @return array|null Category data or null.
+	 */
+	public function get_category( int $id ): ?array {
+		global $wpdb;
+		$safe_table = $this->question_categories_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM `{$safe_table}` WHERE id = %d", $id ), ARRAY_A );
+	}
+
+	/**
+	 * Insert a new category.
+	 *
+	 * @param array $data Category data.
+	 * @return int|false Inserted ID or false.
+	 */
+	public function insert_category( array $data ) {
+		global $wpdb;
+		$result = $wpdb->insert( $this->question_categories_table_name, $data );
+		return $result ? $wpdb->insert_id : false;
+	}
+
+	/**
+	 * Update a category.
+	 *
+	 * @param int   $id   Category ID.
+	 * @param array $data Update data.
+	 * @return int|false Result or false.
+	 */
+	public function update_category( int $id, array $data ) {
+		global $wpdb;
+		return $wpdb->update( $this->question_categories_table_name, $data, [ 'id' => $id ] );
+	}
+
+	/**
+	 * Delete a category.
+	 *
+	 * @param int $id Category ID.
+	 * @return int|false Result or false.
+	 */
+	public function delete_category( int $id ) {
+		global $wpdb;
+		return $wpdb->delete( $this->question_categories_table_name, [ 'id' => $id ] );
 	}
 
 	/**

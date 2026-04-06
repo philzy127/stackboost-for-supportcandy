@@ -130,6 +130,12 @@ class WordPress extends Module {
 		$options['ticket_metrics_sla_resolution_hours'] = isset( $_POST['ticket_metrics_sla_resolution_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_resolution_hours'] ) : 0;
 		$options['ticket_metrics_survey_max_score'] = isset( $_POST['ticket_metrics_survey_max_score'] ) ? max( 0, (float) $_POST['ticket_metrics_survey_max_score'] ) : 0;
 
+		if ( isset( $_POST['ticket_metrics_survey_categories'] ) && is_array( $_POST['ticket_metrics_survey_categories'] ) ) {
+			$options['ticket_metrics_survey_categories'] = array_map( 'sanitize_text_field', wp_unslash( $_POST['ticket_metrics_survey_categories'] ) );
+		} else {
+			$options['ticket_metrics_survey_categories'] = [];
+		}
+
 		$other_issues_rules = [];
 		if ( isset( $_POST['ticket_metrics_other_issues_rules'] ) && is_array( $_POST['ticket_metrics_other_issues_rules'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1780,15 +1786,30 @@ class WordPress extends Module {
 				// CSAT Average (Calculate average of numeric responses, assuming 1-5 or 1-10 scales like stars/numbers)
 				// Target ONLY questions where question_type = 'rating' via a join to the questions table
 				if ( $total_surveys > 0 ) {
+					$survey_categories = $options['ticket_metrics_survey_categories'] ?? [];
+					$category_filter = "";
+					if ( ! empty( $survey_categories ) ) {
+						$placeholders = implode( ',', array_fill( 0, count( $survey_categories ), '%s' ) );
+						$category_filter = " AND q.category_id IN ($placeholders)";
+					}
+
 					$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
 								JOIN " . $submissions_table . " s ON a.submission_id = s.id
 								JOIN " . $answers_table . " a_ticket ON s.id = a_ticket.submission_id
 								JOIN " . $tickets_table . " t ON a_ticket.answer_value = t.id
 								JOIN " . $questions_table . " q ON a.question_id = q.id
-								WHERE a_ticket.question_id = %d AND q.question_type = 'rating' AND " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s
+								WHERE a_ticket.question_id = %d AND q.question_type = 'rating' " . $category_filter . " AND " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s
 								AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+
+					$args = [ $ticket_question_id ];
+					if ( ! empty( $survey_categories ) ) {
+						$args = array_merge( $args, $survey_categories );
+					}
+					$args[] = $start_dt;
+					$args[] = $end_dt;
+
 					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-					$query_csat = $wpdb->prepare( $sql_csat, $ticket_question_id, $start_dt, $end_dt ) . " " . $extra_where;
+					$query_csat = $wpdb->prepare( $sql_csat, $args ) . " " . $extra_where;
 					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$avg_csat = $wpdb->get_var( $query_csat );
 
@@ -1831,13 +1852,28 @@ class WordPress extends Module {
 					}
 
 					if ( $total_surveys > 0 ) {
+						$survey_categories = $options['ticket_metrics_survey_categories'] ?? [];
+						$category_filter = "";
+						if ( ! empty( $survey_categories ) ) {
+							$placeholders = implode( ',', array_fill( 0, count( $survey_categories ), '%s' ) );
+							$category_filter = " AND q.category_id IN ($placeholders)";
+						}
+
 						$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
 									JOIN " . $submissions_table . " s ON a.submission_id = s.id
 									JOIN " . $questions_table . " q ON a.question_id = q.id
-									WHERE q.question_type = 'rating' AND s.submission_date >= %s AND s.submission_date <= %s
+									WHERE q.question_type = 'rating' " . $category_filter . " AND s.submission_date >= %s AND s.submission_date <= %s
 									AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+
+						$args = [];
+						if ( ! empty( $survey_categories ) ) {
+							$args = array_merge( $args, $survey_categories );
+						}
+						$args[] = $start_dt;
+						$args[] = $end_dt;
+
 						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-						$query_csat = $wpdb->prepare( $sql_csat, $start_dt, $end_dt );
+						$query_csat = $wpdb->prepare( $sql_csat, $args );
 						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 						$avg_csat = $wpdb->get_var( $query_csat );
 

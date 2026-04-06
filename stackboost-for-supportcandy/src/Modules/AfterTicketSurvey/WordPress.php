@@ -93,6 +93,9 @@ class WordPress extends Module {
         add_action( 'wp_ajax_stackboost_ats_get_question', [ $this->ajax, 'get_question' ] );
         add_action( 'wp_ajax_stackboost_ats_delete_question', [ $this->ajax, 'delete_question' ] );
         add_action( 'wp_ajax_stackboost_ats_reorder_questions', [ $this->ajax, 'reorder_questions' ] );
+        add_action( 'wp_ajax_stackboost_ats_save_category', [ $this->ajax, 'save_category' ] );
+        add_action( 'wp_ajax_stackboost_ats_get_category', [ $this->ajax, 'get_category' ] );
+        add_action( 'wp_ajax_stackboost_ats_delete_category', [ $this->ajax, 'delete_category' ] );
 
         // Asset Enqueueing
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ] );
@@ -144,6 +147,22 @@ class WordPress extends Module {
                 [
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'stackboost_ats_manage_questions_nonce' ),
+                    'diagnostic_log_enabled' => $diagnostic_log_enabled
+                ]
+            );
+        }
+
+        if ( 'categories' === $current_tab ) {
+            wp_enqueue_script( 'jquery-ui-dialog' );
+            wp_enqueue_style( 'wp-jquery-ui-dialog' ); // Load WP's default jQuery UI styles
+
+            wp_enqueue_script( 'stackboost-ats-manage-categories', STACKBOOST_PLUGIN_URL . 'assets/admin/js/stackboost-ats-manage-categories.js', [ 'jquery', 'jquery-ui-dialog' ], STACKBOOST_VERSION, true );
+            wp_localize_script(
+                'stackboost-ats-manage-categories',
+                'stackboost_ats_manage',
+                [
+                    'ajax_url' => admin_url( 'admin-ajax.php' ),
+                    'nonce'    => wp_create_nonce( 'stackboost_ats_manage_questions_nonce' ), // reuse the same nonce
                     'diagnostic_log_enabled' => $diagnostic_log_enabled
                 ]
             );

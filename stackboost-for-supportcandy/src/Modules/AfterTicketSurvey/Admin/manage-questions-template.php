@@ -20,6 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                     <th class="manage-column column-sort" style="width: 30px;"></th> <!-- Handle column -->
                     <th class="manage-column"><?php esc_html_e( 'Question Text', 'stackboost-for-supportcandy' ); ?></th>
                     <th class="manage-column"><?php esc_html_e( 'Type', 'stackboost-for-supportcandy' ); ?></th>
+                    <th class="manage-column"><?php esc_html_e( 'Category', 'stackboost-for-supportcandy' ); ?></th>
                     <th class="manage-column"><?php esc_html_e( 'Required', 'stackboost-for-supportcandy' ); ?></th>
                     <th class="manage-column"><?php esc_html_e( 'Options', 'stackboost-for-supportcandy' ); ?></th>
                     <th class="manage-column"><?php esc_html_e( 'Prefill Key', 'stackboost-for-supportcandy' ); ?></th>
@@ -28,13 +29,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
             </thead>
             <tbody>
             <?php if ( empty( $questions ) ) : ?>
-                <tr class="no-items"><td colspan="7"><?php esc_html_e( 'No questions found.', 'stackboost-for-supportcandy' ); ?></td></tr>
+                <tr class="no-items"><td colspan="8"><?php esc_html_e( 'No questions found.', 'stackboost-for-supportcandy' ); ?></td></tr>
             <?php else : ?>
                 <?php foreach ( $questions as $stackboost_q ) : ?>
                 <tr data-id="<?php echo esc_attr($stackboost_q['id']); ?>" data-type="<?php echo esc_attr($stackboost_q['question_type']); ?>">
                     <td class="stackboost-ats-sort-handle" style="cursor: move;"><span class="dashicons dashicons-menu"></span></td>
                     <td><?php echo esc_html( $stackboost_q['question_text'] ); ?></td>
                     <td><?php echo esc_html( str_replace('_', ' ', ucfirst( $stackboost_q['question_type'] ) ) ); ?></td>
+                    <td><?php echo esc_html( ! empty( $stackboost_q['category_name'] ) ? $stackboost_q['category_name'] : __( 'None', 'stackboost-for-supportcandy' ) ); ?></td>
                     <td><?php echo $stackboost_q['is_required'] ? esc_html__( 'Yes', 'stackboost-for-supportcandy' ) : esc_html__( 'No', 'stackboost-for-supportcandy' ); ?></td>
                     <td>
                         <?php
@@ -71,6 +73,17 @@ if ( ! defined( 'ABSPATH' ) ) exit;
             <div class="form-group">
                 <label for="question_text" style="display:block; margin-bottom:5px;"><strong><?php esc_html_e( 'Question Text:', 'stackboost-for-supportcandy' ); ?></strong></label>
                 <input type="text" id="question_text" name="question_text" class="widefat" required>
+            </div>
+
+            <div class="form-group" style="margin-top:10px;">
+                <label for="stackboost-ats-question-category" style="display:block; margin-bottom:5px;"><strong><?php esc_html_e( 'Category:', 'stackboost-for-supportcandy' ); ?></strong></label>
+                <select name="category_id" id="stackboost-ats-question-category" class="widefat">
+                    <option value="0"><?php esc_html_e( '-- No Category --', 'stackboost-for-supportcandy' ); ?></option>
+                    <?php foreach ( $categories as $cat ) : ?>
+                        <option value="<?php echo esc_attr( $cat['id'] ); ?>"><?php echo esc_html( $cat['name'] ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="description"><?php esc_html_e( 'Categorizing questions allows you to group related ratings together in the Ticket Metrics dashboard.', 'stackboost-for-supportcandy' ); ?></p>
             </div>
 
             <div class="form-group" style="margin-top:10px;">

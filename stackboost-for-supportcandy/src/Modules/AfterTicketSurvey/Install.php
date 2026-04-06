@@ -14,7 +14,13 @@ class Install {
 	 * The current database version for this module.
 	 * @var string
 	 */
-	private string $db_version = '1.5';
+	private string $db_version = '1.6';
+
+	/**
+	 * The name of the question categories table.
+	 * @var string
+	 */
+	private string $question_categories_table_name;
 
 	/**
 	 * The name of the questions table.
@@ -45,6 +51,7 @@ class Install {
 	 */
 	public function __construct() {
 		global $wpdb;
+		$this->question_categories_table_name = $wpdb->prefix . 'stackboost_ats_question_categories';
 		$this->questions_table_name        = $wpdb->prefix . 'stackboost_ats_questions';
 		$this->dropdown_options_table_name = $wpdb->prefix . 'stackboost_ats_dropdown_options';
 		$this->survey_submissions_table_name = $wpdb->prefix . 'stackboost_ats_survey_submissions';
@@ -111,10 +118,19 @@ class Install {
 
         stackboost_log("ATS: Running dbDelta for tables.", 'ats');
 
+        // SQL for Categories Table
+        $sql_categories = "CREATE TABLE {$this->question_categories_table_name} (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			name varchar(255) NOT NULL,
+			description text DEFAULT '' NOT NULL,
+			PRIMARY KEY  (id)
+		) $charset_collate;";
+
 		// SQL for Questions Table
         // dbDelta requires 2 spaces after PRIMARY KEY
 		$sql_questions = "CREATE TABLE {$this->questions_table_name} (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
+			category_id bigint(20) DEFAULT 0 NOT NULL,
 			question_text text NOT NULL,
 			report_heading varchar(255) DEFAULT '' NOT NULL,
             prefill_key varchar(50) DEFAULT '' NOT NULL,
@@ -122,7 +138,8 @@ class Install {
 			sort_order int(11) DEFAULT 0 NOT NULL,
 			is_required tinyint(1) DEFAULT 1 NOT NULL,
             is_readonly_prefill tinyint(1) DEFAULT 0 NOT NULL,
-			PRIMARY KEY  (id)
+			PRIMARY KEY  (id),
+			KEY category_id (category_id)
 		) $charset_collate;";
 
         // SQL for Dropdown Options Table
@@ -154,7 +171,7 @@ class Install {
 			KEY question_id (question_id)
 		) $charset_collate;";
 
-        $result = dbDelta( [ $sql_questions, $sql_dropdown_options, $sql_submissions, $sql_answers ] );
+        $result = dbDelta( [ $sql_categories, $sql_questions, $sql_dropdown_options, $sql_submissions, $sql_answers ] );
         // stackboost_log("ATS: dbDelta result: " . print_r($result, true), 'ats');
 
 		$this->seed_default_questions();
