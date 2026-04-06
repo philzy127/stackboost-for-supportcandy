@@ -93,6 +93,7 @@ class WordPress extends Module {
 
 		// Read and sanitize raw POST data directly
 		$options['ticket_metrics_type_field']        = isset( $_POST['ticket_metrics_type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_type_field'] ) ) : 'category';
+		$options['ticket_metrics_enable_agent_group_filter'] = isset( $_POST['ticket_metrics_enable_agent_group_filter'] ) ? filter_var( wp_unslash( $_POST['ticket_metrics_enable_agent_group_filter'] ), FILTER_VALIDATE_BOOLEAN ) : false;
 
 		$agent_chart = isset( $_POST['ticket_metrics_chart_type_agent'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_agent'] ) ) : 'multi_pie';
 		$options['ticket_metrics_chart_type_agent']  = in_array( $agent_chart, [ 'none', 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $agent_chart : 'multi_pie';
