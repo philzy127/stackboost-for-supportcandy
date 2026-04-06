@@ -896,7 +896,7 @@ class WordPress extends Module {
 		$overall_metrics = $this->calculate_metric_set(
 			$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 			$closed_condition, $open_condition, $close_date_col,
-			$active_in_period_sql, $overall_extra_where, false
+			$active_in_period_sql, $overall_extra_where, $is_agent_group_wrapper
 		);
 
 		// Manually append these root properties because JS expects them at the top level
@@ -1873,8 +1873,11 @@ class WordPress extends Module {
 				// Therefore, if $extra_where is NOT empty (meaning this is a query for a specific agent or ticket type), we MUST return N/A
 				// to prevent the global average from overwriting the specific agent's distinct metric.
 				// However, if $is_agent_group_wrapper is true AND it's just the root total (no other specific agent/type logic appended),
-				// we still have to return N/A because we can't join to the tickets table to filter the unlinked surveys by agent group!
-				if ( ! empty( $extra_where ) || $is_agent_group_wrapper ) {
+				// we can STILL calculate the unlinked global average if we ignore the agent group filter entirely for the unlinked surveys.
+				// Wait! The user actually wants to see the CSAT score. If ATS isn't linked, then we can't filter by agent group.
+				// We should just return the global unlinked CSAT score for the root total when it's just an agent group wrapper,
+				// or N/A if it's an explicit agent breakdown.
+				if ( ! empty( $extra_where ) && ! $is_agent_group_wrapper ) {
 					$metrics['survey_response_rate'] = 'N/A';
 					$metrics['survey_avg_csat'] = 'N/A';
 				} else {
