@@ -895,6 +895,13 @@ class WordPress extends Module {
 		// Set a specific flag so calculate_metric_set knows this $overall_extra_where is just an agent group wrapper,
 		// not an explicit agent/type breakdown filter that usually forces N/A on CSAT when a ticket question is missing.
 		$is_agent_group_wrapper = ( $overall_extra_where !== '' );
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "--- TICKET METRICS AGENT GROUP FILTER ---", 'ticket_metrics' );
+			stackboost_log( "Agent Group Val: {$agent_group_val}", 'ticket_metrics' );
+			stackboost_log( "Overall Extra Where: {$overall_extra_where}", 'ticket_metrics' );
+		}
+
 		// Pass $is_agent_group_wrapper to the root call so it falls back gracefully if unlinked
 		$overall_metrics = $this->calculate_metric_set(
 			$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
@@ -1818,7 +1825,7 @@ class WordPress extends Module {
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$total_surveys = (int) $wpdb->get_var( $query_surveys );
 
-				if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+				if ( function_exists( 'stackboost_log' ) ) {
 					stackboost_log( "ATS Total Surveys Linked Query: {$query_surveys}", 'ticket_metrics' );
 					stackboost_log( "ATS Total Surveys Linked Result: {$total_surveys}", 'ticket_metrics' );
 				}
@@ -1859,7 +1866,7 @@ class WordPress extends Module {
 					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$avg_csat = $wpdb->get_var( $query_csat );
 
-					if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+					if ( function_exists( 'stackboost_log' ) ) {
 						stackboost_log( "ATS CSAT Linked Average Query: {$query_csat}", 'ticket_metrics' );
 						stackboost_log( "ATS CSAT Linked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
 					}
@@ -1893,7 +1900,7 @@ class WordPress extends Module {
 						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 						$total_surveys = (int) $wpdb->get_var( $query_surveys );
 
-						if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+						if ( function_exists( 'stackboost_log' ) ) {
 							stackboost_log( "ATS Total Surveys Unlinked Query: {$query_surveys}", 'ticket_metrics' );
 							stackboost_log( "ATS Total Surveys Unlinked Result: {$total_surveys}", 'ticket_metrics' );
 						}
@@ -1930,7 +1937,7 @@ class WordPress extends Module {
 							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 							$avg_csat = $wpdb->get_var( $query_csat );
 
-							if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+						if ( function_exists( 'stackboost_log' ) ) {
 								stackboost_log( "ATS CSAT Unlinked Average Query: {$query_csat}", 'ticket_metrics' );
 								stackboost_log( "ATS CSAT Unlinked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
 							}
