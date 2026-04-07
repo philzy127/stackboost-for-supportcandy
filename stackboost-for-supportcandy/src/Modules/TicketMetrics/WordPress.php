@@ -670,10 +670,12 @@ class WordPress extends Module {
 					if ( ! empty( $all_group_agents ) ) {
 						$find_in_set_parts = [];
 						foreach ( $all_group_agents as $a_id ) {
-							// Use standard LIKE with wildcard padding because REGEXP with escaped pipes fails on some WPDB implementations
-							// Literal percentage signs MUST be escaped as %% for wpdb->prepare to handle them correctly when the string is built
+							// Use standard LIKE with wildcard padding because REGEXP with escaped pipes fails on some WPDB implementations.
+							// Note: Because we append $overall_extra_where to our queries AFTER running wpdb->prepare, we must NOT escape
+							// the percentage signs as %%. Doing so will result in literal %% in the final SQL string.
+							// E.g., `wpdb->prepare( "SELECT * FROM tickets WHERE id = %d", 1 ) . " AND assigned_agent LIKE '%|2|%'" `
 							$a = (int) $a_id;
-							$find_in_set_parts[] = "(t.assigned_agent LIKE '%%|" . $a . "|%%' OR t.assigned_agent LIKE '" . $a . "|%%' OR t.assigned_agent LIKE '%%|" . $a . "' OR t.assigned_agent = '" . $a . "')";
+							$find_in_set_parts[] = "(t.assigned_agent LIKE '%|" . $a . "|%' OR t.assigned_agent LIKE '" . $a . "|%' OR t.assigned_agent LIKE '%|" . $a . "' OR t.assigned_agent = '" . $a . "')";
 						}
 						$overall_extra_where = " AND (" . implode( " OR ", $find_in_set_parts ) . ")";
 					} else {
