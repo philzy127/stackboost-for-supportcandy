@@ -923,6 +923,7 @@ class WordPress extends Module {
 		$metrics['sla_resolution_breach_rate'] = $overall_metrics['sla_resolution_breach_rate'];
 		$metrics['survey_response_rate'] = $overall_metrics['survey_response_rate'];
 		$metrics['survey_avg_csat']      = $overall_metrics['survey_avg_csat'];
+		$metrics['survey_count']         = $overall_metrics['survey_count'];
 		$metrics['is_sla_configured']    = $overall_metrics['is_sla_configured'];
 		$metrics['is_survey_configured'] = $overall_metrics['is_survey_configured'];
 
