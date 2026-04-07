@@ -432,6 +432,10 @@ class Page {
 							</div>
 							<div class="stkb-metric-card" id="stkb_metric_survey_card" style="display:none; padding: 15px; justify-content: space-between;">
 								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+									<h3><?php esc_html_e( 'Survey Responses', 'stackboost-for-supportcandy' ); ?></h3>
+									<p id="stkb_metric_survey_count">0</p>
+								</div>
+								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
 									<h3><?php esc_html_e( 'Survey Response Rate', 'stackboost-for-supportcandy' ); ?></h3>
 									<p id="stkb_metric_survey_rate">N/A</p>
 								</div>
@@ -1291,13 +1295,9 @@ class Page {
 									$('#stkb_metric_sla_card').css('display', 'none');
 								}
 
+								$('#stkb_metric_survey_count').text(data.survey_count || 0);
 								$('#stkb_metric_survey_rate').text(data.survey_response_rate);
-
-								let csat_html = data.survey_avg_csat;
-								if (data.survey_count !== undefined) {
-									csat_html += '<br><span style="font-size:11px; color:#50575e;">' + data.survey_count + ' responses</span>';
-								}
-								$('#stkb_metric_survey_csat').html(csat_html);
+								$('#stkb_metric_survey_csat').text(data.survey_avg_csat);
 
 								if (data.is_survey_configured === true || data.is_survey_configured === 1 || data.is_survey_configured === '1') {
 									$('#stkb_metric_survey_card').css('display', 'flex');
