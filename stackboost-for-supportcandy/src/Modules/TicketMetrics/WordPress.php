@@ -1279,7 +1279,7 @@ class WordPress extends Module {
 										<tr>
 											<th>Type</th>
 											<th style="text-align:center;">Assigned</th>
-											<th style="text-align:center;">Touches</th>
+											<th style="text-align:center;">Touches Per Ticket</th>
 											<th style="text-align:center;">Closed</th>
 											<th style="text-align:center;">Avg Close Time</th>
 											<th style="text-align:center;">Avg Age (Open)</th>
@@ -1538,7 +1538,7 @@ class WordPress extends Module {
 							</div>
 							<div class="stackboost-card" style="flex: 1;">
 								<h3>Averages</h3>
-								<p>Touches: <strong>%s</strong></p>
+								<p>Touches Per Ticket: <strong>%s</strong></p>
 								<p>Time to Close: <strong>%s</strong></p>
 								<p>Age (Open): <strong>%s</strong></p>
 								<p>Initial Response: <strong>%s</strong></p>
@@ -1553,7 +1553,7 @@ class WordPress extends Module {
 										<tr>
 											<th>Assigned Agent</th>
 											<th style="text-align:center;">Assigned</th>
-											<th style="text-align:center;">Touches</th>
+											<th style="text-align:center;">Touches Per Ticket</th>
 											<th style="text-align:center;">Closed</th>
 											<th style="text-align:center;">Avg Close Time</th>
 											<th style="text-align:center;">Avg Age (Open)</th>
@@ -1942,7 +1942,7 @@ class WordPress extends Module {
 							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 							$avg_csat = $wpdb->get_var( $query_csat );
 
-						if ( function_exists( 'stackboost_log' ) ) {
+							if ( function_exists( 'stackboost_log' ) ) {
 								stackboost_log( "ATS CSAT Unlinked Average Query: {$query_csat}", 'ticket_metrics' );
 								stackboost_log( "ATS CSAT Unlinked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
 							}

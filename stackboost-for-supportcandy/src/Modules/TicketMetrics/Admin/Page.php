@@ -1292,7 +1292,12 @@ class Page {
 								}
 
 								$('#stkb_metric_survey_rate').text(data.survey_response_rate);
-								$('#stkb_metric_survey_csat').text(data.survey_avg_csat);
+
+								let csat_html = data.survey_avg_csat;
+								if (data.survey_count !== undefined) {
+									csat_html += '<br><span style="font-size:11px; color:#50575e;">' + data.survey_count + ' responses</span>';
+								}
+								$('#stkb_metric_survey_csat').html(csat_html);
 
 								if (data.is_survey_configured === true || data.is_survey_configured === 1 || data.is_survey_configured === '1') {
 									$('#stkb_metric_survey_card').css('display', 'flex');
