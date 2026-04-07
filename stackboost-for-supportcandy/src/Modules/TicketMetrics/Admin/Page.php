@@ -808,6 +808,18 @@ class Page {
 										<p class="description"><?php esc_html_e( 'Specify the maximum possible numeric rating your survey allows (e.g., 5 or 10). If configured, the metrics dashboard will automatically normalize the raw CSAT average into a percentage. Leave as 0 to display the raw aggregate average without formatting.', 'stackboost-for-supportcandy' ); ?></p>
 									</td>
 								</tr>
+								<tr>
+									<th scope="row"><label for="stkb_survey_grade_mode"><?php esc_html_e( 'CSAT Display Format', 'stackboost-for-supportcandy' ); ?></label></th>
+									<td>
+										<select name="stackboost_settings[ticket_metrics_survey_grade_mode]" id="stkb_survey_grade_mode">
+											<?php $survey_grade_mode = isset( $options['ticket_metrics_survey_grade_mode'] ) ? $options['ticket_metrics_survey_grade_mode'] : 'numerical'; ?>
+											<option value="numerical" <?php selected( $survey_grade_mode, 'numerical' ); ?>><?php esc_html_e( 'Numerical Score (e.g., 4.2)', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="letter" <?php selected( $survey_grade_mode, 'letter' ); ?>><?php esc_html_e( 'Letter Grade (e.g., B+)', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="both" <?php selected( $survey_grade_mode, 'both' ); ?>><?php esc_html_e( 'Both (e.g., B+ (89%))', 'stackboost-for-supportcandy' ); ?></option>
+										</select>
+										<p class="description"><?php esc_html_e( 'Choose how normalized CSAT scores are displayed in the dashboard. (Requires Maximum Survey Score to be configured above).', 'stackboost-for-supportcandy' ); ?></p>
+									</td>
+								</tr>
 							</table>
 
 							<p class="submit">
@@ -1159,7 +1171,8 @@ class Page {
 							ticket_metrics_sla_frt_hours: $('#stkb_sla_frt_hours').val(),
 							ticket_metrics_sla_resolution_hours: $('#stkb_sla_resolution_hours').val(),
 							ticket_metrics_survey_max_score: $('#stkb_survey_max_score').val(),
-							ticket_metrics_survey_categories: $('#stkb_survey_categories').val() || []
+							ticket_metrics_survey_categories: $('#stkb_survey_categories').val() || [],
+							ticket_metrics_survey_grade_mode: $('#stkb_survey_grade_mode').val()
 						};
 
 						// Use dedicated endpoint

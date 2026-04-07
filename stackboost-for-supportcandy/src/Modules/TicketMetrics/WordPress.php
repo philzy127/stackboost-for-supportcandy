@@ -130,6 +130,7 @@ class WordPress extends Module {
 		$options['ticket_metrics_sla_frt_hours'] = isset( $_POST['ticket_metrics_sla_frt_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_frt_hours'] ) : 0;
 		$options['ticket_metrics_sla_resolution_hours'] = isset( $_POST['ticket_metrics_sla_resolution_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_resolution_hours'] ) : 0;
 		$options['ticket_metrics_survey_max_score'] = isset( $_POST['ticket_metrics_survey_max_score'] ) ? max( 0, (float) $_POST['ticket_metrics_survey_max_score'] ) : 0;
+		$options['ticket_metrics_survey_grade_mode'] = isset( $_POST['ticket_metrics_survey_grade_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_survey_grade_mode'] ) ) : 'numerical';
 
 		if ( isset( $_POST['ticket_metrics_survey_categories'] ) && is_array( $_POST['ticket_metrics_survey_categories'] ) ) {
 			$options['ticket_metrics_survey_categories'] = array_map( 'sanitize_text_field', wp_unslash( $_POST['ticket_metrics_survey_categories'] ) );
@@ -1961,14 +1962,46 @@ class WordPress extends Module {
 
 		// Normalize CSAT against Max Score setting if configured to give it meaning (e.g., 4.2 / 5)
 		$survey_max_score = isset( $options['ticket_metrics_survey_max_score'] ) ? (float) $options['ticket_metrics_survey_max_score'] : 0;
+		$survey_grade_mode = isset( $options['ticket_metrics_survey_grade_mode'] ) ? $options['ticket_metrics_survey_grade_mode'] : 'numerical';
+
 		if ( $survey_max_score > 0 && $metrics['survey_avg_csat'] !== 'N/A' ) {
 			$raw_csat = (float) $metrics['survey_avg_csat'];
-			// Format as requested: "4.2 (84%)" without the / 5.
 			$percentage = round(($raw_csat / $survey_max_score) * 100);
-			$metrics['survey_avg_csat'] = "{$raw_csat} ({$percentage}%)";
+
+			if ( 'letter' === $survey_grade_mode ) {
+				$metrics['survey_avg_csat'] = $this->get_letter_grade( $percentage );
+			} elseif ( 'both' === $survey_grade_mode ) {
+				$letter = $this->get_letter_grade( $percentage );
+				$metrics['survey_avg_csat'] = "{$letter} ({$percentage}%)";
+			} else {
+				// Format as requested: "4.2 (84%)" without the / 5.
+				$metrics['survey_avg_csat'] = "{$raw_csat} ({$percentage}%)";
+			}
 		}
 
 		return $metrics;
+	}
+
+	/**
+	 * Convert a percentage into a letter grade.
+	 *
+	 * @param int $percentage The percentage score.
+	 * @return string The letter grade.
+	 */
+	private function get_letter_grade( int $percentage ): string {
+		if ( $percentage >= 97 ) return 'A+';
+		if ( $percentage >= 93 ) return 'A';
+		if ( $percentage >= 90 ) return 'A-';
+		if ( $percentage >= 87 ) return 'B+';
+		if ( $percentage >= 83 ) return 'B';
+		if ( $percentage >= 80 ) return 'B-';
+		if ( $percentage >= 77 ) return 'C+';
+		if ( $percentage >= 73 ) return 'C';
+		if ( $percentage >= 70 ) return 'C-';
+		if ( $percentage >= 67 ) return 'D+';
+		if ( $percentage >= 63 ) return 'D';
+		if ( $percentage >= 60 ) return 'D-';
+		return 'F';
 	}
 
 	private function format_seconds( $seconds ) {
