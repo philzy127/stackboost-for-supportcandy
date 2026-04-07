@@ -136,41 +136,14 @@ class Shortcode {
 			}
 		}
 
-		$options = get_option( 'stackboost_settings', [] );
-		$landing_action = $options['ats_landing_action'] ?? 'custom_message';
-
 		// Handle Redirect or Success Message
-		if ( 'internal_page' === $landing_action ) {
-			$page_id = $options['ats_landing_internal_page'] ?? 0;
-			if ( $page_id > 0 ) {
-				$url = get_permalink( $page_id );
-				if ( $url ) {
-					echo '<script>window.location.href = "' . esc_url_raw( $url ) . '";</script>';
-					return;
-				}
-			}
-		} elseif ( 'external_url' === $landing_action ) {
-			$url = $options['ats_landing_external_url'] ?? '';
-			if ( ! empty( $url ) ) {
-				echo '<script>window.location.href = "' . esc_url_raw( $url ) . '";</script>';
-				return;
-			}
-		}
-
-		// Fallback to legacy block redirect
 		if ( ! empty( $atts['redirectUrl'] ) ) {
 			$url = esc_url_raw( $atts['redirectUrl'] );
 			echo "<script>window.location.href = '" . esc_js( $url ) . "';</script>";
 			return;
 		}
 
-		// Display Custom Message
-		if ( 'custom_message' === $landing_action && ! empty( $options['ats_landing_custom_message'] ) ) {
-			echo '<div class="stackboost-ats-success-message">' . wp_kses_post( $options['ats_landing_custom_message'] ) . '</div>';
-			return;
-		}
-
-		echo '<div class="stackboost-ats-success-message">' . esc_html( $atts['successMessage'] ) . '</div>';
+		echo '<div class="stackboost-ats-success-message">' . wp_kses_post( $atts['successMessage'] ) . '</div>';
 	}
 
 	/**
@@ -229,7 +202,7 @@ class Shortcode {
 				<h2 class="stackboost-ats-main-title"><?php echo esc_html( $atts['formTitle'] ); ?></h2>
 			<?php endif; ?>
 			<?php if ( ! empty( $atts['introText'] ) ) : ?>
-				<p class="stackboost-ats-intro"><?php echo nl2br( esc_html( $atts['introText'] ) ); ?></p>
+				<div class="stackboost-ats-intro"><?php echo wp_kses_post( $atts['introText'] ); ?></div>
 			<?php endif; ?>
 			<form method="post" class="stackboost-ats-form">
 				<?php wp_nonce_field( 'stackboost_ats_survey_form_nonce', 'stackboost_ats_survey_nonce' ); ?>

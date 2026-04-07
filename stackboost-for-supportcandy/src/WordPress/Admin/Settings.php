@@ -837,7 +837,7 @@ class Settings {
 				'ticket_metrics_gemini_api_key_locked'
 			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
-			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base', 'ats_landing_action', 'ats_landing_internal_page', 'ats_landing_external_url', 'ats_landing_custom_message'],
+			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
 			'stackboost-tools'              => [
 				'diagnostic_log_enabled',
@@ -1033,7 +1033,6 @@ class Settings {
 					case 'before_hours_end':
 					case 'ats_ticket_question_id':
 					case 'ats_technician_question_id':
-					case 'ats_landing_internal_page':
 						$saved_settings[$key] = intval($value);
 						break;
 
@@ -1070,16 +1069,7 @@ class Settings {
 						break;
 
 					case 'ats_ticket_url_base':
-					case 'ats_landing_external_url':
 						$saved_settings[$key] = esc_url_raw($value);
-						break;
-
-					case 'ats_landing_custom_message':
-						$saved_settings[$key] = wp_kses_post($value);
-						break;
-
-					case 'ats_landing_action':
-						$saved_settings[$key] = in_array( $value, [ 'internal_page', 'external_url', 'custom_message' ], true ) ? $value : 'custom_message';
 						break;
 
 					case 'ticket_types_to_hide':
