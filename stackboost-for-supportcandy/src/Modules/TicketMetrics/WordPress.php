@@ -1926,19 +1926,20 @@ class WordPress extends Module {
 
 							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 							$query_csat = $wpdb->prepare( $sql_csat, $args );
-						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-						$avg_csat = $wpdb->get_var( $query_csat );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$avg_csat = $wpdb->get_var( $query_csat );
 
-						if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
-							stackboost_log( "ATS CSAT Unlinked Average Query: {$query_csat}", 'ticket_metrics' );
-							stackboost_log( "ATS CSAT Unlinked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
-						}
+							if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+								stackboost_log( "ATS CSAT Unlinked Average Query: {$query_csat}", 'ticket_metrics' );
+								stackboost_log( "ATS CSAT Unlinked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
+							}
 
-						if ( $avg_csat !== null ) {
-							$metrics['survey_avg_csat'] = round($avg_csat, 2);
+							if ( $avg_csat !== null ) {
+								$metrics['survey_avg_csat'] = round($avg_csat, 2);
+							}
+						} else {
+							$metrics['survey_response_rate'] = '0%';
 						}
-					} else {
-						$metrics['survey_response_rate'] = '0%';
 					}
 				}
 			}
