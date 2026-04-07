@@ -670,12 +670,10 @@ class WordPress extends Module {
 					if ( ! empty( $all_group_agents ) ) {
 						$find_in_set_parts = [];
 						foreach ( $all_group_agents as $a_id ) {
-							// Use standard LIKE with wildcard padding because REGEXP with escaped pipes fails on some WPDB implementations.
-							// Note: Because we append $overall_extra_where to our queries AFTER running wpdb->prepare, we must NOT escape
-							// the percentage signs as %%. Doing so will result in literal %% in the final SQL string.
-							// E.g., `wpdb->prepare( "SELECT * FROM tickets WHERE id = %d", 1 ) . " AND assigned_agent LIKE '%|2|%'" `
+							// Native SupportCandy string format can be unreliable with LIKE queries depending on how missing/multiple pipes are stored.
+							// We fall back to standard FIND_IN_SET after replacing the pipes, which handles strings correctly.
 							$a = (int) $a_id;
-							$find_in_set_parts[] = "(t.assigned_agent LIKE '%|" . $a . "|%' OR t.assigned_agent LIKE '" . $a . "|%' OR t.assigned_agent LIKE '%|" . $a . "' OR t.assigned_agent = '" . $a . "')";
+							$find_in_set_parts[] = "FIND_IN_SET(" . $a . ", REPLACE(t.assigned_agent, '|', ',')) > 0";
 						}
 						$overall_extra_where = " AND (" . implode( " OR ", $find_in_set_parts ) . ")";
 					} else {
@@ -1144,10 +1142,15 @@ class WordPress extends Module {
 					$agent_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", $a_id);
 				}
 
+				// Explicitly drop $overall_extra_where for the individual agent breakdown calculations if it's an agent group wrapper.
+				// This is because we are already calculating stats FOR THIS SPECIFIC AGENT (`$agent_where`).
+				// If we append the group wrapper, we might inadvertently demand the ticket also belong to someone ELSE in the group,
+				// or we enforce an unnecessary duplicate WHERE clause. But more importantly, the survey query will
+				// fail to correctly scope the unlinked surveys if there are two complex conflicting agent strings.
 				$agent_metrics = $this->calculate_metric_set(
 					$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 					$closed_condition, $open_condition, $close_date_col,
-					$active_in_period_sql, $agent_where . $overall_extra_where
+					$active_in_period_sql, $agent_where
 				);
 
 				$csat_text = 'N/A';
@@ -1192,7 +1195,7 @@ class WordPress extends Module {
 						$o_metrics = $this->calculate_metric_set(
 							$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 							$closed_condition, $open_condition, $close_date_col,
-							$active_in_period_sql, $o_where . $overall_extra_where
+							$active_in_period_sql, $o_where
 						);
 
 						$modal_rows .= sprintf(
@@ -1243,7 +1246,7 @@ class WordPress extends Module {
 						$agent_type_metrics = $this->calculate_metric_set(
 							$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 							$closed_condition, $open_condition, $close_date_col,
-							$active_in_period_sql, $agent_type_where . $overall_extra_where
+							$active_in_period_sql, $agent_type_where
 						);
 
 						$modal_rows .= sprintf(
@@ -1375,7 +1378,7 @@ class WordPress extends Module {
 					$agent_type_metrics = $this->calculate_metric_set(
 						$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 						$closed_condition, $open_condition, $close_date_col,
-						$active_in_period_sql, $agent_type_where . $overall_extra_where
+						$active_in_period_sql, $agent_type_where
 					);
 
 					$agent_rows .= sprintf(
