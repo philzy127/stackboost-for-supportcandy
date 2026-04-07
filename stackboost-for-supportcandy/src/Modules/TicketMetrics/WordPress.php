@@ -671,8 +671,9 @@ class WordPress extends Module {
 						$find_in_set_parts = [];
 						foreach ( $all_group_agents as $a_id ) {
 							// Use standard LIKE with wildcard padding because REGEXP with escaped pipes fails on some WPDB implementations
+							// Literal percentage signs MUST be escaped as %% for wpdb->prepare to handle them correctly when the string is built
 							$a = (int) $a_id;
-							$find_in_set_parts[] = "(t.assigned_agent LIKE '%|" . $a . "|%' OR t.assigned_agent LIKE '" . $a . "|%' OR t.assigned_agent LIKE '%|" . $a . "' OR t.assigned_agent = '" . $a . "')";
+							$find_in_set_parts[] = "(t.assigned_agent LIKE '%%|" . $a . "|%%' OR t.assigned_agent LIKE '" . $a . "|%%' OR t.assigned_agent LIKE '%%|" . $a . "' OR t.assigned_agent = '" . $a . "')";
 						}
 						$overall_extra_where = " AND (" . implode( " OR ", $find_in_set_parts ) . ")";
 					} else {
