@@ -207,7 +207,7 @@ class Page {
 		?>
 		<style>
 			/* Custom grid styles for smaller metric cards as requested */
-			.stkb-metrics-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+			.stkb-metrics-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 20px; }
 			.stkb-metric-col { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 15px; }
 			.stkb-metric-card { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 15px; text-align: center; box-shadow: 0 1px 1px rgba(0,0,0,.04); }
 			.stkb-metric-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #50575e; }

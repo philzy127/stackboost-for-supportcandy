@@ -100,9 +100,9 @@ use StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\Repository;
 </table>
 
 <!-- Modal for editing headings -->
-<div id="stackboost-ats-heading-modal" class="stackboost-ats-modal" style="display: none;">
-    <div class="modal-content" style="max-width:600px; max-height:80vh; overflow-y:auto;">
-        <span class="close-modal">&times;</span>
+<div id="stackboost-ats-heading-modal" class="stackboost-modal" style="display: none;">
+    <div class="stackboost-modal-content" style="max-width:600px; max-height:80vh; overflow-y:auto;">
+        <span class="stackboost-modal-close-button">&times;</span>
         <h3><?php esc_html_e( 'Edit Report Headings', 'stackboost-for-supportcandy' ); ?></h3>
         <form id="stackboost-ats-heading-form">
             <table class="form-table">

@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!modal) {
         return;
     }
-    const closeModal = modal.querySelector('.close-modal');
+    const closeModal = modal.querySelector('.stackboost-modal-close-button');
     const form = document.getElementById('stackboost-ats-heading-form');
     const openBtn = document.getElementById('stackboost-ats-open-headings-modal');
 
@@ -13,9 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    closeModal.addEventListener('click', function() {
-        modal.style.display = 'none';
-    });
+    if (closeModal) {
+        closeModal.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+    }
 
     window.addEventListener('click', function(event) {
         if (event.target === modal) {

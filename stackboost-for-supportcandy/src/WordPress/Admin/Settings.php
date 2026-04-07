@@ -828,6 +828,7 @@ class Settings {
 				'ticket_metrics_frt_mode',
 				'ticket_metrics_sla_frt_hours',
 				'ticket_metrics_sla_resolution_hours',
+				'ticket_metrics_survey_categories',
 				'ticket_metrics_survey_max_score',
 				'ticket_metrics_verbose_logging',
 				'ticket_metrics_tracked_agents',
@@ -836,7 +837,7 @@ class Settings {
 				'ticket_metrics_gemini_api_key_locked'
 			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
-			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
+			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base', 'ats_landing_action', 'ats_landing_internal_page', 'ats_landing_external_url', 'ats_landing_custom_message'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
 			'stackboost-tools'              => [
 				'diagnostic_log_enabled',
@@ -966,6 +967,13 @@ class Settings {
 						$saved_settings[$key] = max( 0, (float) $value );
 						break;
 
+					case 'ticket_metrics_survey_categories':
+						if ( is_string( $value ) ) {
+							$value = array_filter( explode( ',', $value ) );
+						}
+						$saved_settings[$key] = array_map( 'sanitize_text_field', (array) $value );
+						break;
+
 					case 'ticket_metrics_tracked_agents':
 						if ( is_string( $value ) ) {
 							$value = array_filter( explode( ',', $value ) );
@@ -1025,6 +1033,7 @@ class Settings {
 					case 'before_hours_end':
 					case 'ats_ticket_question_id':
 					case 'ats_technician_question_id':
+					case 'ats_landing_internal_page':
 						$saved_settings[$key] = intval($value);
 						break;
 
@@ -1061,7 +1070,16 @@ class Settings {
 						break;
 
 					case 'ats_ticket_url_base':
+					case 'ats_landing_external_url':
 						$saved_settings[$key] = esc_url_raw($value);
+						break;
+
+					case 'ats_landing_custom_message':
+						$saved_settings[$key] = wp_kses_post($value);
+						break;
+
+					case 'ats_landing_action':
+						$saved_settings[$key] = in_array( $value, [ 'internal_page', 'external_url', 'custom_message' ], true ) ? $value : 'custom_message';
 						break;
 
 					case 'ticket_types_to_hide':
@@ -1079,7 +1097,7 @@ class Settings {
 				// Handle unchecked checkboxes, which are not present in the form submission.
 				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled' || $key === 'ticket_metrics_show_other_agents' || $key === 'ticket_metrics_verbose_logging') {
 					$saved_settings[$key] = 0;
-				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses') || $key === 'ticket_metrics_tracked_agents') {
+				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses') || $key === 'ticket_metrics_tracked_agents' || $key === 'ticket_metrics_survey_categories') {
 					$saved_settings[$key] = [];
 				}
 			}

@@ -46,6 +46,7 @@ class AdminController {
 				<a href="?page=stackboost-ats&tab=categories" class="nav-tab <?php if ( $current_tab === 'categories' ) echo 'nav-tab-active'; ?>"><?php esc_html_e( 'Manage Categories', 'stackboost-for-supportcandy' ); ?></a>
 				<a href="?page=stackboost-ats&tab=submissions" class="nav-tab <?php if ( $current_tab === 'submissions' ) echo 'nav-tab-active'; ?>"><?php esc_html_e( 'Manage Submissions', 'stackboost-for-supportcandy' ); ?></a>
 				<a href="?page=stackboost-ats&tab=results" class="nav-tab <?php if ( $current_tab === 'results' ) echo 'nav-tab-active'; ?>"><?php esc_html_e( 'View Results', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="?page=stackboost-ats&tab=settings" class="nav-tab <?php if ( $current_tab === 'settings' ) echo 'nav-tab-active'; ?>"><?php esc_html_e( 'Settings', 'stackboost-for-supportcandy' ); ?></a>
 			</nav>
 			<div class="stackboost-card stackboost-card-connected">
 			<?php
@@ -58,6 +59,9 @@ class AdminController {
 						break;
 					case 'categories':
 						$this->render_categories_tab();
+						break;
+					case 'settings':
+						$this->render_settings_tab();
 						break;
 					case 'questions':
 					default:
@@ -165,5 +169,9 @@ class AdminController {
 		$questions   = $this->repository->get_questions();
 		$submissions = $this->repository->get_submissions_with_users( $agent_id, $start_date, $end_date );
 		include __DIR__ . '/Admin/view-results-template.php';
+	}
+
+	private function render_settings_tab() {
+		include __DIR__ . '/Admin/manage-settings-template.php';
 	}
 }
