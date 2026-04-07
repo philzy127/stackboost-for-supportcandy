@@ -1261,7 +1261,7 @@ class WordPress extends Module {
 							</tr>',
 							esc_html($t_name),
 							(int)$t_counts['assigned'],
-							(int)$agent_type_metrics['touched_tickets'],
+							esc_html($agent_type_metrics['avg_touches']),
 							(int)$t_counts['closed'],
 							esc_html($agent_type_metrics['avg_open_time']),
 							esc_html($agent_type_metrics['avg_age_open']),
@@ -1393,7 +1393,7 @@ class WordPress extends Module {
 						</tr>',
 						$a_name, // Output raw string since we optionally injected a span
 						(int)$a_assigned,
-						(int)$agent_type_metrics['touched_tickets'],
+						esc_html($agent_type_metrics['avg_touches']),
 						(int)$a_closed,
 						esc_html($agent_type_metrics['avg_open_time']),
 						esc_html($agent_type_metrics['avg_age_open']),
