@@ -117,7 +117,6 @@ class Page {
 
 		$sla_frt_hours = isset( $options['ticket_metrics_sla_frt_hours'] ) ? (float) $options['ticket_metrics_sla_frt_hours'] : 0;
 		$sla_resolution_hours = isset( $options['ticket_metrics_sla_resolution_hours'] ) ? (float) $options['ticket_metrics_sla_resolution_hours'] : 0;
-		$survey_max_score = isset( $options['ticket_metrics_survey_max_score'] ) ? (float) $options['ticket_metrics_survey_max_score'] : 0;
 
 		$survey_categories = [];
 		if ( isset( $options['ticket_metrics_survey_categories'] ) && is_array( $options['ticket_metrics_survey_categories'] ) ) {
@@ -801,13 +800,6 @@ class Page {
 										<p class="description"><?php esc_html_e( 'Select which question categories should be mathematically tied to Agent CSAT scores. If none are selected, all rating questions are calculated.', 'stackboost-for-supportcandy' ); ?></p>
 									</td>
 								</tr>
-								<tr>
-									<th scope="row"><label for="stkb_survey_max_score"><?php esc_html_e( 'Maximum Survey Score', 'stackboost-for-supportcandy' ); ?></label></th>
-									<td>
-										<input type="number" step="0.1" min="0" name="stackboost_settings[ticket_metrics_survey_max_score]" id="stkb_survey_max_score" value="<?php echo esc_attr( $survey_max_score ); ?>" class="small-text">
-										<p class="description"><?php esc_html_e( 'Specify the maximum possible numeric rating your survey allows (e.g., 5 or 10). If configured, the metrics dashboard will automatically normalize the raw CSAT average into a percentage. Leave as 0 to display the raw aggregate average without formatting.', 'stackboost-for-supportcandy' ); ?></p>
-									</td>
-								</tr>
 							</table>
 
 							<p class="submit">
@@ -1158,7 +1150,6 @@ class Page {
 							ticket_metrics_gemini_api_key: $('#stkb_gemini_api_key').val(),
 							ticket_metrics_sla_frt_hours: $('#stkb_sla_frt_hours').val(),
 							ticket_metrics_sla_resolution_hours: $('#stkb_sla_resolution_hours').val(),
-							ticket_metrics_survey_max_score: $('#stkb_survey_max_score').val(),
 							ticket_metrics_survey_categories: $('#stkb_survey_categories').val() || []
 						};
 
