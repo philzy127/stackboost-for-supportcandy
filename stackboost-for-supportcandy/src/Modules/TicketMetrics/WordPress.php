@@ -129,7 +129,9 @@ class WordPress extends Module {
 
 		$options['ticket_metrics_sla_frt_hours'] = isset( $_POST['ticket_metrics_sla_frt_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_frt_hours'] ) : 0;
 		$options['ticket_metrics_sla_resolution_hours'] = isset( $_POST['ticket_metrics_sla_resolution_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_resolution_hours'] ) : 0;
-		$options['ticket_metrics_survey_grade_mode'] = isset( $_POST['ticket_metrics_survey_grade_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_survey_grade_mode'] ) ) : 'numerical';
+		$options['ticket_metrics_csat_show_score'] = isset( $_POST['ticket_metrics_csat_show_score'] ) ? (int) $_POST['ticket_metrics_csat_show_score'] : 0;
+		$options['ticket_metrics_csat_show_percent'] = isset( $_POST['ticket_metrics_csat_show_percent'] ) ? (int) $_POST['ticket_metrics_csat_show_percent'] : 0;
+		$options['ticket_metrics_csat_show_letter'] = isset( $_POST['ticket_metrics_csat_show_letter'] ) ? (int) $_POST['ticket_metrics_csat_show_letter'] : 0;
 
 		if ( isset( $_POST['ticket_metrics_survey_categories'] ) && is_array( $_POST['ticket_metrics_survey_categories'] ) ) {
 			$options['ticket_metrics_survey_categories'] = array_map( 'sanitize_text_field', wp_unslash( $_POST['ticket_metrics_survey_categories'] ) );
@@ -1961,21 +1963,31 @@ class WordPress extends Module {
 
 		// Normalize CSAT against hardcoded Max Score of 5 to give it meaning (e.g., 4.2 / 5)
 		$survey_max_score = 5;
-		$survey_grade_mode = isset( $options['ticket_metrics_survey_grade_mode'] ) ? $options['ticket_metrics_survey_grade_mode'] : 'numerical';
+		$show_score = isset( $options['ticket_metrics_csat_show_score'] ) ? (bool) $options['ticket_metrics_csat_show_score'] : true;
+		$show_percent = isset( $options['ticket_metrics_csat_show_percent'] ) ? (bool) $options['ticket_metrics_csat_show_percent'] : true;
+		$show_letter = isset( $options['ticket_metrics_csat_show_letter'] ) ? (bool) $options['ticket_metrics_csat_show_letter'] : false;
+
+		// Default to score if nothing selected
+		if ( ! $show_score && ! $show_percent && ! $show_letter ) {
+			$show_score = true;
+		}
 
 		if ( $metrics['survey_avg_csat'] !== 'N/A' ) {
 			$raw_csat = (float) $metrics['survey_avg_csat'];
 			$percentage = round(($raw_csat / $survey_max_score) * 100);
 
-			if ( 'letter' === $survey_grade_mode ) {
-				$metrics['survey_avg_csat'] = $this->get_letter_grade( $percentage );
-			} elseif ( 'both' === $survey_grade_mode ) {
-				$letter = $this->get_letter_grade( $percentage );
-				$metrics['survey_avg_csat'] = "{$letter} ({$percentage}%)";
-			} else {
-				// Format as requested: "4.2 (84%)" without the / 5.
-				$metrics['survey_avg_csat'] = "{$raw_csat} ({$percentage}%)";
+			$parts = [];
+			if ( $show_score ) {
+				$parts[] = number_format( $raw_csat, 1 );
 			}
+			if ( $show_percent ) {
+				$parts[] = $percentage . '%';
+			}
+			if ( $show_letter ) {
+				$parts[] = $this->get_letter_grade( $percentage );
+			}
+
+			$metrics['survey_avg_csat'] = implode( ' | ', $parts );
 		}
 
 		return $metrics;

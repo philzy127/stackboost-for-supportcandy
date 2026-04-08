@@ -207,7 +207,7 @@ class Page {
 		<style>
 			/* Custom grid styles for smaller metric cards as requested */
 			.stkb-metrics-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 20px; }
-			.stkb-metric-card { flex: 1 1 30%; max-width: 400px; min-width: 250px; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 15px; text-align: center; box-shadow: 0 1px 1px rgba(0,0,0,.04); }
+			.stkb-metric-card { flex: 0 1 calc(50% - 15px); min-width: 250px; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 15px; text-align: center; box-shadow: 0 1px 1px rgba(0,0,0,.04); }
 			.stkb-metric-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #50575e; }
 			.stkb-metric-card p { margin: 0; font-size: 24px; font-weight: 600; color: #1d2327; }
 			.stkb-breakdown-wrapper { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
@@ -794,15 +794,28 @@ class Page {
 									</td>
 								</tr>
 								<tr>
-									<th scope="row"><label for="stkb_survey_grade_mode"><?php esc_html_e( 'CSAT Display Format', 'stackboost-for-supportcandy' ); ?></label></th>
+									<th scope="row"><?php esc_html_e( 'CSAT Display Elements', 'stackboost-for-supportcandy' ); ?></th>
 									<td>
-										<select name="stackboost_settings[ticket_metrics_survey_grade_mode]" id="stkb_survey_grade_mode">
-											<?php $survey_grade_mode = isset( $options['ticket_metrics_survey_grade_mode'] ) ? $options['ticket_metrics_survey_grade_mode'] : 'numerical'; ?>
-											<option value="numerical" <?php selected( $survey_grade_mode, 'numerical' ); ?>><?php esc_html_e( 'Numerical Score (e.g., 4.2)', 'stackboost-for-supportcandy' ); ?></option>
-											<option value="letter" <?php selected( $survey_grade_mode, 'letter' ); ?>><?php esc_html_e( 'Letter Grade (e.g., B)', 'stackboost-for-supportcandy' ); ?></option>
-											<option value="both" <?php selected( $survey_grade_mode, 'both' ); ?>><?php esc_html_e( 'Both (e.g., B (84%))', 'stackboost-for-supportcandy' ); ?></option>
-										</select>
-										<p class="description"><?php esc_html_e( 'Choose how normalized CSAT scores are displayed in the dashboard.', 'stackboost-for-supportcandy' ); ?></p>
+										<fieldset>
+											<?php
+											$show_score = isset($options['ticket_metrics_csat_show_score']) ? (bool) $options['ticket_metrics_csat_show_score'] : true;
+											$show_percent = isset($options['ticket_metrics_csat_show_percent']) ? (bool) $options['ticket_metrics_csat_show_percent'] : true;
+											$show_letter = isset($options['ticket_metrics_csat_show_letter']) ? (bool) $options['ticket_metrics_csat_show_letter'] : false;
+											?>
+											<label style="display:block; margin-bottom:5px;">
+												<input type="checkbox" name="stackboost_settings[ticket_metrics_csat_show_score]" id="stkb_csat_show_score" value="1" <?php checked($show_score); ?>>
+												<?php esc_html_e( 'Numerical Score (e.g., 4.2)', 'stackboost-for-supportcandy' ); ?>
+											</label>
+											<label style="display:block; margin-bottom:5px;">
+												<input type="checkbox" name="stackboost_settings[ticket_metrics_csat_show_percent]" id="stkb_csat_show_percent" value="1" <?php checked($show_percent); ?>>
+												<?php esc_html_e( 'Percentage (e.g., 84%)', 'stackboost-for-supportcandy' ); ?>
+											</label>
+											<label style="display:block;">
+												<input type="checkbox" name="stackboost_settings[ticket_metrics_csat_show_letter]" id="stkb_csat_show_letter" value="1" <?php checked($show_letter); ?>>
+												<?php esc_html_e( 'Letter Grade (e.g., B)', 'stackboost-for-supportcandy' ); ?>
+											</label>
+										</fieldset>
+										<p class="description" style="margin-top:5px;"><?php esc_html_e( 'Select any combination of elements to display for the average CSAT score. If none are selected, it defaults to the Numerical Score.', 'stackboost-for-supportcandy' ); ?></p>
 									</td>
 								</tr>
 							</table>
@@ -1156,7 +1169,9 @@ class Page {
 							ticket_metrics_sla_frt_hours: $('#stkb_sla_frt_hours').val(),
 							ticket_metrics_sla_resolution_hours: $('#stkb_sla_resolution_hours').val(),
 							ticket_metrics_survey_categories: $('#stkb_survey_categories').val() || [],
-							ticket_metrics_survey_grade_mode: $('#stkb_survey_grade_mode').val()
+							ticket_metrics_csat_show_score: $('#stkb_csat_show_score').is(':checked') ? 1 : 0,
+							ticket_metrics_csat_show_percent: $('#stkb_csat_show_percent').is(':checked') ? 1 : 0,
+							ticket_metrics_csat_show_letter: $('#stkb_csat_show_letter').is(':checked') ? 1 : 0
 						};
 
 						// Use dedicated endpoint
