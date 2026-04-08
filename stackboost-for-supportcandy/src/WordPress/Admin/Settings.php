@@ -829,7 +829,6 @@ class Settings {
 				'ticket_metrics_sla_frt_hours',
 				'ticket_metrics_sla_resolution_hours',
 				'ticket_metrics_survey_categories',
-				'ticket_metrics_survey_max_score',
 				'ticket_metrics_survey_grade_mode',
 				'ticket_metrics_verbose_logging',
 				'ticket_metrics_tracked_agents',
@@ -962,14 +961,13 @@ class Settings {
 						$saved_settings[$key] = sanitize_text_field($value);
 						break;
 
-					case 'ticket_metrics_survey_grade_mode':
-						$saved_settings[$key] = in_array( $value, [ 'numerical', 'letter', 'both' ], true ) ? $value : 'numerical';
-						break;
-
 					case 'ticket_metrics_sla_frt_hours':
 					case 'ticket_metrics_sla_resolution_hours':
-					case 'ticket_metrics_survey_max_score':
 						$saved_settings[$key] = max( 0, (float) $value );
+						break;
+
+					case 'ticket_metrics_survey_grade_mode':
+						$saved_settings[$key] = in_array( $value, [ 'numerical', 'letter', 'both' ], true ) ? $value : 'numerical';
 						break;
 
 					case 'ticket_metrics_survey_categories':

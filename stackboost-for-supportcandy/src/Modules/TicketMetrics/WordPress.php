@@ -129,7 +129,6 @@ class WordPress extends Module {
 
 		$options['ticket_metrics_sla_frt_hours'] = isset( $_POST['ticket_metrics_sla_frt_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_frt_hours'] ) : 0;
 		$options['ticket_metrics_sla_resolution_hours'] = isset( $_POST['ticket_metrics_sla_resolution_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_resolution_hours'] ) : 0;
-		$options['ticket_metrics_survey_max_score'] = isset( $_POST['ticket_metrics_survey_max_score'] ) ? max( 0, (float) $_POST['ticket_metrics_survey_max_score'] ) : 0;
 		$options['ticket_metrics_survey_grade_mode'] = isset( $_POST['ticket_metrics_survey_grade_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_survey_grade_mode'] ) ) : 'numerical';
 
 		if ( isset( $_POST['ticket_metrics_survey_categories'] ) && is_array( $_POST['ticket_metrics_survey_categories'] ) ) {
@@ -1960,11 +1959,11 @@ class WordPress extends Module {
 			}
 		}
 
-		// Normalize CSAT against Max Score setting if configured to give it meaning (e.g., 4.2 / 5)
-		$survey_max_score = isset( $options['ticket_metrics_survey_max_score'] ) ? (float) $options['ticket_metrics_survey_max_score'] : 0;
+		// Normalize CSAT against hardcoded Max Score of 5 to give it meaning (e.g., 4.2 / 5)
+		$survey_max_score = 5;
 		$survey_grade_mode = isset( $options['ticket_metrics_survey_grade_mode'] ) ? $options['ticket_metrics_survey_grade_mode'] : 'numerical';
 
-		if ( $survey_max_score > 0 && $metrics['survey_avg_csat'] !== 'N/A' ) {
+		if ( $metrics['survey_avg_csat'] !== 'N/A' ) {
 			$raw_csat = (float) $metrics['survey_avg_csat'];
 			$percentage = round(($raw_csat / $survey_max_score) * 100);
 

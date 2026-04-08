@@ -117,7 +117,6 @@ class Page {
 
 		$sla_frt_hours = isset( $options['ticket_metrics_sla_frt_hours'] ) ? (float) $options['ticket_metrics_sla_frt_hours'] : 0;
 		$sla_resolution_hours = isset( $options['ticket_metrics_sla_resolution_hours'] ) ? (float) $options['ticket_metrics_sla_resolution_hours'] : 0;
-		$survey_max_score = isset( $options['ticket_metrics_survey_max_score'] ) ? (float) $options['ticket_metrics_survey_max_score'] : 0;
 
 		$survey_categories = [];
 		if ( isset( $options['ticket_metrics_survey_categories'] ) && is_array( $options['ticket_metrics_survey_categories'] ) ) {
@@ -208,8 +207,7 @@ class Page {
 		<style>
 			/* Custom grid styles for smaller metric cards as requested */
 			.stkb-metrics-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 20px; }
-			.stkb-metric-col { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 15px; }
-			.stkb-metric-card { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 15px; text-align: center; box-shadow: 0 1px 1px rgba(0,0,0,.04); }
+			.stkb-metric-card { flex: 1 1 30%; max-width: 400px; min-width: 250px; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 15px; text-align: center; box-shadow: 0 1px 1px rgba(0,0,0,.04); }
 			.stkb-metric-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #50575e; }
 			.stkb-metric-card p { margin: 0; font-size: 24px; font-weight: 600; color: #1d2327; }
 			.stkb-breakdown-wrapper { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
@@ -372,77 +370,71 @@ class Page {
 
 				<div id="stkb_metrics_results" style="display:none;">
 					<div class="stkb-metrics-row">
-						<!-- Column 1: Counts -->
-						<div class="stkb-metric-col">
-							<div class="stkb-metric-card" style="padding: 15px;">
-								<h3><?php esc_html_e( 'Touched Tickets', 'stackboost-for-supportcandy' ); ?></h3>
-								<p id="stkb_metric_touched_tickets">0</p>
+						<div class="stkb-metric-card" style="padding: 15px;">
+							<h3><?php esc_html_e( 'Touched Tickets', 'stackboost-for-supportcandy' ); ?></h3>
+							<p id="stkb_metric_touched_tickets">0</p>
+						</div>
+						<div class="stkb-metric-card" style="padding: 15px;">
+							<h3><?php esc_html_e( 'Active Backlog', 'stackboost-for-supportcandy' ); ?></h3>
+							<p id="stkb_metric_active_backlog">0</p>
+						</div>
+						<div class="stkb-metric-card" style="padding: 15px; display: flex; justify-content: space-between;">
+							<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+								<h3><?php esc_html_e( 'Tickets Created', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_total">0</p>
 							</div>
-							<div class="stkb-metric-card" style="padding: 15px;">
-								<h3><?php esc_html_e( 'Active Backlog', 'stackboost-for-supportcandy' ); ?></h3>
-								<p id="stkb_metric_active_backlog">0</p>
+							<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+								<h3><?php esc_html_e( 'Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_total_closed">0</p>
 							</div>
-							<div class="stkb-metric-card" style="padding: 15px; display: flex; justify-content: space-between;">
-								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-									<h3><?php esc_html_e( 'Tickets Created', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_total">0</p>
-								</div>
-								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-									<h3><?php esc_html_e( 'Tickets Closed', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_total_closed">0</p>
-								</div>
-								<div style="flex: 1; text-align: center;">
-									<h3><?php esc_html_e( 'Resolution Rate', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_resolution_rate">0%</p>
-								</div>
+							<div style="flex: 1; text-align: center;">
+								<h3><?php esc_html_e( 'Resolution Rate', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_resolution_rate">0%</p>
 							</div>
 						</div>
 
-						<!-- Column 2: Averages & SLAs -->
-						<div class="stkb-metric-col">
-							<div class="stkb-metric-card" style="padding: 15px; display: flex; justify-content: space-between;">
-								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-									<h3><?php esc_html_e( 'Avg Time to Close', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_avg_open">0</p>
-								</div>
-								<div style="flex: 1; text-align: center;">
-									<h3><?php esc_html_e( 'Avg Age (Open)', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_avg_age_open">0</p>
-								</div>
+						<div class="stkb-metric-card" style="padding: 15px; display: flex; justify-content: space-between;">
+							<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+								<h3><?php esc_html_e( 'Avg Time to Close', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_avg_open">0</p>
 							</div>
-							<div class="stkb-metric-card" style="padding: 15px; display: flex; justify-content: space-between;">
-								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-									<h3><?php esc_html_e( 'Avg Initial Response', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_avg_response">0</p>
-								</div>
-								<div style="flex: 1; text-align: center;">
-									<h3><?php esc_html_e( 'Avg Touches/Ticket', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_avg_touches">0</p>
-								</div>
+							<div style="flex: 1; text-align: center;">
+								<h3><?php esc_html_e( 'Avg Age (Open)', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_avg_age_open">0</p>
 							</div>
-							<div class="stkb-metric-card" id="stkb_metric_sla_card" style="display:none; padding: 15px; justify-content: space-between;">
-								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-									<h3 style="color:#d63638;"><?php esc_html_e( 'FRT SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_sla_frt_breach" style="color:#d63638;">N/A</p>
-								</div>
-								<div style="flex: 1; text-align: center;">
-									<h3 style="color:#d63638;"><?php esc_html_e( 'Resolution SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_sla_resolution_breach" style="color:#d63638;">N/A</p>
-								</div>
+						</div>
+						<div class="stkb-metric-card" style="padding: 15px; display: flex; justify-content: space-between;">
+							<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+								<h3><?php esc_html_e( 'Avg Initial Response', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_avg_response">0</p>
 							</div>
-							<div class="stkb-metric-card" id="stkb_metric_survey_card" style="display:none; padding: 15px; justify-content: space-between;">
-								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-									<h3><?php esc_html_e( 'Survey Responses', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_survey_count">0</p>
-								</div>
-								<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
-									<h3><?php esc_html_e( 'Survey Response Rate', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_survey_rate">N/A</p>
-								</div>
-								<div style="flex: 1; text-align: center;">
-									<h3><?php esc_html_e( 'Avg CSAT Score', 'stackboost-for-supportcandy' ); ?></h3>
-									<p id="stkb_metric_survey_csat">N/A</p>
-								</div>
+							<div style="flex: 1; text-align: center;">
+								<h3><?php esc_html_e( 'Avg Touches/Ticket', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_avg_touches">0</p>
+							</div>
+						</div>
+						<div class="stkb-metric-card" id="stkb_metric_sla_card" style="display:none; padding: 15px; justify-content: space-between;">
+							<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+								<h3 style="color:#d63638;"><?php esc_html_e( 'FRT SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_sla_frt_breach" style="color:#d63638;">N/A</p>
+							</div>
+							<div style="flex: 1; text-align: center;">
+								<h3 style="color:#d63638;"><?php esc_html_e( 'Resolution SLA Breach', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_sla_resolution_breach" style="color:#d63638;">N/A</p>
+							</div>
+						</div>
+						<div class="stkb-metric-card" id="stkb_metric_survey_card" style="display:none; padding: 15px; justify-content: space-between;">
+							<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+								<h3><?php esc_html_e( 'Survey Responses', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_survey_count">0</p>
+							</div>
+							<div style="flex: 1; text-align: center; border-right: 1px solid var(--sb-card-border, #ccd0d4);">
+								<h3><?php esc_html_e( 'Survey Response Rate', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_survey_rate">N/A</p>
+							</div>
+							<div style="flex: 1; text-align: center;">
+								<h3><?php esc_html_e( 'Avg CSAT Score', 'stackboost-for-supportcandy' ); ?></h3>
+								<p id="stkb_metric_survey_csat">N/A</p>
 							</div>
 						</div>
 					</div>
@@ -802,22 +794,15 @@ class Page {
 									</td>
 								</tr>
 								<tr>
-									<th scope="row"><label for="stkb_survey_max_score"><?php esc_html_e( 'Maximum Survey Score', 'stackboost-for-supportcandy' ); ?></label></th>
-									<td>
-										<input type="number" step="0.1" min="0" name="stackboost_settings[ticket_metrics_survey_max_score]" id="stkb_survey_max_score" value="<?php echo esc_attr( $survey_max_score ); ?>" class="small-text">
-										<p class="description"><?php esc_html_e( 'Specify the maximum possible numeric rating your survey allows (e.g., 5 or 10). If configured, the metrics dashboard will automatically normalize the raw CSAT average into a percentage. Leave as 0 to display the raw aggregate average without formatting.', 'stackboost-for-supportcandy' ); ?></p>
-									</td>
-								</tr>
-								<tr>
 									<th scope="row"><label for="stkb_survey_grade_mode"><?php esc_html_e( 'CSAT Display Format', 'stackboost-for-supportcandy' ); ?></label></th>
 									<td>
 										<select name="stackboost_settings[ticket_metrics_survey_grade_mode]" id="stkb_survey_grade_mode">
 											<?php $survey_grade_mode = isset( $options['ticket_metrics_survey_grade_mode'] ) ? $options['ticket_metrics_survey_grade_mode'] : 'numerical'; ?>
 											<option value="numerical" <?php selected( $survey_grade_mode, 'numerical' ); ?>><?php esc_html_e( 'Numerical Score (e.g., 4.2)', 'stackboost-for-supportcandy' ); ?></option>
-											<option value="letter" <?php selected( $survey_grade_mode, 'letter' ); ?>><?php esc_html_e( 'Letter Grade (e.g., B+)', 'stackboost-for-supportcandy' ); ?></option>
-											<option value="both" <?php selected( $survey_grade_mode, 'both' ); ?>><?php esc_html_e( 'Both (e.g., B+ (89%))', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="letter" <?php selected( $survey_grade_mode, 'letter' ); ?>><?php esc_html_e( 'Letter Grade (e.g., B)', 'stackboost-for-supportcandy' ); ?></option>
+											<option value="both" <?php selected( $survey_grade_mode, 'both' ); ?>><?php esc_html_e( 'Both (e.g., B (84%))', 'stackboost-for-supportcandy' ); ?></option>
 										</select>
-										<p class="description"><?php esc_html_e( 'Choose how normalized CSAT scores are displayed in the dashboard. (Requires Maximum Survey Score to be configured above).', 'stackboost-for-supportcandy' ); ?></p>
+										<p class="description"><?php esc_html_e( 'Choose how normalized CSAT scores are displayed in the dashboard.', 'stackboost-for-supportcandy' ); ?></p>
 									</td>
 								</tr>
 							</table>
@@ -1170,7 +1155,6 @@ class Page {
 							ticket_metrics_gemini_api_key: $('#stkb_gemini_api_key').val(),
 							ticket_metrics_sla_frt_hours: $('#stkb_sla_frt_hours').val(),
 							ticket_metrics_sla_resolution_hours: $('#stkb_sla_resolution_hours').val(),
-							ticket_metrics_survey_max_score: $('#stkb_survey_max_score').val(),
 							ticket_metrics_survey_categories: $('#stkb_survey_categories').val() || [],
 							ticket_metrics_survey_grade_mode: $('#stkb_survey_grade_mode').val()
 						};
