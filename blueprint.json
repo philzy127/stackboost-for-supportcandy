@@ -11,7 +11,14 @@
     },
     {
       "step": "installPlugin",
-      "pluginZipFile": {
+      "pluginData": {
+        "resource": "wordpress.org/plugins",
+        "slug": "supportcandy"
+      }
+    },
+    {
+      "step": "installPlugin",
+      "pluginData": {
         "resource": "vfs",
         "path": "/app/stackboost-for-supportcandy.zip"
       }

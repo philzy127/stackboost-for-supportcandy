@@ -1,0 +1,11 @@
+
+WordPress Playground CLI
+
+PHP 8.3  WordPress latest
+Extensions intl
+Mount /app → /app
+Blueprint blueprint.json
+
+Plugin /wordpress/wp-content/plugins/supportcandy activation printed the following bytes: The plugin generated unexpected output.
+
+Ready! WordPress is running on http://127.0.0.1:41369 (6 workers)

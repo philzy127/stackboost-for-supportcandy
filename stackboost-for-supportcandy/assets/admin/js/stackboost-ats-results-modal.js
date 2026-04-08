@@ -1,39 +1,39 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('stackboost-ats-heading-modal');
-    if (!modal) {
+jQuery(document).ready(function($) {
+    const $modal = $('#stackboost-ats-heading-modal');
+    if (!$modal.length) {
         return;
     }
-    const closeModal = modal.querySelector('.close-modal');
-    const form = document.getElementById('stackboost-ats-heading-form');
-    const openBtn = document.getElementById('stackboost-ats-open-headings-modal');
 
-    if (openBtn) {
-        openBtn.addEventListener('click', function() {
-            modal.style.display = 'block';
+    const $form = $('#stackboost-ats-heading-form');
+    const $openBtn = $('#stackboost-ats-open-headings-modal');
+    const $closeModal = $modal.find('.close-modal');
+
+    if ($openBtn.length) {
+        $openBtn.on('click', function() {
+            $modal.show();
         });
     }
 
-    closeModal.addEventListener('click', function() {
-        modal.style.display = 'none';
+    $closeModal.on('click', function() {
+        $modal.hide();
     });
 
-    window.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            modal.style.display = 'none';
+    $(window).on('click', function(event) {
+        if (event.target === $modal[0]) {
+            $modal.hide();
         }
     });
 
-    form.addEventListener('submit', function(e) {
+    $form.on('submit', function(e) {
         e.preventDefault();
 
         const formData = new FormData(this);
         formData.append('action', 'stackboost_ats_update_report_headings');
         formData.append('nonce', stackboost_ats_modal_ajax.nonce);
 
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving...';
+        const $submitBtn = $form.find('button[type="submit"]');
+        const originalText = $submitBtn.text();
+        $submitBtn.prop('disabled', true).text('Saving...');
 
         fetch(stackboost_ats_modal_ajax.ajax_url, {
             method: 'POST',
@@ -42,32 +42,27 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(result => {
             if (result.success) {
-                modal.style.display = 'none';
+                $modal.hide();
 
                 // Update the headings in the table
                 for (let [key, value] of formData.entries()) {
                     if (key.startsWith('report_headings[')) {
                         const questionId = key.match(/\[(\d+)\]/)[1];
-                        const headingElement = document.querySelector(`.stackboost-ats-report-heading-${questionId}`);
-                        if (headingElement) {
+                        const $headingElement = $(`.stackboost-ats-report-heading-${questionId}`);
+                        if ($headingElement.length) {
                             // If value is empty, fallback to placeholder (which is the question text)
-                            const inputElem = document.getElementById(`report_heading_${questionId}`);
-                            headingElement.textContent = value.trim() !== '' ? value.trim() : inputElem.placeholder;
+                            const $inputElem = $(`#report_heading_${questionId}`);
+                            $headingElement.text(value.trim() !== '' ? value.trim() : $inputElem.attr('placeholder'));
                         }
                     }
                 }
 
                 // Show toast notification
-                const toast = document.createElement('div');
-                toast.id = 'stackboost-ats-toast';
-                toast.className = 'show';
-                toast.textContent = 'Headings updated successfully!';
-                document.body.appendChild(toast);
+                const $toast = $('<div id="stackboost-ats-toast" class="show">Headings updated successfully!</div>');
+                $('body').append($toast);
                 setTimeout(() => {
-                    toast.className = toast.className.replace('show', '');
-                    if (document.body.contains(toast)) {
-                        document.body.removeChild(toast);
-                    }
+                    $toast.removeClass('show');
+                    setTimeout(() => $toast.remove(), 300); // Allow fadeout transition if any
                 }, 3000);
 
             } else {
@@ -79,8 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('An unexpected error occurred.');
         })
         .finally(() => {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
+            $submitBtn.prop('disabled', false).text(originalText);
         });
     });
 });

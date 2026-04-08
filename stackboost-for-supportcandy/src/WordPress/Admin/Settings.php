@@ -833,7 +833,8 @@ class Settings {
 				'ticket_metrics_tracked_agents',
 				'ticket_metrics_other_issues_rules',
 				'ticket_metrics_gemini_api_key',
-				'ticket_metrics_gemini_api_key_locked'
+				'ticket_metrics_gemini_api_key_locked',
+				'ticket_metrics_survey_categories'
 			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
@@ -975,6 +976,10 @@ class Settings {
 
 					case 'ticket_metrics_other_issues_rules':
 						$saved_settings[$key] = is_array($value) ? $value : [];
+						break;
+
+					case 'ticket_metrics_survey_categories':
+						$saved_settings[$key] = is_array($value) ? array_map('sanitize_text_field', $value) : [];
 						break;
 
 					case 'holidays':
