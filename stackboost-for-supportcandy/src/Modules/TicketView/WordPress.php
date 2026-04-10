@@ -790,7 +790,7 @@ class WordPress extends Module {
 
 			// Common Data
 			$author_name = $thread->customer ? $thread->customer->name : __( 'Unknown', 'stackboost-for-supportcandy' );
-			$date_str = $thread->date_created->setTimezone( wp_timezone() )->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
+			$date_str = $thread->date_created->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
 
 			// Render
 			if ( $chat_bubbles ) {

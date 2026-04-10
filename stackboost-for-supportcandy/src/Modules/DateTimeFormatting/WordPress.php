@@ -296,7 +296,7 @@ class WordPress extends Module {
 			$date_str = $date_object;
 			try {
 				$date_object = new DateTime( $date_str );
-				$date_object->setTimezone( wp_timezone() );
+
 				stackboost_log( "format_date_time_callback: Successfully converted string to DateTime.", 'date_time_formatting' );
 			} catch ( \Exception $e ) {
 				stackboost_log( "format_date_time_callback: Failed to convert string to DateTime. Error: " . $e->getMessage(), 'date_time_formatting' );
@@ -308,7 +308,7 @@ class WordPress extends Module {
 					$fallback_str = str_replace( '-', '/', $date_str );
 					try {
 						$date_object = new DateTime( $fallback_str );
-						$date_object->setTimezone( wp_timezone() );
+
 						stackboost_log( "format_date_time_callback: Successfully converted fallback string (slashes) to DateTime.", 'date_time_formatting' );
 					} catch ( \Exception $e2 ) {
 						stackboost_log( "format_date_time_callback: Fallback conversion failed. Returning original value.", 'date_time_formatting' );
