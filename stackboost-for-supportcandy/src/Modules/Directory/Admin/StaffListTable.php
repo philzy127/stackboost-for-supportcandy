@@ -175,10 +175,10 @@ class StaffListTable extends \WP_List_Table {
 		$post_status = Request::get_request( 'post_status', '', 'key' );
 
 		if ( 'trash' === $post_status ) {
-			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=untrash&post=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
-			$actions['delete']  = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=delete&post=' . $item->ID ), 'delete-post_' . $item->ID ), __( 'Delete Permanently', 'stackboost-for-supportcandy' ) );
+			$actions['untrash'] = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=untrash&post[]=' . $item->ID ), 'untrash-post_' . $item->ID ), __( 'Restore', 'stackboost-for-supportcandy' ) );
+			$actions['delete']  = sprintf( '<a href="%s">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=delete&post[]=' . $item->ID ), 'delete-post_' . $item->ID ), __( 'Delete Permanently', 'stackboost-for-supportcandy' ) );
 		} else {
-			$actions['trash'] = sprintf( '<a href="%s" class="submitdelete">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=trash&post=' . $item->ID ), 'trash-post_' . $item->ID ), __( 'Trash', 'stackboost-for-supportcandy' ) );
+			$actions['trash'] = sprintf( '<a href="%s" class="submitdelete">%s</a>', wp_nonce_url( admin_url( 'admin.php?page=stackboost-directory&tab=staff&action=trash&post[]=' . $item->ID ), 'trash-post_' . $item->ID ), __( 'Trash', 'stackboost-for-supportcandy' ) );
 		}
 
 		return sprintf( '<strong><a class="row-title" href="%s">%s</a></strong>%s', get_edit_post_link( $item->ID ), $item->post_title, $this->row_actions( $actions ) );
@@ -273,7 +273,20 @@ class StaffListTable extends \WP_List_Table {
 		// Ensure IDs are integers
 		$post_ids = array_map( 'intval', $post_ids );
 
-		check_admin_referer( 'bulk-' . $this->_args['plural'] );
+		// Check if this is a single item action with a specific nonce, or a bulk action
+		$is_single_action = false;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( count( $post_ids ) === 1 && isset( $_REQUEST['_wpnonce'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$nonce = sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) );
+			if ( wp_verify_nonce( $nonce, $action . '-post_' . $post_ids[0] ) ) {
+				$is_single_action = true;
+			}
+		}
+
+		if ( ! $is_single_action ) {
+			check_admin_referer( 'bulk-' . $this->_args['plural'] );
+		}
 
 		switch ( $action ) {
 			case 'trash':
