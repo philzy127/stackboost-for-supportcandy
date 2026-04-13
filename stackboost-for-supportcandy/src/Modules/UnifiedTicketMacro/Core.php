@@ -208,7 +208,7 @@ class Core {
 					break;
 				case 'cf_date':
 					$date_obj = clone $field_value;
-
+					$date_obj->setTimezone( wp_timezone() );
 					$display_value = $date_obj->format( get_option( 'date_format' ) );
 					break;
 				case 'cf_datetime':
@@ -217,7 +217,7 @@ class Core {
 				case 'df_date_closed':
 				case 'df_last_reply_on':
 					$date_obj = clone $field_value;
-
+					$date_obj->setTimezone( wp_timezone() );
 					$display_value = $date_obj->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
 					break;
 				case 'cf_single_select':
@@ -371,7 +371,7 @@ class Core {
 
 			// Common Data
 			$author_name = $thread->customer ? $thread->customer->name : __( 'Unknown', 'stackboost-for-supportcandy' );
-			$date_str = $thread->date_created->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
+			$date_str = $thread->date_created->setTimezone( wp_timezone() )->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
 
 			// Render
 			if ( $chat_bubbles ) {
