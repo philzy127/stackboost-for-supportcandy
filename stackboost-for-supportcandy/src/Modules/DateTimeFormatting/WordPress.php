@@ -297,16 +297,14 @@ class WordPress extends Module {
 		if ( is_string( $date_object ) && ! empty( $date_object ) ) {
 			$date_str = $date_object;
 
-			// Standard intrinsic fields from SC already have local timezone applied by the time they are strings here.
-			// Custom fields are typically raw UTC DB strings.
-			$is_standard_field = in_array( $field_slug, [ 'date_created', 'last_reply_on', 'date_closed', 'date_updated' ], true );
-			$tz = $is_standard_field ? wp_timezone() : new DateTimeZone('UTC');
+			// Both intrinsic fields and custom date/time fields from SC already have
+			// the local timezone applied by the time they are strings here (via date_i18n or explicit timezone shifts).
+			// We MUST explicitly parse them as local time using wp_timezone()
+			// so that PHP extracts the correct underlying UTC timestamp, preventing double-shifting by wp_date.
+			$tz = wp_timezone();
 
 			try {
 				$date_object = new DateTime( $date_str, $tz );
-				if ( ! $is_standard_field ) {
-					$date_object->setTimezone( wp_timezone() );
-				}
 				stackboost_log( "format_date_time_callback: Successfully converted string to DateTime.", 'date_time_formatting' );
 			} catch ( \Exception $e ) {
 				stackboost_log( "format_date_time_callback: Failed to convert string to DateTime. Error: " . $e->getMessage(), 'date_time_formatting' );
@@ -318,10 +316,6 @@ class WordPress extends Module {
 					$fallback_str = str_replace( '-', '/', $date_str );
 					try {
 						$date_object = new DateTime( $fallback_str, $tz );
-						if ( ! $is_standard_field ) {
-							$date_object->setTimezone( wp_timezone() );
-						}
-
 						stackboost_log( "format_date_time_callback: Successfully converted fallback string (slashes) to DateTime.", 'date_time_formatting' );
 					} catch ( \Exception $e2 ) {
 						stackboost_log( "format_date_time_callback: Fallback conversion failed. Returning original value.", 'date_time_formatting' );
