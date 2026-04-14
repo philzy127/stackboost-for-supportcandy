@@ -278,29 +278,20 @@ class WordPress extends Module {
 		}
 
 		// GET AND VALIDATE DATE OBJECT
-		// Note: The property name on the ticket object typically matches the slug.
-		$date_object = isset($ticket->{$field_slug}) ? $ticket->{$field_slug} : null;
+		// SupportCandy passes the localized, formatted string directly to this hook via $value.
+		// We strictly use $value, avoiding raw ticket objects, to prevent double-shifting timezones.
+		$date_object = $value;
 
-		stackboost_log( "format_date_time_callback: Initial Date Object Type: " . gettype($date_object), 'date_time_formatting' );
-
-		// Fallback: If ticket property is null, try using the filter value itself.
-		if ( empty( $date_object ) && ! empty( $value ) ) {
-			stackboost_log( "format_date_time_callback: Ticket property is empty. Using filter value: " . $value, 'date_time_formatting' );
-			$date_object = $value;
+		if ( empty( $date_object ) ) {
+			stackboost_log( "format_date_time_callback: Empty value received from hook.", 'date_time_formatting' );
+			return $value;
 		}
 
-		if ( is_string($date_object) ) {
+		if ( is_string( $date_object ) ) {
 			stackboost_log( "format_date_time_callback: Initial Date String: " . $date_object, 'date_time_formatting' );
-		}
-
-		// If the date object is a string (raw DB format), convert it to DateTime.
-		if ( is_string( $date_object ) && ! empty( $date_object ) ) {
 			$date_str = $date_object;
 
-			// Both intrinsic fields and custom date/time fields from SC already have
-			// the local timezone applied by the time they are strings here (via date_i18n or explicit timezone shifts).
-			// We MUST explicitly parse them as local time using wp_timezone()
-			// so that PHP extracts the correct underlying UTC timestamp, preventing double-shifting by wp_date.
+			// SupportCandy strings are already localized. Parse them as local time explicitly.
 			$tz = wp_timezone();
 
 			try {
