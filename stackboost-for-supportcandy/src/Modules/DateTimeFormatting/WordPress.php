@@ -190,8 +190,10 @@ class WordPress extends Module {
 			return;
 		}
 
-		// Add a single filter for all datetime custom fields.
+		// Add filters for all custom date/time fields.
 		add_filter( 'wpsc_ticket_field_val_datetime', [ $this, 'format_date_time_callback' ], 10, 4 );
+		add_filter( 'wpsc_ticket_field_val_date', [ $this, 'format_date_time_callback' ], 10, 4 );
+		add_filter( 'wpsc_ticket_field_val_time', [ $this, 'format_date_time_callback' ], 10, 4 );
 
 		// Add filters for all potential standard fields. The callback will check if a rule exists.
 		$standard_fields = [ 'date_created', 'last_reply_on', 'date_closed', 'date_updated' ];
@@ -247,7 +249,7 @@ class WordPress extends Module {
 		// GET SLUG
 		$current_filter = current_filter();
 		$field_slug     = null;
-		if ( strpos( $current_filter, 'wpsc_ticket_field_val_datetime' ) !== false ) {
+		if ( strpos( $current_filter, 'wpsc_ticket_field_val_datetime' ) !== false || strpos( $current_filter, 'wpsc_ticket_field_val_date' ) !== false || strpos( $current_filter, 'wpsc_ticket_field_val_time' ) !== false ) {
 			if ( is_object( $cf ) && isset( $cf->slug ) ) {
 				$field_slug = $cf->slug;
 			}
