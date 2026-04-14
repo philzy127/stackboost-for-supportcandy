@@ -199,7 +199,7 @@ class Page {
 		$repo = new SupportCandyRepository();
 
 		// Use the repository method to fetch datetime, date, and time fields.
-		$target_types = [ 'datetime', 'date', 'time' ];
+		$target_types = [ 'cf_datetime', 'cf_date', 'cf_time' ];
 		foreach ( $target_types as $type ) {
 			$fields = $repo->get_custom_fields_by_type( $type );
 			if ( $fields ) {
