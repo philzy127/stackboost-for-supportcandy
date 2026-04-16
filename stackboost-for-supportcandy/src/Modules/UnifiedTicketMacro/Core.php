@@ -206,18 +206,24 @@ class Core {
 				case 'df_description':
 					// Already handled above to ensure it works even if $field_value is empty.
 					break;
-				case 'cf_date':
-					$date_obj = clone $field_value;
-					$date_obj->setTimezone( wp_timezone() );
-					$display_value = $date_obj->format( get_option( 'date_format' ) );
-					break;
-				case 'cf_datetime':
 				case 'df_date_created':
 				case 'df_date_updated':
 				case 'df_date_closed':
 				case 'df_last_reply_on':
+					// Standard intrinsic fields are stored as pure UTC. They must be shifted to the site's local timezone.
 					$date_obj = clone $field_value;
 					$date_obj->setTimezone( wp_timezone() );
+					$display_value = $date_obj->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
+					break;
+				case 'cf_date':
+					// Custom Date fields are stored as exact local times in the DB without UTC conversion.
+					// Applying wp_timezone() would incorrectly shift them.
+					$date_obj = clone $field_value;
+					$display_value = $date_obj->format( get_option( 'date_format' ) );
+					break;
+				case 'cf_datetime':
+					// Custom DateTime fields are stored as exact local times in the DB without UTC conversion.
+					$date_obj = clone $field_value;
 					$display_value = $date_obj->format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) );
 					break;
 				case 'cf_single_select':
