@@ -72,6 +72,7 @@ class WordPress extends Module {
 	public function sanitize_settings( $input ) {
 		$output = [];
 		$output['enable_date_time_formatting'] = ! empty( $input['enable_date_time_formatting'] ) ? 1 : 0;
+		$output['apply_custom_field_offset'] = ! empty( $input['apply_custom_field_offset'] ) ? 1 : 0;
 
 		if ( isset( $input['date_format_rules'] ) && is_array( $input['date_format_rules'] ) ) {
 			$sanitized_rules = [];
@@ -341,11 +342,11 @@ class WordPress extends Module {
 			return $value;
 		}
 
-		// Because we explicitly initialized the DateTime object with wp_timezone(),
-		// its getTimestamp() method now correctly reflects the UTC Unix Timestamp for that local time.
-		// When wp_date() receives this timestamp, it natively subtracts the local offset exactly once, perfectly rendering the exact time the user originally input.
-
 		// APPLY FORMAT
+		// We have a global settings array we can check to determine if we should offset the timezone natively via wp_date().
+		$options = get_option( 'stackboost_date_time_settings', [] );
+		$apply_offset = ! empty( $options['apply_custom_field_offset'] ) || $is_standard_field;
+
 		$timestamp         = $date_object->getTimestamp();
 		$new_value         = $value;
 		$short_date_format = 'm/d/Y';
@@ -358,19 +359,27 @@ class WordPress extends Module {
 			$date_format = $day_prefix . $date_format;
 		}
 
+		// Helper function for conditional shifting
+		$format_func = function( $format_str ) use ( $apply_offset, $date_object, $timestamp ) {
+			if ( $apply_offset ) {
+				return wp_date( $format_str, $timestamp );
+			}
+			return $date_object->format( $format_str );
+		};
+
 		switch ( $rule['format_type'] ) {
 			case 'date_only':
-				$new_value = wp_date( $date_format, $timestamp );
+				$new_value = $format_func( $date_format );
 				break;
 			case 'time_only':
-				$new_value = wp_date( $time_format, $timestamp );
+				$new_value = $format_func( $time_format );
 				break;
 			case 'date_and_time':
-				$new_value = wp_date( $date_format . ' ' . $time_format, $timestamp );
+				$new_value = $format_func( $date_format . ' ' . $time_format );
 				break;
 			case 'custom':
 				if ( ! empty( $rule['custom_format'] ) ) {
-					$new_value = wp_date( $rule['custom_format'], $timestamp );
+					$new_value = $format_func( $rule['custom_format'] );
 				}
 				break;
 		}
