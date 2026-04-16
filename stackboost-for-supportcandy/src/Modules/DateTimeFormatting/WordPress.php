@@ -278,43 +278,61 @@ class WordPress extends Module {
 		}
 
 		// GET AND VALIDATE DATE OBJECT
-		// SupportCandy passes the localized, formatted string directly to this hook via $value.
-		// We strictly use $value, avoiding raw ticket objects, to prevent double-shifting timezones.
-		$date_object = $value;
+		// SupportCandy saves Custom Date/Time fields literally into the DB without converting them to UTC first.
+		// When it reads them into the ticket model as DateTime objects, PHP defaults to assigning them the UTC timezone.
+		// We must extract the raw literal string from the ticket object to discard PHP's incorrect UTC assignment,
+		// and then explicitly define that the string represents the site's local timezone.
 
-		if ( empty( $date_object ) ) {
-			stackboost_log( "format_date_time_callback: Empty value received from hook.", 'date_time_formatting' );
+		$ticket_cf_obj = isset($ticket->{$field_slug}) ? $ticket->{$field_slug} : null;
+
+		// Determine if this is a standard intrinsic field (which SupportCandy natively stores as true UTC)
+		// or a custom field (which SupportCandy stores as literal local time directly into the DB).
+		$is_standard_field = in_array( $field_slug, [ 'date_created', 'last_reply_on', 'date_closed', 'date_updated' ], true );
+
+		// 1. If it's a DateTime object in the ticket, extract its literal string value to discard the incorrect UTC timezone.
+		if ( $ticket_cf_obj instanceof DateTime ) {
+			$date_str = $ticket_cf_obj->format('Y-m-d H:i:s');
+		}
+		// 2. If it's just a raw string (e.g. from the hook or a legacy DB value), use it directly.
+		elseif ( is_string( $ticket_cf_obj ) && ! empty( $ticket_cf_obj ) ) {
+			$date_str = $ticket_cf_obj;
+		}
+		// 3. If the ticket object doesn't have it, fallback to the string passed by the filter hook.
+		elseif ( is_string( $value ) && ! empty( $value ) ) {
+			$date_str = $value;
+		}
+		// 4. If all else fails, we can't format it.
+		else {
+			stackboost_log( "format_date_time_callback: No valid date source found.", 'date_time_formatting' );
 			return $value;
 		}
 
-		if ( is_string( $date_object ) ) {
-			stackboost_log( "format_date_time_callback: Initial Date String: " . $date_object, 'date_time_formatting' );
-			$date_str = $date_object;
+		// If it's a standard intrinsic SC field, it was stored in the database as pure UTC.
+		// If it's a custom field, it was stored in the database exactly as the user typed it (local time).
+		$tz = $is_standard_field ? new DateTimeZone('UTC') : wp_timezone();
+		$date_object = null;
 
-			// SupportCandy strings are already localized. Parse them as local time explicitly.
-			$tz = wp_timezone();
+		try {
+			// Explicitly declare the timezone the string originated in.
+			$date_object = new DateTime( $date_str, $tz );
+			stackboost_log( "format_date_time_callback: Successfully explicitly converted string '{$date_str}' to DateTime.", 'date_time_formatting' );
+		} catch ( \Exception $e ) {
+			stackboost_log( "format_date_time_callback: Failed to convert string to DateTime. Error: " . $e->getMessage(), 'date_time_formatting' );
 
-			try {
-				$date_object = new DateTime( $date_str, $tz );
-				stackboost_log( "format_date_time_callback: Successfully converted string to DateTime.", 'date_time_formatting' );
-			} catch ( \Exception $e ) {
-				stackboost_log( "format_date_time_callback: Failed to convert string to DateTime. Error: " . $e->getMessage(), 'date_time_formatting' );
-
-				// Fallback: SupportCandy might format dates as 'm-d-Y' (US format with dashes)
-				// PHP's DateTime assumes dashes = European (d-m-y), so '01-30-2024' fails (Month 30).
-				// We try replacing dashes with slashes to force 'm/d/y' parsing.
-				if ( strpos( $date_str, '-' ) !== false ) {
-					$fallback_str = str_replace( '-', '/', $date_str );
-					try {
-						$date_object = new DateTime( $fallback_str, $tz );
-						stackboost_log( "format_date_time_callback: Successfully converted fallback string (slashes) to DateTime.", 'date_time_formatting' );
-					} catch ( \Exception $e2 ) {
-						stackboost_log( "format_date_time_callback: Fallback conversion failed. Returning original value.", 'date_time_formatting' );
-						return $value;
-					}
-				} else {
+			// Fallback: SupportCandy might format dates as 'm-d-Y' (US format with dashes)
+			// PHP's DateTime assumes dashes = European (d-m-y), so '01-30-2024' fails (Month 30).
+			// We try replacing dashes with slashes to force 'm/d/y' parsing.
+			if ( strpos( $date_str, '-' ) !== false ) {
+				$fallback_str = str_replace( '-', '/', $date_str );
+				try {
+					$date_object = new DateTime( $fallback_str, $tz );
+					stackboost_log( "format_date_time_callback: Successfully converted fallback string '{$fallback_str}' to local DateTime.", 'date_time_formatting' );
+				} catch ( \Exception $e2 ) {
+					stackboost_log( "format_date_time_callback: Fallback conversion failed. Returning original value.", 'date_time_formatting' );
 					return $value;
 				}
+			} else {
+				return $value;
 			}
 		}
 
@@ -322,6 +340,10 @@ class WordPress extends Module {
 			stackboost_log( "format_date_time_callback: Not a valid DateTime object after processing. Returning original value.", 'date_time_formatting' );
 			return $value;
 		}
+
+		// Because we explicitly initialized the DateTime object with wp_timezone(),
+		// its getTimestamp() method now correctly reflects the UTC Unix Timestamp for that local time.
+		// When wp_date() receives this timestamp, it natively subtracts the local offset exactly once, perfectly rendering the exact time the user originally input.
 
 		// APPLY FORMAT
 		$timestamp         = $date_object->getTimestamp();
