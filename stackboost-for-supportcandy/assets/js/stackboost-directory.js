@@ -14,6 +14,26 @@ jQuery(document).ready(function($) {
 
     sbLog('Script loaded. Secure Context: ' + window.isSecureContext);
 
+    // Frontend Export to Google CSV Trigger
+    $('#stackboost-directory-export-google-csv').on('click', function(e) {
+        e.preventDefault();
+        var $button = $(this);
+        var originalText = $button.text();
+        $button.prop('disabled', true).text('Exporting...');
+
+        var form = $('<form></form>').attr('action', stackboostPublicAjax.ajax_url).attr('method', 'post');
+        form.append($('<input></input>').attr('type', 'hidden').attr('name', 'action').attr('value', 'stackboost_directory_export_csv_google_public'));
+        form.append($('<input></input>').attr('type', 'hidden').attr('name', 'nonce').attr('value', stackboostPublicAjax.export_csv_nonce));
+
+        $('body').append(form);
+        form.submit();
+        form.remove();
+
+        setTimeout(function() {
+            $button.prop('disabled', false).text(originalText);
+        }, 3000);
+    });
+
     // 2. Robust DataTables Initialization
     // Check if table exists and is visible to avoid cloneNode errors
     var $table = $('#stackboostStaffDirectoryTable');

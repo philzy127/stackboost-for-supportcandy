@@ -64,6 +64,10 @@ class WordPress {
 		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
 		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
+
+		add_action( 'wp_ajax_stackboost_directory_export_csv_google_public', array( $this, 'ajax_export_csv_google_public' ) );
+		add_action( 'wp_ajax_nopriv_stackboost_directory_export_csv_google_public', array( $this, 'ajax_export_csv_google_public' ) );
+
 		Management::register_ajax_actions();
 
 		// Hook for rendering the ticket widget.
@@ -339,6 +343,7 @@ class WordPress {
 				array(
 					'ajax_url'                   => admin_url( 'admin-ajax.php' ),
 					'stackboost_directory_nonce' => wp_create_nonce( 'stackboost_directory_public_nonce' ),
+					'export_csv_nonce'           => wp_create_nonce( 'stackboost_directory_csv_export_google_public' ),
 					'no_entries_found'           => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
 					'debug_enabled'              => $debug_enabled,
 				)
@@ -503,6 +508,94 @@ class WordPress {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * AJAX handler for exporting directory data to CSV specifically formatted for Google Contacts (Public).
+	 */
+	public function ajax_export_csv_google_public() {
+		check_ajax_referer( 'stackboost_directory_csv_export_google_public', 'nonce' );
+
+		$posts = get_posts(
+			array(
+				'post_type'      => $this->core->cpts->post_type,
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+			)
+		);
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="company-directory-' . gmdate( 'Y-m-d' ) . '.csv"' );
+		header( 'Expires: 0' );
+		header( 'Cache-Control: must-revalidate' );
+		header( 'Pragma: public' );
+
+		$output = fopen( 'php://output', 'w' );
+
+		// Add UTF-8 BOM for Excel compatibility
+		fwrite( $output, chr(0xEF) . chr(0xBB) . chr(0xBF) );
+
+		// Define Google Contacts Headers
+		$headers = array(
+			'Name',
+			'Given Name',
+			'Family Name',
+			'E-mail 1 - Type',
+			'E-mail 1 - Value',
+			'Phone 1 - Type',
+			'Phone 1 - Value',
+			'Phone 2 - Type',
+			'Phone 2 - Value',
+			'Organization 1 - Title',
+			'Organization 1 - Department',
+		);
+		fputcsv( $output, $headers );
+
+		foreach ( $posts as $post ) {
+			// Basic visibility check for public export
+			$active  = get_post_meta( $post->ID, '_active', true );
+			$private = get_post_meta( $post->ID, '_private', true );
+
+			if ( 'Yes' !== $active || 'Yes' === $private ) {
+				continue;
+			}
+
+			$name = $post->post_title;
+			$parts = explode( ' ', $name, 2 );
+			$given_name = $parts[0] ?? '';
+			$family_name = $parts[1] ?? '';
+
+			$email        = get_post_meta( $post->ID, '_email_address', true );
+			$office_phone = get_post_meta( $post->ID, '_office_phone', true );
+			$extension    = get_post_meta( $post->ID, '_extension', true );
+			$mobile_phone = get_post_meta( $post->ID, '_mobile_phone', true );
+			$job_title    = get_post_meta( $post->ID, '_stackboost_staff_job_title', true );
+			$department   = get_post_meta( $post->ID, '_department_program', true );
+
+			$office_full = $office_phone;
+			if ( ! empty( $office_full ) && ! empty( $extension ) ) {
+				$office_full .= ' x' . $extension;
+			}
+
+			$row = array(
+				$name,
+				$given_name,
+				$family_name,
+				'* Work', // E-mail 1 - Type
+				$email,
+				'Work', // Phone 1 - Type
+				$office_full,
+				'Mobile', // Phone 2 - Type
+				$mobile_phone,
+				$job_title,
+				$department,
+			);
+
+			fputcsv( $output, $row );
+		}
+
+		fclose( $output );
+		wp_die();
 	}
 
 	/**

@@ -199,6 +199,12 @@ class DirectoryShortcode {
                 </div>
             <?php endif; ?>
 
+			<div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+				<button id="stackboost-directory-export-google-csv" class="stackboost-btn stackboost-btn-secondary" style="font-size: 13px; padding: 5px 10px;">
+					<?php esc_html_e( 'Export to Google Contacts', 'stackboost-for-supportcandy' ); ?>
+				</button>
+			</div>
+
 			<div id="stackboost-full-directory-table-wrapper">
 				<?php if ( ! empty( $employees ) ) : ?>
 					<table id="stackboostStaffDirectoryTable"
