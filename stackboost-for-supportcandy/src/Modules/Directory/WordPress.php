@@ -551,6 +551,15 @@ class WordPress {
 		);
 		fputcsv( $output, $headers );
 
+		// Helper function to prevent CSV Injection (forces Excel to treat value as text)
+		$sanitize_csv_field = function( $value ) {
+			$value = (string) $value;
+			if ( preg_match( '/^[\=\-\+\@]/', $value ) ) {
+				return "'" . $value;
+			}
+			return $value;
+		};
+
 		foreach ( $posts as $post ) {
 			// Basic visibility check for public export
 			$active  = get_post_meta( $post->ID, '_active', true );
@@ -578,17 +587,17 @@ class WordPress {
 			}
 
 			$row = array(
-				$name,
-				$given_name,
-				$family_name,
+				$sanitize_csv_field( $name ),
+				$sanitize_csv_field( $given_name ),
+				$sanitize_csv_field( $family_name ),
 				'* Work', // E-mail 1 - Type
-				$email,
+				$sanitize_csv_field( $email ),
 				'Work', // Phone 1 - Type
-				$office_full,
+				$sanitize_csv_field( $office_full ),
 				'Mobile', // Phone 2 - Type
-				$mobile_phone,
-				$job_title,
-				$department,
+				$sanitize_csv_field( $mobile_phone ),
+				$sanitize_csv_field( $job_title ),
+				$sanitize_csv_field( $department ),
 			);
 
 			fputcsv( $output, $row );
