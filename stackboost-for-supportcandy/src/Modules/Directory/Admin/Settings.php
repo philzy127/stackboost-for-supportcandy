@@ -71,6 +71,12 @@ class Settings {
 			$sanitized_input['revisions_to_keep'] = '';
 		}
 
+		if ( isset( $input['csv_export_no_split_phrases'] ) ) {
+			$sanitized_input['csv_export_no_split_phrases'] = sanitize_text_field( $input['csv_export_no_split_phrases'] );
+		} else {
+			$sanitized_input['csv_export_no_split_phrases'] = '';
+		}
+
 		return $sanitized_input;
 	}
 
@@ -83,6 +89,7 @@ class Settings {
 		$management_roles     = $options['management_roles'] ?? array( 'administrator' );
 		$listing_display_mode = $options['listing_display_mode'] ?? 'page';
 		$revisions_to_keep    = $options['revisions_to_keep'] ?? '';
+		$csv_export_no_split_phrases = $options['csv_export_no_split_phrases'] ?? '';
 
         $theme_class = 'sb-theme-clean-tech';
         if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -118,6 +125,19 @@ class Settings {
 						<td>
 							<input type="number" id="stackboost-revisions-to-keep" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[revisions_to_keep]" value="<?php echo esc_attr( $revisions_to_keep ); ?>" class="small-text">
 							<p class="description"><?php esc_html_e( 'Set the number of revisions to keep for Staff, Locations, and Departments. Leave empty or set to -1 for unlimited. Set to 0 to disable revisions.', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+				<hr>
+				<h2><?php esc_html_e( 'Export Settings', 'stackboost-for-supportcandy' ); ?></h2>
+				<table class="form-table">
+					<tr valign="top">
+						<th scope="row">
+							<label for="stackboost-csv-export-no-split-phrases"><?php esc_html_e( 'Name Split Exceptions', 'stackboost-for-supportcandy' ); ?></label>
+						</th>
+						<td>
+							<input type="text" id="stackboost-csv-export-no-split-phrases" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[csv_export_no_split_phrases]" value="<?php echo esc_attr( $csv_export_no_split_phrases ); ?>" class="regular-text">
+							<p class="description"><?php esc_html_e( 'Comma-separated list of phrases that should NOT be split into First/Last name during CSV export (e.g., "On Call, Help Desk"). If a directory entry title contains any of these phrases, the entire title will be placed in the Given Name column.', 'stackboost-for-supportcandy' ); ?></p>
 						</td>
 					</tr>
 				</table>

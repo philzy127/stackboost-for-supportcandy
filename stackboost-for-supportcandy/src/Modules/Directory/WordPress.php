@@ -551,6 +551,10 @@ class WordPress {
 		);
 		fputcsv( $output, $headers );
 
+		$options = get_option( Settings::OPTION_NAME, array() );
+		$no_split_raw = $options['csv_export_no_split_phrases'] ?? '';
+		$no_split_phrases = array_filter( array_map( 'trim', explode( ',', $no_split_raw ) ) );
+
 		// Helper function to prevent CSV Injection (forces Excel to treat value as text)
 		$sanitize_csv_field = function( $value ) {
 			$value = (string) $value;
@@ -570,13 +574,29 @@ class WordPress {
 			}
 
 			$name = $post->post_title;
-			$parts = explode( ' ', $name, 2 );
-			$given_name = $parts[0] ?? '';
-			$family_name = $parts[1] ?? '';
 
-			// Strip leading hyphens from Family Name while preserving internal hyphens
-			if ( ! empty( $family_name ) ) {
-				$family_name = ltrim( $family_name, '-' );
+			$should_split = true;
+			foreach ( $no_split_phrases as $phrase ) {
+				if ( stripos( $name, $phrase ) !== false ) {
+					$should_split = false;
+					break;
+				}
+			}
+
+			if ( $should_split ) {
+				$parts = explode( ' ', $name, 2 );
+				$given_name = $parts[0] ?? '';
+				$family_name = $parts[1] ?? '';
+
+				// Trim spaces, then strip leading hyphens, then trim spaces again
+				if ( ! empty( $family_name ) ) {
+					$family_name = trim( $family_name );
+					$family_name = ltrim( $family_name, '-' );
+					$family_name = trim( $family_name );
+				}
+			} else {
+				$given_name = $name;
+				$family_name = '';
 			}
 
 			$email        = get_post_meta( $post->ID, '_email_address', true );
