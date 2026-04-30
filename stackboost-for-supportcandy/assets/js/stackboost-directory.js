@@ -18,8 +18,9 @@ jQuery(document).ready(function($) {
     $('#stackboost-directory-export-google-csv').on('click', function(e) {
         e.preventDefault();
         var $button = $(this);
-        var originalText = $button.text();
-        $button.prop('disabled', true).text('Exporting...');
+        var originalHtml = $button.html();
+
+        $button.prop('disabled', true).html('<span style="padding: 0 10px;">Exporting...</span>');
 
         var form = $('<form></form>').attr('action', stackboostPublicAjax.ajax_url).attr('method', 'post');
         form.append($('<input></input>').attr('type', 'hidden').attr('name', 'action').attr('value', 'stackboost_directory_export_csv_google_public'));
@@ -30,7 +31,7 @@ jQuery(document).ready(function($) {
         form.remove();
 
         setTimeout(function() {
-            $button.prop('disabled', false).text(originalText);
+            $button.prop('disabled', false).html(originalHtml);
         }, 3000);
     });
 

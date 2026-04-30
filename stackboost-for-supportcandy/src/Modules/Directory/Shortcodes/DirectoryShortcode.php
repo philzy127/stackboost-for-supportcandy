@@ -200,8 +200,8 @@ class DirectoryShortcode {
             <?php endif; ?>
 
 			<div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-				<button id="stackboost-directory-export-google-csv" class="stackboost-btn stackboost-btn-secondary" style="font-size: 13px; padding: 5px 10px;">
-					<?php esc_html_e( 'Export to Google Contacts', 'stackboost-for-supportcandy' ); ?>
+				<button id="stackboost-directory-export-google-csv" class="stackboost-btn stackboost-btn-secondary" style="background: none; border: none; box-shadow: none; padding: 0; cursor: pointer;" title="<?php esc_attr_e( 'Export for Google Contacts', 'stackboost-for-supportcandy' ); ?>">
+					<img src="<?php echo esc_url( \STACKBOOST_PLUGIN_URL . 'assets/images/google-contacts-icon.png' ); ?>" alt="<?php esc_attr_e( 'Export for Google Contacts', 'stackboost-for-supportcandy' ); ?>" style="width: 32px; height: 32px; vertical-align: middle;">
 				</button>
 			</div>
 
