@@ -18,9 +18,14 @@ jQuery(document).ready(function($) {
     $('#stackboost-directory-export-google-csv').on('click', function(e) {
         e.preventDefault();
         var $button = $(this);
-        var originalHtml = $button.html();
 
-        $button.prop('disabled', true).html('<span style="padding: 0 10px;">Exporting...</span>');
+        // Gray out the button and disable it
+        $button.prop('disabled', true).css('opacity', '0.5');
+
+        // Show friendly toast message
+        if (typeof window.stackboostToast === 'function') {
+            window.stackboostToast('Exporting directory... Please wait.');
+        }
 
         var form = $('<form></form>').attr('action', stackboostPublicAjax.ajax_url).attr('method', 'post');
         form.append($('<input></input>').attr('type', 'hidden').attr('name', 'action').attr('value', 'stackboost_directory_export_csv_google_public'));
@@ -30,8 +35,12 @@ jQuery(document).ready(function($) {
         form.submit();
         form.remove();
 
+        // Release the button back to its usable state after the download triggers
         setTimeout(function() {
-            $button.prop('disabled', false).html(originalHtml);
+            $button.prop('disabled', false).css('opacity', '1');
+            if (typeof window.stackboostToast === 'function') {
+                window.stackboostToast('Export complete.');
+            }
         }, 3000);
     });
 
