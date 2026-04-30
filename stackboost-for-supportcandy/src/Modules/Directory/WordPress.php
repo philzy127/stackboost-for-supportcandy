@@ -574,6 +574,11 @@ class WordPress {
 			$given_name = $parts[0] ?? '';
 			$family_name = $parts[1] ?? '';
 
+			// Strip leading hyphens from Family Name while preserving internal hyphens
+			if ( ! empty( $family_name ) ) {
+				$family_name = ltrim( $family_name, '-' );
+			}
+
 			$email        = get_post_meta( $post->ID, '_email_address', true );
 			$office_phone = get_post_meta( $post->ID, '_office_phone', true );
 			$extension    = get_post_meta( $post->ID, '_extension', true );
