@@ -575,29 +575,33 @@ class WordPress {
 
 			$name = $post->post_title;
 
-			$should_split = true;
+			$matched_phrase = null;
 			foreach ( $no_split_phrases as $phrase ) {
 				if ( stripos( $name, $phrase ) !== false ) {
-					$should_split = false;
+					$matched_phrase = $phrase;
 					break;
 				}
 			}
 
-			if ( $should_split ) {
+			if ( ! $matched_phrase ) {
 				$parts = explode( ' ', $name, 2 );
 				$given_name = $parts[0] ?? '';
 				$family_name = $parts[1] ?? '';
-
-				// Trim spaces, then strip leading hyphens, then trim spaces again
-				if ( ! empty( $family_name ) ) {
-					$family_name = trim( $family_name );
-					$family_name = ltrim( $family_name, '-' );
-					$family_name = trim( $family_name );
-				}
 			} else {
-				$given_name = $name;
-				$family_name = '';
+				// If we have a match like "On Call", split the name AT the phrase.
+				// e.g. "On Call - Maintenance" -> given: "On Call", family: " - Maintenance"
+				$pos = stripos( $name, $matched_phrase );
+				$given_name = substr( $name, 0, $pos + strlen( $matched_phrase ) );
+				$family_name = substr( $name, $pos + strlen( $matched_phrase ) );
 			}
+
+			// Always apply cleanup to the family name (strips hyphens and whitespace)
+			if ( ! empty( $family_name ) ) {
+				$family_name = trim( $family_name );
+				$family_name = ltrim( $family_name, '-' );
+				$family_name = trim( $family_name );
+			}
+			$given_name = trim( $given_name );
 
 			$email        = get_post_meta( $post->ID, '_email_address', true );
 			$office_phone = get_post_meta( $post->ID, '_office_phone', true );
