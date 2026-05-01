@@ -77,6 +77,15 @@ class Settings {
 			$sanitized_input['csv_export_no_split_phrases'] = '';
 		}
 
+		$sanitized_input['google_export_csv_enabled'] = isset( $input['google_export_csv_enabled'] ) ? 1 : 0;
+		$sanitized_input['google_export_auto_enabled'] = isset( $input['google_export_auto_enabled'] ) ? 1 : 0;
+
+		if ( isset( $input['google_client_id'] ) ) {
+		    $sanitized_input['google_client_id'] = sanitize_text_field( $input['google_client_id'] );
+		} else {
+		    $sanitized_input['google_client_id'] = '';
+		}
+
 		return $sanitized_input;
 	}
 
