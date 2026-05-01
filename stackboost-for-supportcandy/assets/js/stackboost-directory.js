@@ -30,22 +30,14 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         var $button = $(this);
 
+        if ($('#stackboost-google-sync-modal').is(':visible')) {
+            $('#stackboost-google-sync-modal').hide();
+        }
+
         $button.prop('disabled', true).css('opacity', '0.5');
 
-        var $modalText = null;
-        if ($('#stackboost-google-sync-modal').length) {
-            $('#stackboost-google-sync-modal').show();
-            // Hide the initial view and show a status text inside the modal
-            $('#stackboost-google-sync-modal .stackboost-sync-modal-initial-view').hide();
-            if ($('#stackboost-google-sync-status').length === 0) {
-                $('#stackboost-google-sync-modal .stackboost-modal-body').append('<div id="stackboost-google-sync-status" style="margin-top:20px; font-weight:bold; width:100%;">Initializing Google API... Please wait.</div>');
-            }
-            $modalText = $('#stackboost-google-sync-status');
-            $modalText.text('Initializing Google API... Please wait.').show();
-        } else {
-            if (typeof window.stackboostToast === 'function') {
-                window.stackboostToast('Initializing Google API... Please wait.');
-            }
+        if (typeof window.stackboostToast === 'function') {
+            window.stackboostToast('Initializing Google API... Please wait.');
         }
 
         var doSync = function() {
@@ -54,9 +46,7 @@ jQuery(document).ready(function($) {
                 scope: 'https://www.googleapis.com/auth/contacts',
                 callback: function(tokenResponse) {
                     if (tokenResponse && tokenResponse.access_token) {
-                        if ($modalText) {
-                            $modalText.text('Authorized. Processing data and syncing to Google Contacts API...');
-                        } else if (typeof window.stackboostToast === 'function') {
+                        if (typeof window.stackboostToast === 'function') {
                             window.stackboostToast('Authorized. Syncing contacts...');
                         }
 
@@ -70,42 +60,25 @@ jQuery(document).ready(function($) {
                             },
                             success: function(response) {
                                 if (response.success) {
-                                    if ($modalText) {
-                                        $modalText.text('Sync complete! ' + response.data.message);
-                                        $('#stackboost-google-sync-modal .stackboost-modal-close').one('click', function() {
-                                            $('#stackboost-google-sync-modal .stackboost-sync-modal-initial-view').show();
-                                            $modalText.hide();
-                                        });
-                                    } else if (typeof window.stackboostToast === 'function') {
+                                    if (typeof window.stackboostToast === 'function') {
                                         window.stackboostToast('Sync complete! ' + response.data.message);
                                     }
                                 } else {
-                                    if ($modalText) {
-                                        $modalText.text('Sync failed: ' + (response.data || 'Unknown error'));
-                                    } else if (typeof window.stackboostToast === 'function') {
+                                    if (typeof window.stackboostToast === 'function') {
                                         window.stackboostToast('Sync failed: ' + (response.data || 'Unknown error'));
                                     }
                                 }
                                 $button.prop('disabled', false).css('opacity', '1');
                             },
                             error: function() {
-                                if ($modalText) {
-                                    $modalText.text('Server connection failed. Could not reach backend.');
-                                } else if (typeof window.stackboostToast === 'function') {
+                                if (typeof window.stackboostToast === 'function') {
                                     window.stackboostToast('Server connection failed.');
                                 }
                                 $button.prop('disabled', false).css('opacity', '1');
                             }
                         });
                     } else {
-                        if ($modalText) {
-                            $modalText.text('Authorization failed or cancelled.');
-                            setTimeout(function() {
-                                $('#stackboost-google-sync-modal').hide();
-                                $('#stackboost-google-sync-modal .stackboost-sync-modal-initial-view').show();
-                                $modalText.hide();
-                            }, 2000);
-                        } else if (typeof window.stackboostToast === 'function') {
+                        if (typeof window.stackboostToast === 'function') {
                             window.stackboostToast('Authorization failed or cancelled.');
                         }
                         $button.prop('disabled', false).css('opacity', '1');
