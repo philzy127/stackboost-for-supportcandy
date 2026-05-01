@@ -33,8 +33,8 @@ To allow your users to automatically sync the staff directory with their persona
 
 ## 5. Configure StackBoost
 1. Log into your WordPress admin dashboard.
-2. Navigate to **SupportCandy > StackBoost**.
-3. Go to the **Directory** tab, and then the **Settings** sub-tab.
+2. Navigate to **StackBoost > Directory**.
+3. Click on the **Settings** tab.
 4. Under **Export Settings**, check **Enable Auto Sync API**.
 5. Paste the **Client ID** you copied from Google into the **Google Client ID** field.
 6. Click **Save Settings**.
