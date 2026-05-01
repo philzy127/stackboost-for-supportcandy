@@ -35,10 +35,10 @@ jQuery(document).ready(function($) {
         var $modalText = null;
         if ($('#stackboost-google-sync-modal').length) {
             $('#stackboost-google-sync-modal').show();
-            // Hide the buttons and show a status text inside the modal
-            $('#stackboost-google-sync-modal .stackboost-modal-body > div').hide();
+            // Hide the initial view and show a status text inside the modal
+            $('#stackboost-google-sync-modal .stackboost-sync-modal-initial-view').hide();
             if ($('#stackboost-google-sync-status').length === 0) {
-                $('#stackboost-google-sync-modal .stackboost-modal-body').append('<div id="stackboost-google-sync-status" style="margin-top:20px; font-weight:bold;">Initializing Google API... Please wait.</div>');
+                $('#stackboost-google-sync-modal .stackboost-modal-body').append('<div id="stackboost-google-sync-status" style="margin-top:20px; font-weight:bold; width:100%;">Initializing Google API... Please wait.</div>');
             }
             $modalText = $('#stackboost-google-sync-status');
             $modalText.text('Initializing Google API... Please wait.').show();
@@ -73,7 +73,7 @@ jQuery(document).ready(function($) {
                                     if ($modalText) {
                                         $modalText.text('Sync complete! ' + response.data.message);
                                         $('#stackboost-google-sync-modal .stackboost-modal-close').one('click', function() {
-                                            $('#stackboost-google-sync-modal .stackboost-modal-body > div').show();
+                                            $('#stackboost-google-sync-modal .stackboost-sync-modal-initial-view').show();
                                             $modalText.hide();
                                         });
                                     } else if (typeof window.stackboostToast === 'function') {
@@ -102,7 +102,7 @@ jQuery(document).ready(function($) {
                             $modalText.text('Authorization failed or cancelled.');
                             setTimeout(function() {
                                 $('#stackboost-google-sync-modal').hide();
-                                $('#stackboost-google-sync-modal .stackboost-modal-body > div').show();
+                                $('#stackboost-google-sync-modal .stackboost-sync-modal-initial-view').show();
                                 $modalText.hide();
                             }, 2000);
                         } else if (typeof window.stackboostToast === 'function') {

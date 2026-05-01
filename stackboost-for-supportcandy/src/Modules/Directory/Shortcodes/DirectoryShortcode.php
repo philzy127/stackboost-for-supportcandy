@@ -560,16 +560,18 @@ class DirectoryShortcode {
                 <div id="stackboost-google-sync-modal" class="stackboost-modal" style="display: none;">
                     <div class="stackboost-modal-content" style="max-width: 400px; text-align: center;">
                         <span class="stackboost-modal-close">&times;</span>
-                        <div class="stackboost-modal-body">
-                            <h3 style="margin-top: 0;"><?php esc_html_e( 'Google Contacts Sync', 'stackboost-for-supportcandy' ); ?></h3>
-                            <p><?php esc_html_e( 'How would you like to sync the directory?', 'stackboost-for-supportcandy' ); ?></p>
-                            <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
-                                <button id="stackboost-directory-auto-sync-google" class="stackboost-btn stackboost-btn-primary" style="padding: 10px;">
-                                    <?php esc_html_e( 'Auto Sync via Google API', 'stackboost-for-supportcandy' ); ?>
-                                </button>
-                                <button id="stackboost-directory-export-google-csv" class="stackboost-btn stackboost-btn-secondary" style="padding: 10px;">
-                                    <?php esc_html_e( 'Download CSV File', 'stackboost-for-supportcandy' ); ?>
-                                </button>
+                        <div class="stackboost-modal-body" style="display: block;">
+                            <div class="stackboost-sync-modal-initial-view">
+                                <h3 style="margin-top: 0;"><?php esc_html_e( 'Google Contacts Sync', 'stackboost-for-supportcandy' ); ?></h3>
+                                <p><?php esc_html_e( 'How would you like to sync the directory?', 'stackboost-for-supportcandy' ); ?></p>
+                                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                                    <button id="stackboost-directory-auto-sync-google" class="stackboost-btn stackboost-btn-primary" style="padding: 10px;">
+                                        <?php esc_html_e( 'Auto Sync via Google API', 'stackboost-for-supportcandy' ); ?>
+                                    </button>
+                                    <button id="stackboost-directory-export-google-csv" class="stackboost-btn stackboost-btn-secondary" style="padding: 10px;">
+                                        <?php esc_html_e( 'Download CSV File', 'stackboost-for-supportcandy' ); ?>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
