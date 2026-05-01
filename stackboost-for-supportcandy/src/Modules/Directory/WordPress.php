@@ -1464,6 +1464,7 @@ class WordPress {
 
 		if ( empty( $access_token ) ) {
 			wp_send_json_error( 'Missing access token.' );
+			return;
 		}
 
 		$posts = get_posts(
@@ -1493,6 +1494,7 @@ class WordPress {
 
 			if ( is_wp_error( $response ) ) {
 				wp_send_json_error( 'Failed to fetch existing Google Contacts: ' . $response->get_error_message() );
+				return;
 			}
 
 			$body = wp_remote_retrieve_body( $response );
@@ -1500,6 +1502,7 @@ class WordPress {
 
 			if ( isset( $data['error'] ) ) {
 				wp_send_json_error( 'Google API Error: ' . ( $data['error']['message'] ?? 'Unknown' ) );
+				return;
 			}
 
 			if ( ! empty( $data['connections'] ) ) {
@@ -1518,7 +1521,7 @@ class WordPress {
 			$next_page_token = $data['nextPageToken'] ?? '';
 		} while ( ! empty( $next_page_token ) );
 
-		$options = get_option( \StackBoost\ForSupportCandy\Modules\Directory\Admin\Settings::OPTION_NAME, array() );
+		$options = get_option( Settings::OPTION_NAME, array() );
 		$no_split_raw = $options['csv_export_no_split_phrases'] ?? '';
 		$no_split_phrases = array_filter( array_map( 'trim', explode( ',', $no_split_raw ) ) );
 
