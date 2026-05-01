@@ -49,7 +49,7 @@ jQuery(document).ready(function($) {
         }
 
         var doSync = function() {
-            var client = google.accounts.oauth2.initTokenClient({
+            var tokenConfig = {
                 client_id: stackboostPublicAjax.google_client_id,
                 scope: 'https://www.googleapis.com/auth/contacts',
                 callback: function(tokenResponse) {
@@ -111,7 +111,13 @@ jQuery(document).ready(function($) {
                         $button.prop('disabled', false).css('opacity', '1');
                     }
                 }
-            });
+            };
+
+            if (stackboostPublicAjax.current_user_email) {
+                tokenConfig.hint = stackboostPublicAjax.current_user_email;
+            }
+
+            var client = google.accounts.oauth2.initTokenClient(tokenConfig);
             client.requestAccessToken();
         };
 
