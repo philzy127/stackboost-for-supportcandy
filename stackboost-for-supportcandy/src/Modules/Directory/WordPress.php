@@ -1460,6 +1460,11 @@ class WordPress {
 	public function ajax_auto_sync_google() {
 		check_ajax_referer( 'stackboost_directory_auto_sync_google', 'nonce' );
 
+        // Prevent script timeout for large directories connecting to Google API
+        if ( function_exists( 'set_time_limit' ) ) {
+            set_time_limit( 0 );
+        }
+
 		$access_token = isset( $_POST['access_token'] ) ? sanitize_text_field( $_POST['access_token'] ) : '';
 
 		if ( empty( $access_token ) ) {
@@ -1529,6 +1534,9 @@ class WordPress {
 		$added = 0;
 		$updated = 0;
 		$errors = 0;
+
+		$create_batch = array();
+		$update_batch = array();
 
 		foreach ( $posts as $post ) {
 			$active  = get_post_meta( $post->ID, '_active', true );
@@ -1617,44 +1625,72 @@ class WordPress {
 			$lookup_email = strtolower( trim( $email ) );
 
 			if ( isset( $existing_contacts[ $lookup_email ] ) ) {
-			    // Update
+			    // Update Map
 			    $person['etag'] = $existing_contacts[ $lookup_email ]['etag'];
 			    $resource_name = $existing_contacts[ $lookup_email ]['resourceName'];
 
-			    $update_response = wp_remote_request( "https://people.googleapis.com/v1/{$resource_name}:updateContact?updatePersonFields=names,emailAddresses,phoneNumbers,organizations", array(
-			        'method' => 'PATCH',
-			        'headers' => array(
-			            'Authorization' => 'Bearer ' . $access_token,
-			            'Content-Type' => 'application/json',
-			        ),
-			        'body' => wp_json_encode( $person ),
-			    ) );
-
-			    if ( ! is_wp_error( $update_response ) && wp_remote_retrieve_response_code( $update_response ) === 200 ) {
-			        $updated++;
-			    } else {
-			        $errors++;
-			    }
+			    $update_batch[ $resource_name ] = $person;
 
 			} else {
-			    // Create
-			    $create_response = wp_remote_post( 'https://people.googleapis.com/v1/people:createContact', array(
-			        'headers' => array(
-			            'Authorization' => 'Bearer ' . $access_token,
-			            'Content-Type' => 'application/json',
-			        ),
-			        'body' => wp_json_encode( $person ),
-			    ) );
-
-			    if ( ! is_wp_error( $create_response ) && wp_remote_retrieve_response_code( $create_response ) === 200 ) {
-			        $added++;
-			    } else {
-			        $errors++;
-			    }
+			    // Create List
+			    $create_batch[] = array( 'contactPerson' => $person );
 			}
 
 			$processed++;
 		}
+
+        // Send Batch Updates (max 200 per request)
+        if ( ! empty( $update_batch ) ) {
+            $chunks = array_chunk( $update_batch, 200, true );
+            foreach ( $chunks as $chunk ) {
+                $payload = array(
+                    'contacts' => $chunk,
+                    'updateMask' => 'names,emailAddresses,phoneNumbers,organizations',
+                    'readMask' => 'names', // Required to return response but we don't care
+                );
+                $update_response = wp_remote_post( 'https://people.googleapis.com/v1/people:batchUpdateContacts', array(
+			        'headers' => array(
+			            'Authorization' => 'Bearer ' . $access_token,
+			            'Content-Type' => 'application/json',
+			        ),
+			        'body' => wp_json_encode( $payload ),
+			    ) );
+			    if ( ! is_wp_error( $update_response ) && wp_remote_retrieve_response_code( $update_response ) === 200 ) {
+			        $updated += count( $chunk );
+			    } else {
+			        if ( function_exists( 'stackboost_log' ) ) {
+			            stackboost_log( 'Failed to batchUpdate Google Contacts: ' . wp_json_encode( is_wp_error( $update_response ) ? $update_response->get_error_messages() : wp_remote_retrieve_body( $update_response ) ), 'directory' );
+			        }
+			        $errors += count( $chunk );
+			    }
+            }
+        }
+
+        // Send Batch Creates (max 200 per request)
+        if ( ! empty( $create_batch ) ) {
+            $chunks = array_chunk( $create_batch, 200 );
+            foreach ( $chunks as $chunk ) {
+                $payload = array(
+                    'contacts' => $chunk,
+                    'readMask' => 'names', // Required
+                );
+                $create_response = wp_remote_post( 'https://people.googleapis.com/v1/people:batchCreateContacts', array(
+			        'headers' => array(
+			            'Authorization' => 'Bearer ' . $access_token,
+			            'Content-Type' => 'application/json',
+			        ),
+			        'body' => wp_json_encode( $payload ),
+			    ) );
+			    if ( ! is_wp_error( $create_response ) && wp_remote_retrieve_response_code( $create_response ) === 200 ) {
+			        $added += count( $chunk );
+			    } else {
+			        if ( function_exists( 'stackboost_log' ) ) {
+			            stackboost_log( 'Failed to batchCreate Google Contacts: ' . wp_json_encode( is_wp_error( $create_response ) ? $create_response->get_error_messages() : wp_remote_retrieve_body( $create_response ) ), 'directory' );
+			        }
+			        $errors += count( $chunk );
+			    }
+            }
+        }
 
 		wp_send_json_success( array(
 		    'message' => sprintf( 'Processed %d contacts (%d added, %d updated, %d errors).', $processed, $added, $updated, $errors ),

@@ -30,14 +30,22 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         var $button = $(this);
 
-        if ($('#stackboost-google-sync-modal').is(':visible')) {
-            $('#stackboost-google-sync-modal').hide();
-        }
-
         $button.prop('disabled', true).css('opacity', '0.5');
 
-        if (typeof window.stackboostToast === 'function') {
-            window.stackboostToast('Initializing Google API... Please wait.');
+        var $modalText = null;
+        if ($('#stackboost-google-sync-modal').length) {
+            $('#stackboost-google-sync-modal').show();
+            // Hide the buttons and show a status text inside the modal
+            $('#stackboost-google-sync-modal .stackboost-modal-body > div').hide();
+            if ($('#stackboost-google-sync-status').length === 0) {
+                $('#stackboost-google-sync-modal .stackboost-modal-body').append('<div id="stackboost-google-sync-status" style="margin-top:20px; font-weight:bold;">Initializing Google API... Please wait.</div>');
+            }
+            $modalText = $('#stackboost-google-sync-status');
+            $modalText.text('Initializing Google API... Please wait.').show();
+        } else {
+            if (typeof window.stackboostToast === 'function') {
+                window.stackboostToast('Initializing Google API... Please wait.');
+            }
         }
 
         var doSync = function() {
@@ -46,7 +54,9 @@ jQuery(document).ready(function($) {
                 scope: 'https://www.googleapis.com/auth/contacts',
                 callback: function(tokenResponse) {
                     if (tokenResponse && tokenResponse.access_token) {
-                        if (typeof window.stackboostToast === 'function') {
+                        if ($modalText) {
+                            $modalText.text('Authorized. Processing data and syncing to Google Contacts API...');
+                        } else if (typeof window.stackboostToast === 'function') {
                             window.stackboostToast('Authorized. Syncing contacts...');
                         }
 
@@ -60,25 +70,42 @@ jQuery(document).ready(function($) {
                             },
                             success: function(response) {
                                 if (response.success) {
-                                    if (typeof window.stackboostToast === 'function') {
+                                    if ($modalText) {
+                                        $modalText.text('Sync complete! ' + response.data.message);
+                                        $('#stackboost-google-sync-modal .stackboost-modal-close').one('click', function() {
+                                            $('#stackboost-google-sync-modal .stackboost-modal-body > div').show();
+                                            $modalText.hide();
+                                        });
+                                    } else if (typeof window.stackboostToast === 'function') {
                                         window.stackboostToast('Sync complete! ' + response.data.message);
                                     }
                                 } else {
-                                    if (typeof window.stackboostToast === 'function') {
+                                    if ($modalText) {
+                                        $modalText.text('Sync failed: ' + (response.data || 'Unknown error'));
+                                    } else if (typeof window.stackboostToast === 'function') {
                                         window.stackboostToast('Sync failed: ' + (response.data || 'Unknown error'));
                                     }
                                 }
                                 $button.prop('disabled', false).css('opacity', '1');
                             },
                             error: function() {
-                                if (typeof window.stackboostToast === 'function') {
+                                if ($modalText) {
+                                    $modalText.text('Server connection failed. Could not reach backend.');
+                                } else if (typeof window.stackboostToast === 'function') {
                                     window.stackboostToast('Server connection failed.');
                                 }
                                 $button.prop('disabled', false).css('opacity', '1');
                             }
                         });
                     } else {
-                        if (typeof window.stackboostToast === 'function') {
+                        if ($modalText) {
+                            $modalText.text('Authorization failed or cancelled.');
+                            setTimeout(function() {
+                                $('#stackboost-google-sync-modal').hide();
+                                $('#stackboost-google-sync-modal .stackboost-modal-body > div').show();
+                                $modalText.hide();
+                            }, 2000);
+                        } else if (typeof window.stackboostToast === 'function') {
                             window.stackboostToast('Authorization failed or cancelled.');
                         }
                         $button.prop('disabled', false).css('opacity', '1');
