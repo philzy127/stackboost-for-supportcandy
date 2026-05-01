@@ -90,6 +90,9 @@ class Settings {
 		$listing_display_mode = $options['listing_display_mode'] ?? 'page';
 		$revisions_to_keep    = $options['revisions_to_keep'] ?? '';
 		$csv_export_no_split_phrases = $options['csv_export_no_split_phrases'] ?? '';
+		$google_export_csv_enabled   = isset( $options['google_export_csv_enabled'] ) ? (bool) $options['google_export_csv_enabled'] : true;
+		$google_export_auto_enabled  = isset( $options['google_export_auto_enabled'] ) ? (bool) $options['google_export_auto_enabled'] : false;
+		$google_client_id            = $options['google_client_id'] ?? '';
 
         $theme_class = 'sb-theme-clean-tech';
         if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -131,6 +134,33 @@ class Settings {
 				<hr>
 				<h2><?php esc_html_e( 'Export Settings', 'stackboost-for-supportcandy' ); ?></h2>
 				<table class="form-table">
+					<tr valign="top">
+						<th scope="row">
+							<label for="stackboost-google-export-csv-enabled"><?php esc_html_e( 'Enable CSV Export', 'stackboost-for-supportcandy' ); ?></label>
+						</th>
+						<td>
+							<input type="checkbox" id="stackboost-google-export-csv-enabled" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[google_export_csv_enabled]" value="1" <?php checked( $google_export_csv_enabled ); ?>>
+							<p class="description"><?php esc_html_e( 'Allow frontend users to export the directory to a CSV file formatted for Google Contacts.', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<label for="stackboost-google-export-auto-enabled"><?php esc_html_e( 'Enable Auto Sync API', 'stackboost-for-supportcandy' ); ?></label>
+						</th>
+						<td>
+							<input type="checkbox" id="stackboost-google-export-auto-enabled" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[google_export_auto_enabled]" value="1" <?php checked( $google_export_auto_enabled ); ?>>
+							<p class="description"><?php esc_html_e( 'Allow frontend users to automatically sync the directory directly to their Google Contacts using the Google API. (Requires Client ID below)', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<label for="stackboost-google-client-id"><?php esc_html_e( 'Google Client ID', 'stackboost-for-supportcandy' ); ?></label>
+						</th>
+						<td>
+							<input type="text" id="stackboost-google-client-id" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[google_client_id]" value="<?php echo esc_attr( $google_client_id ); ?>" class="regular-text">
+							<p class="description"><?php esc_html_e( 'OAuth 2.0 Client ID for Web application from Google Cloud Console. Required for Auto Sync.', 'stackboost-for-supportcandy' ); ?></p>
+						</td>
+					</tr>
 					<tr valign="top">
 						<th scope="row">
 							<label for="stackboost-csv-export-no-split-phrases"><?php esc_html_e( 'Name Split Exceptions', 'stackboost-for-supportcandy' ); ?></label>

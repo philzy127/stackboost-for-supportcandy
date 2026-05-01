@@ -199,11 +199,29 @@ class DirectoryShortcode {
                 </div>
             <?php endif; ?>
 
+            <?php
+            $options = get_option( 'stackboost_directory_settings', array() );
+            $google_export_csv_enabled = isset( $options['google_export_csv_enabled'] ) ? (bool) $options['google_export_csv_enabled'] : true;
+            $google_export_auto_enabled = isset( $options['google_export_auto_enabled'] ) ? (bool) $options['google_export_auto_enabled'] : false;
+
+            if ( $google_export_csv_enabled || $google_export_auto_enabled ) :
+            ?>
 			<div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-				<button id="stackboost-directory-export-google-csv" class="stackboost-btn stackboost-btn-secondary" style="background: none; border: none; box-shadow: none; padding: 0; cursor: pointer;" title="<?php esc_attr_e( 'Export for Google Contacts', 'stackboost-for-supportcandy' ); ?>">
-					<img src="<?php echo esc_url( \STACKBOOST_PLUGIN_URL . 'assets/images/google-contacts-icon.png' ); ?>" alt="<?php esc_attr_e( 'Export for Google Contacts', 'stackboost-for-supportcandy' ); ?>" style="width: 32px; height: 32px; vertical-align: middle;">
-				</button>
+                <?php if ( $google_export_csv_enabled && $google_export_auto_enabled ) : ?>
+                    <button id="stackboost-directory-google-sync-trigger" class="stackboost-btn stackboost-btn-secondary" style="background: none; border: none; box-shadow: none; padding: 0; cursor: pointer;" title="<?php esc_attr_e( 'Sync to Google Contacts', 'stackboost-for-supportcandy' ); ?>">
+                        <img src="<?php echo esc_url( \STACKBOOST_PLUGIN_URL . 'assets/images/google-contacts-icon.png' ); ?>" alt="<?php esc_attr_e( 'Sync to Google Contacts', 'stackboost-for-supportcandy' ); ?>" style="width: 32px; height: 32px; vertical-align: middle;">
+                    </button>
+                <?php elseif ( $google_export_csv_enabled ) : ?>
+                    <button id="stackboost-directory-export-google-csv" class="stackboost-btn stackboost-btn-secondary" style="background: none; border: none; box-shadow: none; padding: 0; cursor: pointer;" title="<?php esc_attr_e( 'Export for Google Contacts', 'stackboost-for-supportcandy' ); ?>">
+                        <img src="<?php echo esc_url( \STACKBOOST_PLUGIN_URL . 'assets/images/google-contacts-icon.png' ); ?>" alt="<?php esc_attr_e( 'Export for Google Contacts', 'stackboost-for-supportcandy' ); ?>" style="width: 32px; height: 32px; vertical-align: middle;">
+                    </button>
+                <?php elseif ( $google_export_auto_enabled ) : ?>
+                    <button id="stackboost-directory-auto-sync-google" class="stackboost-btn stackboost-btn-secondary" style="background: none; border: none; box-shadow: none; padding: 0; cursor: pointer;" title="<?php esc_attr_e( 'Auto Sync to Google Contacts', 'stackboost-for-supportcandy' ); ?>">
+                        <img src="<?php echo esc_url( \STACKBOOST_PLUGIN_URL . 'assets/images/google-contacts-icon.png' ); ?>" alt="<?php esc_attr_e( 'Auto Sync to Google Contacts', 'stackboost-for-supportcandy' ); ?>" style="width: 32px; height: 32px; vertical-align: middle;">
+                    </button>
+                <?php endif; ?>
 			</div>
+            <?php endif; ?>
 
 			<div id="stackboost-full-directory-table-wrapper">
 				<?php if ( ! empty( $employees ) ) : ?>
@@ -537,6 +555,26 @@ class DirectoryShortcode {
 					</div>
 				</div>
 			<?php endif; ?>
+
+            <?php if ( $google_export_csv_enabled && $google_export_auto_enabled ) : ?>
+                <div id="stackboost-google-sync-modal" class="stackboost-modal" style="display: none;">
+                    <div class="stackboost-modal-content" style="max-width: 400px; text-align: center;">
+                        <span class="stackboost-modal-close">&times;</span>
+                        <div class="stackboost-modal-body">
+                            <h3 style="margin-top: 0;"><?php esc_html_e( 'Google Contacts Sync', 'stackboost-for-supportcandy' ); ?></h3>
+                            <p><?php esc_html_e( 'How would you like to sync the directory?', 'stackboost-for-supportcandy' ); ?></p>
+                            <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                                <button id="stackboost-directory-auto-sync-google" class="stackboost-btn stackboost-btn-primary" style="padding: 10px;">
+                                    <?php esc_html_e( 'Auto Sync via Google API', 'stackboost-for-supportcandy' ); ?>
+                                </button>
+                                <button id="stackboost-directory-export-google-csv" class="stackboost-btn stackboost-btn-secondary" style="padding: 10px;">
+                                    <?php esc_html_e( 'Download CSV File', 'stackboost-for-supportcandy' ); ?>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();

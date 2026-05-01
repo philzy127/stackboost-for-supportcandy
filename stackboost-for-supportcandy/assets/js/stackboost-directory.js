@@ -14,10 +14,97 @@ jQuery(document).ready(function($) {
 
     sbLog('Script loaded. Secure Context: ' + window.isSecureContext);
 
-    // Frontend Export to Google CSV Trigger
-    $('#stackboost-directory-export-google-csv').on('click', function(e) {
+    // Google Sync Modal Trigger
+    $('#stackboost-directory-google-sync-trigger').on('click', function(e) {
+        e.preventDefault();
+        $('#stackboost-google-sync-modal').show();
+    });
+
+    // Handle closing the sync modal specifically
+    $('#stackboost-google-sync-modal .stackboost-modal-close').on('click', function() {
+        $('#stackboost-google-sync-modal').hide();
+    });
+
+    // Frontend Auto Sync API Trigger
+    $(document).on('click', '#stackboost-directory-auto-sync-google', function(e) {
         e.preventDefault();
         var $button = $(this);
+
+        if ($('#stackboost-google-sync-modal').is(':visible')) {
+            $('#stackboost-google-sync-modal').hide();
+        }
+
+        $button.prop('disabled', true).css('opacity', '0.5');
+
+        if (typeof window.stackboostToast === 'function') {
+            window.stackboostToast('Initializing Google API... Please wait.');
+        }
+
+        var doSync = function() {
+            var client = google.accounts.oauth2.initTokenClient({
+                client_id: stackboostPublicAjax.google_client_id,
+                scope: 'https://www.googleapis.com/auth/contacts',
+                callback: function(tokenResponse) {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        if (typeof window.stackboostToast === 'function') {
+                            window.stackboostToast('Authorized. Syncing contacts...');
+                        }
+
+                        $.ajax({
+                            url: stackboostPublicAjax.ajax_url,
+                            type: 'POST',
+                            data: {
+                                action: 'stackboost_directory_auto_sync_google',
+                                nonce: stackboostPublicAjax.auto_sync_nonce,
+                                access_token: tokenResponse.access_token
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    if (typeof window.stackboostToast === 'function') {
+                                        window.stackboostToast('Sync complete! ' + response.data.message);
+                                    }
+                                } else {
+                                    if (typeof window.stackboostToast === 'function') {
+                                        window.stackboostToast('Sync failed: ' + (response.data || 'Unknown error'));
+                                    }
+                                }
+                                $button.prop('disabled', false).css('opacity', '1');
+                            },
+                            error: function() {
+                                if (typeof window.stackboostToast === 'function') {
+                                    window.stackboostToast('Server connection failed.');
+                                }
+                                $button.prop('disabled', false).css('opacity', '1');
+                            }
+                        });
+                    } else {
+                        if (typeof window.stackboostToast === 'function') {
+                            window.stackboostToast('Authorization failed or cancelled.');
+                        }
+                        $button.prop('disabled', false).css('opacity', '1');
+                    }
+                }
+            });
+            client.requestAccessToken();
+        };
+
+        if (typeof google === 'undefined' || typeof google.accounts === 'undefined') {
+            $.getScript('https://accounts.google.com/gsi/client', function() {
+                doSync();
+            });
+        } else {
+            doSync();
+        }
+    });
+
+    // Frontend Export to Google CSV Trigger
+    $(document).on('click', '#stackboost-directory-export-google-csv', function(e) {
+        e.preventDefault();
+        var $button = $(this);
+
+        if ($('#stackboost-google-sync-modal').is(':visible')) {
+            $('#stackboost-google-sync-modal').hide();
+        }
 
         // Gray out the button and disable it
         $button.prop('disabled', true).css('opacity', '0.5');

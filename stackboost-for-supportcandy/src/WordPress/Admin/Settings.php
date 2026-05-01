@@ -1080,7 +1080,7 @@ class Settings {
 					stackboost_log( "PROCESSING KEY: {$key} - NOT found in \$input. Applying fallback logic.", 'core' );
 				}
 				// Handle unchecked checkboxes, which are not present in the form submission.
-				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled' || $key === 'ticket_metrics_show_other_agents' || $key === 'ticket_metrics_verbose_logging') {
+				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || str_starts_with($key, 'google_export_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled' || $key === 'ticket_metrics_show_other_agents' || $key === 'ticket_metrics_verbose_logging') {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses') || $key === 'ticket_metrics_tracked_agents') {
 					$saved_settings[$key] = [];
