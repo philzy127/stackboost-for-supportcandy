@@ -73,3 +73,8 @@ StackBoost extends SupportCandy with modular features. Each feature is encapsula
 1.  **Version Bump:** Update `STACKBOOST_VERSION` constant in `Plugin.php` and the file header.
 2.  **Changelog:** Update `CHANGELOG.md`.
 3.  **Build:** Run the build script (if applicable) to generate the `.zip` package.
+
+### 3. Directory Module
+*   **Location:** `src/Modules/Directory/`
+*   **Purpose:** Provides a staff directory with optional frontend sync to Google Contacts.
+*   **Key Hooks/APIs:** `wp_ajax_stackboost_directory_auto_sync_google` uses OAuth 2.0 generated frontend tokens to interface natively with the Google Contacts People API, enabling robust bulk sync mapping without persisting Google credentials in the WordPress database.
