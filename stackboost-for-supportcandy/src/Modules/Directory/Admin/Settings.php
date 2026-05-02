@@ -81,7 +81,13 @@ class Settings {
 		$sanitized_input['google_export_auto_enabled'] = isset( $input['google_export_auto_enabled'] ) ? 1 : 0;
 
 		if ( isset( $input['google_client_id'] ) ) {
-		    $sanitized_input['google_client_id'] = sanitize_text_field( $input['google_client_id'] );
+		    if ( '********' === $input['google_client_id'] ) {
+		        // If it's the mask, retain the existing value
+		        $existing = get_option( self::OPTION_NAME, array() );
+		        $sanitized_input['google_client_id'] = $existing['google_client_id'] ?? '';
+		    } else {
+		        $sanitized_input['google_client_id'] = sanitize_text_field( $input['google_client_id'] );
+		    }
 		} else {
 		    $sanitized_input['google_client_id'] = '';
 		}
@@ -102,6 +108,7 @@ class Settings {
 		$google_export_csv_enabled   = isset( $options['google_export_csv_enabled'] ) ? (bool) $options['google_export_csv_enabled'] : true;
 		$google_export_auto_enabled  = isset( $options['google_export_auto_enabled'] ) ? (bool) $options['google_export_auto_enabled'] : false;
 		$google_client_id            = $options['google_client_id'] ?? '';
+		$client_id_locked            = ! empty( $google_client_id );
 
         $theme_class = 'sb-theme-clean-tech';
         if ( class_exists( '\StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -166,8 +173,18 @@ class Settings {
 							<label for="stackboost-google-client-id"><?php esc_html_e( 'Google Client ID', 'stackboost-for-supportcandy' ); ?></label>
 						</th>
 						<td>
-							<input type="text" id="stackboost-google-client-id" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[google_client_id]" value="<?php echo esc_attr( $google_client_id ); ?>" class="regular-text">
-							<p class="description"><?php esc_html_e( 'OAuth 2.0 Client ID for Web application from Google Cloud Console. Required for Auto Sync.', 'stackboost-for-supportcandy' ); ?></p>
+                            <?php if ( $client_id_locked ) : ?>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <input type="password" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[google_client_id]" id="stackboost-google-client-id" value="********" class="regular-text" readonly="readonly" style="background:#f0f0f1; border-color:#8c8f94; cursor:not-allowed;">
+                                    <button type="button" class="button" id="stkb_deactivate_google_client_id" style="color:#d63638; border-color:#d63638;"><?php esc_html_e( 'Deactivate / Remove Key', 'stackboost-for-supportcandy' ); ?></button>
+                                </div>
+                                <p class="description" id="stkb_google_client_id_desc"><?php esc_html_e( 'Your Client ID is currently locked and active.', 'stackboost-for-supportcandy' ); ?></p>
+                            <?php else : ?>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <input type="password" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[google_client_id]" id="stackboost-google-client-id" value="" class="regular-text" autocomplete="new-password" placeholder="<?php esc_attr_e( 'Paste your Client ID here...', 'stackboost-for-supportcandy' ); ?>">
+                                </div>
+                                <p class="description" id="stkb_google_client_id_desc"><?php esc_html_e( 'OAuth 2.0 Client ID for Web application from Google Cloud Console. Required for Auto Sync. Once saved, it will be locked to prevent accidental changes.', 'stackboost-for-supportcandy' ); ?></p>
+                            <?php endif; ?>
 						</td>
 					</tr>
 					<tr valign="top">
@@ -201,6 +218,22 @@ class Settings {
 				<?php submit_button(); ?>
 			</form>
 		</div>
+		<script>
+		jQuery(document).ready(function($) {
+			$('#stkb_deactivate_google_client_id').on('click', function() {
+				if (confirm('<?php esc_js( esc_html__( 'Are you sure you want to remove the Client ID?', 'stackboost-for-supportcandy' ) ); ?>')) {
+					$('#stackboost-google-client-id').val('').removeAttr('readonly').css({
+						'background': '',
+						'border-color': '',
+						'cursor': 'text'
+					}).attr('placeholder', '<?php esc_attr_e( 'Paste your Client ID here...', 'stackboost-for-supportcandy' ); ?>');
+
+					$(this).hide();
+					$('#stkb_google_client_id_desc').text('<?php esc_js( esc_html__( 'OAuth 2.0 Client ID for Web application from Google Cloud Console. Required for Auto Sync. Once saved, it will be locked to prevent accidental changes.', 'stackboost-for-supportcandy' ) ); ?>');
+				}
+			});
+		});
+		</script>
 		<?php
 	}
 
