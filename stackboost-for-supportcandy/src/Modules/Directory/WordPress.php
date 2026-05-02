@@ -351,6 +351,7 @@ class WordPress {
 					'export_csv_nonce'           => wp_create_nonce( 'stackboost_directory_csv_export_google_public' ),
                     'auto_sync_nonce'            => wp_create_nonce( 'stackboost_directory_auto_sync_google' ),
                     'google_client_id'           => $options['google_client_id'] ?? '',
+                    'current_user_email'         => is_user_logged_in() ? wp_get_current_user()->user_email : '',
 					'no_entries_found'           => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
 					'debug_enabled'              => $debug_enabled,
 				)
