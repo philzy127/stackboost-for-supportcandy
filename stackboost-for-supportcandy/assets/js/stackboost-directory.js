@@ -91,7 +91,7 @@ jQuery(document).ready(function($) {
             }
 
             var client = google.accounts.oauth2.initTokenClient(tokenConfig);
-            client.requestAccessToken();
+            client.requestAccessToken({prompt: ''});
         };
 
         if (typeof google === 'undefined' || typeof google.accounts === 'undefined') {
