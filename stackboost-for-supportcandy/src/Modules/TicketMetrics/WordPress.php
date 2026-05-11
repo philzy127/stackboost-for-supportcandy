@@ -184,6 +184,8 @@ class WordPress extends Module {
 			stackboost_log(json_encode($options), 'ticket_metrics');
 		}
 
+		$options['ticket_metrics_ai_prompt'] = isset( $_POST['ticket_metrics_ai_prompt'] ) ? wp_kses_post( wp_unslash( $_POST['ticket_metrics_ai_prompt'] ) ) : self::get_default_ai_prompt();
+
 		$update_result = update_option( 'stackboost_settings', $options );
 
 		if ( function_exists( 'stackboost_log' ) ) {
@@ -369,6 +371,15 @@ class WordPress extends Module {
 		exit;
 	}
 
+	public static function get_default_ai_prompt(): string {
+		$prompt = "You are a helpful customer support trend analyst. I will provide you with a list of ticket issues or subjects submitted by customers over a specific period. These tickets were categorized as 'Other' or similar catch-all options because they didn't fit existing categories.\n\n";
+		$prompt .= "Please read through these items and provide a succinct summary of the main trends, common questions, or recurring complaints.\n\n";
+		$prompt .= "Additionally, you MUST include a specific section proposing 2-3 NEW ticket categories or subcategories that we should add to our system to help reduce the volume of these 'Other' tickets in the future. \n\n";
+		$prompt .= "For context, here are the categories/options that ALREADY exist in the system for this field: [{{existing_options}}]. Do not suggest these exact existing options.\n\n";
+		$prompt .= "Do not mention that you are an AI. Provide the analysis in clean HTML format using only standard tags (<h3>, <ul>, <li>, <strong>, <p>, <br>). Ensure all text and elements are left-aligned using inline CSS where necessary (e.g., <div style=\"text-align: left;\">). Include extra line breaks (<br><br>) between major sections for readability so it can be directly embedded into an admin dashboard modal. Avoid Markdown formatting in your final output, just raw HTML. Do not wrap the response in ```html ``` blocks.\n\nHere are the ticket excerpts:\n\n{{ticket_excerpts}}";
+		return $prompt;
+	}
+
 	public function ajax_get_trend_analysis_ai() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
@@ -378,6 +389,7 @@ class WordPress extends Module {
 
 		$options = get_option( 'stackboost_settings', [] );
 		$api_key = $options['ticket_metrics_gemini_api_key'] ?? '';
+		$custom_prompt = $options['ticket_metrics_ai_prompt'] ?? self::get_default_ai_prompt();
 
 		if ( empty( $api_key ) ) {
 			wp_send_json_error( esc_html__( 'Gemini API Key is not configured. Please add it in the settings tab.', 'stackboost-for-supportcandy' ) );
@@ -537,15 +549,14 @@ class WordPress extends Module {
 		}
 
 		// Prepare the prompt for Gemini
-		$prompt_intro = "You are a helpful customer support trend analyst. I will provide you with a list of ticket issues or subjects submitted by customers over a specific period. These tickets were categorized as 'Other' or similar catch-all options because they didn't fit existing categories.\n\n";
-		$prompt_intro .= "Please read through these items and provide a succinct summary of the main trends, common questions, or recurring complaints.\n\n";
-		$prompt_intro .= "Additionally, you MUST include a specific section proposing 2-3 NEW ticket categories or subcategories that we should add to our system to help reduce the volume of these 'Other' tickets in the future. \n\n";
-		$prompt_intro .= "For context, here are the categories/options that ALREADY exist in the system for this field: [" . $existing_options_list . "]. Do not suggest these exact existing options.\n\n";
-		$prompt_intro .= "Do not mention that you are an AI. Provide the analysis in clean HTML format using only standard tags (<h3>, <ul>, <li>, <strong>, <p>, <br>). Ensure all text and elements are left-aligned using inline CSS where necessary (e.g., <div style=\"text-align: left;\">). Include extra line breaks (<br><br>) between major sections for readability so it can be directly embedded into an admin dashboard modal. Avoid Markdown formatting in your final output, just raw HTML. Do not wrap the response in ```html ``` blocks.\n\nHere are the ticket excerpts:\n\n";
-
-		// Limit the texts to prevent exceeding token limits if there are thousands
 		$texts_to_analyze = array_slice( $texts_to_analyze, 0, 1000 );
-		$prompt = $prompt_intro . implode( "\n- ", $texts_to_analyze );
+		$excerpts = implode( "\n- ", $texts_to_analyze );
+
+		$prompt = str_replace(
+			[ '{{existing_options}}', '{{ticket_excerpts}}' ],
+			[ $existing_options_list, $excerpts ],
+			$custom_prompt
+		);
 
 		$api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=" . $api_key;
 

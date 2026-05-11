@@ -833,7 +833,8 @@ class Settings {
 				'ticket_metrics_other_issues_rules',
 				'ticket_metrics_gemini_api_key',
 				'ticket_metrics_gemini_api_key_locked',
-				'ticket_metrics_survey_categories'
+				'ticket_metrics_survey_categories',
+				'ticket_metrics_ai_prompt'
 			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
@@ -957,7 +958,8 @@ class Settings {
 					case 'ticket_metrics_type_field':
 					case 'ticket_metrics_gemini_api_key':
 					case 'ticket_metrics_frt_mode':
-						$saved_settings[$key] = sanitize_text_field($value);
+					case 'ticket_metrics_ai_prompt':
+						$saved_settings[$key] = wp_kses_post($value);
 						break;
 
 					case 'ticket_metrics_sla_frt_hours':

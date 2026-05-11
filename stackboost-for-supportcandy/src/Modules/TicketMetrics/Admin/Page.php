@@ -115,6 +115,9 @@ class Page {
 		$api_key = $options['ticket_metrics_gemini_api_key'] ?? '';
 		$api_key_locked = ! empty( $api_key );
 
+		$default_ai_prompt = \StackBoost\ForSupportCandy\Modules\TicketMetrics\WordPress::get_default_ai_prompt();
+		$ai_prompt = $options['ticket_metrics_ai_prompt'] ?? $default_ai_prompt;
+
 		$sla_frt_hours = isset( $options['ticket_metrics_sla_frt_hours'] ) ? (float) $options['ticket_metrics_sla_frt_hours'] : 0;
 		$sla_resolution_hours = isset( $options['ticket_metrics_sla_resolution_hours'] ) ? (float) $options['ticket_metrics_sla_resolution_hours'] : 0;
 
@@ -747,6 +750,16 @@ class Page {
 											<?php endif; ?>
 										</td>
 									</tr>
+									<tr>
+										<th scope="row"><label for="stkb_ai_prompt"><?php esc_html_e( 'AI Analysis Prompt', 'stackboost-for-supportcandy' ); ?></label></th>
+										<td>
+											<textarea name="ticket_metrics_ai_prompt" id="stkb_ai_prompt" rows="12" class="large-text" style="font-family: monospace; font-size: 12px;"><?php echo esc_textarea( $ai_prompt ); ?></textarea>
+											<div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+												<p class="description"><?php esc_html_e( 'Customize the prompt sent to Gemini. Use {{existing_options}} and {{ticket_excerpts}} as placeholders.', 'stackboost-for-supportcandy' ); ?></p>
+												<button type="button" class="button" id="stkb_reset_ai_prompt"><?php esc_html_e( 'Reset to Default', 'stackboost-for-supportcandy' ); ?></button>
+											</div>
+										</td>
+									</tr>
 								</tbody>
 							</table>
 
@@ -1086,6 +1099,13 @@ class Page {
 						$('#tab-' + target.substring(1)).show();
 					});
 
+					// AI Prompt Reset Handler
+					$('#stkb_reset_ai_prompt').on('click', function() {
+						if (confirm('<?php echo esc_js( __( 'Are you sure you want to reset the AI prompt to its default state?', 'stackboost-for-supportcandy' ) ); ?>')) {
+							$('#stkb_ai_prompt').val(<?php echo json_encode( $default_ai_prompt ); ?>);
+						}
+					});
+
 					// API Key Lock/Unlock Handler
 					$('#stkb_deactivate_api_key').on('click', function() {
 						if (confirm('<?php esc_js( esc_html__( 'Are you sure you want to remove the API key?', 'stackboost-for-supportcandy' ) ); ?>')) {
@@ -1148,6 +1168,7 @@ class Page {
 							ticket_metrics_tracked_agents: $('#stkb_tracked_agents').val() || [],
 							ticket_metrics_other_issues_rules: other_issues_rules,
 							ticket_metrics_gemini_api_key: $('#stkb_gemini_api_key').val(),
+							ticket_metrics_ai_prompt: $('#stkb_ai_prompt').val(),
 							ticket_metrics_sla_frt_hours: $('#stkb_sla_frt_hours').val(),
 							ticket_metrics_sla_resolution_hours: $('#stkb_sla_resolution_hours').val(),
 							ticket_metrics_survey_categories: $('#stkb_survey_categories').val() || []
