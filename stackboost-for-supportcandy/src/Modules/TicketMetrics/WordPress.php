@@ -373,13 +373,13 @@ class WordPress extends Module {
 
 	public static function get_default_ai_prompt(): string {
 		$prompt = "You are a helpful customer support trend analyst. I will provide you with a list of ticket issues or subjects submitted by customers over a specific period. These tickets were categorized as 'Other' or similar catch-all options because they didn't fit existing categories.\n\n";
-		$prompt .= "Please read through these items and provide a succinct summary of the main trends, common questions, or recurring complaints.";
+		$prompt .= "Please read through these items and provide a succinct summary of the main trends, common questions, or recurring complaints.\n\n";
+		$prompt .= "Additionally, you MUST include a specific section proposing 2-3 NEW ticket categories or subcategories that we should add to our system to help reduce the volume of these 'Other' tickets in the future.";
 		return $prompt;
 	}
 
 	public static function get_fixed_ai_instructions(): string {
-		$instr = "Additionally, you MUST include a specific section proposing 2-3 NEW ticket categories or subcategories that we should add to our system to help reduce the volume of these 'Other' tickets in the future. \n\n";
-		$instr .= "For context, here are the categories/options that ALREADY exist in the system for this field: [{{existing_options}}]. Do not suggest these exact existing options.\n\n";
+		$instr = "For context, here are the categories/options that ALREADY exist in the system for this field: [{{existing_options}}]. Do not suggest these exact existing options.\n\n";
 		$instr .= "Do not mention that you are an AI. Provide the analysis in clean HTML format using only standard tags (<h3>, <ul>, <li>, <strong>, <p>, <br>). Ensure all text and elements are left-aligned using inline CSS where necessary (e.g., <div style=\"text-align: left;\">). Include extra line breaks (<br><br>) between major sections for readability so it can be directly embedded into an admin dashboard modal. Avoid Markdown formatting in your final output, just raw HTML. Do not wrap the response in ```html ``` blocks.\n\nHere are the ticket excerpts:\n\n{{ticket_excerpts}}";
 		return $instr;
 	}
@@ -556,7 +556,7 @@ class WordPress extends Module {
 		$texts_to_analyze = array_slice( $texts_to_analyze, 0, 1000 );
 		$excerpts = implode( "\n- ", $texts_to_analyze );
 
-		$full_prompt = $custom_prompt . "\n\n" . self::get_fixed_ai_instructions();
+		$full_prompt = self::get_fixed_ai_instructions() . "\n\n" . $custom_prompt;
 
 		$prompt = str_replace(
 			[ '{{existing_options}}', '{{ticket_excerpts}}' ],

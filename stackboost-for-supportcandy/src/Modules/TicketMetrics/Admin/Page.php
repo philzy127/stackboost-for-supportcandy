@@ -752,20 +752,20 @@ class Page {
 										</td>
 									</tr>
 									<tr>
-										<th scope="row"><label for="stkb_ai_prompt"><?php esc_html_e( 'AI Analysis Prompt', 'stackboost-for-supportcandy' ); ?></label></th>
-										<td>
-											<textarea name="ticket_metrics_ai_prompt" id="stkb_ai_prompt" rows="6" class="large-text" style="font-family: monospace; font-size: 12px;"><?php echo esc_textarea( $ai_prompt ); ?></textarea>
-											<div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-												<p class="description"><?php esc_html_e( 'Customize the introductory prompt sent to Gemini.', 'stackboost-for-supportcandy' ); ?></p>
-												<button type="button" class="button" id="stkb_reset_ai_prompt"><?php esc_html_e( 'Reset to Default', 'stackboost-for-supportcandy' ); ?></button>
-											</div>
-										</td>
-									</tr>
-									<tr>
 										<th scope="row"><?php esc_html_e( 'Forced Instructions', 'stackboost-for-supportcandy' ); ?></th>
 										<td>
 											<div style="background: #f0f0f1; border: 1px solid #c3c4c7; padding: 10px; font-family: monospace; font-size: 11px; white-space: pre-wrap; color: #50575e;"><?php echo esc_html( $fixed_ai_instr ); ?></div>
-											<p class="description"><?php esc_html_e( 'These instructions are automatically appended to your prompt to ensure consistent output format and context.', 'stackboost-for-supportcandy' ); ?></p>
+											<p class="description"><?php esc_html_e( 'These instructions are delivered to the AI first to establish data context and formatting rules. They cannot be modified.', 'stackboost-for-supportcandy' ); ?></p>
+										</td>
+									</tr>
+									<tr>
+										<th scope="row"><label for="stkb_ai_prompt"><?php esc_html_e( 'AI Analysis Prompt', 'stackboost-for-supportcandy' ); ?></label></th>
+										<td>
+											<textarea name="ticket_metrics_ai_prompt" id="stkb_ai_prompt" rows="10" class="large-text" style="font-family: monospace; font-size: 12px;"><?php echo esc_textarea( $ai_prompt ); ?></textarea>
+											<div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+												<p class="description"><?php esc_html_e( 'Customize the prompt defining the AI persona, trend summary task, and category suggestion requirements.', 'stackboost-for-supportcandy' ); ?></p>
+												<button type="button" class="button" id="stkb_reset_ai_prompt"><?php esc_html_e( 'Reset to Default', 'stackboost-for-supportcandy' ); ?></button>
+											</div>
 										</td>
 									</tr>
 								</tbody>
@@ -1111,6 +1111,12 @@ class Page {
 					$('#stkb_reset_ai_prompt').on('click', function() {
 						if (confirm('<?php echo esc_js( __( 'Are you sure you want to reset the AI prompt to its default state?', 'stackboost-for-supportcandy' ) ); ?>')) {
 							$('#stkb_ai_prompt').val(<?php echo json_encode( $default_ai_prompt ); ?>);
+						}
+					});
+
+					$('#stkb_reset_ai_instructions').on('click', function() {
+						if (confirm('<?php echo esc_js( __( 'Are you sure you want to reset the AI instructions to their default state?', 'stackboost-for-supportcandy' ) ); ?>')) {
+							$('#stkb_ai_instructions').val(<?php echo json_encode( $default_ai_instr ); ?>);
 						}
 					});
 
