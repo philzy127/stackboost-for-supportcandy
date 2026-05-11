@@ -116,7 +116,8 @@ class Page {
 		$api_key_locked = ! empty( $api_key );
 
 		$default_ai_prompt = \StackBoost\ForSupportCandy\Modules\TicketMetrics\WordPress::get_default_ai_prompt();
-		$ai_prompt = $options['ticket_metrics_ai_prompt'] ?? $default_ai_prompt;
+		$fixed_ai_instr    = \StackBoost\ForSupportCandy\Modules\TicketMetrics\WordPress::get_fixed_ai_instructions();
+		$ai_prompt         = $options['ticket_metrics_ai_prompt'] ?? $default_ai_prompt;
 
 		$sla_frt_hours = isset( $options['ticket_metrics_sla_frt_hours'] ) ? (float) $options['ticket_metrics_sla_frt_hours'] : 0;
 		$sla_resolution_hours = isset( $options['ticket_metrics_sla_resolution_hours'] ) ? (float) $options['ticket_metrics_sla_resolution_hours'] : 0;
@@ -753,11 +754,18 @@ class Page {
 									<tr>
 										<th scope="row"><label for="stkb_ai_prompt"><?php esc_html_e( 'AI Analysis Prompt', 'stackboost-for-supportcandy' ); ?></label></th>
 										<td>
-											<textarea name="ticket_metrics_ai_prompt" id="stkb_ai_prompt" rows="12" class="large-text" style="font-family: monospace; font-size: 12px;"><?php echo esc_textarea( $ai_prompt ); ?></textarea>
+											<textarea name="ticket_metrics_ai_prompt" id="stkb_ai_prompt" rows="6" class="large-text" style="font-family: monospace; font-size: 12px;"><?php echo esc_textarea( $ai_prompt ); ?></textarea>
 											<div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-												<p class="description"><?php esc_html_e( 'Customize the prompt sent to Gemini. Use {{existing_options}} and {{ticket_excerpts}} as placeholders.', 'stackboost-for-supportcandy' ); ?></p>
+												<p class="description"><?php esc_html_e( 'Customize the introductory prompt sent to Gemini.', 'stackboost-for-supportcandy' ); ?></p>
 												<button type="button" class="button" id="stkb_reset_ai_prompt"><?php esc_html_e( 'Reset to Default', 'stackboost-for-supportcandy' ); ?></button>
 											</div>
+										</td>
+									</tr>
+									<tr>
+										<th scope="row"><?php esc_html_e( 'Forced Instructions', 'stackboost-for-supportcandy' ); ?></th>
+										<td>
+											<div style="background: #f0f0f1; border: 1px solid #c3c4c7; padding: 10px; font-family: monospace; font-size: 11px; white-space: pre-wrap; color: #50575e;"><?php echo esc_html( $fixed_ai_instr ); ?></div>
+											<p class="description"><?php esc_html_e( 'These instructions are automatically appended to your prompt to ensure consistent output format and context.', 'stackboost-for-supportcandy' ); ?></p>
 										</td>
 									</tr>
 								</tbody>

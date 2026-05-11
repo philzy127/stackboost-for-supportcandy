@@ -20,7 +20,7 @@
       "step": "installPlugin",
       "pluginData": {
         "resource": "vfs",
-        "path": "stackboost-for-supportcandy.zip"
+        "path": "/app/stackboost-for-supportcandy.zip"
       }
     }
   ]
