@@ -451,3 +451,9 @@
     margin-bottom: 20px !important;
     height: auto !important;
 }
+
+/* Force dashicons to size naturally based on parent text */
+.dashicons, 
+.dashicons-before::before {
+    height: auto !important;
+}
