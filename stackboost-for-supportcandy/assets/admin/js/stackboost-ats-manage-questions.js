@@ -156,6 +156,7 @@ jQuery(document).ready(function($) {
                 $('#question_id').val(q.id);
                 $('#question_text').val(q.question_text);
                 $('#question_type').val(q.question_type).trigger('change');
+                $('#stackboost-ats-question-category').val(q.category_id || 0);
                 $('#ats_sort_order').val(q.sort_order);
                 $('#ats_is_required').prop('checked', q.is_required == 1);
                 $('#ats_dropdown_options').val(q.options_str);
@@ -215,6 +216,7 @@ jQuery(document).ready(function($) {
             question_id: $('#question_id').val(),
             question_text: $('#question_text').val(),
             question_type: $('#question_type').val(),
+            category_id: $('#stackboost-ats-question-category').val(),
             sort_order: $('#ats_sort_order').val(),
             is_required: $('#ats_is_required').is(':checked') ? 1 : 0,
             is_readonly_prefill: $('#ats_is_readonly_prefill').is(':checked') ? 1 : 0,

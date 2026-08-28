@@ -170,10 +170,15 @@ jQuery(document).ready(function($) {
         if (fullNumber) copyToClipboard(fullNumber, $(this), 'phone');
     });
 
-    function showToast(message) {
+    window.stackboostToast = function(message) {
         var toast = $('<div class="stackboost-toast"></div>').text(message);
         $('body').append(toast);
         toast.fadeIn(400).delay(3000).fadeOut(400, function() { $(this).remove(); });
+    };
+
+    // Internal alias for backwards compatibility within this file
+    function showToast(message) {
+        window.stackboostToast(message);
     }
 
     function copyToClipboard(text, $icon, type) {

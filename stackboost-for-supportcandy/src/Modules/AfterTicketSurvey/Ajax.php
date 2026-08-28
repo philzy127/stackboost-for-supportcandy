@@ -47,6 +47,39 @@ class Ajax {
 	}
 
 	/**
+	 * Handle the request to update multiple report headings at once.
+	 */
+	public function update_report_headings() {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
+			wp_send_json_error( 'Permission denied.' );
+		}
+		check_ajax_referer( 'stackboost_ats_results_nonce', 'nonce' );
+
+		$report_headings = Request::get_post( 'report_headings', [], 'array' );
+
+		if ( empty( $report_headings ) || ! is_array( $report_headings ) ) {
+			wp_send_json_error( 'No headings provided.' );
+		}
+
+		$has_error = false;
+		foreach ( $report_headings as $question_id => $heading ) {
+			$q_id = (int) $question_id;
+			if ( $q_id > 0 ) {
+				$result = $this->repository->update_question( $q_id, [ 'report_heading' => sanitize_text_field( $heading ) ] );
+				if ( false === $result ) {
+					$has_error = true;
+				}
+			}
+		}
+
+		if ( $has_error ) {
+			wp_send_json_error( 'Some headings failed to update.' );
+		} else {
+			wp_send_json_success( 'Headings updated successfully.' );
+		}
+	}
+
+	/**
 	 * Get a single question's data.
 	 */
 	public function get_question() {
@@ -107,6 +140,7 @@ class Ajax {
 		$data = [
 			'question_text'       => Request::get_post( 'question_text' ),
 			'question_type'       => Request::get_post( 'question_type' ),
+			'category_id'         => Request::has_post( 'category_id' ) ? (int) Request::get_post( 'category_id' ) : 0,
 			'is_required'         => $is_required,
 			'is_readonly_prefill' => $is_readonly,
 			'sort_order'          => $sort_order,
@@ -177,6 +211,93 @@ class Ajax {
 			'id'      => $question_id,
 			'message' => 'Question saved successfully.',
 		] );
+	}
+
+	/**
+	 * Save a category.
+	 */
+	public function save_category() {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
+			wp_send_json_error( 'Permission denied.' );
+		}
+		check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
+
+		$category_id = Request::has_post( 'category_id' ) ? (int) Request::get_post( 'category_id' ) : 0;
+		$name = sanitize_text_field( Request::get_post( 'name' ) );
+		$description = sanitize_textarea_field( Request::get_post( 'description' ) );
+
+		if ( empty( $name ) ) {
+			wp_send_json_error( 'Name is required.' );
+		}
+
+		$data = [
+			'name' => $name,
+			'description' => $description
+		];
+
+		if ( $category_id ) {
+			$result = $this->repository->update_category( $category_id, $data );
+			if ( false === $result ) {
+				wp_send_json_error( 'Failed to update category.' );
+			}
+		} else {
+			$category_id = $this->repository->insert_category( $data );
+			if ( false === $category_id ) {
+				wp_send_json_error( 'Failed to add category.' );
+			}
+		}
+
+		wp_send_json_success( 'Category saved successfully.' );
+	}
+
+	/**
+	 * Get a category.
+	 */
+	public function get_category() {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
+			wp_send_json_error( 'Permission denied.' );
+		}
+		check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
+
+		$category_id = Request::has_post( 'category_id' ) ? (int) Request::get_post( 'category_id' ) : 0;
+
+		if ( ! $category_id ) {
+			wp_send_json_error( 'Invalid category ID.' );
+		}
+
+		$category = $this->repository->get_category( $category_id );
+
+		if ( ! $category ) {
+			wp_send_json_error( 'Category not found.' );
+		}
+
+		wp_send_json_success( $category );
+	}
+
+	/**
+	 * Delete a category.
+	 */
+	public function delete_category() {
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_ATS ) ) {
+			wp_send_json_error( 'Permission denied.' );
+		}
+		check_ajax_referer( 'stackboost_ats_manage_questions_nonce', 'nonce' );
+
+		$category_id = Request::has_post( 'category_id' ) ? (int) Request::get_post( 'category_id' ) : 0;
+
+		if ( ! $category_id ) {
+			wp_send_json_error( 'Invalid category ID.' );
+		}
+
+		$this->repository->delete_category( $category_id );
+
+		// Set category_id to 0 for all questions that belonged to this category
+		global $wpdb;
+		$questions_table = $wpdb->prefix . 'stackboost_ats_questions';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$wpdb->query( $wpdb->prepare( "UPDATE `{$questions_table}` SET category_id = 0 WHERE category_id = %d", $category_id ) );
+
+		wp_send_json_success( 'Category deleted successfully.' );
 	}
 
 	/**

@@ -25,11 +25,15 @@ class Repository {
 	/** @var string The name of the survey answers table. */
 	private string $survey_answers_table_name;
 
+	/** @var string The name of the question categories table. */
+	private string $question_categories_table_name;
+
 	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		global $wpdb;
+		$this->question_categories_table_name = $wpdb->prefix . 'stackboost_ats_question_categories';
 		$this->questions_table_name          = $wpdb->prefix . 'stackboost_ats_questions';
 		$this->dropdown_options_table_name   = $wpdb->prefix . 'stackboost_ats_dropdown_options';
 		$this->survey_submissions_table_name = $wpdb->prefix . 'stackboost_ats_survey_submissions';
@@ -44,8 +48,9 @@ class Repository {
 	public function get_questions(): array {
 		global $wpdb;
 		$safe_table = $this->questions_table_name;
+		$safe_categories_table = $this->question_categories_table_name;
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
-		return $wpdb->get_results( "SELECT * FROM `{$safe_table}` ORDER BY sort_order ASC", ARRAY_A ) ?: [];
+		return $wpdb->get_results( "SELECT q.*, c.name as category_name FROM `{$safe_table}` q LEFT JOIN `{$safe_categories_table}` c ON q.category_id = c.id ORDER BY q.sort_order ASC", ARRAY_A ) ?: [];
 	}
 
 	/**
@@ -57,8 +62,9 @@ class Repository {
 	public function get_question( int $id ): ?array {
 		global $wpdb;
 		$safe_table = $this->questions_table_name;
+		$safe_categories_table = $this->question_categories_table_name;
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM `{$safe_table}` WHERE id = %d", $id ), ARRAY_A );
+		return $wpdb->get_row( $wpdb->prepare( "SELECT q.*, c.name as category_name FROM `{$safe_table}` q LEFT JOIN `{$safe_categories_table}` c ON q.category_id = c.id WHERE q.id = %d", $id ), ARRAY_A );
 	}
 
 	/**
@@ -121,6 +127,66 @@ class Repository {
 	}
 
 	/**
+	 * Get all categories.
+	 *
+	 * @return array List of categories.
+	 */
+	public function get_categories(): array {
+		global $wpdb;
+		$safe_table = $this->question_categories_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
+		return $wpdb->get_results( "SELECT * FROM `{$safe_table}` ORDER BY name ASC", ARRAY_A ) ?: [];
+	}
+
+	/**
+	 * Get specific category by ID.
+	 *
+	 * @param int $id Category ID.
+	 * @return array|null Category data or null.
+	 */
+	public function get_category( int $id ): ?array {
+		global $wpdb;
+		$safe_table = $this->question_categories_table_name;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM `{$safe_table}` WHERE id = %d", $id ), ARRAY_A );
+	}
+
+	/**
+	 * Insert a new category.
+	 *
+	 * @param array $data Category data.
+	 * @return int|false Inserted ID or false.
+	 */
+	public function insert_category( array $data ) {
+		global $wpdb;
+		$result = $wpdb->insert( $this->question_categories_table_name, $data );
+		return $result ? $wpdb->insert_id : false;
+	}
+
+	/**
+	 * Update a category.
+	 *
+	 * @param int   $id   Category ID.
+	 * @param array $data Update data.
+	 * @return int|false Result or false.
+	 */
+	public function update_category( int $id, array $data ) {
+		global $wpdb;
+		return $wpdb->update( $this->question_categories_table_name, $data, [ 'id' => $id ] );
+	}
+
+	/**
+	 * Delete a category.
+	 *
+	 * @param int $id Category ID.
+	 * @return int|false Result or false.
+	 */
+	public function delete_category( int $id ) {
+		global $wpdb;
+		return $wpdb->delete( $this->question_categories_table_name, [ 'id' => $id ] );
+	}
+
+	/**
 	 * Get dropdown options for a question.
 	 *
 	 * @param int $question_id Question ID.
@@ -168,15 +234,61 @@ class Repository {
 	}
 
 	/**
-	 * Get submissions with user details.
+	 * Get submissions with user details, optionally filtered by date and agent.
 	 *
+	 * @param string $agent_id   Optional. Agent ID to filter by.
+	 * @param string $start_date Optional. Start date (YYYY-MM-DD).
+	 * @param string $end_date   Optional. End date (YYYY-MM-DD).
 	 * @return array List of submissions with display name.
 	 */
-	public function get_submissions_with_users(): array {
+	public function get_submissions_with_users( string $agent_id = '', string $start_date = '', string $end_date = '' ): array {
 		global $wpdb;
 		$safe_table = $this->survey_submissions_table_name;
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is derived from trusted property.
-		return $wpdb->get_results( "SELECT s.*, u.display_name FROM `{$safe_table}` s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID ORDER BY submission_date DESC", ARRAY_A ) ?: [];
+		$safe_answers = $this->survey_answers_table_name;
+
+		$sql = "SELECT s.*, u.display_name FROM `{$safe_table}` s LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID";
+		$where = [];
+		$args = [];
+
+		if ( ! empty( $start_date ) && ! empty( $end_date ) ) {
+			$start_dt = gmdate( 'Y-m-d 00:00:00', strtotime( $start_date ) );
+			$end_dt   = gmdate( 'Y-m-d 23:59:59', strtotime( $end_date ) );
+			$where[] = "s.submission_date >= %s AND s.submission_date <= %s";
+			$args[] = $start_dt;
+			$args[] = $end_dt;
+		}
+
+		if ( ! empty( $agent_id ) ) {
+			$ticket_question_id = $this->get_ticket_number_question_id();
+			if ( $ticket_question_id ) {
+				$tickets_table = $wpdb->prefix . 'psmsc_tickets';
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				if ( $wpdb->get_var("SHOW TABLES LIKE '{$tickets_table}'") !== $tickets_table ) {
+					$tickets_table = $wpdb->prefix . 'wpsc_tickets';
+				}
+
+				$sql .= " INNER JOIN `{$safe_answers}` a ON s.id = a.submission_id";
+				$sql .= " INNER JOIN `{$tickets_table}` t ON a.answer_value = t.id";
+				$where[] = "a.question_id = %d";
+				$args[] = $ticket_question_id;
+				$where[] = "FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0";
+				$args[] = $agent_id;
+			}
+		}
+
+		if ( ! empty( $where ) ) {
+			$sql .= " WHERE " . implode( " AND ", $where );
+		}
+
+		$sql .= " ORDER BY s.submission_date DESC";
+
+		if ( ! empty( $args ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$sql = $wpdb->prepare( $sql, $args );
+		}
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
+		return $wpdb->get_results( $sql, ARRAY_A ) ?: [];
 	}
 
 	/**

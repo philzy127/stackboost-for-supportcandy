@@ -143,7 +143,7 @@ class Shortcode {
 			return;
 		}
 
-		echo '<div class="stackboost-ats-success-message">' . esc_html( $atts['successMessage'] ) . '</div>';
+		echo '<div class="stackboost-ats-success-message">' . wp_kses_post( $atts['successMessage'] ) . '</div>';
 	}
 
 	/**
@@ -202,7 +202,7 @@ class Shortcode {
 				<h2 class="stackboost-ats-main-title"><?php echo esc_html( $atts['formTitle'] ); ?></h2>
 			<?php endif; ?>
 			<?php if ( ! empty( $atts['introText'] ) ) : ?>
-				<p class="stackboost-ats-intro"><?php echo nl2br( esc_html( $atts['introText'] ) ); ?></p>
+				<div class="stackboost-ats-intro"><?php echo wp_kses_post( $atts['introText'] ); ?></div>
 			<?php endif; ?>
 			<form method="post" class="stackboost-ats-form">
 				<?php wp_nonce_field( 'stackboost_ats_survey_form_nonce', 'stackboost_ats_survey_nonce' ); ?>

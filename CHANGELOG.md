@@ -1,6 +1,22 @@
 Change Log
 ==========
 
+1.6.5
+-----
+*   Added: Directory - Google Contacts Auto Sync via Google People API. Users can bulk-sync the directory to their Google Workspace contacts directly from the frontend using SSO login hints.
+*   Added: Ticket Metrics - AI Trend Analysis tool powered by Google Gemini (`gemini-flash-lite-latest`) to generate automated HTML summaries of unclassified "Other" ticket descriptions.
+*   Added: Ticket Metrics - Service Level Agreement (SLA) threshold tracking. Administrators can define target Response and Resolution times in hours, and the dashboard automatically computes dynamic SLA Breach percentages.
+*   Added: Ticket Metrics - "Average Touches" metric to calculate the mean number of threads/replies per ticket within the reporting period.
+*   Added: Ticket Metrics - Interactive "Submission Heatmap" visualizing ticket creation volume density by Day of the Week and Hour of the Day based on the localized WordPress timezone.
+*   Added: Ticket Metrics - Deep integration with the After Ticket Survey module. Dynamically queries the native `stackboost_ats_questions` schema to map surveys to closed tickets and computes exact Agent-level Survey Response Rates and Average CSAT Scores.
+*   Added: Ticket Metrics - "Max CSAT Score" normalization setting to format raw aggregate survey calculations into human-readable percentage outputs (e.g., `4.2 / 5 (84%)`).
+*   Added: Ticket Metrics - "Secondary Chart Type" setting to allow selecting distinct chart visuals (Pie, Bar, Radar, etc.) explicitly for subcategory breakdown modals, or disabling them entirely (`None`).
+*   Improved: Ticket Metrics - Completely refactored the entire dashboard HTML into an auto-flowing CSS Grid. Replaced rigid HTML tables with strict Flexbox columns to guarantee symmetrical vertical alignment of all data cards.
+*   Improved: Ticket Metrics - Implemented a highly secure masking state for the Gemini API Key input. Once saved, keys display as `********` and require an explicit confirmation prompt to "Deactivate / Remove" before they can be overwritten.
+*   Fixed: Ticket Metrics - Corrected the CSS padding discrepancies between Left and Right-sided columns that caused visual staggering.
+*   Fixed: Ticket Metrics - Added robust boolean configuration flags (`is_sla_configured`, `is_survey_configured`) passed from the backend payload to perfectly control UI card visibility instead of using brittle `N/A` string-comparison logic in JavaScript.
+*   Fixed: Ticket Metrics - Implemented `TRIM(a.answer_value) REGEXP '^[0-9]+'` inside CSAT SQL parsing, safely extracting leading numeric scores even if users format their survey choices defensively (e.g., "5 - Excellent").
+
 1.6.4
 -----
 *   Fixed: Compliance - Fully removes non-functional Pro settings ("Card View Type" and "Enable Chat Bubbles") from the free plugin build to comply with WordPress.org repository rules, while enforcing strict functional defaults.

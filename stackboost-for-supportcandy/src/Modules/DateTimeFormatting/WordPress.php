@@ -72,6 +72,7 @@ class WordPress extends Module {
 	public function sanitize_settings( $input ) {
 		$output = [];
 		$output['enable_date_time_formatting'] = ! empty( $input['enable_date_time_formatting'] ) ? 1 : 0;
+		$output['apply_custom_field_offset'] = ! empty( $input['apply_custom_field_offset'] ) ? 1 : 0;
 
 		if ( isset( $input['date_format_rules'] ) && is_array( $input['date_format_rules'] ) ) {
 			$sanitized_rules = [];
@@ -190,8 +191,10 @@ class WordPress extends Module {
 			return;
 		}
 
-		// Add a single filter for all datetime custom fields.
+		// Add filters for all custom date/time fields.
 		add_filter( 'wpsc_ticket_field_val_datetime', [ $this, 'format_date_time_callback' ], 10, 4 );
+		add_filter( 'wpsc_ticket_field_val_date', [ $this, 'format_date_time_callback' ], 10, 4 );
+		add_filter( 'wpsc_ticket_field_val_time', [ $this, 'format_date_time_callback' ], 10, 4 );
 
 		// Add filters for all potential standard fields. The callback will check if a rule exists.
 		$standard_fields = [ 'date_created', 'last_reply_on', 'date_closed', 'date_updated' ];
@@ -247,7 +250,7 @@ class WordPress extends Module {
 		// GET SLUG
 		$current_filter = current_filter();
 		$field_slug     = null;
-		if ( strpos( $current_filter, 'wpsc_ticket_field_val_datetime' ) !== false ) {
+		if ( strpos( $current_filter, 'wpsc_ticket_field_val_datetime' ) !== false || strpos( $current_filter, 'wpsc_ticket_field_val_date' ) !== false || strpos( $current_filter, 'wpsc_ticket_field_val_time' ) !== false ) {
 			if ( is_object( $cf ) && isset( $cf->slug ) ) {
 				$field_slug = $cf->slug;
 			}
@@ -276,47 +279,61 @@ class WordPress extends Module {
 		}
 
 		// GET AND VALIDATE DATE OBJECT
-		// Note: The property name on the ticket object typically matches the slug.
-		$date_object = isset($ticket->{$field_slug}) ? $ticket->{$field_slug} : null;
+		// SupportCandy saves Custom Date/Time fields literally into the DB without converting them to UTC first.
+		// When it reads them into the ticket model as DateTime objects, PHP defaults to assigning them the UTC timezone.
+		// We must extract the raw literal string from the ticket object to discard PHP's incorrect UTC assignment,
+		// and then explicitly define that the string represents the site's local timezone.
 
-		stackboost_log( "format_date_time_callback: Initial Date Object Type: " . gettype($date_object), 'date_time_formatting' );
+		$ticket_cf_obj = isset($ticket->{$field_slug}) ? $ticket->{$field_slug} : null;
 
-		// Fallback: If ticket property is null, try using the filter value itself.
-		if ( empty( $date_object ) && ! empty( $value ) ) {
-			stackboost_log( "format_date_time_callback: Ticket property is empty. Using filter value: " . $value, 'date_time_formatting' );
-			$date_object = $value;
+		// Determine if this is a standard intrinsic field (which SupportCandy natively stores as true UTC)
+		// or a custom field (which SupportCandy stores as literal local time directly into the DB).
+		$is_standard_field = in_array( $field_slug, [ 'date_created', 'last_reply_on', 'date_closed', 'date_updated' ], true );
+
+		// 1. If it's a DateTime object in the ticket, extract its literal string value to discard the incorrect UTC timezone.
+		if ( $ticket_cf_obj instanceof DateTime ) {
+			$date_str = $ticket_cf_obj->format('Y-m-d H:i:s');
+		}
+		// 2. If it's just a raw string (e.g. from the hook or a legacy DB value), use it directly.
+		elseif ( is_string( $ticket_cf_obj ) && ! empty( $ticket_cf_obj ) ) {
+			$date_str = $ticket_cf_obj;
+		}
+		// 3. If the ticket object doesn't have it, fallback to the string passed by the filter hook.
+		elseif ( is_string( $value ) && ! empty( $value ) ) {
+			$date_str = $value;
+		}
+		// 4. If all else fails, we can't format it.
+		else {
+			stackboost_log( "format_date_time_callback: No valid date source found.", 'date_time_formatting' );
+			return $value;
 		}
 
-		if ( is_string($date_object) ) {
-			stackboost_log( "format_date_time_callback: Initial Date String: " . $date_object, 'date_time_formatting' );
-		}
+		// If it's a standard intrinsic SC field, it was stored in the database as pure UTC.
+		// If it's a custom field, it was stored in the database exactly as the user typed it (local time).
+		$tz = $is_standard_field ? new DateTimeZone('UTC') : wp_timezone();
+		$date_object = null;
 
-		// If the date object is a string (raw DB format), convert it to DateTime.
-		if ( is_string( $date_object ) && ! empty( $date_object ) ) {
-			$date_str = $date_object;
-			try {
-				$date_object = new DateTime( $date_str );
-				$date_object->setTimezone( wp_timezone() );
-				stackboost_log( "format_date_time_callback: Successfully converted string to DateTime.", 'date_time_formatting' );
-			} catch ( \Exception $e ) {
-				stackboost_log( "format_date_time_callback: Failed to convert string to DateTime. Error: " . $e->getMessage(), 'date_time_formatting' );
+		try {
+			// Explicitly declare the timezone the string originated in.
+			$date_object = new DateTime( $date_str, $tz );
+			stackboost_log( "format_date_time_callback: Successfully explicitly converted string '{$date_str}' to DateTime.", 'date_time_formatting' );
+		} catch ( \Exception $e ) {
+			stackboost_log( "format_date_time_callback: Failed to convert string to DateTime. Error: " . $e->getMessage(), 'date_time_formatting' );
 
-				// Fallback: SupportCandy might format dates as 'm-d-Y' (US format with dashes)
-				// PHP's DateTime assumes dashes = European (d-m-y), so '01-30-2024' fails (Month 30).
-				// We try replacing dashes with slashes to force 'm/d/y' parsing.
-				if ( strpos( $date_str, '-' ) !== false ) {
-					$fallback_str = str_replace( '-', '/', $date_str );
-					try {
-						$date_object = new DateTime( $fallback_str );
-						$date_object->setTimezone( wp_timezone() );
-						stackboost_log( "format_date_time_callback: Successfully converted fallback string (slashes) to DateTime.", 'date_time_formatting' );
-					} catch ( \Exception $e2 ) {
-						stackboost_log( "format_date_time_callback: Fallback conversion failed. Returning original value.", 'date_time_formatting' );
-						return $value;
-					}
-				} else {
+			// Fallback: SupportCandy might format dates as 'm-d-Y' (US format with dashes)
+			// PHP's DateTime assumes dashes = European (d-m-y), so '01-30-2024' fails (Month 30).
+			// We try replacing dashes with slashes to force 'm/d/y' parsing.
+			if ( strpos( $date_str, '-' ) !== false ) {
+				$fallback_str = str_replace( '-', '/', $date_str );
+				try {
+					$date_object = new DateTime( $fallback_str, $tz );
+					stackboost_log( "format_date_time_callback: Successfully converted fallback string '{$fallback_str}' to local DateTime.", 'date_time_formatting' );
+				} catch ( \Exception $e2 ) {
+					stackboost_log( "format_date_time_callback: Fallback conversion failed. Returning original value.", 'date_time_formatting' );
 					return $value;
 				}
+			} else {
+				return $value;
 			}
 		}
 
@@ -326,6 +343,10 @@ class WordPress extends Module {
 		}
 
 		// APPLY FORMAT
+		// We have a global settings array we can check to determine if we should offset the timezone natively via wp_date().
+		$options = get_option( 'stackboost_date_time_settings', [] );
+		$apply_offset = ! empty( $options['apply_custom_field_offset'] ) || $is_standard_field;
+
 		$timestamp         = $date_object->getTimestamp();
 		$new_value         = $value;
 		$short_date_format = 'm/d/Y';
@@ -338,19 +359,27 @@ class WordPress extends Module {
 			$date_format = $day_prefix . $date_format;
 		}
 
+		// Helper function for conditional shifting
+		$format_func = function( $format_str ) use ( $apply_offset, $date_object, $timestamp ) {
+			if ( $apply_offset ) {
+				return wp_date( $format_str, $timestamp );
+			}
+			return $date_object->format( $format_str );
+		};
+
 		switch ( $rule['format_type'] ) {
 			case 'date_only':
-				$new_value = wp_date( $date_format, $timestamp );
+				$new_value = $format_func( $date_format );
 				break;
 			case 'time_only':
-				$new_value = wp_date( $time_format, $timestamp );
+				$new_value = $format_func( $time_format );
 				break;
 			case 'date_and_time':
-				$new_value = wp_date( $date_format . ' ' . $time_format, $timestamp );
+				$new_value = $format_func( $date_format . ' ' . $time_format );
 				break;
 			case 'custom':
 				if ( ! empty( $rule['custom_format'] ) ) {
-					$new_value = wp_date( $rule['custom_format'], $timestamp );
+					$new_value = $format_func( $rule['custom_format'] );
 				}
 				break;
 		}

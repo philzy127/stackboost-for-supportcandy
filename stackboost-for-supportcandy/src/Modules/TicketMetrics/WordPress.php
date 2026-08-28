@@ -32,6 +32,41 @@ class WordPress extends Module {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'wp_ajax_stackboost_get_ticket_metrics', [ $this, 'ajax_get_metrics' ] );
 		add_action( 'wp_ajax_stackboost_save_ticket_metrics_settings', [ $this, 'ajax_save_ticket_metrics_settings' ] );
+		add_action( 'wp_ajax_stackboost_get_other_issues_csv', [ $this, 'ajax_get_other_issues_csv' ] );
+		add_action( 'wp_ajax_stackboost_get_field_options', [ $this, 'ajax_get_field_options' ] );
+		add_action( 'wp_ajax_stackboost_get_trend_analysis_ai', [ $this, 'ajax_get_trend_analysis_ai' ] );
+	}
+
+	public function ajax_get_field_options() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_METRICS ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$field_slug = isset( $_POST['field_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['field_slug'] ) ) : '';
+
+		if ( empty( $field_slug ) ) {
+			wp_send_json_error( __( 'No field selected.', 'stackboost-for-supportcandy' ) );
+		}
+
+		global $wpdb;
+		$categories_table = $wpdb->prefix . 'psmsc_categories';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$categories_table}'") !== $categories_table ) {
+			$categories_table = $wpdb->prefix . 'wpsc_categories';
+			$priorities_table = $wpdb->prefix . 'wpsc_priorities';
+			$status_table     = $wpdb->prefix . 'wpsc_statuses';
+			$options_table    = $wpdb->prefix . 'wpsc_options';
+		} else {
+			$priorities_table = $wpdb->prefix . 'psmsc_priorities';
+			$status_table     = $wpdb->prefix . 'psmsc_statuses';
+			$options_table    = $wpdb->prefix . 'psmsc_options';
+		}
+
+		$map = $this->get_type_map($wpdb, $field_slug, $categories_table, $priorities_table, $status_table, $options_table);
+
+		wp_send_json_success( $map );
 	}
 
 	public function ajax_save_ticket_metrics_settings() {
@@ -58,12 +93,16 @@ class WordPress extends Module {
 
 		// Read and sanitize raw POST data directly
 		$options['ticket_metrics_type_field']        = isset( $_POST['ticket_metrics_type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_type_field'] ) ) : 'category';
+		$options['ticket_metrics_enable_agent_group_filter'] = isset( $_POST['ticket_metrics_enable_agent_group_filter'] ) ? filter_var( wp_unslash( $_POST['ticket_metrics_enable_agent_group_filter'] ), FILTER_VALIDATE_BOOLEAN ) : false;
 
 		$agent_chart = isset( $_POST['ticket_metrics_chart_type_agent'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_agent'] ) ) : 'multi_pie';
-		$options['ticket_metrics_chart_type_agent']  = in_array( $agent_chart, [ 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $agent_chart : 'multi_pie';
+		$options['ticket_metrics_chart_type_agent']  = in_array( $agent_chart, [ 'none', 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $agent_chart : 'multi_pie';
 
 		$type_chart = isset( $_POST['ticket_metrics_chart_type_type'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_type'] ) ) : 'doughnut';
-		$options['ticket_metrics_chart_type_type']   = in_array( $type_chart, [ 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $type_chart : 'doughnut';
+		$options['ticket_metrics_chart_type_type']   = in_array( $type_chart, [ 'none', 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $type_chart : 'doughnut';
+
+		$secondary_chart = isset( $_POST['ticket_metrics_chart_type_secondary'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_chart_type_secondary'] ) ) : 'bar';
+		$options['ticket_metrics_chart_type_secondary']   = in_array( $secondary_chart, [ 'none', 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ] ) ? $secondary_chart : 'bar';
 
 		// Handle the array of tracked agents
 		$agents = [];
@@ -88,6 +127,51 @@ class WordPress extends Module {
 		$options['ticket_metrics_frt_mode'] = isset( $_POST['ticket_metrics_frt_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_frt_mode'] ) ) : 'stackboost';
 		$options['ticket_metrics_verbose_logging'] = isset( $_POST['ticket_metrics_verbose_logging'] ) ? (int) $_POST['ticket_metrics_verbose_logging'] : 0;
 
+		$options['ticket_metrics_sla_frt_hours'] = isset( $_POST['ticket_metrics_sla_frt_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_frt_hours'] ) : 0;
+		$options['ticket_metrics_sla_resolution_hours'] = isset( $_POST['ticket_metrics_sla_resolution_hours'] ) ? max( 0, (float) $_POST['ticket_metrics_sla_resolution_hours'] ) : 0;
+
+		if ( isset( $_POST['ticket_metrics_survey_categories'] ) && is_array( $_POST['ticket_metrics_survey_categories'] ) ) {
+			$options['ticket_metrics_survey_categories'] = array_map( 'sanitize_text_field', wp_unslash( $_POST['ticket_metrics_survey_categories'] ) );
+		} else {
+			$options['ticket_metrics_survey_categories'] = [];
+		}
+
+		$other_issues_rules = [];
+		if ( isset( $_POST['ticket_metrics_other_issues_rules'] ) && is_array( $_POST['ticket_metrics_other_issues_rules'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$raw_rules = wp_unslash( $_POST['ticket_metrics_other_issues_rules'] );
+			foreach ( $raw_rules as $rule ) {
+				// Handle both string representations and arrays for trigger conditions from the JS payload
+				$trigger_condition = [];
+				if ( isset( $rule['trigger_condition'] ) ) {
+					if ( is_array( $rule['trigger_condition'] ) ) {
+						$trigger_condition = array_map('sanitize_text_field', $rule['trigger_condition']);
+					} elseif ( is_string( $rule['trigger_condition'] ) ) {
+						$decoded = json_decode($rule['trigger_condition'], true);
+						if ( is_array($decoded) ) {
+							$trigger_condition = array_map('sanitize_text_field', $decoded);
+						} else {
+							$trigger_condition = [ sanitize_text_field( $rule['trigger_condition'] ) ];
+						}
+					}
+				}
+				$other_issues_rules[] = [
+					'trigger_field' => isset( $rule['trigger_field'] ) ? sanitize_text_field( $rule['trigger_field'] ) : '',
+					'trigger_condition' => $trigger_condition,
+					'text_field' => isset( $rule['text_field'] ) ? sanitize_text_field( $rule['text_field'] ) : 'subject',
+				];
+			}
+		}
+		$options['ticket_metrics_other_issues_rules'] = $other_issues_rules;
+
+		$incoming_key = isset( $_POST['ticket_metrics_gemini_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_metrics_gemini_api_key'] ) ) : '';
+
+		if ( $incoming_key !== '********' ) {
+			// If it's not the masked placeholder, it means they either wiped it empty or provided a new key.
+			$options['ticket_metrics_gemini_api_key'] = $incoming_key;
+		}
+		// If it IS '********', we do nothing and let the existing key persist in the $options array.
+
 		// Clean up legacy settings if present
 		unset( $options['ticket_metrics_agent_filter_mode'] );
 		unset( $options['ticket_metrics_excluded_agents'] );
@@ -99,6 +183,8 @@ class WordPress extends Module {
 			stackboost_log('PROCESSED $options ARRAY TO BE SAVED:', 'ticket_metrics');
 			stackboost_log(json_encode($options), 'ticket_metrics');
 		}
+
+		$options['ticket_metrics_ai_prompt'] = isset( $_POST['ticket_metrics_ai_prompt'] ) ? wp_kses_post( wp_unslash( $_POST['ticket_metrics_ai_prompt'] ) ) : self::get_default_ai_prompt();
 
 		$update_result = update_option( 'stackboost_settings', $options );
 
@@ -114,6 +200,443 @@ class WordPress extends Module {
 		// Basic setting if we ever want to toggle it or add preferences
 	}
 
+	public function ajax_get_other_issues_csv() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_METRICS ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$start_date = isset( $_GET['start_date'] ) ? sanitize_text_field( wp_unslash( $_GET['start_date'] ) ) : '';
+		$end_date   = isset( $_GET['end_date'] ) ? sanitize_text_field( wp_unslash( $_GET['end_date'] ) ) : '';
+		$trigger_field_filter = isset( $_GET['trigger_field'] ) ? sanitize_text_field( wp_unslash( $_GET['trigger_field'] ) ) : '';
+		$parent_field = isset( $_GET['parent_field'] ) ? sanitize_text_field( wp_unslash( $_GET['parent_field'] ) ) : '';
+		$parent_val   = isset( $_GET['parent_val'] ) ? sanitize_text_field( wp_unslash( $_GET['parent_val'] ) ) : '';
+
+		if ( empty( $start_date ) || empty( $end_date ) ) {
+			wp_die( esc_html__( 'Start and End dates are required.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$options = get_option( 'stackboost_settings', [] );
+		$rules = $options['ticket_metrics_other_issues_rules'] ?? [];
+
+		if ( empty( $rules ) ) {
+			wp_die( esc_html__( 'No "Other Issues" rules configured in settings.', 'stackboost-for-supportcandy' ) );
+		}
+
+		global $wpdb;
+		$start_dt = gmdate( 'Y-m-d 00:00:00', strtotime( $start_date ) );
+		$end_dt   = gmdate( 'Y-m-d 23:59:59', strtotime( $end_date ) );
+
+		$tickets_table = $wpdb->prefix . 'psmsc_tickets';
+		$threads_table = $wpdb->prefix . 'psmsc_threads';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$tickets_table}'") !== $tickets_table ) {
+			$tickets_table = $wpdb->prefix . 'wpsc_tickets';
+			$threads_table = $wpdb->prefix . 'wpsc_threads';
+		}
+
+		$csv_data = [];
+
+		foreach ( $rules as $rule ) {
+			if ( empty( $rule['trigger_field'] ) ) {
+				continue;
+			}
+
+			if ( ! empty( $trigger_field_filter ) && $rule['trigger_field'] !== $trigger_field_filter ) {
+				continue; // Skip rules that do not match the explicitly requested trigger field
+			}
+
+			$trigger_field = $rule['trigger_field'];
+			$trigger_cond  = $rule['trigger_condition'];
+			$text_field    = $rule['text_field'];
+
+			// We need to fetch tickets in the timeframe that match the condition.
+			// Similar to `active_in_period_sql` in regular metrics
+			// Is `date_closed` explicitly available?
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$has_date_closed = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'date_closed'") === 'date_closed';
+			$close_date_col = $has_date_closed ? 't.date_closed' : 't.date_updated';
+			$open_condition = $has_date_closed ? "(t.date_closed IS NULL OR t.date_closed = '0000-00-00 00:00:00')" : "t.is_active = 1";
+
+			$active_in_period_sql = "t.date_created <= %s AND ( " . $open_condition . " OR " . $close_date_col . " >= %s )";
+
+			// Build query for this rule
+			if ( preg_match( '/^[a-zA-Z0-9_]+$/', $trigger_field ) ) {
+				$sql = "SELECT t.id, t.`" . $trigger_field . "` as trigger_val ";
+
+				// Add select for text field if it's a native column
+				if ( in_array( $text_field, [ 'subject', 'description' ] ) ) {
+					// We will grab description from threads separately to avoid huge joins if many tickets.
+					// Subject is on tickets table usually. Let's verify.
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$has_subject = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'subject'") === 'subject';
+					if ( $has_subject && $text_field === 'subject' ) {
+						$sql .= ", t.subject as extracted_text ";
+					} else {
+						$sql .= ", '' as extracted_text "; // Will populate manually
+					}
+				} elseif ( preg_match( '/^[a-zA-Z0-9_]+$/', $text_field ) ) {
+					// Custom text field, usually stored in a column on the tickets table in modern SC.
+					$sql .= ", t.`" . $text_field . "` as extracted_text ";
+				} else {
+					$sql .= ", '' as extracted_text ";
+				}
+
+				$sql .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql;
+
+				$query_args = [ $end_dt, $start_dt ];
+
+				if ( ! empty( $parent_field ) && ! empty( $parent_val ) && preg_match( '/^[a-zA-Z0-9_]+$/', $parent_field ) ) {
+					$sql .= " AND t.`" . $parent_field . "` = %s";
+					$query_args[] = $parent_val;
+				}
+
+				if ( ! empty( $trigger_cond ) ) {
+					if ( is_array( $trigger_cond ) ) {
+						$placeholders = implode( ',', array_fill( 0, count( $trigger_cond ), '%s' ) );
+						$sql .= " AND t.`" . $trigger_field . "` IN ($placeholders)";
+						$query_args = array_merge( $query_args, $trigger_cond );
+					} else {
+						$sql .= " AND t.`" . $trigger_field . "` = %s";
+						$query_args[] = $trigger_cond;
+					}
+				} else {
+					// If no condition specified, assume it's misconfigured.
+					continue;
+				}
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query = $wpdb->prepare( $sql, $query_args );
+
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$results = $wpdb->get_results( $query );
+
+				if ( is_array( $results ) ) {
+					foreach ( $results as $res ) {
+						$extracted_text = $res->extracted_text;
+
+						// If text field is description, fetch the first thread body.
+						if ( $text_field === 'description' ) {
+							$thread_sql = "SELECT body FROM {$threads_table} WHERE ticket = %d ORDER BY date_created ASC LIMIT 1";
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$thread_query = $wpdb->prepare( $thread_sql, $res->id );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$first_thread = $wpdb->get_var( $thread_query );
+							if ( $first_thread ) {
+								$extracted_text = wp_strip_all_tags( $first_thread );
+							}
+						} elseif ( $text_field === 'subject' && empty( $extracted_text ) ) {
+							// fallback if it wasn't returned in the main query for some reason
+							$subj_sql = "SELECT subject FROM {$tickets_table} WHERE id = %d";
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$subj_query = $wpdb->prepare( $subj_sql, $res->id );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$subj = $wpdb->get_var( $subj_query );
+							$extracted_text = $subj ? $subj : '';
+						}
+
+						// Clean up the text for CSV
+						$extracted_text = trim( $extracted_text );
+						if ( ! empty( $extracted_text ) ) {
+							$csv_data[] = [ $extracted_text ];
+						}
+					}
+				}
+			}
+		}
+
+		if ( empty( $csv_data ) ) {
+			wp_die( esc_html__( 'No data found matching the rules in this timeframe.', 'stackboost-for-supportcandy' ) );
+		}
+
+		// Generate CSV output
+		$filename = 'other-issues-report-' . date( 'Y-m-d' ) . '.csv';
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=' . $filename );
+
+		$output = fopen( 'php://output', 'w' );
+		if ( $output === false ) {
+			wp_die( esc_html__( 'Failed to generate CSV.', 'stackboost-for-supportcandy' ) );
+		}
+
+		// Output UTF-8 BOM for Excel compatibility
+		fprintf( $output, chr(0xEF).chr(0xBB).chr(0xBF) );
+
+		foreach ( $csv_data as $row ) {
+			fputcsv( $output, $row );
+		}
+		fclose( $output );
+		exit;
+	}
+
+	public static function get_default_ai_prompt(): string {
+		$prompt = "Please read through these items and provide a succinct summary of the main trends, common questions, or recurring complaints.\n\n";
+		$prompt .= "Additionally, you MUST include a specific section proposing 2-3 NEW ticket categories or subcategories that we should add to our system to help reduce the volume of these 'Other' tickets in the future.";
+		return $prompt;
+	}
+
+	public static function get_fixed_ai_instructions(): string {
+		$instr = "You are a helpful customer support trend analyst. I will provide you with a list of ticket issues or subjects submitted by customers over a specific period. These tickets were categorized as 'Other' or similar catch-all options because they didn't fit existing categories.\n\n";
+		$instr .= "For context, here are the categories/options that ALREADY exist in the system for this field: [{{existing_options}}]. Do not suggest these exact existing options.\n\n";
+		$instr .= "Do not mention that you are an AI. Provide the analysis in clean HTML format using only standard tags (<h3>, <ul>, <li>, <strong>, <p>, <br>). Ensure all text and elements are left-aligned using inline CSS where necessary (e.g., <div style=\"text-align: left;\">). Include extra line breaks (<br><br>) between major sections for readability so it can be directly embedded into an admin dashboard modal. Avoid Markdown formatting in your final output, just raw HTML. Do not wrap the response in ```html ``` blocks.\n\nHere are the ticket excerpts:\n\n{{ticket_excerpts}}";
+		return $instr;
+	}
+
+	public function ajax_get_trend_analysis_ai() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_METRICS ) ) {
+			wp_send_json_error( esc_html__( 'Permission denied.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$options = get_option( 'stackboost_settings', [] );
+		$api_key = $options['ticket_metrics_gemini_api_key'] ?? '';
+		$custom_prompt = $options['ticket_metrics_ai_prompt'] ?? self::get_default_ai_prompt();
+
+		if ( empty( $api_key ) ) {
+			wp_send_json_error( esc_html__( 'Gemini API Key is not configured. Please add it in the settings tab.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$start_date = isset( $_POST['start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['start_date'] ) ) : '';
+		$end_date   = isset( $_POST['end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['end_date'] ) ) : '';
+		$trigger_field_filter = isset( $_POST['trigger_field'] ) ? sanitize_text_field( wp_unslash( $_POST['trigger_field'] ) ) : '';
+		$parent_field = isset( $_POST['parent_field'] ) ? sanitize_text_field( wp_unslash( $_POST['parent_field'] ) ) : '';
+		$parent_val   = isset( $_POST['parent_val'] ) ? sanitize_text_field( wp_unslash( $_POST['parent_val'] ) ) : '';
+
+		if ( empty( $start_date ) || empty( $end_date ) ) {
+			wp_send_json_error( esc_html__( 'Start and End dates are required.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$rules = $options['ticket_metrics_other_issues_rules'] ?? [];
+
+		if ( empty( $rules ) ) {
+			wp_send_json_error( esc_html__( 'No "Other Issues" rules configured in settings.', 'stackboost-for-supportcandy' ) );
+		}
+
+		global $wpdb;
+		$start_dt = gmdate( 'Y-m-d 00:00:00', strtotime( $start_date ) );
+		$end_dt   = gmdate( 'Y-m-d 23:59:59', strtotime( $end_date ) );
+
+		$tickets_table = $wpdb->prefix . 'psmsc_tickets';
+		$threads_table = $wpdb->prefix . 'psmsc_threads';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$tickets_table}'") !== $tickets_table ) {
+			$tickets_table = $wpdb->prefix . 'wpsc_tickets';
+			$threads_table = $wpdb->prefix . 'wpsc_threads';
+		}
+
+		$texts_to_analyze = [];
+
+		foreach ( $rules as $rule ) {
+			if ( empty( $rule['trigger_field'] ) ) {
+				continue;
+			}
+
+			if ( ! empty( $trigger_field_filter ) && $rule['trigger_field'] !== $trigger_field_filter ) {
+				continue; // Skip rules that do not match the explicitly requested trigger field
+			}
+
+			$trigger_field = $rule['trigger_field'];
+			$trigger_cond  = $rule['trigger_condition'];
+			$text_field    = $rule['text_field'];
+
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$has_date_closed = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'date_closed'") === 'date_closed';
+			$close_date_col = $has_date_closed ? 't.date_closed' : 't.date_updated';
+			$open_condition = $has_date_closed ? "(t.date_closed IS NULL OR t.date_closed = '0000-00-00 00:00:00')" : "t.is_active = 1";
+
+			$active_in_period_sql = "t.date_created <= %s AND ( " . $open_condition . " OR " . $close_date_col . " >= %s )";
+
+			if ( preg_match( '/^[a-zA-Z0-9_]+$/', $trigger_field ) ) {
+				$sql = "SELECT t.id, t.`" . $trigger_field . "` as trigger_val ";
+
+				if ( in_array( $text_field, [ 'subject', 'description' ] ) ) {
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$has_subject = $wpdb->get_var("SHOW COLUMNS FROM {$tickets_table} LIKE 'subject'") === 'subject';
+					if ( $has_subject && $text_field === 'subject' ) {
+						$sql .= ", t.subject as extracted_text ";
+					} else {
+						$sql .= ", '' as extracted_text ";
+					}
+				} elseif ( preg_match( '/^[a-zA-Z0-9_]+$/', $text_field ) ) {
+					$sql .= ", t.`" . $text_field . "` as extracted_text ";
+				} else {
+					$sql .= ", '' as extracted_text ";
+				}
+
+				$sql .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql;
+
+				$query_args = [ $end_dt, $start_dt ];
+
+				if ( ! empty( $parent_field ) && ! empty( $parent_val ) && preg_match( '/^[a-zA-Z0-9_]+$/', $parent_field ) ) {
+					$sql .= " AND t.`" . $parent_field . "` = %s";
+					$query_args[] = $parent_val;
+				}
+
+				if ( ! empty( $trigger_cond ) ) {
+					if ( is_array( $trigger_cond ) ) {
+						$placeholders = implode( ',', array_fill( 0, count( $trigger_cond ), '%s' ) );
+						$sql .= " AND t.`" . $trigger_field . "` IN ($placeholders)";
+						$query_args = array_merge( $query_args, $trigger_cond );
+					} else {
+						$sql .= " AND t.`" . $trigger_field . "` = %s";
+						$query_args[] = $trigger_cond;
+					}
+				} else {
+					continue;
+				}
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query = $wpdb->prepare( $sql, $query_args );
+
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$results = $wpdb->get_results( $query );
+
+				if ( is_array( $results ) ) {
+					foreach ( $results as $res ) {
+						$extracted_text = $res->extracted_text;
+
+						if ( $text_field === 'description' ) {
+							$thread_sql = "SELECT body FROM {$threads_table} WHERE ticket = %d ORDER BY date_created ASC LIMIT 1";
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$thread_query = $wpdb->prepare( $thread_sql, $res->id );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$first_thread = $wpdb->get_var( $thread_query );
+							if ( $first_thread ) {
+								$extracted_text = wp_strip_all_tags( $first_thread );
+							}
+						} elseif ( $text_field === 'subject' && empty( $extracted_text ) ) {
+							$subj_sql = "SELECT subject FROM {$tickets_table} WHERE id = %d";
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$subj_query = $wpdb->prepare( $subj_sql, $res->id );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$subj = $wpdb->get_var( $subj_query );
+							$extracted_text = $subj ? $subj : '';
+						}
+
+						$extracted_text = trim( $extracted_text );
+						if ( ! empty( $extracted_text ) ) {
+							$texts_to_analyze[] = $extracted_text;
+						}
+					}
+				}
+			}
+		}
+
+		if ( empty( $texts_to_analyze ) ) {
+			wp_send_json_error( esc_html__( 'No text data found to analyze for this timeframe/rule.', 'stackboost-for-supportcandy' ) );
+		}
+
+		// Fetch existing options for this field to provide context to Gemini
+		$categories_table = $wpdb->prefix . 'psmsc_categories';
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$categories_table}'") !== $categories_table ) {
+			$categories_table = $wpdb->prefix . 'wpsc_categories';
+			$priorities_table = $wpdb->prefix . 'wpsc_priorities';
+			$status_table     = $wpdb->prefix . 'wpsc_statuses';
+			$options_table    = $wpdb->prefix . 'wpsc_options';
+		} else {
+			$priorities_table = $wpdb->prefix . 'psmsc_priorities';
+			$status_table     = $wpdb->prefix . 'psmsc_statuses';
+			$options_table    = $wpdb->prefix . 'psmsc_options';
+		}
+
+		// Use the first rule's trigger field as the context (assuming the button clicked was for a specific trigger field, though we use a filter to narrow it down above)
+		$context_field = ! empty( $trigger_field_filter ) ? $trigger_field_filter : ( $rules[0]['trigger_field'] ?? 'category' );
+		$existing_options_map = $this->get_type_map( $wpdb, $context_field, $categories_table, $priorities_table, $status_table, $options_table );
+
+		$existing_options_list = "None";
+		if ( ! empty( $existing_options_map ) ) {
+			$existing_options_list = implode( ', ', array_values( $existing_options_map ) );
+		}
+
+		// Prepare the prompt for Gemini
+		$texts_to_analyze = array_slice( $texts_to_analyze, 0, 1000 );
+		$excerpts = implode( "\n- ", $texts_to_analyze );
+
+		$full_prompt = self::get_fixed_ai_instructions() . "\n\n" . $custom_prompt;
+
+		$prompt = str_replace(
+			[ '{{existing_options}}', '{{ticket_excerpts}}' ],
+			[ $existing_options_list, $excerpts ],
+			$full_prompt
+		);
+
+		$api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=" . $api_key;
+
+		$body = [
+			'contents' => [
+				[
+					'parts' => [
+						[ 'text' => $prompt ]
+					]
+				]
+			]
+		];
+
+		$response = wp_remote_post( $api_url, [
+			'headers'     => [
+				'Content-Type' => 'application/json',
+			],
+			'body'        => json_encode( $body ),
+			'method'      => 'POST',
+			'data_format' => 'body',
+			'timeout'     => 45, // AI requests can take a moment
+		] );
+
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( esc_html__( 'Failed to connect to Gemini API: ', 'stackboost-for-supportcandy' ) . $response->get_error_message() );
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( $status_code !== 200 ) {
+			$error_msg = isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown API error';
+			wp_send_json_error( esc_html__( 'Gemini API Error: ', 'stackboost-for-supportcandy' ) . $error_msg );
+		}
+
+		if ( ! isset( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
+			wp_send_json_error( esc_html__( 'Invalid response format from Gemini API.', 'stackboost-for-supportcandy' ) );
+		}
+
+		$ai_response_html = $data['candidates'][0]['content']['parts'][0]['text'];
+
+		// Clean up the response if Gemini still wrapped it in markdown code blocks despite instructions
+		$ai_response_html = preg_replace('/^```html\s*$/m', '', $ai_response_html);
+		$ai_response_html = preg_replace('/^```\s*$/m', '', $ai_response_html);
+		$ai_response_html = trim($ai_response_html);
+
+		// Basic safety sanitization (kses allows basic HTML)
+		$allowed_html = array(
+			'h2' => array(),
+			'h3' => array(),
+			'h4' => array(),
+			'p' => array(),
+			'ul' => array(),
+			'ol' => array(),
+			'li' => array(),
+			'strong' => array(),
+			'em' => array(),
+			'br' => array(),
+			'span' => array(
+				'style' => array(),
+				'class' => array(),
+			),
+			'div' => array(
+				'style' => array(),
+				'class' => array(),
+			),
+		);
+
+		$sanitized_html = wp_kses( $ai_response_html, $allowed_html );
+
+		wp_send_json_success( $sanitized_html );
+	}
+
 	public function ajax_get_metrics() {
 		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
 
@@ -124,6 +647,7 @@ class WordPress extends Module {
 		$start_date = isset( $_POST['start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['start_date'] ) ) : '';
 		$end_date   = isset( $_POST['end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['end_date'] ) ) : '';
 		$type_field = isset( $_POST['type_field'] ) ? sanitize_text_field( wp_unslash( $_POST['type_field'] ) ) : 'category';
+		$agent_group_val = isset( $_POST['agent_group_val'] ) ? intval( wp_unslash( $_POST['agent_group_val'] ) ) : 0;
 
 		// Save preference securely using a standalone option.
 		// Inject page_slug to satisfy central settings sanitizer.
@@ -143,6 +667,38 @@ class WordPress extends Module {
 		}
 
 		global $wpdb;
+
+		$overall_extra_where = '';
+
+		if ( $agent_group_val > 0 && isset( $options['ticket_metrics_enable_agent_group_filter'] ) && filter_var( $options['ticket_metrics_enable_agent_group_filter'], FILTER_VALIDATE_BOOLEAN ) ) {
+			$agentgroups_table = $wpdb->prefix . 'psmsc_agentgroups';
+			if ( $wpdb->get_var( "SHOW TABLES LIKE '$agentgroups_table'" ) !== $agentgroups_table ) {
+				$agentgroups_table = $wpdb->prefix . 'wpsc_agentgroups'; // fallback
+			}
+			if ( $wpdb->get_var( "SHOW TABLES LIKE '$agentgroups_table'" ) === $agentgroups_table ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$group_record = $wpdb->get_row( $wpdb->prepare( "SELECT agents, supervisors FROM {$agentgroups_table} WHERE id = %d", $agent_group_val ) );
+				if ( $group_record ) {
+					$member_ids = array_filter( explode( '|', $group_record->agents ) );
+					$supervisor_ids = array_filter( explode( '|', $group_record->supervisors ) );
+					$all_group_agents = array_unique( array_merge( $member_ids, $supervisor_ids ) );
+
+					if ( ! empty( $all_group_agents ) ) {
+						$find_in_set_parts = [];
+						foreach ( $all_group_agents as $a_id ) {
+							// Native SupportCandy string format can be unreliable with LIKE queries depending on how missing/multiple pipes are stored.
+							// We fall back to standard FIND_IN_SET after replacing the pipes, which handles strings correctly.
+							$a = (int) $a_id;
+							$find_in_set_parts[] = "FIND_IN_SET(" . $a . ", REPLACE(t.assigned_agent, '|', ',')) > 0";
+						}
+						$overall_extra_where = " AND (" . implode( " OR ", $find_in_set_parts ) . ")";
+					} else {
+						// Group has no members, return empty dataset
+						$overall_extra_where = " AND 1=0";
+					}
+				}
+			}
+		}
 
 		// Convert dates to Y-m-d H:i:s range
 		$start_dt = gmdate( 'Y-m-d 00:00:00', strtotime( $start_date ) );
@@ -314,6 +870,10 @@ class WordPress extends Module {
 
 		$metrics['avg_initial_response'] = $avg_response_seconds > 0 ? $this->format_seconds($avg_response_seconds) : '0m';
 
+		// Perform a unified raw fetch to build rich hierarchies for Tooltips and Modals
+		// We need: id, assigned_agent, type_field value, and whether it was closed in range.
+		$options = get_option( 'stackboost_settings', [] );
+
 		// Fetch maps first
 		$agent_map = $this->get_agent_map($wpdb, $agents_table);
 		$type_map = [];
@@ -321,9 +881,14 @@ class WordPress extends Module {
 			$type_map = $this->get_type_map($wpdb, $type_field, $categories_table, $priorities_table, $status_table, $options_table);
 		}
 
-		// Perform a unified raw fetch to build rich hierarchies for Tooltips and Modals
-		// We need: id, assigned_agent, type_field value, and whether it was closed in range.
-		$options = get_option( 'stackboost_settings', [] );
+		$other_rules = $options['ticket_metrics_other_issues_rules'] ?? [];
+		$trigger_condition_maps = [];
+		foreach ( $other_rules as $rule ) {
+			if ( ! empty( $rule['trigger_field'] ) && ! isset( $trigger_condition_maps[$rule['trigger_field']] ) ) {
+				$trigger_condition_maps[$rule['trigger_field']] = $this->get_type_map($wpdb, $rule['trigger_field'], $categories_table, $priorities_table, $status_table, $options_table);
+			}
+		}
+
 		$tracked_agents = $options['ticket_metrics_tracked_agents'] ?? [];
 		if ( ! is_array( $tracked_agents ) ) {
 			$tracked_agents = [];
@@ -340,12 +905,24 @@ class WordPress extends Module {
 
 		$metrics['agent_breakdown'] = [];
 		$metrics['type_breakdown'] = [];
+		$metrics['heatmap_data'] = [];
 
 		// Overall Metrics
+		// Set a specific flag so calculate_metric_set knows this $overall_extra_where is just an agent group wrapper,
+		// not an explicit agent/type breakdown filter that usually forces N/A on CSAT when a ticket question is missing.
+		$is_agent_group_wrapper = ( $overall_extra_where !== '' );
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( "--- TICKET METRICS AGENT GROUP FILTER ---", 'ticket_metrics' );
+			stackboost_log( "Agent Group Val: {$agent_group_val}", 'ticket_metrics' );
+			stackboost_log( "Overall Extra Where: {$overall_extra_where}", 'ticket_metrics' );
+		}
+
+		// Pass $is_agent_group_wrapper to the root call so it falls back gracefully if unlinked
 		$overall_metrics = $this->calculate_metric_set(
 			$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 			$closed_condition, $open_condition, $close_date_col,
-			$active_in_period_sql, '' // Empty extra where for root totals
+			$active_in_period_sql, $overall_extra_where, $is_agent_group_wrapper
 		);
 
 		// Manually append these root properties because JS expects them at the top level
@@ -357,12 +934,77 @@ class WordPress extends Module {
 		$metrics['resolution_rate']      = $overall_metrics['resolution_rate'];
 		$metrics['active_backlog']       = $overall_metrics['active_backlog'];
 		$metrics['touched_tickets']      = $overall_metrics['touched_tickets'];
+		$metrics['avg_touches']          = $overall_metrics['avg_touches'];
+		$metrics['sla_frt_breach_rate']  = $overall_metrics['sla_frt_breach_rate'];
+		$metrics['sla_resolution_breach_rate'] = $overall_metrics['sla_resolution_breach_rate'];
+		$metrics['survey_response_rate'] = $overall_metrics['survey_response_rate'];
+		$metrics['survey_avg_csat']      = $overall_metrics['survey_avg_csat'];
+		$metrics['survey_count']         = $overall_metrics['survey_count'];
+		$metrics['is_sla_configured']    = $overall_metrics['is_sla_configured'];
+		$metrics['is_survey_configured'] = $overall_metrics['is_survey_configured'];
+
+		// Heatmap Data (Ticket Creation Volume by Day of Week and Hour of Day)
+		// We use DAYOFWEEK where 1=Sunday, 2=Monday, etc. and HOUR 0-23
+		// date_created is stored in UTC. Apply WP gmt_offset so the heatmap visually aligns with the local timezone.
+		$gmt_offset = (float) get_option( 'gmt_offset' );
+
+		$sql_heatmap = "SELECT DAYOFWEEK(DATE_ADD(t.date_created, INTERVAL %f HOUR)) as dow,
+							   HOUR(DATE_ADD(t.date_created, INTERVAL %f HOUR)) as hod,
+							   COUNT(t.id) as count
+						FROM " . $tickets_table . " t
+						WHERE t.date_created >= %s AND t.date_created <= %s" . $overall_extra_where . "
+						GROUP BY dow, hod";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$query_heatmap = $wpdb->prepare( $sql_heatmap, $gmt_offset, $gmt_offset, $start_dt, $end_dt );
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$heatmap_results = $wpdb->get_results( $query_heatmap );
+
+		if ( is_array( $heatmap_results ) ) {
+			foreach ( $heatmap_results as $row ) {
+				$metrics['heatmap_data'][] = [
+					'dow'   => (int) $row->dow,
+					'hod'   => (int) $row->hod,
+					'count' => (int) $row->count,
+				];
+			}
+		}
 
 		if ( preg_match( '/^[a-zA-Z0-9_]+$/', $type_field ) ) {
+			// Check for ALL rules to see if we need to fetch multiple trigger fields for breakdown tracking
+			$other_rules = $options['ticket_metrics_other_issues_rules'] ?? [];
+			$trigger_fields_to_fetch = [];
+
+			// Ensure we fetch all fields that have a rule defined so we can show breakdowns regardless of the main grouped $type_field
+			foreach ( $other_rules as $rule ) {
+				if ( ! empty( $rule['trigger_field'] ) ) {
+					$tf = $rule['trigger_field'];
+					if ( preg_match( '/^[a-zA-Z0-9_]+$/', $tf ) ) {
+						$trigger_fields_to_fetch[$tf] = $rule;
+					}
+				}
+			}
+
 			$sql_raw_tickets = "SELECT t.id, t.assigned_agent, t.`" . $type_field . "` as type_val,
-						IF(" . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s, 1, 0) as is_closed_in_range
-				 FROM " . $tickets_table . " t
-				 WHERE " . $active_in_period_sql;
+						IF(" . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s, 1, 0) as is_closed_in_range";
+
+			// Append all valid trigger fields so we can track if the ticket matches any configured rules
+			foreach ( $trigger_fields_to_fetch as $tf => $rule ) {
+				if ( $tf !== $type_field ) { // avoid double querying the main group field
+					$sql_raw_tickets .= ", t.`" . $tf . "` as trigger_" . $tf;
+				}
+
+				// If a rule exists for this trigger field and the subcategory is a native/custom text column on the ticket, fetch it inline
+				$subcat_field = $rule['text_field'];
+				if ( $subcat_field && $subcat_field !== 'description' ) {
+					if ( preg_match( '/^[a-zA-Z0-9_]+$/', $subcat_field ) ) {
+						// Alias it distinctively so we don't collide if multiple rules use the same subcat field
+						$sql_raw_tickets .= ", t.`" . $subcat_field . "` as subcat_" . $tf;
+					}
+				}
+			}
+
+			$sql_raw_tickets .= " FROM " . $tickets_table . " t WHERE " . $active_in_period_sql . $overall_extra_where;
+
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$raw_tickets_query = $wpdb->prepare( $sql_raw_tickets, $start_dt, $end_dt, $end_dt, $start_dt );
 
@@ -381,7 +1023,52 @@ class WordPress extends Module {
 
 					// Init Type Data
 					if ( ! isset( $type_data[$type_val] ) ) {
-						$type_data[$type_val] = ['count' => 0, 'agents' => []];
+						$type_data[$type_val] = ['count' => 0, 'agents' => [], 'breakdown_tables' => []];
+					}
+
+					// Process Trigger Fields for Subcategory Breakdown Tables
+					foreach ( $trigger_fields_to_fetch as $tf => $rule ) {
+						// Retrieve the ticket's value for this trigger field
+						$tf_val = ($tf === $type_field) ? $type_val : $t->{"trigger_" . $tf};
+
+						// Skip if this ticket does not have a value for this trigger field
+						if ( empty( $tf_val ) ) {
+							continue;
+						}
+
+						// Determine if this value is the "Other" condition
+						$trigger_cond = $rule['trigger_condition'];
+						$is_other_match = false;
+						if ( is_array( $trigger_cond ) && in_array( $tf_val, $trigger_cond ) ) {
+							$is_other_match = true;
+						} elseif ( ! is_array( $trigger_cond ) && (string)$tf_val === (string)$trigger_cond ) {
+							$is_other_match = true;
+						}
+
+						$subcat_field = isset( $rule['text_field'] ) ? $rule['text_field'] : '';
+
+						// Initialize the table array for this trigger field if not exists
+						if ( ! isset( $type_data[$type_val]['breakdown_tables'][$tf] ) ) {
+							$type_data[$type_val]['breakdown_tables'][$tf] = [
+								'responses' => [],
+								'other_matches' => [] // Store the exact "Other" values encountered
+							];
+						}
+
+						if ( ! isset( $type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val] ) ) {
+							$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val] = ['count' => 0, 'has_subcat' => false];
+						}
+
+						$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['count']++;
+
+						// We only record that a subcat field is available if the rule defines one
+						if ( ! empty( $subcat_field ) && $is_other_match ) {
+							$type_data[$type_val]['breakdown_tables'][$tf]['responses'][$tf_val]['has_subcat'] = true;
+
+							if ( ! in_array( $tf_val, $type_data[$type_val]['breakdown_tables'][$tf]['other_matches'] ) ) {
+								$type_data[$type_val]['breakdown_tables'][$tf]['other_matches'][] = $tf_val;
+							}
+						}
 					}
 					$type_data[$type_val]['count']++;
 
@@ -472,11 +1159,26 @@ class WordPress extends Module {
 					$agent_where = $wpdb->prepare("AND FIND_IN_SET(%d, REPLACE(t.assigned_agent, '|', ',')) > 0", $a_id);
 				}
 
+				// Explicitly drop $overall_extra_where for the individual agent breakdown calculations if it's an agent group wrapper.
+				// This is because we are already calculating stats FOR THIS SPECIFIC AGENT (`$agent_where`).
+				// If we append the group wrapper, we might inadvertently demand the ticket also belong to someone ELSE in the group,
+				// or we enforce an unnecessary duplicate WHERE clause. But more importantly, the survey query will
+				// fail to correctly scope the unlinked surveys if there are two complex conflicting agent strings.
 				$agent_metrics = $this->calculate_metric_set(
 					$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 					$closed_condition, $open_condition, $close_date_col,
 					$active_in_period_sql, $agent_where
 				);
+
+				$csat_text = 'N/A';
+				if ( $agent_metrics['survey_avg_csat'] !== 'N/A' ) {
+					if ( $a_id !== 'other' ) {
+						$filter_url = admin_url( 'admin.php?page=stackboost-ats&tab=results&agent_id=' . $a_id . '&start_date=' . urlencode( date('Y-m-d', strtotime($start_dt)) ) . '&end_date=' . urlencode( date('Y-m-d', strtotime($end_dt)) ) );
+						$csat_text = '<a href="' . esc_url( $filter_url ) . '" target="_blank">' . esc_html( $agent_metrics['survey_avg_csat'] ) . '</a><br>' . (int)$agent_metrics['survey_count'] . ' surveys';
+					} else {
+						$csat_text = esc_html($agent_metrics['survey_avg_csat']) . '<br>' . (int)$agent_metrics['survey_count'] . ' surveys';
+					}
+				}
 
 				$tooltip_html = sprintf(
 					'<div style="text-align:left; font-size: 13px; line-height: 1.5;">
@@ -485,7 +1187,8 @@ class WordPress extends Module {
 						Closed: <strong>%s</strong><br>
 						Avg Time to Close: <strong>%s</strong><br>
 						Avg Age (Open): <strong>%s</strong><br>
-						Avg Initial Response: <strong>%s</strong><br><br>
+						Avg Initial Response: <strong>%s</strong><br>
+						CSAT: <strong>%s</strong><br><br>
 						<em>Click row to view %s</em>
 					</div>',
 					esc_html($name),
@@ -494,6 +1197,7 @@ class WordPress extends Module {
 					esc_html($agent_metrics['avg_open_time']),
 					esc_html($agent_metrics['avg_age_open']),
 					esc_html($agent_metrics['avg_initial_response']),
+					$csat_text,
 					($a_id === 'other') ? __( 'individual agent breakdown', 'stackboost-for-supportcandy' ) : __( 'Ticket Type distribution', 'stackboost-for-supportcandy' )
 				);
 
@@ -570,9 +1274,11 @@ class WordPress extends Module {
 								<td style="text-align:center;">%s</td>
 								<td style="text-align:center;">%s</td>
 								<td style="text-align:center;">%s</td>
+								<td style="text-align:center;">%s</td>
 							</tr>',
 							esc_html($t_name),
 							(int)$t_counts['assigned'],
+							esc_html($agent_type_metrics['avg_touches']),
 							(int)$t_counts['closed'],
 							esc_html($agent_type_metrics['avg_open_time']),
 							esc_html($agent_type_metrics['avg_age_open']),
@@ -590,6 +1296,7 @@ class WordPress extends Module {
 										<tr>
 											<th>Type</th>
 											<th style="text-align:center;">Assigned</th>
+											<th style="text-align:center;">Touches Per Ticket</th>
 											<th style="text-align:center;">Closed</th>
 											<th style="text-align:center;">Avg Close Time</th>
 											<th style="text-align:center;">Avg Age (Open)</th>
@@ -609,6 +1316,7 @@ class WordPress extends Module {
 					'label' => $name,
 					'assigned' => $data['assigned'],
 					'closed' => $data['closed'],
+					'csat' => $csat_text,
 					'tooltip' => $tooltip_html,
 					'modal_html' => $modal_html
 				];
@@ -626,7 +1334,7 @@ class WordPress extends Module {
 				$type_metrics = $this->calculate_metric_set(
 					$wpdb, $tickets_table, $threads_table, $start_dt, $end_dt,
 					$closed_condition, $open_condition, $close_date_col,
-					$active_in_period_sql, $type_where
+					$active_in_period_sql, $type_where . $overall_extra_where
 				);
 
 				// Build agent distribution HTML
@@ -698,9 +1406,11 @@ class WordPress extends Module {
 							<td style="text-align:center;">%s</td>
 							<td style="text-align:center;">%s</td>
 							<td style="text-align:center;">%s</td>
+							<td style="text-align:center;">%s</td>
 						</tr>',
 						$a_name, // Output raw string since we optionally injected a span
 						(int)$a_assigned,
+						esc_html($agent_type_metrics['avg_touches']),
 						(int)$a_closed,
 						esc_html($agent_type_metrics['avg_open_time']),
 						esc_html($agent_type_metrics['avg_age_open']),
@@ -726,9 +1436,116 @@ class WordPress extends Module {
 					esc_html($type_metrics['avg_initial_response'])
 				);
 
+				$subcat_html = '';
+				if ( ! empty( $data['breakdown_tables'] ) ) {
+					// We need to fetch the names of the custom fields themselves for the table title
+					$all_type_fields = [
+						'category' => __( 'Category', 'stackboost-for-supportcandy' ),
+						'priority' => __( 'Priority', 'stackboost-for-supportcandy' ),
+						'status'   => __( 'Status', 'stackboost-for-supportcandy' ),
+					];
+					if ( class_exists( '\WPSC_Custom_Field' ) ) {
+						$cfs = \WPSC_Custom_Field::find( [ 'items_per_page' => 0 ] )['results'];
+						foreach ( $cfs as $cf ) {
+							$all_type_fields[ $cf->slug ] = $cf->name;
+						}
+					}
+
+					foreach ( $data['breakdown_tables'] as $tf => $tf_data ) {
+						// Only render a breakdown table if there are actually multiple responses, or if it's a direct rule match we need to show
+						if ( empty( $tf_data['responses'] ) ) {
+							continue;
+						}
+
+						// Sort responses by count descending
+						uasort($tf_data['responses'], function($a, $b) { return $b['count'] <=> $a['count']; });
+
+						$tf_name = $all_type_fields[$tf] ?? $tf; // Fallback in case type_map doesn't have it, though UI should have it
+
+						$subcat_rows = '';
+						$chart_labels = [];
+						$chart_data = [];
+
+						foreach ( $tf_data['responses'] as $resp_val => $resp_data ) {
+							$is_this_other = in_array( $resp_val, $tf_data['other_matches'] );
+
+							// Map response value to friendly name if possible
+							$raw_resp_name = isset($trigger_condition_maps[$tf][$resp_val]) ? $trigger_condition_maps[$tf][$resp_val] : $resp_val;
+							$resp_name = $raw_resp_name;
+
+							$chart_labels[] = $raw_resp_name;
+							$chart_data[] = $resp_data['count'];
+
+							// If this is an 'other' condition, make the name a link to the CSV
+							if ( $is_this_other ) {
+								$resp_name = sprintf(
+									'<a href="#" class="stkb-export-other-issues" style="text-decoration:none; font-weight:bold; color: var(--sb-accent, #2271b1);" data-trigger="%s" data-trigger-val="%s" title="%s">%s <span class="dashicons dashicons-download" style="vertical-align:middle;"></span></a> <a href="#" class="stkb-trend-analysis-ai" style="text-decoration:none; font-weight:bold; color: #ffb900;" data-trigger="%s" data-trigger-val="%s" title="%s"><span class="dashicons dashicons-lightbulb" style="vertical-align:middle;"></span></a>',
+									esc_attr( $tf ),
+									esc_attr( $resp_val ),
+									esc_attr__( 'Export Issues (CSV)', 'stackboost-for-supportcandy' ),
+									esc_html( $resp_name ),
+									esc_attr( $tf ),
+									esc_attr( $resp_val ),
+									esc_attr__( 'Generate Trend Analysis (AI)', 'stackboost-for-supportcandy' )
+								);
+							} else {
+								$resp_name = esc_html($resp_name);
+							}
+
+							$subcat_rows .= sprintf(
+								'<tr>
+									<td>%s</td>
+									<td style="text-align:center;"><strong>%d</strong></td>
+								</tr>',
+								$resp_name,
+								$resp_data['count']
+							);
+						}
+
+						$chart_json = json_encode([
+							'labels' => $chart_labels,
+							'data'   => $chart_data,
+							'title'  => $tf_name
+						]);
+
+						$subcat_html .= sprintf(
+							'<div class="stackboost-card" style="margin-bottom: 20px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+									<h3>%s</h3>
+								</div>
+								<div style="display: flex; gap: 20px; flex-wrap: wrap;">
+									<div style="flex: 1; min-width: 300px; overflow-x: auto;">
+										<table class="wp-list-table widefat striped">
+											<thead>
+												<tr>
+													<th>%s</th>
+													<th style="text-align:center; width:100px;">%s</th>
+												</tr>
+											</thead>
+											<tbody>%s</tbody>
+										</table>
+									</div>
+									<div style="flex: 1; min-width: 300px;">
+										<div class="stkb-chart-container" style="height: 300px;">
+											<canvas class="stkb-secondary-chart" data-chart-config="%s"></canvas>
+										</div>
+									</div>
+								</div>
+							</div>',
+							sprintf( esc_html__( 'Issue Breakdown: %s', 'stackboost-for-supportcandy' ), esc_html($tf_name) ),
+							esc_html__( 'Response / Subcategory', 'stackboost-for-supportcandy' ),
+							esc_html__( 'Count', 'stackboost-for-supportcandy' ),
+							$subcat_rows,
+							esc_attr($chart_json)
+						);
+					}
+				}
+
+				$modal_title = esc_html($name) . ' - ' . esc_html__( 'Performance & Distribution', 'stackboost-for-supportcandy' );
+
 				$modal_html = sprintf(
-					'<div class="stackboost-dashboard" style="text-align:left;">
-						<h2>%s - Performance & Distribution</h2>
+					'<div class="stackboost-dashboard" style="text-align:left;" data-stkb-category-val="%s">
+						<h2>%s</h2>
 						<div style="display: flex; gap: 20px; margin-bottom: 20px;">
 							<div class="stackboost-card" style="flex: 1;">
 								<h3>Lifecycle</h3>
@@ -738,11 +1555,13 @@ class WordPress extends Module {
 							</div>
 							<div class="stackboost-card" style="flex: 1;">
 								<h3>Averages</h3>
+								<p>Touches Per Ticket: <strong>%s</strong></p>
 								<p>Time to Close: <strong>%s</strong></p>
 								<p>Age (Open): <strong>%s</strong></p>
 								<p>Initial Response: <strong>%s</strong></p>
 							</div>
 						</div>
+						%s
 						<div style="display: block;">
 							<div class="stackboost-card" style="overflow-x: auto;">
 								<h3>Agent Distribution</h3>
@@ -751,6 +1570,7 @@ class WordPress extends Module {
 										<tr>
 											<th>Assigned Agent</th>
 											<th style="text-align:center;">Assigned</th>
+											<th style="text-align:center;">Touches Per Ticket</th>
 											<th style="text-align:center;">Closed</th>
 											<th style="text-align:center;">Avg Close Time</th>
 											<th style="text-align:center;">Avg Age (Open)</th>
@@ -762,14 +1582,17 @@ class WordPress extends Module {
 							</div>
 						</div>
 					</div>',
-					esc_html($name),
+					esc_attr($t_val),
+					$modal_title, // Allowed raw HTML from sprintf above
 					esc_html($type_metrics['total_created']),
 					esc_html($type_metrics['carried_closed']),
 					esc_html($type_metrics['carried_open']),
+					esc_html($type_metrics['avg_touches']),
 					esc_html($type_metrics['avg_open_time']),
 					esc_html($type_metrics['avg_age_open']),
 					esc_html($type_metrics['avg_initial_response']),
-					$agent_rows ?: '<tr><td colspan="6">No agents assigned</td></tr>'
+					$subcat_html,
+					$agent_rows ?: '<tr><td colspan="7">No agents assigned</td></tr>'
 				);
 
 				$metrics['type_breakdown'][] = [
@@ -792,7 +1615,7 @@ class WordPress extends Module {
 		wp_send_json_success( $metrics );
 	}
 
-	private function calculate_metric_set( $wpdb, $tickets_table, $threads_table, $start_dt, $end_dt, $closed_condition, $open_condition, $close_date_col, $active_in_period_sql, $extra_where = '' ) {
+	private function calculate_metric_set( $wpdb, $tickets_table, $threads_table, $start_dt, $end_dt, $closed_condition, $open_condition, $close_date_col, $active_in_period_sql, $extra_where = '', $is_agent_group_wrapper = false ) {
 		$metrics = [];
 		$options = get_option( 'stackboost_settings', [] );
 
@@ -876,6 +1699,23 @@ class WordPress extends Module {
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['avg_age_open'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : 'N/A';
 
+		// Average Touches per Ticket
+		// Total messages in threads for the touched tickets divided by the number of touched tickets
+		if ($metrics['touched_tickets'] > 0) {
+			$sql = "SELECT COUNT(th.id) FROM " . $threads_table . " th
+					JOIN " . $tickets_table . " t ON th.ticket = t.id
+					WHERE " . $active_in_period_sql;
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$query = $wpdb->prepare( $sql, $end_dt, $start_dt ) . " " . $extra_where;
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$total_threads = (int) $wpdb->get_var( $query );
+
+			// Format as float to 1 decimal place
+			$metrics['avg_touches'] = number_format($total_threads / $metrics['touched_tickets'], 1);
+		} else {
+			$metrics['avg_touches'] = '0.0';
+		}
+
 		// Average Initial Response Time
 		$frt_mode = $options['ticket_metrics_frt_mode'] ?? 'stackboost';
 
@@ -900,6 +1740,249 @@ class WordPress extends Module {
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$metrics['avg_initial_response'] = (int) $wpdb->get_var($query) > 0 ? $this->format_seconds((int) $wpdb->get_var($query)) : '0m';
+
+		// SLA Calculations
+		$sla_frt_hours = isset( $options['ticket_metrics_sla_frt_hours'] ) ? (float) $options['ticket_metrics_sla_frt_hours'] : 0;
+		$sla_resolution_hours = isset( $options['ticket_metrics_sla_resolution_hours'] ) ? (float) $options['ticket_metrics_sla_resolution_hours'] : 0;
+
+		$metrics['sla_frt_breach_rate'] = 'N/A';
+		$metrics['sla_resolution_breach_rate'] = 'N/A';
+
+		$metrics['survey_response_rate'] = 'N/A';
+		$metrics['survey_avg_csat'] = 'N/A';
+		$metrics['survey_count'] = 0;
+
+		$metrics['is_sla_configured'] = ($sla_frt_hours > 0 || $sla_resolution_hours > 0);
+		$metrics['is_survey_configured'] = false;
+
+		// Resolution SLA (Closed Tickets in Period)
+		if ( $sla_resolution_hours > 0 && $metrics['total_closed'] > 0 ) {
+			$resolution_seconds_limit = $sla_resolution_hours * 3600;
+
+			$sql = "SELECT COUNT(t.id) FROM " . $tickets_table . " t
+				 WHERE " . $closed_condition . "
+				 AND TIMESTAMPDIFF(SECOND, t.date_created, " . $close_date_col . ") > %d
+				 AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$query = $wpdb->prepare( $sql, $resolution_seconds_limit, $start_dt, $end_dt ) . " " . $extra_where;
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$breached_resolution = (int) $wpdb->get_var( $query );
+
+			$metrics['sla_resolution_breach_rate'] = round(($breached_resolution / $metrics['total_closed']) * 100, 1) . '%';
+		}
+
+		// FRT SLA (Touched Tickets in Period)
+		// We calculate this based on the tickets that HAD a first response during this period.
+		if ( $sla_frt_hours > 0 ) {
+			$frt_seconds_limit = $sla_frt_hours * 3600;
+
+			if ( $frt_mode === 'supportcandy' ) {
+				// Base it on tickets touched in period where FRD > limit
+				$sql_total = "SELECT COUNT(t.id) FROM " . $tickets_table . " t WHERE t.frd IS NOT NULL AND t.frd > 0 AND " . $active_in_period_sql;
+				$sql_breach = "SELECT COUNT(t.id) FROM " . $tickets_table . " t WHERE t.frd IS NOT NULL AND t.frd > %d AND " . $active_in_period_sql;
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_total = $wpdb->prepare( $sql_total, $end_dt, $start_dt ) . " " . $extra_where;
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_breach = $wpdb->prepare( $sql_breach, $frt_seconds_limit, $end_dt, $start_dt ) . " " . $extra_where;
+			} else {
+				$sql_total = "SELECT COUNT(t.id) FROM (
+						SELECT t.id, TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
+						FROM " . $tickets_table . " t JOIN " . $threads_table . " th ON t.id = th.ticket
+						WHERE " . $active_in_period_sql . " " . $extra_where . " AND th.date_created > t.date_created GROUP BY t.id ) as response_times";
+
+				$sql_breach = "SELECT COUNT(t.id) FROM (
+						SELECT t.id, TIMESTAMPDIFF(SECOND, t.date_created, MIN(th.date_created)) as response_time
+						FROM " . $tickets_table . " t JOIN " . $threads_table . " th ON t.id = th.ticket
+						WHERE " . $active_in_period_sql . " " . $extra_where . " AND th.date_created > t.date_created GROUP BY t.id
+					) as response_times WHERE response_time > %d";
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_total = $wpdb->prepare( $sql_total, $end_dt, $start_dt );
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_breach = $wpdb->prepare( $sql_breach, $end_dt, $start_dt, $frt_seconds_limit );
+			}
+
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$total_responded = (int) $wpdb->get_var( $query_total );
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$breached_frt = (int) $wpdb->get_var( $query_breach );
+
+			if ( $total_responded > 0 ) {
+				$metrics['sla_frt_breach_rate'] = round(($breached_frt / $total_responded) * 100, 1) . '%';
+			}
+		}
+
+		// Survey Tracking
+		$submissions_table = $wpdb->prefix . 'stackboost_ats_survey_submissions';
+		$answers_table     = $wpdb->prefix . 'stackboost_ats_survey_answers';
+		$questions_table   = $wpdb->prefix . 'stackboost_ats_questions';
+		$verbose_logging = isset( $options['ticket_metrics_verbose_logging'] ) ? (bool) $options['ticket_metrics_verbose_logging'] : false;
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var("SHOW TABLES LIKE '{$submissions_table}'") === $submissions_table ) {
+			$metrics['is_survey_configured'] = true;
+			$ats_options = get_option( 'stackboost_settings', [] );
+			$ticket_question_id = isset( $ats_options['ats_ticket_question_id'] ) ? (int) $ats_options['ats_ticket_question_id'] : 0;
+
+			if ( $ticket_question_id === 0 ) {
+				// Auto-detect the ticket ID question if the user hasn't explicitly configured it in ATS settings.
+				// ATS uses the `question_type = 'ticket_number'` to designate which input receives the `ticket_id`.
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$ticket_question_id = (int) $wpdb->get_var("SELECT id FROM {$questions_table} WHERE question_type = 'ticket_number' LIMIT 1");
+			}
+
+			if ( $verbose_logging && function_exists( 'stackboost_log' ) ) {
+				stackboost_log( "ATS Ticket Question ID Mapping: {$ticket_question_id}", 'ticket_metrics' );
+			}
+
+			if ( $ticket_question_id > 0 ) {
+				// Find total completed surveys linked to tickets closed during this exact period via the dynamic ticket_id answer
+				$sql_surveys = "SELECT COUNT(DISTINCT s.id) FROM " . $submissions_table . " s
+								JOIN " . $answers_table . " a_ticket ON s.id = a_ticket.submission_id
+								JOIN " . $tickets_table . " t ON a_ticket.answer_value = t.id
+								WHERE a_ticket.question_id = %d AND " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s";
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$query_surveys = $wpdb->prepare( $sql_surveys, $ticket_question_id, $start_dt, $end_dt ) . " " . ltrim($extra_where);
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$total_surveys = (int) $wpdb->get_var( $query_surveys );
+
+				if ( function_exists( 'stackboost_log' ) ) {
+					stackboost_log( "ATS Total Surveys Linked Query: {$query_surveys}", 'ticket_metrics' );
+					stackboost_log( "ATS Total Surveys Linked Result: {$total_surveys}", 'ticket_metrics' );
+				}
+
+				$metrics['survey_count'] = $total_surveys;
+
+				if ( $metrics['total_closed'] > 0 ) {
+					$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
+				}
+
+				// CSAT Average (Calculate average of numeric responses, assuming 1-5 or 1-10 scales like stars/numbers)
+				// Target ONLY questions where question_type = 'rating' via a join to the questions table
+				if ( $total_surveys > 0 ) {
+					$survey_categories = $options['ticket_metrics_survey_categories'] ?? [];
+					$category_filter = "";
+					if ( ! empty( $survey_categories ) ) {
+						$placeholders = implode( ',', array_fill( 0, count( $survey_categories ), '%s' ) );
+						$category_filter = " AND q.category_id IN ($placeholders)";
+					}
+
+					$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
+								JOIN " . $submissions_table . " s ON a.submission_id = s.id
+								JOIN " . $answers_table . " a_ticket ON s.id = a_ticket.submission_id
+								JOIN " . $tickets_table . " t ON a_ticket.answer_value = t.id
+								JOIN " . $questions_table . " q ON a.question_id = q.id
+								WHERE a_ticket.question_id = %d AND q.question_type = 'rating' " . $category_filter . " AND " . $closed_condition . " AND " . $close_date_col . " >= %s AND " . $close_date_col . " <= %s
+								AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+
+					$args = [ $ticket_question_id ];
+					if ( ! empty( $survey_categories ) ) {
+						$args = array_merge( $args, $survey_categories );
+					}
+					$args[] = $start_dt;
+					$args[] = $end_dt;
+
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					$query_csat = $wpdb->prepare( $sql_csat, $args ) . " " . ltrim($extra_where);
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$avg_csat = $wpdb->get_var( $query_csat );
+
+					if ( function_exists( 'stackboost_log' ) ) {
+						stackboost_log( "ATS CSAT Linked Average Query: {$query_csat}", 'ticket_metrics' );
+						stackboost_log( "ATS CSAT Linked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
+					}
+
+					if ( $avg_csat !== null ) {
+						$metrics['survey_avg_csat'] = round($avg_csat, 2);
+					}
+				} else {
+					$metrics['survey_response_rate'] = '0%';
+				}
+			} else {
+				// If the user hasn't configured which survey question maps to the Ticket ID, we can't link them accurately.
+				// We CANNOT apply $extra_where here because we have no ticket to join against to check the assigned agent or category.
+				// Therefore, if $extra_where is NOT empty (meaning this is a query for a specific agent or ticket type), we MUST return N/A
+				// to prevent the global average from overwriting the specific agent's distinct metric.
+				if ( ! empty( $extra_where ) && ! $is_agent_group_wrapper ) {
+					$metrics['survey_response_rate'] = 'N/A';
+					$metrics['survey_avg_csat'] = 'N/A';
+				} else {
+					// Fallback: Just calculate global survey stats for surveys submitted in the timeframe.
+					// If $is_agent_group_wrapper is true, the user is expecting stats for that group.
+					// Since we can't accurately link without a ticket ID map, we can't reliably scope the surveys.
+					// To avoid showing completely inaccurate (global) stats disguised as group stats, we must return N/A if a group is selected!
+					if ( $is_agent_group_wrapper ) {
+						$metrics['survey_response_rate'] = 'N/A';
+						$metrics['survey_avg_csat'] = 'N/A';
+					} else {
+						$sql_surveys = "SELECT COUNT(id) FROM " . $submissions_table . " WHERE submission_date >= %s AND submission_date <= %s";
+						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+						$query_surveys = $wpdb->prepare( $sql_surveys, $start_dt, $end_dt );
+						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+						$total_surveys = (int) $wpdb->get_var( $query_surveys );
+
+						if ( function_exists( 'stackboost_log' ) ) {
+							stackboost_log( "ATS Total Surveys Unlinked Query: {$query_surveys}", 'ticket_metrics' );
+							stackboost_log( "ATS Total Surveys Unlinked Result: {$total_surveys}", 'ticket_metrics' );
+						}
+
+						$metrics['survey_count'] = $total_surveys;
+
+						if ( $metrics['total_closed'] > 0 ) {
+							$metrics['survey_response_rate'] = round(($total_surveys / $metrics['total_closed']) * 100, 1) . '%';
+						}
+
+						if ( $total_surveys > 0 ) {
+							$survey_categories = $options['ticket_metrics_survey_categories'] ?? [];
+							$category_filter = "";
+							if ( ! empty( $survey_categories ) ) {
+								$placeholders = implode( ',', array_fill( 0, count( $survey_categories ), '%s' ) );
+								$category_filter = " AND q.category_id IN ($placeholders)";
+							}
+
+							$sql_csat = "SELECT AVG(CAST(TRIM(a.answer_value) AS DECIMAL(10,2))) FROM " . $answers_table . " a
+										JOIN " . $submissions_table . " s ON a.submission_id = s.id
+										JOIN " . $questions_table . " q ON a.question_id = q.id
+										WHERE q.question_type = 'rating' " . $category_filter . " AND s.submission_date >= %s AND s.submission_date <= %s
+										AND TRIM(a.answer_value) REGEXP '^[0-9]+'";
+
+							$args = [];
+							if ( ! empty( $survey_categories ) ) {
+								$args = array_merge( $args, $survey_categories );
+							}
+							$args[] = $start_dt;
+							$args[] = $end_dt;
+
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							$query_csat = $wpdb->prepare( $sql_csat, $args );
+							// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$avg_csat = $wpdb->get_var( $query_csat );
+
+							if ( function_exists( 'stackboost_log' ) ) {
+								stackboost_log( "ATS CSAT Unlinked Average Query: {$query_csat}", 'ticket_metrics' );
+								stackboost_log( "ATS CSAT Unlinked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
+							}
+
+							if ( $avg_csat !== null ) {
+								$metrics['survey_avg_csat'] = round($avg_csat, 2);
+							}
+						} else {
+							$metrics['survey_response_rate'] = '0%';
+						}
+					}
+				}
+			}
+		}
+
+		// Normalize CSAT against Max Score setting if configured to give it meaning (e.g., 4.2 / 5)
+		$survey_max_score = 5;
+		if ( $metrics['survey_avg_csat'] !== 'N/A' ) {
+			$raw_csat = (float) $metrics['survey_avg_csat'];
+			// Format as requested: "4.2 (84%)" without the / 5.
+			$percentage = round(($raw_csat / $survey_max_score) * 100);
+			$metrics['survey_avg_csat'] = "{$raw_csat} ({$percentage}%)";
+		}
 
 		return $metrics;
 	}

@@ -820,12 +820,21 @@ class Settings {
 			'stackboost-after-hours'        => ['enable_after_hours_notice', 'after_hours_in_email', 'use_sc_working_hours', 'use_sc_holidays', 'after_hours_start', 'before_hours_end', 'include_all_weekends', 'holidays', 'after_hours_message'],
 			'stackboost-ticket-metrics'     => [
 				'ticket_metrics_type_field',
+				'ticket_metrics_enable_agent_group_filter',
 				'ticket_metrics_chart_type_agent',
 				'ticket_metrics_chart_type_type',
+				'ticket_metrics_chart_type_secondary',
 				'ticket_metrics_show_other_agents',
 				'ticket_metrics_frt_mode',
+				'ticket_metrics_sla_frt_hours',
+				'ticket_metrics_sla_resolution_hours',
 				'ticket_metrics_verbose_logging',
-				'ticket_metrics_tracked_agents'
+				'ticket_metrics_tracked_agents',
+				'ticket_metrics_other_issues_rules',
+				'ticket_metrics_gemini_api_key',
+				'ticket_metrics_gemini_api_key_locked',
+				'ticket_metrics_survey_categories',
+				'ticket_metrics_ai_prompt'
 			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
@@ -936,11 +945,26 @@ class Settings {
 
 					case 'ticket_metrics_chart_type_agent':
 					case 'ticket_metrics_chart_type_type':
-						$saved_settings[$key] = in_array( $value, [ 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ], true ) ? $value : 'pie';
+						$saved_settings[$key] = in_array( $value, [ 'none', 'pie', 'doughnut', 'multi_pie', 'multi_doughnut', 'bar', 'line', 'radar', 'polarArea' ], true ) ? $value : 'pie';
+						break;
+					case 'ticket_metrics_chart_type_secondary':
+						$saved_settings[$key] = in_array( $value, [ 'none', 'pie', 'doughnut', 'bar', 'line', 'radar', 'polarArea' ], true ) ? $value : 'bar';
+						break;
+
+					case 'ticket_metrics_enable_agent_group_filter':
+						$saved_settings[$key] = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
 						break;
 
 					case 'ticket_metrics_type_field':
-						$saved_settings[$key] = sanitize_text_field($value);
+					case 'ticket_metrics_gemini_api_key':
+					case 'ticket_metrics_frt_mode':
+					case 'ticket_metrics_ai_prompt':
+						$saved_settings[$key] = wp_kses_post($value);
+						break;
+
+					case 'ticket_metrics_sla_frt_hours':
+					case 'ticket_metrics_sla_resolution_hours':
+						$saved_settings[$key] = max( 0, (float) $value );
 						break;
 
 					case 'ticket_metrics_tracked_agents':
@@ -948,6 +972,14 @@ class Settings {
 							$value = array_filter( explode( ',', $value ) );
 						}
 						$saved_settings[$key] = array_map('intval', (array) $value);
+						break;
+
+					case 'ticket_metrics_other_issues_rules':
+						$saved_settings[$key] = is_array($value) ? $value : [];
+						break;
+
+					case 'ticket_metrics_survey_categories':
+						$saved_settings[$key] = is_array($value) ? array_map('sanitize_text_field', $value) : [];
 						break;
 
 					case 'holidays':
@@ -1050,7 +1082,7 @@ class Settings {
 					stackboost_log( "PROCESSING KEY: {$key} - NOT found in \$input. Applying fallback logic.", 'core' );
 				}
 				// Handle unchecked checkboxes, which are not present in the form submission.
-				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled' || $key === 'ticket_metrics_show_other_agents' || $key === 'ticket_metrics_verbose_logging') {
+				if (str_starts_with($key, 'enable_') || str_starts_with($key, 'include_') || str_starts_with($key, 'use_sc_') || str_starts_with($key, 'chat_bubbles_') || str_starts_with($key, 'google_export_') || $key === 'utm_enabled' || $key === 'utm_use_sc_order' || $key === 'diagnostic_log_enabled' || $key === 'ticket_metrics_show_other_agents' || $key === 'ticket_metrics_verbose_logging') {
 					$saved_settings[$key] = 0;
 				} elseif (str_ends_with($key, '_rules') || str_ends_with($key, '_statuses') || $key === 'ticket_metrics_tracked_agents') {
 					$saved_settings[$key] = [];

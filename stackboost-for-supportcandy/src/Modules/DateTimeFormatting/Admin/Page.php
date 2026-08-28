@@ -78,11 +78,20 @@ class Page {
 	private static function render_enable_checkbox() {
 		$options = get_option( 'stackboost_date_time_settings', [] );
 		$is_enabled = ! empty( $options['enable_date_time_formatting'] );
+		$apply_offset = ! empty( $options['apply_custom_field_offset'] );
 		?>
-		<label>
-			<input type="checkbox" name="stackboost_date_time_settings[enable_date_time_formatting]" value="1" <?php checked( $is_enabled ); ?>>
-			<?php esc_html_e( 'Enable custom date and time formatting for the ticket list.', 'stackboost-for-supportcandy' ); ?>
-		</label>
+		<div style="margin-bottom: 15px;">
+			<label>
+				<input type="checkbox" name="stackboost_date_time_settings[enable_date_time_formatting]" value="1" <?php checked( $is_enabled ); ?>>
+				<?php esc_html_e( 'Enable custom date and time formatting for the ticket list.', 'stackboost-for-supportcandy' ); ?>
+			</label>
+		</div>
+		<div>
+			<label>
+				<input type="checkbox" name="stackboost_date_time_settings[apply_custom_field_offset]" value="1" <?php checked( $apply_offset ); ?>>
+				<?php esc_html_e( 'Apply WordPress Timezone Offset to Custom Fields (Enable if custom times are rendering incorrectly in UTC)', 'stackboost-for-supportcandy' ); ?>
+			</label>
+		</div>
 		<?php
 	}
 
@@ -199,7 +208,7 @@ class Page {
 		$repo = new SupportCandyRepository();
 
 		// Use the repository method to fetch datetime, date, and time fields.
-		$target_types = [ 'datetime', 'date', 'time' ];
+		$target_types = [ 'cf_datetime', 'cf_date', 'cf_time' ];
 		foreach ( $target_types as $type ) {
 			$fields = $repo->get_custom_fields_by_type( $type );
 			if ( $fields ) {

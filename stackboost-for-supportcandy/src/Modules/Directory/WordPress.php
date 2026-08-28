@@ -64,6 +64,13 @@ class WordPress {
 		add_filter( 'single_template', array( $this, 'load_single_staff_template' ) );
 		add_action( 'wp_ajax_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
 		add_action( 'wp_ajax_nopriv_stackboost_get_staff_details', array( $this, 'ajax_get_staff_details' ) );
+
+		add_action( 'wp_ajax_stackboost_directory_export_csv_google_public', array( $this, 'ajax_export_csv_google_public' ) );
+		add_action( 'wp_ajax_nopriv_stackboost_directory_export_csv_google_public', array( $this, 'ajax_export_csv_google_public' ) );
+
+		add_action( 'wp_ajax_stackboost_directory_auto_sync_google', array( $this, 'ajax_auto_sync_google' ) );
+		add_action( 'wp_ajax_nopriv_stackboost_directory_auto_sync_google', array( $this, 'ajax_auto_sync_google' ) );
+
 		Management::register_ajax_actions();
 
 		// Hook for rendering the ticket widget.
@@ -333,12 +340,18 @@ class WordPress {
 				$debug_enabled = isset( $settings['diagnostic_log_enabled'] ) && '1' === $settings['diagnostic_log_enabled'];
 			}
 
+            $options = get_option( 'stackboost_directory_settings', array() );
+
 			wp_localize_script(
 				'stackboost-directory-js',
 				'stackboostPublicAjax',
 				array(
 					'ajax_url'                   => admin_url( 'admin-ajax.php' ),
 					'stackboost_directory_nonce' => wp_create_nonce( 'stackboost_directory_public_nonce' ),
+					'export_csv_nonce'           => wp_create_nonce( 'stackboost_directory_csv_export_google_public' ),
+                    'auto_sync_nonce'            => wp_create_nonce( 'stackboost_directory_auto_sync_google' ),
+                    'google_client_id'           => $options['google_client_id'] ?? '',
+                    'current_user_email'         => is_user_logged_in() ? wp_get_current_user()->user_email : '',
 					'no_entries_found'           => __( 'No directory entries found.', 'stackboost-for-supportcandy' ),
 					'debug_enabled'              => $debug_enabled,
 				)
@@ -503,6 +516,132 @@ class WordPress {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * AJAX handler for exporting directory data to CSV specifically formatted for Google Contacts (Public).
+	 */
+	public function ajax_export_csv_google_public() {
+		check_ajax_referer( 'stackboost_directory_csv_export_google_public', 'nonce' );
+
+		$posts = get_posts(
+			array(
+				'post_type'      => $this->core->cpts->post_type,
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+			)
+		);
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="company-directory-' . gmdate( 'Y-m-d' ) . '.csv"' );
+		header( 'Expires: 0' );
+		header( 'Cache-Control: must-revalidate' );
+		header( 'Pragma: public' );
+
+		$output = fopen( 'php://output', 'w' );
+
+		// Add UTF-8 BOM for Excel compatibility
+		fwrite( $output, chr(0xEF) . chr(0xBB) . chr(0xBF) );
+
+		// Define Google Contacts Headers
+		$headers = array(
+			'Name',
+			'Given Name',
+			'Family Name',
+			'E-mail 1 - Type',
+			'E-mail 1 - Value',
+			'Phone 1 - Type',
+			'Phone 1 - Value',
+			'Phone 2 - Type',
+			'Phone 2 - Value',
+			'Organization 1 - Title',
+			'Organization 1 - Department',
+		);
+		fputcsv( $output, $headers );
+
+		$options = get_option( Settings::OPTION_NAME, array() );
+		$no_split_raw = $options['csv_export_no_split_phrases'] ?? '';
+		$no_split_phrases = array_filter( array_map( 'trim', explode( ',', $no_split_raw ) ) );
+
+		// Helper function to prevent CSV Injection (forces Excel to treat value as text)
+		$sanitize_csv_field = function( $value ) {
+			$value = (string) $value;
+			if ( preg_match( '/^[\=\-\+\@]/', $value ) ) {
+				return "'" . $value;
+			}
+			return $value;
+		};
+
+		foreach ( $posts as $post ) {
+			// Basic visibility check for public export
+			$active  = get_post_meta( $post->ID, '_active', true );
+			$private = get_post_meta( $post->ID, '_private', true );
+
+			if ( 'Yes' !== $active || 'Yes' === $private ) {
+				continue;
+			}
+
+			$name = $post->post_title;
+
+			$matched_phrase = null;
+			foreach ( $no_split_phrases as $phrase ) {
+				if ( stripos( $name, $phrase ) !== false ) {
+					$matched_phrase = $phrase;
+					break;
+				}
+			}
+
+			if ( ! $matched_phrase ) {
+				$parts = explode( ' ', $name, 2 );
+				$given_name = $parts[0] ?? '';
+				$family_name = $parts[1] ?? '';
+			} else {
+				// If we have a match like "On Call", split the name AT the phrase.
+				// e.g. "On Call - Maintenance" -> given: "On Call", family: " - Maintenance"
+				$pos = stripos( $name, $matched_phrase );
+				$given_name = substr( $name, 0, $pos + strlen( $matched_phrase ) );
+				$family_name = substr( $name, $pos + strlen( $matched_phrase ) );
+			}
+
+			// Always apply cleanup to the family name (strips hyphens and whitespace)
+			if ( ! empty( $family_name ) ) {
+				$family_name = trim( $family_name );
+				$family_name = ltrim( $family_name, '-' );
+				$family_name = trim( $family_name );
+			}
+			$given_name = trim( $given_name );
+
+			$email        = get_post_meta( $post->ID, '_email_address', true );
+			$office_phone = get_post_meta( $post->ID, '_office_phone', true );
+			$extension    = get_post_meta( $post->ID, '_extension', true );
+			$mobile_phone = get_post_meta( $post->ID, '_mobile_phone', true );
+			$job_title    = get_post_meta( $post->ID, '_stackboost_staff_job_title', true );
+			$department   = get_post_meta( $post->ID, '_department_program', true );
+
+			$office_full = $office_phone;
+			if ( ! empty( $office_full ) && ! empty( $extension ) ) {
+				$office_full .= ' x' . $extension;
+			}
+
+			$row = array(
+				$sanitize_csv_field( $name ),
+				$sanitize_csv_field( $given_name ),
+				$sanitize_csv_field( $family_name ),
+				'* Work', // E-mail 1 - Type
+				$sanitize_csv_field( $email ),
+				'Work', // Phone 1 - Type
+				$sanitize_csv_field( $office_full ),
+				'Mobile', // Phone 2 - Type
+				$sanitize_csv_field( $mobile_phone ),
+				$sanitize_csv_field( $job_title ),
+				$sanitize_csv_field( $department ),
+			);
+
+			fputcsv( $output, $row );
+		}
+
+		fclose( $output );
+		wp_die();
 	}
 
 	/**
@@ -1314,5 +1453,248 @@ class WordPress {
 			'messages'       => $messages,
 			'done'           => $done,
 		);
+	}
+
+	/**
+	 * AJAX handler for automatically syncing directory data to Google Contacts.
+	 */
+	public function ajax_auto_sync_google() {
+		check_ajax_referer( 'stackboost_directory_auto_sync_google', 'nonce' );
+
+        // Prevent script timeout for large directories connecting to Google API
+        if ( function_exists( 'set_time_limit' ) ) {
+            set_time_limit( 0 );
+        }
+
+		$access_token = isset( $_POST['access_token'] ) ? sanitize_text_field( $_POST['access_token'] ) : '';
+
+		if ( empty( $access_token ) ) {
+			wp_send_json_error( 'Missing access token.' );
+			return;
+		}
+
+		$posts = get_posts(
+			array(
+				'post_type'      => $this->core->cpts->post_type,
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+			)
+		);
+
+		// 1. Fetch Existing Google Contacts
+		$existing_contacts = array();
+		$next_page_token = '';
+
+		do {
+			$url = 'https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses&pageSize=1000';
+			if ( ! empty( $next_page_token ) ) {
+				$url .= '&pageToken=' . urlencode( $next_page_token );
+			}
+
+			$response = wp_remote_get( $url, array(
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $access_token,
+				),
+				'timeout' => 15,
+			) );
+
+			if ( is_wp_error( $response ) ) {
+				wp_send_json_error( 'Failed to fetch existing Google Contacts: ' . $response->get_error_message() );
+				return;
+			}
+
+			$body = wp_remote_retrieve_body( $response );
+			$data = json_decode( $body, true );
+
+			if ( isset( $data['error'] ) ) {
+				wp_send_json_error( 'Google API Error: ' . ( $data['error']['message'] ?? 'Unknown' ) );
+				return;
+			}
+
+			if ( ! empty( $data['connections'] ) ) {
+				foreach ( $data['connections'] as $connection ) {
+					if ( ! empty( $connection['emailAddresses'] ) ) {
+						foreach ( $connection['emailAddresses'] as $email ) {
+							$existing_contacts[ strtolower( trim( $email['value'] ) ) ] = array(
+								'resourceName' => $connection['resourceName'],
+								'etag'         => $connection['etag'],
+							);
+						}
+					}
+				}
+			}
+
+			$next_page_token = $data['nextPageToken'] ?? '';
+		} while ( ! empty( $next_page_token ) );
+
+		$options = get_option( Settings::OPTION_NAME, array() );
+		$no_split_raw = $options['csv_export_no_split_phrases'] ?? '';
+		$no_split_phrases = array_filter( array_map( 'trim', explode( ',', $no_split_raw ) ) );
+
+		$processed = 0;
+		$added = 0;
+		$updated = 0;
+		$errors = 0;
+
+		$create_batch = array();
+		$update_batch = array();
+
+		foreach ( $posts as $post ) {
+			$active  = get_post_meta( $post->ID, '_active', true );
+			$private = get_post_meta( $post->ID, '_private', true );
+
+			if ( 'Yes' !== $active || 'Yes' === $private ) {
+				continue;
+			}
+
+			$name = $post->post_title;
+			$email        = get_post_meta( $post->ID, '_email_address', true );
+
+			if ( empty( $email ) ) {
+			    continue; // Need an email to match reliably
+			}
+
+			$matched_phrase = null;
+			foreach ( $no_split_phrases as $phrase ) {
+				if ( stripos( $name, $phrase ) !== false ) {
+					$matched_phrase = $phrase;
+					break;
+				}
+			}
+
+			if ( ! $matched_phrase ) {
+				$parts = explode( ' ', $name, 2 );
+				$given_name = $parts[0] ?? '';
+				$family_name = $parts[1] ?? '';
+			} else {
+				$pos = stripos( $name, $matched_phrase );
+				$given_name = substr( $name, 0, $pos + strlen( $matched_phrase ) );
+				$family_name = substr( $name, $pos + strlen( $matched_phrase ) );
+			}
+
+			if ( ! empty( $family_name ) ) {
+				$family_name = trim( $family_name );
+				$family_name = ltrim( $family_name, '-' );
+				$family_name = trim( $family_name );
+			}
+			$given_name = trim( $given_name );
+
+			$office_phone = get_post_meta( $post->ID, '_office_phone', true );
+			$extension    = get_post_meta( $post->ID, '_extension', true );
+			$mobile_phone = get_post_meta( $post->ID, '_mobile_phone', true );
+			$job_title    = get_post_meta( $post->ID, '_stackboost_staff_job_title', true );
+			$department   = get_post_meta( $post->ID, '_department_program', true );
+
+			$office_full = $office_phone;
+			if ( ! empty( $office_full ) && ! empty( $extension ) ) {
+				$office_full .= ' x' . $extension;
+			}
+
+			// Build Person object
+			$person = array(
+				'names' => array(
+					array(
+						'givenName' => $given_name,
+						'familyName' => $family_name,
+					)
+				),
+				'emailAddresses' => array(
+					array(
+						'value' => $email,
+						'type' => 'work',
+					)
+				),
+				'organizations' => array(
+					array(
+						'title' => $job_title,
+						'department' => $department,
+					)
+				),
+			);
+
+			$phones = array();
+			if ( ! empty( $office_full ) ) {
+			    $phones[] = array( 'value' => $office_full, 'type' => 'work' );
+			}
+			if ( ! empty( $mobile_phone ) ) {
+			    $phones[] = array( 'value' => $mobile_phone, 'type' => 'mobile' );
+			}
+			if ( ! empty( $phones ) ) {
+			    $person['phoneNumbers'] = $phones;
+			}
+
+			$lookup_email = strtolower( trim( $email ) );
+
+			if ( isset( $existing_contacts[ $lookup_email ] ) ) {
+			    // Update Map
+			    $person['etag'] = $existing_contacts[ $lookup_email ]['etag'];
+			    $resource_name = $existing_contacts[ $lookup_email ]['resourceName'];
+
+			    $update_batch[ $resource_name ] = $person;
+
+			} else {
+			    // Create List
+			    $create_batch[] = array( 'contactPerson' => $person );
+			}
+
+			$processed++;
+		}
+
+        // Send Batch Updates (max 200 per request)
+        if ( ! empty( $update_batch ) ) {
+            $chunks = array_chunk( $update_batch, 200, true );
+            foreach ( $chunks as $chunk ) {
+                $payload = array(
+                    'contacts' => $chunk,
+                    'updateMask' => 'names,emailAddresses,phoneNumbers,organizations',
+                    'readMask' => 'names', // Required to return response but we don't care
+                );
+                $update_response = wp_remote_post( 'https://people.googleapis.com/v1/people:batchUpdateContacts', array(
+			        'headers' => array(
+			            'Authorization' => 'Bearer ' . $access_token,
+			            'Content-Type' => 'application/json',
+			        ),
+			        'body' => wp_json_encode( $payload ),
+			    ) );
+			    if ( ! is_wp_error( $update_response ) && wp_remote_retrieve_response_code( $update_response ) === 200 ) {
+			        $updated += count( $chunk );
+			    } else {
+			        if ( function_exists( 'stackboost_log' ) ) {
+			            stackboost_log( 'Failed to batchUpdate Google Contacts: ' . wp_json_encode( is_wp_error( $update_response ) ? $update_response->get_error_messages() : wp_remote_retrieve_body( $update_response ) ), 'directory' );
+			        }
+			        $errors += count( $chunk );
+			    }
+            }
+        }
+
+        // Send Batch Creates (max 200 per request)
+        if ( ! empty( $create_batch ) ) {
+            $chunks = array_chunk( $create_batch, 200 );
+            foreach ( $chunks as $chunk ) {
+                $payload = array(
+                    'contacts' => $chunk,
+                    'readMask' => 'names', // Required
+                );
+                $create_response = wp_remote_post( 'https://people.googleapis.com/v1/people:batchCreateContacts', array(
+			        'headers' => array(
+			            'Authorization' => 'Bearer ' . $access_token,
+			            'Content-Type' => 'application/json',
+			        ),
+			        'body' => wp_json_encode( $payload ),
+			    ) );
+			    if ( ! is_wp_error( $create_response ) && wp_remote_retrieve_response_code( $create_response ) === 200 ) {
+			        $added += count( $chunk );
+			    } else {
+			        if ( function_exists( 'stackboost_log' ) ) {
+			            stackboost_log( 'Failed to batchCreate Google Contacts: ' . wp_json_encode( is_wp_error( $create_response ) ? $create_response->get_error_messages() : wp_remote_retrieve_body( $create_response ) ), 'directory' );
+			        }
+			        $errors += count( $chunk );
+			    }
+            }
+        }
+
+		wp_send_json_success( array(
+		    'message' => sprintf( 'Processed %d contacts (%d added, %d updated, %d errors).', $processed, $added, $updated, $errors ),
+		) );
 	}
 }
