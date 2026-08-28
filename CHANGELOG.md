@@ -3,6 +3,7 @@ Change Log
 
 1.6.5
 -----
+*   Added: Unified Ticket Macro (UTM) - Response Placement option (`beside`, `below`, `mobile_only`) to position field responses below questions for improved ticket readability, with responsive mobile support.
 *   Added: Directory - Google Contacts Auto Sync via Google People API. Users can bulk-sync the directory to their Google Workspace contacts directly from the frontend using SSO login hints.
 *   Added: Ticket Metrics - AI Trend Analysis tool powered by Google Gemini (`gemini-flash-lite-latest`) to generate automated HTML summaries of unclassified "Other" ticket descriptions.
 *   Added: Ticket Metrics - Service Level Agreement (SLA) threshold tracking. Administrators can define target Response and Resolution times in hours, and the dashboard automatically computes dynamic SLA Breach percentages.

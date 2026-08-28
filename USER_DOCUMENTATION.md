@@ -56,6 +56,7 @@ Streamline your employee onboarding process.
 Create consistent, formatted ticket updates.
 
 *   **Configuration:** Go to the "Unified Ticket Macro" page to select which fields to include in your macro.
+*   **Response Placement:** Choose whether responses are placed beside questions, below questions, or below questions for mobile devices only to enhance ticket readability.
 *   **Usage:** Use the `{{stackboost_unified_ticket}}` macro in your SupportCandy email templates.
 
 ### After Ticket Survey (ATS)

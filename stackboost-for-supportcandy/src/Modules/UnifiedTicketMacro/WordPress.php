@@ -91,6 +91,14 @@ class WordPress {
 			'stackboost_utm_main_section'
 		);
 
+		add_settings_field(
+			'stackboost_utm_response_placement',
+			__( 'Response Placement', 'stackboost-for-supportcandy' ),
+			[ $this, 'render_response_placement_select' ],
+			$page,
+			'stackboost_utm_main_section'
+		);
+
 		add_settings_section(
 			'stackboost_utm_fields_section',
 			__( 'Fields to Display', 'stackboost-for-supportcandy' ),
@@ -262,6 +270,24 @@ class WordPress {
 			</div>
 		</div>
 		<p class="description"><?php esc_html_e( 'Select the fields you want to include in the macro. The order of fields in the "Selected Fields" box will be the order they appear in the email.', 'stackboost-for-supportcandy' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Render the response placement select input.
+	 */
+	public function render_response_placement_select() {
+		$options   = get_option( 'stackboost_settings', [] );
+		$placement = isset( $options['utm_response_placement'] ) ? $options['utm_response_placement'] : 'beside';
+		?>
+		<select name="stackboost_settings[utm_response_placement]" id="stackboost_utm_response_placement">
+			<option value="beside" <?php selected( $placement, 'beside' ); ?>><?php esc_html_e( 'Beside Question (Default)', 'stackboost-for-supportcandy' ); ?></option>
+			<option value="below" <?php selected( $placement, 'below' ); ?>><?php esc_html_e( 'Below Question', 'stackboost-for-supportcandy' ); ?></option>
+			<option value="mobile_only" <?php selected( $placement, 'mobile_only' ); ?>><?php esc_html_e( 'Below Question (Mobile Only)', 'stackboost-for-supportcandy' ); ?></option>
+		</select>
+		<p class="description">
+			<?php esc_html_e( 'Choose whether field responses appear beside questions or below them to keep tickets readable.', 'stackboost-for-supportcandy' ); ?>
+		</p>
 		<?php
 	}
 

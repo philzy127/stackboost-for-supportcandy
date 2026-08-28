@@ -838,7 +838,7 @@ class Settings {
 			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
-			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules'],
+			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules', 'utm_response_placement'],
 			'stackboost-tools'              => [
 				'diagnostic_log_enabled',
 				'enable_log_general',
@@ -992,6 +992,10 @@ class Settings {
 
 					case 'utm_rename_rules':
 						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['field', 'name']) : [];
+						break;
+
+					case 'utm_response_placement':
+						$saved_settings[$key] = in_array( $value, [ 'beside', 'below', 'mobile_only' ], true ) ? $value : 'beside';
 						break;
 
 					case 'date_format_rules':
