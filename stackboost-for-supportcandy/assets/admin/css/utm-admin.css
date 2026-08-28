@@ -118,14 +118,16 @@
 }
 
 /* Unified Ticket Macro (UTM) Responsive Layout */
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 768px) {
     .stackboost-utm-table.utm-mobile-below,
     .stackboost-utm-table.utm-mobile-below tbody,
     .stackboost-utm-table.utm-mobile-below tr,
     .stackboost-utm-table.utm-mobile-below td {
         display: block !important;
         width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
+        float: none !important;
     }
     .stackboost-utm-table.utm-mobile-below td.sb-utm-label {
         white-space: normal !important;
@@ -133,10 +135,12 @@
     }
     .stackboost-utm-table.utm-mobile-below td.sb-utm-val {
         padding-bottom: 8px !important;
+        padding-left: 0 !important;
     }
     .stackboost-utm-list.utm-mobile-below .stackboost-utm-list-item .sb-utm-label,
     .stackboost-utm-list.utm-mobile-below .stackboost-utm-list-item .sb-utm-val {
         display: block !important;
+        width: 100% !important;
         margin-right: 0 !important;
         margin-bottom: 2px !important;
     }

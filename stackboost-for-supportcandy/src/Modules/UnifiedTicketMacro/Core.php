@@ -127,7 +127,7 @@ class Core {
 		$html_output = '';
 		if ( 'table' === $format ) {
 			if ( 'mobile_only' === $response_placement ) {
-				$html_output = '<style>@media only screen and (max-width: 600px) { .stackboost-utm-table, .stackboost-utm-table tbody, .stackboost-utm-table tr, .stackboost-utm-table td { display: block !important; width: 100% !important; box-sizing: border-box !important; } .stackboost-utm-table td.sb-utm-label { white-space: normal !important; padding-bottom: 2px !important; } .stackboost-utm-table td.sb-utm-val { padding-bottom: 8px !important; } }</style>';
+				$html_output = '<style>@media only screen and (max-width: 768px) { .stackboost-utm-table, .stackboost-utm-table tbody, .stackboost-utm-table tr, .stackboost-utm-table td { display: block !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; float: none !important; } .stackboost-utm-table td.sb-utm-label { white-space: normal !important; padding-bottom: 2px !important; } .stackboost-utm-table td.sb-utm-val { padding-bottom: 8px !important; padding-left: 0 !important; } }</style>';
 				$html_output .= '<table class="stackboost-utm-table utm-mobile-below">';
 			} else {
 				$html_output = '<table>';
