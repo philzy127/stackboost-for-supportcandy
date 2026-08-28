@@ -301,9 +301,9 @@ class Core {
 						if ( 'below' === $response_placement ) {
 							$html_output .= '<tr><td colspan="2" style="vertical-align: top; padding-bottom: 8px;"><div style="font-weight: bold; margin-bottom: 2px;">' . esc_html( $field_name ) . ':</div><div style="vertical-align: top;">' . $display_value . '</div></td></tr>';
 						} elseif ( 'mobile_only' === $response_placement ) {
-							$html_output .= '<div class="stackboost-utm-row" style="margin-bottom: 8px; font-size: 13px; line-height: 1.5;">';
-							$html_output .= '<div class="sb-utm-label" style="display: block; font-weight: 600; color: #50575e; margin-bottom: 2px;">' . esc_html( $field_name ) . ':</div>';
-							$html_output .= '<div class="sb-utm-val" style="display: block; color: #2c3338;">' . $display_value . '</div>';
+							$html_output .= '<div class="stackboost-utm-row" style="margin-bottom: 8px;">';
+							$html_output .= '<div class="sb-utm-label" style="display: block; margin-bottom: 2px;"><strong>' . esc_html( $field_name ) . ':</strong></div>';
+							$html_output .= '<div class="sb-utm-val" style="display: block; vertical-align: top;">' . $display_value . '</div>';
 							$html_output .= '</div>';
 						} else {
 							$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
@@ -311,9 +311,9 @@ class Core {
 					} elseif ( 'below' === $response_placement ) {
 						$html_output .= '<tr><td colspan="2" style="vertical-align: top; padding-bottom: 8px;"><div style="font-weight: bold; margin-bottom: 2px;">' . esc_html( $field_name ) . ':</div><div style="vertical-align: top;">' . esc_html( $display_value ) . '</div></td></tr>';
 					} elseif ( 'mobile_only' === $response_placement ) {
-						$html_output .= '<div class="stackboost-utm-row" style="margin-bottom: 8px; font-size: 13px; line-height: 1.5;">';
-						$html_output .= '<div class="sb-utm-label" style="display: inline-block; vertical-align: top; font-weight: 600; color: #50575e; margin-right: 5px; max-width: 100%;">' . esc_html( $field_name ) . ':</div>';
-						$html_output .= '<div class="sb-utm-val" style="display: inline-block; vertical-align: top; color: #2c3338; max-width: 100%;">' . esc_html( $display_value ) . '</div>';
+						$html_output .= '<div class="stackboost-utm-row" style="margin-bottom: 8px;">';
+						$html_output .= '<div class="sb-utm-label" style="display: inline-block; vertical-align: top; margin-right: 5px; max-width: 100%;"><strong>' . esc_html( $field_name ) . ':</strong></div>';
+						$html_output .= '<div class="sb-utm-val" style="display: inline-block; vertical-align: top; max-width: 100%;">' . esc_html( $display_value ) . '</div>';
 						$html_output .= '</div>';
 					} else {
 						$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
