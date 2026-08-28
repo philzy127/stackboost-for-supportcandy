@@ -127,7 +127,8 @@ class Core {
 		$html_output = '';
 		if ( 'table' === $format ) {
 			if ( 'mobile_only' === $response_placement ) {
-				$html_output = '<div class="stackboost-utm-table utm-mobile-below" style="width: 100%;">';
+				$html_output = '<style>@media only screen and (max-width: 768px) { .stackboost-utm-table, .stackboost-utm-table tbody, .stackboost-utm-table tr, .stackboost-utm-table td { display: block !important; width: 100% !important; box-sizing: border-box !important; } .stackboost-utm-table td.sb-utm-label { padding-bottom: 2px !important; } .stackboost-utm-table td.sb-utm-val { padding-bottom: 8px !important; } }</style>';
+				$html_output .= '<table class="stackboost-utm-table utm-mobile-below">';
 			} else {
 				$html_output = '<table>';
 			}
@@ -299,22 +300,16 @@ class Core {
 						// Fix alignment issue caused by paragraph margins in rich text fields.
 						$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
 						if ( 'below' === $response_placement ) {
-							$html_output .= '<tr><td colspan="2" style="vertical-align: top; padding-bottom: 8px;"><div style="font-weight: bold; margin-bottom: 2px;">' . esc_html( $field_name ) . ':</div><div style="vertical-align: top;">' . $display_value . '</div></td></tr>';
+							$html_output .= '<tr><td colspan="2" style="vertical-align: top; padding-bottom: 8px;"><div><strong>' . esc_html( $field_name ) . ':</strong></div><div style="vertical-align: top;">' . $display_value . '</div></td></tr>';
 						} elseif ( 'mobile_only' === $response_placement ) {
-							$html_output .= '<div class="stackboost-utm-row" style="margin-bottom: 8px;">';
-							$html_output .= '<div class="sb-utm-label" style="display: block; margin-bottom: 2px;"><strong>' . esc_html( $field_name ) . ':</strong></div>';
-							$html_output .= '<div class="sb-utm-val" style="display: block; vertical-align: top;">' . $display_value . '</div>';
-							$html_output .= '</div>';
+							$html_output .= '<tr><td class="sb-utm-label" style="white-space: nowrap; vertical-align: top; padding-right: 10px;"><strong>' . esc_html( $field_name ) . ':</strong></td><td class="sb-utm-val" style="vertical-align: top;">' . $display_value . '</td></tr>';
 						} else {
 							$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
 						}
 					} elseif ( 'below' === $response_placement ) {
-						$html_output .= '<tr><td colspan="2" style="vertical-align: top; padding-bottom: 8px;"><div style="font-weight: bold; margin-bottom: 2px;">' . esc_html( $field_name ) . ':</div><div style="vertical-align: top;">' . esc_html( $display_value ) . '</div></td></tr>';
+						$html_output .= '<tr><td colspan="2" style="vertical-align: top; padding-bottom: 8px;"><div><strong>' . esc_html( $field_name ) . ':</strong></div><div style="vertical-align: top;">' . esc_html( $display_value ) . '</div></td></tr>';
 					} elseif ( 'mobile_only' === $response_placement ) {
-						$html_output .= '<div class="stackboost-utm-row" style="margin-bottom: 8px;">';
-						$html_output .= '<div class="sb-utm-label" style="display: inline-block; vertical-align: top; margin-right: 5px; max-width: 100%;"><strong>' . esc_html( $field_name ) . ':</strong></div>';
-						$html_output .= '<div class="sb-utm-val" style="display: inline-block; vertical-align: top; max-width: 100%;">' . esc_html( $display_value ) . '</div>';
-						$html_output .= '</div>';
+						$html_output .= '<tr><td class="sb-utm-label" style="white-space: nowrap; vertical-align: top; padding-right: 10px;"><strong>' . esc_html( $field_name ) . ':</strong></td><td class="sb-utm-val" style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
 					} else {
 						$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
 					}
@@ -323,11 +318,7 @@ class Core {
 		}
 
 		if ( 'table' === $format ) {
-			if ( 'mobile_only' === $response_placement ) {
-				$html_output .= '</div>';
-			} else {
-				$html_output .= '</table>';
-			}
+			$html_output .= '</table>';
 		} elseif ( 'list' === $format ) {
 			$html_output .= '</div>';
 		}
