@@ -283,10 +283,10 @@ class WordPress {
 		<select name="stackboost_settings[utm_response_placement]" id="stackboost_utm_response_placement">
 			<option value="beside" <?php selected( $placement, 'beside' ); ?>><?php esc_html_e( 'Beside Question (Default)', 'stackboost-for-supportcandy' ); ?></option>
 			<option value="below" <?php selected( $placement, 'below' ); ?>><?php esc_html_e( 'Below Question', 'stackboost-for-supportcandy' ); ?></option>
-			<option value="mobile_only" <?php selected( $placement, 'mobile_only' ); ?>><?php esc_html_e( 'Below Question (Mobile Only)', 'stackboost-for-supportcandy' ); ?></option>
+			<option value="mobile_only" <?php selected( $placement, 'mobile_only' ); ?>><?php esc_html_e( 'Automatic', 'stackboost-for-supportcandy' ); ?></option>
 		</select>
 		<p class="description">
-			<?php esc_html_e( 'Choose whether field responses appear beside questions or below them to keep tickets readable.', 'stackboost-for-supportcandy' ); ?>
+			<?php esc_html_e( 'Choose whether field responses appear beside questions, below questions, or automatically stack on mobile screens to keep tickets readable.', 'stackboost-for-supportcandy' ); ?>
 		</p>
 		<?php
 	}

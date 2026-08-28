@@ -183,7 +183,7 @@ Located at **StackBoost > Unified Ticket Macro**. Standardizes email notificatio
 
 ### General Settings
 *   **Enable Feature:** Toggles the UTM system.
-*   **Response Placement:** Choose whether ticket field responses appear beside questions (default), below questions, or below questions for mobile devices only.
+*   **Response Placement:** Choose whether ticket field responses appear beside questions (default), below questions, or automatically stacked for mobile screens.
 
 ### Fields to Display
 *   **Available Fields:** A list of all SupportCandy fields.

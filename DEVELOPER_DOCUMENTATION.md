@@ -18,7 +18,7 @@ StackBoost extends SupportCandy with modular features. Each feature is encapsula
 ### 1. Unified Ticket Macro (UTM)
 *   **Location:** `src/Modules/UnifiedTicketMacro/`
 *   **Purpose:** Replaces the `{{stackboost_unified_ticket}}` macro in emails with a dynamic HTML table or responsive list layout.
-*   **Response Placement:** Supports `beside`, `below`, and `mobile_only` response positioning options via `utm_response_placement`. `below` stacks field values underneath field titles, while `mobile_only` applies `@media` queries (`.utm-mobile-below`) for responsive mobile stacking.
+*   **Response Placement:** Supports `beside`, `below`, and `mobile_only` (Automatic) response positioning options via `utm_response_placement`. `below` stacks field values underneath field titles, while `mobile_only` (Automatic) applies fluid containers and `@media` queries (`.utm-mobile-below`) for responsive mobile stacking.
 *   **Key Hooks:** `wpsc_replace_macros` (Email Body Replacement).
 *   **Logging:** Detailed hook logging is implemented in `WordPress.php` to trace ticket lifecycle events (`wpsc_create_new_ticket`, `wpsc_post_reply`, etc.).
 

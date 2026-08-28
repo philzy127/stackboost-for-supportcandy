@@ -21,7 +21,7 @@ Go to **StackBoost > Unified Ticket Macro**.
 *   **Response Placement:** Choose how response values are positioned relative to field titles/questions.
     *   **Beside Question (Default):** Places responses side-by-side with questions.
     *   **Below Question:** Places responses directly below questions for improved readability on stacked layouts.
-    *   **Below Question (Mobile Only):** Keeps responses beside questions on desktop and automatically stacks responses below questions on mobile devices.
+    *   **Automatic (Responsive Mobile Stacking):** Keeps responses beside questions on desktop and automatically stacks responses below questions on mobile devices.
 
 ### Fields to Display
 *   **Selection:** Use the dual-list box to choose which fields to include in the table.

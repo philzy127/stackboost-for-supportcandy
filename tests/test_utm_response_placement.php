@@ -167,7 +167,7 @@ namespace {
 	];
 
 	$html_beside_table = $core->build_live_utm_html( $ticket, 'table' );
-	if ( str_istr( $html_beside_table, '<strong>Subject:</strong>' ) && str_istr( $html_beside_table, 'Help with billing</td>' ) ) {
+	if ( str_istr( $html_beside_table, '<strong>Subject:</strong>' ) && str_istr( $html_beside_table, 'Help with billing</span>' ) ) {
 		echo "[PASS] Table format - 'beside' layout renders side-by-side cells.\n";
 	} else {
 		echo "[FAIL] Table format - 'beside' layout output unexpected: " . $html_beside_table . "\n";
