@@ -200,8 +200,8 @@ namespace {
 	// Case 2c: Mobile Only
 	$mock_options['stackboost_settings']['utm_response_placement'] = 'mobile_only';
 	$html_mobile_table = $core->build_live_utm_html( $ticket, 'table' );
-	if ( str_istr( $html_mobile_table, 'max-width: 768px' ) && str_istr( $html_mobile_table, 'utm-mobile-below' ) && str_istr( $html_mobile_table, 'sb-utm-label' ) && str_istr( $html_mobile_table, 'sb-utm-val' ) ) {
-		echo "[PASS] Table format - 'mobile_only' layout includes responsive table markup and embedded style block.\n";
+	if ( str_istr( $html_mobile_table, 'utm-mobile-below' ) && str_istr( $html_mobile_table, 'display: inline-block' ) && str_istr( $html_mobile_table, 'sb-utm-label' ) && str_istr( $html_mobile_table, 'sb-utm-val' ) ) {
+		echo "[PASS] Table format - 'mobile_only' layout includes fluid inline-block wrappers.\n";
 	} else {
 		echo "[FAIL] Table format - 'mobile_only' layout output unexpected: " . $html_mobile_table . "\n";
 		exit(1);
