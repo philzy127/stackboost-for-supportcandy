@@ -85,6 +85,10 @@
     font-weight: bold;
 }
 
+.sb-utm-val {
+    font-weight: normal !important;
+}
+
 /* Unified Ticket Macro (UTM) Responsive Layout */
 @media only screen and (max-width: 768px) {
     .stackboost-utm-table.utm-mobile-below,

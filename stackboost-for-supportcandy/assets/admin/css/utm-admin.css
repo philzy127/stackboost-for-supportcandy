@@ -57,6 +57,9 @@
 
 .stackboost-utm-buttons .button .dashicons {
 	font-size: 20px;
+	line-height: 1 !important;
+	height: auto;
+	width: auto;
 }
 
 .stackboost-utm-selected-wrapper {
@@ -115,6 +118,10 @@
 
 .stackboost-utm-toast.error {
     background-color: #d9534f;
+}
+
+.sb-utm-val {
+    font-weight: normal !important;
 }
 
 /* Unified Ticket Macro (UTM) Responsive Layout */
