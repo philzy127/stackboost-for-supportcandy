@@ -31,7 +31,7 @@ class Core {
 	}
 
 	/**
-	 * Strips duplicate line breaks and excessive added whitespace.
+	 * Strips duplicate line breaks, empty paragraph tags, and excessive added whitespace/newlines.
 	 *
 	 * @param mixed $html Raw string or content.
 	 * @return mixed Cleaned HTML content or original input if not string/empty.
@@ -41,9 +41,16 @@ class Core {
 			return $html;
 		}
 
-		// Handles variations of <br> tags with whitespace, newlines, and &nbsp; entities
-		$pattern = '/(?:(?:\s|&nbsp;)*<br\s*\/?>\s*){2,}/i';
-		return preg_replace( $pattern, '<br>', $html );
+		// 1. Remove empty or break-only paragraph blocks (<p>&nbsp;</p>, <p><br></p>, <p></p>)
+		$html = preg_replace( '/<p\b[^>]*>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/i', '', $html );
+
+		// 2. Reduce consecutive <br> tags (with optional spaces, newlines, &nbsp;) down to a single <br>
+		$html = preg_replace( '/(?:(?:\s|&nbsp;)*<br\s*\/?>\s*){2,}/i', '<br>', $html );
+
+		// 3. Reduce 3+ consecutive plain-text newlines down to 2 newlines (preserves paragraph gaps in plain text)
+		$html = preg_replace( '/(?:\r\n|\r|\n){3,}/', "\n\n", $html );
+
+		return $html;
 	}
 
 	/**

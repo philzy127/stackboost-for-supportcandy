@@ -92,10 +92,13 @@ class WordPress extends Module {
 		// 1. Clean PHPMailer payload directly before email delivery
 		add_action( 'phpmailer_init', [ $this, 'clean_phpmailer_body' ], 9999 );
 
-		// 2. Intercept SupportCandy-specific email/macro filters
+		// 2. Intercept SupportCandy-specific email/macro filters & email payload data
 		add_filter( 'wpsc_ticket_macro_value', [ $this, 'clean_macro_filter' ], 9999, 3 );
 		add_filter( 'wpsc_email_notification_body', [ $this, 'clean_string_filter' ], 9999, 1 );
 		add_filter( 'wpsc_email_body', [ $this, 'clean_string_filter' ], 9999, 1 );
+		add_filter( 'wpsc_create_ticket_email_data', [ $this, 'clean_email_data_filter' ], 9999, 2 );
+		add_filter( 'wpsc_agent_reply_email_data', [ $this, 'clean_email_data_filter' ], 9999, 2 );
+		add_filter( 'wpsc_cust_reply_email_data', [ $this, 'clean_email_data_filter' ], 9999, 2 );
 
 		// 3. Output Buffer fallback for page renders / AJAX calls
 		add_action( 'wp_loaded', [ $this, 'start_global_buffer' ] );
@@ -138,12 +141,44 @@ class WordPress extends Module {
 	}
 
 	/**
+	 * Intercept SupportCandy email data arrays (body, subject, etc.).
+	 *
+	 * @param array $email_data
+	 * @param mixed $ticket
+	 * @return array
+	 */
+	public function clean_email_data_filter( $email_data, $ticket = null ) {
+		if ( is_array( $email_data ) ) {
+			if ( ! empty( $email_data['body'] ) ) {
+				$email_data['body'] = $this->process_cleanup( $email_data['body'] );
+			}
+			if ( ! empty( $email_data['message'] ) ) {
+				$email_data['message'] = $this->process_cleanup( $email_data['message'] );
+			}
+		}
+		return $email_data;
+	}
+
+	/**
 	 * Output Buffer fallback for page renders / AJAX calls.
 	 */
 	public function start_global_buffer() {
-		if ( ! $this->is_clean_breaks_enabled() && ! $this->is_clean_hrs_enabled() ) {
+		$clean_breaks = $this->is_clean_breaks_enabled();
+		$clean_hrs    = $this->is_clean_hrs_enabled();
+
+		if ( ! $clean_breaks && ! $clean_hrs ) {
 			return;
 		}
-		ob_start( [ $this, 'process_cleanup' ] );
+
+		$core = $this->core;
+		ob_start( function( $html ) use ( $core, $clean_breaks, $clean_hrs ) {
+			if ( $clean_breaks ) {
+				$html = $core->strip_excessive_breaks( $html );
+			}
+			if ( $clean_hrs ) {
+				$html = $core->strip_excessive_hrs( $html );
+			}
+			return $html;
+		} );
 	}
 }

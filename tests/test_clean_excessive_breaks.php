@@ -26,40 +26,58 @@ if ($output2 === "Line 1<br>Line 2") {
     echo "[FAIL] strip_excessive_breaks(): Got '{$output2}'\n";
 }
 
-// Case 3: Multiple HR tags (HR only)
-$input3 = "Header<hr><hr /><hr  />Footer";
-$output3 = $core->strip_excessive_hrs($input3);
-if ($output3 === "Header<hr>Footer") {
+// Case 3: Empty and break-only paragraph tags
+$input3 = "<p>First paragraph</p><p>&nbsp;</p><p><br></p><p>Second paragraph</p>";
+$output3 = $core->strip_excessive_breaks($input3);
+if ($output3 === "<p>First paragraph</p><p>Second paragraph</p>") {
+    echo "[PASS] strip_excessive_breaks(): Empty & break-only paragraph tags removed\n";
+} else {
+    echo "[FAIL] strip_excessive_breaks(): Got '{$output3}'\n";
+}
+
+// Case 4: Plain-text consecutive newlines
+$input4 = "Line 1\n\n\n\nLine 2";
+$output4 = $core->strip_excessive_breaks($input4);
+if ($output4 === "Line 1\n\nLine 2") {
+    echo "[PASS] strip_excessive_breaks(): 3+ consecutive newlines reduced to 2 newlines\n";
+} else {
+    echo "[FAIL] strip_excessive_breaks(): Got '{$output4}'\n";
+}
+
+// Case 5: Multiple HR tags (HR only)
+$input5 = "Header<hr><hr /><hr  />Footer";
+$output5 = $core->strip_excessive_hrs($input5);
+if ($output5 === "Header<hr>Footer") {
     echo "[PASS] strip_excessive_hrs(): Multiple HR tags reduced to single HR\n";
 } else {
-    echo "[FAIL] strip_excessive_hrs(): Got '{$output3}'\n";
+    echo "[FAIL] strip_excessive_hrs(): Got '{$output5}'\n";
 }
 
-// Case 4: Independent application (HRs preserved when only stripping BRs)
-$input4 = "Top<br><br>Middle<hr><hr>Bottom";
-$output4_br = $core->strip_excessive_breaks($input4);
-if ($output4_br === "Top<br>Middle<hr><hr>Bottom") {
+// Case 6: Independent application (HRs preserved when only stripping BRs)
+$input6 = "Top<br><br>Middle<hr><hr>Bottom";
+$output6_br = $core->strip_excessive_breaks($input6);
+if ($output6_br === "Top<br>Middle<hr><hr>Bottom") {
     echo "[PASS] strip_excessive_breaks(): Leaves HR tags untouched\n";
 } else {
-    echo "[FAIL] strip_excessive_breaks(): Got '{$output4_br}'\n";
+    echo "[FAIL] strip_excessive_breaks(): Got '{$output6_br}'\n";
 }
 
-$output4_hr = $core->strip_excessive_hrs($input4);
-if ($output4_hr === "Top<br><br>Middle<hr>Bottom") {
+$output6_hr = $core->strip_excessive_hrs($input6);
+if ($output6_hr === "Top<br><br>Middle<hr>Bottom") {
     echo "[PASS] strip_excessive_hrs(): Leaves BR tags untouched\n";
 } else {
-    echo "[FAIL] strip_excessive_hrs(): Got '{$output4_hr}'\n";
+    echo "[FAIL] strip_excessive_hrs(): Got '{$output6_hr}'\n";
 }
 
-// Case 5: Sequential application of both
-$output4_both = $core->strip_excessive_hrs($core->strip_excessive_breaks($input4));
-if ($output4_both === "Top<br>Middle<hr>Bottom") {
+// Case 7: Sequential application of both
+$output6_both = $core->strip_excessive_hrs($core->strip_excessive_breaks($input6));
+if ($output6_both === "Top<br>Middle<hr>Bottom") {
     echo "[PASS] Both cleaners applied sequentially produce clean HTML\n";
 } else {
-    echo "[FAIL] Both cleaners: Got '{$output4_both}'\n";
+    echo "[FAIL] Both cleaners: Got '{$output6_both}'\n";
 }
 
-// Case 6: Non-string / Empty input
+// Case 8: Non-string / Empty input
 if ($core->strip_excessive_breaks(null) === null && $core->strip_excessive_hrs('') === '') {
     echo "[PASS] Non-string / Empty inputs handled safely\n";
 } else {
