@@ -50,7 +50,7 @@ class WordPress extends Module {
 	}
 
 	/**
-	 * Helper to check if clean line breaks option is enabled in settings.
+	 * Helper to check if clean macro spacing option is enabled in settings.
 	 *
 	 * @return bool
 	 */
@@ -60,27 +60,14 @@ class WordPress extends Module {
 	}
 
 	/**
-	 * Helper to check if clean HR tags option is enabled in settings.
-	 *
-	 * @return bool
-	 */
-	private function is_clean_hrs_enabled(): bool {
-		$options = get_option( 'stackboost_settings', [] );
-		return ! empty( $options['enable_clean_excessive_hrs'] );
-	}
-
-	/**
-	 * Helper to process string through active cleanup routines.
+	 * Process HTML content through clean macro spacing cleaner.
 	 *
 	 * @param mixed $content
 	 * @return mixed
 	 */
 	public function process_cleanup( $content ) {
 		if ( $this->is_clean_breaks_enabled() ) {
-			$content = $this->core->strip_excessive_breaks( $content );
-		}
-		if ( $this->is_clean_hrs_enabled() ) {
-			$content = $this->core->strip_excessive_hrs( $content );
+			$content = $this->core->strip_br_hr_tags( $content );
 		}
 		return $content;
 	}
@@ -163,22 +150,13 @@ class WordPress extends Module {
 	 * Output Buffer fallback for page renders / AJAX calls.
 	 */
 	public function start_global_buffer() {
-		$clean_breaks = $this->is_clean_breaks_enabled();
-		$clean_hrs    = $this->is_clean_hrs_enabled();
-
-		if ( ! $clean_breaks && ! $clean_hrs ) {
+		if ( ! $this->is_clean_breaks_enabled() ) {
 			return;
 		}
 
 		$core = $this->core;
-		ob_start( function( $html ) use ( $core, $clean_breaks, $clean_hrs ) {
-			if ( $clean_breaks ) {
-				$html = $core->strip_excessive_breaks( $html );
-			}
-			if ( $clean_hrs ) {
-				$html = $core->strip_excessive_hrs( $html );
-			}
-			return $html;
+		ob_start( function( $html ) use ( $core ) {
+			return $core->strip_br_hr_tags( $html );
 		} );
 	}
 }

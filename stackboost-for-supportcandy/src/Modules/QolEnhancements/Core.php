@@ -31,41 +31,30 @@ class Core {
 	}
 
 	/**
-	 * Strips duplicate line breaks, empty paragraph tags, and excessive added whitespace/newlines.
+	 * Intercepts email compilation and global output buffer to strip <br><hr><br> tags.
 	 *
 	 * @param mixed $html Raw string or content.
 	 * @return mixed Cleaned HTML content or original input if not string/empty.
 	 */
-	public function strip_excessive_breaks( $html ) {
+	public function strip_br_hr_tags( $html ) {
 		if ( ! is_string( $html ) || empty( $html ) ) {
 			return $html;
 		}
 
-		// 1. Remove empty or break-only paragraph blocks (<p>&nbsp;</p>, <p><br></p>, <p></p>)
-		$html = preg_replace( '/<p\b[^>]*>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/i', '', $html );
+		// Handles variations of <br><hr><br> with space/newline variations
+		$pattern     = '/<br\s*\/?>\s*<hr[^>]*>\s*<br\s*\/?>/i';
+		$replacement = '<hr style="margin:4px 0 !important; border:0; border-top:1px solid #ccc;">';
 
-		// 2. Reduce consecutive <br> tags (with optional spaces, newlines, &nbsp;) down to a single <br>
-		$html = preg_replace( '/(?:(?:\s|&nbsp;)*<br\s*\/?>\s*){2,}/i', '<br>', $html );
-
-		// 3. Reduce 3+ consecutive plain-text newlines down to 2 newlines (preserves paragraph gaps in plain text)
-		$html = preg_replace( '/(?:\r\n|\r|\n){3,}/', "\n\n", $html );
-
-		return $html;
+		return preg_replace( $pattern, $replacement, $html );
 	}
 
 	/**
-	 * Strips duplicate horizontal rules and excessive added whitespace.
+	 * Alias for backward compatibility.
 	 *
-	 * @param mixed $html Raw string or content.
-	 * @return mixed Cleaned HTML content or original input if not string/empty.
+	 * @param mixed $html
+	 * @return mixed
 	 */
-	public function strip_excessive_hrs( $html ) {
-		if ( ! is_string( $html ) || empty( $html ) ) {
-			return $html;
-		}
-
-		// Handles variations of <hr> tags with whitespace, newlines, and &nbsp; entities
-		$pattern = '/(?:(?:\s|&nbsp;)*<hr\s*\/?>\s*){2,}/i';
-		return preg_replace( $pattern, '<hr>', $html );
+	public function strip_excessive_breaks( $html ) {
+		return $this->strip_br_hr_tags( $html );
 	}
 }
