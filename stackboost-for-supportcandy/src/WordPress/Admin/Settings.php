@@ -806,6 +806,7 @@ class Settings {
 				'enable_hide_empty_columns',
 				'enable_hide_priority_column',
 				'hide_reply_close_for_users',
+				'enable_clean_excessive_breaks',
 				'enable_ticket_type_hiding',
 				'ticket_type_custom_field_name',
 				'ticket_types_to_hide',
@@ -907,6 +908,7 @@ class Settings {
 					case 'enable_hide_empty_columns':
 					case 'enable_hide_priority_column':
 					case 'hide_reply_close_for_users':
+					case 'enable_clean_excessive_breaks':
 					case 'enable_ticket_type_hiding':
 					case 'enable_conditional_hiding':
 					case 'enable_queue_macro':
