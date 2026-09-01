@@ -41,8 +41,8 @@ class Core {
 			return $html;
 		}
 
-		// Handles variations of <br> and <hr> tags with space/newline variations
-		$pattern = '/(?:(?:\s*<br\s*[\/]?>\s*){2,}|(?:\s*<hr\s*[\/]?>\s*){2,})/i';
+		// Handles variations of <br> and <hr> tags with whitespace, newlines, and &nbsp; entities
+		$pattern = '/(?:(?:\s|&nbsp;)*<(?:br|hr)\s*\/?>\s*){2,}/i';
 		return preg_replace( $pattern, '<br>', $html );
 	}
 }

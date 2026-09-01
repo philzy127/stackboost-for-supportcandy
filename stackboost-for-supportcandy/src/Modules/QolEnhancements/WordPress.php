@@ -50,22 +50,29 @@ class WordPress extends Module {
 	}
 
 	/**
+	 * Helper to check if clean line breaks option is enabled in settings.
+	 *
+	 * @return bool
+	 */
+	private function is_clean_breaks_enabled(): bool {
+		$options = get_option( 'stackboost_settings', [] );
+		return ! empty( $options['enable_clean_excessive_breaks'] );
+	}
+
+	/**
 	 * Initialize hooks.
 	 */
 	public function init_hooks() {
-		$options = get_option( 'stackboost_settings', [] );
-		if ( ! empty( $options['enable_clean_excessive_breaks'] ) ) {
-			// 1. Clean PHPMailer payload directly before email delivery
-			add_action( 'phpmailer_init', [ $this, 'clean_phpmailer_body' ], 9999 );
+		// 1. Clean PHPMailer payload directly before email delivery
+		add_action( 'phpmailer_init', [ $this, 'clean_phpmailer_body' ], 9999 );
 
-			// 2. Intercept SupportCandy-specific email/macro filters
-			add_filter( 'wpsc_ticket_macro_value', [ $this, 'clean_macro_filter' ], 9999, 3 );
-			add_filter( 'wpsc_email_notification_body', [ $this, 'clean_string_filter' ], 9999, 1 );
-			add_filter( 'wpsc_email_body', [ $this, 'clean_string_filter' ], 9999, 1 );
+		// 2. Intercept SupportCandy-specific email/macro filters
+		add_filter( 'wpsc_ticket_macro_value', [ $this, 'clean_macro_filter' ], 9999, 3 );
+		add_filter( 'wpsc_email_notification_body', [ $this, 'clean_string_filter' ], 9999, 1 );
+		add_filter( 'wpsc_email_body', [ $this, 'clean_string_filter' ], 9999, 1 );
 
-			// 3. Output Buffer fallback for page renders / AJAX calls
-			add_action( 'wp_loaded', [ $this, 'start_global_buffer' ] );
-		}
+		// 3. Output Buffer fallback for page renders / AJAX calls
+		add_action( 'wp_loaded', [ $this, 'start_global_buffer' ] );
 	}
 
 	/**
@@ -74,6 +81,10 @@ class WordPress extends Module {
 	 * @param \PHPMailer\PHPMailer\PHPMailer $phpmailer
 	 */
 	public function clean_phpmailer_body( $phpmailer ) {
+		if ( ! $this->is_clean_breaks_enabled() ) {
+			return;
+		}
+
 		if ( ! empty( $phpmailer->Body ) ) {
 			$phpmailer->Body = $this->core->strip_excessive_breaks( $phpmailer->Body );
 		}
@@ -90,7 +101,10 @@ class WordPress extends Module {
 	 * @param mixed $ticket
 	 * @return string
 	 */
-	public function clean_macro_filter( $value, $macro, $ticket ) {
+	public function clean_macro_filter( $value, $macro = '', $ticket = null ) {
+		if ( ! $this->is_clean_breaks_enabled() ) {
+			return $value;
+		}
 		return $this->core->strip_excessive_breaks( $value );
 	}
 
@@ -101,6 +115,9 @@ class WordPress extends Module {
 	 * @return string
 	 */
 	public function clean_string_filter( $content ) {
+		if ( ! $this->is_clean_breaks_enabled() ) {
+			return $content;
+		}
 		return $this->core->strip_excessive_breaks( $content );
 	}
 
@@ -108,6 +125,9 @@ class WordPress extends Module {
 	 * Output Buffer fallback for page renders / AJAX calls.
 	 */
 	public function start_global_buffer() {
+		if ( ! $this->is_clean_breaks_enabled() ) {
+			return;
+		}
 		ob_start( [ $this->core, 'strip_excessive_breaks' ] );
 	}
 }

@@ -35,7 +35,16 @@ if ($output3 === "Header<br>Footer") {
     echo "[FAIL] Multiple HR tags: Got '{$output3}'\n";
 }
 
-// Case 4: Non-string / Empty input
+// Case 4: Mixed BR, HR and &nbsp; entities
+$input4 = "Section 1<br>&nbsp;<br /><hr />&nbsp;<br>Section 2";
+$output4 = $core->strip_excessive_breaks($input4);
+if ($output4 === "Section 1<br>Section 2") {
+    echo "[PASS] Mixed BR, HR, and &nbsp; tags reduced to single BR\n";
+} else {
+    echo "[FAIL] Mixed BR, HR, &nbsp;: Got '{$output4}'\n";
+}
+
+// Case 5: Non-string / Empty input
 if ($core->strip_excessive_breaks(null) === null && $core->strip_excessive_breaks('') === '') {
     echo "[PASS] Non-string / Empty inputs handled safely\n";
 } else {
