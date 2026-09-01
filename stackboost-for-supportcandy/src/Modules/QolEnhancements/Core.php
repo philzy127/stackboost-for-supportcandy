@@ -31,7 +31,7 @@ class Core {
 	}
 
 	/**
-	 * Strips duplicate line breaks, HR tags, and excessive added whitespace.
+	 * Strips duplicate line breaks and excessive added whitespace.
 	 *
 	 * @param mixed $html Raw string or content.
 	 * @return mixed Cleaned HTML content or original input if not string/empty.
@@ -41,8 +41,24 @@ class Core {
 			return $html;
 		}
 
-		// Handles variations of <br> and <hr> tags with whitespace, newlines, and &nbsp; entities
-		$pattern = '/(?:(?:\s|&nbsp;)*<(?:br|hr)\s*\/?>\s*){2,}/i';
+		// Handles variations of <br> tags with whitespace, newlines, and &nbsp; entities
+		$pattern = '/(?:(?:\s|&nbsp;)*<br\s*\/?>\s*){2,}/i';
 		return preg_replace( $pattern, '<br>', $html );
+	}
+
+	/**
+	 * Strips duplicate horizontal rules and excessive added whitespace.
+	 *
+	 * @param mixed $html Raw string or content.
+	 * @return mixed Cleaned HTML content or original input if not string/empty.
+	 */
+	public function strip_excessive_hrs( $html ) {
+		if ( ! is_string( $html ) || empty( $html ) ) {
+			return $html;
+		}
+
+		// Handles variations of <hr> tags with whitespace, newlines, and &nbsp; entities
+		$pattern = '/(?:(?:\s|&nbsp;)*<hr\s*\/?>\s*){2,}/i';
+		return preg_replace( $pattern, '<hr>', $html );
 	}
 }

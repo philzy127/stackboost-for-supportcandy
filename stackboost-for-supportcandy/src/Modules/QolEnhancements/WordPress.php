@@ -60,6 +60,32 @@ class WordPress extends Module {
 	}
 
 	/**
+	 * Helper to check if clean HR tags option is enabled in settings.
+	 *
+	 * @return bool
+	 */
+	private function is_clean_hrs_enabled(): bool {
+		$options = get_option( 'stackboost_settings', [] );
+		return ! empty( $options['enable_clean_excessive_hrs'] );
+	}
+
+	/**
+	 * Helper to process string through active cleanup routines.
+	 *
+	 * @param mixed $content
+	 * @return mixed
+	 */
+	public function process_cleanup( $content ) {
+		if ( $this->is_clean_breaks_enabled() ) {
+			$content = $this->core->strip_excessive_breaks( $content );
+		}
+		if ( $this->is_clean_hrs_enabled() ) {
+			$content = $this->core->strip_excessive_hrs( $content );
+		}
+		return $content;
+	}
+
+	/**
 	 * Initialize hooks.
 	 */
 	public function init_hooks() {
@@ -81,15 +107,11 @@ class WordPress extends Module {
 	 * @param \PHPMailer\PHPMailer\PHPMailer $phpmailer
 	 */
 	public function clean_phpmailer_body( $phpmailer ) {
-		if ( ! $this->is_clean_breaks_enabled() ) {
-			return;
-		}
-
 		if ( ! empty( $phpmailer->Body ) ) {
-			$phpmailer->Body = $this->core->strip_excessive_breaks( $phpmailer->Body );
+			$phpmailer->Body = $this->process_cleanup( $phpmailer->Body );
 		}
 		if ( ! empty( $phpmailer->AltBody ) ) {
-			$phpmailer->AltBody = $this->core->strip_excessive_breaks( $phpmailer->AltBody );
+			$phpmailer->AltBody = $this->process_cleanup( $phpmailer->AltBody );
 		}
 	}
 
@@ -102,10 +124,7 @@ class WordPress extends Module {
 	 * @return string
 	 */
 	public function clean_macro_filter( $value, $macro = '', $ticket = null ) {
-		if ( ! $this->is_clean_breaks_enabled() ) {
-			return $value;
-		}
-		return $this->core->strip_excessive_breaks( $value );
+		return $this->process_cleanup( $value );
 	}
 
 	/**
@@ -115,19 +134,16 @@ class WordPress extends Module {
 	 * @return string
 	 */
 	public function clean_string_filter( $content ) {
-		if ( ! $this->is_clean_breaks_enabled() ) {
-			return $content;
-		}
-		return $this->core->strip_excessive_breaks( $content );
+		return $this->process_cleanup( $content );
 	}
 
 	/**
 	 * Output Buffer fallback for page renders / AJAX calls.
 	 */
 	public function start_global_buffer() {
-		if ( ! $this->is_clean_breaks_enabled() ) {
+		if ( ! $this->is_clean_breaks_enabled() && ! $this->is_clean_hrs_enabled() ) {
 			return;
 		}
-		ob_start( [ $this->core, 'strip_excessive_breaks' ] );
+		ob_start( [ $this, 'process_cleanup' ] );
 	}
 }

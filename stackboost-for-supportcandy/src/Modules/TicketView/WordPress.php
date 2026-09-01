@@ -490,7 +490,8 @@ class WordPress extends Module {
 
 		// Section: Email Cleanup
 		add_settings_section( 'stackboost_email_cleanup_section', __( 'Email Cleanup', 'stackboost-for-supportcandy' ), null, $page_slug );
-		add_settings_field( 'stackboost_enable_clean_excessive_breaks', __( 'Clean Excessive Line Breaks', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_email_cleanup_section', [ 'id' => 'enable_clean_excessive_breaks', 'desc' => 'Removes extra added whitespace and duplicate <br> or <hr> tags from ticket emails and macro outputs.' ] );
+		add_settings_field( 'stackboost_enable_clean_excessive_breaks', __( 'Clean Excessive Line Breaks', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_email_cleanup_section', [ 'id' => 'enable_clean_excessive_breaks', 'desc' => 'Removes extra added whitespace and duplicate <br> tags from ticket emails and macro outputs.' ] );
+		add_settings_field( 'stackboost_enable_clean_excessive_hrs', __( 'Clean Excessive Horizontal Rules', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_email_cleanup_section', [ 'id' => 'enable_clean_excessive_hrs', 'desc' => 'Removes extra added whitespace and duplicate <hr> tags from ticket emails and macro outputs.' ] );
 
 		// Section: Page Last Loaded Indicator
 		add_settings_section( 'stackboost_page_last_loaded_section', __( 'Page Last Loaded Indicator', 'stackboost-for-supportcandy' ), null, $page_slug );
