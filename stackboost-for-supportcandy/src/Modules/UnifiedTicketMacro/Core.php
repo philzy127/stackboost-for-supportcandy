@@ -87,9 +87,10 @@ class Core {
 			return ''; // Return empty string if the feature is disabled.
 		}
 
-		$selected_fields  = $options['utm_columns'] ?? [];
-		$rename_rules_raw = $options['utm_rename_rules'] ?? [];
-		\stackboost_log( '[UTM] build_live_utm_html() - Found ' . count( $selected_fields ) . ' selected fields.', 'module-utm' );
+		$selected_fields    = $options['utm_columns'] ?? [];
+		$rename_rules_raw   = $options['utm_rename_rules'] ?? [];
+		$response_placement = $options['utm_response_placement'] ?? 'beside';
+		\stackboost_log( '[UTM] build_live_utm_html() - Found ' . count( $selected_fields ) . ' selected fields. Placement: ' . $response_placement, 'module-utm' );
 
 		// Create a simple map for the rename rules for easy lookup.
 		$rename_rules_map = [];
@@ -125,9 +126,17 @@ class Core {
 
 		$html_output = '';
 		if ( 'table' === $format ) {
-			$html_output = '<table>';
+			if ( 'mobile_only' === $response_placement ) {
+				$html_output = '<div class="stackboost-utm-table utm-mobile-below" style="width: 100%;">';
+			} else {
+				$html_output = '<table>';
+			}
 		} elseif ( 'list' === $format ) {
-			$html_output = '<div class="stackboost-utm-list">';
+			if ( 'mobile_only' === $response_placement ) {
+				$html_output = '<div class="stackboost-utm-list utm-mobile-below">';
+			} else {
+				$html_output = '<div class="stackboost-utm-list">';
+			}
 		}
 
 		foreach ( $selected_fields as $field_slug ) {
@@ -265,35 +274,60 @@ class Core {
 					// Styles to mimic standard view
 					$row_style = 'margin-bottom: 8px; font-size: 13px; line-height: 1.5;';
 					$label_style = 'font-weight: 600; color: #50575e; margin-right: 5px;';
-					$value_style = 'color: #2c3338;';
+					$value_style = 'color: #2c3338; font-weight: normal;';
 
 					if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
 						$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
-						$html_output .= '<div style="' . $row_style . '">';
-						$html_output .= '<div style="' . $label_style . ' display:block; margin-bottom: 2px;">' . esc_html( $field_name ) . '</div>';
-						$html_output .= '<div style="' . $value_style . '">' . $display_value . '</div>';
+						$html_output .= '<div class="stackboost-utm-list-item" style="' . $row_style . '">';
+						$html_output .= '<div class="sb-utm-label" style="' . $label_style . ' display:block; margin-bottom: 2px;">' . esc_html( $field_name ) . '</div>';
+						$html_output .= '<div class="sb-utm-val" style="' . $value_style . '">' . $display_value . '</div>';
+						$html_output .= '</div>';
+					} elseif ( 'below' === $response_placement ) {
+						$html_output .= '<div class="stackboost-utm-list-item" style="' . $row_style . '">';
+						$html_output .= '<div class="sb-utm-label" style="' . $label_style . ' display:block; margin-bottom: 2px;">' . esc_html( $field_name ) . ':</div>';
+						$html_output .= '<div class="sb-utm-val" style="' . $value_style . '">' . esc_html( $display_value ) . '</div>';
 						$html_output .= '</div>';
 					} else {
-						$html_output .= '<div style="' . $row_style . '">';
-						$html_output .= '<span style="' . $label_style . '">' . esc_html( $field_name ) . ':</span> ';
-						$html_output .= '<span style="' . $value_style . '">' . esc_html( $display_value ) . '</span>';
+						$html_output .= '<div class="stackboost-utm-list-item" style="' . $row_style . '">';
+						$html_output .= '<span class="sb-utm-label" style="' . $label_style . '">' . esc_html( $field_name ) . ':</span> ';
+						$html_output .= '<span class="sb-utm-val" style="' . $value_style . '">' . esc_html( $display_value ) . '</span>';
 						$html_output .= '</div>';
 					}
 				} else {
 					// TABLE based layout (Default)
 					if ( 'cf_html' === $field_type || 'df_description' === $field_type ) {
 						// Fix alignment issue caused by paragraph margins in rich text fields.
-						$display_value = str_replace( '<p>', '<p style="margin:0;">', $display_value );
-						$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . $display_value . '</td></tr>';
+						$display_value = str_replace( '<p>', '<p style="margin:0; font-weight: normal !important;">', $display_value );
+						if ( 'below' === $response_placement ) {
+							$html_output .= '<tr><td colspan="2" style="vertical-align: top; padding-bottom: 8px;"><div><strong>' . esc_html( $field_name ) . ':</strong></div><div style="vertical-align: top; font-weight: normal !important;"><span style="font-weight: normal !important; font-weight: 400 !important;">' . $display_value . '</span></div></td></tr>';
+						} elseif ( 'mobile_only' === $response_placement ) {
+							$html_output .= '<div class="stackboost-utm-row" style="margin-bottom: 8px;">';
+							$html_output .= '<div class="sb-utm-label" style="display: block; margin-bottom: 2px;"><strong>' . esc_html( $field_name ) . ':</strong></div>';
+							$html_output .= '<div class="sb-utm-val" style="display: block; vertical-align: top; font-weight: normal !important;"><span style="font-weight: normal !important; font-weight: 400 !important;">' . $display_value . '</span></div>';
+							$html_output .= '</div>';
+						} else {
+							$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top; font-weight: normal !important;"><span style="font-weight: normal !important; font-weight: 400 !important;">' . $display_value . '</span></td></tr>';
+						}
+					} elseif ( 'below' === $response_placement ) {
+						$html_output .= '<tr><td colspan="2" style="vertical-align: top; padding-bottom: 8px;"><div><strong>' . esc_html( $field_name ) . ':</strong></div><div style="vertical-align: top; font-weight: normal !important;"><span style="font-weight: normal !important; font-weight: 400 !important;">' . esc_html( $display_value ) . '</span></div></td></tr>';
+					} elseif ( 'mobile_only' === $response_placement ) {
+						$html_output .= '<div class="stackboost-utm-row" style="margin-bottom: 8px;">';
+						$html_output .= '<div class="sb-utm-label" style="display: inline-block; vertical-align: top; margin-right: 5px; max-width: 100%;"><strong>' . esc_html( $field_name ) . ':</strong></div>';
+						$html_output .= '<div class="sb-utm-val" style="display: inline-block; vertical-align: top; font-weight: normal !important; max-width: 100%;"><span style="font-weight: normal !important; font-weight: 400 !important;">' . esc_html( $display_value ) . '</span></div>';
+						$html_output .= '</div>';
 					} else {
-						$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top;">' . esc_html( $display_value ) . '</td></tr>';
+						$html_output .= '<tr><td style="white-space: nowrap; vertical-align: top;"><strong>' . esc_html( $field_name ) . ':</strong></td><td style="vertical-align: top; font-weight: normal !important;"><span style="font-weight: normal !important; font-weight: 400 !important;">' . esc_html( $display_value ) . '</span></td></tr>';
 					}
 				}
 			}
 		}
 
 		if ( 'table' === $format ) {
-			$html_output .= '</table>';
+			if ( 'mobile_only' === $response_placement ) {
+				$html_output .= '</div>';
+			} else {
+				$html_output .= '</table>';
+			}
 		} elseif ( 'list' === $format ) {
 			$html_output .= '</div>';
 		}
