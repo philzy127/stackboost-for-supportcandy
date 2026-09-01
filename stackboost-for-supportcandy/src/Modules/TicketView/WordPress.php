@@ -381,6 +381,14 @@ class WordPress extends Module {
 						</table>
 					</div>
 
+					<!-- Card 4: Email Cleanup -->
+					<div class="stackboost-card">
+						<h2><?php esc_html_e( 'Email Cleanup', 'stackboost-for-supportcandy' ); ?></h2>
+						<table class="form-table">
+							<?php do_settings_fields( 'stackboost-ticket-view', 'stackboost_email_cleanup_section' ); ?>
+						</table>
+					</div>
+
 				</div>
 
 				<?php submit_button( __( 'Save Settings', 'stackboost-for-supportcandy' ) ); ?>
@@ -479,6 +487,10 @@ class WordPress extends Module {
 		add_settings_field( 'stackboost_enable_hide_empty_columns', __( 'Hide Empty Columns', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_hide_empty_columns', 'desc' => 'Automatically hide any column in the ticket list that is completely empty.' ] );
 		add_settings_field( 'stackboost_enable_hide_priority_column', __( 'Hide Priority Column', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'enable_hide_priority_column', 'desc' => 'Hides the "Priority" column if all visible tickets have a priority of "Low".' ] );
 		add_settings_field( 'stackboost_hide_reply_close_for_users', __( 'Hide "Reply & Close" for Users', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_general_cleanup_section', [ 'id' => 'hide_reply_close_for_users', 'desc' => 'Hides the "Reply & Close" button for non-agent users on the ticket reply form.' ] );
+
+		// Section: Email Cleanup
+		add_settings_section( 'stackboost_email_cleanup_section', __( 'Email Cleanup', 'stackboost-for-supportcandy' ), null, $page_slug );
+		add_settings_field( 'stackboost_enable_clean_excessive_breaks', __( 'Clean Excessive Line Breaks', 'stackboost-for-supportcandy' ), [ $this, 'render_checkbox_field' ], $page_slug, 'stackboost_email_cleanup_section', [ 'id' => 'enable_clean_excessive_breaks', 'desc' => 'Removes extra added whitespace and duplicate <br><hr><br> tags from ticket emails and macro outputs.' ] );
 
 		// Section: Page Last Loaded Indicator
 		add_settings_section( 'stackboost_page_last_loaded_section', __( 'Page Last Loaded Indicator', 'stackboost-for-supportcandy' ), null, $page_slug );

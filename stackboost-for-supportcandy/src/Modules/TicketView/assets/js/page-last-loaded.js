@@ -23,10 +23,19 @@
             timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: is12Hour});
         }
 
-        var label = config.label || 'Page Last Loaded: ';
+        var label = config.label || 'Page Last Loaded:';
 
         // Remove existing indicators to prevent duplicates
         $('.stackboost-last-loaded-row').remove();
+
+        var $labelSpan = $('<span>')
+            .addClass('stackboost-last-loaded-label')
+            .css('margin-right', '5px')
+            .text(label);
+
+        var $timeSpan = $('<span>')
+            .addClass('stackboost-last-loaded-time')
+            .text(timeString);
 
         var $row = $('<div>')
             .addClass('stackboost-last-loaded-row')
@@ -39,7 +48,8 @@
                 'color': '#777',
                 'clear': 'both' // Ensure it breaks to a new line if floating elements exist
             })
-            .text(label + timeString);
+            .append($labelSpan)
+            .append($timeSpan);
 
         if (config.placement === 'header' || config.placement === 'both') {
             // Place AFTER the bulk actions container (which contains top pagination)
