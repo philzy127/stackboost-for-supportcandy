@@ -1064,7 +1064,12 @@ class Settings {
 						break;
 
 					case 'ticket_guard_rules':
-						$saved_settings[$key] = is_array($value) ? $value : [];
+						if ( is_string( $value ) ) {
+							$decoded = json_decode( $value, true );
+							$saved_settings[$key] = is_array( $decoded ) ? $decoded : [];
+						} else {
+							$saved_settings[$key] = is_array( $value ) ? $value : [];
+						}
 						break;
 
 					case 'conditional_options_rules':

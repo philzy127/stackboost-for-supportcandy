@@ -10,6 +10,7 @@
         // Master Enable Toggle
         $(document).on('change', '#stackboost_tg_enabled', function() {
             var isEnabled = $(this).is(':checked');
+            $('#sb_tg_enabled_hidden').val(isEnabled ? '1' : '0');
             if (isEnabled) {
                 $('#stackboost-tg-rules-card').removeClass('stackboost-disabled-ui');
             } else {
@@ -21,12 +22,14 @@
         // Open Modal: Add Rule (Delegated Handler)
         $(document).on('click', '#sb-tg-add-rule-btn', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             openRuleModal(null);
         });
 
         // Save Settings Button (Page Footer)
         $(document).on('click', '#sb-tg-main-save-btn', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             var $btn = $(this);
             $btn.prop('disabled', true);
             saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), true, function() {
@@ -120,6 +123,8 @@
         var $tbody = $('#sb-tg-rules-tbody');
         $tbody.empty();
 
+        $('#sb_tg_rules_hidden').val(JSON.stringify(rules));
+
         if (!rules || !rules.length) {
             $('#sb-tg-no-rules-msg').show();
             return;
@@ -208,6 +213,9 @@
     }
 
     function saveConfig(rulesArray, isEnabled, showFeedback, callback) {
+        $('#sb_tg_enabled_hidden').val(isEnabled ? '1' : '0');
+        $('#sb_tg_rules_hidden').val(JSON.stringify(rulesArray));
+
         var $msg = $('#sb-tg-save-msg');
         $.post(config.ajax_url || ajaxurl, {
             action: 'stackboost_tg_save_rules',

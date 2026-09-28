@@ -456,7 +456,7 @@ final class Plugin {
 			wp_enqueue_style( 'stackboost-selectwoo' );
 		}
 
-		if ( in_array( $hook_suffix, $pages_with_common_script, true ) || str_contains( $hook_suffix, 'ticket-guard' ) ) {
+		if ( in_array( $hook_suffix, $pages_with_common_script, true ) || false !== strpos( $hook_suffix, 'ticket-guard' ) ) {
             stackboost_log( "Common scripts (and nonce) enqueued for hook: " . $hook_suffix, 'core' );
 
 			// Enqueue General Dashboard Styles if on main page

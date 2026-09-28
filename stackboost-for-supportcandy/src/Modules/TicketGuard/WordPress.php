@@ -119,6 +119,7 @@ class WordPress extends Module {
 		$form_data  = $core->get_form_options();
 		$fields     = $form_data['fields'];
 		$categories = $form_data['categories'];
+		$rules      = $core->get_rules();
 
 		$theme_class = 'sb-theme-clean-tech';
 		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -128,6 +129,10 @@ class WordPress extends Module {
 		<div class="wrap stackboost-dashboard <?php echo esc_attr( $theme_class ); ?>">
 			<h1><?php esc_html_e( 'Ticket Guard', 'stackboost-for-supportcandy' ); ?></h1>
 			<p><?php esc_html_e( 'Rules-based intake optimization engine to steer users toward appropriate ticket categories and eliminate generic "Other" submissions.', 'stackboost-for-supportcandy' ); ?></p>
+
+			<!-- Hidden Inputs for Standard Form Submissions -->
+			<input type="hidden" name="stackboost_settings[enable_ticket_guard]" id="sb_tg_enabled_hidden" value="<?php echo $is_enabled ? '1' : '0'; ?>" />
+			<input type="hidden" name="stackboost_settings[ticket_guard_rules]" id="sb_tg_rules_hidden" value="<?php echo esc_attr( json_encode( $rules ) ); ?>" />
 
 			<div id="stackboost-ticket-guard-app">
 				<!-- Global Enable/Disable Toggle -->
@@ -151,7 +156,7 @@ class WordPress extends Module {
 				<div id="stackboost-tg-rules-card" class="stackboost-card <?php echo $is_enabled ? '' : 'stackboost-disabled-ui'; ?>" style="padding: 20px;">
 					<div class="pm-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
 						<h2 style="margin: 0;"><?php esc_html_e( 'Intake Steering Rules', 'stackboost-for-supportcandy' ); ?></h2>
-						<button type="button" id="sb-tg-add-rule-btn" class="button button-primary" style="margin-right: 10px; padding: 4px 14px;"><?php esc_html_e( 'Add New Rule', 'stackboost-for-supportcandy' ); ?></button>
+						<button type="button" id="sb-tg-add-rule-btn" class="button button-primary" style="margin-right: 10px; padding: 4px 14px; position: relative; z-index: 10; cursor: pointer;"><?php esc_html_e( 'Add New Rule', 'stackboost-for-supportcandy' ); ?></button>
 					</div>
 
 					<p class="description" style="margin-bottom: 15px;">
@@ -180,14 +185,14 @@ class WordPress extends Module {
 
 					<!-- Save Settings Footer -->
 					<div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; display: flex; align-items: center; gap: 15px;">
-						<button type="button" id="sb-tg-main-save-btn" class="button button-primary button-large"><?php esc_html_e( 'Save Settings', 'stackboost-for-supportcandy' ); ?></button>
+						<button type="button" id="sb-tg-main-save-btn" class="button button-primary button-large" style="padding: 6px 20px; font-size: 14px; cursor: pointer;"><?php esc_html_e( 'Save Settings', 'stackboost-for-supportcandy' ); ?></button>
 						<span id="sb-tg-save-msg" style="display:none; font-weight: bold; color: green; font-size: 13px;"></span>
 					</div>
 				</div>
 			</div>
 
 			<!-- Rule Builder Modal -->
-			<div id="sb-tg-modal-overlay" class="stackboost-modal-overlay" style="display:none;">
+			<div id="sb-tg-modal-overlay" class="stackboost-modal-overlay" style="display:none; z-index: 99999;">
 				<div class="stackboost-modal-box" style="max-width: 700px; width: 90%;">
 					<div class="stackboost-modal-header">
 						<h3 id="sb-tg-modal-title" class="stackboost-modal-title"><?php esc_html_e( 'Configure Rule', 'stackboost-for-supportcandy' ); ?></h3>
@@ -268,6 +273,213 @@ class WordPress extends Module {
 			</div>
 
 		</div>
+
+		<script>
+		jQuery(document).ready(function($) {
+			var tgRules = <?php echo json_encode( $rules ); ?> || [];
+			var tgNonce = '<?php echo esc_js( wp_create_nonce( 'stackboost_admin_nonce' ) ); ?>';
+
+			function renderRules() {
+				var $tbody = $('#sb-tg-rules-tbody');
+				$tbody.empty();
+
+				if (!tgRules.length) {
+					$('#sb-tg-no-rules-msg').show();
+					return;
+				}
+
+				$('#sb-tg-no-rules-msg').hide();
+
+				$.each(tgRules, function(i, rule) {
+					var fieldsStr = (rule.monitored_fields || []).join(', ') || 'None';
+					var keywordsStr = (rule.keywords || []).join(', ') || 'None';
+
+					var actionsHtml = '';
+					if (rule.actions) {
+						if (rule.actions.disable_submit) actionsHtml += '<span class="sb-tg-action-badge active" style="background:#007cba;color:#fff;padding:3px 6px;border-radius:3px;font-size:11px;margin-right:4px;">Disable Submit</span>';
+						if (rule.actions.show_modal) actionsHtml += '<span class="sb-tg-action-badge active" style="background:#007cba;color:#fff;padding:3px 6px;border-radius:3px;font-size:11px;margin-right:4px;">Modal</span>';
+						if (rule.actions.show_inline_warning) actionsHtml += '<span class="sb-tg-action-badge active" style="background:#007cba;color:#fff;padding:3px 6px;border-radius:3px;font-size:11px;margin-right:4px;">Inline Warning</span>';
+						if (rule.actions.auto_swap_category) actionsHtml += '<span class="sb-tg-action-badge active" style="background:#007cba;color:#fff;padding:3px 6px;border-radius:3px;font-size:11px;margin-right:4px;">Category Swap</span>';
+					}
+
+					var $row = $('<tr>');
+					$row.append($('<td>').html('<strong>' + $('<div>').text(rule.name || 'Unnamed Rule').html() + '</strong>'));
+					$row.append($('<td>').text(fieldsStr));
+					$row.append($('<td>').text(keywordsStr));
+					$row.append($('<td>').html(actionsHtml || '<span style="color:#888;">None</span>'));
+
+					var actionsCell = '<button type="button" class="button button-small sb-tg-edit-rule-btn" data-id="' + rule.id + '"><?php echo esc_js( __( 'Edit', 'stackboost-for-supportcandy' ) ); ?></button> ' +
+						'<span class="sb-tg-delete-rule-btn dashicons dashicons-trash" data-id="' + rule.id + '" style="color:#d63638;cursor:pointer;vertical-align:middle;margin-left:8px;" title="<?php echo esc_js( __( 'Delete', 'stackboost-for-supportcandy' ) ); ?>"></span>';
+
+					$row.append($('<td style="text-align: right;">').html(actionsCell));
+					$tbody.append($row);
+				});
+
+				$('#sb_tg_rules_hidden').val(JSON.stringify(tgRules));
+			}
+
+			renderRules();
+
+			// Master Enable Switch
+			$(document).on('change', '#stackboost_tg_enabled', function() {
+				var isEnabled = $(this).is(':checked');
+				$('#sb_tg_enabled_hidden').val(isEnabled ? '1' : '0');
+				if (isEnabled) {
+					$('#stackboost-tg-rules-card').removeClass('stackboost-disabled-ui');
+				} else {
+					$('#stackboost-tg-rules-card').addClass('stackboost-disabled-ui');
+				}
+				persistConfig(false);
+			});
+
+			// Add Rule Click
+			$(document).on('click', '#sb-tg-add-rule-btn', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+
+				$('#sb-tg-modal-title').text('<?php echo esc_js( __( 'Add New Intake Steering Rule', 'stackboost-for-supportcandy' ) ); ?>');
+				$('#sb-tg-rule-id').val('');
+				$('#sb-tg-rule-name').val('');
+				$('#sb-tg-rule-keywords').val('');
+				$('#sb-tg-trigger-category').val('');
+				$('#sb-tg-suggested-category').val('');
+				$('.sb-tg-field-cb').prop('checked', true);
+				$('#sb-tg-act-disable-submit').prop('checked', true);
+				$('#sb-tg-act-show-modal').prop('checked', true);
+				$('#sb-tg-act-show-inline').prop('checked', true);
+				$('#sb-tg-act-auto-swap').prop('checked', false);
+				$('#sb-tg-inline-warning').val('');
+
+				$('#sb-tg-modal-overlay').show();
+			});
+
+			// Save Settings Button
+			$(document).on('click', '#sb-tg-main-save-btn', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				persistConfig(true);
+			});
+
+			// Save Rule Modal Button
+			$(document).on('click', '#sb-tg-save-rule-btn', function(e) {
+				e.preventDefault();
+				var ruleId = $('#sb-tg-rule-id').val();
+				var name = $.trim($('#sb-tg-rule-name').val());
+
+				if (!name) {
+					alert('<?php echo esc_js( __( 'Please enter a Rule Name.', 'stackboost-for-supportcandy' ) ); ?>');
+					return;
+				}
+
+				var monitoredFields = [];
+				$('.sb-tg-field-cb:checked').each(function() {
+					monitoredFields.push($(this).val());
+				});
+
+				var keywordsText = $.trim($('#sb-tg-rule-keywords').val());
+				var keywords = keywordsText ? keywordsText.split('\n').map(function(k) { return $.trim(k); }).filter(function(k) { return k.length > 0; }) : [];
+
+				var ruleObj = {
+					id: ruleId || ('rule_' + Math.floor(Math.random() * 100000)),
+					name: name,
+					enabled: true,
+					monitored_fields: monitoredFields,
+					keywords: keywords,
+					trigger_category: $('#sb-tg-trigger-category').val(),
+					suggested_category: $('#sb-tg-suggested-category').val(),
+					actions: {
+						disable_submit: $('#sb-tg-act-disable-submit').is(':checked'),
+						show_modal: $('#sb-tg-act-show-modal').is(':checked'),
+						show_inline_warning: $('#sb-tg-act-show-inline').is(':checked'),
+						auto_swap_category: $('#sb-tg-act-auto-swap').is(':checked')
+					},
+					messaging: {
+						inline_warning: $.trim($('#sb-tg-inline-warning').val())
+					}
+				};
+
+				if (ruleId) {
+					var idx = tgRules.findIndex(function(r) { return r.id === ruleId; });
+					if (idx !== -1) tgRules[idx] = ruleObj;
+					else tgRules.push(ruleObj);
+				} else {
+					tgRules.push(ruleObj);
+				}
+
+				renderRules();
+				$('#sb-tg-modal-overlay').hide();
+				persistConfig(true);
+			});
+
+			// Edit Rule
+			$(document).on('click', '.sb-tg-edit-rule-btn', function(e) {
+				e.preventDefault();
+				var ruleId = $(this).data('id');
+				var rule = tgRules.find(function(r) { return r.id === ruleId; });
+				if (rule) {
+					$('#sb-tg-modal-title').text('<?php echo esc_js( __( 'Edit Intake Steering Rule', 'stackboost-for-supportcandy' ) ); ?>');
+					$('#sb-tg-rule-id').val(rule.id);
+					$('#sb-tg-rule-name').val(rule.name || '');
+					$('#sb-tg-rule-keywords').val((rule.keywords || []).join('\n'));
+					$('#sb-tg-trigger-category').val(rule.trigger_category || '');
+					$('#sb-tg-suggested-category').val(rule.suggested_category || '');
+
+					$('.sb-tg-field-cb').prop('checked', false);
+					if (rule.monitored_fields) {
+						$.each(rule.monitored_fields, function(i, slug) {
+							$('.sb-tg-field-cb[value="' + slug + '"]').prop('checked', true);
+						});
+					}
+
+					var acts = rule.actions || {};
+					$('#sb-tg-act-disable-submit').prop('checked', !!acts.disable_submit);
+					$('#sb-tg-act-show-modal').prop('checked', !!acts.show_modal);
+					$('#sb-tg-act-show-inline').prop('checked', !!acts.show_inline_warning);
+					$('#sb-tg-act-auto-swap').prop('checked', !!acts.auto_swap_category);
+
+					var msgs = rule.messaging || {};
+					$('#sb-tg-inline-warning').val(msgs.inline_warning || '');
+
+					$('#sb-tg-modal-overlay').show();
+				}
+			});
+
+			// Delete Rule
+			$(document).on('click', '.sb-tg-delete-rule-btn', function(e) {
+				e.preventDefault();
+				var ruleId = $(this).data('id');
+				if (confirm('<?php echo esc_js( __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ) ); ?>')) {
+					tgRules = tgRules.filter(function(r) { return r.id !== ruleId; });
+					renderRules();
+					persistConfig(true);
+				}
+			});
+
+			// Close Modal
+			$(document).on('click', '.sb-tg-modal-close', function(e) {
+				e.preventDefault();
+				$('#sb-tg-modal-overlay').hide();
+			});
+
+			function persistConfig(showFeedback) {
+				var isEnabled = $('#stackboost_tg_enabled').is(':checked');
+				$('#sb_tg_enabled_hidden').val(isEnabled ? '1' : '0');
+				$('#sb_tg_rules_hidden').val(JSON.stringify(tgRules));
+
+				var $msg = $('#sb-tg-save-msg');
+				$.post(ajaxurl, {
+					action: 'stackboost_tg_save_rules',
+					nonce: tgNonce,
+					enabled: isEnabled ? 'true' : 'false',
+					rules: JSON.stringify(tgRules)
+				}, function(res) {
+					if (showFeedback) {
+						$msg.text('<?php echo esc_js( __( 'Settings saved successfully.', 'stackboost-for-supportcandy' ) ); ?>').fadeIn().delay(3000).fadeOut();
+					}
+				});
+			}
+		});
+		</script>
 		<?php
 	}
 
