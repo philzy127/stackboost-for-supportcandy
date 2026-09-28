@@ -8,28 +8,41 @@
         renderRulesTable();
 
         // Master Enable Toggle
-        $('#stackboost_tg_enabled').on('change', function() {
+        $(document).on('change', '#stackboost_tg_enabled', function() {
             var isEnabled = $(this).is(':checked');
             if (isEnabled) {
                 $('#stackboost-tg-rules-card').removeClass('stackboost-disabled-ui');
             } else {
                 $('#stackboost-tg-rules-card').addClass('stackboost-disabled-ui');
             }
-            saveConfig(rules, isEnabled);
+            saveConfig(rules, isEnabled, false);
         });
 
-        // Open Modal: Add Rule
-        $('#sb-tg-add-rule-btn').on('click', function() {
+        // Open Modal: Add Rule (Delegated Handler)
+        $(document).on('click', '#sb-tg-add-rule-btn', function(e) {
+            e.preventDefault();
             openRuleModal(null);
         });
 
+        // Save Settings Button (Page Footer)
+        $(document).on('click', '#sb-tg-main-save-btn', function(e) {
+            e.preventDefault();
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), true, function() {
+                $btn.prop('disabled', false);
+            });
+        });
+
         // Close Modal
-        $('.sb-tg-modal-close').on('click', function() {
+        $(document).on('click', '.sb-tg-modal-close', function(e) {
+            e.preventDefault();
             closeRuleModal();
         });
 
         // Edit Rule Button
-        $(document).on('click', '.sb-tg-edit-rule-btn', function() {
+        $(document).on('click', '.sb-tg-edit-rule-btn', function(e) {
+            e.preventDefault();
             var ruleId = $(this).data('id');
             var rule = findRuleById(ruleId);
             if (rule) {
@@ -38,17 +51,19 @@
         });
 
         // Delete Rule Button
-        $(document).on('click', '.sb-tg-delete-rule-btn', function() {
+        $(document).on('click', '.sb-tg-delete-rule-btn', function(e) {
+            e.preventDefault();
             var ruleId = $(this).data('id');
             if (confirm(config.i18n ? config.i18n.confirm_delete : 'Delete this rule?')) {
                 rules = rules.filter(function(r) { return r.id !== ruleId; });
                 renderRulesTable();
-                saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'));
+                saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), false);
             }
         });
 
         // Save Rule from Modal
-        $('#sb-tg-save-rule-btn').on('click', function() {
+        $(document).on('click', '#sb-tg-save-rule-btn', function(e) {
+            e.preventDefault();
             var ruleId = $('#sb-tg-rule-id').val();
             var name = $.trim($('#sb-tg-rule-name').val());
             var keywordsText = $.trim($('#sb-tg-rule-keywords').val());
@@ -97,7 +112,7 @@
 
             renderRulesTable();
             closeRuleModal();
-            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'));
+            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), true);
         });
     });
 
@@ -178,11 +193,11 @@
             $('#sb-tg-inline-warning').val('');
         }
 
-        $('#sb-tg-modal-overlay').show();
+        $('#sb-tg-modal-overlay').fadeIn(150);
     }
 
     function closeRuleModal() {
-        $('#sb-tg-modal-overlay').hide();
+        $('#sb-tg-modal-overlay').fadeOut(150);
     }
 
     function findRuleById(id) {
@@ -192,14 +207,23 @@
         return null;
     }
 
-    function saveConfig(rulesArray, isEnabled) {
+    function saveConfig(rulesArray, isEnabled, showFeedback, callback) {
+        var $msg = $('#sb-tg-save-msg');
         $.post(config.ajax_url || ajaxurl, {
             action: 'stackboost_tg_save_rules',
             nonce: config.nonce,
             enabled: isEnabled ? 'true' : 'false',
             rules: JSON.stringify(rulesArray)
         }, function(res) {
-            // Options persisted
+            if (showFeedback) {
+                $msg.text(config.i18n ? config.i18n.saved_success : 'Settings saved successfully.').fadeIn().delay(3000).fadeOut();
+            }
+            if (typeof callback === 'function') callback();
+        }).fail(function() {
+            if (showFeedback) {
+                alert(config.i18n ? config.i18n.save_error : 'Failed to save settings.');
+            }
+            if (typeof callback === 'function') callback();
         });
     }
 

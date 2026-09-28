@@ -65,7 +65,7 @@ class WordPress extends Module {
 	 * @param string $hook_suffix
 	 */
 	public function enqueue_admin_scripts( $hook_suffix ) {
-		if ( 'stackboost-for-supportcandy_page_stackboost-ticket-guard' !== $hook_suffix && 'stackboost_page_stackboost-ticket-guard' !== $hook_suffix ) {
+		if ( false === strpos( $hook_suffix, 'ticket-guard' ) ) {
 			return;
 		}
 
@@ -98,7 +98,7 @@ class WordPress extends Module {
 			'ajax_url'   => admin_url( 'admin-ajax.php' ),
 			'i18n'       => [
 				'confirm_delete' => __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ),
-				'saved_success'  => __( 'Ticket Guard rules saved successfully.', 'stackboost-for-supportcandy' ),
+				'saved_success'  => __( 'Ticket Guard settings saved successfully.', 'stackboost-for-supportcandy' ),
 				'save_error'     => __( 'An error occurred while saving rules.', 'stackboost-for-supportcandy' ),
 			]
 		] );
@@ -148,17 +148,17 @@ class WordPress extends Module {
 				</div>
 
 				<!-- Rules Card -->
-				<div id="stackboost-tg-rules-card" class="stackboost-card <?php echo $is_enabled ? '' : 'stackboost-disabled-ui'; ?>">
-					<div class="pm-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+				<div id="stackboost-tg-rules-card" class="stackboost-card <?php echo $is_enabled ? '' : 'stackboost-disabled-ui'; ?>" style="padding: 20px;">
+					<div class="pm-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
 						<h2 style="margin: 0;"><?php esc_html_e( 'Intake Steering Rules', 'stackboost-for-supportcandy' ); ?></h2>
-						<button type="button" id="sb-tg-add-rule-btn" class="button button-primary"><?php esc_html_e( 'Add New Rule', 'stackboost-for-supportcandy' ); ?></button>
+						<button type="button" id="sb-tg-add-rule-btn" class="button button-primary" style="margin-right: 10px; padding: 4px 14px;"><?php esc_html_e( 'Add New Rule', 'stackboost-for-supportcandy' ); ?></button>
 					</div>
 
 					<p class="description" style="margin-bottom: 15px;">
 						<?php esc_html_e( 'Configure keyword monitoring rules on text fields to steer users toward specific categories with real-time warnings, modals, submit button disabling, or category swaps.', 'stackboost-for-supportcandy' ); ?>
 					</p>
 
-					<div class="pm-rules-wrapper">
+					<div class="pm-rules-wrapper" style="margin-bottom: 20px;">
 						<table class="wp-list-table widefat fixed striped">
 							<thead>
 								<tr>
@@ -176,6 +176,12 @@ class WordPress extends Module {
 						<p id="sb-tg-no-rules-msg" style="display:none; text-align: center; padding: 20px; font-style: italic;">
 							<?php esc_html_e( 'No intake steering rules configured yet. Click "Add New Rule" to create one.', 'stackboost-for-supportcandy' ); ?>
 						</p>
+					</div>
+
+					<!-- Save Settings Footer -->
+					<div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; display: flex; align-items: center; gap: 15px;">
+						<button type="button" id="sb-tg-main-save-btn" class="button button-primary button-large"><?php esc_html_e( 'Save Settings', 'stackboost-for-supportcandy' ); ?></button>
+						<span id="sb-tg-save-msg" style="display:none; font-weight: bold; color: green; font-size: 13px;"></span>
 					</div>
 				</div>
 			</div>

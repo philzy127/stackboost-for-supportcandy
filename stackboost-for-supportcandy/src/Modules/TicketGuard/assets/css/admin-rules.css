@@ -1,5 +1,19 @@
 /* Ticket Guard Admin Rule Builder Styles */
 
+.pm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+#sb-tg-add-rule-btn {
+    margin-right: 10px;
+    margin-top: 2px;
+}
+
 .sb-tg-action-badge {
     display: inline-block;
     background-color: #e0e0e0;
@@ -20,8 +34,65 @@
     color: #d63638;
     cursor: pointer;
     margin-left: 10px;
+    vertical-align: middle;
 }
 
 .sb-tg-delete-rule-btn:hover {
     color: #990000;
+}
+
+.stackboost-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.stackboost-modal-box {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.stackboost-modal-header {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stackboost-modal-title {
+    margin: 0;
+    font-size: 18px;
+}
+
+.stackboost-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+.stackboost-modal-close:hover {
+    color: #000;
+}
+
+.stackboost-modal-footer {
+    padding: 12px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
