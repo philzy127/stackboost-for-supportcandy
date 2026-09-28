@@ -4,8 +4,6 @@ namespace StackBoost\ForSupportCandy\Modules\TicketGuard;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-use StackBoost\ForSupportCandy\Core\Singleton;
-
 /**
  * Core Business Logic for Ticket Guard.
  *
@@ -13,16 +11,19 @@ use StackBoost\ForSupportCandy\Core\Singleton;
  *
  * @package StackBoost\ForSupportCandy\Modules\TicketGuard
  */
-class Core extends Singleton {
+class Core {
 
 	/** @var Core|null */
-	protected static ?Singleton $instance = null;
+	private static ?Core $instance = null;
 
 	/**
 	 * Get the single instance of the class.
 	 */
 	public static function get_instance(): Core {
-		return parent::get_instance();
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
 	}
 
 	/**
@@ -116,8 +117,11 @@ class Core extends Singleton {
 	 * @return array
 	 */
 	public function get_form_options(): array {
-		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
-		$fields          = $plugin_instance->get_supportcandy_columns();
+		$fields = [];
+		if ( class_exists( '\StackBoost\ForSupportCandy\WordPress\Plugin' ) ) {
+			$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
+			$fields          = $plugin_instance->get_supportcandy_columns();
+		}
 
 		$categories = [];
 		if ( class_exists( '\WPSC_Category' ) ) {
