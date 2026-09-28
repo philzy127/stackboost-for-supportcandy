@@ -14,6 +14,7 @@ use StackBoost\ForSupportCandy\Modules\ChatBubbles;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 use StackBoost\ForSupportCandy\Modules\ConditionalOptions;
+use StackBoost\ForSupportCandy\Modules\TicketGuard;
 use StackBoost\ForSupportCandy\Integration\SupportCandyRepository;
 
 /**
@@ -140,10 +141,7 @@ final class Plugin {
 		}
 
 		if ( stackboost_is_feature_active( 'ticket_guard' ) ) {
-			$class = 'StackBoost\ForSupportCandy\Modules\TicketGuard\WordPress';
-			if ( class_exists( $class ) ) {
-				$this->modules['ticket_guard'] = $class::get_instance();
-			}
+			$this->modules['ticket_guard'] = TicketGuard\WordPress::get_instance();
 		}
 
 		// Business Features

@@ -228,7 +228,7 @@ class Settings {
 		}
 
 		// 7.1 Ticket Guard - Pro
-		if ( stackboost_is_feature_active( 'ticket_guard' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\TicketGuard\WordPress' ) ) {
+		if ( stackboost_is_feature_active( 'ticket_guard' ) ) {
 			$menu_config[] = [
 				'slug'        => 'stackboost-ticket-guard',
 				'parent'      => 'stackboost-for-supportcandy',
