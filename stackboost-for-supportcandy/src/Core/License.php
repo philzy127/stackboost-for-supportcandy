@@ -24,6 +24,12 @@ class License {
 	 * @return string
 	 */
 	public static function get_tier(): string {
+        // Check stored license tier option
+        $saved_tier = get_option( 'stackboost_license_tier', '' );
+        if ( self::is_valid_tier( $saved_tier ) ) {
+            return $saved_tier;
+        }
+
         $class = 'StackBoost\ForSupportCandy\Services\LicenseManager';
         if ( ! class_exists( $class ) ) {
             return 'lite';
