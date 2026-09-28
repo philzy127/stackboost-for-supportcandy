@@ -29,10 +29,10 @@
         // Intercept submit click if modal notice is active
         $(document).on('click', '.wpsc-submit-btn, #wpsc-submit, button[type="submit"]', function(e) {
             var $btn = $(this);
-            if ($btn.data('tg-modal-blocked')) {
+            if ($btn.data('tg-modal-blocked') && !$btn.data('tg-modal-bypassed')) {
                 e.preventDefault();
                 e.stopPropagation();
-                showGuidanceModal($btn.data('tg-modal-rule'));
+                showGuidanceModal($btn, $btn.data('tg-modal-rule'));
                 return false;
             }
         });
@@ -116,27 +116,29 @@
         }
     }
 
-    function showGuidanceModal(rule) {
+    function showGuidanceModal($btn, rule) {
         $('.stackboost-tg-modal-overlay').remove();
 
         var msgs = rule.messaging || {};
         var title = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
         var bodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
 
-        var modalHtml = '<div class="stackboost-modal-overlay stackboost-tg-modal-overlay">' +
-            '<div class="stackboost-modal-box" style="max-width: 500px; width: 90%;">' +
-            '<div class="stackboost-modal-header">' +
-            '<h3 class="stackboost-modal-title">' + escapeHtml(title) + '</h3>' +
-            '<button type="button" class="stackboost-modal-close sb-tg-close-modal">&times;</button>' +
+        var modalHtml = '<div class="stackboost-modal-overlay stackboost-tg-modal-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;">' +
+            '<div class="stackboost-modal-box" style="background:#fff;border-radius:4px;max-width:500px;width:90%;box-shadow:0 4px 15px rgba(0,0,0,0.3);overflow:hidden;">' +
+            '<div class="stackboost-modal-header" style="padding:15px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;">' +
+            '<h3 class="stackboost-modal-title" style="margin:0;font-size:1.1em;">' + escapeHtml(title) + '</h3>' +
+            '<button type="button" class="stackboost-modal-close sb-tg-close-modal" style="background:none;border:none;font-size:20px;cursor:pointer;">&times;</button>' +
             '</div>' +
-            '<div class="stackboost-modal-body" style="padding: 15px;">' +
-            '<p>' + escapeHtml(bodyText) + '</p>' +
+            '<div class="stackboost-modal-body" style="padding:20px;">' +
+            '<p style="margin:0 0 15px 0;">' + escapeHtml(bodyText) + '</p>' +
             '</div>' +
-            '<div class="stackboost-modal-footer">' +
-            '<button type="button" class="button button-secondary sb-tg-close-modal">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.dismiss : 'Dismiss') + '</button>';
+            '<div class="stackboost-modal-footer" style="padding:12px 20px;background:#f7f7f7;border-top:1px solid #ddd;display:flex;justify-content:flex-end;gap:10px;">' +
+            '<button type="button" class="button sb-tg-proceed-btn">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.proceed : 'Proceed Anyway') + '</button>';
 
         if (rule.suggested_category) {
             modalHtml += '<button type="button" class="button button-primary sb-tg-swap-cat-btn" data-cat="' + escapeHtml(rule.suggested_category) + '">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Category') + '</button>';
+        } else {
+            modalHtml += '<button type="button" class="button button-secondary sb-tg-close-modal">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.dismiss : 'Dismiss') + '</button>';
         }
 
         modalHtml += '</div></div></div>';
@@ -146,6 +148,12 @@
 
         $overlay.find('.sb-tg-close-modal').on('click', function() {
             $overlay.remove();
+        });
+
+        $overlay.find('.sb-tg-proceed-btn').on('click', function() {
+            $overlay.remove();
+            $btn.data('tg-modal-bypassed', true);
+            $btn.trigger('click');
         });
 
         $overlay.find('.sb-tg-swap-cat-btn').on('click', function() {

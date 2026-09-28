@@ -1065,7 +1065,7 @@ class Settings {
 
 					case 'ticket_guard_rules':
 						if ( is_string( $value ) ) {
-							$decoded = json_decode( $value, true );
+							$decoded = json_decode( wp_unslash( $value ), true );
 							$saved_settings[$key] = is_array( $decoded ) ? $decoded : [];
 						} else {
 							$saved_settings[$key] = is_array( $value ) ? $value : [];

@@ -3,6 +3,9 @@
 
     var config = window.stackboostTicketGuardAdmin || {};
     var rules = config.rules || [];
+    if (!Array.isArray(rules)) {
+        rules = [];
+    }
 
     $(document).ready(function() {
         renderRulesTable();
@@ -58,7 +61,7 @@
             e.preventDefault();
             var ruleId = $(this).data('id');
             if (confirm(config.i18n ? config.i18n.confirm_delete : 'Delete this rule?')) {
-                rules = rules.filter(function(r) { return r.id !== ruleId; });
+                rules = rules.filter(function(r) { return String(r.id) !== String(ruleId); });
                 renderRulesTable();
                 saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), false);
             }
@@ -98,12 +101,14 @@
                     auto_swap_category: $('#sb-tg-act-auto-swap').is(':checked')
                 },
                 messaging: {
+                    modal_title: $.trim($('#sb-tg-modal-custom-title').val()),
+                    modal_body: $.trim($('#sb-tg-modal-custom-body').val()),
                     inline_warning: $.trim($('#sb-tg-inline-warning').val())
                 }
             };
 
             if (ruleId) {
-                var idx = rules.findIndex(function(r) { return r.id === ruleId; });
+                var idx = findRuleIndex(ruleId);
                 if (idx !== -1) {
                     rules[idx] = ruleObj;
                 } else {
@@ -123,9 +128,13 @@
         var $tbody = $('#sb-tg-rules-tbody');
         $tbody.empty();
 
+        if (!Array.isArray(rules)) {
+            rules = [];
+        }
+
         $('#sb_tg_rules_hidden').val(JSON.stringify(rules));
 
-        if (!rules || !rules.length) {
+        if (!rules.length) {
             $('#sb-tg-no-rules-msg').show();
             return;
         }
@@ -182,6 +191,8 @@
             $('#sb-tg-act-auto-swap').prop('checked', !!acts.auto_swap_category);
 
             var msgs = rule.messaging || {};
+            $('#sb-tg-modal-custom-title').val(msgs.modal_title || '');
+            $('#sb-tg-modal-custom-body').val(msgs.modal_body || '');
             $('#sb-tg-inline-warning').val(msgs.inline_warning || '');
         } else {
             $('#sb-tg-modal-title').text('Add New Intake Steering Rule');
@@ -195,6 +206,8 @@
             $('#sb-tg-act-show-modal').prop('checked', true);
             $('#sb-tg-act-show-inline').prop('checked', true);
             $('#sb-tg-act-auto-swap').prop('checked', false);
+            $('#sb-tg-modal-custom-title').val('');
+            $('#sb-tg-modal-custom-body').val('');
             $('#sb-tg-inline-warning').val('');
         }
 
@@ -205,11 +218,19 @@
         $('#sb-tg-modal-overlay').fadeOut(150);
     }
 
-    function findRuleById(id) {
+    function findRuleIndex(ruleId) {
+        if (!Array.isArray(rules)) return -1;
         for (var i = 0; i < rules.length; i++) {
-            if (rules[i].id === id) return rules[i];
+            if (String(rules[i].id) === String(ruleId)) {
+                return i;
+            }
         }
-        return null;
+        return -1;
+    }
+
+    function findRuleById(ruleId) {
+        var idx = findRuleIndex(ruleId);
+        return idx !== -1 ? rules[idx] : null;
     }
 
     function saveConfig(rulesArray, isEnabled, showFeedback, callback) {

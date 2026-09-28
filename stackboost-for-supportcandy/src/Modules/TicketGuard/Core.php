@@ -48,7 +48,7 @@ class Core {
 	public function get_rules(): array {
 		$options = get_option( 'stackboost_settings', [] );
 		$rules   = $options['ticket_guard_rules'] ?? [];
-		return is_array( $rules ) ? $rules : [];
+		return is_array( $rules ) ? array_values( $rules ) : [];
 	}
 
 	/**
