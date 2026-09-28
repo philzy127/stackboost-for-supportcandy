@@ -79,7 +79,7 @@ class WordPress extends Module {
 		wp_register_script(
 			'stackboost-tg-admin-js',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/TicketGuard/assets/js/admin-rules.js',
-			[ 'jquery', 'stackboost-admin-common' ],
+			[ 'jquery' ],
 			STACKBOOST_VERSION,
 			true
 		);
@@ -282,7 +282,7 @@ class WordPress extends Module {
 		}
 
 		$rules_json = Request::get_post( 'rules', '[]', 'raw' );
-		$rules      = json_decode( wp_unslash( $rules_json ), true );
+		$rules      = json_decode( $rules_json, true );
 		$is_enabled = Request::get_post( 'enabled', '', 'text' ) === 'true';
 
 		if ( ! is_array( $rules ) ) {
