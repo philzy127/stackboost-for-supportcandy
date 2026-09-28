@@ -51,6 +51,92 @@ class Core extends Singleton {
 	}
 
 	/**
+	 * Save Ticket Guard configuration rules and master switch state.
+	 *
+	 * @param array $rules
+	 * @param bool  $enabled
+	 * @return true|\WP_Error
+	 */
+	public function save_config( array $rules, bool $enabled ) {
+		$options = get_option( 'stackboost_settings', [] );
+		if ( ! is_array( $options ) ) {
+			$options = [];
+		}
+
+		$sanitized_rules = [];
+		foreach ( $rules as $rule ) {
+			if ( ! is_array( $rule ) ) {
+				continue;
+			}
+
+			$keywords_raw = $rule['keywords'] ?? [];
+			if ( is_string( $keywords_raw ) ) {
+				$keywords_array = array_filter( array_map( 'trim', explode( "\n", $keywords_raw ) ) );
+			} else {
+				$keywords_array = array_map( 'sanitize_text_field', (array) $keywords_raw );
+			}
+
+			$sanitized_rules[] = [
+				'id'                 => sanitize_key( $rule['id'] ?? ( 'rule_' . wp_rand( 1000, 9999 ) ) ),
+				'name'               => sanitize_text_field( $rule['name'] ?? '' ),
+				'enabled'            => ! empty( $rule['enabled'] ),
+				'monitored_fields'   => array_map( 'sanitize_key', (array) ( $rule['monitored_fields'] ?? [] ) ),
+				'keywords'           => array_values( $keywords_array ),
+				'trigger_category'   => sanitize_text_field( $rule['trigger_category'] ?? '' ),
+				'suggested_category' => sanitize_text_field( $rule['suggested_category'] ?? '' ),
+				'actions'            => [
+					'disable_submit'      => ! empty( $rule['actions']['disable_submit'] ),
+					'show_modal'          => ! empty( $rule['actions']['show_modal'] ),
+					'show_inline_warning' => ! empty( $rule['actions']['show_inline_warning'] ),
+					'auto_swap_category'  => ! empty( $rule['actions']['auto_swap_category'] ),
+				],
+				'messaging'          => [
+					'modal_title'    => sanitize_text_field( $rule['messaging']['modal_title'] ?? '' ),
+					'modal_body'     => wp_kses_post( $rule['messaging']['modal_body'] ?? '' ),
+					'inline_warning' => sanitize_text_field( $rule['messaging']['inline_warning'] ?? '' ),
+				],
+			];
+		}
+
+		$options['enable_ticket_guard'] = $enabled ? 1 : 0;
+		$options['ticket_guard_rules']  = $sanitized_rules;
+
+		$updated = update_option( 'stackboost_settings', $options );
+
+		if ( function_exists( 'stackboost_log' ) ) {
+			stackboost_log( sprintf( 'Ticket Guard settings saved. Enabled: %d, Rule Count: %d', $enabled ? 1 : 0, count( $sanitized_rules ) ), 'ticket_guard' );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Retrieve SupportCandy field choices and categories for the admin rule builder.
+	 *
+	 * @return array
+	 */
+	public function get_form_options(): array {
+		$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
+		$fields          = $plugin_instance->get_supportcandy_columns();
+
+		$categories = [];
+		if ( class_exists( '\WPSC_Category' ) ) {
+			$raw_categories = \WPSC_Category::find( [ 'items_per_page' => 0 ] )['results'] ?? [];
+			foreach ( $raw_categories as $cat ) {
+				$categories[] = [
+					'id'   => is_object( $cat ) ? $cat->id : $cat['id'],
+					'name' => is_object( $cat ) ? $cat->name : $cat['name'],
+				];
+			}
+		}
+
+		return [
+			'fields'     => $fields,
+			'categories' => $categories,
+		];
+	}
+
+	/**
 	 * Evaluate incoming ticket creation data against configured rules for backend enforcement.
 	 *
 	 * @param array $ticket_data Incoming data filter array from `wpsc_create_ticket_data`.

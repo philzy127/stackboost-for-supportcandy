@@ -1,0 +1,27 @@
+/* Ticket Guard Admin Rule Builder Styles */
+
+.sb-tg-action-badge {
+    display: inline-block;
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+}
+
+.sb-tg-action-badge.active {
+    background-color: #007cba;
+    color: #fff;
+}
+
+.sb-tg-delete-rule-btn {
+    color: #d63638;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.sb-tg-delete-rule-btn:hover {
+    color: #990000;
+}
