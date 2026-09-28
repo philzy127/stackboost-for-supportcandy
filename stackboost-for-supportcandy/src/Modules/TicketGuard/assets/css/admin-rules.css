@@ -12,6 +12,9 @@
 #sb-tg-add-rule-btn {
     margin-right: 10px;
     margin-top: 2px;
+    position: relative;
+    z-index: 20;
+    pointer-events: auto !important;
 }
 
 .sb-tg-action-badge {
@@ -41,6 +44,15 @@
     color: #990000;
 }
 
+.stackboost-disabled-ui {
+    opacity: 0.55;
+}
+
+.stackboost-disabled-ui table,
+.stackboost-disabled-ui .pm-rules-wrapper {
+    pointer-events: none;
+}
+
 .stackboost-modal-overlay {
     position: fixed;
     top: 0;
@@ -48,7 +60,7 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
-    z-index: 99999;
+    z-index: 999999;
     display: flex;
     justify-content: center;
     align-items: center;

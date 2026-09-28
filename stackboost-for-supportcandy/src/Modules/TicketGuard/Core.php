@@ -99,6 +99,7 @@ class Core {
 			];
 		}
 
+		$options['page_slug']           = 'stackboost-ticket-guard';
 		$options['enable_ticket_guard'] = $enabled ? 1 : 0;
 		$options['ticket_guard_rules']  = $sanitized_rules;
 

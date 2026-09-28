@@ -26,6 +26,11 @@
         $(document).on('click', '#sb-tg-add-rule-btn', function(e) {
             e.preventDefault();
             e.stopPropagation();
+
+            if (!$('#stackboost_tg_enabled').is(':checked')) {
+                $('#stackboost_tg_enabled').prop('checked', true).trigger('change');
+            }
+
             openRuleModal(null);
         });
 
@@ -211,7 +216,7 @@
             $('#sb-tg-inline-warning').val('');
         }
 
-        $('#sb-tg-modal-overlay').fadeIn(150);
+        $('#sb-tg-modal-overlay').css('display', 'flex').hide().fadeIn(150);
     }
 
     function closeRuleModal() {
