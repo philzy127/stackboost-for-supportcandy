@@ -227,6 +227,18 @@ class Settings {
 			];
 		}
 
+		// 7.1 Ticket Guard - Pro
+		if ( stackboost_is_feature_active( 'ticket_guard' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\TicketGuard\WordPress' ) ) {
+			$menu_config[] = [
+				'slug'        => 'stackboost-ticket-guard',
+				'parent'      => 'stackboost-for-supportcandy',
+				'page_title'  => __( 'Ticket Guard', 'stackboost-for-supportcandy' ),
+				'menu_title'  => __( 'Ticket Guard', 'stackboost-for-supportcandy' ),
+				'capability'  => STACKBOOST_CAP_MANAGE_TICKET_GUARD,
+				'callback'    => [ \StackBoost\ForSupportCandy\Modules\TicketGuard\WordPress::get_instance(), 'render_page' ],
+			];
+		}
+
 		// 8. After Ticket Survey - Pro
 		if ( stackboost_is_feature_active( 'after_ticket_survey' ) && class_exists( 'StackBoost\ForSupportCandy\Modules\AfterTicketSurvey\WordPress' ) ) {
 			$menu_config[] = [
@@ -838,6 +850,7 @@ class Settings {
 				'ticket_metrics_ai_prompt'
 			],
 			'stackboost-queue-macro'        => ['enable_queue_macro', 'queue_macro_type_field', 'queue_macro_statuses'],
+			'stackboost-ticket-guard'       => ['enable_ticket_guard', 'ticket_guard_rules'],
 			'stackboost-ats-settings'       => ['ats_background_color', 'ats_ticket_question_id', 'ats_technician_question_id', 'ats_ticket_url_base'],
 			'stackboost-utm'                => ['utm_enabled', 'utm_columns', 'utm_use_sc_order', 'utm_rename_rules', 'utm_response_placement'],
 			'stackboost-tools'              => [
@@ -856,6 +869,7 @@ class Settings {
 				'enable_log_appearance', // Added Appearance Logging
 				'enable_log_chat_bubbles', // Added Chat Bubbles Logging
 				'enable_log_ticket_metrics',
+				'enable_log_ticket_guard',
 			],
 			// 'stackboost-date-time' removed - uses isolated option group via custom AJAX
 			'stackboost-chat-bubbles' => class_exists( 'StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings' ) ? \StackBoost\ForSupportCandy\Modules\ChatBubbles\Admin\Settings::get_settings_keys() : [],
@@ -936,6 +950,8 @@ class Settings {
 					case 'enable_log_chat_bubbles':
 					case 'enable_log_conditional_options':
 					case 'enable_log_ticket_metrics':
+					case 'enable_log_ticket_guard':
+					case 'enable_ticket_guard':
 					case 'conditional_options_enabled':
 					case 'ticket_details_chat_bubbles':
 					case 'chat_bubbles_enable_ticket':
@@ -1047,6 +1063,10 @@ class Settings {
 						$saved_settings[$key] = is_array($value) ? $this->sanitize_rules_array($value, ['action', 'columns', 'condition', 'view']) : [];
 						break;
 
+					case 'ticket_guard_rules':
+						$saved_settings[$key] = is_array($value) ? $value : [];
+						break;
+
 					case 'conditional_options_rules':
 						// Decode JSON if it's a string, or trust array if already array
 						// Since sanitization usually receives the raw POST data, it might be an array if PHP handles nested inputs
@@ -1142,6 +1162,7 @@ class Settings {
 			'enable_log_onboarding'        => [ 'label' => __( 'Onboarding Dashboard', 'stackboost-for-supportcandy' ), 'feature' => 'onboarding_dashboard' ],
 			'enable_log_appearance'        => [ 'label' => __( 'Appearance / Theme', 'stackboost-for-supportcandy' ), 'feature' => '' ],
 			'enable_log_ticket_metrics'    => [ 'label' => __( 'Ticket Metrics', 'stackboost-for-supportcandy' ), 'feature' => 'ticket_metrics' ],
+			'enable_log_ticket_guard'      => [ 'label' => __( 'Ticket Guard', 'stackboost-for-supportcandy' ), 'feature' => 'ticket_guard' ],
 		];
 
 		foreach ( $modules as $key => $data ) {
@@ -1321,6 +1342,7 @@ class Settings {
 			case 'stackboost-onboarding-dashboard': $capability = STACKBOOST_CAP_MANAGE_ONBOARDING; break;
 			case 'stackboost-appearance': $capability = STACKBOOST_CAP_MANAGE_APPEARANCE; break;
 			case 'stackboost-ticket-metrics': $capability = STACKBOOST_CAP_MANAGE_TICKET_METRICS; break;
+			case 'stackboost-ticket-guard': $capability = STACKBOOST_CAP_MANAGE_TICKET_GUARD; break;
 		}
 
 		if ( ! current_user_can( $capability ) ) {

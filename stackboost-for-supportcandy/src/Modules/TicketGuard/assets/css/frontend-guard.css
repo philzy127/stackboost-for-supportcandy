@@ -1,0 +1,29 @@
+/* Ticket Guard Frontend Styling */
+
+.stackboost-tg-banner {
+    background-color: #fff8e5;
+    border-left: 4px solid #ffb900;
+    color: #333;
+    padding: 10px 14px;
+    margin: 10px 0;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stackboost-tg-banner .dashicons {
+    color: #ffb900;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+}
+
+.stackboost-tg-submit-disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}

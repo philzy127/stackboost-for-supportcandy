@@ -139,6 +139,13 @@ final class Plugin {
 			}
 		}
 
+		if ( stackboost_is_feature_active( 'ticket_guard' ) ) {
+			$class = 'StackBoost\ForSupportCandy\Modules\TicketGuard\WordPress';
+			if ( class_exists( $class ) ) {
+				$this->modules['ticket_guard'] = $class::get_instance();
+			}
+		}
+
 		// Business Features
 		if ( stackboost_is_feature_active( 'staff_directory' ) ) {
 			$class = 'StackBoost\ForSupportCandy\Modules\Directory\WordPress';
@@ -431,6 +438,8 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-conditional-options',
             'stackboost-for-supportcandy_page_stackboost-ticket-metrics',
             'stackboost_page_stackboost-ticket-metrics',
+            'stackboost_page_stackboost-ticket-guard',
+            'stackboost-for-supportcandy_page_stackboost-ticket-guard',
             // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
             'stackboost_page_stackboost-date-time',
 		];

@@ -23,6 +23,7 @@ define( 'STACKBOOST_CAP_MANAGE_UTM', 'manage_stackboost_utm' );
 define( 'STACKBOOST_CAP_MANAGE_ATS', 'manage_stackboost_ats' );
 define( 'STACKBOOST_CAP_MANAGE_APPEARANCE', 'manage_stackboost_appearance' );
 define( 'STACKBOOST_CAP_MANAGE_TICKET_METRICS', 'manage_stackboost_ticket_metrics' );
+define( 'STACKBOOST_CAP_MANAGE_TICKET_GUARD', 'manage_stackboost_ticket_guard' );
 
 /**
  * Autoloader for the plugin.
@@ -122,6 +123,7 @@ function stackboost_log( $message, $context = 'general' ) {
         'chat_bubbles'         => 'enable_log_chat_bubbles',
         'conditional_options'  => 'enable_log_conditional_options',
         'ticket_metrics'       => 'enable_log_ticket_metrics',
+        'ticket_guard'         => 'enable_log_ticket_guard',
 
         // Directory (handles multiple contexts)
         'directory-import'     => 'enable_log_directory',
@@ -197,6 +199,7 @@ function stackboost_grant_admin_caps( $allcaps ) {
             STACKBOOST_CAP_MANAGE_ATS,
             STACKBOOST_CAP_MANAGE_APPEARANCE,
             STACKBOOST_CAP_MANAGE_TICKET_METRICS,
+            STACKBOOST_CAP_MANAGE_TICKET_GUARD,
         ];
 
         foreach ( $stackboost_caps as $cap ) {
@@ -237,6 +240,7 @@ function stackboost_register_caps_for_role_manager() {
         STACKBOOST_CAP_MANAGE_ATS,
         STACKBOOST_CAP_MANAGE_APPEARANCE,
         STACKBOOST_CAP_MANAGE_TICKET_METRICS,
+        STACKBOOST_CAP_MANAGE_TICKET_GUARD,
     ];
 
     foreach ( $stackboost_caps as $cap ) {
