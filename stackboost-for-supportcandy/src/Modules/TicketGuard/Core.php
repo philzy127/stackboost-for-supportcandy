@@ -84,7 +84,7 @@ class Core {
 				$monitored_field = sanitize_key( reset( $rule['monitored_fields'] ) );
 			}
 
-			$swap_field           = ! empty( $rule['swap_field'] ) ? sanitize_key( $rule['swap_field'] ) : 'df_category';
+			$swap_field           = ! empty( $rule['swap_field'] ) ? sanitize_key( $rule['swap_field'] ) : '';
 			$swap_value           = ! empty( $rule['swap_value'] ) ? sanitize_text_field( $rule['swap_value'] ) : ( ! empty( $rule['suggested_category'] ) ? sanitize_text_field( $rule['suggested_category'] ) : '' );
 			$secondary_swap_field = ! empty( $rule['secondary_swap_field'] ) ? sanitize_key( $rule['secondary_swap_field'] ) : '';
 			$secondary_swap_value = ! empty( $rule['secondary_swap_value'] ) ? sanitize_text_field( $rule['secondary_swap_value'] ) : '';
@@ -110,6 +110,7 @@ class Core {
 					'modal_title'    => sanitize_text_field( $rule['messaging']['modal_title'] ?? '' ),
 					'modal_body'     => wp_kses_post( $rule['messaging']['modal_body'] ?? '' ),
 					'inline_warning' => sanitize_text_field( $rule['messaging']['inline_warning'] ?? '' ),
+					'inline_level'   => sanitize_key( $rule['messaging']['inline_level'] ?? 'alert' ),
 				],
 			];
 		}
@@ -392,7 +393,7 @@ class Core {
 				}
 
 				// If auto-swap category / dropdown action is set, apply primary & secondary swaps on backend
-				$swap_field           = ! empty( $rule['swap_field'] ) ? $rule['swap_field'] : 'df_category';
+				$swap_field           = ! empty( $rule['swap_field'] ) ? $rule['swap_field'] : '';
 				$swap_value           = ! empty( $rule['swap_value'] ) ? $rule['swap_value'] : ( $rule['suggested_category'] ?? '' );
 				$secondary_swap_field = ! empty( $rule['secondary_swap_field'] ) ? $rule['secondary_swap_field'] : '';
 				$secondary_swap_value = ! empty( $rule['secondary_swap_value'] ) ? $rule['secondary_swap_value'] : '';

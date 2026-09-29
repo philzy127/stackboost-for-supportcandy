@@ -241,7 +241,14 @@
 
                 if (actions.show_inline_warning && $matchedField && $matchedField.length) {
                     var warnText = (rule.messaging && rule.messaging.inline_warning) ? rule.messaging.inline_warning : 'Keywords detected: Please ensure appropriate category selection.';
-                    var $banner = $('<div class="stackboost-tg-banner"><span class="dashicons dashicons-warning"></span><span>' + escapeHtml(warnText) + '</span></div>');
+                    var level = (rule.messaging && rule.messaging.inline_level) ? rule.messaging.inline_level : 'alert';
+                    var iconClass = 'dashicons-warning';
+                    if (level === 'info') {
+                        iconClass = 'dashicons-info';
+                    } else if (level === 'warning') {
+                        iconClass = 'dashicons-dismiss';
+                    }
+                    var $banner = $('<div class="stackboost-tg-banner sb-tg-' + escapeHtml(level) + '"><span class="dashicons ' + iconClass + '"></span><span>' + escapeHtml(warnText) + '</span></div>');
                     $matchedField.after($banner);
                 }
 

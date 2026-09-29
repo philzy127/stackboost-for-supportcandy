@@ -296,6 +296,15 @@ class WordPress extends Module {
 
 						<!-- Inline Warning Message (Conditional) -->
 						<div id="sb-tg-inline-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
+							<div class="sb-tg-field-group" style="margin-bottom: 10px;">
+								<label for="sb-tg-inline-level"><strong><?php esc_html_e( 'Notice Style:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<select id="sb-tg-inline-level" class="widefat">
+									<option value="info"><?php esc_html_e( 'Information (Green)', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="alert" selected><?php esc_html_e( 'Alert (Amber)', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="warning"><?php esc_html_e( 'Warning (Red)', 'stackboost-for-supportcandy' ); ?></option>
+								</select>
+							</div>
+
 							<div class="sb-tg-field-group">
 								<label for="sb-tg-inline-warning"><strong><?php esc_html_e( 'Inline Warning Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
 								<input type="text" id="sb-tg-inline-warning" class="widefat" placeholder="<?php esc_attr_e( 'Keywords detected: Consider selecting Billing Support for faster service.', 'stackboost-for-supportcandy' ); ?>" />

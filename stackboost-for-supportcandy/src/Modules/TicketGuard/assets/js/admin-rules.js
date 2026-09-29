@@ -111,10 +111,11 @@
             var name = $.trim($('#sb-tg-rule-name').val());
             var monitoredField = $('#sb-tg-monitored-field').val();
             var keywordsText = $.trim($('#sb-tg-rule-keywords').val());
-            var swapField = $('#sb-tg-swap-field').val() || 'df_category';
+            var swapField = $('#sb-tg-swap-field').val() || '';
             var swapValue = $('#sb-tg-swap-value').val() || '';
             var secSwapField = $('#sb-tg-sec-swap-field').val() || '';
             var secSwapValue = $('#sb-tg-sec-swap-value').val() || '';
+            var inlineLevel = $('#sb-tg-inline-level').val() || 'alert';
 
             if (!name) {
                 alert('Please enter a Rule Name.');
@@ -149,7 +150,8 @@
                 messaging: {
                     modal_title: $.trim($('#sb-tg-modal-custom-title').val()),
                     modal_body: $.trim($('#sb-tg-modal-custom-body').val()),
-                    inline_warning: $.trim($('#sb-tg-inline-warning').val())
+                    inline_warning: $.trim($('#sb-tg-inline-warning').val()),
+                    inline_level: inlineLevel
                 }
             };
 
@@ -299,7 +301,7 @@
             $('#sb-tg-act-show-inline').prop('checked', !!acts.show_inline_warning);
             $('#sb-tg-act-auto-swap').prop('checked', !!acts.auto_swap_category);
 
-            var swapField = rule.swap_field || 'df_category';
+            var swapField = rule.swap_field || '';
             var swapValue = rule.swap_value || rule.suggested_category || '';
             $('#sb-tg-swap-field').val(swapField);
             populateSwapValueDropdown(swapField, swapValue);
@@ -313,6 +315,7 @@
             $('#sb-tg-modal-custom-title').val(msgs.modal_title || '');
             $('#sb-tg-modal-custom-body').val(msgs.modal_body || '');
             $('#sb-tg-inline-warning').val(msgs.inline_warning || '');
+            $('#sb-tg-inline-level').val(msgs.inline_level || 'alert');
         } else {
             $('#sb-tg-modal-title').text('Add New Intake Steering Rule');
             $('#sb-tg-rule-id').val('');
@@ -326,9 +329,8 @@
             $('#sb-tg-act-show-inline').prop('checked', false);
             $('#sb-tg-act-auto-swap').prop('checked', false);
 
-            var defaultSwapField = 'df_category';
-            $('#sb-tg-swap-field').val(defaultSwapField);
-            populateSwapValueDropdown(defaultSwapField, null);
+            $('#sb-tg-swap-field').val('');
+            populateSwapValueDropdown('', null);
 
             $('#sb-tg-sec-swap-field').val('');
             populateSecSwapValueDropdown('', null);
@@ -336,6 +338,7 @@
             $('#sb-tg-modal-custom-title').val('');
             $('#sb-tg-modal-custom-body').val('');
             $('#sb-tg-inline-warning').val('');
+            $('#sb-tg-inline-level').val('alert');
         }
 
         toggleConditionalSections();

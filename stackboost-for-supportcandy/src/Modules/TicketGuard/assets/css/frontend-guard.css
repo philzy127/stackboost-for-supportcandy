@@ -1,9 +1,6 @@
 /* Ticket Guard Frontend Styling */
 
 .stackboost-tg-banner {
-    background-color: #fff8e5;
-    border-left: 4px solid #ffb900;
-    color: #333;
     padding: 10px 14px;
     margin: 10px 0;
     border-radius: 4px;
@@ -14,8 +11,44 @@
     gap: 10px;
 }
 
-.stackboost-tg-banner .dashicons {
+/* Default / Amber Alert */
+.stackboost-tg-banner,
+.stackboost-tg-banner.sb-tg-alert {
+    background-color: #fff8e5;
+    border-left: 4px solid #ffb900;
+    color: #333;
+}
+.stackboost-tg-banner .dashicons,
+.stackboost-tg-banner.sb-tg-alert .dashicons {
     color: #ffb900;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+}
+
+/* Info (Green) */
+.stackboost-tg-banner.sb-tg-info {
+    background-color: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    color: #14532d;
+}
+.stackboost-tg-banner.sb-tg-info .dashicons {
+    color: #16a34a;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+}
+
+/* Warning (Red) */
+.stackboost-tg-banner.sb-tg-warning {
+    background-color: #fef2f2;
+    border-left: 4px solid #dc2626;
+    color: #7f1d1d;
+}
+.stackboost-tg-banner.sb-tg-warning .dashicons {
+    color: #dc2626;
     font-size: 18px;
     width: 18px;
     height: 18px;
