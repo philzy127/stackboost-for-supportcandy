@@ -352,12 +352,28 @@ class Core {
 			$matched = false;
 			if ( ! empty( $ticket_data[ $monitored_field ] ) ) {
 				$content = (string) $ticket_data[ $monitored_field ];
-				foreach ( $keywords as $kw ) {
-					if ( empty( trim( $kw ) ) ) {
+
+				foreach ( $keywords as $kw_line ) {
+					$kw_line = trim( $kw_line );
+					if ( empty( $kw_line ) ) {
 						continue;
 					}
 
-					if ( false !== stripos( $content, trim( $kw ) ) ) {
+					// Compound AND matching via &
+					$parts = array_filter( array_map( 'trim', explode( '&', $kw_line ) ) );
+					if ( empty( $parts ) ) {
+						continue;
+					}
+
+					$line_matches = true;
+					foreach ( $parts as $sub_kw ) {
+						if ( false === stripos( $content, $sub_kw ) ) {
+							$line_matches = false;
+							break;
+						}
+					}
+
+					if ( $line_matches ) {
 						$matched = true;
 						break;
 					}

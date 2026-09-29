@@ -149,9 +149,25 @@
                     }
                 }
 
-                $.each(keywords, function(k, kw) {
-                    kw = $.trim(kw);
-                    if (kw && val.toLowerCase().indexOf(kw.toLowerCase()) !== -1) {
+                var valLower = val.toLowerCase();
+
+                $.each(keywords, function(k, kwLine) {
+                    kwLine = $.trim(kwLine);
+                    if (!kwLine) return;
+
+                    // Compound AND matching via &
+                    var parts = kwLine.split('&').map(function(p) { return $.trim(p); }).filter(function(p) { return p.length > 0; });
+                    if (!parts.length) return;
+
+                    var lineMatches = true;
+                    $.each(parts, function(pIdx, subKw) {
+                        if (valLower.indexOf(subKw.toLowerCase()) === -1) {
+                            lineMatches = false;
+                            return false;
+                        }
+                    });
+
+                    if (lineMatches) {
                         matched = true;
                         return false;
                     }

@@ -33,10 +33,21 @@
     color: #fff;
 }
 
+.sb-tg-edit-rule-btn {
+    color: #2271b1;
+    cursor: pointer;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.sb-tg-edit-rule-btn:hover {
+    color: #135e96;
+}
+
 .sb-tg-delete-rule-btn {
     color: #d63638;
     cursor: pointer;
-    margin-left: 10px;
+    margin-left: 6px;
     vertical-align: middle;
 }
 
