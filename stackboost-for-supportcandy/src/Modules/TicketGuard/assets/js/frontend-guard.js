@@ -2,7 +2,7 @@
     'use strict';
 
     var debounceTimer = null;
-    var submitBtnSelector = '.wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button.wpsc-btn, button[type="submit"], input[type="submit"]';
+    var submitBtnSelector = '.wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button.wpsc-btn, button[onclick*="wpsc"], button[type="submit"], input[type="submit"]';
 
     $(document).ready(function() {
         if (typeof stackboostTicketGuard === 'undefined' || !stackboostTicketGuard.enabled) {
@@ -117,31 +117,35 @@
             var $matchedField = null;
 
             $.each(monitoredFields, function(i, slug) {
-                var $field = $('[name="' + slug + '"], [name="' + slug + '[]"]');
-                if (!$field.length) {
-                    // Try looking for TinyMCE container or id
-                    var editorInstance = (typeof tinymce !== 'undefined') ? tinymce.get(slug) : null;
-                    if (editorInstance) {
-                        var val = editorInstance.getContent({ format: 'text' }) || editorInstance.getContent() || '';
-                        $.each(keywords, function(k, kw) {
-                            kw = $.trim(kw);
-                            if (kw && val.toLowerCase().indexOf(kw.toLowerCase()) !== -1) {
-                                matched = true;
-                                $matchedField = $(editorInstance.getContainer());
-                                return false;
-                            }
-                        });
-                        if (matched) return false;
+                if (!slug) return;
+
+                // Try multiple DOM selector patterns for SupportCandy custom/included fields
+                var $field = $('[name="' + slug + '"], [name="' + slug + '[]"], [name*="[' + slug + ']"], #' + slug);
+
+                // Check TinyMCE instance
+                var editorInstance = (typeof tinymce !== 'undefined') ? (tinymce.get(slug) || (tinymce.editors && tinymce.editors[0])) : null;
+
+                var val = '';
+                if (editorInstance) {
+                    try {
+                        val = editorInstance.getContent({ format: 'text' }) || editorInstance.getContent() || '';
+                    } catch (e) {
+                        val = '';
                     }
-                    return;
                 }
 
-                var val = $field.val() || '';
-                // If TinyMCE is attached to this field, check editor text content
-                if (typeof tinymce !== 'undefined') {
-                    var ed = tinymce.get($field.attr('id'));
-                    if (ed) {
-                        val = ed.getContent({ format: 'text' }) || val;
+                if (!val && $field.length) {
+                    val = $field.val() || '';
+                }
+
+                if (!$field.length && editorInstance) {
+                    $matchedField = $(editorInstance.getContainer());
+                } else if ($field.length) {
+                    $matchedField = $field;
+                } else {
+                    $matchedField = $('textarea').first();
+                    if ($matchedField.length && !val) {
+                        val = $matchedField.val() || '';
                     }
                 }
 
@@ -149,7 +153,6 @@
                     kw = $.trim(kw);
                     if (kw && val.toLowerCase().indexOf(kw.toLowerCase()) !== -1) {
                         matched = true;
-                        $matchedField = $field;
                         return false;
                     }
                 });
@@ -168,22 +171,22 @@
                 if (actions.show_modal) {
                     modalBlockedRule = rule;
 
-                    // Trigger guidance modal immediately if not already displayed for this rule match
-                    if (window._tgModalShownRuleId !== rule.id && !window._tgModalDismissedRules?.[rule.id]) {
+                    var isDismissed = window._tgModalDismissedRules && window._tgModalDismissedRules[rule.id];
+                    if (window._tgModalShownRuleId !== rule.id && !isDismissed) {
                         window._tgModalShownRuleId = rule.id;
                         var $targetBtn = $(submitBtnSelector).first();
                         showGuidanceModal($targetBtn, rule);
                     }
                 }
 
-                if (actions.show_inline_warning && $matchedField) {
+                if (actions.show_inline_warning && $matchedField && $matchedField.length) {
                     var warnText = (rule.messaging && rule.messaging.inline_warning) ? rule.messaging.inline_warning : 'Keywords detected: Please ensure appropriate category selection.';
                     var $banner = $('<div class="stackboost-tg-banner"><span class="dashicons dashicons-warning"></span><span>' + escapeHtml(warnText) + '</span></div>');
                     $matchedField.after($banner);
                 }
 
                 if (actions.auto_swap_category && rule.suggested_category) {
-                    var $catSelect = $('select[name="df_category"], select[name="category"]');
+                    var $catSelect = $('select[name="df_category"], select[name="category"], select[name*="category"]');
                     if ($catSelect.length && $catSelect.val() !== rule.suggested_category) {
                         $catSelect.val(rule.suggested_category).trigger('change').trigger('change.select2');
                     }
@@ -296,7 +299,7 @@
         $overlay.find('.sb-tg-swap-cat-btn').on('click', function() {
             if (rule && rule.id) window._tgModalDismissedRules[rule.id] = true;
             var catId = $(this).data('cat');
-            var $catSelect = $('select[name="df_category"], select[name="category"]');
+            var $catSelect = $('select[name="df_category"], select[name="category"], select[name*="category"]');
             if ($catSelect.length && catId) {
                 $catSelect.val(catId).trigger('change').trigger('change.select2');
             }
