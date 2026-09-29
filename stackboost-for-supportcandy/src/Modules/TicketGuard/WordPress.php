@@ -227,28 +227,10 @@ class WordPress extends Module {
 							<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: Use & to require multiple phrases on the same line (e.g. "UC Portal & Password"). Each new line acts as an OR condition.', 'stackboost-for-supportcandy' ); ?></p>
 						</div>
 
-						<!-- Action Toggles -->
-						<div class="sb-tg-field-group" style="margin-bottom: 15px; background: #f9f9f9; padding: 12px; border-radius: 4px;">
-							<label><strong><?php esc_html_e( 'Action Toggles (Independently Selectable):', 'stackboost-for-supportcandy' ); ?></strong></label>
-							<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-								<label><input type="checkbox" id="sb-tg-act-disable-submit" /> <?php esc_html_e( 'Disable Submit Button when matched', 'stackboost-for-supportcandy' ); ?></label>
-								<label><input type="checkbox" id="sb-tg-act-show-modal" /> <?php esc_html_e( 'Display Guidance Modal Popup', 'stackboost-for-supportcandy' ); ?></label>
-								<label><input type="checkbox" id="sb-tg-act-show-inline" /> <?php esc_html_e( 'Show Real-Time Inline Warning Banner', 'stackboost-for-supportcandy' ); ?></label>
-								<label><input type="checkbox" id="sb-tg-act-auto-swap" /> <?php esc_html_e( 'Automatically Swap Selected Fields to Target Options', 'stackboost-for-supportcandy' ); ?></label>
-							</div>
-						</div>
+						<!-- Target Field & Option Selection (Permanently Visible) -->
+						<div id="sb-tg-swap-container" style="margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
+							<label style="display: block; margin-bottom: 10px;"><strong><?php esc_html_e( 'Target Field & Option Selection:', 'stackboost-for-supportcandy' ); ?></strong></label>
 
-						<!-- Submit Disabled Message (Conditional) -->
-						<div id="sb-tg-submit-msg-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
-							<div class="sb-tg-field-group">
-								<label for="sb-tg-submit-disabled-msg"><strong><?php esc_html_e( 'Submit Disabled Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<input type="text" id="sb-tg-submit-disabled-msg" class="widefat" placeholder="<?php esc_attr_e( 'Submit button disabled: Please review your entry or category selection.', 'stackboost-for-supportcandy' ); ?>" />
-								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Displayed near the submit button when it is disabled by this rule.', 'stackboost-for-supportcandy' ); ?></p>
-							</div>
-						</div>
-
-						<!-- Field Swap Options (Conditional) -->
-						<div id="sb-tg-swap-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
 							<!-- Primary Field to Swap & Target Option -->
 							<div style="display: flex; gap: 20px; margin-bottom: 15px;">
 								<div style="flex: 1;">
@@ -290,6 +272,26 @@ class WordPress extends Module {
 							</div>
 						</div>
 
+						<!-- Action Toggles -->
+						<div class="sb-tg-field-group" style="margin-bottom: 15px; background: #f9f9f9; padding: 12px; border-radius: 4px;">
+							<label><strong><?php esc_html_e( 'Action Toggles (Independently Selectable):', 'stackboost-for-supportcandy' ); ?></strong></label>
+							<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+								<label><input type="checkbox" id="sb-tg-act-disable-submit" /> <?php esc_html_e( 'Disable Submit Button when matched', 'stackboost-for-supportcandy' ); ?></label>
+								<label><input type="checkbox" id="sb-tg-act-show-modal" /> <?php esc_html_e( 'Display Guidance Modal Popup', 'stackboost-for-supportcandy' ); ?></label>
+								<label><input type="checkbox" id="sb-tg-act-show-inline" /> <?php esc_html_e( 'Show Real-Time Inline Warning Banner', 'stackboost-for-supportcandy' ); ?></label>
+								<label><input type="checkbox" id="sb-tg-act-auto-swap" /> <?php esc_html_e( 'Automatically Swap Selected Fields to Target Options', 'stackboost-for-supportcandy' ); ?></label>
+							</div>
+						</div>
+
+						<!-- Submit Disabled Message (Conditional) -->
+						<div id="sb-tg-submit-msg-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
+							<div class="sb-tg-field-group">
+								<label for="sb-tg-submit-disabled-msg"><strong><?php esc_html_e( 'Submit Disabled Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<input type="text" id="sb-tg-submit-disabled-msg" class="widefat" placeholder="<?php esc_attr_e( 'Submit button disabled: Please review your entry or category selection.', 'stackboost-for-supportcandy' ); ?>" />
+								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Displayed near the submit button when it is disabled by this rule.', 'stackboost-for-supportcandy' ); ?></p>
+							</div>
+						</div>
+
 						<!-- Guidance Modal Customization (Conditional) -->
 						<div id="sb-tg-modal-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
 							<div class="sb-tg-field-group" style="margin-bottom: 15px;">
@@ -300,6 +302,7 @@ class WordPress extends Module {
 							<div class="sb-tg-field-group">
 								<label for="sb-tg-modal-custom-body"><strong><?php esc_html_e( 'Guidance Modal Message Body:', 'stackboost-for-supportcandy' ); ?></strong></label>
 								<textarea id="sb-tg-modal-custom-body" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'It looks like your ticket relates to billing or invoices. Switching to the Billing category ensures faster response times.', 'stackboost-for-supportcandy' ); ?>"></textarea>
+								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: You can use dynamic placeholders like {primary_field}, {primary_response}, {secondary_field}, and {secondary_response} in your title or body.', 'stackboost-for-supportcandy' ); ?></p>
 							</div>
 						</div>
 
@@ -400,10 +403,11 @@ class WordPress extends Module {
 		wp_enqueue_style( 'stackboost-tg-frontend-css' );
 
 		wp_localize_script( 'stackboost-tg-frontend', 'stackboostTicketGuard', [
-			'enabled' => true,
-			'rules'   => array_values( $core->get_rules() ),
-			'i18n'    => [
-				'notice_title'   => __( 'Category Guidance', 'stackboost-for-supportcandy' ),
+			'enabled'   => true,
+			'rules'     => array_values( $core->get_rules() ),
+			'dropdowns' => $core->get_dropdown_fields_and_options(),
+			'i18n'      => [
+				'notice_title'    => __( 'Category Guidance', 'stackboost-for-supportcandy' ),
 				'change_category' => __( 'Switch Options', 'stackboost-for-supportcandy' ),
 				'proceed_anyway'  => __( 'Proceed Anyway', 'stackboost-for-supportcandy' ),
 				'dismiss'         => __( 'Dismiss', 'stackboost-for-supportcandy' ),
