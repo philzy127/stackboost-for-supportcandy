@@ -27,7 +27,13 @@
         initTinyMCEObserver(rules);
 
         // Re-evaluate on dynamic SupportCandy AJAX form loads & TinyMCE init
-        $(document).ajaxComplete(function() {
+        $(document).ajaxComplete(function(e, xhr, settings) {
+            if (settings && settings.data) {
+                var dataStr = typeof settings.data === 'string' ? settings.data : (typeof settings.data === 'object' ? JSON.stringify(settings.data) : '');
+                if (dataStr.indexOf('wpsc_check_tff_visibility') !== -1) {
+                    return; // Ignore SupportCandy field visibility AJAX requests to prevent recursion
+                }
+            }
             initTinyMCEObserver(rules);
             evaluateGuardRules(rules);
         });
@@ -57,7 +63,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-                showGuidanceModal($btn, blockedRule);
+                showGuidanceModal($btn, blockedRule, true); // Intercepted via user submit click
                 return false;
             }
         }, true);
@@ -100,27 +106,38 @@
     }
 
     function applyFieldSwap(swapField, swapValue) {
-        if (!swapField || !swapValue) return;
+        if (!swapField || !swapValue || window._tgSwapping) return;
 
-        // 1. Try Select / Dropdown
-        var $targetSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
-        if ($targetSelect.length) {
-            $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
-            return;
-        }
+        window._tgSwapping = true;
+        try {
+            // 1. Try Select / Dropdown
+            var $targetSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
+            if ($targetSelect.length) {
+                if ($targetSelect.val() !== String(swapValue)) {
+                    $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
+                }
+                return;
+            }
 
-        // 2. Try Radio Button
-        var $targetRadio = $('input[type="radio"][name="' + swapField + '"][value="' + swapValue + '"], input[type="radio"][name*="' + swapField + '"][value="' + swapValue + '"]');
-        if ($targetRadio.length) {
-            $targetRadio.prop('checked', true).trigger('change');
-            return;
-        }
+            // 2. Try Radio Button
+            var $targetRadio = $('input[type="radio"][name="' + swapField + '"][value="' + swapValue + '"], input[type="radio"][name*="' + swapField + '"][value="' + swapValue + '"]');
+            if ($targetRadio.length) {
+                if (!$targetRadio.is(':checked')) {
+                    $targetRadio.prop('checked', true).trigger('change');
+                }
+                return;
+            }
 
-        // 3. Try Checkbox
-        var $targetCb = $('input[type="checkbox"][name="' + swapField + '"][value="' + swapValue + '"], input[type="checkbox"][name*="' + swapField + '"][value="' + swapValue + '"]');
-        if ($targetCb.length) {
-            $targetCb.prop('checked', true).trigger('change');
-            return;
+            // 3. Try Checkbox
+            var $targetCb = $('input[type="checkbox"][name="' + swapField + '"][value="' + swapValue + '"], input[type="checkbox"][name*="' + swapField + '"][value="' + swapValue + '"]');
+            if ($targetCb.length) {
+                if (!$targetCb.is(':checked')) {
+                    $targetCb.prop('checked', true).trigger('change');
+                }
+                return;
+            }
+        } finally {
+            window._tgSwapping = false;
         }
     }
 
@@ -218,7 +235,7 @@
                     if (window._tgModalShownRuleId !== rule.id && !isDismissed) {
                         window._tgModalShownRuleId = rule.id;
                         var $targetBtn = $(submitBtnSelector).first();
-                        showGuidanceModal($targetBtn, rule);
+                        showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
                     }
                 }
 
@@ -286,7 +303,7 @@
                         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
                     }
 
-                    showGuidanceModal($btn, modalBlockedRule);
+                    showGuidanceModal($btn, modalBlockedRule, true); // Direct user click
                     return false;
                 };
 
@@ -299,7 +316,7 @@
         });
     }
 
-    function showGuidanceModal($btn, rule) {
+    function showGuidanceModal($btn, rule, isUserSubmitClick) {
         var msgs = rule.messaging || {};
         var title = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
         var bodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
@@ -329,11 +346,13 @@
                     if (rule.id) window._tgModalDismissedRules[rule.id] = true;
                     if ($btn && $btn.length) {
                         $btn.data('tg-modal-bypassed', true);
-                        var btnEl = $btn.get(0);
-                        if (btnEl && btnEl._tgOriginalOnClick) {
-                            btnEl._tgOriginalOnClick.call(btnEl);
-                        } else {
-                            $btn.trigger('click');
+                        if (isUserSubmitClick) {
+                            var btnEl = $btn.get(0);
+                            if (btnEl && btnEl._tgOriginalOnClick) {
+                                btnEl._tgOriginalOnClick.call(btnEl);
+                            } else {
+                                $btn.trigger('click');
+                            }
                         }
                     }
                 },
@@ -349,11 +368,11 @@
                 }
             );
         } else {
-            fallbackShowGuidanceModal($btn, rule);
+            fallbackShowGuidanceModal($btn, rule, isUserSubmitClick);
         }
     }
 
-    function fallbackShowGuidanceModal($btn, rule) {
+    function fallbackShowGuidanceModal($btn, rule, isUserSubmitClick) {
         $('.stackboost-tg-modal-overlay').remove();
 
         var msgs = rule.messaging || {};
@@ -396,11 +415,13 @@
             $overlay.remove();
             if ($btn && $btn.length) {
                 $btn.data('tg-modal-bypassed', true);
-                var btnEl = $btn.get(0);
-                if (btnEl && btnEl._tgOriginalOnClick) {
-                    btnEl._tgOriginalOnClick.call(btnEl);
-                } else {
-                    $btn.trigger('click');
+                if (isUserSubmitClick) {
+                    var btnEl = $btn.get(0);
+                    if (btnEl && btnEl._tgOriginalOnClick) {
+                        btnEl._tgOriginalOnClick.call(btnEl);
+                    } else {
+                        $btn.trigger('click');
+                    }
                 }
             }
         });
