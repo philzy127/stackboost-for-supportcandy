@@ -185,10 +185,13 @@
                     $matchedField.after($banner);
                 }
 
-                if (actions.auto_swap_category && rule.suggested_category) {
-                    var $catSelect = $('select[name="df_category"], select[name="category"], select[name*="category"]');
-                    if ($catSelect.length && $catSelect.val() !== rule.suggested_category) {
-                        $catSelect.val(rule.suggested_category).trigger('change').trigger('change.select2');
+                var swapField = rule.swap_field || 'df_category';
+                var swapValue = rule.swap_value || rule.suggested_category;
+
+                if (actions.auto_swap_category && swapValue) {
+                    var $targetSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
+                    if ($targetSelect.length && $targetSelect.val() !== swapValue) {
+                        $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
                     }
                 }
             }
@@ -260,20 +263,22 @@
 
         if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
 
-        var changeCatText = stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Category';
+        var changeCatText = stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Option';
         var proceedText = stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway';
 
-        if (rule.suggested_category && typeof window.stackboostConfirm === 'function') {
+        var swapField = rule.swap_field || 'df_category';
+        var swapValue = rule.swap_value || rule.suggested_category;
+
+        if (swapValue && typeof window.stackboostConfirm === 'function') {
             window.stackboostConfirm(
                 '<p style="font-size:14px;line-height:1.5;margin:0;">' + escapeHtml(bodyText) + '</p>',
                 title,
                 function onConfirm() {
-                    // Switch Category
+                    // Switch Target Option
                     if (rule.id) window._tgModalDismissedRules[rule.id] = true;
-                    var catId = rule.suggested_category;
-                    var $catSelect = $('select[name="df_category"], select[name="category"], select[name*="category"]');
-                    if ($catSelect.length && catId) {
-                        $catSelect.val(catId).trigger('change').trigger('change.select2');
+                    var $targetSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
+                    if ($targetSelect.length) {
+                        $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
                     }
                 },
                 function onCancel() {
@@ -312,6 +317,9 @@
         var title = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
         var bodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
 
+        var swapField = rule.swap_field || 'df_category';
+        var swapValue = rule.swap_value || rule.suggested_category;
+
         var modalHtml = '<div class="stackboost-modal-overlay stackboost-tg-modal-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999999;display:flex;align-items:center;justify-content:center;">' +
             '<div class="stackboost-modal-box" style="background:#fff;border-radius:6px;max-width:520px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,0.35);overflow:hidden;">' +
             '<div class="stackboost-modal-header" style="padding:16px 20px;background:#f8f9fa;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">' +
@@ -324,8 +332,8 @@
             '<div class="stackboost-modal-footer" style="padding:14px 20px;background:#f8f9fa;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;">' +
             '<button type="button" class="button sb-tg-proceed-btn" style="cursor:pointer;">' + escapeHtml(stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway') + '</button>';
 
-        if (rule.suggested_category) {
-            modalHtml += '<button type="button" class="button button-primary sb-tg-swap-cat-btn" data-cat="' + escapeHtml(rule.suggested_category) + '" style="cursor:pointer;">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Category') + '</button>';
+        if (swapValue) {
+            modalHtml += '<button type="button" class="button button-primary sb-tg-swap-cat-btn" data-cat="' + escapeHtml(swapValue) + '" style="cursor:pointer;">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Option') + '</button>';
         } else {
             modalHtml += '<button type="button" class="button button-secondary sb-tg-close-modal" style="cursor:pointer;">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.dismiss : 'Dismiss') + '</button>';
         }
@@ -357,7 +365,7 @@
         $overlay.find('.sb-tg-swap-cat-btn').on('click', function() {
             if (rule && rule.id) window._tgModalDismissedRules[rule.id] = true;
             var catId = $(this).data('cat');
-            var $catSelect = $('select[name="df_category"], select[name="category"], select[name*="category"]');
+            var $catSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
             if ($catSelect.length && catId) {
                 $catSelect.val(catId).trigger('change').trigger('change.select2');
             }

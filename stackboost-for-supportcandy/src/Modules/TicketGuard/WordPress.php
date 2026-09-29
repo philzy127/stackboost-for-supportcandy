@@ -94,6 +94,7 @@ class WordPress extends Module {
 			'enabled'    => $core->is_enabled(),
 			'fields'     => $form_data['fields'],
 			'categories' => $form_data['categories'],
+			'dropdowns'  => $form_data['dropdowns'],
 			'nonce'      => wp_create_nonce( 'stackboost_admin_nonce' ),
 			'ajax_url'   => admin_url( 'admin-ajax.php' ),
 			'i18n'       => [
@@ -118,7 +119,7 @@ class WordPress extends Module {
 		$is_enabled = $core->is_enabled();
 		$form_data  = $core->get_form_options();
 		$fields     = $form_data['fields'];
-		$categories = $form_data['categories'];
+		$dropdowns  = $form_data['dropdowns'];
 		$rules      = array_values( $core->get_rules() );
 
 		$theme_class = 'sb-theme-clean-tech';
@@ -160,7 +161,7 @@ class WordPress extends Module {
 					</div>
 
 					<p class="description" style="margin-bottom: 15px;">
-						<?php esc_html_e( 'Configure keyword monitoring rules on text fields to steer users toward specific categories with real-time warnings, modals, submit button disabling, or category swaps.', 'stackboost-for-supportcandy' ); ?>
+						<?php esc_html_e( 'Configure keyword monitoring rules on text fields to steer users toward specific categories or options with real-time warnings, modals, submit button disabling, or field swaps.', 'stackboost-for-supportcandy' ); ?>
 					</p>
 
 					<div class="pm-rules-wrapper" style="margin-bottom: 20px;">
@@ -225,25 +226,22 @@ class WordPress extends Module {
 							<textarea id="sb-tg-rule-keywords" class="widefat" rows="4" placeholder="<?php esc_attr_e( "refund\ninvoice\novercharge\ncredit card\nbilling", 'stackboost-for-supportcandy' ); ?>"></textarea>
 						</div>
 
-						<!-- Category Trigger & Suggested Swap -->
+						<!-- Dropdown Field to Swap & Target Option -->
 						<div style="display: flex; gap: 20px; margin-bottom: 15px;">
 							<div style="flex: 1;">
-								<label for="sb-tg-trigger-category"><strong><?php esc_html_e( 'Trigger Category (Optional):', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<select id="sb-tg-trigger-category" class="widefat">
-									<option value=""><?php esc_html_e( '-- Any Category --', 'stackboost-for-supportcandy' ); ?></option>
-									<?php foreach ( $categories as $cat ) : ?>
-										<option value="<?php echo esc_attr( $cat['id'] ); ?>"><?php echo esc_html( $cat['name'] ); ?></option>
+								<label for="sb-tg-swap-field"><strong><?php esc_html_e( 'Dropdown Field to Swap:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<select id="sb-tg-swap-field" class="widefat">
+									<option value=""><?php esc_html_e( '-- Select Dropdown Field --', 'stackboost-for-supportcandy' ); ?></option>
+									<?php foreach ( $dropdowns as $slug => $d_info ) : ?>
+										<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $d_info['label'] ); ?></option>
 									<?php endforeach; ?>
 								</select>
 							</div>
 
 							<div style="flex: 1;">
-								<label for="sb-tg-suggested-category"><strong><?php esc_html_e( 'Suggested Category Swap:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<select id="sb-tg-suggested-category" class="widefat">
-									<option value=""><?php esc_html_e( '-- Select Target Category --', 'stackboost-for-supportcandy' ); ?></option>
-									<?php foreach ( $categories as $cat ) : ?>
-										<option value="<?php echo esc_attr( $cat['id'] ); ?>"><?php echo esc_html( $cat['name'] ); ?></option>
-									<?php endforeach; ?>
+								<label for="sb-tg-swap-value"><strong><?php esc_html_e( 'Target Option to Select:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<select id="sb-tg-swap-value" class="widefat">
+									<option value=""><?php esc_html_e( '-- Select Target Option --', 'stackboost-for-supportcandy' ); ?></option>
 								</select>
 							</div>
 						</div>
@@ -255,7 +253,7 @@ class WordPress extends Module {
 								<label><input type="checkbox" id="sb-tg-act-disable-submit" /> <?php esc_html_e( 'Disable Submit Button when matched', 'stackboost-for-supportcandy' ); ?></label>
 								<label><input type="checkbox" id="sb-tg-act-show-modal" /> <?php esc_html_e( 'Display Guidance Modal Popup', 'stackboost-for-supportcandy' ); ?></label>
 								<label><input type="checkbox" id="sb-tg-act-show-inline" /> <?php esc_html_e( 'Show Real-Time Inline Warning Banner', 'stackboost-for-supportcandy' ); ?></label>
-								<label><input type="checkbox" id="sb-tg-act-auto-swap" /> <?php esc_html_e( 'Automatically Swap Category to Target', 'stackboost-for-supportcandy' ); ?></label>
+								<label><input type="checkbox" id="sb-tg-act-auto-swap" /> <?php esc_html_e( 'Automatically Swap Selected Dropdown to Target Option', 'stackboost-for-supportcandy' ); ?></label>
 							</div>
 						</div>
 
@@ -359,7 +357,7 @@ class WordPress extends Module {
 			'rules'   => array_values( $core->get_rules() ),
 			'i18n'    => [
 				'notice_title'   => __( 'Category Guidance', 'stackboost-for-supportcandy' ),
-				'change_category' => __( 'Switch Category', 'stackboost-for-supportcandy' ),
+				'change_category' => __( 'Switch Option', 'stackboost-for-supportcandy' ),
 				'proceed_anyway'  => __( 'Proceed Anyway', 'stackboost-for-supportcandy' ),
 				'dismiss'         => __( 'Dismiss', 'stackboost-for-supportcandy' ),
 			]

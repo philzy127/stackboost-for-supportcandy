@@ -26,6 +26,12 @@
             saveConfig(rules, isEnabled, false);
         });
 
+        // Dynamic Swap Target Options population when Swap Field changes
+        $(document).on('change', '#sb-tg-swap-field', function() {
+            var selectedSlug = $(this).val();
+            populateSwapValueDropdown(selectedSlug, null);
+        });
+
         // Open Modal: Add Rule (Delegated & Direct Handlers)
         function handleAddRuleClick(e) {
             e.preventDefault();
@@ -94,6 +100,8 @@
             var name = $.trim($('#sb-tg-rule-name').val());
             var monitoredField = $('#sb-tg-monitored-field').val();
             var keywordsText = $.trim($('#sb-tg-rule-keywords').val());
+            var swapField = $('#sb-tg-swap-field').val() || 'df_category';
+            var swapValue = $('#sb-tg-swap-value').val() || '';
 
             if (!name) {
                 alert('Please enter a Rule Name.');
@@ -114,8 +122,9 @@
                 monitored_field: monitoredField,
                 monitored_fields: [monitoredField],
                 keywords: keywords,
-                trigger_category: $('#sb-tg-trigger-category').val(),
-                suggested_category: $('#sb-tg-suggested-category').val(),
+                swap_field: swapField,
+                swap_value: swapValue,
+                suggested_category: swapValue,
                 actions: {
                     disable_submit: $('#sb-tg-act-disable-submit').is(':checked'),
                     show_modal: $('#sb-tg-act-show-modal').is(':checked'),
@@ -147,6 +156,25 @@
         });
     });
 
+    function populateSwapValueDropdown(fieldSlug, selectedVal) {
+        var $valSelect = $('#sb-tg-swap-value');
+        $valSelect.empty();
+        $valSelect.append('<option value="">-- Select Target Option --</option>');
+
+        if (!fieldSlug || !config.dropdowns || !config.dropdowns[fieldSlug]) {
+            return;
+        }
+
+        var optionsList = config.dropdowns[fieldSlug].options || [];
+        $.each(optionsList, function(i, opt) {
+            var $opt = $('<option>').val(opt.id).text(opt.name);
+            if (String(opt.id) === String(selectedVal)) {
+                $opt.prop('selected', true);
+            }
+            $valSelect.append($opt);
+        });
+    }
+
     function renderRulesTable() {
         var $tbody = $('#sb-tg-rules-tbody');
         $tbody.empty();
@@ -174,7 +202,7 @@
                 if (rule.actions.disable_submit) actionsHtml += '<span class="sb-tg-action-badge active">Disable Submit</span>';
                 if (rule.actions.show_modal) actionsHtml += '<span class="sb-tg-action-badge active">Modal</span>';
                 if (rule.actions.show_inline_warning) actionsHtml += '<span class="sb-tg-action-badge active">Inline Warning</span>';
-                if (rule.actions.auto_swap_category) actionsHtml += '<span class="sb-tg-action-badge active">Category Swap</span>';
+                if (rule.actions.auto_swap_category) actionsHtml += '<span class="sb-tg-action-badge active">Option Swap</span>';
             }
             if (!actionsHtml) actionsHtml = '<span class="sb-tg-action-badge">None</span>';
 
@@ -210,8 +238,11 @@
             $('#sb-tg-monitored-field').val(monitoredSlug || '');
 
             $('#sb-tg-rule-keywords').val((rule.keywords || []).join('\n'));
-            $('#sb-tg-trigger-category').val(rule.trigger_category || '');
-            $('#sb-tg-suggested-category').val(rule.suggested_category || '');
+
+            var swapField = rule.swap_field || 'df_category';
+            var swapValue = rule.swap_value || rule.suggested_category || '';
+            $('#sb-tg-swap-field').val(swapField);
+            populateSwapValueDropdown(swapField, swapValue);
 
             var acts = rule.actions || {};
             $('#sb-tg-act-disable-submit').prop('checked', !!acts.disable_submit);
@@ -229,8 +260,11 @@
             $('#sb-tg-rule-name').val('');
             $('#sb-tg-monitored-field').val('');
             $('#sb-tg-rule-keywords').val('');
-            $('#sb-tg-trigger-category').val('');
-            $('#sb-tg-suggested-category').val('');
+
+            var defaultSwapField = 'df_category';
+            $('#sb-tg-swap-field').val(defaultSwapField);
+            populateSwapValueDropdown(defaultSwapField, null);
+
             $('#sb-tg-act-disable-submit').prop('checked', true);
             $('#sb-tg-act-show-modal').prop('checked', true);
             $('#sb-tg-act-show-inline').prop('checked', true);
