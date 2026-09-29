@@ -125,20 +125,38 @@ class Core {
 	 * @return array
 	 */
 	public function get_form_options(): array {
-		$all_fields = [];
-		if ( class_exists( '\StackBoost\ForSupportCandy\WordPress\Plugin' ) ) {
-			$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
-			$all_fields      = $plugin_instance->get_supportcandy_columns();
+		$textarea_fields = [];
+
+		// 1. Standard Included Description Fields
+		$textarea_fields['description']    = __( 'Description', 'stackboost-for-supportcandy' );
+		$textarea_fields['df_description'] = __( 'Description', 'stackboost-for-supportcandy' );
+
+		// 2. Query Custom Fields repository for textareas and tinymce fields
+		if ( class_exists( '\StackBoost\ForSupportCandy\Integration\SupportCandyRepository' ) ) {
+			$sc_repo = new \StackBoost\ForSupportCandy\Integration\SupportCandyRepository();
+			$custom_textareas = $sc_repo->get_textarea_fields();
+			if ( ! empty( $custom_textareas ) ) {
+				foreach ( $custom_textareas as $field ) {
+					if ( ! empty( $field['slug'] ) && ! empty( $field['name'] ) ) {
+						$textarea_fields[ $field['slug'] ] = $field['name'];
+					}
+				}
+			}
 		}
 
-		$text_fields = [];
-		$excluded_slugs = [ 'status', 'df_status', 'category', 'df_category', 'priority', 'df_priority' ];
-
-		foreach ( $all_fields as $slug => $label ) {
-			if ( in_array( $slug, $excluded_slugs, true ) ) {
-				continue;
+		// Fallback: If repo query returned empty custom fields, search columns list for description/textarea/tinymce
+		if ( count( $textarea_fields ) <= 2 && class_exists( '\StackBoost\ForSupportCandy\WordPress\Plugin' ) ) {
+			$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
+			$all_columns      = $plugin_instance->get_supportcandy_columns();
+			foreach ( $all_columns as $slug => $label ) {
+				if ( false !== strpos( strtolower( $slug ), 'description' ) ||
+				     false !== strpos( strtolower( $slug ), 'textarea' ) ||
+				     false !== strpos( strtolower( $slug ), 'tinymce' ) ||
+				     false !== strpos( strtolower( $label ), 'description' ) ||
+				     false !== strpos( strtolower( $label ), 'textarea' ) ) {
+					$textarea_fields[ $slug ] = $label;
+				}
 			}
-			$text_fields[ $slug ] = $label;
 		}
 
 		$categories = [];
@@ -153,7 +171,7 @@ class Core {
 		}
 
 		return [
-			'fields'     => $text_fields,
+			'fields'     => $textarea_fields,
 			'categories' => $categories,
 		];
 	}
