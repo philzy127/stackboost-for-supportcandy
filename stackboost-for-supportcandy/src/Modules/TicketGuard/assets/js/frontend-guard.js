@@ -50,13 +50,14 @@
                 return;
             }
 
-            var monitoredFields = rule.monitored_fields || [];
+            var fieldSlug = rule.monitored_field || (Array.isArray(rule.monitored_fields) && rule.monitored_fields.length ? rule.monitored_fields[0] : '');
+            var monitoredFields = fieldSlug ? [fieldSlug] : (rule.monitored_fields || []);
             var keywords = rule.keywords || [];
             var matched = false;
             var $matchedField = null;
 
-            $.each(monitoredFields, function(i, fieldSlug) {
-                var $field = $('[name="' + fieldSlug + '"], [name="' + fieldSlug + '[]"]');
+            $.each(monitoredFields, function(i, slug) {
+                var $field = $('[name="' + slug + '"], [name="' + slug + '[]"]');
                 if (!$field.length) {
                     return;
                 }
@@ -133,7 +134,7 @@
             '<p style="margin:0 0 15px 0;">' + escapeHtml(bodyText) + '</p>' +
             '</div>' +
             '<div class="stackboost-modal-footer" style="padding:12px 20px;background:#f7f7f7;border-top:1px solid #ddd;display:flex;justify-content:flex-end;gap:10px;">' +
-            '<button type="button" class="button sb-tg-proceed-btn">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.proceed : 'Proceed Anyway') + '</button>';
+            '<button type="button" class="button sb-tg-proceed-btn">' + escapeHtml(stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway') + '</button>';
 
         if (rule.suggested_category) {
             modalHtml += '<button type="button" class="button button-primary sb-tg-swap-cat-btn" data-cat="' + escapeHtml(rule.suggested_category) + '">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Category') + '</button>';

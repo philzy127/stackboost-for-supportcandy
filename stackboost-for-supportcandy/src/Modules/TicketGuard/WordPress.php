@@ -168,7 +168,7 @@ class WordPress extends Module {
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Rule Name', 'stackboost-for-supportcandy' ); ?></th>
-									<th><?php esc_html_e( 'Monitored Fields', 'stackboost-for-supportcandy' ); ?></th>
+									<th><?php esc_html_e( 'Monitored Field', 'stackboost-for-supportcandy' ); ?></th>
 									<th><?php esc_html_e( 'Keywords / Phrases', 'stackboost-for-supportcandy' ); ?></th>
 									<th><?php esc_html_e( 'Actions Enabled', 'stackboost-for-supportcandy' ); ?></th>
 									<th style="width: 120px; text-align: right;"><?php esc_html_e( 'Actions', 'stackboost-for-supportcandy' ); ?></th>
@@ -208,14 +208,15 @@ class WordPress extends Module {
 							<input type="text" id="sb-tg-rule-name" class="widefat" placeholder="<?php esc_attr_e( 'e.g., Steer Billing Keywords away from General Category', 'stackboost-for-supportcandy' ); ?>" />
 						</div>
 
-						<!-- Monitored Fields -->
+						<!-- Monitored Field -->
 						<div class="sb-tg-field-group" style="margin-bottom: 15px;">
-							<label><strong><?php esc_html_e( 'Monitored Fields:', 'stackboost-for-supportcandy' ); ?></strong></label>
-							<div id="sb-tg-fields-checkboxes" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+							<label for="sb-tg-monitored-field"><strong><?php esc_html_e( 'Monitored Field:', 'stackboost-for-supportcandy' ); ?></strong></label>
+							<select id="sb-tg-monitored-field" class="widefat">
+								<option value=""><?php esc_html_e( '-- Select Text Field --', 'stackboost-for-supportcandy' ); ?></option>
 								<?php foreach ( $fields as $slug => $label ) : ?>
-									<label><input type="checkbox" class="sb-tg-field-cb" value="<?php echo esc_attr( $slug ); ?>" /> <?php echo esc_html( $label ); ?></label>
+									<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $label ); ?></option>
 								<?php endforeach; ?>
-							</div>
+							</select>
 						</div>
 
 						<!-- Keywords -->

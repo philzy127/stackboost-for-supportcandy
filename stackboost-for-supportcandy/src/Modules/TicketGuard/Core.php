@@ -77,11 +77,18 @@ class Core {
 				$keywords_array = array_map( 'sanitize_text_field', (array) $keywords_raw );
 			}
 
+			$monitored_field = '';
+			if ( ! empty( $rule['monitored_field'] ) ) {
+				$monitored_field = sanitize_key( $rule['monitored_field'] );
+			} elseif ( ! empty( $rule['monitored_fields'] ) && is_array( $rule['monitored_fields'] ) ) {
+				$monitored_field = sanitize_key( reset( $rule['monitored_fields'] ) );
+			}
+
 			$sanitized_rules[] = [
 				'id'                 => sanitize_key( $rule['id'] ?? ( 'rule_' . wp_rand( 1000, 9999 ) ) ),
 				'name'               => sanitize_text_field( $rule['name'] ?? '' ),
 				'enabled'            => ! empty( $rule['enabled'] ),
-				'monitored_fields'   => array_map( 'sanitize_key', (array) ( $rule['monitored_fields'] ?? [] ) ),
+				'monitored_field'    => $monitored_field,
 				'keywords'           => array_values( $keywords_array ),
 				'trigger_category'   => sanitize_text_field( $rule['trigger_category'] ?? '' ),
 				'suggested_category' => sanitize_text_field( $rule['suggested_category'] ?? '' ),
@@ -118,10 +125,20 @@ class Core {
 	 * @return array
 	 */
 	public function get_form_options(): array {
-		$fields = [];
+		$all_fields = [];
 		if ( class_exists( '\StackBoost\ForSupportCandy\WordPress\Plugin' ) ) {
 			$plugin_instance = \StackBoost\ForSupportCandy\WordPress\Plugin::get_instance();
-			$fields          = $plugin_instance->get_supportcandy_columns();
+			$all_fields      = $plugin_instance->get_supportcandy_columns();
+		}
+
+		$text_fields = [];
+		$excluded_slugs = [ 'status', 'df_status', 'category', 'df_category', 'priority', 'df_priority' ];
+
+		foreach ( $all_fields as $slug => $label ) {
+			if ( in_array( $slug, $excluded_slugs, true ) ) {
+				continue;
+			}
+			$text_fields[ $slug ] = $label;
 		}
 
 		$categories = [];
@@ -136,7 +153,7 @@ class Core {
 		}
 
 		return [
-			'fields'     => $fields,
+			'fields'     => $text_fields,
 			'categories' => $categories,
 		];
 	}
@@ -162,12 +179,16 @@ class Core {
 				continue;
 			}
 
-			$monitored_fields  = (array) ( $rule['monitored_fields'] ?? [] );
+			$monitored_field = $rule['monitored_field'] ?? '';
+			if ( empty( $monitored_field ) && ! empty( $rule['monitored_fields'] ) ) {
+				$monitored_field = is_array( $rule['monitored_fields'] ) ? reset( $rule['monitored_fields'] ) : (string) $rule['monitored_fields'];
+			}
+
 			$keywords          = (array) ( $rule['keywords'] ?? [] );
 			$trigger_category  = $rule['trigger_category'] ?? '';
 			$actions           = $rule['actions'] ?? [];
 
-			if ( empty( $monitored_fields ) || empty( $keywords ) ) {
+			if ( empty( $monitored_field ) || empty( $keywords ) ) {
 				continue;
 			}
 
@@ -178,14 +199,10 @@ class Core {
 				}
 			}
 
-			// Scan fields for keywords
+			// Scan field for keywords
 			$matched = false;
-			foreach ( $monitored_fields as $field_slug ) {
-				if ( empty( $ticket_data[ $field_slug ] ) ) {
-					continue;
-				}
-
-				$content = (string) $ticket_data[ $field_slug ];
+			if ( ! empty( $ticket_data[ $monitored_field ] ) ) {
+				$content = (string) $ticket_data[ $monitored_field ];
 				foreach ( $keywords as $kw ) {
 					if ( empty( trim( $kw ) ) ) {
 						continue;
@@ -193,7 +210,7 @@ class Core {
 
 					if ( false !== stripos( $content, trim( $kw ) ) ) {
 						$matched = true;
-						break 2;
+						break;
 					}
 				}
 			}

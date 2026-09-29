@@ -92,6 +92,7 @@
 
             var ruleId = $('#sb-tg-rule-id').val();
             var name = $.trim($('#sb-tg-rule-name').val());
+            var monitoredField = $('#sb-tg-monitored-field').val();
             var keywordsText = $.trim($('#sb-tg-rule-keywords').val());
 
             if (!name) {
@@ -99,10 +100,10 @@
                 return;
             }
 
-            var monitoredFields = [];
-            $('.sb-tg-field-cb:checked').each(function() {
-                monitoredFields.push($(this).val());
-            });
+            if (!monitoredField) {
+                alert('Please select a Monitored Field.');
+                return;
+            }
 
             var keywords = keywordsText ? keywordsText.split('\n').map(function(k) { return $.trim(k); }).filter(function(k) { return k.length > 0; }) : [];
 
@@ -110,7 +111,8 @@
                 id: ruleId || ('rule_' + Math.floor(Math.random() * 100000)),
                 name: name,
                 enabled: true,
-                monitored_fields: monitoredFields,
+                monitored_field: monitoredField,
+                monitored_fields: [monitoredField],
                 keywords: keywords,
                 trigger_category: $('#sb-tg-trigger-category').val(),
                 suggested_category: $('#sb-tg-suggested-category').val(),
@@ -163,7 +165,8 @@
         $('#sb-tg-no-rules-msg').hide();
 
         $.each(rules, function(i, rule) {
-            var fieldsStr = (rule.monitored_fields || []).join(', ') || 'None';
+            var fieldSlug = rule.monitored_field || (Array.isArray(rule.monitored_fields) ? rule.monitored_fields[0] : '');
+            var fieldLabel = (config.fields && config.fields[fieldSlug]) ? config.fields[fieldSlug] : (fieldSlug || 'None');
             var keywordsStr = (rule.keywords || []).join(', ') || 'None';
 
             var actionsHtml = '';
@@ -177,7 +180,7 @@
 
             var $row = $('<tr>');
             $row.append($('<td>').html('<strong>' + escapeHtml(rule.name || 'Unnamed Rule') + '</strong>'));
-            $row.append($('<td>').text(fieldsStr));
+            $row.append($('<td>').text(fieldLabel));
             $row.append($('<td>').text(keywordsStr));
             $row.append($('<td>').html(actionsHtml));
 
@@ -202,16 +205,13 @@
             $('#sb-tg-modal-title').text('Edit Intake Steering Rule');
             $('#sb-tg-rule-id').val(rule.id);
             $('#sb-tg-rule-name').val(rule.name || '');
+
+            var monitoredSlug = rule.monitored_field || (Array.isArray(rule.monitored_fields) ? rule.monitored_fields[0] : '');
+            $('#sb-tg-monitored-field').val(monitoredSlug || '');
+
             $('#sb-tg-rule-keywords').val((rule.keywords || []).join('\n'));
             $('#sb-tg-trigger-category').val(rule.trigger_category || '');
             $('#sb-tg-suggested-category').val(rule.suggested_category || '');
-
-            $('.sb-tg-field-cb').prop('checked', false);
-            if (rule.monitored_fields) {
-                $.each(rule.monitored_fields, function(idx, slug) {
-                    $('.sb-tg-field-cb[value="' + slug + '"]').prop('checked', true);
-                });
-            }
 
             var acts = rule.actions || {};
             $('#sb-tg-act-disable-submit').prop('checked', !!acts.disable_submit);
@@ -227,10 +227,10 @@
             $('#sb-tg-modal-title').text('Add New Intake Steering Rule');
             $('#sb-tg-rule-id').val('');
             $('#sb-tg-rule-name').val('');
+            $('#sb-tg-monitored-field').val('');
             $('#sb-tg-rule-keywords').val('');
             $('#sb-tg-trigger-category').val('');
             $('#sb-tg-suggested-category').val('');
-            $('.sb-tg-field-cb').prop('checked', true);
             $('#sb-tg-act-disable-submit').prop('checked', true);
             $('#sb-tg-act-show-modal').prop('checked', true);
             $('#sb-tg-act-show-inline').prop('checked', true);
