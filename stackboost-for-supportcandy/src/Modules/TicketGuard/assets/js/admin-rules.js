@@ -26,10 +26,16 @@
             saveConfig(rules, isEnabled, false);
         });
 
-        // Dynamic Swap Target Options population when Swap Field changes
+        // Dynamic Primary Swap Target Options population
         $(document).on('change', '#sb-tg-swap-field', function() {
             var selectedSlug = $(this).val();
             populateSwapValueDropdown(selectedSlug, null);
+        });
+
+        // Dynamic Secondary Swap Target Options population
+        $(document).on('change', '#sb-tg-sec-swap-field', function() {
+            var selectedSlug = $(this).val();
+            populateSecSwapValueDropdown(selectedSlug, null);
         });
 
         // Open Modal: Add Rule (Delegated & Direct Handlers)
@@ -102,6 +108,8 @@
             var keywordsText = $.trim($('#sb-tg-rule-keywords').val());
             var swapField = $('#sb-tg-swap-field').val() || 'df_category';
             var swapValue = $('#sb-tg-swap-value').val() || '';
+            var secSwapField = $('#sb-tg-sec-swap-field').val() || '';
+            var secSwapValue = $('#sb-tg-sec-swap-value').val() || '';
 
             if (!name) {
                 alert('Please enter a Rule Name.');
@@ -124,6 +132,8 @@
                 keywords: keywords,
                 swap_field: swapField,
                 swap_value: swapValue,
+                secondary_swap_field: secSwapField,
+                secondary_swap_value: secSwapValue,
                 suggested_category: swapValue,
                 actions: {
                     disable_submit: $('#sb-tg-act-disable-submit').is(':checked'),
@@ -160,6 +170,25 @@
         var $valSelect = $('#sb-tg-swap-value');
         $valSelect.empty();
         $valSelect.append('<option value="">-- Select Target Option --</option>');
+
+        if (!fieldSlug || !config.dropdowns || !config.dropdowns[fieldSlug]) {
+            return;
+        }
+
+        var optionsList = config.dropdowns[fieldSlug].options || [];
+        $.each(optionsList, function(i, opt) {
+            var $opt = $('<option>').val(opt.id).text(opt.name);
+            if (String(opt.id) === String(selectedVal)) {
+                $opt.prop('selected', true);
+            }
+            $valSelect.append($opt);
+        });
+    }
+
+    function populateSecSwapValueDropdown(fieldSlug, selectedVal) {
+        var $valSelect = $('#sb-tg-sec-swap-value');
+        $valSelect.empty();
+        $valSelect.append('<option value="">-- Select Secondary Option --</option>');
 
         if (!fieldSlug || !config.dropdowns || !config.dropdowns[fieldSlug]) {
             return;
@@ -244,6 +273,11 @@
             $('#sb-tg-swap-field').val(swapField);
             populateSwapValueDropdown(swapField, swapValue);
 
+            var secSwapField = rule.secondary_swap_field || '';
+            var secSwapValue = rule.secondary_swap_value || '';
+            $('#sb-tg-sec-swap-field').val(secSwapField);
+            populateSecSwapValueDropdown(secSwapField, secSwapValue);
+
             var acts = rule.actions || {};
             $('#sb-tg-act-disable-submit').prop('checked', !!acts.disable_submit);
             $('#sb-tg-act-show-modal').prop('checked', !!acts.show_modal);
@@ -264,6 +298,9 @@
             var defaultSwapField = 'df_category';
             $('#sb-tg-swap-field').val(defaultSwapField);
             populateSwapValueDropdown(defaultSwapField, null);
+
+            $('#sb-tg-sec-swap-field').val('');
+            populateSecSwapValueDropdown('', null);
 
             $('#sb-tg-act-disable-submit').prop('checked', true);
             $('#sb-tg-act-show-modal').prop('checked', true);

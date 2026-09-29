@@ -84,25 +84,29 @@ class Core {
 				$monitored_field = sanitize_key( reset( $rule['monitored_fields'] ) );
 			}
 
-			$swap_field = ! empty( $rule['swap_field'] ) ? sanitize_key( $rule['swap_field'] ) : 'df_category';
-			$swap_value = ! empty( $rule['swap_value'] ) ? sanitize_text_field( $rule['swap_value'] ) : ( ! empty( $rule['suggested_category'] ) ? sanitize_text_field( $rule['suggested_category'] ) : '' );
+			$swap_field           = ! empty( $rule['swap_field'] ) ? sanitize_key( $rule['swap_field'] ) : 'df_category';
+			$swap_value           = ! empty( $rule['swap_value'] ) ? sanitize_text_field( $rule['swap_value'] ) : ( ! empty( $rule['suggested_category'] ) ? sanitize_text_field( $rule['suggested_category'] ) : '' );
+			$secondary_swap_field = ! empty( $rule['secondary_swap_field'] ) ? sanitize_key( $rule['secondary_swap_field'] ) : '';
+			$secondary_swap_value = ! empty( $rule['secondary_swap_value'] ) ? sanitize_text_field( $rule['secondary_swap_value'] ) : '';
 
 			$sanitized_rules[] = [
-				'id'                 => sanitize_key( $rule['id'] ?? ( 'rule_' . wp_rand( 1000, 9999 ) ) ),
-				'name'               => sanitize_text_field( $rule['name'] ?? '' ),
-				'enabled'            => ! empty( $rule['enabled'] ),
-				'monitored_field'    => $monitored_field,
-				'keywords'           => array_values( $keywords_array ),
-				'swap_field'         => $swap_field,
-				'swap_value'         => $swap_value,
-				'suggested_category' => $swap_value,
-				'actions'            => [
+				'id'                   => sanitize_key( $rule['id'] ?? ( 'rule_' . wp_rand( 1000, 9999 ) ) ),
+				'name'                 => sanitize_text_field( $rule['name'] ?? '' ),
+				'enabled'              => ! empty( $rule['enabled'] ),
+				'monitored_field'      => $monitored_field,
+				'keywords'             => array_values( $keywords_array ),
+				'swap_field'           => $swap_field,
+				'swap_value'           => $swap_value,
+				'secondary_swap_field' => $secondary_swap_field,
+				'secondary_swap_value' => $secondary_swap_value,
+				'suggested_category'   => $swap_value,
+				'actions'              => [
 					'disable_submit'      => ! empty( $rule['actions']['disable_submit'] ),
 					'show_modal'          => ! empty( $rule['actions']['show_modal'] ),
 					'show_inline_warning' => ! empty( $rule['actions']['show_inline_warning'] ),
 					'auto_swap_category'  => ! empty( $rule['actions']['auto_swap_category'] ),
 				],
-				'messaging'          => [
+				'messaging'            => [
 					'modal_title'    => sanitize_text_field( $rule['messaging']['modal_title'] ?? '' ),
 					'modal_body'     => wp_kses_post( $rule['messaging']['modal_body'] ?? '' ),
 					'inline_warning' => sanitize_text_field( $rule['messaging']['inline_warning'] ?? '' ),
@@ -124,7 +128,7 @@ class Core {
 	}
 
 	/**
-	 * Retrieve all single-select dropdown fields and their available options in SupportCandy.
+	 * Retrieve all choice fields (dropdowns, radio buttons, checkboxes) and their available options in SupportCandy.
 	 *
 	 * @return array
 	 */
@@ -137,12 +141,14 @@ class Core {
 				$type_class = is_object( $field_obj ) ? $field_obj->type : '';
 				$type_slug  = is_string( $type_class ) && class_exists( $type_class ) && isset( $type_class::$slug ) ? $type_class::$slug : (string) $type_class;
 
-				// Check if this field is strictly a single-select dropdown field
-				$is_single_select = in_array( $type_slug, [ 'cf_single_select', 'select', 'single_select', 'df_category', 'df_priority', 'df_status' ], true )
-					|| strpos( strtolower( $type_class ), 'single_select' ) !== false
+				// Check if this field is a choice field (single-select, radio, checkbox, multi-select)
+				$is_choice = in_array( $type_slug, [ 'cf_single_select', 'select', 'single_select', 'radio', 'cf_radio', 'checkbox', 'cf_checkbox', 'multi_select', 'cf_multi_select', 'df_category', 'df_priority', 'df_status' ], true )
+					|| strpos( strtolower( $type_class ), 'select' ) !== false
+					|| strpos( strtolower( $type_class ), 'radio' ) !== false
+					|| strpos( strtolower( $type_class ), 'checkbox' ) !== false
 					|| in_array( $slug, [ 'category', 'df_category', 'priority', 'df_priority', 'status', 'df_status' ], true );
 
-				if ( $is_single_select ) {
+				if ( $is_choice ) {
 					$label = is_object( $field_obj ) ? $field_obj->name : $slug;
 					$opts  = [];
 
@@ -173,7 +179,7 @@ class Core {
 			}
 		}
 
-		// 2. Query database for all single-select fields from psmsc_custom_fields / wpsc_custom_fields
+		// 2. Query database for choice fields from psmsc_custom_fields / wpsc_custom_fields
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
 		$table_name_like = $wpdb->esc_like( $table_name );
@@ -183,7 +189,7 @@ class Core {
 
 		$safe_table = esc_sql( $table_name );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-		$cf_rows = $wpdb->get_results( "SELECT id, slug, name, type FROM `{$safe_table}` WHERE type IN ('select', 'single_select', 'cf_single_select')", ARRAY_A );
+		$cf_rows = $wpdb->get_results( "SELECT id, slug, name, type FROM `{$safe_table}` WHERE type IN ('select', 'single_select', 'cf_single_select', 'radio', 'cf_radio', 'checkbox', 'cf_checkbox', 'multi_select', 'cf_multi_select')", ARRAY_A );
 
 		if ( ! empty( $cf_rows ) ) {
 			$opts_table = $wpdb->prefix . 'psmsc_custom_field_options';
@@ -385,12 +391,19 @@ class Core {
 					stackboost_log( sprintf( 'Ticket Guard Rule Matched on Backend: %s', $rule['name'] ?? 'Unnamed' ), 'ticket_guard' );
 				}
 
-				// If auto-swap category / dropdown action is set, apply swap on backend
-				$swap_field = ! empty( $rule['swap_field'] ) ? $rule['swap_field'] : 'df_category';
-				$swap_value = ! empty( $rule['swap_value'] ) ? $rule['swap_value'] : ( $rule['suggested_category'] ?? '' );
+				// If auto-swap category / dropdown action is set, apply primary & secondary swaps on backend
+				$swap_field           = ! empty( $rule['swap_field'] ) ? $rule['swap_field'] : 'df_category';
+				$swap_value           = ! empty( $rule['swap_value'] ) ? $rule['swap_value'] : ( $rule['suggested_category'] ?? '' );
+				$secondary_swap_field = ! empty( $rule['secondary_swap_field'] ) ? $rule['secondary_swap_field'] : '';
+				$secondary_swap_value = ! empty( $rule['secondary_swap_value'] ) ? $rule['secondary_swap_value'] : '';
 
-				if ( ! empty( $actions['auto_swap_category'] ) && ! empty( $swap_value ) ) {
-					$ticket_data[ $swap_field ] = $swap_value;
+				if ( ! empty( $actions['auto_swap_category'] ) ) {
+					if ( ! empty( $swap_value ) ) {
+						$ticket_data[ $swap_field ] = $swap_value;
+					}
+					if ( ! empty( $secondary_swap_field ) && ! empty( $secondary_swap_value ) ) {
+						$ticket_data[ $secondary_swap_field ] = $secondary_swap_value;
+					}
 				}
 			}
 		}

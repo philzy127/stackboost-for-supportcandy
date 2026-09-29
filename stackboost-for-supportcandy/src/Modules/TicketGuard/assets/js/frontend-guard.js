@@ -99,6 +99,31 @@
         editor.on('keyup input Change ExecCommand SetContent NodeChange', triggerEval);
     }
 
+    function applyFieldSwap(swapField, swapValue) {
+        if (!swapField || !swapValue) return;
+
+        // 1. Try Select / Dropdown
+        var $targetSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
+        if ($targetSelect.length) {
+            $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
+            return;
+        }
+
+        // 2. Try Radio Button
+        var $targetRadio = $('input[type="radio"][name="' + swapField + '"][value="' + swapValue + '"], input[type="radio"][name*="' + swapField + '"][value="' + swapValue + '"]');
+        if ($targetRadio.length) {
+            $targetRadio.prop('checked', true).trigger('change');
+            return;
+        }
+
+        // 3. Try Checkbox
+        var $targetCb = $('input[type="checkbox"][name="' + swapField + '"][value="' + swapValue + '"], input[type="checkbox"][name*="' + swapField + '"][value="' + swapValue + '"]');
+        if ($targetCb.length) {
+            $targetCb.prop('checked', true).trigger('change');
+            return;
+        }
+    }
+
     function evaluateGuardRules(rules) {
         var shouldDisableSubmit = false;
         var modalBlockedRule = null;
@@ -206,10 +231,10 @@
                 var swapField = rule.swap_field || 'df_category';
                 var swapValue = rule.swap_value || rule.suggested_category;
 
-                if (actions.auto_swap_category && swapValue) {
-                    var $targetSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
-                    if ($targetSelect.length && $targetSelect.val() !== swapValue) {
-                        $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
+                if (actions.auto_swap_category) {
+                    applyFieldSwap(swapField, swapValue);
+                    if (rule.secondary_swap_field && rule.secondary_swap_value) {
+                        applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
                     }
                 }
             }
@@ -281,7 +306,7 @@
 
         if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
 
-        var changeCatText = stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Option';
+        var changeCatText = stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Options';
         var proceedText = stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway';
 
         var swapField = rule.swap_field || 'df_category';
@@ -292,11 +317,11 @@
                 '<p style="font-size:14px;line-height:1.5;margin:0;">' + escapeHtml(bodyText) + '</p>',
                 title,
                 function onConfirm() {
-                    // Switch Target Option
+                    // Switch Target Options
                     if (rule.id) window._tgModalDismissedRules[rule.id] = true;
-                    var $targetSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
-                    if ($targetSelect.length) {
-                        $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
+                    applyFieldSwap(swapField, swapValue);
+                    if (rule.secondary_swap_field && rule.secondary_swap_value) {
+                        applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
                     }
                 },
                 function onCancel() {
@@ -382,10 +407,9 @@
 
         $overlay.find('.sb-tg-swap-cat-btn').on('click', function() {
             if (rule && rule.id) window._tgModalDismissedRules[rule.id] = true;
-            var catId = $(this).data('cat');
-            var $catSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
-            if ($catSelect.length && catId) {
-                $catSelect.val(catId).trigger('change').trigger('change.select2');
+            applyFieldSwap(swapField, swapValue);
+            if (rule.secondary_swap_field && rule.secondary_swap_value) {
+                applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
             }
             $overlay.remove();
         });

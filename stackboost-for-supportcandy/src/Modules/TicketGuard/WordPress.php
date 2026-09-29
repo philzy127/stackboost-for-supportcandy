@@ -227,12 +227,12 @@ class WordPress extends Module {
 							<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: Use & to require multiple phrases on the same line (e.g. "UC Portal & Password"). Each new line acts as an OR condition.', 'stackboost-for-supportcandy' ); ?></p>
 						</div>
 
-						<!-- Dropdown Field to Swap & Target Option -->
+						<!-- Primary Field to Swap & Target Option -->
 						<div style="display: flex; gap: 20px; margin-bottom: 15px;">
 							<div style="flex: 1;">
-								<label for="sb-tg-swap-field"><strong><?php esc_html_e( 'Dropdown Field to Swap:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<label for="sb-tg-swap-field"><strong><?php esc_html_e( 'Primary Field to Swap:', 'stackboost-for-supportcandy' ); ?></strong></label>
 								<select id="sb-tg-swap-field" class="widefat">
-									<option value=""><?php esc_html_e( '-- Select Dropdown Field --', 'stackboost-for-supportcandy' ); ?></option>
+									<option value=""><?php esc_html_e( '-- Select Primary Field --', 'stackboost-for-supportcandy' ); ?></option>
 									<?php foreach ( $dropdowns as $slug => $d_info ) : ?>
 										<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $d_info['label'] ); ?></option>
 									<?php endforeach; ?>
@@ -240,9 +240,29 @@ class WordPress extends Module {
 							</div>
 
 							<div style="flex: 1;">
-								<label for="sb-tg-swap-value"><strong><?php esc_html_e( 'Target Option to Select:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<label for="sb-tg-swap-value"><strong><?php esc_html_e( 'Primary Target Option:', 'stackboost-for-supportcandy' ); ?></strong></label>
 								<select id="sb-tg-swap-value" class="widefat">
 									<option value=""><?php esc_html_e( '-- Select Target Option --', 'stackboost-for-supportcandy' ); ?></option>
+								</select>
+							</div>
+						</div>
+
+						<!-- Secondary Field to Swap (Dropdown/Radio/Checkbox) & Target Option -->
+						<div style="display: flex; gap: 20px; margin-bottom: 15px;">
+							<div style="flex: 1;">
+								<label for="sb-tg-sec-swap-field"><strong><?php esc_html_e( 'Secondary Field to Swap (Optional):', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<select id="sb-tg-sec-swap-field" class="widefat">
+									<option value=""><?php esc_html_e( '-- Select Secondary Field --', 'stackboost-for-supportcandy' ); ?></option>
+									<?php foreach ( $dropdowns as $slug => $d_info ) : ?>
+										<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $d_info['label'] ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+
+							<div style="flex: 1;">
+								<label for="sb-tg-sec-swap-value"><strong><?php esc_html_e( 'Secondary Target Option:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<select id="sb-tg-sec-swap-value" class="widefat">
+									<option value=""><?php esc_html_e( '-- Select Secondary Option --', 'stackboost-for-supportcandy' ); ?></option>
 								</select>
 							</div>
 						</div>
@@ -254,7 +274,7 @@ class WordPress extends Module {
 								<label><input type="checkbox" id="sb-tg-act-disable-submit" /> <?php esc_html_e( 'Disable Submit Button when matched', 'stackboost-for-supportcandy' ); ?></label>
 								<label><input type="checkbox" id="sb-tg-act-show-modal" /> <?php esc_html_e( 'Display Guidance Modal Popup', 'stackboost-for-supportcandy' ); ?></label>
 								<label><input type="checkbox" id="sb-tg-act-show-inline" /> <?php esc_html_e( 'Show Real-Time Inline Warning Banner', 'stackboost-for-supportcandy' ); ?></label>
-								<label><input type="checkbox" id="sb-tg-act-auto-swap" /> <?php esc_html_e( 'Automatically Swap Selected Dropdown to Target Option', 'stackboost-for-supportcandy' ); ?></label>
+								<label><input type="checkbox" id="sb-tg-act-auto-swap" /> <?php esc_html_e( 'Automatically Swap Selected Fields to Target Options', 'stackboost-for-supportcandy' ); ?></label>
 							</div>
 						</div>
 
@@ -358,7 +378,7 @@ class WordPress extends Module {
 			'rules'   => array_values( $core->get_rules() ),
 			'i18n'    => [
 				'notice_title'   => __( 'Category Guidance', 'stackboost-for-supportcandy' ),
-				'change_category' => __( 'Switch Option', 'stackboost-for-supportcandy' ),
+				'change_category' => __( 'Switch Options', 'stackboost-for-supportcandy' ),
 				'proceed_anyway'  => __( 'Proceed Anyway', 'stackboost-for-supportcandy' ),
 				'dismiss'         => __( 'Dismiss', 'stackboost-for-supportcandy' ),
 			]
