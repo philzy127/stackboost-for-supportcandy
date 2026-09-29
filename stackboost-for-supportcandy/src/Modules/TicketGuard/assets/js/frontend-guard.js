@@ -2,7 +2,7 @@
     'use strict';
 
     var debounceTimer = null;
-    var submitBtnSelector = '.wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button.wpsc-btn, button[onclick*="wpsc"], button[type="submit"], input[type="submit"]';
+    var submitBtnSelector = '#wpsc-ct-submit, .wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button.wpsc-btn, button[onclick*="wpsc"], button[type="submit"], input[type="submit"]';
 
     $(document).ready(function() {
         if (typeof stackboostTicketGuard === 'undefined' || !stackboostTicketGuard.enabled) {
@@ -206,9 +206,17 @@
             var btnEl = this;
 
             if (shouldDisableSubmit) {
-                $btn.addClass('stackboost-tg-submit-disabled').prop('disabled', true);
+                $btn.prop('disabled', true).addClass('stackboost-tg-submit-disabled').css({
+                    'opacity': '0.5',
+                    'cursor': 'not-allowed',
+                    'pointer-events': 'none'
+                });
             } else {
-                $btn.removeClass('stackboost-tg-submit-disabled').prop('disabled', false);
+                $btn.prop('disabled', false).removeClass('stackboost-tg-submit-disabled').css({
+                    'opacity': '1',
+                    'cursor': 'pointer',
+                    'pointer-events': 'auto'
+                });
             }
 
             if (modalBlockedRule) {
@@ -246,6 +254,58 @@
     }
 
     function showGuidanceModal($btn, rule) {
+        var msgs = rule.messaging || {};
+        var title = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
+        var bodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
+
+        if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
+
+        var changeCatText = stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Category';
+        var proceedText = stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway';
+
+        if (rule.suggested_category && typeof window.stackboostConfirm === 'function') {
+            window.stackboostConfirm(
+                '<p style="font-size:14px;line-height:1.5;margin:0;">' + escapeHtml(bodyText) + '</p>',
+                title,
+                function onConfirm() {
+                    // Switch Category
+                    if (rule.id) window._tgModalDismissedRules[rule.id] = true;
+                    var catId = rule.suggested_category;
+                    var $catSelect = $('select[name="df_category"], select[name="category"], select[name*="category"]');
+                    if ($catSelect.length && catId) {
+                        $catSelect.val(catId).trigger('change').trigger('change.select2');
+                    }
+                },
+                function onCancel() {
+                    // Proceed Anyway
+                    if (rule.id) window._tgModalDismissedRules[rule.id] = true;
+                    if ($btn && $btn.length) {
+                        $btn.data('tg-modal-bypassed', true);
+                        var btnEl = $btn.get(0);
+                        if (btnEl && btnEl._tgOriginalOnClick) {
+                            btnEl._tgOriginalOnClick.call(btnEl);
+                        } else {
+                            $btn.trigger('click');
+                        }
+                    }
+                },
+                changeCatText,
+                proceedText
+            );
+        } else if (typeof window.stackboostAlert === 'function') {
+            window.stackboostAlert(
+                '<p style="font-size:14px;line-height:1.5;margin:0;">' + escapeHtml(bodyText) + '</p>',
+                title,
+                function() {
+                    if (rule.id) window._tgModalDismissedRules[rule.id] = true;
+                }
+            );
+        } else {
+            fallbackShowGuidanceModal($btn, rule);
+        }
+    }
+
+    function fallbackShowGuidanceModal($btn, rule) {
         $('.stackboost-tg-modal-overlay').remove();
 
         var msgs = rule.messaging || {};
@@ -274,8 +334,6 @@
 
         var $overlay = $(modalHtml);
         $('body').append($overlay);
-
-        if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
 
         $overlay.find('.sb-tg-close-modal').on('click', function() {
             if (rule && rule.id) window._tgModalDismissedRules[rule.id] = true;
