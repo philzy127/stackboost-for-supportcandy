@@ -107,10 +107,11 @@ class Core {
 					'auto_swap_category'  => ! empty( $rule['actions']['auto_swap_category'] ),
 				],
 				'messaging'            => [
-					'modal_title'    => sanitize_text_field( $rule['messaging']['modal_title'] ?? '' ),
-					'modal_body'     => wp_kses_post( $rule['messaging']['modal_body'] ?? '' ),
-					'inline_warning' => sanitize_text_field( $rule['messaging']['inline_warning'] ?? '' ),
-					'inline_level'   => sanitize_key( $rule['messaging']['inline_level'] ?? 'alert' ),
+					'modal_title'             => sanitize_text_field( $rule['messaging']['modal_title'] ?? '' ),
+					'modal_body'              => wp_kses_post( $rule['messaging']['modal_body'] ?? '' ),
+					'inline_warning'          => sanitize_text_field( $rule['messaging']['inline_warning'] ?? '' ),
+					'inline_level'            => sanitize_key( $rule['messaging']['inline_level'] ?? 'alert' ),
+					'submit_disabled_message' => sanitize_text_field( $rule['messaging']['submit_disabled_message'] ?? '' ),
 				],
 			];
 		}

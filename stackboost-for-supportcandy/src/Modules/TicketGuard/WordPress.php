@@ -238,6 +238,15 @@ class WordPress extends Module {
 							</div>
 						</div>
 
+						<!-- Submit Disabled Message (Conditional) -->
+						<div id="sb-tg-submit-msg-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
+							<div class="sb-tg-field-group">
+								<label for="sb-tg-submit-disabled-msg"><strong><?php esc_html_e( 'Submit Disabled Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<input type="text" id="sb-tg-submit-disabled-msg" class="widefat" placeholder="<?php esc_attr_e( 'Submit button disabled: Please review your entry or category selection.', 'stackboost-for-supportcandy' ); ?>" />
+								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Displayed near the submit button when it is disabled by this rule.', 'stackboost-for-supportcandy' ); ?></p>
+							</div>
+						</div>
+
 						<!-- Field Swap Options (Conditional) -->
 						<div id="sb-tg-swap-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
 							<!-- Primary Field to Swap & Target Option -->

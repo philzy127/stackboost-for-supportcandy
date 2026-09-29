@@ -27,7 +27,7 @@
         });
 
         // Toggle visibility of conditional action sub-options
-        $(document).on('change', '#sb-tg-act-auto-swap, #sb-tg-act-show-modal, #sb-tg-act-show-inline', function() {
+        $(document).on('change', '#sb-tg-act-disable-submit, #sb-tg-act-auto-swap, #sb-tg-act-show-modal, #sb-tg-act-show-inline', function() {
             toggleConditionalSections();
         });
 
@@ -151,7 +151,8 @@
                     modal_title: $.trim($('#sb-tg-modal-custom-title').val()),
                     modal_body: $.trim($('#sb-tg-modal-custom-body').val()),
                     inline_warning: $.trim($('#sb-tg-inline-warning').val()),
-                    inline_level: inlineLevel
+                    inline_level: inlineLevel,
+                    submit_disabled_message: $.trim($('#sb-tg-submit-disabled-msg').val())
                 }
             };
 
@@ -174,6 +175,12 @@
     });
 
     function toggleConditionalSections() {
+        if ($('#sb-tg-act-disable-submit').is(':checked')) {
+            $('#sb-tg-submit-msg-container').slideDown(150);
+        } else {
+            $('#sb-tg-submit-msg-container').slideUp(150);
+        }
+
         if ($('#sb-tg-act-auto-swap').is(':checked')) {
             $('#sb-tg-swap-container').slideDown(150);
         } else {
@@ -316,6 +323,7 @@
             $('#sb-tg-modal-custom-body').val(msgs.modal_body || '');
             $('#sb-tg-inline-warning').val(msgs.inline_warning || '');
             $('#sb-tg-inline-level').val(msgs.inline_level || 'alert');
+            $('#sb-tg-submit-disabled-msg').val(msgs.submit_disabled_message || '');
         } else {
             $('#sb-tg-modal-title').text('Add New Intake Steering Rule');
             $('#sb-tg-rule-id').val('');
@@ -339,6 +347,7 @@
             $('#sb-tg-modal-custom-body').val('');
             $('#sb-tg-inline-warning').val('');
             $('#sb-tg-inline-level').val('alert');
+            $('#sb-tg-submit-disabled-msg').val('');
         }
 
         toggleConditionalSections();

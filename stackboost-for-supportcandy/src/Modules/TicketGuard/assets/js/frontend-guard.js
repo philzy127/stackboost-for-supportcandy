@@ -2,7 +2,8 @@
     'use strict';
 
     var debounceTimer = null;
-    var submitBtnSelector = '#wpsc-ct-submit, .wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button.wpsc-btn, button[onclick*="wpsc"], button[type="submit"], input[type="submit"]';
+    var submitBtnSelector = '#wpsc-ct-submit, .wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button[type="submit"], input[type="submit"]';
+    var resetBtnSelector = '#wpsc-ct-reset, .wpsc-reset-btn, button[type="reset"], input[type="reset"], button[onclick*="reset"]';
 
     $(document).ready(function() {
         if (typeof stackboostTicketGuard === 'undefined' || !stackboostTicketGuard.enabled) {
@@ -17,6 +18,8 @@
         // Real-time observer on standard text input/textarea fields
         $(document).on('input keyup paste change', 'input[type="text"], textarea', function() {
             window._tgModalDismissedRules = {}; // Reset dismissal tracking on user edit re-incident
+            window._tgCircuitBreakerActive = false; // Reset circuit breaker on genuine user input
+            window._tgEvalHistory = [];
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(function() {
                 evaluateGuardRules(rules);
@@ -26,14 +29,37 @@
         // Initialize TinyMCE / Rich Text Editor Real-time Observer
         initTinyMCEObserver(rules);
 
-        // Re-evaluate on dynamic SupportCandy AJAX form loads & TinyMCE init
+        // Explicit Reset Button Click Handler - NEVER block or disable reset buttons
+        $(document).on('click', resetBtnSelector, function() {
+            window._tgModalDismissedRules = {};
+            window._tgModalShownRuleId = null;
+            window._tgCircuitBreakerActive = false;
+            window._tgEvalHistory = [];
+            $('.stackboost-tg-banner, #sb-tg-submit-disabled-banner').remove();
+
+            var $submitBtns = $(submitBtnSelector);
+            $submitBtns.prop('disabled', false).removeClass('stackboost-tg-submit-disabled').css({
+                'opacity': '1',
+                'cursor': 'pointer',
+                'pointer-events': 'auto',
+                'filter': 'none'
+            }).data('tg-modal-blocked', false).removeData('tg-modal-rule').removeData('tg-modal-bypassed');
+
+            setTimeout(function() {
+                evaluateGuardRules(rules);
+            }, 150);
+        });
+
+        // Re-evaluate ONLY when a new SupportCandy ticket form is dynamically loaded
         $(document).ajaxComplete(function(e, xhr, settings) {
-            if (settings && settings.data) {
-                var dataStr = typeof settings.data === 'string' ? settings.data : (typeof settings.data === 'object' ? JSON.stringify(settings.data) : '');
-                if (dataStr.indexOf('wpsc_check_tff_visibility') !== -1) {
-                    return; // Ignore SupportCandy field visibility AJAX requests to prevent recursion
-                }
+            if (!settings || !settings.data) return;
+            var dataStr = typeof settings.data === 'string' ? settings.data : (typeof settings.data === 'object' ? JSON.stringify(settings.data) : '');
+
+            // STRICT FILTER: ONLY trigger when explicitly loading a ticket form
+            if (dataStr.indexOf('wpsc_get_ticket_form') === -1 && dataStr.indexOf('wpsc_open_ticket') === -1) {
+                return; // Ignore ALL other AJAX calls (visibility checks, options, updates, etc.)
             }
+
             initTinyMCEObserver(rules);
             evaluateGuardRules(rules);
         });
@@ -45,6 +71,11 @@
         window.addEventListener('click', function(e) {
             var btn = e.target ? e.target.closest(submitBtnSelector) : null;
             if (!btn) return;
+
+            // Ensure reset button was not clicked by mistake
+            if (e.target && e.target.closest(resetBtnSelector)) {
+                return;
+            }
 
             var $btn = $(btn);
 
@@ -96,6 +127,8 @@
             } catch (err) {}
 
             window._tgModalDismissedRules = {}; // Reset dismissal tracking on user edit re-incident
+            window._tgCircuitBreakerActive = false; // Reset circuit breaker on genuine user typing
+            window._tgEvalHistory = [];
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(function() {
                 evaluateGuardRules(rules);
@@ -108,32 +141,40 @@
     function applyFieldSwap(swapField, swapValue) {
         if (!swapField || !swapValue || window._tgSwapping) return;
 
+        var strSwapValue = String(swapValue);
+
         window._tgSwapping = true;
         try {
             // 1. Try Select / Dropdown
             var $targetSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
             if ($targetSelect.length) {
-                if ($targetSelect.val() !== String(swapValue)) {
-                    $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
+                var currentVal = $targetSelect.val();
+                if (Array.isArray(currentVal)) {
+                    if (currentVal.indexOf(strSwapValue) !== -1 || currentVal.join(',') === strSwapValue) return;
+                } else if (String(currentVal) === strSwapValue || $targetSelect.data('tg-swapped') === strSwapValue) {
+                    return; // Already set to this option, do NOT fire change event again
                 }
+
+                $targetSelect.data('tg-swapped', strSwapValue);
+                $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
                 return;
             }
 
             // 2. Try Radio Button
             var $targetRadio = $('input[type="radio"][name="' + swapField + '"][value="' + swapValue + '"], input[type="radio"][name*="' + swapField + '"][value="' + swapValue + '"]');
             if ($targetRadio.length) {
-                if (!$targetRadio.is(':checked')) {
-                    $targetRadio.prop('checked', true).trigger('change');
-                }
+                if ($targetRadio.is(':checked')) return; // Already checked
+
+                $targetRadio.prop('checked', true).trigger('change');
                 return;
             }
 
             // 3. Try Checkbox
             var $targetCb = $('input[type="checkbox"][name="' + swapField + '"][value="' + swapValue + '"], input[type="checkbox"][name*="' + swapField + '"][value="' + swapValue + '"]');
             if ($targetCb.length) {
-                if (!$targetCb.is(':checked')) {
-                    $targetCb.prop('checked', true).trigger('change');
-                }
+                if ($targetCb.is(':checked')) return; // Already checked
+
+                $targetCb.prop('checked', true).trigger('change');
                 return;
             }
         } finally {
@@ -142,185 +183,219 @@
     }
 
     function evaluateGuardRules(rules) {
-        var shouldDisableSubmit = false;
-        var modalBlockedRule = null;
-        var matchedRuleId = null;
+        if (window._tgIsEvaluating || window._tgSwapping || window._tgCircuitBreakerActive) {
+            return;
+        }
 
-        // Remove existing inline banners
-        $('.stackboost-tg-banner').remove();
+        var now = Date.now();
+        if (!window._tgEvalHistory) window._tgEvalHistory = [];
+        window._tgEvalHistory = window._tgEvalHistory.filter(function(t) { return now - t < 1000; });
+        window._tgEvalHistory.push(now);
 
-        $.each(rules, function(index, rule) {
-            if (!rule.enabled) {
-                return;
-            }
+        if (window._tgEvalHistory.length > 3) {
+            window._tgCircuitBreakerActive = true;
+            console.warn('[TicketGuard] Circuit breaker tripped (more than 3 evaluations in 1 second). Pausing auto-evaluation until next user keystroke.');
+            return;
+        }
 
-            var fieldSlug = rule.monitored_field || (Array.isArray(rule.monitored_fields) && rule.monitored_fields.length ? rule.monitored_fields[0] : '');
-            var monitoredFields = fieldSlug ? [fieldSlug] : (rule.monitored_fields || []);
-            var keywords = rule.keywords || [];
-            var matched = false;
-            var $matchedField = null;
+        window._tgIsEvaluating = true;
 
-            $.each(monitoredFields, function(i, slug) {
-                if (!slug) return;
+        try {
+            var shouldDisableSubmit = false;
+            var disableSubmitMsg = null;
+            var modalBlockedRule = null;
+            var matchedRuleId = null;
 
-                // Try multiple DOM selector patterns for SupportCandy custom/included fields
-                var $field = $('[name="' + slug + '"], [name="' + slug + '[]"], [name*="[' + slug + ']"], #' + slug);
+            // Remove existing inline banners
+            $('.stackboost-tg-banner').remove();
 
-                // Check TinyMCE instance
-                var editorInstance = (typeof tinymce !== 'undefined') ? (tinymce.get(slug) || (tinymce.editors && tinymce.editors[0])) : null;
+            $.each(rules, function(index, rule) {
+                if (!rule.enabled) {
+                    return;
+                }
 
-                var val = '';
-                if (editorInstance) {
-                    try {
-                        val = editorInstance.getContent({ format: 'text' }) || editorInstance.getContent() || '';
-                    } catch (e) {
-                        val = '';
+                var fieldSlug = rule.monitored_field || (Array.isArray(rule.monitored_fields) && rule.monitored_fields.length ? rule.monitored_fields[0] : '');
+                var monitoredFields = fieldSlug ? [fieldSlug] : (rule.monitored_fields || []);
+                var keywords = rule.keywords || [];
+                var matched = false;
+                var $matchedField = null;
+
+                $.each(monitoredFields, function(i, slug) {
+                    if (!slug) return;
+
+                    // Try multiple DOM selector patterns for SupportCandy custom/included fields
+                    var $field = $('[name="' + slug + '"], [name="' + slug + '[]"], [name*="[' + slug + ']"], #' + slug);
+
+                    // Check TinyMCE instance
+                    var editorInstance = (typeof tinymce !== 'undefined') ? (tinymce.get(slug) || (tinymce.editors && tinymce.editors[0])) : null;
+
+                    var val = '';
+                    if (editorInstance) {
+                        try {
+                            val = editorInstance.getContent({ format: 'text' }) || editorInstance.getContent() || '';
+                        } catch (e) {
+                            val = '';
+                        }
                     }
-                }
 
-                if (!val && $field.length) {
-                    val = $field.val() || '';
-                }
-
-                if (!$field.length && editorInstance) {
-                    $matchedField = $(editorInstance.getContainer());
-                } else if ($field.length) {
-                    $matchedField = $field;
-                } else {
-                    $matchedField = $('textarea').first();
-                    if ($matchedField.length && !val) {
-                        val = $matchedField.val() || '';
+                    if (!val && $field.length) {
+                        val = $field.val() || '';
                     }
-                }
 
-                var valLower = val.toLowerCase();
+                    if (!$field.length && editorInstance) {
+                        $matchedField = $(editorInstance.getContainer());
+                    } else if ($field.length) {
+                        $matchedField = $field;
+                    } else {
+                        $matchedField = $('textarea').first();
+                        if ($matchedField.length && !val) {
+                            val = $matchedField.val() || '';
+                        }
+                    }
 
-                $.each(keywords, function(k, kwLine) {
-                    kwLine = $.trim(kwLine);
-                    if (!kwLine) return;
+                    var valLower = val.toLowerCase();
 
-                    // Compound AND matching via &
-                    var parts = kwLine.split('&').map(function(p) { return $.trim(p); }).filter(function(p) { return p.length > 0; });
-                    if (!parts.length) return;
+                    $.each(keywords, function(k, kwLine) {
+                        kwLine = $.trim(kwLine);
+                        if (!kwLine) return;
 
-                    var lineMatches = true;
-                    $.each(parts, function(pIdx, subKw) {
-                        if (valLower.indexOf(subKw.toLowerCase()) === -1) {
-                            lineMatches = false;
+                        // Compound AND matching via &
+                        var parts = kwLine.split('&').map(function(p) { return $.trim(p); }).filter(function(p) { return p.length > 0; });
+                        if (!parts.length) return;
+
+                        var lineMatches = true;
+                        $.each(parts, function(pIdx, subKw) {
+                            if (valLower.indexOf(subKw.toLowerCase()) === -1) {
+                                lineMatches = false;
+                                return false;
+                            }
+                        });
+
+                        if (lineMatches) {
+                            matched = true;
                             return false;
                         }
                     });
 
-                    if (lineMatches) {
-                        matched = true;
-                        return false;
-                    }
+                    if (matched) return false;
                 });
 
-                if (matched) return false;
+                if (matched) {
+                    matchedRuleId = rule.id;
+                    var actions = rule.actions || {};
+
+                    if (actions.disable_submit) {
+                        shouldDisableSubmit = true;
+                        if (rule.messaging && rule.messaging.submit_disabled_message) {
+                            disableSubmitMsg = rule.messaging.submit_disabled_message;
+                        } else if (!disableSubmitMsg) {
+                            disableSubmitMsg = 'Submit button disabled: Please review your entry or category selection.';
+                        }
+                    }
+
+                    if (actions.show_modal) {
+                        modalBlockedRule = rule;
+
+                        var isDismissed = window._tgModalDismissedRules && window._tgModalDismissedRules[rule.id];
+                        if (window._tgModalShownRuleId !== rule.id && !isDismissed) {
+                            window._tgModalShownRuleId = rule.id;
+                            var $targetBtn = $(submitBtnSelector).first();
+                            showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
+                        }
+                    }
+
+                    if (actions.show_inline_warning && $matchedField && $matchedField.length) {
+                        var warnText = (rule.messaging && rule.messaging.inline_warning) ? rule.messaging.inline_warning : 'Keywords detected: Please ensure appropriate category selection.';
+                        var level = (rule.messaging && rule.messaging.inline_level) ? rule.messaging.inline_level : 'alert';
+                        var iconClass = 'dashicons-warning';
+                        if (level === 'info') {
+                            iconClass = 'dashicons-info';
+                        } else if (level === 'warning') {
+                            iconClass = 'dashicons-dismiss';
+                        }
+                        var $banner = $('<div class="stackboost-tg-banner sb-tg-' + escapeHtml(level) + '"><span class="dashicons ' + iconClass + '"></span><span>' + escapeHtml(warnText) + '</span></div>');
+                        $matchedField.after($banner);
+                    }
+
+                    var swapField = rule.swap_field || '';
+                    var swapValue = rule.swap_value || rule.suggested_category;
+
+                    if (actions.auto_swap_category && swapField && swapValue) {
+                        applyFieldSwap(swapField, swapValue);
+                        if (rule.secondary_swap_field && rule.secondary_swap_value) {
+                            applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                        }
+                    }
+                }
             });
 
-            if (matched) {
-                matchedRuleId = rule.id;
-                var actions = rule.actions || {};
-
-                if (actions.disable_submit) {
-                    shouldDisableSubmit = true;
-                }
-
-                if (actions.show_modal) {
-                    modalBlockedRule = rule;
-
-                    var isDismissed = window._tgModalDismissedRules && window._tgModalDismissedRules[rule.id];
-                    if (window._tgModalShownRuleId !== rule.id && !isDismissed) {
-                        window._tgModalShownRuleId = rule.id;
-                        var $targetBtn = $(submitBtnSelector).first();
-                        showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
-                    }
-                }
-
-                if (actions.show_inline_warning && $matchedField && $matchedField.length) {
-                    var warnText = (rule.messaging && rule.messaging.inline_warning) ? rule.messaging.inline_warning : 'Keywords detected: Please ensure appropriate category selection.';
-                    var level = (rule.messaging && rule.messaging.inline_level) ? rule.messaging.inline_level : 'alert';
-                    var iconClass = 'dashicons-warning';
-                    if (level === 'info') {
-                        iconClass = 'dashicons-info';
-                    } else if (level === 'warning') {
-                        iconClass = 'dashicons-dismiss';
-                    }
-                    var $banner = $('<div class="stackboost-tg-banner sb-tg-' + escapeHtml(level) + '"><span class="dashicons ' + iconClass + '"></span><span>' + escapeHtml(warnText) + '</span></div>');
-                    $matchedField.after($banner);
-                }
-
-                var swapField = rule.swap_field || 'df_category';
-                var swapValue = rule.swap_value || rule.suggested_category;
-
-                if (actions.auto_swap_category) {
-                    applyFieldSwap(swapField, swapValue);
-                    if (rule.secondary_swap_field && rule.secondary_swap_value) {
-                        applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                    }
-                }
-            }
-        });
-
-        if (!matchedRuleId) {
-            window._tgModalShownRuleId = null;
-        }
-
-        // Apply consolidated submit button state across all rules
-        var $submitBtns = $(submitBtnSelector);
-
-        $submitBtns.each(function() {
-            var $btn = $(this);
-            var btnEl = this;
-
-            if (shouldDisableSubmit) {
-                $btn.prop('disabled', true).addClass('stackboost-tg-submit-disabled').css({
-                    'opacity': '0.5',
-                    'cursor': 'not-allowed',
-                    'pointer-events': 'none'
-                });
-            } else {
-                $btn.prop('disabled', false).removeClass('stackboost-tg-submit-disabled').css({
-                    'opacity': '1',
-                    'cursor': 'pointer',
-                    'pointer-events': 'auto'
-                });
+            if (!matchedRuleId) {
+                window._tgModalShownRuleId = null;
             }
 
-            if (modalBlockedRule) {
-                $btn.data('tg-modal-blocked', true).data('tg-modal-rule', modalBlockedRule);
+            // Apply consolidated submit button state across all rules
+            var $submitBtns = $(submitBtnSelector);
+            $('#sb-tg-submit-disabled-banner').remove();
 
-                if (!btnEl._tgOriginalOnClick && btnEl.onclick) {
-                    btnEl._tgOriginalOnClick = btnEl.onclick;
+            if (shouldDisableSubmit && $submitBtns.length) {
+                var bannerText = disableSubmitMsg || 'Submit button disabled: Please review your entry or category selection.';
+                var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning"><span class="dashicons dashicons-lock"></span><span>' + escapeHtml(bannerText) + '</span></div>');
+                $submitBtns.first().before($disBanner);
+            }
+
+            $submitBtns.each(function() {
+                var $btn = $(this);
+                var btnEl = this;
+
+                if (shouldDisableSubmit) {
+                    $btn.prop('disabled', true).addClass('stackboost-tg-submit-disabled').css({
+                        'opacity': '0.5',
+                        'cursor': 'not-allowed',
+                        'pointer-events': 'none'
+                    });
+                } else {
+                    $btn.prop('disabled', false).removeClass('stackboost-tg-submit-disabled').css({
+                        'opacity': '1',
+                        'cursor': 'pointer',
+                        'pointer-events': 'auto'
+                    });
                 }
 
-                btnEl.onclick = function(e) {
-                    if ($btn.data('tg-modal-bypassed')) {
-                        if (btnEl._tgOriginalOnClick) {
-                            return btnEl._tgOriginalOnClick.call(btnEl, e);
+                if (modalBlockedRule) {
+                    $btn.data('tg-modal-blocked', true).data('tg-modal-rule', modalBlockedRule);
+
+                    if (!btnEl._tgOriginalOnClick && btnEl.onclick) {
+                        btnEl._tgOriginalOnClick = btnEl.onclick;
+                    }
+
+                    btnEl.onclick = function(e) {
+                        if ($btn.data('tg-modal-bypassed')) {
+                            if (btnEl._tgOriginalOnClick) {
+                                return btnEl._tgOriginalOnClick.call(btnEl, e);
+                            }
+                            return true;
                         }
-                        return true;
+
+                        if (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                        }
+
+                        showGuidanceModal($btn, modalBlockedRule, true); // Direct user click
+                        return false;
+                    };
+
+                } else {
+                    $btn.data('tg-modal-blocked', false).removeData('tg-modal-rule');
+                    if (btnEl._tgOriginalOnClick) {
+                        btnEl.onclick = btnEl._tgOriginalOnClick;
                     }
-
-                    if (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-                    }
-
-                    showGuidanceModal($btn, modalBlockedRule, true); // Direct user click
-                    return false;
-                };
-
-            } else {
-                $btn.data('tg-modal-blocked', false).removeData('tg-modal-rule');
-                if (btnEl._tgOriginalOnClick) {
-                    btnEl.onclick = btnEl._tgOriginalOnClick;
                 }
-            }
-        });
+            });
+        } finally {
+            window._tgIsEvaluating = false;
+        }
     }
 
     function showGuidanceModal($btn, rule, isUserSubmitClick) {
@@ -333,7 +408,7 @@
         var changeCatText = stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Options';
         var proceedText = stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway';
 
-        var swapField = rule.swap_field || 'df_category';
+        var swapField = rule.swap_field || '';
         var swapValue = rule.swap_value || rule.suggested_category;
 
         if (swapValue && typeof window.stackboostConfirm === 'function') {
@@ -386,7 +461,7 @@
         var title = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
         var bodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
 
-        var swapField = rule.swap_field || 'df_category';
+        var swapField = rule.swap_field || '';
         var swapValue = rule.swap_value || rule.suggested_category;
 
         var modalHtml = '<div class="stackboost-modal-overlay stackboost-tg-modal-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999999;display:flex;align-items:center;justify-content:center;">' +
