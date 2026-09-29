@@ -26,6 +26,11 @@
             saveConfig(rules, isEnabled, false);
         });
 
+        // Toggle visibility of conditional action sub-options
+        $(document).on('change', '#sb-tg-act-auto-swap, #sb-tg-act-show-modal, #sb-tg-act-show-inline', function() {
+            toggleConditionalSections();
+        });
+
         // Dynamic Primary Swap Target Options population
         $(document).on('change', '#sb-tg-swap-field', function() {
             var selectedSlug = $(this).val();
@@ -166,6 +171,26 @@
         });
     });
 
+    function toggleConditionalSections() {
+        if ($('#sb-tg-act-auto-swap').is(':checked')) {
+            $('#sb-tg-swap-container').slideDown(150);
+        } else {
+            $('#sb-tg-swap-container').slideUp(150);
+        }
+
+        if ($('#sb-tg-act-show-modal').is(':checked')) {
+            $('#sb-tg-modal-container').slideDown(150);
+        } else {
+            $('#sb-tg-modal-container').slideUp(150);
+        }
+
+        if ($('#sb-tg-act-show-inline').is(':checked')) {
+            $('#sb-tg-inline-container').slideDown(150);
+        } else {
+            $('#sb-tg-inline-container').slideUp(150);
+        }
+    }
+
     function populateSwapValueDropdown(fieldSlug, selectedVal) {
         var $valSelect = $('#sb-tg-swap-value');
         $valSelect.empty();
@@ -268,6 +293,12 @@
 
             $('#sb-tg-rule-keywords').val((rule.keywords || []).join('\n'));
 
+            var acts = rule.actions || {};
+            $('#sb-tg-act-disable-submit').prop('checked', !!acts.disable_submit);
+            $('#sb-tg-act-show-modal').prop('checked', !!acts.show_modal);
+            $('#sb-tg-act-show-inline').prop('checked', !!acts.show_inline_warning);
+            $('#sb-tg-act-auto-swap').prop('checked', !!acts.auto_swap_category);
+
             var swapField = rule.swap_field || 'df_category';
             var swapValue = rule.swap_value || rule.suggested_category || '';
             $('#sb-tg-swap-field').val(swapField);
@@ -277,12 +308,6 @@
             var secSwapValue = rule.secondary_swap_value || '';
             $('#sb-tg-sec-swap-field').val(secSwapField);
             populateSecSwapValueDropdown(secSwapField, secSwapValue);
-
-            var acts = rule.actions || {};
-            $('#sb-tg-act-disable-submit').prop('checked', !!acts.disable_submit);
-            $('#sb-tg-act-show-modal').prop('checked', !!acts.show_modal);
-            $('#sb-tg-act-show-inline').prop('checked', !!acts.show_inline_warning);
-            $('#sb-tg-act-auto-swap').prop('checked', !!acts.auto_swap_category);
 
             var msgs = rule.messaging || {};
             $('#sb-tg-modal-custom-title').val(msgs.modal_title || '');
@@ -295,6 +320,12 @@
             $('#sb-tg-monitored-field').val('');
             $('#sb-tg-rule-keywords').val('');
 
+            // Clear all action toggle checkboxes on new rule creation
+            $('#sb-tg-act-disable-submit').prop('checked', false);
+            $('#sb-tg-act-show-modal').prop('checked', false);
+            $('#sb-tg-act-show-inline').prop('checked', false);
+            $('#sb-tg-act-auto-swap').prop('checked', false);
+
             var defaultSwapField = 'df_category';
             $('#sb-tg-swap-field').val(defaultSwapField);
             populateSwapValueDropdown(defaultSwapField, null);
@@ -302,14 +333,12 @@
             $('#sb-tg-sec-swap-field').val('');
             populateSecSwapValueDropdown('', null);
 
-            $('#sb-tg-act-disable-submit').prop('checked', true);
-            $('#sb-tg-act-show-modal').prop('checked', true);
-            $('#sb-tg-act-show-inline').prop('checked', true);
-            $('#sb-tg-act-auto-swap').prop('checked', false);
             $('#sb-tg-modal-custom-title').val('');
             $('#sb-tg-modal-custom-body').val('');
             $('#sb-tg-inline-warning').val('');
         }
+
+        toggleConditionalSections();
 
         $overlay.css({
             'display': 'flex',

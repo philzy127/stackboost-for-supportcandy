@@ -227,46 +227,6 @@ class WordPress extends Module {
 							<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: Use & to require multiple phrases on the same line (e.g. "UC Portal & Password"). Each new line acts as an OR condition.', 'stackboost-for-supportcandy' ); ?></p>
 						</div>
 
-						<!-- Primary Field to Swap & Target Option -->
-						<div style="display: flex; gap: 20px; margin-bottom: 15px;">
-							<div style="flex: 1;">
-								<label for="sb-tg-swap-field"><strong><?php esc_html_e( 'Primary Field to Swap:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<select id="sb-tg-swap-field" class="widefat">
-									<option value=""><?php esc_html_e( '-- Select Primary Field --', 'stackboost-for-supportcandy' ); ?></option>
-									<?php foreach ( $dropdowns as $slug => $d_info ) : ?>
-										<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $d_info['label'] ); ?></option>
-									<?php endforeach; ?>
-								</select>
-							</div>
-
-							<div style="flex: 1;">
-								<label for="sb-tg-swap-value"><strong><?php esc_html_e( 'Primary Target Option:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<select id="sb-tg-swap-value" class="widefat">
-									<option value=""><?php esc_html_e( '-- Select Target Option --', 'stackboost-for-supportcandy' ); ?></option>
-								</select>
-							</div>
-						</div>
-
-						<!-- Secondary Field to Swap (Dropdown/Radio/Checkbox) & Target Option -->
-						<div style="display: flex; gap: 20px; margin-bottom: 15px;">
-							<div style="flex: 1;">
-								<label for="sb-tg-sec-swap-field"><strong><?php esc_html_e( 'Secondary Field to Swap (Optional):', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<select id="sb-tg-sec-swap-field" class="widefat">
-									<option value=""><?php esc_html_e( '-- Select Secondary Field --', 'stackboost-for-supportcandy' ); ?></option>
-									<?php foreach ( $dropdowns as $slug => $d_info ) : ?>
-										<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $d_info['label'] ); ?></option>
-									<?php endforeach; ?>
-								</select>
-							</div>
-
-							<div style="flex: 1;">
-								<label for="sb-tg-sec-swap-value"><strong><?php esc_html_e( 'Secondary Target Option:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<select id="sb-tg-sec-swap-value" class="widefat">
-									<option value=""><?php esc_html_e( '-- Select Secondary Option --', 'stackboost-for-supportcandy' ); ?></option>
-								</select>
-							</div>
-						</div>
-
 						<!-- Action Toggles -->
 						<div class="sb-tg-field-group" style="margin-bottom: 15px; background: #f9f9f9; padding: 12px; border-radius: 4px;">
 							<label><strong><?php esc_html_e( 'Action Toggles (Independently Selectable):', 'stackboost-for-supportcandy' ); ?></strong></label>
@@ -278,20 +238,68 @@ class WordPress extends Module {
 							</div>
 						</div>
 
-						<!-- Messaging Customization -->
-						<div class="sb-tg-field-group" style="margin-bottom: 15px;">
-							<label for="sb-tg-modal-custom-title"><strong><?php esc_html_e( 'Guidance Modal Title:', 'stackboost-for-supportcandy' ); ?></strong></label>
-							<input type="text" id="sb-tg-modal-custom-title" class="widefat" placeholder="<?php esc_attr_e( 'Looking for Billing Support?', 'stackboost-for-supportcandy' ); ?>" />
+						<!-- Field Swap Options (Conditional) -->
+						<div id="sb-tg-swap-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
+							<!-- Primary Field to Swap & Target Option -->
+							<div style="display: flex; gap: 20px; margin-bottom: 15px;">
+								<div style="flex: 1;">
+									<label for="sb-tg-swap-field"><strong><?php esc_html_e( 'Primary Field to Swap:', 'stackboost-for-supportcandy' ); ?></strong></label>
+									<select id="sb-tg-swap-field" class="widefat">
+										<option value=""><?php esc_html_e( '-- Select Primary Field --', 'stackboost-for-supportcandy' ); ?></option>
+										<?php foreach ( $dropdowns as $slug => $d_info ) : ?>
+											<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $d_info['label'] ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+
+								<div style="flex: 1;">
+									<label for="sb-tg-swap-value"><strong><?php esc_html_e( 'Primary Target Option:', 'stackboost-for-supportcandy' ); ?></strong></label>
+									<select id="sb-tg-swap-value" class="widefat">
+										<option value=""><?php esc_html_e( '-- Select Target Option --', 'stackboost-for-supportcandy' ); ?></option>
+									</select>
+								</div>
+							</div>
+
+							<!-- Secondary Field to Swap (Dropdown/Radio/Checkbox) & Target Option -->
+							<div style="display: flex; gap: 20px;">
+								<div style="flex: 1;">
+									<label for="sb-tg-sec-swap-field"><strong><?php esc_html_e( 'Secondary Field to Swap (Optional):', 'stackboost-for-supportcandy' ); ?></strong></label>
+									<select id="sb-tg-sec-swap-field" class="widefat">
+										<option value=""><?php esc_html_e( '-- Select Secondary Field --', 'stackboost-for-supportcandy' ); ?></option>
+										<?php foreach ( $dropdowns as $slug => $d_info ) : ?>
+											<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $d_info['label'] ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+
+								<div style="flex: 1;">
+									<label for="sb-tg-sec-swap-value"><strong><?php esc_html_e( 'Secondary Target Option:', 'stackboost-for-supportcandy' ); ?></strong></label>
+									<select id="sb-tg-sec-swap-value" class="widefat">
+										<option value=""><?php esc_html_e( '-- Select Secondary Option --', 'stackboost-for-supportcandy' ); ?></option>
+									</select>
+								</div>
+							</div>
 						</div>
 
-						<div class="sb-tg-field-group" style="margin-bottom: 15px;">
-							<label for="sb-tg-modal-custom-body"><strong><?php esc_html_e( 'Guidance Modal Message Body:', 'stackboost-for-supportcandy' ); ?></strong></label>
-							<textarea id="sb-tg-modal-custom-body" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'It looks like your ticket relates to billing or invoices. Switching to the Billing category ensures faster response times.', 'stackboost-for-supportcandy' ); ?>"></textarea>
+						<!-- Guidance Modal Customization (Conditional) -->
+						<div id="sb-tg-modal-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
+							<div class="sb-tg-field-group" style="margin-bottom: 15px;">
+								<label for="sb-tg-modal-custom-title"><strong><?php esc_html_e( 'Guidance Modal Title:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<input type="text" id="sb-tg-modal-custom-title" class="widefat" placeholder="<?php esc_attr_e( 'Looking for Billing Support?', 'stackboost-for-supportcandy' ); ?>" />
+							</div>
+
+							<div class="sb-tg-field-group">
+								<label for="sb-tg-modal-custom-body"><strong><?php esc_html_e( 'Guidance Modal Message Body:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<textarea id="sb-tg-modal-custom-body" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'It looks like your ticket relates to billing or invoices. Switching to the Billing category ensures faster response times.', 'stackboost-for-supportcandy' ); ?>"></textarea>
+							</div>
 						</div>
 
-						<div class="sb-tg-field-group">
-							<label for="sb-tg-inline-warning"><strong><?php esc_html_e( 'Inline Warning Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
-							<input type="text" id="sb-tg-inline-warning" class="widefat" placeholder="<?php esc_attr_e( 'Keywords detected: Consider selecting Billing Support for faster service.', 'stackboost-for-supportcandy' ); ?>" />
+						<!-- Inline Warning Message (Conditional) -->
+						<div id="sb-tg-inline-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
+							<div class="sb-tg-field-group">
+								<label for="sb-tg-inline-warning"><strong><?php esc_html_e( 'Inline Warning Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<input type="text" id="sb-tg-inline-warning" class="widefat" placeholder="<?php esc_attr_e( 'Keywords detected: Consider selecting Billing Support for faster service.', 'stackboost-for-supportcandy' ); ?>" />
+							</div>
 						</div>
 					</div>
 
