@@ -124,69 +124,38 @@ class Core {
 	}
 
 	/**
-	 * Retrieve all dropdown fields and their available options in SupportCandy.
+	 * Retrieve all single-select dropdown fields and their available options in SupportCandy.
 	 *
 	 * @return array
 	 */
 	public function get_dropdown_fields_and_options(): array {
 		$dropdowns = [];
 
-		// 1. Category Field
-		$category_options = [];
-		if ( class_exists( '\WPSC_Category' ) ) {
-			$raw_cats = \WPSC_Category::find( [ 'items_per_page' => 0 ] )['results'] ?? [];
-			foreach ( $raw_cats as $cat ) {
-				$category_options[] = [
-					'id'   => (string) ( is_object( $cat ) ? $cat->id : $cat['id'] ),
-					'name' => is_object( $cat ) ? $cat->name : $cat['name'],
-				];
-			}
-		}
-		if ( ! empty( $category_options ) ) {
-			$dropdowns['df_category'] = [
-				'label'   => __( 'Category', 'stackboost-for-supportcandy' ),
-				'options' => $category_options,
-			];
-		}
+		// 1. Check \WPSC_Custom_Field::$custom_fields if available
+		if ( class_exists( '\WPSC_Custom_Field' ) && ! empty( \WPSC_Custom_Field::$custom_fields ) ) {
+			foreach ( \WPSC_Custom_Field::$custom_fields as $slug => $field_obj ) {
+				$type_class = is_object( $field_obj ) ? $field_obj->type : '';
+				$type_slug  = is_string( $type_class ) && class_exists( $type_class ) && isset( $type_class::$slug ) ? $type_class::$slug : (string) $type_class;
 
-		// 2. Priority Field
-		$priority_options = [];
-		if ( class_exists( '\WPSC_Priority' ) ) {
-			$raw_priorities = \WPSC_Priority::find( [ 'items_per_page' => 0 ] )['results'] ?? [];
-			foreach ( $raw_priorities as $pri ) {
-				$priority_options[] = [
-					'id'   => (string) ( is_object( $pri ) ? $pri->id : $pri['id'] ),
-					'name' => is_object( $pri ) ? $pri->name : $pri['name'],
-				];
-			}
-		}
-		if ( ! empty( $priority_options ) ) {
-			$dropdowns['df_priority'] = [
-				'label'   => __( 'Priority', 'stackboost-for-supportcandy' ),
-				'options' => $priority_options,
-			];
-		}
+				// Check if this field is strictly a single-select dropdown field
+				$is_single_select = in_array( $type_slug, [ 'cf_single_select', 'select', 'single_select', 'df_category', 'df_priority', 'df_status' ], true )
+					|| strpos( strtolower( $type_class ), 'single_select' ) !== false
+					|| in_array( $slug, [ 'category', 'df_category', 'priority', 'df_priority', 'status', 'df_status' ], true );
 
-		// 3. Custom Dropdown / Select Fields
-		if ( class_exists( '\WPSC_Custom_Field' ) ) {
-			$raw_cfs = \WPSC_Custom_Field::find( [ 'items_per_page' => 0 ] )['results'] ?? [];
-			foreach ( $raw_cfs as $cf ) {
-				$type = is_object( $cf ) ? $cf->type : ( $cf['type'] ?? '' );
-				if ( in_array( $type, [ 'select', 'single_select', 'radio', 'df_select' ], true ) ) {
-					$slug  = is_object( $cf ) ? $cf->slug : $cf['slug'];
-					$label = is_object( $cf ) ? $cf->name : $cf['name'];
+				if ( $is_single_select ) {
+					$label = is_object( $field_obj ) ? $field_obj->name : $slug;
 					$opts  = [];
 
-					if ( is_object( $cf ) && method_exists( $cf, 'get_options' ) ) {
-						$raw_opts = $cf->get_options();
+					if ( is_object( $field_obj ) && method_exists( $field_obj, 'get_options' ) ) {
+						$raw_opts = $field_obj->get_options();
 						foreach ( $raw_opts as $o ) {
 							$opts[] = [
-								'id'   => (string) ( is_object( $o ) ? $o->id : $o['id'] ),
-								'name' => is_object( $o ) ? $o->name : $o['name'],
+								'id'   => (string) ( is_object( $o ) ? $o->id : ( is_array( $o ) ? $o['id'] : $o ) ),
+								'name' => is_object( $o ) ? $o->name : ( is_array( $o ) ? $o['name'] : $o ),
 							];
 						}
-					} elseif ( is_object( $cf ) && isset( $cf->options ) && is_array( $cf->options ) ) {
-						foreach ( $cf->options as $o ) {
+					} elseif ( is_object( $field_obj ) && isset( $field_obj->options ) && is_array( $field_obj->options ) ) {
+						foreach ( $field_obj->options as $o ) {
 							$opts[] = [
 								'id'   => (string) ( is_object( $o ) ? $o->id : ( is_array( $o ) ? $o['id'] : $o ) ),
 								'name' => is_object( $o ) ? $o->name : ( is_array( $o ) ? $o['name'] : $o ),
@@ -204,45 +173,84 @@ class Core {
 			}
 		}
 
-		// Fallback DB query if WPSC_Custom_Field returned no custom selects
-		if ( count( $dropdowns ) <= 2 ) {
-			global $wpdb;
-			$table_name = $wpdb->prefix . 'psmsc_custom_fields';
-			$table_name_like = $wpdb->esc_like( $table_name );
-			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) !== $table_name ) {
-				$table_name = $wpdb->prefix . 'wpsc_custom_fields';
+		// 2. Query database for all single-select fields from psmsc_custom_fields / wpsc_custom_fields
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
+		$table_name_like = $wpdb->esc_like( $table_name );
+		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) !== $table_name ) {
+			$table_name = $wpdb->prefix . 'wpsc_custom_fields';
+		}
+
+		$safe_table = esc_sql( $table_name );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$cf_rows = $wpdb->get_results( "SELECT id, slug, name, type FROM `{$safe_table}` WHERE type IN ('select', 'single_select', 'cf_single_select')", ARRAY_A );
+
+		if ( ! empty( $cf_rows ) ) {
+			$opts_table = $wpdb->prefix . 'psmsc_custom_field_options';
+			$opts_table_like = $wpdb->esc_like( $opts_table );
+			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $opts_table_like ) ) !== $opts_table ) {
+				$opts_table = $wpdb->prefix . 'wpsc_custom_field_options';
 			}
+			$safe_opts_table = esc_sql( $opts_table );
 
-			$safe_table = esc_sql( $table_name );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-			$cf_rows = $wpdb->get_results( "SELECT id, slug, name, type FROM `{$safe_table}` WHERE type IN ('select', 'single_select', 'radio')", ARRAY_A );
-
-			if ( ! empty( $cf_rows ) ) {
-				$opts_table = $wpdb->prefix . 'psmsc_custom_field_options';
-				$opts_table_like = $wpdb->esc_like( $opts_table );
-				if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $opts_table_like ) ) !== $opts_table ) {
-					$opts_table = $wpdb->prefix . 'wpsc_custom_field_options';
+			foreach ( $cf_rows as $row ) {
+				$slug = $row['slug'];
+				if ( isset( $dropdowns[ $slug ] ) && ! empty( $dropdowns[ $slug ]['options'] ) ) {
+					continue;
 				}
-				$safe_opts_table = esc_sql( $opts_table );
 
-				foreach ( $cf_rows as $row ) {
-					$field_id = (int) $row['id'];
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-					$opt_rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, name FROM `{$safe_opts_table}` WHERE field_id = %d", $field_id ), ARRAY_A );
-					if ( ! empty( $opt_rows ) ) {
-						$opts = [];
-						foreach ( $opt_rows as $or ) {
-							$opts[] = [
-								'id'   => (string) $or['id'],
-								'name' => $or['name'],
-							];
-						}
-						$dropdowns[ $row['slug'] ] = [
-							'label'   => $row['name'],
-							'options' => $opts,
+				$field_id = (int) $row['id'];
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+				$opt_rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, name FROM `{$safe_opts_table}` WHERE field_id = %d ORDER BY name ASC", $field_id ), ARRAY_A );
+
+				if ( ! empty( $opt_rows ) ) {
+					$opts = [];
+					foreach ( $opt_rows as $or ) {
+						$opts[] = [
+							'id'   => (string) $or['id'],
+							'name' => $or['name'],
 						];
 					}
+					$dropdowns[ $slug ] = [
+						'label'   => $row['name'],
+						'options' => $opts,
+					];
 				}
+			}
+		}
+
+		// 3. Fallback for Standard Category / Priority if not populated yet
+		if ( empty( $dropdowns['df_category'] ) && class_exists( '\WPSC_Category' ) ) {
+			$raw_cats = \WPSC_Category::find( [ 'items_per_page' => 0 ] )['results'] ?? [];
+			$category_options = [];
+			foreach ( $raw_cats as $cat ) {
+				$category_options[] = [
+					'id'   => (string) ( is_object( $cat ) ? $cat->id : $cat['id'] ),
+					'name' => is_object( $cat ) ? $cat->name : $cat['name'],
+				];
+			}
+			if ( ! empty( $category_options ) ) {
+				$dropdowns['df_category'] = [
+					'label'   => __( 'Category', 'stackboost-for-supportcandy' ),
+					'options' => $category_options,
+				];
+			}
+		}
+
+		if ( empty( $dropdowns['df_priority'] ) && class_exists( '\WPSC_Priority' ) ) {
+			$raw_priorities = \WPSC_Priority::find( [ 'items_per_page' => 0 ] )['results'] ?? [];
+			$priority_options = [];
+			foreach ( $raw_priorities as $pri ) {
+				$priority_options[] = [
+					'id'   => (string) ( is_object( $pri ) ? $pri->id : $pri['id'] ),
+					'name' => is_object( $pri ) ? $pri->name : $pri['name'],
+				];
+			}
+			if ( ! empty( $priority_options ) ) {
+				$dropdowns['df_priority'] = [
+					'label'   => __( 'Priority', 'stackboost-for-supportcandy' ),
+					'options' => $priority_options,
+				];
 			}
 		}
 
