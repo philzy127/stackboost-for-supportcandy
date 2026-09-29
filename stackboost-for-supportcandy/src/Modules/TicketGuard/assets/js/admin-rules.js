@@ -212,8 +212,8 @@
             $row.append($('<td>').text(keywordsStr));
             $row.append($('<td>').html(actionsHtml));
 
-            var actionsCellHtml = '<span class="sb-tg-edit-rule-btn dashicons dashicons-edit" data-id="' + escapeHtml(rule.id) + '" title="Edit"></span>' +
-                                  '<span class="sb-tg-delete-rule-btn dashicons dashicons-trash" data-id="' + escapeHtml(rule.id) + '" title="Delete"></span>';
+            var actionsCellHtml = '<button type="button" class="stackboost-icon-btn sb-tg-edit-rule-btn" data-id="' + escapeHtml(rule.id) + '" title="Edit"><span class="dashicons dashicons-edit"></span></button>' +
+                                  '<button type="button" class="stackboost-icon-btn sb-tg-delete-rule-btn" data-id="' + escapeHtml(rule.id) + '" title="Delete"><span class="dashicons dashicons-trash"></span></button>';
 
             $row.append($('<td style="text-align: right;">').html(actionsCellHtml));
             $tbody.append($row);

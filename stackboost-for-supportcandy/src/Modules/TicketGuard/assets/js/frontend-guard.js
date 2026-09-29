@@ -16,6 +16,7 @@
 
         // Real-time observer on standard text input/textarea fields
         $(document).on('input keyup paste change', 'input[type="text"], textarea', function() {
+            window._tgModalDismissedRules = {}; // Reset dismissal tracking on user edit re-incident
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(function() {
                 evaluateGuardRules(rules);
@@ -88,6 +89,7 @@
                 editor.save(); // Syncs TinyMCE HTML back to underlying textarea
             } catch (err) {}
 
+            window._tgModalDismissedRules = {}; // Reset dismissal tracking on user edit re-incident
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(function() {
                 evaluateGuardRules(rules);

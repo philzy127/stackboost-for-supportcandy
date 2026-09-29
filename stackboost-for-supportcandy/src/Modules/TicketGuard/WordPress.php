@@ -224,6 +224,7 @@ class WordPress extends Module {
 						<div class="sb-tg-field-group" style="margin-bottom: 15px;">
 							<label for="sb-tg-rule-keywords"><strong><?php esc_html_e( 'Keywords / Phrases (One per line):', 'stackboost-for-supportcandy' ); ?></strong></label>
 							<textarea id="sb-tg-rule-keywords" class="widefat" rows="4" placeholder="<?php esc_attr_e( "refund\ninvoice\novercharge\ncredit card\nbilling", 'stackboost-for-supportcandy' ); ?>"></textarea>
+							<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: Use & to require multiple phrases on the same line (e.g. "UC Portal & Password"). Each new line acts as an OR condition.', 'stackboost-for-supportcandy' ); ?></p>
 						</div>
 
 						<!-- Dropdown Field to Swap & Target Option -->
