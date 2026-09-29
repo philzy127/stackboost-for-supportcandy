@@ -2,6 +2,7 @@
     'use strict';
 
     var debounceTimer = null;
+    var submitBtnSelector = '.wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button.wpsc-btn, button[type="submit"], input[type="submit"]';
 
     $(document).ready(function() {
         if (typeof stackboostTicketGuard === 'undefined' || !stackboostTicketGuard.enabled) {
@@ -33,11 +34,20 @@
         // Initial Evaluation
         evaluateGuardRules(rules);
 
-        // Capture-phase event handler on submit buttons
-        var submitBtnSelector = '.wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button.wpsc-btn, button[type="submit"], input[type="submit"]';
+        // Native Capture Phase Event Interceptor for Submit Buttons
+        window.addEventListener('click', function(e) {
+            var btn = e.target ? e.target.closest(submitBtnSelector) : null;
+            if (!btn) return;
 
-        $(document).on('click', submitBtnSelector, function(e) {
-            var $btn = $(this);
+            var $btn = $(btn);
+
+            if ($btn.hasClass('stackboost-tg-submit-disabled') || $btn.prop('disabled')) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                return false;
+            }
+
             var isBlocked = $btn.data('tg-modal-blocked');
             var isBypassed = $btn.data('tg-modal-bypassed');
             var blockedRule = $btn.data('tg-modal-rule');
@@ -45,11 +55,11 @@
             if (isBlocked && !isBypassed && blockedRule) {
                 e.preventDefault();
                 e.stopPropagation();
-                e.stopImmediatePropagation();
+                if (e.stopImmediatePropagation) e.stopImmediatePropagation();
                 showGuidanceModal($btn, blockedRule);
                 return false;
             }
-        });
+        }, true);
     });
 
     function initTinyMCEObserver(rules) {
@@ -90,6 +100,7 @@
     function evaluateGuardRules(rules) {
         var shouldDisableSubmit = false;
         var modalBlockedRule = null;
+        var matchedRuleId = null;
 
         // Remove existing inline banners
         $('.stackboost-tg-banner').remove();
@@ -147,6 +158,7 @@
             });
 
             if (matched) {
+                matchedRuleId = rule.id;
                 var actions = rule.actions || {};
 
                 if (actions.disable_submit) {
@@ -155,6 +167,13 @@
 
                 if (actions.show_modal) {
                     modalBlockedRule = rule;
+
+                    // Trigger guidance modal immediately if not already displayed for this rule match
+                    if (window._tgModalShownRuleId !== rule.id && !window._tgModalDismissedRules?.[rule.id]) {
+                        window._tgModalShownRuleId = rule.id;
+                        var $targetBtn = $(submitBtnSelector).first();
+                        showGuidanceModal($targetBtn, rule);
+                    }
                 }
 
                 if (actions.show_inline_warning && $matchedField) {
@@ -172,8 +191,11 @@
             }
         });
 
+        if (!matchedRuleId) {
+            window._tgModalShownRuleId = null;
+        }
+
         // Apply consolidated submit button state across all rules
-        var submitBtnSelector = '.wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button.wpsc-btn, button[type="submit"], input[type="submit"]';
         var $submitBtns = $(submitBtnSelector);
 
         $submitBtns.each(function() {
@@ -189,7 +211,6 @@
             if (modalBlockedRule) {
                 $btn.data('tg-modal-blocked', true).data('tg-modal-rule', modalBlockedRule);
 
-                // Override element inline onclick property directly
                 if (!btnEl._tgOriginalOnClick && btnEl.onclick) {
                     btnEl._tgOriginalOnClick = btnEl.onclick;
                 }
@@ -251,22 +272,29 @@
         var $overlay = $(modalHtml);
         $('body').append($overlay);
 
+        if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
+
         $overlay.find('.sb-tg-close-modal').on('click', function() {
+            if (rule && rule.id) window._tgModalDismissedRules[rule.id] = true;
             $overlay.remove();
         });
 
         $overlay.find('.sb-tg-proceed-btn').on('click', function() {
+            if (rule && rule.id) window._tgModalDismissedRules[rule.id] = true;
             $overlay.remove();
-            $btn.data('tg-modal-bypassed', true);
-            var btnEl = $btn.get(0);
-            if (btnEl && btnEl._tgOriginalOnClick) {
-                btnEl._tgOriginalOnClick.call(btnEl);
-            } else {
-                $btn.trigger('click');
+            if ($btn && $btn.length) {
+                $btn.data('tg-modal-bypassed', true);
+                var btnEl = $btn.get(0);
+                if (btnEl && btnEl._tgOriginalOnClick) {
+                    btnEl._tgOriginalOnClick.call(btnEl);
+                } else {
+                    $btn.trigger('click');
+                }
             }
         });
 
         $overlay.find('.sb-tg-swap-cat-btn').on('click', function() {
+            if (rule && rule.id) window._tgModalDismissedRules[rule.id] = true;
             var catId = $(this).data('cat');
             var $catSelect = $('select[name="df_category"], select[name="category"]');
             if ($catSelect.length && catId) {
