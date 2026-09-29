@@ -138,6 +138,22 @@
         editor.on('keyup input Change ExecCommand SetContent NodeChange', triggerEval);
     }
 
+    function triggerElementEventChain($el) {
+        if (!$el || !$el.length) return;
+
+        $el.trigger('change').trigger('click').trigger('focusout').trigger('blur').trigger('select2:select');
+
+        var el = $el.get(0);
+        if (el && typeof el.dispatchEvent === 'function') {
+            try {
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+                el.dispatchEvent(new Event('click', { bubbles: true }));
+                el.dispatchEvent(new Event('blur', { bubbles: true }));
+                el.dispatchEvent(new Event('focusout', { bubbles: true }));
+            } catch (e) {}
+        }
+    }
+
     function applyFieldSwap(swapField, swapValue) {
         if (!swapField || !swapValue || window._tgSwapping) return;
 
@@ -151,12 +167,18 @@
                 var currentVal = $targetSelect.val();
                 if (Array.isArray(currentVal)) {
                     if (currentVal.indexOf(strSwapValue) !== -1 || currentVal.join(',') === strSwapValue) return;
-                } else if (String(currentVal) === strSwapValue || $targetSelect.data('tg-swapped') === strSwapValue) {
-                    return; // Already set to this option, do NOT fire change event again
+                } else if (String(currentVal) === strSwapValue && $targetSelect.data('tg-swapped') === strSwapValue) {
+                    return; // Already set to this option
                 }
 
                 $targetSelect.data('tg-swapped', strSwapValue);
-                $targetSelect.val(swapValue).trigger('change').trigger('change.select2');
+                $targetSelect.val(swapValue);
+                triggerElementEventChain($targetSelect);
+
+                var $s2Container = $targetSelect.next('.select2-container');
+                if ($s2Container.length) {
+                    $s2Container.find('.select2-selection').trigger('click').trigger('focusout').trigger('blur');
+                }
                 return;
             }
 
@@ -165,7 +187,12 @@
             if ($targetRadio.length) {
                 if ($targetRadio.is(':checked')) return; // Already checked
 
-                $targetRadio.prop('checked', true).trigger('change');
+                $targetRadio.prop('checked', true);
+                var radioEl = $targetRadio.get(0);
+                if (radioEl && typeof radioEl.click === 'function') {
+                    try { radioEl.click(); } catch(err) {}
+                }
+                triggerElementEventChain($targetRadio);
                 return;
             }
 
@@ -174,7 +201,12 @@
             if ($targetCb.length) {
                 if ($targetCb.is(':checked')) return; // Already checked
 
-                $targetCb.prop('checked', true).trigger('change');
+                $targetCb.prop('checked', true);
+                var cbEl = $targetCb.get(0);
+                if (cbEl && typeof cbEl.click === 'function') {
+                    try { cbEl.click(); } catch(err) {}
+                }
+                triggerElementEventChain($targetCb);
                 return;
             }
         } finally {
@@ -324,6 +356,12 @@
                         applyFieldSwap(swapField, swapValue);
                         if (rule.secondary_swap_field && rule.secondary_swap_value) {
                             applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                            setTimeout(function() {
+                                applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                            }, 50);
+                            setTimeout(function() {
+                                applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                            }, 200);
                         }
                     }
                 }
@@ -421,6 +459,12 @@
                     applyFieldSwap(swapField, swapValue);
                     if (rule.secondary_swap_field && rule.secondary_swap_value) {
                         applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                        setTimeout(function() {
+                            applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                        }, 50);
+                        setTimeout(function() {
+                            applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                        }, 200);
                     }
                 },
                 function onCancel() {
@@ -513,6 +557,12 @@
             applyFieldSwap(swapField, swapValue);
             if (rule.secondary_swap_field && rule.secondary_swap_value) {
                 applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                setTimeout(function() {
+                    applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                }, 50);
+                setTimeout(function() {
+                    applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
+                }, 200);
             }
             $overlay.remove();
         });
