@@ -91,6 +91,9 @@
                 e.preventDefault();
                 e.stopPropagation();
                 if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+
+                var disabledMsg = $btn.data('tg-disabled-msg') || $btn.attr('title') || 'Submit button disabled: Please review your entry or category selection.';
+                showSubmitDisabledModal(disabledMsg);
                 return false;
             }
 
@@ -463,12 +466,15 @@
                 var btnEl = this;
 
                 if (shouldDisableSubmit) {
+                    var msgText = disableSubmitMsg || 'Submit button disabled: Please review your entry or category selection.';
+                    $btn.attr('title', msgText).data('tg-disabled-msg', msgText);
                     $btn.prop('disabled', true).addClass('stackboost-tg-submit-disabled').css({
                         'opacity': '0.5',
                         'cursor': 'not-allowed',
-                        'pointer-events': 'none'
+                        'pointer-events': 'auto'
                     });
                 } else {
+                    $btn.removeAttr('title').removeData('tg-disabled-msg');
                     $btn.prop('disabled', false).removeClass('stackboost-tg-submit-disabled').css({
                         'opacity': '1',
                         'cursor': 'pointer',
@@ -661,6 +667,37 @@
         }
 
         return primaryMatches && secondaryMatches;
+    }
+
+    function showSubmitDisabledModal(message) {
+        var title = stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.notice_title || 'Submission Disabled') : 'Submission Disabled';
+
+        if (typeof window.stackboostAlert === 'function') {
+            window.stackboostAlert(
+                '<p style="font-size:14px;line-height:1.5;margin:0;">' + escapeHtml(message) + '</p>',
+                title
+            );
+        } else {
+            $('.stackboost-tg-modal-overlay').remove();
+            var modalHtml = '<div class="stackboost-modal-overlay stackboost-tg-modal-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999999;display:flex;align-items:center;justify-content:center;">' +
+                '<div class="stackboost-modal-box" style="background:#fff;border-radius:6px;max-width:520px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,0.35);overflow:hidden;">' +
+                '<div class="stackboost-modal-header" style="padding:16px 20px;background:#f8f9fa;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">' +
+                '<h3 class="stackboost-modal-title" style="margin:0;font-size:1.15em;font-weight:600;">' + escapeHtml(title) + '</h3>' +
+                '<button type="button" class="stackboost-modal-close sb-tg-close-modal" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;">&times;</button>' +
+                '</div>' +
+                '<div class="stackboost-modal-body" style="padding:20px 20px 10px;">' +
+                '<p style="margin:0 0 15px 0;font-size:14px;line-height:1.5;color:#444;">' + escapeHtml(message) + '</p>' +
+                '</div>' +
+                '<div class="stackboost-modal-footer" style="padding:14px 20px;background:#f8f9fa;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;">' +
+                '<button type="button" class="button button-primary sb-tg-close-modal" style="cursor:pointer;">' + escapeHtml(stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.dismiss : 'OK') + '</button>' +
+                '</div></div></div>';
+
+            var $overlay = $(modalHtml);
+            $('body').append($overlay);
+            $overlay.find('.sb-tg-close-modal').on('click', function() {
+                $overlay.remove();
+            });
+        }
     }
 
     function showGuidanceModal($btn, rule, isUserSubmitClick) {
