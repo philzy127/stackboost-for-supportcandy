@@ -401,10 +401,12 @@
                         return; // Option is already selected - no action needed
                     }
 
+                    var isRuleDismissed = !!(window._tgModalDismissedRules && window._tgModalDismissedRules[rule.id]);
+
                     matchedRuleId = rule.id;
                     var actions = rule.actions || {};
 
-                    if (actions.disable_submit) {
+                    if (actions.disable_submit && !isRuleDismissed) {
                         shouldDisableSubmit = true;
                         if (rule.messaging && rule.messaging.submit_disabled_message) {
                             disableSubmitMsg = formatRulePlaceholders(rule.messaging.submit_disabled_message, rule);
@@ -413,11 +415,10 @@
                         }
                     }
 
-                    if (actions.show_modal) {
+                    if (actions.show_modal && !isRuleDismissed) {
                         modalBlockedRule = rule;
 
-                        var isDismissed = window._tgModalDismissedRules && window._tgModalDismissedRules[rule.id];
-                        if (window._tgModalShownRuleId !== rule.id && !isDismissed) {
+                        if (window._tgModalShownRuleId !== rule.id) {
                             window._tgModalShownRuleId = rule.id;
                             var $targetBtn = $(submitBtnSelector).first();
                             showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
@@ -427,7 +428,7 @@
                     var swapField = rule.swap_field || '';
                     var swapValue = rule.swap_value || rule.suggested_category;
 
-                    if (actions.show_inline_warning && $matchedField && $matchedField.length) {
+                    if (actions.show_inline_warning && $matchedField && $matchedField.length && !isRuleDismissed) {
                         var warnText = (rule.messaging && rule.messaging.inline_warning) ? rule.messaging.inline_warning : 'Keywords detected: Please ensure appropriate category selection.';
                         warnText = formatRulePlaceholders(warnText, rule);
                         var level = (rule.messaging && rule.messaging.inline_level) ? rule.messaging.inline_level : 'alert';
@@ -440,16 +441,24 @@
 
                         var hasFixItOptions = !!(swapField && swapValue);
                         var fixItBtnText = (stackboostTicketGuard.i18n && stackboostTicketGuard.i18n.fix_it) ? stackboostTicketGuard.i18n.fix_it : 'Fix It';
-                        var fixItBtnHtml = hasFixItOptions ? ' <button type="button" class="sb-tg-fix-it-btn button button-primary" style="margin-left: 10px; padding: 2px 10px; font-size: 12px; height: 26px; line-height: 24px; cursor: pointer; border-radius: 3px; vertical-align: middle;">' + escapeHtml(fixItBtnText) + '</button>' : '';
+                        var fixItIconBtnHtml = hasFixItOptions ? '<button type="button" class="stackboost-icon-btn sb-tg-fix-it-btn" title="' + escapeHtml(fixItBtnText) + '"><span class="dashicons dashicons-admin-tools"></span></button>' : '';
+
+                        var dismissBtnText = (stackboostTicketGuard.i18n && stackboostTicketGuard.i18n.dismiss) ? stackboostTicketGuard.i18n.dismiss : 'Dismiss';
+                        var dismissIconBtnHtml = '<button type="button" class="stackboost-icon-btn sb-tg-dismiss-btn" title="' + escapeHtml(dismissBtnText) + '"><span class="dashicons dashicons-dismiss"></span></button>';
 
                         var bannerContentHtml = '';
                         if (warnText.indexOf('{fix_it_button}') !== -1) {
-                            bannerContentHtml = escapeHtml(warnText).replace(/\{fix_it_button\}/g, fixItBtnHtml);
+                            bannerContentHtml = escapeHtml(warnText).replace(/\{fix_it_button\}/g, fixItIconBtnHtml);
                         } else {
-                            bannerContentHtml = escapeHtml(warnText) + fixItBtnHtml;
+                            bannerContentHtml = escapeHtml(warnText);
                         }
 
-                        var $banner = $('<div class="stackboost-tg-banner sb-tg-' + escapeHtml(level) + '"><span class="dashicons ' + iconClass + '"></span><span>' + bannerContentHtml + '</span></div>');
+                        var actionsGroupHtml = '<span class="sb-tg-banner-actions" style="margin-left: auto; display: inline-flex; align-items: center; gap: 4px;">' +
+                            (warnText.indexOf('{fix_it_button}') === -1 ? fixItIconBtnHtml : '') +
+                            dismissIconBtnHtml +
+                            '</span>';
+
+                        var $banner = $('<div class="stackboost-tg-banner sb-tg-' + escapeHtml(level) + '"><span class="dashicons ' + iconClass + '"></span><span style="flex:1;">' + bannerContentHtml + '</span>' + actionsGroupHtml + '</div>');
 
                         if (hasFixItOptions) {
                             $banner.find('.sb-tg-fix-it-btn').on('click', function(e) {
@@ -465,6 +474,17 @@
                                 });
                             });
                         }
+
+                        $banner.find('.sb-tg-dismiss-btn').on('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (rule.id) {
+                                if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
+                                window._tgModalDismissedRules[rule.id] = true;
+                            }
+                            $banner.remove();
+                            evaluateGuardRules(rules);
+                        });
 
                         $matchedField.after($banner);
                     }
