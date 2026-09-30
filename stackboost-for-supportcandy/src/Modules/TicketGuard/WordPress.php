@@ -294,6 +294,7 @@ class WordPress extends Module {
 							<div class="sb-tg-field-group">
 								<label for="sb-tg-inline-warning"><strong><?php esc_html_e( 'Inline Warning Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
 								<input type="text" id="sb-tg-inline-warning" class="widefat" placeholder="<?php esc_attr_e( 'Keywords detected: Consider selecting Billing Support for faster service.', 'stackboost-for-supportcandy' ); ?>" />
+								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: If target options are configured below, an action button will automatically appear in the warning banner. You can also use {fix_it_button} to position it within your message text.', 'stackboost-for-supportcandy' ); ?></p>
 							</div>
 						</div>
 

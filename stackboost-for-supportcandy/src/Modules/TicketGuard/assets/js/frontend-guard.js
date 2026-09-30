@@ -424,6 +424,9 @@
                         }
                     }
 
+                    var swapField = rule.swap_field || '';
+                    var swapValue = rule.swap_value || rule.suggested_category;
+
                     if (actions.show_inline_warning && $matchedField && $matchedField.length) {
                         var warnText = (rule.messaging && rule.messaging.inline_warning) ? rule.messaging.inline_warning : 'Keywords detected: Please ensure appropriate category selection.';
                         warnText = formatRulePlaceholders(warnText, rule);
@@ -434,12 +437,37 @@
                         } else if (level === 'warning') {
                             iconClass = 'dashicons-dismiss';
                         }
-                        var $banner = $('<div class="stackboost-tg-banner sb-tg-' + escapeHtml(level) + '"><span class="dashicons ' + iconClass + '"></span><span>' + escapeHtml(warnText) + '</span></div>');
+
+                        var hasFixItOptions = !!(swapField && swapValue);
+                        var fixItBtnText = (stackboostTicketGuard.i18n && stackboostTicketGuard.i18n.fix_it) ? stackboostTicketGuard.i18n.fix_it : 'Fix It';
+                        var fixItBtnHtml = hasFixItOptions ? ' <button type="button" class="sb-tg-fix-it-btn button button-primary" style="margin-left: 10px; padding: 2px 10px; font-size: 12px; height: 26px; line-height: 24px; cursor: pointer; border-radius: 3px; vertical-align: middle;">' + escapeHtml(fixItBtnText) + '</button>' : '';
+
+                        var bannerContentHtml = '';
+                        if (warnText.indexOf('{fix_it_button}') !== -1) {
+                            bannerContentHtml = escapeHtml(warnText).replace(/\{fix_it_button\}/g, fixItBtnHtml);
+                        } else {
+                            bannerContentHtml = escapeHtml(warnText) + fixItBtnHtml;
+                        }
+
+                        var $banner = $('<div class="stackboost-tg-banner sb-tg-' + escapeHtml(level) + '"><span class="dashicons ' + iconClass + '"></span><span>' + bannerContentHtml + '</span></div>');
+
+                        if (hasFixItOptions) {
+                            $banner.find('.sb-tg-fix-it-btn').on('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (rule.id) {
+                                    if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
+                                    window._tgModalDismissedRules[rule.id] = true;
+                                }
+                                applyRuleSwaps(rule, function() {
+                                    $banner.remove();
+                                    evaluateGuardRules(rules);
+                                });
+                            });
+                        }
+
                         $matchedField.after($banner);
                     }
-
-                    var swapField = rule.swap_field || '';
-                    var swapValue = rule.swap_value || rule.suggested_category;
 
                     if (actions.auto_swap_category && swapField && swapValue) {
                         applyRuleSwaps(rule);

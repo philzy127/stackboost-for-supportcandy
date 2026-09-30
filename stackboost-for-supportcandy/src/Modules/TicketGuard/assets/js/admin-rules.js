@@ -193,7 +193,7 @@
             $('#sb-tg-inline-container').slideUp(150);
         }
 
-        if ($('#sb-tg-act-auto-swap').is(':checked') || $('#sb-tg-act-show-modal').is(':checked')) {
+        if ($('#sb-tg-act-auto-swap').is(':checked') || $('#sb-tg-act-show-modal').is(':checked') || $('#sb-tg-act-show-inline').is(':checked')) {
             $('#sb-tg-swap-container').slideDown(150);
         } else {
             $('#sb-tg-swap-container').slideUp(150);
