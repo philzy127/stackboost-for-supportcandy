@@ -146,80 +146,152 @@
         editor.on('keyup input Change ExecCommand SetContent NodeChange', triggerEval);
     }
 
-    function triggerElementEventChain($el) {
-        if (!$el || !$el.length) return;
-
-        $el.trigger('change').trigger('click').trigger('focusout').trigger('blur').trigger('select2:select');
+    function triggerElementEventChain($el, callback) {
+        if (!$el || !$el.length) {
+            if (typeof callback === 'function') callback();
+            return;
+        }
 
         var el = $el.get(0);
-        if (el && typeof el.dispatchEvent === 'function') {
-            try {
-                el.dispatchEvent(new Event('change', { bubbles: true }));
-                el.dispatchEvent(new Event('click', { bubbles: true }));
-                el.dispatchEvent(new Event('blur', { bubbles: true }));
-                el.dispatchEvent(new Event('focusout', { bubbles: true }));
-            } catch (e) {}
+
+        // Step 1: Pre-focus
+        try {
+            if (typeof el.focus === 'function') el.focus();
+        } catch (e) {}
+
+        // Step 2: Click
+        if (typeof el.click === 'function') {
+            try { el.click(); } catch(e) {}
+        } else if (el && typeof el.dispatchEvent === 'function') {
+            try { el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); } catch(e) {}
         }
+        $el.trigger('click');
+
+        // Step 3: Pause briefly (30ms), then Change & Select2 events
+        setTimeout(function() {
+            $el.trigger('change').trigger('select2:select');
+            if (el && typeof el.dispatchEvent === 'function') {
+                try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch(e) {}
+            }
+
+            // Step 4: Pause briefly (30ms), then Focusout & Blur
+            setTimeout(function() {
+                $el.trigger('focusout').trigger('blur');
+                if (el && typeof el.dispatchEvent === 'function') {
+                    try {
+                        el.dispatchEvent(new Event('focusout', { bubbles: true }));
+                        el.dispatchEvent(new Event('blur', { bubbles: true }));
+                    } catch(e) {}
+                }
+                try {
+                    if (typeof el.blur === 'function') el.blur();
+                } catch(e) {}
+
+                var $s2 = $el.next('.select2-container');
+                if ($s2.length) {
+                    $s2.find('.select2-selection').trigger('click').trigger('focusout').trigger('blur');
+                }
+
+                // Final pause before calling callback
+                setTimeout(function() {
+                    if (typeof callback === 'function') callback();
+                }, 40);
+            }, 30);
+        }, 30);
     }
 
-    function applyFieldSwap(swapField, swapValue) {
-        if (!swapField || !swapValue || window._tgSwapping) return;
+    function applyFieldSwap(swapField, swapValue, callback) {
+        if (!swapField || !swapValue || window._tgSwapping) {
+            if (typeof callback === 'function') callback();
+            return;
+        }
 
         var strSwapValue = String(swapValue);
-
         window._tgSwapping = true;
+
+        function finishSwap() {
+            window._tgSwapping = false;
+            if (typeof callback === 'function') callback();
+        }
+
         try {
             // 1. Try Select / Dropdown
             var $targetSelect = $('select[name="' + swapField + '"], select[name="' + swapField + '[]"], select[name="df_' + swapField + '"], select[name*="' + swapField + '"]');
             if ($targetSelect.length) {
                 var currentVal = $targetSelect.val();
                 if (Array.isArray(currentVal)) {
-                    if (currentVal.indexOf(strSwapValue) !== -1 || currentVal.join(',') === strSwapValue) return;
+                    if (currentVal.indexOf(strSwapValue) !== -1 || currentVal.join(',') === strSwapValue) {
+                        finishSwap();
+                        return;
+                    }
                 } else if (String(currentVal) === strSwapValue && $targetSelect.data('tg-swapped') === strSwapValue) {
+                    finishSwap();
                     return; // Already set to this option
                 }
 
                 $targetSelect.data('tg-swapped', strSwapValue);
                 $targetSelect.val(swapValue);
-                triggerElementEventChain($targetSelect);
-
-                var $s2Container = $targetSelect.next('.select2-container');
-                if ($s2Container.length) {
-                    $s2Container.find('.select2-selection').trigger('click').trigger('focusout').trigger('blur');
-                }
+                triggerElementEventChain($targetSelect, finishSwap);
                 return;
             }
 
             // 2. Try Radio Button
             var $targetRadio = $('input[type="radio"][name="' + swapField + '"][value="' + swapValue + '"], input[type="radio"][name*="' + swapField + '"][value="' + swapValue + '"]');
             if ($targetRadio.length) {
-                if ($targetRadio.is(':checked')) return; // Already checked
+                if ($targetRadio.is(':checked')) {
+                    finishSwap();
+                    return;
+                }
 
                 $targetRadio.prop('checked', true);
-                var radioEl = $targetRadio.get(0);
-                if (radioEl && typeof radioEl.click === 'function') {
-                    try { radioEl.click(); } catch(err) {}
-                }
-                triggerElementEventChain($targetRadio);
+                triggerElementEventChain($targetRadio, finishSwap);
                 return;
             }
 
             // 3. Try Checkbox
             var $targetCb = $('input[type="checkbox"][name="' + swapField + '"][value="' + swapValue + '"], input[type="checkbox"][name*="' + swapField + '"][value="' + swapValue + '"]');
             if ($targetCb.length) {
-                if ($targetCb.is(':checked')) return; // Already checked
+                if ($targetCb.is(':checked')) {
+                    finishSwap();
+                    return;
+                }
 
                 $targetCb.prop('checked', true);
-                var cbEl = $targetCb.get(0);
-                if (cbEl && typeof cbEl.click === 'function') {
-                    try { cbEl.click(); } catch(err) {}
-                }
-                triggerElementEventChain($targetCb);
+                triggerElementEventChain($targetCb, finishSwap);
                 return;
             }
-        } finally {
-            window._tgSwapping = false;
+
+            finishSwap();
+        } catch(err) {
+            finishSwap();
         }
+    }
+
+    function applyRuleSwaps(rule, callback) {
+        if (!rule) {
+            if (typeof callback === 'function') callback();
+            return;
+        }
+
+        var swapField = rule.swap_field || '';
+        var swapValue = rule.swap_value || rule.suggested_category;
+
+        if (!swapField || !swapValue) {
+            if (typeof callback === 'function') callback();
+            return;
+        }
+
+        applyFieldSwap(swapField, swapValue, function() {
+            if (rule.secondary_swap_field && rule.secondary_swap_value) {
+                setTimeout(function() {
+                    applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value, function() {
+                        if (typeof callback === 'function') callback();
+                    });
+                }, 100);
+            } else {
+                if (typeof callback === 'function') callback();
+            }
+        });
     }
 
     function evaluateGuardRules(rules) {
@@ -367,16 +439,7 @@
                     var swapValue = rule.swap_value || rule.suggested_category;
 
                     if (actions.auto_swap_category && swapField && swapValue) {
-                        applyFieldSwap(swapField, swapValue);
-                        if (rule.secondary_swap_field && rule.secondary_swap_value) {
-                            applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                            setTimeout(function() {
-                                applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                            }, 50);
-                            setTimeout(function() {
-                                applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                            }, 200);
-                        }
+                        applyRuleSwaps(rule);
                     }
                 }
             });
@@ -623,16 +686,7 @@
                 function onConfirm() {
                     // Switch Target Options
                     if (rule.id) window._tgModalDismissedRules[rule.id] = true;
-                    applyFieldSwap(swapField, swapValue);
-                    if (rule.secondary_swap_field && rule.secondary_swap_value) {
-                        applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                        setTimeout(function() {
-                            applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                        }, 50);
-                        setTimeout(function() {
-                            applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                        }, 200);
-                    }
+                    applyRuleSwaps(rule);
                 },
                 function onCancel() {
                     // Proceed Anyway
@@ -724,16 +778,7 @@
 
         $overlay.find('.sb-tg-swap-cat-btn').on('click', function() {
             if (rule && rule.id) window._tgModalDismissedRules[rule.id] = true;
-            applyFieldSwap(swapField, swapValue);
-            if (rule.secondary_swap_field && rule.secondary_swap_value) {
-                applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                setTimeout(function() {
-                    applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                }, 50);
-                setTimeout(function() {
-                    applyFieldSwap(rule.secondary_swap_field, rule.secondary_swap_value);
-                }, 200);
-            }
+            applyRuleSwaps(rule);
             $overlay.remove();
         });
     }
