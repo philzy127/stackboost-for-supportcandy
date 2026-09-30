@@ -194,7 +194,7 @@ class WordPress extends Module {
 
 			<!-- Rule Builder Modal -->
 			<div id="sb-tg-modal-overlay" class="stackboost-modal-overlay <?php echo esc_attr( $theme_class ); ?>" style="display:none;">
-				<div class="stackboost-modal-box">
+				<div class="stackboost-modal-box" style="width: 90%; max-width: 800px;">
 					<div class="stackboost-modal-header">
 						<h3 id="sb-tg-modal-title" class="stackboost-modal-title"><?php esc_html_e( 'Configure Rule', 'stackboost-for-supportcandy' ); ?></h3>
 						<button type="button" class="stackboost-modal-close sb-tg-modal-close">&times;</button>

@@ -26,6 +26,14 @@
             }, 100);
         });
 
+        // Observer on dropdown / radio / checkbox option changes
+        $(document).on('change select2:select', 'select, input[type="radio"], input[type="checkbox"]', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                evaluateGuardRules(rules);
+            }, 100);
+        });
+
         // Initialize TinyMCE / Rich Text Editor Real-time Observer
         initTinyMCEObserver(rules);
 
@@ -313,13 +321,18 @@
                 });
 
                 if (matched) {
+                    // Check if target option(s) are ALREADY set on the form as configured
+                    if (isTargetOptionAlreadySelected(rule)) {
+                        return; // Option is already selected - no action needed
+                    }
+
                     matchedRuleId = rule.id;
                     var actions = rule.actions || {};
 
                     if (actions.disable_submit) {
                         shouldDisableSubmit = true;
                         if (rule.messaging && rule.messaging.submit_disabled_message) {
-                            disableSubmitMsg = rule.messaging.submit_disabled_message;
+                            disableSubmitMsg = formatRulePlaceholders(rule.messaging.submit_disabled_message, rule);
                         } else if (!disableSubmitMsg) {
                             disableSubmitMsg = 'Submit button disabled: Please review your entry or category selection.';
                         }
@@ -338,6 +351,7 @@
 
                     if (actions.show_inline_warning && $matchedField && $matchedField.length) {
                         var warnText = (rule.messaging && rule.messaging.inline_warning) ? rule.messaging.inline_warning : 'Keywords detected: Please ensure appropriate category selection.';
+                        warnText = formatRulePlaceholders(warnText, rule);
                         var level = (rule.messaging && rule.messaging.inline_level) ? rule.messaging.inline_level : 'alert';
                         var iconClass = 'dashicons-warning';
                         if (level === 'info') {
@@ -436,10 +450,163 @@
         }
     }
 
+    function formatRulePlaceholders(text, rule) {
+        if (!text || typeof text !== 'string') return '';
+        if (!rule) return text;
+
+        var dropdowns = (typeof stackboostTicketGuard !== 'undefined' && stackboostTicketGuard.dropdowns) ? stackboostTicketGuard.dropdowns : {};
+
+        var primaryFieldSlug = rule.swap_field || '';
+        var primaryVal = rule.swap_value || rule.suggested_category || '';
+
+        var secFieldSlug = rule.secondary_swap_field || '';
+        var secVal = rule.secondary_swap_value || '';
+
+        // Resolve Primary Field Label
+        var primaryFieldLabel = '';
+        if (primaryFieldSlug && dropdowns[primaryFieldSlug] && dropdowns[primaryFieldSlug].label) {
+            primaryFieldLabel = dropdowns[primaryFieldSlug].label;
+        } else if (primaryFieldSlug) {
+            var $pEl = $('select[name="' + primaryFieldSlug + '"], select[name="df_' + primaryFieldSlug + '"], [name="' + primaryFieldSlug + '"]');
+            if ($pEl.length) {
+                var $pLabel = $('label[for="' + $pEl.attr('id') + '"]');
+                if ($pLabel.length) {
+                    primaryFieldLabel = $.trim($pLabel.text());
+                }
+            }
+            if (!primaryFieldLabel) primaryFieldLabel = primaryFieldSlug;
+        }
+
+        // Resolve Primary Response / Target Option Text
+        var primaryResponseText = '';
+        if (primaryFieldSlug && primaryVal && dropdowns[primaryFieldSlug] && Array.isArray(dropdowns[primaryFieldSlug].options)) {
+            $.each(dropdowns[primaryFieldSlug].options, function(i, opt) {
+                if (String(opt.id) === String(primaryVal)) {
+                    primaryResponseText = opt.name;
+                    return false;
+                }
+            });
+        }
+        if (!primaryResponseText && primaryVal) {
+            var $optEl = $('option[value="' + primaryVal + '"], input[value="' + primaryVal + '"]');
+            if ($optEl.length) {
+                if ($optEl.is('option')) {
+                    primaryResponseText = $.trim($optEl.text());
+                } else {
+                    var $lbl = $('label[for="' + $optEl.attr('id') + '"]');
+                    if ($lbl.length) primaryResponseText = $.trim($lbl.text());
+                }
+            }
+            if (!primaryResponseText) primaryResponseText = primaryVal;
+        }
+
+        // Resolve Secondary Field Label
+        var secFieldLabel = '';
+        if (secFieldSlug && dropdowns[secFieldSlug] && dropdowns[secFieldSlug].label) {
+            secFieldLabel = dropdowns[secFieldSlug].label;
+        } else if (secFieldSlug) {
+            var $sEl = $('select[name="' + secFieldSlug + '"], select[name="df_' + secFieldSlug + '"], [name="' + secFieldSlug + '"]');
+            if ($sEl.length) {
+                var $sLabel = $('label[for="' + $sEl.attr('id') + '"]');
+                if ($sLabel.length) {
+                    secFieldLabel = $.trim($sLabel.text());
+                }
+            }
+            if (!secFieldLabel) secFieldLabel = secFieldSlug;
+        }
+
+        // Resolve Secondary Response / Target Option Text
+        var secResponseText = '';
+        if (secFieldSlug && secVal && dropdowns[secFieldSlug] && Array.isArray(dropdowns[secFieldSlug].options)) {
+            $.each(dropdowns[secFieldSlug].options, function(i, opt) {
+                if (String(opt.id) === String(secVal)) {
+                    secResponseText = opt.name;
+                    return false;
+                }
+            });
+        }
+        if (!secResponseText && secVal) {
+            var $secOptEl = $('option[value="' + secVal + '"], input[value="' + secVal + '"]');
+            if ($secOptEl.length) {
+                if ($secOptEl.is('option')) {
+                    secResponseText = $.trim($secOptEl.text());
+                } else {
+                    var $secLbl = $('label[for="' + $secOptEl.attr('id') + '"]');
+                    if ($secLbl.length) secResponseText = $.trim($secLbl.text());
+                }
+            }
+            if (!secResponseText) secResponseText = secVal;
+        }
+
+        return text
+            .replace(/\{primary_field\}/g, primaryFieldLabel)
+            .replace(/\{primary_response\}/g, primaryResponseText)
+            .replace(/\{target_option\}/g, primaryResponseText)
+            .replace(/\{secondary_field\}/g, secFieldLabel)
+            .replace(/\{secondary_response\}/g, secResponseText);
+    }
+
+    function isTargetOptionAlreadySelected(rule) {
+        if (!rule) return false;
+
+        var primaryField = rule.swap_field || '';
+        var primaryValue = rule.swap_value || rule.suggested_category || '';
+
+        var secondaryField = rule.secondary_swap_field || '';
+        var secondaryValue = rule.secondary_swap_value || '';
+
+        if (!primaryField || !primaryValue) {
+            return false;
+        }
+
+        function isFieldValueSet(fieldSlug, targetVal) {
+            if (!fieldSlug || !targetVal) return true;
+
+            var strTarget = String(targetVal);
+
+            // 1. Dropdown / Select
+            var $select = $('select[name="' + fieldSlug + '"], select[name="' + fieldSlug + '[]"], select[name="df_' + fieldSlug + '"], select[name*="' + fieldSlug + '"]');
+            if ($select.length) {
+                var val = $select.val();
+                if (Array.isArray(val)) {
+                    return val.indexOf(strTarget) !== -1 || val.join(',') === strTarget;
+                }
+                return String(val) === strTarget;
+            }
+
+            // 2. Radio Button
+            var $radioChecked = $('input[type="radio"][name="' + fieldSlug + '"]:checked, input[type="radio"][name*="' + fieldSlug + '"]:checked');
+            if ($radioChecked.length) {
+                return String($radioChecked.val()) === strTarget;
+            }
+
+            // 3. Checkbox
+            var $cbChecked = $('input[type="checkbox"][name="' + fieldSlug + '"]:checked, input[type="checkbox"][name*="' + fieldSlug + '"]:checked');
+            if ($cbChecked.length) {
+                var cbVals = $cbChecked.map(function() { return String($(this).val()); }).get();
+                return cbVals.indexOf(strTarget) !== -1;
+            }
+
+            return false;
+        }
+
+        var primaryMatches = isFieldValueSet(primaryField, primaryValue);
+
+        var secondaryMatches = true;
+        if (secondaryField && secondaryValue) {
+            secondaryMatches = isFieldValueSet(secondaryField, secondaryValue);
+        }
+
+        return primaryMatches && secondaryMatches;
+    }
+
     function showGuidanceModal($btn, rule, isUserSubmitClick) {
         var msgs = rule.messaging || {};
-        var title = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
-        var bodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
+        var rawTitle = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
+        var rawBodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
+
+        var title = formatRulePlaceholders(rawTitle, rule);
+        var bodyText = formatRulePlaceholders(rawBodyText, rule);
 
         if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
 
@@ -502,8 +669,11 @@
         $('.stackboost-tg-modal-overlay').remove();
 
         var msgs = rule.messaging || {};
-        var title = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
-        var bodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
+        var rawTitle = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
+        var rawBodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
+
+        var title = formatRulePlaceholders(rawTitle, rule);
+        var bodyText = formatRulePlaceholders(rawBodyText, rule);
 
         var swapField = rule.swap_field || '';
         var swapValue = rule.swap_value || rule.suggested_category;
