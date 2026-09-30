@@ -185,3 +185,42 @@
 .stackboost-modal-footer .button-primary:focus {
     opacity: 0.9;
 }
+
+/* Select2 / SelectWoo Searchable Modal Overrides */
+.stackboost-modal-overlay .select2-container {
+    width: 100% !important;
+    display: block;
+    margin-top: 4px;
+}
+
+.stackboost-modal-overlay .select2-container--default .select2-selection--single {
+    background-color: var(--sb-input-bg, #ffffff);
+    border: var(--sb-card-border, 1px solid #ccd0d4);
+    border-radius: var(--sb-radius, 4px);
+    height: 34px;
+    display: flex;
+    align-items: center;
+}
+
+.stackboost-modal-overlay .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #3c434a;
+    line-height: 32px;
+    padding-left: 10px;
+}
+
+.stackboost-modal-overlay .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 32px;
+}
+
+.stackboost-modal-overlay .select2-dropdown {
+    border: var(--sb-card-border, 1px solid #ccd0d4);
+    border-radius: var(--sb-radius, 4px);
+    z-index: 99999999 !important;
+}
+
+.stackboost-modal-overlay .select2-search__field {
+    background-color: var(--sb-input-bg, #ffffff);
+    border: var(--sb-card-border, 1px solid #ccd0d4) !important;
+    border-radius: var(--sb-radius, 4px) !important;
+    padding: 4px 8px !important;
+}

@@ -70,20 +70,37 @@ class WordPress extends Module {
 		}
 
 		wp_register_style(
+			'stackboost-select2-css',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/selectwoo/css/selectWoo.min.css',
+			[],
+			STACKBOOST_VERSION
+		);
+
+		wp_register_script(
+			'stackboost-select2-js',
+			STACKBOOST_PLUGIN_URL . 'assets/libraries/selectwoo/js/selectWoo.full.min.js',
+			[ 'jquery' ],
+			STACKBOOST_VERSION,
+			true
+		);
+
+		wp_register_style(
 			'stackboost-tg-admin-css',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/TicketGuard/assets/css/admin-rules.css',
-			[],
+			[ 'stackboost-select2-css' ],
 			STACKBOOST_VERSION
 		);
 
 		wp_register_script(
 			'stackboost-tg-admin-js',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/TicketGuard/assets/js/admin-rules.js',
-			[ 'jquery' ],
+			[ 'jquery', 'stackboost-select2-js' ],
 			STACKBOOST_VERSION,
 			true
 		);
 
+		wp_enqueue_style( 'stackboost-select2-css' );
+		wp_enqueue_script( 'stackboost-select2-js' );
 		wp_enqueue_style( 'stackboost-tg-admin-css' );
 
 		$core        = Core::get_instance();

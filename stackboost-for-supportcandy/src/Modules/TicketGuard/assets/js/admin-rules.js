@@ -200,16 +200,42 @@
         }
     }
 
+    function initSelect2() {
+        var select2Func = $.fn.selectWoo || $.fn.select2;
+        if (!select2Func) return;
+
+        var $modalBox = $('#sb-tg-modal-overlay');
+        var $selects = $('#sb-tg-monitored-field, #sb-tg-swap-field, #sb-tg-swap-value, #sb-tg-sec-swap-field, #sb-tg-sec-swap-value');
+
+        $selects.each(function() {
+            var $s = $(this);
+            if ($s.data('select2') || $s.hasClass('select2-hidden-accessible')) {
+                try { $s.select2('destroy'); } catch(e) {}
+            }
+            try {
+                select2Func.call($s, {
+                    width: '100%',
+                    dropdownParent: $modalBox
+                });
+            } catch(e) {}
+        });
+    }
+
     function populateSwapValueDropdown(fieldSlug, selectedVal) {
         var $valSelect = $('#sb-tg-swap-value');
         $valSelect.empty();
         $valSelect.append('<option value="">-- Select Target Option --</option>');
 
         if (!fieldSlug || !config.dropdowns || !config.dropdowns[fieldSlug]) {
+            initSelect2();
             return;
         }
 
-        var optionsList = config.dropdowns[fieldSlug].options || [];
+        var optionsList = (config.dropdowns[fieldSlug].options || []).slice();
+        optionsList.sort(function(a, b) {
+            return String(a.name || '').localeCompare(String(b.name || ''));
+        });
+
         $.each(optionsList, function(i, opt) {
             var $opt = $('<option>').val(opt.id).text(opt.name);
             if (String(opt.id) === String(selectedVal)) {
@@ -217,6 +243,8 @@
             }
             $valSelect.append($opt);
         });
+
+        initSelect2();
     }
 
     function populateSecSwapValueDropdown(fieldSlug, selectedVal) {
@@ -225,10 +253,15 @@
         $valSelect.append('<option value="">-- Select Secondary Option --</option>');
 
         if (!fieldSlug || !config.dropdowns || !config.dropdowns[fieldSlug]) {
+            initSelect2();
             return;
         }
 
-        var optionsList = config.dropdowns[fieldSlug].options || [];
+        var optionsList = (config.dropdowns[fieldSlug].options || []).slice();
+        optionsList.sort(function(a, b) {
+            return String(a.name || '').localeCompare(String(b.name || ''));
+        });
+
         $.each(optionsList, function(i, opt) {
             var $opt = $('<option>').val(opt.id).text(opt.name);
             if (String(opt.id) === String(selectedVal)) {
@@ -236,6 +269,8 @@
             }
             $valSelect.append($opt);
         });
+
+        initSelect2();
     }
 
     function renderRulesTable() {
@@ -357,7 +392,11 @@
             'visibility': 'visible',
             'opacity': 1,
             'z-index': 9999999
-        }).hide().fadeIn(150);
+        }).hide().fadeIn(150, function() {
+            initSelect2();
+        });
+
+        initSelect2();
     }
 
     function closeRuleModal() {

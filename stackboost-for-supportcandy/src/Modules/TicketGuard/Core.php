@@ -262,6 +262,19 @@ class Core {
 			}
 		}
 
+		foreach ( $dropdowns as $slug => &$d_info ) {
+			if ( ! empty( $d_info['options'] ) && is_array( $d_info['options'] ) ) {
+				usort( $d_info['options'], function( $a, $b ) {
+					return strnatcasecmp( $a['name'] ?? '', $b['name'] ?? '' );
+				} );
+			}
+		}
+		unset( $d_info );
+
+		uasort( $dropdowns, function( $a, $b ) {
+			return strnatcasecmp( $a['label'] ?? '', $b['label'] ?? '' );
+		} );
+
 		return $dropdowns;
 	}
 
@@ -315,6 +328,8 @@ class Core {
 				];
 			}
 		}
+
+		natcasesort( $textarea_fields );
 
 		return [
 			'fields'     => $textarea_fields,
