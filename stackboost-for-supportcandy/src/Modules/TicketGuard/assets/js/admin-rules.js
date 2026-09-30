@@ -23,7 +23,7 @@
             } else {
                 $('#stackboost-tg-rules-card').addClass('stackboost-disabled-ui');
             }
-            saveConfig(rules, isEnabled, false);
+            saveConfig(rules, isEnabled, 'Feature status updated.');
         });
 
         // Toggle visibility of conditional action sub-options
@@ -86,7 +86,7 @@
             if (confirm(config.i18n ? config.i18n.confirm_delete : 'Delete this rule?')) {
                 rules = rules.filter(function(r) { return String(r.id) !== String(ruleId); });
                 renderRulesTable();
-                saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), false);
+                saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), 'Rule deleted.');
             }
         });
 
@@ -158,7 +158,7 @@
             console.log('[StackBoost TicketGuard] Saving rule object:', ruleObj);
             renderRulesTable();
             closeRuleModal();
-            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), true);
+            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), 'Rule saved successfully.');
         });
     });
 
@@ -407,13 +407,27 @@
         return idx !== -1 ? rules[idx] : null;
     }
 
-    function saveConfig(rulesArray, isEnabled, showFeedback, callback) {
+    function showNotice(msg, isError) {
+        if (typeof window.stackboostToast === 'function') {
+            window.stackboostToast(msg);
+        } else {
+            $('.sb-tg-toast').remove();
+            var bg = isError ? '#d63638' : '#008a20';
+            var icon = isError ? 'dashicons-dismiss' : 'dashicons-yes';
+            var $toast = $('<div class="sb-tg-toast" style="position: fixed; bottom: 30px; right: 30px; background: ' + bg + '; color: #fff; padding: 10px 18px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); font-weight: 600; font-size: 13px; z-index: 9999999; display: flex; align-items: center; gap: 8px;"><span class="dashicons ' + icon + '" style="font-size:18px; width:18px; height:18px; line-height:18px;"></span><span>' + escapeHtml(msg) + '</span></div>');
+            $('body').append($toast);
+            $toast.fadeIn(200).delay(2500).fadeOut(300, function() {
+                $(this).remove();
+            });
+        }
+    }
+
+    function saveConfig(rulesArray, isEnabled, feedbackMsg, callback) {
         console.log('[StackBoost TicketGuard] saveConfig called. Enabled:', isEnabled, 'Rules:', rulesArray);
 
         $('#sb_tg_enabled_hidden').val(isEnabled ? '1' : '0');
         $('#sb_tg_rules_hidden').val(JSON.stringify(rulesArray));
 
-        var $msg = $('#sb-tg-save-msg');
         $.post(config.ajax_url || ajaxurl, {
             action: 'stackboost_tg_save_rules',
             nonce: config.nonce,
@@ -421,15 +435,15 @@
             rules: JSON.stringify(rulesArray)
         }, function(res) {
             console.log('[StackBoost TicketGuard] saveConfig AJAX success response:', res);
-            if (showFeedback) {
-                $msg.text(config.i18n ? config.i18n.saved_success : 'Settings saved successfully.').fadeIn().delay(3000).fadeOut();
+            if (feedbackMsg) {
+                var msgText = typeof feedbackMsg === 'string' ? feedbackMsg : (config.i18n ? config.i18n.saved_success : 'Settings saved successfully.');
+                showNotice(msgText, false);
             }
             if (typeof callback === 'function') callback();
         }).fail(function(xhr, status, error) {
             console.error('[StackBoost TicketGuard] saveConfig AJAX error:', status, error);
-            if (showFeedback) {
-                alert(config.i18n ? config.i18n.save_error : 'Failed to save settings.');
-            }
+            var errText = config.i18n ? config.i18n.save_error : 'Failed to save settings.';
+            showNotice(errText, true);
             if (typeof callback === 'function') callback();
         });
     }

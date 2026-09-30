@@ -94,7 +94,7 @@ class WordPress extends Module {
 		wp_register_script(
 			'stackboost-tg-admin-js',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/TicketGuard/assets/js/admin-rules.js',
-			[ 'jquery', 'stackboost-select2-js' ],
+			[ 'jquery', 'stackboost-util', 'stackboost-select2-js' ],
 			STACKBOOST_VERSION,
 			true
 		);
