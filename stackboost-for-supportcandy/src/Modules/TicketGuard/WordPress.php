@@ -193,14 +193,14 @@ class WordPress extends Module {
 			</div>
 
 			<!-- Rule Builder Modal -->
-			<div id="sb-tg-modal-overlay" class="stackboost-modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999999;">
-				<div class="stackboost-modal-box" style="background: #fff; border-radius: 6px; max-width: 700px; width: 90%; max-height: 90vh; margin: 50px auto; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-					<div class="stackboost-modal-header" style="padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-						<h3 id="sb-tg-modal-title" class="stackboost-modal-title" style="margin: 0; font-size: 18px;"><?php esc_html_e( 'Configure Rule', 'stackboost-for-supportcandy' ); ?></h3>
-						<button type="button" class="stackboost-modal-close sb-tg-modal-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+			<div id="sb-tg-modal-overlay" class="stackboost-modal-overlay <?php echo esc_attr( $theme_class ); ?>" style="display:none;">
+				<div class="stackboost-modal-box">
+					<div class="stackboost-modal-header">
+						<h3 id="sb-tg-modal-title" class="stackboost-modal-title"><?php esc_html_e( 'Configure Rule', 'stackboost-for-supportcandy' ); ?></h3>
+						<button type="button" class="stackboost-modal-close sb-tg-modal-close">&times;</button>
 					</div>
 
-					<div class="stackboost-modal-body" style="max-height: 70vh; overflow-y: auto; padding: 20px;">
+					<div class="stackboost-modal-body">
 						<input type="hidden" id="sb-tg-rule-id" value="" />
 
 						<!-- Rule Name -->
@@ -227,8 +227,61 @@ class WordPress extends Module {
 							<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: Use & to require multiple phrases on the same line (e.g. "UC Portal & Password"). Each new line acts as an OR condition.', 'stackboost-for-supportcandy' ); ?></p>
 						</div>
 
-						<!-- Target Field & Option Selection (Permanently Visible) -->
-						<div id="sb-tg-swap-container" style="margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
+						<!-- Action Toggles (Positioned directly below Keywords) -->
+						<div class="sb-tg-action-toggles-container">
+							<label><strong><?php esc_html_e( 'Action Toggles (Independently Selectable):', 'stackboost-for-supportcandy' ); ?></strong></label>
+							<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+								<label><input type="checkbox" id="sb-tg-act-disable-submit" /> <?php esc_html_e( 'Disable Submit Button when matched', 'stackboost-for-supportcandy' ); ?></label>
+								<label><input type="checkbox" id="sb-tg-act-show-modal" /> <?php esc_html_e( 'Display Guidance Modal Popup', 'stackboost-for-supportcandy' ); ?></label>
+								<label><input type="checkbox" id="sb-tg-act-show-inline" /> <?php esc_html_e( 'Show Real-Time Inline Warning Banner', 'stackboost-for-supportcandy' ); ?></label>
+								<label><input type="checkbox" id="sb-tg-act-auto-swap" /> <?php esc_html_e( 'Automatically Swap Selected Fields to Target Options', 'stackboost-for-supportcandy' ); ?></label>
+							</div>
+						</div>
+
+						<!-- Action Settings (In same order as Action Selections listed above) -->
+
+						<!-- 1. Submit Disabled Message (Conditional on Disable Submit) -->
+						<div id="sb-tg-submit-msg-container" class="sb-tg-section-container" style="display: none;">
+							<div class="sb-tg-field-group">
+								<label for="sb-tg-submit-disabled-msg"><strong><?php esc_html_e( 'Submit Disabled Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<input type="text" id="sb-tg-submit-disabled-msg" class="widefat" placeholder="<?php esc_attr_e( 'Submit button disabled: Please review your entry or category selection.', 'stackboost-for-supportcandy' ); ?>" />
+								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Displayed near the submit button when it is disabled by this rule.', 'stackboost-for-supportcandy' ); ?></p>
+							</div>
+						</div>
+
+						<!-- 2. Guidance Modal Customization (Conditional on Display Guidance Modal) -->
+						<div id="sb-tg-modal-container" class="sb-tg-section-container" style="display: none;">
+							<div class="sb-tg-field-group" style="margin-bottom: 15px;">
+								<label for="sb-tg-modal-custom-title"><strong><?php esc_html_e( 'Guidance Modal Title:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<input type="text" id="sb-tg-modal-custom-title" class="widefat" placeholder="<?php esc_attr_e( 'Looking for Billing Support?', 'stackboost-for-supportcandy' ); ?>" />
+							</div>
+
+							<div class="sb-tg-field-group">
+								<label for="sb-tg-modal-custom-body"><strong><?php esc_html_e( 'Guidance Modal Message Body:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<textarea id="sb-tg-modal-custom-body" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'It looks like your ticket relates to billing or invoices. Switching to the Billing category ensures faster response times.', 'stackboost-for-supportcandy' ); ?>"></textarea>
+								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: You can use dynamic placeholders like {primary_field}, {primary_response}, {secondary_field}, and {secondary_response} in your title or body.', 'stackboost-for-supportcandy' ); ?></p>
+							</div>
+						</div>
+
+						<!-- 3. Inline Warning Message (Conditional on Inline Warning) -->
+						<div id="sb-tg-inline-container" class="sb-tg-section-container" style="display: none;">
+							<div class="sb-tg-field-group" style="margin-bottom: 10px;">
+								<label for="sb-tg-inline-level"><strong><?php esc_html_e( 'Notice Style:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<select id="sb-tg-inline-level" class="widefat">
+									<option value="info"><?php esc_html_e( 'Information (Green)', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="alert" selected><?php esc_html_e( 'Alert (Amber)', 'stackboost-for-supportcandy' ); ?></option>
+									<option value="warning"><?php esc_html_e( 'Warning (Red)', 'stackboost-for-supportcandy' ); ?></option>
+								</select>
+							</div>
+
+							<div class="sb-tg-field-group">
+								<label for="sb-tg-inline-warning"><strong><?php esc_html_e( 'Inline Warning Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
+								<input type="text" id="sb-tg-inline-warning" class="widefat" placeholder="<?php esc_attr_e( 'Keywords detected: Consider selecting Billing Support for faster service.', 'stackboost-for-supportcandy' ); ?>" />
+							</div>
+						</div>
+
+						<!-- 4. Target Field & Option Selection (Conditional on Auto-Swap OR Guidance Modal) -->
+						<div id="sb-tg-swap-container" class="sb-tg-section-container" style="display: none;">
 							<label style="display: block; margin-bottom: 10px;"><strong><?php esc_html_e( 'Target Field & Option Selection:', 'stackboost-for-supportcandy' ); ?></strong></label>
 
 							<!-- Primary Field to Swap & Target Option -->
@@ -271,60 +324,9 @@ class WordPress extends Module {
 								</div>
 							</div>
 						</div>
-
-						<!-- Action Toggles -->
-						<div class="sb-tg-field-group" style="margin-bottom: 15px; background: #f9f9f9; padding: 12px; border-radius: 4px;">
-							<label><strong><?php esc_html_e( 'Action Toggles (Independently Selectable):', 'stackboost-for-supportcandy' ); ?></strong></label>
-							<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-								<label><input type="checkbox" id="sb-tg-act-disable-submit" /> <?php esc_html_e( 'Disable Submit Button when matched', 'stackboost-for-supportcandy' ); ?></label>
-								<label><input type="checkbox" id="sb-tg-act-show-modal" /> <?php esc_html_e( 'Display Guidance Modal Popup', 'stackboost-for-supportcandy' ); ?></label>
-								<label><input type="checkbox" id="sb-tg-act-show-inline" /> <?php esc_html_e( 'Show Real-Time Inline Warning Banner', 'stackboost-for-supportcandy' ); ?></label>
-								<label><input type="checkbox" id="sb-tg-act-auto-swap" /> <?php esc_html_e( 'Automatically Swap Selected Fields to Target Options', 'stackboost-for-supportcandy' ); ?></label>
-							</div>
-						</div>
-
-						<!-- Submit Disabled Message (Conditional) -->
-						<div id="sb-tg-submit-msg-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
-							<div class="sb-tg-field-group">
-								<label for="sb-tg-submit-disabled-msg"><strong><?php esc_html_e( 'Submit Disabled Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<input type="text" id="sb-tg-submit-disabled-msg" class="widefat" placeholder="<?php esc_attr_e( 'Submit button disabled: Please review your entry or category selection.', 'stackboost-for-supportcandy' ); ?>" />
-								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Displayed near the submit button when it is disabled by this rule.', 'stackboost-for-supportcandy' ); ?></p>
-							</div>
-						</div>
-
-						<!-- Guidance Modal Customization (Conditional) -->
-						<div id="sb-tg-modal-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
-							<div class="sb-tg-field-group" style="margin-bottom: 15px;">
-								<label for="sb-tg-modal-custom-title"><strong><?php esc_html_e( 'Guidance Modal Title:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<input type="text" id="sb-tg-modal-custom-title" class="widefat" placeholder="<?php esc_attr_e( 'Looking for Billing Support?', 'stackboost-for-supportcandy' ); ?>" />
-							</div>
-
-							<div class="sb-tg-field-group">
-								<label for="sb-tg-modal-custom-body"><strong><?php esc_html_e( 'Guidance Modal Message Body:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<textarea id="sb-tg-modal-custom-body" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'It looks like your ticket relates to billing or invoices. Switching to the Billing category ensures faster response times.', 'stackboost-for-supportcandy' ); ?>"></textarea>
-								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: You can use dynamic placeholders like {primary_field}, {primary_response}, {secondary_field}, and {secondary_response} in your title or body.', 'stackboost-for-supportcandy' ); ?></p>
-							</div>
-						</div>
-
-						<!-- Inline Warning Message (Conditional) -->
-						<div id="sb-tg-inline-container" style="display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">
-							<div class="sb-tg-field-group" style="margin-bottom: 10px;">
-								<label for="sb-tg-inline-level"><strong><?php esc_html_e( 'Notice Style:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<select id="sb-tg-inline-level" class="widefat">
-									<option value="info"><?php esc_html_e( 'Information (Green)', 'stackboost-for-supportcandy' ); ?></option>
-									<option value="alert" selected><?php esc_html_e( 'Alert (Amber)', 'stackboost-for-supportcandy' ); ?></option>
-									<option value="warning"><?php esc_html_e( 'Warning (Red)', 'stackboost-for-supportcandy' ); ?></option>
-								</select>
-							</div>
-
-							<div class="sb-tg-field-group">
-								<label for="sb-tg-inline-warning"><strong><?php esc_html_e( 'Inline Warning Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<input type="text" id="sb-tg-inline-warning" class="widefat" placeholder="<?php esc_attr_e( 'Keywords detected: Consider selecting Billing Support for faster service.', 'stackboost-for-supportcandy' ); ?>" />
-							</div>
-						</div>
 					</div>
 
-					<div class="stackboost-modal-footer" style="padding: 12px 20px; background: #f8f9fa; border-top: 1px solid #eee; text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+					<div class="stackboost-modal-footer">
 						<button type="button" class="button button-secondary sb-tg-modal-close"><?php esc_html_e( 'Cancel', 'stackboost-for-supportcandy' ); ?></button>
 						<button type="button" id="sb-tg-save-rule-btn" class="button button-primary"><?php esc_html_e( 'Save Rule', 'stackboost-for-supportcandy' ); ?></button>
 					</div>

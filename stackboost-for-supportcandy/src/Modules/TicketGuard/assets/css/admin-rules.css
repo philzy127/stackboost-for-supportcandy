@@ -6,7 +6,7 @@
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--sb-card-border, #f0f0f0);
 }
 
 #sb-tg-add-rule-btn {
@@ -29,23 +29,23 @@
 }
 
 .sb-tg-action-badge.active {
-    background-color: #007cba;
-    color: #fff;
+    background-color: var(--sb-accent, #007cba);
+    color: var(--sb-text-on-accent, #fff);
 }
 
 .sb-tg-edit-rule-btn {
-    color: #2271b1;
+    color: var(--sb-accent, #2271b1);
     cursor: pointer;
     margin-right: 6px;
     vertical-align: middle;
 }
 
 .sb-tg-edit-rule-btn:hover {
-    color: #135e96;
+    color: var(--sb-accent-dark, #135e96);
 }
 
 .sb-tg-delete-rule-btn {
-    color: #d63638;
+    color: var(--sb-destructive, #d63638);
     cursor: pointer;
     margin-left: 6px;
     vertical-align: middle;
@@ -64,6 +64,7 @@
     pointer-events: none;
 }
 
+/* Modal Overlay & Container with Theme Variables */
 .stackboost-modal-overlay {
     position: fixed;
     top: 0;
@@ -78,16 +79,21 @@
 }
 
 .stackboost-modal-box {
-    background: #fff;
-    border-radius: 6px;
+    background: var(--sb-card-bg, #ffffff);
+    border-radius: var(--sb-radius, 6px);
+    border-top: 3px solid var(--sb-accent, #1a3d5c);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
     overflow: hidden;
+    max-width: 700px;
+    width: 90%;
+    max-height: 90vh;
+    margin: 50px auto;
 }
 
 .stackboost-modal-header {
     padding: 15px 20px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #eee;
+    background: var(--sb-bg-main, #f8f9fa);
+    border-bottom: var(--sb-card-border, 1px solid #eee);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -96,6 +102,8 @@
 .stackboost-modal-title {
     margin: 0;
     font-size: 18px;
+    color: var(--sb-accent, #1a3d5c);
+    font-weight: 600;
 }
 
 .stackboost-modal-close {
@@ -104,18 +112,76 @@
     font-size: 24px;
     cursor: pointer;
     color: #666;
+    transition: color 0.15s ease;
 }
 
 .stackboost-modal-close:hover {
-    color: #000;
+    color: var(--sb-accent, #000);
+}
+
+.stackboost-modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: var(--sb-card-bg, #ffffff);
 }
 
 .stackboost-modal-footer {
     padding: 12px 20px;
-    background: #f8f9fa;
-    border-top: 1px solid #eee;
+    background: var(--sb-bg-main, #f8f9fa);
+    border-top: var(--sb-card-border, 1px solid #eee);
     text-align: right;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+/* Modal Form Controls Theme Support */
+.stackboost-modal-box input[type="text"],
+.stackboost-modal-box select,
+.stackboost-modal-box textarea {
+    background-color: var(--sb-input-bg, #ffffff);
+    border: var(--sb-card-border, 1px solid #ccd0d4);
+    border-radius: var(--sb-radius, 4px);
+}
+
+.stackboost-modal-box input[type="text"]:focus,
+.stackboost-modal-box select:focus,
+.stackboost-modal-box textarea:focus {
+    border-color: var(--sb-accent, #1a3d5c);
+    box-shadow: 0 0 0 1px var(--sb-accent, #1a3d5c);
+}
+
+.stackboost-modal-box label {
+    color: var(--sb-accent, #333);
+}
+
+/* Modal Action Toggles Container */
+.sb-tg-action-toggles-container {
+    margin-bottom: 15px;
+    background: var(--sb-bg-main, #f9f9f9);
+    padding: 12px;
+    border: var(--sb-card-border, 1px solid #e0e0e0);
+    border-radius: var(--sb-radius, 4px);
+}
+
+/* Modal Section Containers (Conditional Action Options) */
+.sb-tg-section-container {
+    margin-bottom: 15px;
+    padding: 12px;
+    border: var(--sb-card-border, 1px solid #e0e0e0);
+    border-radius: var(--sb-radius, 4px);
+    background: var(--sb-card-bg, #ffffff);
+}
+
+/* Button Colors inside Modal */
+.stackboost-modal-footer .button-primary {
+    background: var(--sb-accent, #2271b1) !important;
+    border-color: var(--sb-accent, #2271b1) !important;
+    color: var(--sb-text-on-accent, #ffffff) !important;
+}
+
+.stackboost-modal-footer .button-primary:hover,
+.stackboost-modal-footer .button-primary:focus {
+    opacity: 0.9;
 }
