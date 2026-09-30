@@ -200,12 +200,6 @@ class WordPress extends Module {
 							<?php esc_html_e( 'No intake steering rules configured yet. Click "Add New Rule" to create one.', 'stackboost-for-supportcandy' ); ?>
 						</p>
 					</div>
-
-					<!-- Save Settings Footer -->
-					<div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; display: flex; align-items: center; gap: 15px;">
-						<button type="button" id="sb-tg-main-save-btn" class="button button-primary button-large" style="padding: 6px 20px; font-size: 14px; cursor: pointer;"><?php esc_html_e( 'Save Settings', 'stackboost-for-supportcandy' ); ?></button>
-						<span id="sb-tg-save-msg" style="display:none; font-weight: bold; color: green; font-size: 13px;"></span>
-					</div>
 				</div>
 			</div>
 

@@ -60,18 +60,6 @@
         $(document).on('click', '#sb-tg-add-rule-btn', handleAddRuleClick);
         $('#sb-tg-add-rule-btn').on('click', handleAddRuleClick);
 
-        // Save Settings Button (Page Footer)
-        $(document).on('click', '#sb-tg-main-save-btn', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[StackBoost TicketGuard] Save Settings button clicked.');
-            var $btn = $(this);
-            $btn.prop('disabled', true);
-            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), true, function() {
-                $btn.prop('disabled', false);
-            });
-        });
-
         // Close Modal
         $(document).on('click', '.sb-tg-modal-close', function(e) {
             e.preventDefault();
