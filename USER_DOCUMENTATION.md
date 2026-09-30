@@ -104,6 +104,23 @@ Display a custom warning message on the ticket submission form when your busines
     *   **Holidays:** A list of dates (one per line, MM-DD-YYYY or YYYY-MM-DD) when your business is closed all day.
 *   **Important:** The system uses your **WordPress Timezone** setting (Settings > General). Ensure this matches your local time, or the notice may appear at the wrong time.
 
+### Ticket Guard Engine
+
+Optimize intake by monitoring ticket description fields in real time to steer users toward appropriate categories and eliminate generic or misclassified submissions.
+
+*   **Real-Time Keyword Steering:** Monitor text areas and text fields using compound keywords (`&` for AND conditions, newlines for OR conditions).
+*   **Smart Option Pre-Verification:** Automatically checks if target options are already selected on the form and suppresses unnecessary warnings.
+*   **Flexible Escalation Levels:**
+    *   **Disable Submit Button:** Locks form submission with hover tooltips and click modal alerts.
+    *   **Guidance Modal:** Shows an interactive popup offering "Switch Options" or "Proceed Anyway".
+    *   **Inline Warning Banner:** Renders real-time feedback with green "Fix It" tools icon and orange "Dismiss" icon buttons.
+    *   **Auto Field Swapping:** Automatically updates dropdowns, radio buttons, or checkboxes on the fly.
+*   **Dynamic Placeholders:** Use `{primary_field}`, `{primary_response}`, `{target_option}`, `{secondary_field}`, `{secondary_response}`, and `{fix_it_button}` macros in messages.
+*   **Searchable & Alphabetized Dropdowns:** Monitored fields and target option selectors are alphabetized and searchable with integrated SelectWoo.
+*   **Instant AJAX Saving:** All rule creations, edits, deletions, and toggle changes save instantly via AJAX with toast acknowledgements.
+
+For detailed escalation recipes and user manual whitepapers, see `Documentation/User/USER_GUIDE_TICKET_GUARD.md`.
+
 ## Support
 
 If you encounter issues, please check the **Diagnostics** page to see if any errors are being logged. You can download the log file and send it to our support team for assistance.
