@@ -112,6 +112,10 @@ class Core {
 					'inline_warning'          => sanitize_text_field( $rule['messaging']['inline_warning'] ?? '' ),
 					'inline_level'            => sanitize_key( $rule['messaging']['inline_level'] ?? 'alert' ),
 					'submit_disabled_message' => sanitize_text_field( $rule['messaging']['submit_disabled_message'] ?? '' ),
+					'is_kb_steering'          => ! empty( $rule['messaging']['is_kb_steering'] ),
+					'kb_message'              => ! empty( $rule['messaging']['kb_message'] ) ? wp_kses_post( $rule['messaging']['kb_message'] ) : '',
+					'kb_doc_ids'              => ! empty( $rule['messaging']['kb_doc_ids'] ) && is_array( $rule['messaging']['kb_doc_ids'] ) ? array_values( array_map( 'sanitize_text_field', $rule['messaging']['kb_doc_ids'] ) ) : [],
+					'kb_docs'                 => $this->resolve_kb_docs( $rule['messaging']['is_kb_steering'] ?? false, $rule['messaging']['kb_doc_ids'] ?? [] ),
 				],
 			];
 		}
@@ -332,10 +336,66 @@ class Core {
 		natcasesort( $textarea_fields );
 
 		return [
-			'fields'     => $textarea_fields,
-			'categories' => $categories,
-			'dropdowns'  => $this->get_dropdown_fields_and_options(),
+			'fields'              => $textarea_fields,
+			'categories'          => $categories,
+			'dropdowns'           => $this->get_dropdown_fields_and_options(),
+			'betterdocs_articles' => $this->get_betterdocs_articles(),
 		];
+	}
+
+	/**
+	 * Query BetterDocs published documentation articles if BetterDocs is installed/active.
+	 *
+	 * @return array List of published BetterDocs articles.
+	 */
+	public function get_betterdocs_articles(): array {
+		$articles = [];
+		if ( post_type_exists( 'docs' ) ) {
+			$posts = get_posts( [
+				'post_type'      => 'docs',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			] );
+
+			foreach ( $posts as $p ) {
+				$articles[] = [
+					'id'    => (string) $p->ID,
+					'title' => $p->post_title,
+					'url'   => get_permalink( $p->ID ),
+				];
+			}
+		}
+		return $articles;
+	}
+
+	/**
+	 * Resolve article titles and permalinks for specified KB doc IDs.
+	 *
+	 * @param bool  $is_kb_steering
+	 * @param array $doc_ids
+	 * @return array
+	 */
+	public function resolve_kb_docs( bool $is_kb_steering, array $doc_ids ): array {
+		if ( ! $is_kb_steering || empty( $doc_ids ) ) {
+			return [];
+		}
+
+		$kb_docs      = [];
+		$all_articles = $this->get_betterdocs_articles();
+		$article_map  = [];
+		foreach ( $all_articles as $art ) {
+			$article_map[ (string) $art['id'] ] = $art;
+		}
+
+		foreach ( $doc_ids as $doc_id ) {
+			if ( isset( $article_map[ (string) $doc_id ] ) ) {
+				$kb_docs[] = $article_map[ (string) $doc_id ];
+			}
+		}
+
+		return $kb_docs;
 	}
 
 	/**

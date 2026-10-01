@@ -43,6 +43,20 @@
             populateSecSwapValueDropdown(selectedSlug, null);
         });
 
+        // Toggle BetterDocs KB Steering vs Standard Settings
+        $(document).on('change', '#sb-tg-modal-is-kb', function() {
+            var isKb = $(this).is(':checked');
+            if (isKb) {
+                $('#sb-tg-modal-standard-settings').slideUp(150);
+                $('#sb-tg-modal-kb-settings').slideDown(150, function() {
+                    initSelect2();
+                });
+            } else {
+                $('#sb-tg-modal-kb-settings').slideUp(150);
+                $('#sb-tg-modal-standard-settings').slideDown(150);
+            }
+        });
+
         // Open Modal: Add Rule (Delegated & Direct Handlers)
         function handleAddRuleClick(e) {
             e.preventDefault();
@@ -140,7 +154,10 @@
                     modal_body: $.trim($('#sb-tg-modal-custom-body').val()),
                     inline_warning: $.trim($('#sb-tg-inline-warning').val()),
                     inline_level: inlineLevel,
-                    submit_disabled_message: $.trim($('#sb-tg-submit-disabled-msg').val())
+                    submit_disabled_message: $.trim($('#sb-tg-submit-disabled-msg').val()),
+                    is_kb_steering: $('#sb-tg-modal-is-kb').is(':checked'),
+                    kb_message: $.trim($('#sb-tg-modal-kb-message').val()),
+                    kb_doc_ids: $('#sb-tg-modal-kb-docs').val() || []
                 }
             };
 
@@ -193,7 +210,7 @@
         if (!select2Func) return;
 
         var $modalBox = $('#sb-tg-modal-overlay');
-        var $selects = $('#sb-tg-monitored-field, #sb-tg-swap-field, #sb-tg-swap-value, #sb-tg-sec-swap-field, #sb-tg-sec-swap-value');
+        var $selects = $('#sb-tg-monitored-field, #sb-tg-swap-field, #sb-tg-swap-value, #sb-tg-sec-swap-field, #sb-tg-sec-swap-value, #sb-tg-modal-kb-docs');
 
         $selects.each(function() {
             var $s = $(this);
@@ -342,11 +359,23 @@
             populateSecSwapValueDropdown(secSwapField, secSwapValue);
 
             var msgs = rule.messaging || {};
+            var isKb = !!msgs.is_kb_steering;
+            $('#sb-tg-modal-is-kb').prop('checked', isKb);
+            if (isKb) {
+                $('#sb-tg-modal-standard-settings').hide();
+                $('#sb-tg-modal-kb-settings').show();
+            } else {
+                $('#sb-tg-modal-kb-settings').hide();
+                $('#sb-tg-modal-standard-settings').show();
+            }
+
             $('#sb-tg-modal-custom-title').val(msgs.modal_title || '');
             $('#sb-tg-modal-custom-body').val(msgs.modal_body || '');
             $('#sb-tg-inline-warning').val(msgs.inline_warning || '');
             $('#sb-tg-inline-level').val(msgs.inline_level || 'alert');
             $('#sb-tg-submit-disabled-msg').val(msgs.submit_disabled_message || '');
+            $('#sb-tg-modal-kb-message').val(msgs.kb_message || '');
+            $('#sb-tg-modal-kb-docs').val(msgs.kb_doc_ids || []);
         } else {
             $('#sb-tg-modal-title').text('Add New Intake Steering Rule');
             $('#sb-tg-rule-id').val('');
@@ -366,11 +395,17 @@
             $('#sb-tg-sec-swap-field').val('');
             populateSecSwapValueDropdown('', null);
 
+            $('#sb-tg-modal-is-kb').prop('checked', false);
+            $('#sb-tg-modal-kb-settings').hide();
+            $('#sb-tg-modal-standard-settings').show();
+
             $('#sb-tg-modal-custom-title').val('');
             $('#sb-tg-modal-custom-body').val('');
             $('#sb-tg-inline-warning').val('');
             $('#sb-tg-inline-level').val('alert');
             $('#sb-tg-submit-disabled-msg').val('');
+            $('#sb-tg-modal-kb-message').val('');
+            $('#sb-tg-modal-kb-docs').val([]);
         }
 
         toggleConditionalSections();

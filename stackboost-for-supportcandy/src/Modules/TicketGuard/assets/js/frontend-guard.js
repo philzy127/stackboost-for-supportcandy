@@ -748,13 +748,49 @@
         }
     }
 
-    function showGuidanceModal($btn, rule, isUserSubmitClick) {
-        var msgs = rule.messaging || {};
-        var rawTitle = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
-        var rawBodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
+    function buildGuidanceModalContent(rule) {
+        var msgs = (rule && rule.messaging) ? rule.messaging : {};
 
-        var title = formatRulePlaceholders(rawTitle, rule);
-        var bodyText = formatRulePlaceholders(rawBodyText, rule);
+        if (msgs.is_kb_steering) {
+            var kbTitle = msgs.modal_title || 'Information Available';
+            var kbMsg = msgs.kb_message || 'It looks like your request might be answered in our Knowledge Base articles below. Please review these resources before submitting your ticket:';
+            var docsList = msgs.kb_docs || [];
+
+            var bodyHtml = '<p style="font-size:14px;line-height:1.5;margin:0 0 10px 0;">' + escapeHtml(kbMsg) + '</p>';
+            if (Array.isArray(docsList) && docsList.length) {
+                bodyHtml += '<ul style="margin:10px 0 15px 20px; padding:0; list-style:disc; font-size:14px; line-height:1.6;">';
+                $.each(docsList, function(i, doc) {
+                    var docTitle = doc.title || 'Knowledge Base Article';
+                    var docUrl = doc.url || '#';
+                    bodyHtml += '<li><a href="' + escapeHtml(docUrl) + '" target="_blank" rel="noopener noreferrer" style="color:#2271b1; font-weight:600; text-decoration:underline;">' + escapeHtml(docTitle) + '</a></li>';
+                });
+                bodyHtml += '</ul>';
+            }
+
+            return {
+                title: kbTitle,
+                bodyHtml: bodyHtml,
+                isKb: true
+            };
+        } else {
+            var rawTitle = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
+            var rawBodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
+
+            var title = formatRulePlaceholders(rawTitle, rule);
+            var bodyText = formatRulePlaceholders(rawBodyText, rule);
+
+            return {
+                title: title,
+                bodyHtml: '<p style="font-size:14px;line-height:1.5;margin:0;">' + escapeHtml(bodyText) + '</p>',
+                isKb: false
+            };
+        }
+    }
+
+    function showGuidanceModal($btn, rule, isUserSubmitClick) {
+        var modalData = buildGuidanceModalContent(rule);
+        var title = modalData.title;
+        var bodyHtml = modalData.bodyHtml;
 
         if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
 
@@ -766,7 +802,7 @@
 
         if (swapValue && typeof window.stackboostConfirm === 'function') {
             window.stackboostConfirm(
-                '<p style="font-size:14px;line-height:1.5;margin:0;">' + escapeHtml(bodyText) + '</p>',
+                bodyHtml,
                 title,
                 function onConfirm() {
                     // Switch Target Options
@@ -793,7 +829,7 @@
             );
         } else if (typeof window.stackboostAlert === 'function') {
             window.stackboostAlert(
-                '<p style="font-size:14px;line-height:1.5;margin:0;">' + escapeHtml(bodyText) + '</p>',
+                bodyHtml,
                 title,
                 function() {
                     if (rule.id) window._tgModalDismissedRules[rule.id] = true;
@@ -807,12 +843,9 @@
     function fallbackShowGuidanceModal($btn, rule, isUserSubmitClick) {
         $('.stackboost-tg-modal-overlay').remove();
 
-        var msgs = rule.messaging || {};
-        var rawTitle = msgs.modal_title || (stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.notice_title : 'Category Guidance');
-        var rawBodyText = msgs.modal_body || 'It looks like your ticket content relates to a specific department. Please consider updating your category selection before submitting.';
-
-        var title = formatRulePlaceholders(rawTitle, rule);
-        var bodyText = formatRulePlaceholders(rawBodyText, rule);
+        var modalData = buildGuidanceModalContent(rule);
+        var title = modalData.title;
+        var bodyHtml = modalData.bodyHtml;
 
         var swapField = rule.swap_field || '';
         var swapValue = rule.swap_value || rule.suggested_category;
@@ -824,7 +857,7 @@
             '<button type="button" class="stackboost-modal-close sb-tg-close-modal" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;">&times;</button>' +
             '</div>' +
             '<div class="stackboost-modal-body" style="padding:20px 20px 10px;">' +
-            '<p style="margin:0 0 15px 0;font-size:14px;line-height:1.5;color:#444;">' + escapeHtml(bodyText) + '</p>' +
+            bodyHtml +
             '</div>' +
             '<div class="stackboost-modal-footer" style="padding:14px 20px;background:#f8f9fa;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;">' +
             '<button type="button" class="button sb-tg-proceed-btn" style="cursor:pointer;">' + escapeHtml(stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway') + '</button>';

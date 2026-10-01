@@ -136,8 +136,9 @@ class WordPress extends Module {
 		$is_enabled = $core->is_enabled();
 		$form_data  = $core->get_form_options();
 		$fields     = $form_data['fields'];
-		$dropdowns  = $form_data['dropdowns'];
-		$rules      = array_values( $core->get_rules() );
+		$dropdowns           = $form_data['dropdowns'];
+		$betterdocs_articles = $form_data['betterdocs_articles'] ?? [];
+		$rules               = array_values( $core->get_rules() );
 
 		$theme_class = 'sb-theme-clean-tech';
 		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -262,15 +263,44 @@ class WordPress extends Module {
 
 						<!-- 2. Guidance Modal Customization (Conditional on Display Guidance Modal) -->
 						<div id="sb-tg-modal-container" class="sb-tg-section-container" style="display: none;">
-							<div class="sb-tg-field-group" style="margin-bottom: 15px;">
-								<label for="sb-tg-modal-custom-title"><strong><?php esc_html_e( 'Guidance Modal Title:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<input type="text" id="sb-tg-modal-custom-title" class="widefat" placeholder="<?php esc_attr_e( 'Looking for Billing Support?', 'stackboost-for-supportcandy' ); ?>" />
+							<div class="sb-tg-field-group" style="margin-bottom: 12px;">
+								<label><input type="checkbox" id="sb-tg-modal-is-kb" /> <strong><?php esc_html_e( 'Steer user toward BetterDocs documentation', 'stackboost-for-supportcandy' ); ?></strong></label>
 							</div>
 
-							<div class="sb-tg-field-group">
-								<label for="sb-tg-modal-custom-body"><strong><?php esc_html_e( 'Guidance Modal Message Body:', 'stackboost-for-supportcandy' ); ?></strong></label>
-								<textarea id="sb-tg-modal-custom-body" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'It looks like your ticket relates to billing or invoices. Switching to the Billing category ensures faster response times.', 'stackboost-for-supportcandy' ); ?>"></textarea>
-								<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: You can use dynamic placeholders like {primary_field}, {primary_response}, {secondary_field}, and {secondary_response} in your title or body.', 'stackboost-for-supportcandy' ); ?></p>
+							<!-- Standard Guidance Modal Settings -->
+							<div id="sb-tg-modal-standard-settings">
+								<div class="sb-tg-field-group" style="margin-bottom: 15px;">
+									<label for="sb-tg-modal-custom-title"><strong><?php esc_html_e( 'Guidance Modal Title:', 'stackboost-for-supportcandy' ); ?></strong></label>
+									<input type="text" id="sb-tg-modal-custom-title" class="widefat" placeholder="<?php esc_attr_e( 'Looking for Billing Support?', 'stackboost-for-supportcandy' ); ?>" />
+								</div>
+
+								<div class="sb-tg-field-group">
+									<label for="sb-tg-modal-custom-body"><strong><?php esc_html_e( 'Guidance Modal Message Body:', 'stackboost-for-supportcandy' ); ?></strong></label>
+									<textarea id="sb-tg-modal-custom-body" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'It looks like your ticket relates to billing or invoices. Switching to the Billing category ensures faster response times.', 'stackboost-for-supportcandy' ); ?>"></textarea>
+									<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: You can use dynamic placeholders like {primary_field}, {primary_response}, {secondary_field}, and {secondary_response} in your title or body.', 'stackboost-for-supportcandy' ); ?></p>
+								</div>
+							</div>
+
+							<!-- BetterDocs Knowledge Base Steering Settings -->
+							<div id="sb-tg-modal-kb-settings" style="display: none;">
+								<div class="sb-tg-field-group" style="margin-bottom: 15px;">
+									<label for="sb-tg-modal-kb-message"><strong><?php esc_html_e( 'Knowledge Base Guidance Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
+									<textarea id="sb-tg-modal-kb-message" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'It looks like your request might be answered in our Knowledge Base articles below. Please review these resources before submitting your ticket:', 'stackboost-for-supportcandy' ); ?>"></textarea>
+								</div>
+
+								<div class="sb-tg-field-group">
+									<label for="sb-tg-modal-kb-docs"><strong><?php esc_html_e( 'Select BetterDocs Articles (Multi-Select):', 'stackboost-for-supportcandy' ); ?></strong></label>
+									<select id="sb-tg-modal-kb-docs" class="widefat" multiple="multiple" style="width: 100%;">
+										<?php if ( ! empty( $betterdocs_articles ) ) : ?>
+											<?php foreach ( $betterdocs_articles as $art ) : ?>
+												<option value="<?php echo esc_attr( $art['id'] ); ?>"><?php echo esc_html( $art['title'] ); ?></option>
+											<?php endforeach; ?>
+										<?php else : ?>
+											<option value="" disabled><?php esc_html_e( '-- No published BetterDocs articles found --', 'stackboost-for-supportcandy' ); ?></option>
+										<?php endif; ?>
+									</select>
+									<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Select the BetterDocs articles to present to the user when this rule triggers.', 'stackboost-for-supportcandy' ); ?></p>
+								</div>
 							</div>
 						</div>
 
