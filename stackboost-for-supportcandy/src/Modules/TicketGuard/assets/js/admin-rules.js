@@ -47,13 +47,12 @@
         $(document).on('change', '#sb-tg-modal-is-kb', function() {
             var isKb = $(this).is(':checked');
             if (isKb) {
-                $('#sb-tg-modal-standard-settings').slideUp(150);
-                $('#sb-tg-modal-kb-settings').slideDown(150, function() {
-                    initSelect2();
-                });
+                $('#sb-tg-modal-standard-settings').hide();
+                $('#sb-tg-modal-kb-settings').show();
+                initSelect2();
             } else {
-                $('#sb-tg-modal-kb-settings').slideUp(150);
-                $('#sb-tg-modal-standard-settings').slideDown(150);
+                $('#sb-tg-modal-kb-settings').hide();
+                $('#sb-tg-modal-standard-settings').show();
             }
         });
 
@@ -181,27 +180,27 @@
 
     function toggleConditionalSections() {
         if ($('#sb-tg-act-disable-submit').is(':checked')) {
-            $('#sb-tg-submit-msg-container').slideDown(150);
+            $('#sb-tg-submit-msg-container').show();
         } else {
-            $('#sb-tg-submit-msg-container').slideUp(150);
+            $('#sb-tg-submit-msg-container').hide();
         }
 
         if ($('#sb-tg-act-show-modal').is(':checked')) {
-            $('#sb-tg-modal-container').slideDown(150);
+            $('#sb-tg-modal-container').show();
         } else {
-            $('#sb-tg-modal-container').slideUp(150);
+            $('#sb-tg-modal-container').hide();
         }
 
         if ($('#sb-tg-act-show-inline').is(':checked')) {
-            $('#sb-tg-inline-container').slideDown(150);
+            $('#sb-tg-inline-container').show();
         } else {
-            $('#sb-tg-inline-container').slideUp(150);
+            $('#sb-tg-inline-container').hide();
         }
 
         if ($('#sb-tg-act-auto-swap').is(':checked') || $('#sb-tg-act-show-modal').is(':checked') || $('#sb-tg-act-show-inline').is(':checked')) {
-            $('#sb-tg-swap-container').slideDown(150);
+            $('#sb-tg-swap-container').show();
         } else {
-            $('#sb-tg-swap-container').slideUp(150);
+            $('#sb-tg-swap-container').hide();
         }
     }
 
@@ -418,8 +417,6 @@
         }).hide().fadeIn(150, function() {
             initSelect2();
         });
-
-        initSelect2();
     }
 
     function closeRuleModal() {
