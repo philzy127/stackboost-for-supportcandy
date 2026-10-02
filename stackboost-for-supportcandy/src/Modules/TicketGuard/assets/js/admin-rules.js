@@ -213,6 +213,10 @@
 
         $selects.each(function() {
             var $s = $(this);
+            if (!$s.is(':visible')) {
+                return;
+            }
+
             if ($s.data('select2') || $s.hasClass('select2-hidden-accessible')) {
                 try { $s.select2('destroy'); } catch(e) {}
             }
@@ -331,6 +335,16 @@
             $('body').append($overlay);
         }
 
+        // Destroy leftover select2 controls before updating form values
+        var select2Func = $.fn.selectWoo || $.fn.select2;
+        var $selects = $('#sb-tg-monitored-field, #sb-tg-swap-field, #sb-tg-swap-value, #sb-tg-sec-swap-field, #sb-tg-sec-swap-value, #sb-tg-modal-kb-docs');
+        $selects.each(function() {
+            var $s = $(this);
+            if (select2Func && ($s.data('select2') || $s.hasClass('select2-hidden-accessible'))) {
+                try { $s.select2('destroy'); } catch(e) {}
+            }
+        });
+
         if (rule) {
             $('#sb-tg-modal-title').text('Edit Intake Steering Rule');
             $('#sb-tg-rule-id').val(rule.id);
@@ -409,19 +423,42 @@
 
         toggleConditionalSections();
 
+        // Reset scroll positions to top
+        $overlay.scrollTop(0);
+        $overlay.find('.stackboost-modal-body').scrollTop(0);
+
+        // Display overlay instantly with flex
         $overlay.css({
             'display': 'flex',
             'visibility': 'visible',
             'opacity': 1,
             'z-index': 9999999
-        }).hide().fadeIn(150, function() {
-            initSelect2();
         });
+
+        initSelect2();
     }
 
     function closeRuleModal() {
         console.log('[StackBoost TicketGuard] closeRuleModal called.');
-        $('#sb-tg-modal-overlay').fadeOut(150);
+
+        var select2Func = $.fn.selectWoo || $.fn.select2;
+        var $selects = $('#sb-tg-monitored-field, #sb-tg-swap-field, #sb-tg-swap-value, #sb-tg-sec-swap-field, #sb-tg-sec-swap-value, #sb-tg-modal-kb-docs');
+
+        $selects.each(function() {
+            var $s = $(this);
+            if (select2Func && ($s.data('select2') || $s.hasClass('select2-hidden-accessible'))) {
+                try { $s.select2('destroy'); } catch(e) {}
+            }
+        });
+
+        $('#sb-tg-modal-overlay').scrollTop(0);
+        $('#sb-tg-modal-overlay .stackboost-modal-body').scrollTop(0);
+
+        $('#sb-tg-modal-overlay').css({
+            'display': 'none',
+            'visibility': 'hidden',
+            'opacity': 0
+        });
     }
 
     function findRuleIndex(ruleId) {
