@@ -472,7 +472,9 @@
 
             if (!$el.length) return;
 
-            if (!$el.is(':visible')) {
+            var isParentVisible = $el.parents(':hidden').not($el).length === 0;
+
+            if (!isParentVisible) {
                 var existingEd = tinymce.get(id);
                 if (existingEd) {
                     try { existingEd.save(); } catch(e) {}
