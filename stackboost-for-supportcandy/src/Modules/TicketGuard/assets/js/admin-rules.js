@@ -212,6 +212,10 @@
         } else {
             $('#sb-tg-swap-container').hide();
         }
+
+        setTimeout(function() {
+            initModalRichTextEditors();
+        }, 50);
     }
 
     function initSelect2() {
@@ -470,7 +474,10 @@
 
             var ed = tinymce.get(id);
             if (ed) {
-                try { ed.remove(); } catch(e) {}
+                try {
+                    ed.setContent($el.val() || '');
+                } catch(e) {}
+                return;
             }
 
             try {
@@ -479,8 +486,8 @@
                     menubar: false,
                     statusbar: false,
                     height: 160,
-                    plugins: 'lists link code wordpress',
-                    toolbar: 'bold italic blockquote numlist bullist link code',
+                    plugins: 'lists link wordpress',
+                    toolbar: 'bold italic blockquote numlist bullist link',
                     setup: function(editor) {
                         editor.on('change keyup ExecCommand', function() {
                             editor.save();
@@ -513,6 +520,15 @@
                 try { $s.select2('destroy'); } catch(e) {}
             }
         });
+
+        if (typeof tinymce !== 'undefined') {
+            ['sb-tg-modal-custom-body', 'sb-tg-modal-kb-message'].forEach(function(id) {
+                var ed = tinymce.get(id);
+                if (ed) {
+                    try { ed.remove(); } catch(e) {}
+                }
+            });
+        }
 
         $('#sb-tg-modal-overlay').scrollTop(0);
         $('#sb-tg-modal-overlay .stackboost-modal-body').scrollTop(0);
