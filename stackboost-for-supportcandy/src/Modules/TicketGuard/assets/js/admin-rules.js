@@ -484,6 +484,7 @@
             }
 
             var targetContent = $el.val() || '';
+            var targetPlaceholder = $el.attr('placeholder') || '';
 
             var ed = tinymce.get(id);
             if (ed) {
@@ -499,6 +500,7 @@
                     menubar: false,
                     statusbar: false,
                     height: 160,
+                    placeholder: targetPlaceholder,
                     add_unload_trigger: false,
                     plugins: 'lists link wordpress',
                     toolbar: 'bold italic blockquote numlist bullist link',
