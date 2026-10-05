@@ -50,9 +50,15 @@
                 $('#sb-tg-modal-standard-settings').hide();
                 $('#sb-tg-modal-kb-settings').show();
                 initSelect2();
+                setTimeout(function() {
+                    initModalRichTextEditors();
+                }, 50);
             } else {
                 $('#sb-tg-modal-kb-settings').hide();
                 $('#sb-tg-modal-standard-settings').show();
+                setTimeout(function() {
+                    initModalRichTextEditors();
+                }, 50);
             }
         });
 
@@ -451,7 +457,17 @@
         var selectors = ['#sb-tg-modal-custom-body', '#sb-tg-modal-kb-message'];
 
         $.each(selectors, function(i, sel) {
+            var $el = $(sel);
             var id = sel.replace('#', '');
+
+            if (!$el.length || !$el.is(':visible')) {
+                var existingEd = tinymce.get(id);
+                if (existingEd) {
+                    try { existingEd.remove(); } catch(e) {}
+                }
+                return;
+            }
+
             var ed = tinymce.get(id);
             if (ed) {
                 try { ed.remove(); } catch(e) {}
