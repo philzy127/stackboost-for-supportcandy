@@ -99,6 +99,10 @@ class WordPress extends Module {
 			true
 		);
 
+		if ( function_exists( 'wp_enqueue_editor' ) ) {
+			wp_enqueue_editor();
+		}
+
 		wp_enqueue_style( 'stackboost-select2-css' );
 		wp_enqueue_script( 'stackboost-select2-js' );
 		wp_enqueue_style( 'stackboost-tg-admin-css' );

@@ -108,6 +108,10 @@
             e.preventDefault();
             console.log('[StackBoost TicketGuard] Save Rule inside modal clicked.');
 
+            if (typeof tinymce !== 'undefined') {
+                try { tinymce.triggerSave(); } catch(err) {}
+            }
+
             var ruleId = $('#sb-tg-rule-id').val();
             var name = $.trim($('#sb-tg-rule-name').val());
             var monitoredField = $('#sb-tg-monitored-field').val();
@@ -383,11 +387,11 @@
             }
 
             $('#sb-tg-modal-custom-title').val(msgs.modal_title || '');
-            $('#sb-tg-modal-custom-body').val(msgs.modal_body || '');
+            setEditorContent('sb-tg-modal-custom-body', msgs.modal_body || '');
             $('#sb-tg-inline-warning').val(msgs.inline_warning || '');
             $('#sb-tg-inline-level').val(msgs.inline_level || 'alert');
             $('#sb-tg-submit-disabled-msg').val(msgs.submit_disabled_message || '');
-            $('#sb-tg-modal-kb-message').val(msgs.kb_message || '');
+            setEditorContent('sb-tg-modal-kb-message', msgs.kb_message || '');
             $('#sb-tg-modal-kb-docs').val(msgs.kb_doc_ids || []);
         } else {
             $('#sb-tg-modal-title').text('Add New Intake Steering Rule');
@@ -413,11 +417,11 @@
             $('#sb-tg-modal-standard-settings').show();
 
             $('#sb-tg-modal-custom-title').val('');
-            $('#sb-tg-modal-custom-body').val('');
+            setEditorContent('sb-tg-modal-custom-body', '');
             $('#sb-tg-inline-warning').val('');
             $('#sb-tg-inline-level').val('alert');
             $('#sb-tg-submit-disabled-msg').val('');
-            $('#sb-tg-modal-kb-message').val('');
+            setEditorContent('sb-tg-modal-kb-message', '');
             $('#sb-tg-modal-kb-docs').val([]);
         }
 
@@ -436,6 +440,49 @@
         });
 
         initSelect2();
+        setTimeout(function() {
+            initModalRichTextEditors();
+        }, 100);
+    }
+
+    function initModalRichTextEditors() {
+        if (typeof tinymce === 'undefined') return;
+
+        var selectors = ['#sb-tg-modal-custom-body', '#sb-tg-modal-kb-message'];
+
+        $.each(selectors, function(i, sel) {
+            var id = sel.replace('#', '');
+            var ed = tinymce.get(id);
+            if (ed) {
+                try { ed.remove(); } catch(e) {}
+            }
+
+            try {
+                tinymce.init({
+                    selector: sel,
+                    menubar: false,
+                    statusbar: false,
+                    height: 160,
+                    plugins: 'lists link code wordpress',
+                    toolbar: 'bold italic blockquote numlist bullist link code',
+                    setup: function(editor) {
+                        editor.on('change keyup ExecCommand', function() {
+                            editor.save();
+                        });
+                    }
+                });
+            } catch(e) {}
+        });
+    }
+
+    function setEditorContent(id, content) {
+        if (typeof tinymce !== 'undefined') {
+            var ed = tinymce.get(id);
+            if (ed) {
+                try { ed.setContent(content || ''); } catch(e) {}
+            }
+        }
+        $('#' + id).val(content || '');
     }
 
     function closeRuleModal() {

@@ -748,6 +748,13 @@
         }
     }
 
+    function sanitizeGuidanceHtml(htmlStr) {
+        if (!htmlStr || typeof htmlStr !== 'string') return '';
+        var trimmed = $.trim(htmlStr);
+        if (!trimmed) return '';
+        return '<div style="font-size:14px;line-height:1.5;margin:0;">' + trimmed + '</div>';
+    }
+
     function buildGuidanceModalContent(rule) {
         var msgs = (rule && rule.messaging) ? rule.messaging : {};
 
@@ -756,7 +763,7 @@
             var kbMsg = msgs.kb_message || 'It looks like your request might be answered in our Knowledge Base articles below. Please review these resources before submitting your ticket:';
             var docsList = msgs.kb_docs || [];
 
-            var bodyHtml = '<p style="font-size:14px;line-height:1.5;margin:0 0 10px 0;">' + escapeHtml(kbMsg) + '</p>';
+            var bodyHtml = sanitizeGuidanceHtml(kbMsg);
             if (Array.isArray(docsList) && docsList.length) {
                 bodyHtml += '<ul style="margin:10px 0 15px 20px; padding:0; list-style:disc; font-size:14px; line-height:1.6;">';
                 $.each(docsList, function(i, doc) {
@@ -781,7 +788,7 @@
 
             return {
                 title: title,
-                bodyHtml: '<p style="font-size:14px;line-height:1.5;margin:0;">' + escapeHtml(bodyText) + '</p>',
+                bodyHtml: sanitizeGuidanceHtml(bodyText),
                 isKb: false
             };
         }
