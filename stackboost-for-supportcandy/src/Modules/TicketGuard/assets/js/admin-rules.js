@@ -474,10 +474,7 @@
 
             var ed = tinymce.get(id);
             if (ed) {
-                try {
-                    ed.setContent($el.val() || '');
-                } catch(e) {}
-                return;
+                try { ed.remove(); } catch(e) {}
             }
 
             try {
