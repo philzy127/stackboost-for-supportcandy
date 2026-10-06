@@ -500,12 +500,40 @@
                     menubar: false,
                     statusbar: false,
                     height: 160,
-                    placeholder: targetPlaceholder,
                     add_unload_trigger: false,
                     plugins: 'lists link wordpress',
                     toolbar: 'bold italic blockquote numlist bullist link',
                     setup: function(editor) {
                         editor.on('init', function() {
+                            if (targetPlaceholder && editor.getDoc()) {
+                                var doc = editor.getDoc();
+                                var styleEl = doc.createElement('style');
+                                styleEl.type = 'text/css';
+                                styleEl.innerHTML = 'body[data-placeholder].empty:before { content: attr(data-placeholder); color: #8c8c8c; font-style: italic; position: absolute; top: 10px; left: 10px; right: 10px; pointer-events: none; }';
+                                if (doc.head) {
+                                    doc.head.appendChild(styleEl);
+                                }
+
+                                var bodyEl = editor.getBody();
+                                if (bodyEl) {
+                                    bodyEl.setAttribute('data-placeholder', targetPlaceholder);
+                                }
+
+                                var updatePlaceholder = function() {
+                                    if (!bodyEl) return;
+                                    var textVal = editor.getContent({ format: 'text' }) || '';
+                                    if (!$.trim(textVal)) {
+                                        bodyEl.classList.add('empty');
+                                    } else {
+                                        bodyEl.classList.remove('empty');
+                                    }
+                                };
+
+                                updatePlaceholder();
+
+                                editor.on('keyup input change ExecCommand SetContent NodeChange focus blur', updatePlaceholder);
+                            }
+
                             if (targetContent) {
                                 try { editor.setContent(targetContent); } catch(e) {}
                             }
