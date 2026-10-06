@@ -446,11 +446,9 @@
                         var dismissBtnText = (stackboostTicketGuard.i18n && stackboostTicketGuard.i18n.dismiss) ? stackboostTicketGuard.i18n.dismiss : 'Dismiss';
                         var dismissIconBtnHtml = '<button type="button" class="stackboost-icon-btn sb-tg-dismiss-btn" title="' + escapeHtml(dismissBtnText) + '"><span class="dashicons dashicons-dismiss"></span></button>';
 
-                        var bannerContentHtml = '';
-                        if (warnText.indexOf('{fix_it_button}') !== -1) {
-                            bannerContentHtml = escapeHtml(warnText).replace(/\{fix_it_button\}/g, fixItIconBtnHtml);
-                        } else {
-                            bannerContentHtml = escapeHtml(warnText);
+                        var bannerContentHtml = warnText || '';
+                        if (bannerContentHtml.indexOf('{fix_it_button}') !== -1) {
+                            bannerContentHtml = bannerContentHtml.replace(/\{fix_it_button\}/g, fixItIconBtnHtml);
                         }
 
                         var actionsGroupHtml = '<span class="sb-tg-banner-actions" style="margin-left: auto; display: inline-flex; align-items: center; gap: 4px;">' +

@@ -115,7 +115,7 @@
             console.log('[StackBoost TicketGuard] Save Rule inside modal clicked.');
 
             if (typeof tinymce !== 'undefined') {
-                ['sb-tg-modal-custom-body', 'sb-tg-modal-kb-message'].forEach(function(id) {
+                ['sb-tg-modal-custom-body', 'sb-tg-modal-kb-message', 'sb-tg-inline-warning'].forEach(function(id) {
                     var ed = tinymce.get(id);
                     if (ed) {
                         try { ed.save(); } catch(e) {}
@@ -404,7 +404,7 @@
 
             $('#sb-tg-modal-custom-title').val(msgs.modal_title || '');
             setEditorContent('sb-tg-modal-custom-body', msgs.modal_body || '');
-            $('#sb-tg-inline-warning').val(msgs.inline_warning || '');
+            setEditorContent('sb-tg-inline-warning', msgs.inline_warning || '');
             $('#sb-tg-inline-level').val(msgs.inline_level || 'alert');
             $('#sb-tg-submit-disabled-msg').val(msgs.submit_disabled_message || '');
             setEditorContent('sb-tg-modal-kb-message', msgs.kb_message || '');
@@ -434,7 +434,7 @@
 
             $('#sb-tg-modal-custom-title').val('');
             setEditorContent('sb-tg-modal-custom-body', '');
-            $('#sb-tg-inline-warning').val('');
+            setEditorContent('sb-tg-inline-warning', '');
             $('#sb-tg-inline-level').val('alert');
             $('#sb-tg-submit-disabled-msg').val('');
             setEditorContent('sb-tg-modal-kb-message', '');
@@ -464,7 +464,7 @@
     function initModalRichTextEditors() {
         if (typeof tinymce === 'undefined') return;
 
-        var selectors = ['#sb-tg-modal-custom-body', '#sb-tg-modal-kb-message'];
+        var selectors = ['#sb-tg-modal-custom-body', '#sb-tg-modal-kb-message', '#sb-tg-inline-warning'];
 
         $.each(selectors, function(i, sel) {
             var $el = $(sel);
@@ -575,7 +575,7 @@
         });
 
         if (typeof tinymce !== 'undefined') {
-            ['sb-tg-modal-custom-body', 'sb-tg-modal-kb-message'].forEach(function(id) {
+            ['sb-tg-modal-custom-body', 'sb-tg-modal-kb-message', 'sb-tg-inline-warning'].forEach(function(id) {
                 var ed = tinymce.get(id);
                 if (ed) {
                     try { ed.save(); } catch(e) {}
