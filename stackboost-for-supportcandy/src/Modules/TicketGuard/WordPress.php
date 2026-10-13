@@ -442,10 +442,12 @@ class WordPress extends Module {
 			return;
 		}
 
+		wp_enqueue_style( 'dashicons' );
+
 		wp_register_style(
 			'stackboost-tg-frontend-css',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/TicketGuard/assets/css/frontend-guard.css',
-			[],
+			[ 'dashicons' ],
 			STACKBOOST_VERSION
 		);
 
