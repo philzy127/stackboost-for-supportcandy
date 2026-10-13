@@ -308,7 +308,27 @@ Located at **StackBoost > Queue Macro**.
 
 ---
 
-## 12. Privacy & GDPR Compliance
+## 12. Ticket Guard Engine
+
+**Ticket Guard** is a real-time intake optimization and steering engine for SupportCandy. It monitors ticket description and text entry fields in real time to steer users toward appropriate ticket categories and eliminate generic or misclassified submissions (such as placing billing or system outage tickets into "General / Other").
+
+### Key Capabilities
+* **Real-Time Keyword Steering:** Monitor text areas and text fields using compound keywords (`&` for AND conditions, newlines for OR conditions).
+* **Smart Option Pre-Verification:** Automatically checks if target options are already selected on the form and suppresses unnecessary warnings.
+* **Flexible Escalation Levels:**
+  * **Disable Submit Button:** Locks form submission with hover tooltips and click modal alerts.
+  * **Guidance Modal:** Shows an interactive popup offering "Switch Options" or "Proceed Anyway".
+  * **Inline Warning Banner:** Renders real-time feedback with green "Fix It" tools icon (`dashicons-admin-tools`) and orange "Dismiss" icon (`dashicons-dismiss`) buttons.
+  * **Auto Field Swapping:** Automatically updates dropdowns, radio buttons, or checkboxes on the fly with proper DOM event chaining.
+* **Dynamic Placeholders:** Use `{primary_field}`, `{primary_response}`, `{target_option}`, `{secondary_field}`, `{secondary_response}`, and `{fix_it_button}` macros in messages.
+* **Searchable & Alphabetized Dropdowns:** Monitored fields and target option selectors are alphabetized and searchable with integrated SelectWoo.
+* **Instant AJAX Saving:** All rule creations, edits, deletions, and toggle changes save instantly via AJAX with toast acknowledgements.
+
+For full whitepapers, escalation recipes, and step-by-step configurations, see `Documentation/User/USER_GUIDE_TICKET_GUARD.md`.
+
+---
+
+## 13. Privacy & GDPR Compliance
 
 StackBoost is designed with strict data privacy principles ("Zero External Leakage") to ensure compliance with GDPR and other privacy regulations.
 

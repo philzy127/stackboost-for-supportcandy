@@ -43,6 +43,7 @@ function stackboost_is_feature_active( string $feature_slug ): bool {
         'unified_ticket_macro',
         'chat_bubbles',
         'ticket_metrics',
+        'ticket_guard',
     ];
 
     $features_business = [

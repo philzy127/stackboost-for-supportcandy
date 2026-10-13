@@ -40,6 +40,32 @@ class SupportCandyRepository {
 	 * @param string $type The field type (e.g., 'datetime').
 	 * @return array List of custom fields with 'slug' and 'name'.
 	 */
+	/**
+	 * Get SupportCandy textarea / description custom fields.
+	 *
+	 * @return array List of custom fields with 'slug' and 'name'.
+	 */
+	public function get_textarea_fields(): array {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
+		$safe_table = $table_name;
+
+		$table_name_like = $wpdb->esc_like( $table_name );
+		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) !== $table_name ) {
+			$table_name = $wpdb->prefix . 'wpsc_custom_fields';
+			$safe_table = $table_name;
+		}
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$results = $wpdb->get_results(
+			"SELECT slug, name, type FROM `{$safe_table}` WHERE type IN ('textarea', 'tinymce', 'text_area', 'description') OR slug LIKE '%description%' OR slug LIKE '%textarea%' OR slug LIKE '%tinymce%'",
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+
+		return $results ?: [];
+	}
+
 	public function get_custom_fields_by_type( string $type ): array {
 		global $wpdb;
 		$custom_fields_table = $wpdb->prefix . 'psmsc_custom_fields';

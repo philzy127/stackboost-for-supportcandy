@@ -1,0 +1,231 @@
+/* Ticket Guard Admin Rule Builder Styles */
+
+.pm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--sb-card-border, #f0f0f0);
+}
+
+#sb-tg-add-rule-btn {
+    margin-right: 10px;
+    margin-top: 2px;
+    position: relative;
+    z-index: 20;
+    pointer-events: auto !important;
+}
+
+.sb-tg-action-badge {
+    display: inline-block;
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+}
+
+.sb-tg-action-badge.active {
+    background-color: var(--sb-accent, #007cba);
+    color: var(--sb-text-on-accent, #fff);
+}
+
+.sb-tg-edit-rule-btn {
+    color: var(--sb-accent, #2271b1);
+    cursor: pointer;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.sb-tg-edit-rule-btn:hover {
+    color: var(--sb-accent-dark, #135e96);
+}
+
+.sb-tg-delete-rule-btn {
+    color: var(--sb-destructive, #d63638);
+    cursor: pointer;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.sb-tg-delete-rule-btn:hover {
+    color: #990000;
+}
+
+.stackboost-disabled-ui {
+    opacity: 0.55;
+}
+
+.stackboost-disabled-ui table,
+.stackboost-disabled-ui .pm-rules-wrapper {
+    pointer-events: none;
+}
+
+/* Modal Overlay & Container with Theme Variables */
+.stackboost-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.stackboost-modal-box {
+    background: var(--sb-card-bg, #ffffff);
+    border-radius: var(--sb-radius, 6px);
+    border-top: 3px solid var(--sb-accent, #1a3d5c);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    width: 90% !important;
+    max-width: 800px !important;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.stackboost-modal-header {
+    padding: 15px 20px;
+    background: var(--sb-bg-main, #f8f9fa);
+    border-bottom: var(--sb-card-border, 1px solid #eee);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.stackboost-modal-title {
+    margin: 0;
+    font-size: 18px;
+    color: var(--sb-accent, #1a3d5c);
+    font-weight: 600;
+}
+
+.stackboost-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.15s ease;
+}
+
+.stackboost-modal-close:hover {
+    color: var(--sb-accent, #000);
+}
+
+.stackboost-modal-body {
+    padding: 20px;
+    background-color: var(--sb-card-bg, #ffffff);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.stackboost-modal-footer {
+    padding: 12px 20px;
+    background: var(--sb-bg-main, #f8f9fa);
+    border-top: var(--sb-card-border, 1px solid #eee);
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Modal Form Controls Theme Support */
+.stackboost-modal-box input[type="text"],
+.stackboost-modal-box select,
+.stackboost-modal-box textarea {
+    background-color: var(--sb-input-bg, #ffffff);
+    border: var(--sb-card-border, 1px solid #ccd0d4);
+    border-radius: var(--sb-radius, 4px);
+}
+
+.stackboost-modal-box input[type="text"]:focus,
+.stackboost-modal-box select:focus,
+.stackboost-modal-box textarea:focus {
+    border-color: var(--sb-accent, #1a3d5c);
+    box-shadow: 0 0 0 1px var(--sb-accent, #1a3d5c);
+}
+
+.stackboost-modal-box label {
+    color: var(--sb-accent, #333);
+}
+
+/* Modal Action Toggles Container */
+.sb-tg-action-toggles-container {
+    margin-bottom: 15px;
+    background: var(--sb-bg-main, #f9f9f9);
+    padding: 12px;
+    border: var(--sb-card-border, 1px solid #e0e0e0);
+    border-radius: var(--sb-radius, 4px);
+}
+
+/* Modal Section Containers (Conditional Action Options) */
+.sb-tg-section-container {
+    margin-bottom: 15px;
+    padding: 12px;
+    border: var(--sb-card-border, 1px solid #e0e0e0);
+    border-radius: var(--sb-radius, 4px);
+    background: var(--sb-card-bg, #ffffff);
+}
+
+/* Button Colors inside Modal */
+.stackboost-modal-footer .button-primary {
+    background: var(--sb-accent, #2271b1) !important;
+    border-color: var(--sb-accent, #2271b1) !important;
+    color: var(--sb-text-on-accent, #ffffff) !important;
+}
+
+.stackboost-modal-footer .button-primary:hover,
+.stackboost-modal-footer .button-primary:focus {
+    opacity: 0.9;
+}
+
+/* Select2 / SelectWoo Searchable Modal Overrides */
+.stackboost-modal-overlay .select2-container {
+    width: 100% !important;
+    display: block;
+    margin-top: 4px;
+}
+
+.stackboost-modal-overlay .select2-container--default .select2-selection--single {
+    background-color: var(--sb-input-bg, #ffffff);
+    border: var(--sb-card-border, 1px solid #ccd0d4);
+    border-radius: var(--sb-radius, 4px);
+    height: 34px;
+    display: flex;
+    align-items: center;
+}
+
+.stackboost-modal-overlay .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #3c434a;
+    line-height: 32px;
+    padding-left: 10px;
+}
+
+.stackboost-modal-overlay .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 32px;
+}
+
+.stackboost-modal-overlay .select2-dropdown {
+    border: var(--sb-card-border, 1px solid #ccd0d4);
+    border-radius: var(--sb-radius, 4px);
+    z-index: 99999999 !important;
+}
+
+.stackboost-modal-overlay .select2-search__field {
+    background-color: var(--sb-input-bg, #ffffff);
+    border: var(--sb-card-border, 1px solid #ccd0d4) !important;
+    border-radius: var(--sb-radius, 4px) !important;
+    padding: 4px 8px !important;
+}

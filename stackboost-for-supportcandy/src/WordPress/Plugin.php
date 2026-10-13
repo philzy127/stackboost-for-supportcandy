@@ -14,6 +14,7 @@ use StackBoost\ForSupportCandy\Modules\ChatBubbles;
 use StackBoost\ForSupportCandy\Modules\Directory\Admin\TicketWidgetSettings;
 use StackBoost\ForSupportCandy\Modules\DateTimeFormatting;
 use StackBoost\ForSupportCandy\Modules\ConditionalOptions;
+use StackBoost\ForSupportCandy\Modules\TicketGuard;
 use StackBoost\ForSupportCandy\Integration\SupportCandyRepository;
 
 /**
@@ -137,6 +138,10 @@ final class Plugin {
 			if ( class_exists( $class ) ) {
 				$this->modules['chat_bubbles'] = $class::get_instance();
 			}
+		}
+
+		if ( stackboost_is_feature_active( 'ticket_guard' ) ) {
+			$this->modules['ticket_guard'] = TicketGuard\WordPress::get_instance();
 		}
 
 		// Business Features
@@ -431,6 +436,8 @@ final class Plugin {
             'stackboost-for-supportcandy_page_stackboost-conditional-options',
             'stackboost-for-supportcandy_page_stackboost-ticket-metrics',
             'stackboost_page_stackboost-ticket-metrics',
+            'stackboost_page_stackboost-ticket-guard',
+            'stackboost-for-supportcandy_page_stackboost-ticket-guard',
             // Explicitly ensure the Date & Time page hook is covered for AJAX nonce
             'stackboost_page_stackboost-date-time',
 		];
@@ -449,7 +456,7 @@ final class Plugin {
 			wp_enqueue_style( 'stackboost-selectwoo' );
 		}
 
-		if ( in_array( $hook_suffix, $pages_with_common_script, true ) ) {
+		if ( in_array( $hook_suffix, $pages_with_common_script, true ) || false !== strpos( $hook_suffix, 'ticket-guard' ) ) {
             stackboost_log( "Common scripts (and nonce) enqueued for hook: " . $hook_suffix, 'core' );
 
 			// Enqueue General Dashboard Styles if on main page
