@@ -75,6 +75,25 @@
         // Initial Evaluation
         evaluateGuardRules(rules);
 
+        // Accordion Toggle for Inline KB Articles
+        $(document).on('click', '.sb-tg-kb-inline-header', function(e) {
+            e.preventDefault();
+            var $header = $(this);
+            var $article = $header.closest('.sb-tg-kb-inline-article');
+            var $body = $article.find('.sb-tg-kb-article-body');
+            var $icon = $header.find('.sb-tg-kb-toggle-icon');
+
+            $body.slideToggle(200, function() {
+                if ($body.is(':visible')) {
+                    $article.addClass('expanded');
+                    $icon.removeClass('dashicons-alt').addClass('dashicons-arrow-down-alt2');
+                } else {
+                    $article.removeClass('expanded');
+                    $icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-alt');
+                }
+            });
+        });
+
         // Native Capture Phase Event Interceptor for Submit Buttons
         window.addEventListener('click', function(e) {
             var btn = e.target ? e.target.closest(submitBtnSelector) : null;
@@ -766,13 +785,16 @@
 
             if (Array.isArray(docsList) && docsList.length) {
                 if (displayMode === 'inline') {
-                    bodyHtml += '<div class="sb-tg-kb-inline-container" style="margin-top:15px; display:flex; flex-direction:column; gap:20px;">';
+                    bodyHtml += '<div class="sb-tg-kb-inline-container" style="margin-top:15px; display:flex; flex-direction:column; gap:12px;">';
                     $.each(docsList, function(i, doc) {
                         var docTitle = doc.title || 'Knowledge Base Article';
                         var docContent = doc.content || '';
-                        bodyHtml += '<div class="sb-tg-kb-inline-article" style="padding:15px; border:1px solid #e2e8f0; border-radius:6px; background:#f8fafc;">';
-                        bodyHtml += '<h4 class="sb-tg-kb-inline-title" style="margin:0 0 10px 0; font-size:16px; font-weight:600; color:#1e293b;">' + escapeHtml(docTitle) + '</h4>';
-                        bodyHtml += '<div class="sb-tg-kb-article-body" style="font-size:14px; line-height:1.6; color:#334155;">' + docContent + '</div>';
+                        bodyHtml += '<div class="sb-tg-kb-inline-article">';
+                        bodyHtml += '<div class="sb-tg-kb-inline-header" role="button" tabindex="0" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding:12px 15px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; user-select:none;">';
+                        bodyHtml += '<h4 class="sb-tg-kb-inline-title" style="margin:0; font-size:15px; font-weight:600; color:#1e293b;">' + escapeHtml(docTitle) + '</h4>';
+                        bodyHtml += '<span class="dashicons dashicons-alt sb-tg-kb-toggle-icon" style="color:#64748b; font-size:18px; transition:transform 0.2s ease;"></span>';
+                        bodyHtml += '</div>';
+                        bodyHtml += '<div class="sb-tg-kb-article-body" style="display:none; padding:15px; border:1px solid #cbd5e1; border-top:none; border-radius:0 0 6px 6px; background:#ffffff; font-size:14px; line-height:1.6; color:#334155;">' + docContent + '</div>';
                         bodyHtml += '</div>';
                     });
                     bodyHtml += '</div>';
@@ -817,6 +839,9 @@
         var changeCatText = stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Options';
         var proceedText = stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway';
 
+        var msgs = (rule && rule.messaging) ? rule.messaging : {};
+        var isInlineKb = msgs.is_kb_steering && msgs.kb_display_mode === 'inline';
+
         var swapField = rule.swap_field || '';
         var swapValue = rule.swap_value || rule.suggested_category;
 
@@ -847,6 +872,11 @@
                 changeCatText,
                 proceedText
             );
+            if (isInlineKb) {
+                $('#stackboost-modal-overlay').addClass('sb-tg-modal-inline');
+            } else {
+                $('#stackboost-modal-overlay').removeClass('sb-tg-modal-inline');
+            }
         } else if (typeof window.stackboostAlert === 'function') {
             window.stackboostAlert(
                 bodyHtml,
@@ -855,6 +885,11 @@
                     if (rule.id) window._tgModalDismissedRules[rule.id] = true;
                 }
             );
+            if (isInlineKb) {
+                $('#stackboost-modal-overlay').addClass('sb-tg-modal-inline');
+            } else {
+                $('#stackboost-modal-overlay').removeClass('sb-tg-modal-inline');
+            }
         } else {
             fallbackShowGuidanceModal($btn, rule, isUserSubmitClick);
         }
@@ -870,16 +905,21 @@
         var swapField = rule.swap_field || '';
         var swapValue = rule.swap_value || rule.suggested_category;
 
-        var modalHtml = '<div class="stackboost-modal-overlay stackboost-tg-modal-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999999;display:flex;align-items:center;justify-content:center;">' +
-            '<div class="stackboost-modal-box" style="background:#fff;border-radius:6px;max-width:520px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,0.35);overflow:hidden;">' +
-            '<div class="stackboost-modal-header" style="padding:16px 20px;background:#f8f9fa;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">' +
+        var msgs = (rule && rule.messaging) ? rule.messaging : {};
+        var isInlineKb = msgs.is_kb_steering && msgs.kb_display_mode === 'inline';
+        var overlayClass = isInlineKb ? 'stackboost-modal-overlay stackboost-tg-modal-overlay sb-tg-modal-inline' : 'stackboost-modal-overlay stackboost-tg-modal-overlay';
+        var boxWidthStyle = isInlineKb ? 'max-width:80%;width:80%;' : 'max-width:520px;width:90%;';
+
+        var modalHtml = '<div class="' + overlayClass + '" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999999;display:flex;align-items:center;justify-content:center;">' +
+            '<div class="stackboost-modal-box" style="background:#fff;border-radius:6px;' + boxWidthStyle + 'box-shadow:0 8px 30px rgba(0,0,0,0.35);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">' +
+            '<div class="stackboost-modal-header" style="padding:16px 20px;background:#f8f9fa;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">' +
             '<h3 class="stackboost-modal-title" style="margin:0;font-size:1.15em;font-weight:600;">' + escapeHtml(title) + '</h3>' +
             '<button type="button" class="stackboost-modal-close sb-tg-close-modal" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;">&times;</button>' +
             '</div>' +
-            '<div class="stackboost-modal-body" style="padding:20px 20px 10px;">' +
+            '<div class="stackboost-modal-body" style="padding:20px 20px 10px;flex:1 1 auto;min-height:0;overflow-y:auto;">' +
             bodyHtml +
             '</div>' +
-            '<div class="stackboost-modal-footer" style="padding:14px 20px;background:#f8f9fa;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;">' +
+            '<div class="stackboost-modal-footer" style="padding:14px 20px;background:#f8f9fa;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;">' +
             '<button type="button" class="button sb-tg-proceed-btn" style="cursor:pointer;">' + escapeHtml(stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway') + '</button>';
 
         if (swapValue) {
