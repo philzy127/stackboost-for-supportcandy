@@ -113,6 +113,7 @@ class Core {
 					'inline_level'            => sanitize_key( $rule['messaging']['inline_level'] ?? 'alert' ),
 					'submit_disabled_message' => sanitize_text_field( $rule['messaging']['submit_disabled_message'] ?? '' ),
 					'is_kb_steering'          => ! empty( $rule['messaging']['is_kb_steering'] ),
+					'kb_display_mode'         => sanitize_key( $rule['messaging']['kb_display_mode'] ?? 'links' ),
 					'kb_message'              => ! empty( $rule['messaging']['kb_message'] ) ? wp_kses_post( $rule['messaging']['kb_message'] ) : '',
 					'kb_doc_ids'              => ! empty( $rule['messaging']['kb_doc_ids'] ) && is_array( $rule['messaging']['kb_doc_ids'] ) ? array_values( array_map( 'sanitize_text_field', $rule['messaging']['kb_doc_ids'] ) ) : [],
 					'kb_docs'                 => $this->resolve_kb_docs( $rule['messaging']['is_kb_steering'] ?? false, $rule['messaging']['kb_doc_ids'] ?? [] ),
@@ -361,13 +362,48 @@ class Core {
 
 			foreach ( $posts as $p ) {
 				$articles[] = [
-					'id'    => (string) $p->ID,
-					'title' => $p->post_title,
-					'url'   => get_permalink( $p->ID ),
+					'id'      => (string) $p->ID,
+					'title'   => $p->post_title,
+					'url'     => get_permalink( $p->ID ),
+					'content' => $this->clean_kb_article_content( $p->post_content ),
 				];
 			}
 		}
 		return $articles;
+	}
+
+	/**
+	 * Clean and format KB article content for inline display by removing TOCs, sidebars, menus, and shortcodes.
+	 *
+	 * @param string $content Raw post content.
+	 * @return string Formatted and sanitized article HTML content.
+	 */
+	public function clean_kb_article_content( string $content ): string {
+		if ( empty( $content ) ) {
+			return '';
+		}
+
+		// 1. Remove shortcodes related to TOC, sidebars, navigation
+		$content = preg_replace( '/\[(?:betterdocs_toc|betterdocs_sidebar|toc|ez-toc|sidebar|nav|menu)[^\]]*\]/i', '', $content );
+
+		// 2. Strip HTML elements commonly used for TOCs, sidebars, menus, navigation
+		$content = preg_replace( '/<(?:nav|aside|header|footer)[^>]*>.*?<\/(?:nav|aside|header|footer)>/is', '', $content );
+		$content = preg_replace( '/<div[^>]*class="[^"]*(?:betterdocs-toc|ez-toc|toc|sidebar|betterdocs-sidebar|navigation|menu)[^"]*"[^>]*>.*?<\/div>/is', '', $content );
+		$content = preg_replace( '/<div[^>]*id="[^"]*(?:betterdocs-toc|ez-toc|toc|sidebar|betterdocs-sidebar|navigation|menu)[^"]*"[^>]*>.*?<\/div>/is', '', $content );
+
+		// 3. Remove Gutenberg TOC or navigation blocks if present
+		$content = preg_replace( '/<!-- wp:(?:betterdocs\/toc|core\/navigation|core\/site-title|core\/site-tagline|core\/sidebar)[^>]*-->.*?<!-- \/wp:(?:betterdocs\/toc|core\/navigation|core\/site-title|core\/site-tagline|core\/sidebar) -->/is', '', $content );
+
+		// 4. Strip any remaining shortcodes
+		$content = strip_shortcodes( $content );
+
+		// 5. Apply wpautop if paragraphs/divs are missing
+		if ( false === strpos( $content, '<p>' ) && false === strpos( $content, '<div' ) ) {
+			$content = wpautop( $content );
+		}
+
+		// 6. Sanitize with wp_kses_post allowing safe HTML tags
+		return wp_kses_post( trim( $content ) );
 	}
 
 	/**

@@ -760,16 +760,31 @@
             var kbTitle = msgs.modal_title || 'Information Available';
             var kbMsg = msgs.kb_message || 'It looks like your request might be answered in our Knowledge Base articles below. Please review these resources before submitting your ticket:';
             var docsList = msgs.kb_docs || [];
+            var displayMode = msgs.kb_display_mode || 'links';
 
             var bodyHtml = sanitizeGuidanceHtml(kbMsg);
+
             if (Array.isArray(docsList) && docsList.length) {
-                bodyHtml += '<ul style="margin:10px 0 15px 20px; padding:0; list-style:disc; font-size:14px; line-height:1.6;">';
-                $.each(docsList, function(i, doc) {
-                    var docTitle = doc.title || 'Knowledge Base Article';
-                    var docUrl = doc.url || '#';
-                    bodyHtml += '<li><a href="' + escapeHtml(docUrl) + '" target="_blank" rel="noopener noreferrer" style="color:#2271b1; font-weight:600; text-decoration:underline;">' + escapeHtml(docTitle) + '</a></li>';
-                });
-                bodyHtml += '</ul>';
+                if (displayMode === 'inline') {
+                    bodyHtml += '<div class="sb-tg-kb-inline-container" style="margin-top:15px; display:flex; flex-direction:column; gap:20px;">';
+                    $.each(docsList, function(i, doc) {
+                        var docTitle = doc.title || 'Knowledge Base Article';
+                        var docContent = doc.content || '';
+                        bodyHtml += '<div class="sb-tg-kb-inline-article" style="padding:15px; border:1px solid #e2e8f0; border-radius:6px; background:#f8fafc;">';
+                        bodyHtml += '<h4 class="sb-tg-kb-inline-title" style="margin:0 0 10px 0; font-size:16px; font-weight:600; color:#1e293b;">' + escapeHtml(docTitle) + '</h4>';
+                        bodyHtml += '<div class="sb-tg-kb-article-body" style="font-size:14px; line-height:1.6; color:#334155;">' + docContent + '</div>';
+                        bodyHtml += '</div>';
+                    });
+                    bodyHtml += '</div>';
+                } else {
+                    bodyHtml += '<ul style="margin:10px 0 15px 20px; padding:0; list-style:disc; font-size:14px; line-height:1.6;">';
+                    $.each(docsList, function(i, doc) {
+                        var docTitle = doc.title || 'Knowledge Base Article';
+                        var docUrl = doc.url || '#';
+                        bodyHtml += '<li><a href="' + escapeHtml(docUrl) + '" target="_blank" rel="noopener noreferrer" style="color:#2271b1; font-weight:600; text-decoration:underline;">' + escapeHtml(docTitle) + '</a></li>';
+                    });
+                    bodyHtml += '</ul>';
+                }
             }
 
             return {

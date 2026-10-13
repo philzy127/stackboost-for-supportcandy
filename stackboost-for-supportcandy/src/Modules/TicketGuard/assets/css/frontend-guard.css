@@ -102,3 +102,64 @@
     color: #f59e0b !important;
     background: transparent !important;
 }
+
+/* BetterDocs Inline Content Styling */
+.sb-tg-kb-inline-container {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sb-tg-kb-inline-article {
+    padding: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+}
+
+.sb-tg-kb-inline-title {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 6px;
+}
+
+.sb-tg-kb-article-body {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+}
+
+.sb-tg-kb-article-body p {
+    margin: 0 0 10px 0;
+}
+
+.sb-tg-kb-article-body p:last-child {
+    margin-bottom: 0;
+}
+
+.sb-tg-kb-article-body h1,
+.sb-tg-kb-article-body h2,
+.sb-tg-kb-article-body h3,
+.sb-tg-kb-article-body h4,
+.sb-tg-kb-article-body h5,
+.sb-tg-kb-article-body h6 {
+    margin: 12px 0 6px 0;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.sb-tg-kb-article-body ul,
+.sb-tg-kb-article-body ol {
+    margin: 8px 0 10px 20px;
+    padding: 0;
+}
+
+.sb-tg-kb-article-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}

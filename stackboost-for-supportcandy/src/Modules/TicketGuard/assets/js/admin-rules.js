@@ -171,6 +171,7 @@
                     inline_level: inlineLevel,
                     submit_disabled_message: $.trim($('#sb-tg-submit-disabled-msg').val()),
                     is_kb_steering: $('#sb-tg-modal-is-kb').is(':checked'),
+                    kb_display_mode: $('input[name="sb_tg_modal_kb_display_mode"]:checked').val() || 'links',
                     kb_message: $.trim($('#sb-tg-modal-kb-message').val()),
                     kb_doc_ids: $('#sb-tg-modal-kb-docs').val() || []
                 }
@@ -407,6 +408,8 @@
             setEditorContent('sb-tg-inline-warning', msgs.inline_warning || '');
             $('#sb-tg-inline-level').val(msgs.inline_level || 'alert');
             $('#sb-tg-submit-disabled-msg').val(msgs.submit_disabled_message || '');
+            var kbMode = msgs.kb_display_mode || 'links';
+            $('input[name="sb_tg_modal_kb_display_mode"][value="' + kbMode + '"]').prop('checked', true);
             setEditorContent('sb-tg-modal-kb-message', msgs.kb_message || '');
             $('#sb-tg-modal-kb-docs').val(msgs.kb_doc_ids || []);
         } else {
@@ -437,6 +440,7 @@
             setEditorContent('sb-tg-inline-warning', '');
             $('#sb-tg-inline-level').val('alert');
             $('#sb-tg-submit-disabled-msg').val('');
+            $('input[name="sb_tg_modal_kb_display_mode"][value="links"]').prop('checked', true);
             setEditorContent('sb-tg-modal-kb-message', '');
             $('#sb-tg-modal-kb-docs').val([]);
         }
