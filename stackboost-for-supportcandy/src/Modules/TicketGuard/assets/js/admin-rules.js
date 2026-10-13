@@ -115,6 +115,12 @@
             console.log('[StackBoost TicketGuard] Save Rule inside modal clicked.');
 
             if (typeof tinymce !== 'undefined') {
+                ['sb-tg-modal-custom-body', 'sb-tg-modal-kb-message', 'sb-tg-inline-warning'].forEach(function(id) {
+                    var ed = tinymce.get(id);
+                    if (ed) {
+                        try { ed.save(); } catch(e) {}
+                    }
+                });
                 try { tinymce.triggerSave(); } catch(err) {}
             }
 
@@ -398,7 +404,7 @@
 
             $('#sb-tg-modal-custom-title').val(msgs.modal_title || '');
             setEditorContent('sb-tg-modal-custom-body', msgs.modal_body || '');
-            $('#sb-tg-inline-warning').val(msgs.inline_warning || '');
+            setEditorContent('sb-tg-inline-warning', msgs.inline_warning || '');
             $('#sb-tg-inline-level').val(msgs.inline_level || 'alert');
             $('#sb-tg-submit-disabled-msg').val(msgs.submit_disabled_message || '');
             setEditorContent('sb-tg-modal-kb-message', msgs.kb_message || '');
@@ -428,7 +434,7 @@
 
             $('#sb-tg-modal-custom-title').val('');
             setEditorContent('sb-tg-modal-custom-body', '');
-            $('#sb-tg-inline-warning').val('');
+            setEditorContent('sb-tg-inline-warning', '');
             $('#sb-tg-inline-level').val('alert');
             $('#sb-tg-submit-disabled-msg').val('');
             setEditorContent('sb-tg-modal-kb-message', '');
@@ -458,24 +464,35 @@
     function initModalRichTextEditors() {
         if (typeof tinymce === 'undefined') return;
 
-        var selectors = ['#sb-tg-modal-custom-body', '#sb-tg-modal-kb-message'];
+        var selectors = ['#sb-tg-modal-custom-body', '#sb-tg-modal-kb-message', '#sb-tg-inline-warning'];
 
         $.each(selectors, function(i, sel) {
             var $el = $(sel);
             var id = sel.replace('#', '');
 
-            if (!$el.length || !$el.is(':visible')) {
+            if (!$el.length) return;
+
+            var isParentVisible = $el.parents(':hidden').not($el).length === 0;
+
+            if (!isParentVisible) {
                 var existingEd = tinymce.get(id);
                 if (existingEd) {
+                    try { existingEd.save(); } catch(e) {}
                     try { existingEd.remove(); } catch(e) {}
                 }
                 return;
             }
 
+            var targetContent = $el.val() || '';
+            var targetPlaceholder = $el.attr('placeholder') || '';
+
             var ed = tinymce.get(id);
             if (ed) {
+                try { ed.save(); } catch(e) {}
                 try { ed.remove(); } catch(e) {}
             }
+
+            $el.val(targetContent);
 
             try {
                 tinymce.init({
@@ -483,11 +500,47 @@
                     menubar: false,
                     statusbar: false,
                     height: 160,
+                    add_unload_trigger: false,
                     plugins: 'lists link wordpress',
                     toolbar: 'bold italic blockquote numlist bullist link',
                     setup: function(editor) {
-                        editor.on('change keyup ExecCommand', function() {
-                            editor.save();
+                        editor.on('init', function() {
+                            if (targetPlaceholder && editor.getDoc()) {
+                                var doc = editor.getDoc();
+                                var styleEl = doc.createElement('style');
+                                styleEl.type = 'text/css';
+                                styleEl.innerHTML = 'body[data-placeholder].empty:before { content: attr(data-placeholder); color: #8c8c8c; font-style: italic; position: absolute; top: 10px; left: 10px; right: 10px; pointer-events: none; }';
+                                if (doc.head) {
+                                    doc.head.appendChild(styleEl);
+                                }
+
+                                var bodyEl = editor.getBody();
+                                if (bodyEl) {
+                                    bodyEl.setAttribute('data-placeholder', targetPlaceholder);
+                                }
+
+                                var updatePlaceholder = function() {
+                                    if (!bodyEl) return;
+                                    var textVal = editor.getContent({ format: 'text' }) || '';
+                                    if (!$.trim(textVal)) {
+                                        bodyEl.classList.add('empty');
+                                    } else {
+                                        bodyEl.classList.remove('empty');
+                                    }
+                                };
+
+                                updatePlaceholder();
+
+                                editor.on('keyup input change ExecCommand SetContent NodeChange focus blur', updatePlaceholder);
+                            }
+
+                            if (targetContent) {
+                                try { editor.setContent(targetContent); } catch(e) {}
+                            }
+                            try { editor.save(); } catch(e) {}
+                        });
+                        editor.on('change keyup ExecCommand SetContent NodeChange', function() {
+                            try { editor.save(); } catch(e) {}
                         });
                     }
                 });
@@ -496,13 +549,16 @@
     }
 
     function setEditorContent(id, content) {
+        var strContent = content || '';
+        $('#' + id).val(strContent);
+
         if (typeof tinymce !== 'undefined') {
             var ed = tinymce.get(id);
             if (ed) {
-                try { ed.setContent(content || ''); } catch(e) {}
+                try { ed.setContent(strContent); } catch(e) {}
+                try { ed.save(); } catch(e) {}
             }
         }
-        $('#' + id).val(content || '');
     }
 
     function closeRuleModal() {
@@ -519,9 +575,10 @@
         });
 
         if (typeof tinymce !== 'undefined') {
-            ['sb-tg-modal-custom-body', 'sb-tg-modal-kb-message'].forEach(function(id) {
+            ['sb-tg-modal-custom-body', 'sb-tg-modal-kb-message', 'sb-tg-inline-warning'].forEach(function(id) {
                 var ed = tinymce.get(id);
                 if (ed) {
+                    try { ed.save(); } catch(e) {}
                     try { ed.remove(); } catch(e) {}
                 }
             });
