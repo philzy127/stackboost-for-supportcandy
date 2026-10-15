@@ -93,6 +93,7 @@ class Core {
 				'id'                   => sanitize_key( $rule['id'] ?? ( 'rule_' . wp_rand( 1000, 9999 ) ) ),
 				'name'                 => sanitize_text_field( $rule['name'] ?? '' ),
 				'enabled'              => ! empty( $rule['enabled'] ),
+				'target_context'       => in_array( $rule['target_context'] ?? 'new_ticket', [ 'new_ticket', 'agent_edit' ], true ) ? $rule['target_context'] : 'new_ticket',
 				'monitored_field'      => $monitored_field,
 				'keywords'             => array_values( $keywords_array ),
 				'swap_field'           => $swap_field,

@@ -126,6 +126,7 @@
 
             var ruleId = $('#sb-tg-rule-id').val();
             var name = $.trim($('#sb-tg-rule-name').val());
+            var targetContext = $('#sb-tg-target-context').val() || 'new_ticket';
             var monitoredField = $('#sb-tg-monitored-field').val();
             var keywordsText = $.trim($('#sb-tg-rule-keywords').val());
             var swapField = $('#sb-tg-swap-field').val() || '';
@@ -150,6 +151,7 @@
                 id: ruleId || ('rule_' + Math.floor(Math.random() * 100000)),
                 name: name,
                 enabled: true,
+                target_context: targetContext,
                 monitored_field: monitoredField,
                 monitored_fields: [monitoredField],
                 keywords: keywords,
@@ -324,6 +326,8 @@
             var fieldLabel = (config.fields && config.fields[fieldSlug]) ? config.fields[fieldSlug] : (fieldSlug || 'None');
             var keywordsStr = (rule.keywords || []).join(', ') || 'None';
 
+            var contextBadge = (rule.target_context === 'agent_edit') ? '<span class="sb-tg-action-badge active" style="background:#0284c7;color:#fff;">Agent Edit</span>' : '<span class="sb-tg-action-badge active">New Ticket</span>';
+
             var actionsHtml = '';
             if (rule.actions) {
                 if (rule.actions.disable_submit) actionsHtml += '<span class="sb-tg-action-badge active">Disable Submit</span>';
@@ -335,6 +339,7 @@
 
             var $row = $('<tr>');
             $row.append($('<td>').html('<strong>' + escapeHtml(rule.name || 'Unnamed Rule') + '</strong>'));
+            $row.append($('<td>').html(contextBadge));
             $row.append($('<td>').text(fieldLabel));
             $row.append($('<td>').text(keywordsStr));
             $row.append($('<td>').html(actionsHtml));
@@ -370,6 +375,7 @@
             $('#sb-tg-modal-title').text('Edit Intake Steering Rule');
             $('#sb-tg-rule-id').val(rule.id);
             $('#sb-tg-rule-name').val(rule.name || '');
+            $('#sb-tg-target-context').val(rule.target_context || 'new_ticket');
 
             var monitoredSlug = rule.monitored_field || (Array.isArray(rule.monitored_fields) ? rule.monitored_fields[0] : '');
             $('#sb-tg-monitored-field').val(monitoredSlug || '');
@@ -416,6 +422,7 @@
             $('#sb-tg-modal-title').text('Add New Intake Steering Rule');
             $('#sb-tg-rule-id').val('');
             $('#sb-tg-rule-name').val('');
+            $('#sb-tg-target-context').val('new_ticket');
             $('#sb-tg-monitored-field').val('');
             $('#sb-tg-rule-keywords').val('');
 

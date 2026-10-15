@@ -191,6 +191,7 @@ class WordPress extends Module {
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Rule Name', 'stackboost-for-supportcandy' ); ?></th>
+									<th><?php esc_html_e( 'Target Context', 'stackboost-for-supportcandy' ); ?></th>
 									<th><?php esc_html_e( 'Monitored Field', 'stackboost-for-supportcandy' ); ?></th>
 									<th><?php esc_html_e( 'Keywords / Phrases', 'stackboost-for-supportcandy' ); ?></th>
 									<th><?php esc_html_e( 'Actions Enabled', 'stackboost-for-supportcandy' ); ?></th>
@@ -223,6 +224,16 @@ class WordPress extends Module {
 						<div class="sb-tg-field-group" style="margin-bottom: 15px;">
 							<label for="sb-tg-rule-name"><strong><?php esc_html_e( 'Rule Name:', 'stackboost-for-supportcandy' ); ?></strong></label>
 							<input type="text" id="sb-tg-rule-name" class="widefat" placeholder="<?php esc_attr_e( 'e.g., Steer Billing Keywords away from General Category', 'stackboost-for-supportcandy' ); ?>" />
+						</div>
+
+						<!-- Target Context -->
+						<div class="sb-tg-field-group" style="margin-bottom: 15px;">
+							<label for="sb-tg-target-context"><strong><?php esc_html_e( 'Target Context:', 'stackboost-for-supportcandy' ); ?></strong></label>
+							<select id="sb-tg-target-context" class="widefat">
+								<option value="new_ticket"><?php esc_html_e( 'New Ticket Creation (Customer Intake)', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="agent_edit"><?php esc_html_e( 'Agent Ticket Edit / Reply (Policy Guidance)', 'stackboost-for-supportcandy' ); ?></option>
+							</select>
+							<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Choose whether this rule applies when customers submit a new ticket or when agents edit/reply to an existing ticket.', 'stackboost-for-supportcandy' ); ?></p>
 						</div>
 
 						<!-- Monitored Field -->
