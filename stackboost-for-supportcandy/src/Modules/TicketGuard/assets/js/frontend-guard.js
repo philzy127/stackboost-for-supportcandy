@@ -23,6 +23,30 @@
         });
     }
 
+    function recordAnalyticsEvent(rule, actionType) {
+        if (!rule || !rule.id || !actionType) return;
+
+        if (window._tgAnalyticsLogged && window._tgAnalyticsLogged[rule.id + '_' + actionType]) {
+            return; // Prevent duplicate event spam during typing
+        }
+
+        if (!window._tgAnalyticsLogged) window._tgAnalyticsLogged = {};
+        window._tgAnalyticsLogged[rule.id + '_' + actionType] = true;
+
+        var ajaxUrl = (typeof stackboostTicketGuard !== 'undefined' && stackboostTicketGuard.ajax_url) ? stackboostTicketGuard.ajax_url : (window.ajaxurl || '/wp-admin/admin-ajax.php');
+        var nonce = (typeof stackboostTicketGuard !== 'undefined' && stackboostTicketGuard.nonce) ? stackboostTicketGuard.nonce : '';
+
+        $.post(ajaxUrl, {
+            action: 'stackboost_tg_record_analytics',
+            rule_id: rule.id,
+            rule_name: rule.name || 'Unnamed Rule',
+            action_type: actionType,
+            matched_phrase: rule._matchedPhrase || '',
+            target_context: rule.target_context || 'new_ticket',
+            nonce: nonce
+        });
+    }
+
     $(document).ready(function() {
         if (typeof stackboostTicketGuard === 'undefined' || !stackboostTicketGuard.enabled) {
             return;
@@ -434,7 +458,14 @@
 
                         var lineMatches = true;
                         $.each(parts, function(pIdx, subKw) {
-                            if (valLower.indexOf(subKw.toLowerCase()) === -1) {
+                            var cleanKw = $.trim(subKw);
+                            if (cleanKw.indexOf('!') === 0) {
+                                var excludeKw = $.trim(cleanKw.substring(1)).toLowerCase();
+                                if (excludeKw && valLower.indexOf(excludeKw) !== -1) {
+                                    lineMatches = false;
+                                    return false;
+                                }
+                            } else if (valLower.indexOf(cleanKw.toLowerCase()) === -1) {
                                 lineMatches = false;
                                 return false;
                             }
@@ -442,6 +473,7 @@
 
                         if (lineMatches) {
                             matched = true;
+                            rule._matchedPhrase = kwLine;
                             return false;
                         }
                     });
@@ -488,6 +520,7 @@
                                 window._tgModalShownRuleId = rule.id;
                                 var $ruleBtns = getSubmitButtonsForRule('agent_edit');
                                 var $targetBtn = $ruleBtns.first();
+                            recordAnalyticsEvent(rule, 'modal_shown');
                                 showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
                             }
                         }
@@ -508,6 +541,7 @@
                                 window._tgModalShownRuleId = rule.id;
                                 var $ruleBtns = getSubmitButtonsForRule('new_ticket');
                                 var $targetBtn = $ruleBtns.first();
+                            recordAnalyticsEvent(rule, 'modal_shown');
                                 showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
                             }
                         }
@@ -546,6 +580,8 @@
 
                         var $banner = $('<div class="stackboost-tg-banner sb-tg-' + escapeHtml(level) + '"><span class="dashicons ' + iconClass + '"></span><span style="flex:1;">' + bannerContentHtml + '</span>' + actionsGroupHtml + '</div>');
 
+                        recordAnalyticsEvent(rule, 'banner_shown');
+
                         if (hasFixItOptions) {
                             $banner.find('.sb-tg-fix-it-btn').on('click', function(e) {
                                 e.preventDefault();
@@ -554,6 +590,7 @@
                                     if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
                                     window._tgModalDismissedRules[rule.id] = true;
                                 }
+                                recordAnalyticsEvent(rule, 'swap_applied');
                                 applyRuleSwaps(rule, function() {
                                     $banner.remove();
                                     evaluateGuardRules(rules);
@@ -576,6 +613,7 @@
                     }
 
                     if (actions.auto_swap_category && swapField && swapValue) {
+                        recordAnalyticsEvent(rule, 'swap_applied');
                         applyRuleSwaps(rule);
                     }
                 }

@@ -436,6 +436,124 @@ class Core {
 	}
 
 	/**
+	 * Record a Ticket Guard analytics event.
+	 *
+	 * @param string $rule_id Target rule ID.
+	 * @param string $rule_name Target rule name.
+	 * @param string $action_type Event type ('modal_shown', 'banner_shown', 'swap_applied', 'submit_blocked').
+	 * @param string $matched_phrase The specific keyword phrase that triggered the rule.
+	 * @param string $target_context The active context ('new_ticket' vs 'agent_edit').
+	 * @return bool
+	 */
+	public function record_analytics_event( string $rule_id, string $rule_name, string $action_type, string $matched_phrase, string $target_context = 'new_ticket' ): bool {
+		$stats = get_option( 'stackboost_tg_analytics', [
+			'totals'  => [
+				'interventions'   => 0,
+				'modals_shown'    => 0,
+				'banners_shown'   => 0,
+				'swaps_applied'   => 0,
+				'submits_blocked' => 0,
+			],
+			'rules'   => [],
+			'phrases' => [],
+			'history' => [],
+		] );
+
+		$rule_id        = sanitize_key( substr( $rule_id, 0, 50 ) );
+		$rule_name      = sanitize_text_field( substr( $rule_name, 0, 100 ) );
+		$action_type    = sanitize_key( substr( $action_type, 0, 30 ) );
+		$phrase_key     = sanitize_text_field( substr( trim( $matched_phrase ), 0, 200 ) );
+		$target_context = sanitize_key( substr( $target_context, 0, 30 ) );
+
+		// Increment totals
+		$stats['totals']['interventions'] = ( $stats['totals']['interventions'] ?? 0 ) + 1;
+		if ( 'modal_shown' === $action_type ) {
+			$stats['totals']['modals_shown'] = ( $stats['totals']['modals_shown'] ?? 0 ) + 1;
+		} elseif ( 'banner_shown' === $action_type ) {
+			$stats['totals']['banners_shown'] = ( $stats['totals']['banners_shown'] ?? 0 ) + 1;
+		} elseif ( 'swap_applied' === $action_type ) {
+			$stats['totals']['swaps_applied'] = ( $stats['totals']['swaps_applied'] ?? 0 ) + 1;
+		} elseif ( 'submit_blocked' === $action_type ) {
+			$stats['totals']['submits_blocked'] = ( $stats['totals']['submits_blocked'] ?? 0 ) + 1;
+		}
+
+		// Rule breakdown
+		if ( ! isset( $stats['rules'][ $rule_id ] ) ) {
+			$stats['rules'][ $rule_id ] = [
+				'name'  => $rule_name,
+				'count' => 0,
+			];
+		}
+		$stats['rules'][ $rule_id ]['count']++;
+
+		// Effective Phrase breakdown
+		if ( ! empty( $phrase_key ) ) {
+			if ( ! isset( $stats['phrases'][ $phrase_key ] ) ) {
+				$stats['phrases'][ $phrase_key ] = [
+					'phrase' => $phrase_key,
+					'count'  => 0,
+				];
+			}
+			$stats['phrases'][ $phrase_key ]['count']++;
+		}
+
+		// Keep last 50 recent events in history
+		if ( ! isset( $stats['history'] ) || ! is_array( $stats['history'] ) ) {
+			$stats['history'] = [];
+		}
+		array_unshift( $stats['history'], [
+			'time'           => current_time( 'mysql' ),
+			'rule_name'      => $rule_name,
+			'action_type'    => $action_type,
+			'matched_phrase' => $phrase_key,
+			'target_context' => $target_context,
+		] );
+		$stats['history'] = array_slice( $stats['history'], 0, 50 );
+
+		return update_option( 'stackboost_tg_analytics', $stats, false );
+	}
+
+	/**
+	 * Retrieve compiled Ticket Guard analytics statistics.
+	 *
+	 * @return array
+	 */
+	public function get_analytics_stats(): array {
+		return get_option( 'stackboost_tg_analytics', [
+			'totals'  => [
+				'interventions'   => 0,
+				'modals_shown'    => 0,
+				'banners_shown'   => 0,
+				'swaps_applied'   => 0,
+				'submits_blocked' => 0,
+			],
+			'rules'   => [],
+			'phrases' => [],
+			'history' => [],
+		] );
+	}
+
+	/**
+	 * Reset compiled Ticket Guard analytics statistics.
+	 *
+	 * @return bool
+	 */
+	public function reset_analytics_stats(): bool {
+		return update_option( 'stackboost_tg_analytics', [
+			'totals'  => [
+				'interventions'   => 0,
+				'modals_shown'    => 0,
+				'banners_shown'   => 0,
+				'swaps_applied'   => 0,
+				'submits_blocked' => 0,
+			],
+			'rules'   => [],
+			'phrases' => [],
+			'history' => [],
+		], false );
+	}
+
+	/**
 	 * Evaluate incoming ticket creation data against configured rules for backend enforcement.
 	 *
 	 * @param array $ticket_data Incoming data filter array from `wpsc_create_ticket_data`.
@@ -453,6 +571,12 @@ class Core {
 
 		foreach ( $rules as $rule ) {
 			if ( empty( $rule['enabled'] ) ) {
+				continue;
+			}
+
+			// Backend submission filter is strictly for NEW TICKET creation
+			$target_context = $rule['target_context'] ?? 'new_ticket';
+			if ( 'agent_edit' === $target_context ) {
 				continue;
 			}
 
@@ -487,7 +611,14 @@ class Core {
 
 					$line_matches = true;
 					foreach ( $parts as $sub_kw ) {
-						if ( false === stripos( $content, $sub_kw ) ) {
+						$clean_sub = trim( $sub_kw );
+						if ( 0 === strpos( $clean_sub, '!' ) ) {
+							$exclude_kw = trim( substr( $clean_sub, 1 ) );
+							if ( ! empty( $exclude_kw ) && false !== stripos( $content, $exclude_kw ) ) {
+								$line_matches = false;
+								break;
+							}
+						} elseif ( false === stripos( $content, $clean_sub ) ) {
 							$line_matches = false;
 							break;
 						}

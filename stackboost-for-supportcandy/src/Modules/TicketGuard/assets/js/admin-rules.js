@@ -13,6 +13,32 @@
         console.log('[StackBoost TicketGuard] DOM ready. Initial rules count:', rules.length);
         renderRulesTable();
 
+        // Navigation Tab Switching
+        $(document).on('click', '.sb-tg-tab-link', function(e) {
+            e.preventDefault();
+            var targetTab = $(this).data('tab');
+            $('.sb-tg-tab-link').removeClass('nav-tab-active');
+            $(this).addClass('nav-tab-active');
+            $('.sb-tg-tab-content').hide();
+            $('#sb-tg-tab-content-' + targetTab).show();
+        });
+
+        // Reset Analytics Handler
+        $(document).on('click', '#sb-tg-reset-analytics-btn', function(e) {
+            e.preventDefault();
+            if (confirm(config.i18n ? config.i18n.confirm_reset_analytics || 'Clear all analytics statistics?' : 'Clear all analytics statistics?')) {
+                $.post(config.ajax_url || ajaxurl, {
+                    action: 'stackboost_tg_reset_analytics',
+                    nonce: config.nonce
+                }, function(res) {
+                    showNotice('Analytics statistics cleared.', false);
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 500);
+                });
+            }
+        });
+
         // Master Enable Toggle
         $(document).on('change', '#stackboost_tg_enabled', function() {
             var isEnabled = $(this).is(':checked');
