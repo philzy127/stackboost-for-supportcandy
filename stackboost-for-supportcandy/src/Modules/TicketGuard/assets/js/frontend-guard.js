@@ -526,7 +526,12 @@
             if (shouldDisableSubmit && $submitBtns.length) {
                 var bannerText = disableSubmitMsg || 'Submit button disabled: Please review your entry or category selection.';
                 var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning" style="margin-top:10px;"><span class="dashicons dashicons-lock"></span><span>' + escapeHtml(bannerText) + '</span></div>');
-                $submitBtns.last().after($disBanner);
+                var $btnContainer = $submitBtns.first().parent();
+                if ($btnContainer.length && !$btnContainer.is('body, form')) {
+                    $btnContainer.after($disBanner);
+                } else {
+                    $submitBtns.last().after($disBanner);
+                }
             }
 
             $submitBtns.each(function() {
