@@ -83,13 +83,19 @@
             var $body = $article.find('.sb-tg-kb-article-body');
             var $icon = $header.find('.sb-tg-kb-toggle-icon');
 
+            var isOpening = !$body.is(':visible');
+            if (isOpening) {
+                $article.addClass('expanded');
+                $icon.removeClass('dashicons-alt').addClass('dashicons-arrow-down-alt2');
+            } else {
+                $article.removeClass('expanded');
+                $icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-alt');
+            }
+
             $body.slideToggle(200, function() {
-                if ($body.is(':visible')) {
-                    $article.addClass('expanded');
-                    $icon.removeClass('dashicons-alt').addClass('dashicons-arrow-down-alt2');
-                } else {
-                    $article.removeClass('expanded');
-                    $icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-alt');
+                var $modalBody = $article.closest('.stackboost-modal-body');
+                if ($modalBody.length && typeof $modalBody.data('sbTgUpdateTitle') === 'function') {
+                    $modalBody.data('sbTgUpdateTitle')();
                 }
             });
         });
@@ -882,6 +888,7 @@
             );
             if (isInlineKb) {
                 $('#stackboost-modal-overlay').addClass('sb-tg-modal-inline');
+                initKbModalScrollTracker(title);
             } else {
                 $('#stackboost-modal-overlay').removeClass('sb-tg-modal-inline');
             }
@@ -895,6 +902,7 @@
             );
             if (isInlineKb) {
                 $('#stackboost-modal-overlay').addClass('sb-tg-modal-inline');
+                initKbModalScrollTracker(title);
             } else {
                 $('#stackboost-modal-overlay').removeClass('sb-tg-modal-inline');
             }
@@ -941,6 +949,10 @@
         var $overlay = $(modalHtml);
         $('body').append($overlay);
 
+        if (isInlineKb) {
+            initKbModalScrollTracker(title, $overlay);
+        }
+
         $overlay.find('.sb-tg-close-modal').on('click', function() {
             if (rule && rule.id) window._tgModalDismissedRules[rule.id] = true;
             $overlay.remove();
@@ -967,6 +979,80 @@
             applyRuleSwaps(rule);
             $overlay.remove();
         });
+    }
+
+    function initKbModalScrollTracker(originalTitle, $modalContext) {
+        var $overlay = ($modalContext && $modalContext.length) ? $modalContext : $('#stackboost-modal-overlay');
+        var $modalBody = $overlay.find('.stackboost-modal-body');
+        var $modalTitle = $overlay.find('.stackboost-modal-title');
+
+        if (!$modalBody.length || !$modalTitle.length) return;
+
+        $modalBody.off('scroll.sbTgKbTracker');
+
+        var updateTitle = function() {
+            var activeDocTitle = null;
+            var activeHeadingText = null;
+
+            var modalBodyTop = $modalBody.offset() ? $modalBody.offset().top : 0;
+            var paddingOffset = parseFloat($modalBody.css('padding-top')) || 20;
+            // Option B: Top Edge Threshold relative to modal body scroll container
+            var threshold = paddingOffset + 25;
+
+            var $expandedArticles = $modalBody.find('.sb-tg-kb-inline-article.expanded');
+
+            $expandedArticles.each(function() {
+                var $article = $(this);
+                if (!$article.is(':visible')) return;
+
+                var articleOffset = $article.offset();
+                if (!articleOffset) return;
+
+                var articleTopRel = articleOffset.top - modalBodyTop;
+                var articleHeight = $article.outerHeight() || 0;
+                var articleBottomRel = articleTopRel + articleHeight;
+
+                if (articleTopRel <= threshold && articleBottomRel > threshold) {
+                    var docTitle = $.trim($article.find('.sb-tg-kb-inline-title').text()).replace(/\s+/g, ' ');
+                    if (docTitle) {
+                        activeDocTitle = docTitle;
+                        activeHeadingText = null;
+
+                        var $headings = $article.find('.sb-tg-kb-article-body').find('h1, h2, h3, h4, h5, h6');
+                        $headings.each(function() {
+                            var $h = $(this);
+                            if (!$h.is(':visible')) return;
+
+                            var hOffset = $h.offset();
+                            if (!hOffset) return;
+
+                            var hTopRel = hOffset.top - modalBodyTop;
+                            if (hTopRel <= threshold) {
+                                var hText = $.trim($h.text()).replace(/\s+/g, ' ');
+                                if (hText) {
+                                    activeHeadingText = hText;
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            var newTitle = originalTitle;
+            if (activeDocTitle) {
+                newTitle += ' > ' + activeDocTitle;
+                if (activeHeadingText) {
+                    newTitle += ' > ' + activeHeadingText;
+                }
+            }
+
+            $modalTitle.text(newTitle).attr('title', newTitle);
+        };
+
+        $modalBody.on('scroll.sbTgKbTracker', updateTitle);
+        $modalBody.data('sbTgUpdateTitle', updateTitle);
+
+        updateTitle();
     }
 
     function escapeHtml(str) {

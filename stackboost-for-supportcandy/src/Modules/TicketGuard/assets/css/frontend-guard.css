@@ -113,6 +113,19 @@
     flex-direction: column !important;
 }
 
+.sb-tg-modal-inline .stackboost-modal-header {
+    min-width: 0 !important;
+}
+
+.sb-tg-modal-inline .stackboost-modal-title {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    padding-right: 12px;
+}
+
 .sb-tg-modal-inline .stackboost-modal-body {
     flex: 1 1 auto !important;
     min-height: 0 !important;
