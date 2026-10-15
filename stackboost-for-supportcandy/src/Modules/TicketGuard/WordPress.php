@@ -288,6 +288,15 @@ class WordPress extends Module {
 							<!-- BetterDocs Knowledge Base Steering Settings -->
 							<div id="sb-tg-modal-kb-settings" style="display: none;">
 								<div class="sb-tg-field-group" style="margin-bottom: 15px;">
+									<label><strong><?php esc_html_e( 'Display Style:', 'stackboost-for-supportcandy' ); ?></strong></label>
+									<div style="display: flex; gap: 20px; margin-top: 6px;">
+										<label><input type="radio" name="sb_tg_modal_kb_display_mode" value="links" checked /> <?php esc_html_e( 'Link to articles', 'stackboost-for-supportcandy' ); ?></label>
+										<label><input type="radio" name="sb_tg_modal_kb_display_mode" value="inline" /> <?php esc_html_e( 'Display content inline', 'stackboost-for-supportcandy' ); ?></label>
+									</div>
+									<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Choose whether to display links to the articles or render the article content directly inside the modal.', 'stackboost-for-supportcandy' ); ?></p>
+								</div>
+
+								<div class="sb-tg-field-group" style="margin-bottom: 15px;">
 									<label for="sb-tg-modal-kb-message"><strong><?php esc_html_e( 'Knowledge Base Guidance Message:', 'stackboost-for-supportcandy' ); ?></strong></label>
 									<textarea id="sb-tg-modal-kb-message" class="widefat" rows="3" placeholder="<?php esc_attr_e( 'It looks like your request might be answered in our Knowledge Base articles below. Please review these resources before submitting your ticket:', 'stackboost-for-supportcandy' ); ?>"></textarea>
 								</div>
@@ -433,10 +442,12 @@ class WordPress extends Module {
 			return;
 		}
 
+		wp_enqueue_style( 'dashicons' );
+
 		wp_register_style(
 			'stackboost-tg-frontend-css',
 			STACKBOOST_PLUGIN_URL . 'src/Modules/TicketGuard/assets/css/frontend-guard.css',
-			[],
+			[ 'dashicons' ],
 			STACKBOOST_VERSION
 		);
 

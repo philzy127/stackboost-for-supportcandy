@@ -25,6 +25,7 @@
     width: 18px;
     height: 18px;
     line-height: 18px;
+    font-family: Dashicons !important;
 }
 
 /* Info (Green) */
@@ -101,4 +102,111 @@
 .stackboost-tg-banner .sb-tg-dismiss-btn:hover .dashicons {
     color: #f59e0b !important;
     background: transparent !important;
+}
+
+/* BetterDocs Inline Content Styling & Modal Width */
+.sb-tg-modal-inline .stackboost-modal-box {
+    width: 80% !important;
+    max-width: 80% !important;
+    max-height: 85vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.sb-tg-modal-inline .stackboost-modal-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+}
+
+.sb-tg-kb-inline-container {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sb-tg-kb-inline-article {
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.sb-tg-kb-inline-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    user-select: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sb-tg-kb-inline-header:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+}
+
+.sb-tg-kb-inline-article.expanded .sb-tg-kb-inline-header {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    background: #e2e8f0;
+    border-color: #94a3b8;
+}
+
+.sb-tg-kb-inline-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.sb-tg-kb-toggle-icon {
+    color: #64748b;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    transition: transform 0.2s ease;
+}
+
+.sb-tg-kb-article-body {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+}
+
+.sb-tg-kb-article-body p {
+    margin: 0 0 10px 0;
+}
+
+.sb-tg-kb-article-body p:last-child {
+    margin-bottom: 0;
+}
+
+.sb-tg-kb-article-body h1,
+.sb-tg-kb-article-body h2,
+.sb-tg-kb-article-body h3,
+.sb-tg-kb-article-body h4,
+.sb-tg-kb-article-body h5,
+.sb-tg-kb-article-body h6 {
+    margin: 12px 0 6px 0;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.sb-tg-kb-article-body ul,
+.sb-tg-kb-article-body ol {
+    margin: 8px 0 10px 20px;
+    padding: 0;
+}
+
+.sb-tg-kb-article-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
 }

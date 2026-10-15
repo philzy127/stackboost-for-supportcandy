@@ -75,10 +75,32 @@
         // Initial Evaluation
         evaluateGuardRules(rules);
 
+        // Accordion Toggle for Inline KB Articles
+        $(document).on('click', '.sb-tg-kb-inline-header', function(e) {
+            e.preventDefault();
+            var $header = $(this);
+            var $article = $header.closest('.sb-tg-kb-inline-article');
+            var $body = $article.find('.sb-tg-kb-article-body');
+            var $icon = $header.find('.sb-tg-kb-toggle-icon');
+
+            $body.slideToggle(200, function() {
+                if ($body.is(':visible')) {
+                    $article.addClass('expanded');
+                    $icon.removeClass('dashicons-alt').addClass('dashicons-arrow-down-alt2');
+                } else {
+                    $article.removeClass('expanded');
+                    $icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-alt');
+                }
+            });
+        });
+
         // Native Capture Phase Event Interceptor for Submit Buttons
         window.addEventListener('click', function(e) {
+            if (e.target && e.target.closest('#wpadminbar')) {
+                return;
+            }
             var btn = e.target ? e.target.closest(submitBtnSelector) : null;
-            if (!btn) return;
+            if (!btn || btn.closest('#wpadminbar')) return;
 
             // Ensure reset button was not clicked by mistake
             if (e.target && e.target.closest(resetBtnSelector)) {
@@ -420,7 +442,7 @@
 
                         if (window._tgModalShownRuleId !== rule.id) {
                             window._tgModalShownRuleId = rule.id;
-                            var $targetBtn = $(submitBtnSelector).first();
+                            var $targetBtn = $(submitBtnSelector).not('#wpadminbar *, #wpadminbar').first();
                             showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
                         }
                     }
@@ -498,13 +520,18 @@
             }
 
             // Apply consolidated submit button state across all rules
-            var $submitBtns = $(submitBtnSelector);
+            var $submitBtns = $(submitBtnSelector).not('#wpadminbar *, #wpadminbar');
             $('#sb-tg-submit-disabled-banner').remove();
 
             if (shouldDisableSubmit && $submitBtns.length) {
                 var bannerText = disableSubmitMsg || 'Submit button disabled: Please review your entry or category selection.';
-                var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning"><span class="dashicons dashicons-lock"></span><span>' + escapeHtml(bannerText) + '</span></div>');
-                $submitBtns.first().before($disBanner);
+                var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning" style="margin-top:10px;"><span class="dashicons dashicons-lock"></span><span>' + escapeHtml(bannerText) + '</span></div>');
+                var $btnContainer = $submitBtns.first().parent();
+                if ($btnContainer.length && !$btnContainer.is('body, form')) {
+                    $btnContainer.after($disBanner);
+                } else {
+                    $submitBtns.last().after($disBanner);
+                }
             }
 
             $submitBtns.each(function() {
@@ -760,16 +787,34 @@
             var kbTitle = msgs.modal_title || 'Information Available';
             var kbMsg = msgs.kb_message || 'It looks like your request might be answered in our Knowledge Base articles below. Please review these resources before submitting your ticket:';
             var docsList = msgs.kb_docs || [];
+            var displayMode = msgs.kb_display_mode || 'links';
 
             var bodyHtml = sanitizeGuidanceHtml(kbMsg);
+
             if (Array.isArray(docsList) && docsList.length) {
-                bodyHtml += '<ul style="margin:10px 0 15px 20px; padding:0; list-style:disc; font-size:14px; line-height:1.6;">';
-                $.each(docsList, function(i, doc) {
-                    var docTitle = doc.title || 'Knowledge Base Article';
-                    var docUrl = doc.url || '#';
-                    bodyHtml += '<li><a href="' + escapeHtml(docUrl) + '" target="_blank" rel="noopener noreferrer" style="color:#2271b1; font-weight:600; text-decoration:underline;">' + escapeHtml(docTitle) + '</a></li>';
-                });
-                bodyHtml += '</ul>';
+                if (displayMode === 'inline') {
+                    bodyHtml += '<div class="sb-tg-kb-inline-container" style="margin-top:15px; display:flex; flex-direction:column; gap:12px;">';
+                    $.each(docsList, function(i, doc) {
+                        var docTitle = doc.title || 'Knowledge Base Article';
+                        var docContent = doc.content || '';
+                        bodyHtml += '<div class="sb-tg-kb-inline-article">';
+                        bodyHtml += '<div class="sb-tg-kb-inline-header" role="button" tabindex="0" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding:12px 15px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; user-select:none;">';
+                        bodyHtml += '<h4 class="sb-tg-kb-inline-title" style="margin:0; font-size:15px; font-weight:600; color:#1e293b;">' + escapeHtml(docTitle) + '</h4>';
+                        bodyHtml += '<span class="dashicons dashicons-alt sb-tg-kb-toggle-icon" style="color:#64748b; font-size:18px; transition:transform 0.2s ease;"></span>';
+                        bodyHtml += '</div>';
+                        bodyHtml += '<div class="sb-tg-kb-article-body" style="display:none; padding:15px; border:1px solid #cbd5e1; border-top:none; border-radius:0 0 6px 6px; background:#ffffff; font-size:14px; line-height:1.6; color:#334155;">' + docContent + '</div>';
+                        bodyHtml += '</div>';
+                    });
+                    bodyHtml += '</div>';
+                } else {
+                    bodyHtml += '<ul style="margin:10px 0 15px 20px; padding:0; list-style:disc; font-size:14px; line-height:1.6;">';
+                    $.each(docsList, function(i, doc) {
+                        var docTitle = doc.title || 'Knowledge Base Article';
+                        var docUrl = doc.url || '#';
+                        bodyHtml += '<li><a href="' + escapeHtml(docUrl) + '" target="_blank" rel="noopener noreferrer" style="color:#2271b1; font-weight:600; text-decoration:underline;">' + escapeHtml(docTitle) + '</a></li>';
+                    });
+                    bodyHtml += '</ul>';
+                }
             }
 
             return {
@@ -802,6 +847,9 @@
         var changeCatText = stackboostTicketGuard.i18n ? stackboostTicketGuard.i18n.change_category : 'Switch Options';
         var proceedText = stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway';
 
+        var msgs = (rule && rule.messaging) ? rule.messaging : {};
+        var isInlineKb = msgs.is_kb_steering && msgs.kb_display_mode === 'inline';
+
         var swapField = rule.swap_field || '';
         var swapValue = rule.swap_value || rule.suggested_category;
 
@@ -832,6 +880,11 @@
                 changeCatText,
                 proceedText
             );
+            if (isInlineKb) {
+                $('#stackboost-modal-overlay').addClass('sb-tg-modal-inline');
+            } else {
+                $('#stackboost-modal-overlay').removeClass('sb-tg-modal-inline');
+            }
         } else if (typeof window.stackboostAlert === 'function') {
             window.stackboostAlert(
                 bodyHtml,
@@ -840,6 +893,11 @@
                     if (rule.id) window._tgModalDismissedRules[rule.id] = true;
                 }
             );
+            if (isInlineKb) {
+                $('#stackboost-modal-overlay').addClass('sb-tg-modal-inline');
+            } else {
+                $('#stackboost-modal-overlay').removeClass('sb-tg-modal-inline');
+            }
         } else {
             fallbackShowGuidanceModal($btn, rule, isUserSubmitClick);
         }
@@ -855,16 +913,21 @@
         var swapField = rule.swap_field || '';
         var swapValue = rule.swap_value || rule.suggested_category;
 
-        var modalHtml = '<div class="stackboost-modal-overlay stackboost-tg-modal-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999999;display:flex;align-items:center;justify-content:center;">' +
-            '<div class="stackboost-modal-box" style="background:#fff;border-radius:6px;max-width:520px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,0.35);overflow:hidden;">' +
-            '<div class="stackboost-modal-header" style="padding:16px 20px;background:#f8f9fa;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">' +
+        var msgs = (rule && rule.messaging) ? rule.messaging : {};
+        var isInlineKb = msgs.is_kb_steering && msgs.kb_display_mode === 'inline';
+        var overlayClass = isInlineKb ? 'stackboost-modal-overlay stackboost-tg-modal-overlay sb-tg-modal-inline' : 'stackboost-modal-overlay stackboost-tg-modal-overlay';
+        var boxWidthStyle = isInlineKb ? 'max-width:80%;width:80%;' : 'max-width:520px;width:90%;';
+
+        var modalHtml = '<div class="' + overlayClass + '" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999999;display:flex;align-items:center;justify-content:center;">' +
+            '<div class="stackboost-modal-box" style="background:#fff;border-radius:6px;' + boxWidthStyle + 'box-shadow:0 8px 30px rgba(0,0,0,0.35);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">' +
+            '<div class="stackboost-modal-header" style="padding:16px 20px;background:#f8f9fa;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">' +
             '<h3 class="stackboost-modal-title" style="margin:0;font-size:1.15em;font-weight:600;">' + escapeHtml(title) + '</h3>' +
             '<button type="button" class="stackboost-modal-close sb-tg-close-modal" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;">&times;</button>' +
             '</div>' +
-            '<div class="stackboost-modal-body" style="padding:20px 20px 10px;">' +
+            '<div class="stackboost-modal-body" style="padding:20px 20px 10px;flex:1 1 auto;min-height:0;overflow-y:auto;">' +
             bodyHtml +
             '</div>' +
-            '<div class="stackboost-modal-footer" style="padding:14px 20px;background:#f8f9fa;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;">' +
+            '<div class="stackboost-modal-footer" style="padding:14px 20px;background:#f8f9fa;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;">' +
             '<button type="button" class="button sb-tg-proceed-btn" style="cursor:pointer;">' + escapeHtml(stackboostTicketGuard.i18n ? (stackboostTicketGuard.i18n.proceed || stackboostTicketGuard.i18n.proceed_anyway) : 'Proceed Anyway') + '</button>';
 
         if (swapValue) {
