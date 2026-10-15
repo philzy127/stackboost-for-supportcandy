@@ -96,8 +96,11 @@
 
         // Native Capture Phase Event Interceptor for Submit Buttons
         window.addEventListener('click', function(e) {
+            if (e.target && e.target.closest('#wpadminbar')) {
+                return;
+            }
             var btn = e.target ? e.target.closest(submitBtnSelector) : null;
-            if (!btn) return;
+            if (!btn || btn.closest('#wpadminbar')) return;
 
             // Ensure reset button was not clicked by mistake
             if (e.target && e.target.closest(resetBtnSelector)) {
@@ -439,7 +442,7 @@
 
                         if (window._tgModalShownRuleId !== rule.id) {
                             window._tgModalShownRuleId = rule.id;
-                            var $targetBtn = $(submitBtnSelector).first();
+                            var $targetBtn = $(submitBtnSelector).not('#wpadminbar *, #wpadminbar').first();
                             showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
                         }
                     }
@@ -517,12 +520,12 @@
             }
 
             // Apply consolidated submit button state across all rules
-            var $submitBtns = $(submitBtnSelector);
+            var $submitBtns = $(submitBtnSelector).not('#wpadminbar *, #wpadminbar');
             $('#sb-tg-submit-disabled-banner').remove();
 
             if (shouldDisableSubmit && $submitBtns.length) {
                 var bannerText = disableSubmitMsg || 'Submit button disabled: Please review your entry or category selection.';
-                var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning"><span class="dashicons dashicons-warning"></span><span>' + escapeHtml(bannerText) + '</span></div>');
+                var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning"><span class="dashicons dashicons-lock"></span><span>' + escapeHtml(bannerText) + '</span></div>');
                 $submitBtns.first().before($disBanner);
             }
 
