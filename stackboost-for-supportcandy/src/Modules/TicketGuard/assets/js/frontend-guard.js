@@ -525,7 +525,7 @@
 
             if (shouldDisableSubmit && $submitBtns.length) {
                 var bannerText = disableSubmitMsg || 'Submit button disabled: Please review your entry or category selection.';
-                var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning"><span class="dashicons dashicons-lock"></span><span>' + escapeHtml(bannerText) + '</span></div>');
+                var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning"><span class="dashicons dashicons-lock"></span><span>' + escapeHtml(bannerText) + '</span></div><br />');
                 $submitBtns.first().before($disBanner);
             }
 
