@@ -351,7 +351,7 @@ class WordPress extends Module {
 		}
 
 		// Generate CSV output
-		$filename = 'other-issues-report-' . date( 'Y-m-d' ) . '.csv';
+		$filename = 'other-issues-report-' . gmdate( 'Y-m-d' ) . '.csv';
 
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename=' . $filename );
@@ -367,6 +367,7 @@ class WordPress extends Module {
 		foreach ( $csv_data as $row ) {
 			fputcsv( $output, $row );
 		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		fclose( $output );
 		exit;
 	}
@@ -564,6 +565,7 @@ class WordPress extends Module {
 			$full_prompt
 		);
 
+		// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration
 		$api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=" . $api_key;
 
 		$body = [
@@ -672,12 +674,17 @@ class WordPress extends Module {
 
 		if ( $agent_group_val > 0 && isset( $options['ticket_metrics_enable_agent_group_filter'] ) && filter_var( $options['ticket_metrics_enable_agent_group_filter'], FILTER_VALIDATE_BOOLEAN ) ) {
 			$agentgroups_table = $wpdb->prefix . 'psmsc_agentgroups';
-			if ( $wpdb->get_var( "SHOW TABLES LIKE '$agentgroups_table'" ) !== $agentgroups_table ) {
+			$agentgroups_table_like = $wpdb->esc_like( $agentgroups_table );
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $agentgroups_table_like ) ) !== $agentgroups_table ) {
 				$agentgroups_table = $wpdb->prefix . 'wpsc_agentgroups'; // fallback
+				$agentgroups_table_like = $wpdb->esc_like( $agentgroups_table );
 			}
-			if ( $wpdb->get_var( "SHOW TABLES LIKE '$agentgroups_table'" ) === $agentgroups_table ) {
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-				$group_record = $wpdb->get_row( $wpdb->prepare( "SELECT agents, supervisors FROM {$agentgroups_table} WHERE id = %d", $agent_group_val ) );
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $agentgroups_table_like ) ) === $agentgroups_table ) {
+				$safe_agentgroups_table = esc_sql( $agentgroups_table );
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$group_record = $wpdb->get_row( $wpdb->prepare( "SELECT agents, supervisors FROM `{$safe_agentgroups_table}` WHERE id = %d", $agent_group_val ) );
 				if ( $group_record ) {
 					$member_ids = array_filter( explode( '|', $group_record->agents ) );
 					$supervisor_ids = array_filter( explode( '|', $group_record->supervisors ) );
@@ -1173,7 +1180,7 @@ class WordPress extends Module {
 				$csat_text = 'N/A';
 				if ( $agent_metrics['survey_avg_csat'] !== 'N/A' ) {
 					if ( $a_id !== 'other' ) {
-						$filter_url = admin_url( 'admin.php?page=stackboost-ats&tab=results&agent_id=' . $a_id . '&start_date=' . urlencode( date('Y-m-d', strtotime($start_dt)) ) . '&end_date=' . urlencode( date('Y-m-d', strtotime($end_dt)) ) );
+						$filter_url = admin_url( 'admin.php?page=stackboost-ats&tab=results&agent_id=' . $a_id . '&start_date=' . urlencode( gmdate('Y-m-d', strtotime($start_dt)) ) . '&end_date=' . urlencode( gmdate('Y-m-d', strtotime($end_dt)) ) );
 						$csat_text = '<a href="' . esc_url( $filter_url ) . '" target="_blank">' . esc_html( $agent_metrics['survey_avg_csat'] ) . '</a><br>' . (int)$agent_metrics['survey_count'] . ' surveys';
 					} else {
 						$csat_text = esc_html($agent_metrics['survey_avg_csat']) . '<br>' . (int)$agent_metrics['survey_count'] . ' surveys';
@@ -1532,6 +1539,7 @@ class WordPress extends Module {
 									</div>
 								</div>
 							</div>',
+							/* translators: %s: Breakdown field name */
 							sprintf( esc_html__( 'Issue Breakdown: %s', 'stackboost-for-supportcandy' ), esc_html($tf_name) ),
 							esc_html__( 'Response / Subcategory', 'stackboost-for-supportcandy' ),
 							esc_html__( 'Count', 'stackboost-for-supportcandy' ),
@@ -1890,7 +1898,7 @@ class WordPress extends Module {
 
 					if ( function_exists( 'stackboost_log' ) ) {
 						stackboost_log( "ATS CSAT Linked Average Query: {$query_csat}", 'ticket_metrics' );
-						stackboost_log( "ATS CSAT Linked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
+						stackboost_log( "ATS CSAT Linked Average Result: " . var_export($avg_csat, true), 'ticket_metrics' );
 					}
 
 					if ( $avg_csat !== null ) {
@@ -1961,7 +1969,7 @@ class WordPress extends Module {
 
 							if ( function_exists( 'stackboost_log' ) ) {
 								stackboost_log( "ATS CSAT Unlinked Average Query: {$query_csat}", 'ticket_metrics' );
-								stackboost_log( "ATS CSAT Unlinked Average Result: " . print_r($avg_csat, true), 'ticket_metrics' );
+								stackboost_log( "ATS CSAT Unlinked Average Result: " . var_export($avg_csat, true), 'ticket_metrics' );
 							}
 
 							if ( $avg_csat !== null ) {

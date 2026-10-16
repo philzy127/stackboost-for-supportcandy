@@ -351,12 +351,17 @@ class Page {
 									<?php
 									global $wpdb;
 									$table = $wpdb->prefix . 'psmsc_agentgroups';
-									if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) !== $table ) {
+									$table_like = $wpdb->esc_like( $table );
+									// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+									if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_like ) ) !== $table ) {
 										$table = $wpdb->prefix . 'wpsc_agentgroups'; // fallback
+										$table_like = $wpdb->esc_like( $table );
 									}
-									if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) === $table ) {
-										// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-										$groups = $wpdb->get_results( "SELECT id, name FROM $table ORDER BY name ASC" );
+									// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+									if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_like ) ) === $table ) {
+										$safe_table = esc_sql( $table );
+										// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+										$groups = $wpdb->get_results( "SELECT id, name FROM `{$safe_table}` ORDER BY name ASC" );
 										if ( $groups ) {
 											foreach ( $groups as $group ) {
 												echo '<option value="' . esc_attr( $group->id ) . '">' . esc_html( $group->name ) . '</option>';

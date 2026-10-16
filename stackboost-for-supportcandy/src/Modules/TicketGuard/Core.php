@@ -191,17 +191,19 @@ class Core {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'psmsc_custom_fields';
 		$table_name_like = $wpdb->esc_like( $table_name );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name_like ) ) !== $table_name ) {
 			$table_name = $wpdb->prefix . 'wpsc_custom_fields';
 		}
 
 		$safe_table = esc_sql( $table_name );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$cf_rows = $wpdb->get_results( "SELECT id, slug, name, type FROM `{$safe_table}` WHERE type IN ('select', 'single_select', 'cf_single_select', 'radio', 'cf_radio', 'checkbox', 'cf_checkbox', 'multi_select', 'cf_multi_select')", ARRAY_A );
 
 		if ( ! empty( $cf_rows ) ) {
 			$opts_table = $wpdb->prefix . 'psmsc_custom_field_options';
 			$opts_table_like = $wpdb->esc_like( $opts_table );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $opts_table_like ) ) !== $opts_table ) {
 				$opts_table = $wpdb->prefix . 'wpsc_custom_field_options';
 			}
@@ -214,7 +216,7 @@ class Core {
 				}
 
 				$field_id = (int) $row['id'];
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$opt_rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, name FROM `{$safe_opts_table}` WHERE field_id = %d ORDER BY name ASC", $field_id ), ARRAY_A );
 
 				if ( ! empty( $opt_rows ) ) {
