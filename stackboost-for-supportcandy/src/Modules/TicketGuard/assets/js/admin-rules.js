@@ -13,6 +13,32 @@
         console.log('[StackBoost TicketGuard] DOM ready. Initial rules count:', rules.length);
         renderRulesTable();
 
+        // Navigation Tab Switching
+        $(document).on('click', '.sb-tg-tab-link', function(e) {
+            e.preventDefault();
+            var targetTab = $(this).data('tab');
+            $('.sb-tg-tab-link').removeClass('nav-tab-active');
+            $(this).addClass('nav-tab-active');
+            $('.sb-tg-tab-content').hide();
+            $('#sb-tg-tab-content-' + targetTab).show();
+        });
+
+        // Reset Analytics Handler
+        $(document).on('click', '#sb-tg-reset-analytics-btn', function(e) {
+            e.preventDefault();
+            if (confirm(config.i18n ? config.i18n.confirm_reset_analytics || 'Clear all analytics statistics?' : 'Clear all analytics statistics?')) {
+                $.post(config.ajax_url || ajaxurl, {
+                    action: 'stackboost_tg_reset_analytics',
+                    nonce: config.nonce
+                }, function(res) {
+                    showNotice('Analytics statistics cleared.', false);
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 500);
+                });
+            }
+        });
+
         // Master Enable Toggle
         $(document).on('change', '#stackboost_tg_enabled', function() {
             var isEnabled = $(this).is(':checked');
@@ -126,6 +152,7 @@
 
             var ruleId = $('#sb-tg-rule-id').val();
             var name = $.trim($('#sb-tg-rule-name').val());
+            var targetContext = $('#sb-tg-target-context').val() || 'new_ticket';
             var monitoredField = $('#sb-tg-monitored-field').val();
             var keywordsText = $.trim($('#sb-tg-rule-keywords').val());
             var swapField = $('#sb-tg-swap-field').val() || '';
@@ -150,6 +177,7 @@
                 id: ruleId || ('rule_' + Math.floor(Math.random() * 100000)),
                 name: name,
                 enabled: true,
+                target_context: targetContext,
                 monitored_field: monitoredField,
                 monitored_fields: [monitoredField],
                 keywords: keywords,
@@ -188,10 +216,14 @@
                 rules.push(ruleObj);
             }
 
+            var isNewRule = !ruleId;
+            var actionType = isNewRule ? 'create' : 'update';
+            var feedbackMsg = isNewRule ? (config.i18n ? config.i18n.created_success || 'Rule created successfully.' : 'Rule created successfully.') : (config.i18n ? config.i18n.updated_success || 'Rule updated successfully.' : 'Rule updated successfully.');
+
             console.log('[StackBoost TicketGuard] Saving rule object:', ruleObj);
             renderRulesTable();
             closeRuleModal();
-            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), 'Rule saved successfully.');
+            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), feedbackMsg, null, actionType);
         });
     });
 
@@ -324,6 +356,8 @@
             var fieldLabel = (config.fields && config.fields[fieldSlug]) ? config.fields[fieldSlug] : (fieldSlug || 'None');
             var keywordsStr = (rule.keywords || []).join(', ') || 'None';
 
+            var contextBadge = (rule.target_context === 'agent_edit') ? '<span class="sb-tg-action-badge active" style="background:#0284c7;color:#fff;">Agent Edit</span>' : '<span class="sb-tg-action-badge active">New Ticket</span>';
+
             var actionsHtml = '';
             if (rule.actions) {
                 if (rule.actions.disable_submit) actionsHtml += '<span class="sb-tg-action-badge active">Disable Submit</span>';
@@ -335,6 +369,7 @@
 
             var $row = $('<tr>');
             $row.append($('<td>').html('<strong>' + escapeHtml(rule.name || 'Unnamed Rule') + '</strong>'));
+            $row.append($('<td>').html(contextBadge));
             $row.append($('<td>').text(fieldLabel));
             $row.append($('<td>').text(keywordsStr));
             $row.append($('<td>').html(actionsHtml));
@@ -370,6 +405,7 @@
             $('#sb-tg-modal-title').text('Edit Intake Steering Rule');
             $('#sb-tg-rule-id').val(rule.id);
             $('#sb-tg-rule-name').val(rule.name || '');
+            $('#sb-tg-target-context').val(rule.target_context || 'new_ticket');
 
             var monitoredSlug = rule.monitored_field || (Array.isArray(rule.monitored_fields) ? rule.monitored_fields[0] : '');
             $('#sb-tg-monitored-field').val(monitoredSlug || '');
@@ -416,6 +452,7 @@
             $('#sb-tg-modal-title').text('Add New Intake Steering Rule');
             $('#sb-tg-rule-id').val('');
             $('#sb-tg-rule-name').val('');
+            $('#sb-tg-target-context').val('new_ticket');
             $('#sb-tg-monitored-field').val('');
             $('#sb-tg-rule-keywords').val('');
 
@@ -628,7 +665,7 @@
         }
     }
 
-    function saveConfig(rulesArray, isEnabled, feedbackMsg, callback) {
+    function saveConfig(rulesArray, isEnabled, feedbackMsg, callback, actionType) {
         console.log('[StackBoost TicketGuard] saveConfig called. Enabled:', isEnabled, 'Rules:', rulesArray);
 
         $('#sb_tg_enabled_hidden').val(isEnabled ? '1' : '0');
@@ -638,12 +675,16 @@
             action: 'stackboost_tg_save_rules',
             nonce: config.nonce,
             enabled: isEnabled ? 'true' : 'false',
-            rules: JSON.stringify(rulesArray)
+            rules: JSON.stringify(rulesArray),
+            action_type: actionType || 'save'
         }, function(res) {
             console.log('[StackBoost TicketGuard] saveConfig AJAX success response:', res);
-            if (feedbackMsg) {
-                var msgText = typeof feedbackMsg === 'string' ? feedbackMsg : (config.i18n ? config.i18n.saved_success : 'Settings saved successfully.');
+            if (res && res.success) {
+                var msgText = (res.data && res.data.message) ? res.data.message : (typeof feedbackMsg === 'string' ? feedbackMsg : (config.i18n ? config.i18n.saved_success : 'Settings saved successfully.'));
                 showNotice(msgText, false);
+            } else {
+                var errText = (res && res.data && res.data.message) ? res.data.message : (config.i18n ? config.i18n.save_error : 'Failed to save settings.');
+                showNotice(errText, true);
             }
             if (typeof callback === 'function') callback();
         }).fail(function(xhr, status, error) {

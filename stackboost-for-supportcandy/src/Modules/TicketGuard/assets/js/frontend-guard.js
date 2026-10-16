@@ -2,8 +2,50 @@
     'use strict';
 
     var debounceTimer = null;
-    var submitBtnSelector = '#wpsc-ct-submit, .wpsc-submit-btn, #wpsc-submit, .wpsc-open-ticket-btn, .wpsc-create-ticket-btn, button.wpsc-btn-primary, button[type="submit"], input[type="submit"]';
+    var submitBtnSelector = '#wpsc-ct-submit, .wpsc-create-ticket-btn, .wpsc-open-ticket-btn, #wpsc-submit, .wpsc-submit-btn, button.wpsc-btn-primary, button[type="submit"], input[type="submit"]';
     var resetBtnSelector = '#wpsc-ct-reset, .wpsc-reset-btn, button[type="reset"], input[type="reset"], button[onclick*="reset"]';
+
+    function isReplyOrEditContext($el) {
+        if (!$el || !$el.length) return false;
+        return $el.closest('.wpsc-it-container, .wpsc-it-reply, .wpsc-reply-box, .wpsc-thread, .wpsc-it-editor, .wpsc-it-thread, .wpsc-edit-ticket-container').length > 0;
+    }
+
+    function getSubmitButtonsForRule(targetContext) {
+        var $allBtns = $(submitBtnSelector).not('#wpadminbar *, #wpadminbar');
+        if (targetContext === 'agent_edit') {
+            return $allBtns.filter(function() {
+                return isReplyOrEditContext($(this));
+            });
+        }
+        // Default / new_ticket context: filter OUT reply/edit container buttons
+        return $allBtns.filter(function() {
+            return !isReplyOrEditContext($(this));
+        });
+    }
+
+    function recordAnalyticsEvent(rule, actionType) {
+        if (!rule || !rule.id || !actionType) return;
+
+        if (window._tgAnalyticsLogged && window._tgAnalyticsLogged[rule.id + '_' + actionType]) {
+            return; // Prevent duplicate event spam during typing
+        }
+
+        if (!window._tgAnalyticsLogged) window._tgAnalyticsLogged = {};
+        window._tgAnalyticsLogged[rule.id + '_' + actionType] = true;
+
+        var ajaxUrl = (typeof stackboostTicketGuard !== 'undefined' && stackboostTicketGuard.ajax_url) ? stackboostTicketGuard.ajax_url : (window.ajaxurl || '/wp-admin/admin-ajax.php');
+        var nonce = (typeof stackboostTicketGuard !== 'undefined' && stackboostTicketGuard.nonce) ? stackboostTicketGuard.nonce : '';
+
+        $.post(ajaxUrl, {
+            action: 'stackboost_tg_record_analytics',
+            rule_id: rule.id,
+            rule_name: rule.name || 'Unnamed Rule',
+            action_type: actionType,
+            matched_phrase: rule._matchedPhrase || '',
+            target_context: rule.target_context || 'new_ticket',
+            nonce: nonce
+        });
+    }
 
     $(document).ready(function() {
         if (typeof stackboostTicketGuard === 'undefined' || !stackboostTicketGuard.enabled) {
@@ -58,13 +100,16 @@
             }, 150);
         });
 
-        // Re-evaluate ONLY when a new SupportCandy ticket form is dynamically loaded
+        // Re-evaluate when a SupportCandy ticket creation or reply/edit form is dynamically loaded
         $(document).ajaxComplete(function(e, xhr, settings) {
             if (!settings || !settings.data) return;
             var dataStr = typeof settings.data === 'string' ? settings.data : (typeof settings.data === 'object' ? JSON.stringify(settings.data) : '');
 
-            // STRICT FILTER: ONLY trigger when explicitly loading a ticket form
-            if (dataStr.indexOf('wpsc_get_ticket_form') === -1 && dataStr.indexOf('wpsc_open_ticket') === -1) {
+            // STRICT FILTER: ONLY trigger when loading a ticket creation form or ticket reply/edit form
+            var isCreateForm = dataStr.indexOf('wpsc_get_ticket_form') !== -1 || dataStr.indexOf('wpsc_open_ticket') !== -1;
+            var isReplyOrEditForm = dataStr.indexOf('wpsc_get_reply_form') !== -1 || dataStr.indexOf('wpsc_get_edit_ticket') !== -1 || dataStr.indexOf('wpsc_get_individual_ticket') !== -1;
+
+            if (!isCreateForm && !isReplyOrEditForm) {
                 return; // Ignore ALL other AJAX calls (visibility checks, options, updates, etc.)
             }
 
@@ -344,9 +389,14 @@
         window._tgIsEvaluating = true;
 
         try {
-            var shouldDisableSubmit = false;
-            var disableSubmitMsg = null;
-            var modalBlockedRule = null;
+            var shouldDisableSubmitNew = false;
+            var disableSubmitMsgNew = null;
+            var modalBlockedRuleNew = null;
+
+            var shouldDisableSubmitAgent = false;
+            var disableSubmitMsgAgent = null;
+            var modalBlockedRuleAgent = null;
+
             var matchedRuleId = null;
 
             // Remove existing inline banners
@@ -408,7 +458,14 @@
 
                         var lineMatches = true;
                         $.each(parts, function(pIdx, subKw) {
-                            if (valLower.indexOf(subKw.toLowerCase()) === -1) {
+                            var cleanKw = $.trim(subKw);
+                            if (cleanKw.indexOf('!') === 0) {
+                                var excludeKw = $.trim(cleanKw.substring(1)).toLowerCase();
+                                if (excludeKw && valLower.indexOf(excludeKw) !== -1) {
+                                    lineMatches = false;
+                                    return false;
+                                }
+                            } else if (valLower.indexOf(cleanKw.toLowerCase()) === -1) {
                                 lineMatches = false;
                                 return false;
                             }
@@ -416,6 +473,7 @@
 
                         if (lineMatches) {
                             matched = true;
+                            rule._matchedPhrase = kwLine;
                             return false;
                         }
                     });
@@ -424,6 +482,17 @@
                 });
 
                 if (matched) {
+                    var ruleContext = rule.target_context || 'new_ticket';
+                    var inReplyEdit = $matchedField ? isReplyOrEditContext($matchedField) : false;
+
+                    // Context filtering: If new_ticket rule and inside reply/edit, skip
+                    if (ruleContext === 'new_ticket' && inReplyEdit) {
+                        return;
+                    }
+                    // Context filtering: If agent_edit rule and NOT inside reply/edit, skip
+                    if (ruleContext === 'agent_edit' && !inReplyEdit) {
+                        return;
+                    }
                     // Check if target option(s) are ALREADY set on the form as configured
                     if (isTargetOptionAlreadySelected(rule)) {
                         return; // Option is already selected - no action needed
@@ -434,22 +503,47 @@
                     matchedRuleId = rule.id;
                     var actions = rule.actions || {};
 
-                    if (actions.disable_submit && !isRuleDismissed) {
-                        shouldDisableSubmit = true;
-                        if (rule.messaging && rule.messaging.submit_disabled_message) {
-                            disableSubmitMsg = formatRulePlaceholders(rule.messaging.submit_disabled_message, rule);
-                        } else if (!disableSubmitMsg) {
-                            disableSubmitMsg = 'Submit button disabled: Please review your entry or category selection.';
+                    if (ruleContext === 'agent_edit') {
+                        if (actions.disable_submit && !isRuleDismissed) {
+                            shouldDisableSubmitAgent = true;
+                            if (rule.messaging && rule.messaging.submit_disabled_message) {
+                                disableSubmitMsgAgent = formatRulePlaceholders(rule.messaging.submit_disabled_message, rule);
+                            } else if (!disableSubmitMsgAgent) {
+                                disableSubmitMsgAgent = 'Submit button disabled: Please review your entry or category selection.';
+                            }
                         }
-                    }
 
-                    if (actions.show_modal && !isRuleDismissed) {
-                        modalBlockedRule = rule;
+                        if (actions.show_modal && !isRuleDismissed) {
+                            modalBlockedRuleAgent = rule;
 
-                        if (window._tgModalShownRuleId !== rule.id) {
-                            window._tgModalShownRuleId = rule.id;
-                            var $targetBtn = $(submitBtnSelector).not('#wpadminbar *, #wpadminbar').first();
-                            showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
+                            if (window._tgModalShownRuleId !== rule.id) {
+                                window._tgModalShownRuleId = rule.id;
+                                var $ruleBtns = getSubmitButtonsForRule('agent_edit');
+                                var $targetBtn = $ruleBtns.first();
+                            recordAnalyticsEvent(rule, 'modal_shown');
+                                showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
+                            }
+                        }
+                    } else {
+                        if (actions.disable_submit && !isRuleDismissed) {
+                            shouldDisableSubmitNew = true;
+                            if (rule.messaging && rule.messaging.submit_disabled_message) {
+                                disableSubmitMsgNew = formatRulePlaceholders(rule.messaging.submit_disabled_message, rule);
+                            } else if (!disableSubmitMsgNew) {
+                                disableSubmitMsgNew = 'Submit button disabled: Please review your entry or category selection.';
+                            }
+                        }
+
+                        if (actions.show_modal && !isRuleDismissed) {
+                            modalBlockedRuleNew = rule;
+
+                            if (window._tgModalShownRuleId !== rule.id) {
+                                window._tgModalShownRuleId = rule.id;
+                                var $ruleBtns = getSubmitButtonsForRule('new_ticket');
+                                var $targetBtn = $ruleBtns.first();
+                            recordAnalyticsEvent(rule, 'modal_shown');
+                                showGuidanceModal($targetBtn, rule, false); // Triggered automatically while typing
+                            }
                         }
                     }
 
@@ -486,6 +580,8 @@
 
                         var $banner = $('<div class="stackboost-tg-banner sb-tg-' + escapeHtml(level) + '"><span class="dashicons ' + iconClass + '"></span><span style="flex:1;">' + bannerContentHtml + '</span>' + actionsGroupHtml + '</div>');
 
+                        recordAnalyticsEvent(rule, 'banner_shown');
+
                         if (hasFixItOptions) {
                             $banner.find('.sb-tg-fix-it-btn').on('click', function(e) {
                                 e.preventDefault();
@@ -494,6 +590,7 @@
                                     if (!window._tgModalDismissedRules) window._tgModalDismissedRules = {};
                                     window._tgModalDismissedRules[rule.id] = true;
                                 }
+                                recordAnalyticsEvent(rule, 'swap_applied');
                                 applyRuleSwaps(rule, function() {
                                     $banner.remove();
                                     evaluateGuardRules(rules);
@@ -516,6 +613,7 @@
                     }
 
                     if (actions.auto_swap_category && swapField && swapValue) {
+                        recordAnalyticsEvent(rule, 'swap_applied');
                         applyRuleSwaps(rule);
                     }
                 }
@@ -525,74 +623,79 @@
                 window._tgModalShownRuleId = null;
             }
 
-            // Apply consolidated submit button state across all rules
-            var $submitBtns = $(submitBtnSelector).not('#wpadminbar *, #wpadminbar');
+            // Apply consolidated submit button state for both contexts
             $('#sb-tg-submit-disabled-banner').remove();
 
-            if (shouldDisableSubmit && $submitBtns.length) {
-                var bannerText = disableSubmitMsg || 'Submit button disabled: Please review your entry or category selection.';
-                var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning" style="margin-top:10px;"><span class="dashicons dashicons-lock"></span><span>' + escapeHtml(bannerText) + '</span></div>');
-                var $btnContainer = $submitBtns.first().parent();
-                if ($btnContainer.length && !$btnContainer.is('body, form')) {
-                    $btnContainer.after($disBanner);
-                } else {
-                    $submitBtns.last().after($disBanner);
-                }
-            }
-
-            $submitBtns.each(function() {
-                var $btn = $(this);
-                var btnEl = this;
-
-                if (shouldDisableSubmit) {
-                    var msgText = disableSubmitMsg || 'Submit button disabled: Please review your entry or category selection.';
-                    $btn.attr('title', msgText).data('tg-disabled-msg', msgText);
-                    $btn.prop('disabled', true).addClass('stackboost-tg-submit-disabled').css({
-                        'opacity': '0.5',
-                        'cursor': 'not-allowed',
-                        'pointer-events': 'auto'
-                    });
-                } else {
-                    $btn.removeAttr('title').removeData('tg-disabled-msg');
-                    $btn.prop('disabled', false).removeClass('stackboost-tg-submit-disabled').css({
-                        'opacity': '1',
-                        'cursor': 'pointer',
-                        'pointer-events': 'auto'
-                    });
+            var applySubmitButtonState = function(targetContext, shouldDisable, disableMsg, modalRule) {
+                var $btns = getSubmitButtonsForRule(targetContext);
+                if (shouldDisable && $btns.length) {
+                    var bannerText = disableMsg || 'Submit button disabled: Please review your entry or category selection.';
+                    var $disBanner = $('<div id="sb-tg-submit-disabled-banner" class="stackboost-tg-banner sb-tg-warning" style="margin-top:10px;"><span class="dashicons dashicons-lock"></span><span>' + escapeHtml(bannerText) + '</span></div>');
+                    var $btnContainer = $btns.first().parent();
+                    if ($btnContainer.length && !$btnContainer.is('body, form')) {
+                        $btnContainer.after($disBanner);
+                    } else {
+                        $btns.last().after($disBanner);
+                    }
                 }
 
-                if (modalBlockedRule) {
-                    $btn.data('tg-modal-blocked', true).data('tg-modal-rule', modalBlockedRule);
+                $btns.each(function() {
+                    var $btn = $(this);
+                    var btnEl = this;
 
-                    if (!btnEl._tgOriginalOnClick && btnEl.onclick) {
-                        btnEl._tgOriginalOnClick = btnEl.onclick;
+                    if (shouldDisable) {
+                        var msgText = disableMsg || 'Submit button disabled: Please review your entry or category selection.';
+                        $btn.attr('title', msgText).data('tg-disabled-msg', msgText);
+                        $btn.prop('disabled', true).addClass('stackboost-tg-submit-disabled').css({
+                            'opacity': '0.5',
+                            'cursor': 'not-allowed',
+                            'pointer-events': 'auto'
+                        });
+                    } else {
+                        $btn.removeAttr('title').removeData('tg-disabled-msg');
+                        $btn.prop('disabled', false).removeClass('stackboost-tg-submit-disabled').css({
+                            'opacity': '1',
+                            'cursor': 'pointer',
+                            'pointer-events': 'auto'
+                        });
                     }
 
-                    btnEl.onclick = function(e) {
-                        if ($btn.data('tg-modal-bypassed')) {
-                            if (btnEl._tgOriginalOnClick) {
-                                return btnEl._tgOriginalOnClick.call(btnEl, e);
+                    if (modalRule) {
+                        $btn.data('tg-modal-blocked', true).data('tg-modal-rule', modalRule);
+
+                        if (!btnEl._tgOriginalOnClick && btnEl.onclick) {
+                            btnEl._tgOriginalOnClick = btnEl.onclick;
+                        }
+
+                        btnEl.onclick = function(e) {
+                            if ($btn.data('tg-modal-bypassed')) {
+                                if (btnEl._tgOriginalOnClick) {
+                                    return btnEl._tgOriginalOnClick.call(btnEl, e);
+                                }
+                                return true;
                             }
-                            return true;
+
+                            if (e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                            }
+
+                            showGuidanceModal($btn, modalRule, true); // Direct user click
+                            return false;
+                        };
+
+                    } else {
+                        $btn.data('tg-modal-blocked', false).removeData('tg-modal-rule');
+                        if (btnEl._tgOriginalOnClick) {
+                            btnEl.onclick = btnEl._tgOriginalOnClick;
                         }
-
-                        if (e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-                        }
-
-                        showGuidanceModal($btn, modalBlockedRule, true); // Direct user click
-                        return false;
-                    };
-
-                } else {
-                    $btn.data('tg-modal-blocked', false).removeData('tg-modal-rule');
-                    if (btnEl._tgOriginalOnClick) {
-                        btnEl.onclick = btnEl._tgOriginalOnClick;
                     }
-                }
-            });
+                });
+            };
+
+            applySubmitButtonState('new_ticket', shouldDisableSubmitNew, disableSubmitMsgNew, modalBlockedRuleNew);
+            applySubmitButtonState('agent_edit', shouldDisableSubmitAgent, disableSubmitMsgAgent, modalBlockedRuleAgent);
         } finally {
             window._tgIsEvaluating = false;
         }

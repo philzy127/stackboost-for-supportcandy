@@ -51,9 +51,11 @@ class WordPress extends Module {
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_scripts' ] );
 
-		// AJAX Hooks for Admin Rule Builder
+		// AJAX Hooks for Admin Rule Builder & Analytics
 		add_action( 'wp_ajax_stackboost_tg_save_rules', [ $this, 'ajax_save_rules' ] );
 		add_action( 'wp_ajax_stackboost_tg_get_form_options', [ $this, 'ajax_get_form_options' ] );
+		add_action( 'wp_ajax_stackboost_tg_record_analytics', [ $this, 'ajax_record_analytics' ] );
+		add_action( 'wp_ajax_stackboost_tg_reset_analytics', [ $this, 'ajax_reset_analytics' ] );
 
 		// Security Enforcement Hook (Backend)
 		add_filter( 'wpsc_create_ticket_data', [ $this, 'enforce_backend_rules' ], 20, 1 );
@@ -119,9 +121,11 @@ class WordPress extends Module {
 			'nonce'      => wp_create_nonce( 'stackboost_admin_nonce' ),
 			'ajax_url'   => admin_url( 'admin-ajax.php' ),
 			'i18n'       => [
-				'confirm_delete' => __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ),
-				'saved_success'  => __( 'Ticket Guard settings saved successfully.', 'stackboost-for-supportcandy' ),
-				'save_error'     => __( 'An error occurred while saving rules.', 'stackboost-for-supportcandy' ),
+				'confirm_delete'  => __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ),
+				'saved_success'   => __( 'Ticket Guard settings saved successfully.', 'stackboost-for-supportcandy' ),
+				'created_success' => __( 'Rule created successfully.', 'stackboost-for-supportcandy' ),
+				'updated_success' => __( 'Rule updated successfully.', 'stackboost-for-supportcandy' ),
+				'save_error'      => __( 'An error occurred while saving rules.', 'stackboost-for-supportcandy' ),
 			]
 		] );
 
@@ -143,6 +147,7 @@ class WordPress extends Module {
 		$dropdowns           = $form_data['dropdowns'];
 		$betterdocs_articles = $form_data['betterdocs_articles'] ?? [];
 		$rules               = array_values( $core->get_rules() );
+		$stats               = $core->get_analytics_stats();
 
 		$theme_class = 'sb-theme-clean-tech';
 		if ( class_exists( 'StackBoost\ForSupportCandy\Modules\Appearance\WordPress' ) ) {
@@ -153,57 +158,165 @@ class WordPress extends Module {
 			<h1><?php esc_html_e( 'Ticket Guard', 'stackboost-for-supportcandy' ); ?></h1>
 			<p><?php esc_html_e( 'Rules-based intake optimization engine to steer users toward appropriate ticket categories and eliminate generic "Other" submissions.', 'stackboost-for-supportcandy' ); ?></p>
 
+			<!-- Navigation Tabs -->
+			<h2 class="nav-tab-wrapper" style="margin-bottom: 20px;">
+				<a href="#sb-tg-tab-rules" class="nav-tab nav-tab-active sb-tg-tab-link" data-tab="rules"><?php esc_html_e( 'Intake Steering Rules', 'stackboost-for-supportcandy' ); ?></a>
+				<a href="#sb-tg-tab-analytics" class="nav-tab sb-tg-tab-link" data-tab="analytics"><?php esc_html_e( 'Analytics & Reporting', 'stackboost-for-supportcandy' ); ?></a>
+			</h2>
+
 			<!-- Hidden Inputs for Standard Form Submissions -->
 			<input type="hidden" name="stackboost_settings[enable_ticket_guard]" id="sb_tg_enabled_hidden" value="<?php echo $is_enabled ? '1' : '0'; ?>" />
 			<input type="hidden" name="stackboost_settings[ticket_guard_rules]" id="sb_tg_rules_hidden" value="<?php echo esc_attr( json_encode( $rules ) ); ?>" />
 
 			<div id="stackboost-ticket-guard-app">
-				<!-- Global Enable/Disable Toggle -->
-				<div class="stackboost-card" style="margin-bottom: 20px;">
-					<div class="pm-header">
-						<h2 style="margin-bottom: 15px;"><?php esc_html_e( 'Feature Status', 'stackboost-for-supportcandy' ); ?></h2>
+				<!-- TAB 1: RULES ENGINE -->
+				<div id="sb-tg-tab-content-rules" class="sb-tg-tab-content">
+					<!-- Global Enable/Disable Toggle -->
+					<div class="stackboost-card" style="margin-bottom: 20px;">
+						<div class="pm-header">
+							<h2 style="margin-bottom: 15px;"><?php esc_html_e( 'Feature Status', 'stackboost-for-supportcandy' ); ?></h2>
+						</div>
+						<div style="display: flex; align-items: center; gap: 15px;">
+							<label class="switch">
+								<input type="checkbox" id="stackboost_tg_enabled" <?php checked( $is_enabled, true ); ?>>
+								<span class="slider round"></span>
+							</label>
+							<div>
+								<strong><?php esc_html_e( 'Enable Ticket Guard Engine', 'stackboost-for-supportcandy' ); ?></strong>
+								<p class="description" style="margin: 5px 0 0;"><?php esc_html_e( 'Toggle this feature on or off globally. Rules will not be enforced when disabled.', 'stackboost-for-supportcandy' ); ?></p>
+							</div>
+						</div>
 					</div>
-					<div style="display: flex; align-items: center; gap: 15px;">
-						<label class="switch">
-							<input type="checkbox" id="stackboost_tg_enabled" <?php checked( $is_enabled, true ); ?>>
-							<span class="slider round"></span>
-						</label>
-						<div>
-							<strong><?php esc_html_e( 'Enable Ticket Guard Engine', 'stackboost-for-supportcandy' ); ?></strong>
-							<p class="description" style="margin: 5px 0 0;"><?php esc_html_e( 'Toggle this feature on or off globally. Rules will not be enforced when disabled.', 'stackboost-for-supportcandy' ); ?></p>
+
+					<!-- Rules Card -->
+					<div id="stackboost-tg-rules-card" class="stackboost-card <?php echo $is_enabled ? '' : 'stackboost-disabled-ui'; ?>" style="padding: 20px;">
+						<div class="pm-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
+							<h2 style="margin: 0;"><?php esc_html_e( 'Intake Steering Rules', 'stackboost-for-supportcandy' ); ?></h2>
+							<button type="button" id="sb-tg-add-rule-btn" class="button button-primary" style="margin-right: 10px; padding: 4px 14px; position: relative; z-index: 10; cursor: pointer;"><?php esc_html_e( 'Add New Rule', 'stackboost-for-supportcandy' ); ?></button>
+						</div>
+
+						<p class="description" style="margin-bottom: 15px;">
+							<?php esc_html_e( 'Configure keyword monitoring rules on text fields to steer users toward specific categories or options with real-time warnings, modals, submit button disabling, or field swaps.', 'stackboost-for-supportcandy' ); ?>
+						</p>
+
+						<div class="pm-rules-wrapper" style="margin-bottom: 20px;">
+							<table class="wp-list-table widefat fixed striped">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Rule Name', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Target Context', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Monitored Field', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Keywords / Phrases', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Actions Enabled', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="width: 120px; text-align: right;"><?php esc_html_e( 'Actions', 'stackboost-for-supportcandy' ); ?></th>
+									</tr>
+								</thead>
+								<tbody id="sb-tg-rules-tbody">
+									<!-- Populated by JS -->
+								</tbody>
+							</table>
+							<p id="sb-tg-no-rules-msg" style="display:none; text-align: center; padding: 20px; font-style: italic;">
+								<?php esc_html_e( 'No intake steering rules configured yet. Click "Add New Rule" to create one.', 'stackboost-for-supportcandy' ); ?>
+							</p>
 						</div>
 					</div>
 				</div>
 
-				<!-- Rules Card -->
-				<div id="stackboost-tg-rules-card" class="stackboost-card <?php echo $is_enabled ? '' : 'stackboost-disabled-ui'; ?>" style="padding: 20px;">
-					<div class="pm-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
-						<h2 style="margin: 0;"><?php esc_html_e( 'Intake Steering Rules', 'stackboost-for-supportcandy' ); ?></h2>
-						<button type="button" id="sb-tg-add-rule-btn" class="button button-primary" style="margin-right: 10px; padding: 4px 14px; position: relative; z-index: 10; cursor: pointer;"><?php esc_html_e( 'Add New Rule', 'stackboost-for-supportcandy' ); ?></button>
+				<!-- TAB 2: ANALYTICS & REPORTING -->
+				<div id="sb-tg-tab-content-analytics" class="sb-tg-tab-content" style="display: none;">
+					<!-- Summary Cards -->
+					<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+						<div class="stackboost-card" style="padding: 15px; text-align: center;">
+							<h3 style="margin:0 0 5px; font-size: 2em; color: #2271b1;"><?php echo (int) ( $stats['totals']['interventions'] ?? 0 ); ?></h3>
+							<span style="font-weight: 600; color: #646970; font-size: 13px;"><?php esc_html_e( 'Total Interventions', 'stackboost-for-supportcandy' ); ?></span>
+						</div>
+						<div class="stackboost-card" style="padding: 15px; text-align: center;">
+							<h3 style="margin:0 0 5px; font-size: 2em; color: #0284c7;"><?php echo (int) ( $stats['totals']['modals_shown'] ?? 0 ); ?></h3>
+							<span style="font-weight: 600; color: #646970; font-size: 13px;"><?php esc_html_e( 'Modals Displayed', 'stackboost-for-supportcandy' ); ?></span>
+						</div>
+						<div class="stackboost-card" style="padding: 15px; text-align: center;">
+							<h3 style="margin:0 0 5px; font-size: 2em; color: #d97706;"><?php echo (int) ( $stats['totals']['banners_shown'] ?? 0 ); ?></h3>
+							<span style="font-weight: 600; color: #646970; font-size: 13px;"><?php esc_html_e( 'Banners Shown', 'stackboost-for-supportcandy' ); ?></span>
+						</div>
+						<div class="stackboost-card" style="padding: 15px; text-align: center;">
+							<h3 style="margin:0 0 5px; font-size: 2em; color: #16a34a;"><?php echo (int) ( $stats['totals']['swaps_applied'] ?? 0 ); ?></h3>
+							<span style="font-weight: 600; color: #646970; font-size: 13px;"><?php esc_html_e( 'Field Swaps Applied', 'stackboost-for-supportcandy' ); ?></span>
+						</div>
+						<div class="stackboost-card" style="padding: 15px; text-align: center;">
+							<h3 style="margin:0 0 5px; font-size: 2em; color: #dc2626;"><?php echo (int) ( $stats['totals']['submits_blocked'] ?? 0 ); ?></h3>
+							<span style="font-weight: 600; color: #646970; font-size: 13px;"><?php esc_html_e( 'Submissions Blocked', 'stackboost-for-supportcandy' ); ?></span>
+						</div>
 					</div>
 
-					<p class="description" style="margin-bottom: 15px;">
-						<?php esc_html_e( 'Configure keyword monitoring rules on text fields to steer users toward specific categories or options with real-time warnings, modals, submit button disabling, or field swaps.', 'stackboost-for-supportcandy' ); ?>
-					</p>
+					<!-- Effective Keyword Phrases & Recent Activity Tables -->
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+						<!-- Top Effective Keyword Phrases -->
+						<div class="stackboost-card" style="padding: 20px;">
+							<h3 style="margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid #eee;"><?php esc_html_e( 'Top Effective Trigger Phrases', 'stackboost-for-supportcandy' ); ?></h3>
+							<table class="wp-list-table widefat fixed striped">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Keyword / Phrase Line', 'stackboost-for-supportcandy' ); ?></th>
+										<th style="width: 100px; text-align: right;"><?php esc_html_e( 'Triggers', 'stackboost-for-supportcandy' ); ?></th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php if ( ! empty( $stats['phrases'] ) ) : ?>
+										<?php
+										$phrases = array_values( $stats['phrases'] );
+										usort( $phrases, function( $a, $b ) {
+											return ( $b['count'] ?? 0 ) <=> ( $a['count'] ?? 0 );
+										} );
+										$phrases = array_slice( $phrases, 0, 10 );
+										foreach ( $phrases as $p ) :
+										?>
+											<tr>
+												<td><code><?php echo esc_html( $p['phrase'] ); ?></code></td>
+												<td style="text-align: right;"><strong><?php echo (int) $p['count']; ?></strong></td>
+											</tr>
+										<?php endforeach; ?>
+									<?php else : ?>
+										<tr>
+											<td colspan="2" style="text-align: center; font-style: italic; color: #666;"><?php esc_html_e( 'No phrase analytics recorded yet.', 'stackboost-for-supportcandy' ); ?></td>
+										</tr>
+									<?php endif; ?>
+								</tbody>
+							</table>
+						</div>
 
-					<div class="pm-rules-wrapper" style="margin-bottom: 20px;">
-						<table class="wp-list-table widefat fixed striped">
-							<thead>
-								<tr>
-									<th><?php esc_html_e( 'Rule Name', 'stackboost-for-supportcandy' ); ?></th>
-									<th><?php esc_html_e( 'Monitored Field', 'stackboost-for-supportcandy' ); ?></th>
-									<th><?php esc_html_e( 'Keywords / Phrases', 'stackboost-for-supportcandy' ); ?></th>
-									<th><?php esc_html_e( 'Actions Enabled', 'stackboost-for-supportcandy' ); ?></th>
-									<th style="width: 120px; text-align: right;"><?php esc_html_e( 'Actions', 'stackboost-for-supportcandy' ); ?></th>
-								</tr>
-							</thead>
-							<tbody id="sb-tg-rules-tbody">
-								<!-- Populated by JS -->
-							</tbody>
-						</table>
-						<p id="sb-tg-no-rules-msg" style="display:none; text-align: center; padding: 20px; font-style: italic;">
-							<?php esc_html_e( 'No intake steering rules configured yet. Click "Add New Rule" to create one.', 'stackboost-for-supportcandy' ); ?>
-						</p>
+						<!-- Recent Intervention Activity -->
+						<div class="stackboost-card" style="padding: 20px;">
+							<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+								<h3 style="margin: 0;"><?php esc_html_e( 'Recent Interventions', 'stackboost-for-supportcandy' ); ?></h3>
+								<button type="button" id="sb-tg-reset-analytics-btn" class="button button-secondary button-small"><?php esc_html_e( 'Clear Analytics', 'stackboost-for-supportcandy' ); ?></button>
+							</div>
+							<table class="wp-list-table widefat fixed striped">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Time', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Rule', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Trigger Phrase', 'stackboost-for-supportcandy' ); ?></th>
+										<th><?php esc_html_e( 'Action', 'stackboost-for-supportcandy' ); ?></th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php if ( ! empty( $stats['history'] ) ) : ?>
+										<?php foreach ( array_slice( $stats['history'], 0, 10 ) as $h ) : ?>
+											<tr>
+												<td style="font-size: 11px; color: #666;"><?php echo esc_html( $h['time'] ); ?></td>
+												<td><strong><?php echo esc_html( $h['rule_name'] ); ?></strong></td>
+												<td><code><?php echo esc_html( $h['matched_phrase'] ?? '-' ); ?></code></td>
+												<td><span class="sb-tg-action-badge active"><?php echo esc_html( str_replace( '_', ' ', $h['action_type'] ) ); ?></span></td>
+											</tr>
+										<?php endforeach; ?>
+									<?php else : ?>
+										<tr>
+											<td colspan="4" style="text-align: center; font-style: italic; color: #666;"><?php esc_html_e( 'No recent activity recorded yet.', 'stackboost-for-supportcandy' ); ?></td>
+										</tr>
+									<?php endif; ?>
+								</tbody>
+							</table>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -225,6 +338,16 @@ class WordPress extends Module {
 							<input type="text" id="sb-tg-rule-name" class="widefat" placeholder="<?php esc_attr_e( 'e.g., Steer Billing Keywords away from General Category', 'stackboost-for-supportcandy' ); ?>" />
 						</div>
 
+						<!-- Target Context -->
+						<div class="sb-tg-field-group" style="margin-bottom: 15px;">
+							<label for="sb-tg-target-context"><strong><?php esc_html_e( 'Target Context:', 'stackboost-for-supportcandy' ); ?></strong></label>
+							<select id="sb-tg-target-context" class="widefat">
+								<option value="new_ticket"><?php esc_html_e( 'New Ticket Creation (Customer Intake)', 'stackboost-for-supportcandy' ); ?></option>
+								<option value="agent_edit"><?php esc_html_e( 'Agent Ticket Edit / Reply (Policy Guidance)', 'stackboost-for-supportcandy' ); ?></option>
+							</select>
+							<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Choose whether this rule applies when customers submit a new ticket or when agents edit/reply to an existing ticket.', 'stackboost-for-supportcandy' ); ?></p>
+						</div>
+
 						<!-- Monitored Field -->
 						<div class="sb-tg-field-group" style="margin-bottom: 15px;">
 							<label for="sb-tg-monitored-field"><strong><?php esc_html_e( 'Monitored Field:', 'stackboost-for-supportcandy' ); ?></strong></label>
@@ -239,8 +362,8 @@ class WordPress extends Module {
 						<!-- Keywords -->
 						<div class="sb-tg-field-group" style="margin-bottom: 15px;">
 							<label for="sb-tg-rule-keywords"><strong><?php esc_html_e( 'Keywords / Phrases (One per line):', 'stackboost-for-supportcandy' ); ?></strong></label>
-							<textarea id="sb-tg-rule-keywords" class="widefat" rows="4" placeholder="<?php esc_attr_e( "refund\ninvoice\novercharge\ncredit card\nbilling", 'stackboost-for-supportcandy' ); ?>"></textarea>
-							<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: Use & to require multiple phrases on the same line (e.g. "UC Portal & Password"). Each new line acts as an OR condition.', 'stackboost-for-supportcandy' ); ?></p>
+							<textarea id="sb-tg-rule-keywords" class="widefat" rows="4" placeholder="<?php esc_attr_e( "refund\ninvoice & !sample\novercharge\ncredit card\nbilling", 'stackboost-for-supportcandy' ); ?>"></textarea>
+							<p class="description" style="margin-top: 5px; font-size: 12px; color: #666;"><?php esc_html_e( 'Tip: Use & to require multiple phrases on the same line (e.g. "UC Portal & Password"). Use ! before a term to exclude it (e.g. "invoice & !sample"). Each new line acts as an OR condition.', 'stackboost-for-supportcandy' ); ?></p>
 						</div>
 
 						<!-- Action Toggles (Positioned directly below Keywords) -->
@@ -402,9 +525,10 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'stackboost-for-supportcandy' ) ] );
 		}
 
-		$rules_json = Request::get_post( 'rules', '[]', 'raw' );
-		$rules      = json_decode( wp_unslash( $rules_json ), true );
-		$is_enabled = Request::get_post( 'enabled', '', 'text' ) === 'true';
+		$rules_json  = Request::get_post( 'rules', '[]', 'raw' );
+		$rules       = json_decode( $rules_json, true );
+		$is_enabled  = Request::get_post( 'enabled', '', 'text' ) === 'true';
+		$action_type = Request::get_post( 'action_type', 'save', 'text' );
 
 		if ( ! is_array( $rules ) ) {
 			wp_send_json_error( [ 'message' => __( 'Invalid rules data format.', 'stackboost-for-supportcandy' ) ] );
@@ -416,7 +540,14 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Ticket Guard rules saved successfully.', 'stackboost-for-supportcandy' ) ] );
+		$message = __( 'Ticket Guard rules saved successfully.', 'stackboost-for-supportcandy' );
+		if ( 'create' === $action_type ) {
+			$message = __( 'Rule created successfully.', 'stackboost-for-supportcandy' );
+		} elseif ( 'update' === $action_type ) {
+			$message = __( 'Rule updated successfully.', 'stackboost-for-supportcandy' );
+		}
+
+		wp_send_json_success( [ 'message' => $message ] );
 	}
 
 	/**
@@ -431,6 +562,39 @@ class WordPress extends Module {
 
 		$data = Core::get_instance()->get_form_options();
 		wp_send_json_success( $data );
+	}
+
+	/**
+	 * AJAX Handler: Record Analytics Event.
+	 */
+	public function ajax_record_analytics() {
+		check_ajax_referer( 'stackboost_public_nonce', 'nonce' );
+
+		$rule_id        = Request::get_post( 'rule_id', '', 'text' );
+		$rule_name      = Request::get_post( 'rule_name', '', 'text' );
+		$action_type    = Request::get_post( 'action_type', '', 'text' );
+		$matched_phrase = Request::get_post( 'matched_phrase', '', 'text' );
+		$target_context = Request::get_post( 'target_context', 'new_ticket', 'text' );
+
+		if ( ! empty( $rule_id ) && ! empty( $action_type ) ) {
+			Core::get_instance()->record_analytics_event( $rule_id, $rule_name, $action_type, $matched_phrase, $target_context );
+			wp_send_json_success();
+		}
+		wp_send_json_error();
+	}
+
+	/**
+	 * AJAX Handler: Reset Analytics Stats.
+	 */
+	public function ajax_reset_analytics() {
+		check_ajax_referer( 'stackboost_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( STACKBOOST_CAP_MANAGE_TICKET_GUARD ) ) {
+			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'stackboost-for-supportcandy' ) ] );
+		}
+
+		Core::get_instance()->reset_analytics_stats();
+		wp_send_json_success( [ 'message' => __( 'Analytics statistics reset successfully.', 'stackboost-for-supportcandy' ) ] );
 	}
 
 	/**
@@ -465,6 +629,8 @@ class WordPress extends Module {
 			'enabled'   => true,
 			'rules'     => array_values( $core->get_rules() ),
 			'dropdowns' => $core->get_dropdown_fields_and_options(),
+			'ajax_url'  => admin_url( 'admin-ajax.php' ),
+			'nonce'     => wp_create_nonce( 'stackboost_public_nonce' ),
 			'i18n'      => [
 				'notice_title'    => __( 'Category Guidance', 'stackboost-for-supportcandy' ),
 				'change_category' => __( 'Switch Options', 'stackboost-for-supportcandy' ),
