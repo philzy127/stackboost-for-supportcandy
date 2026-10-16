@@ -524,7 +524,7 @@ class WordPress extends Module {
 		}
 
 		$rules_json = Request::get_post( 'rules', '[]', 'raw' );
-		$rules      = json_decode( wp_unslash( $rules_json ), true );
+		$rules      = json_decode( $rules_json, true );
 		$is_enabled = Request::get_post( 'enabled', '', 'text' ) === 'true';
 
 		if ( ! is_array( $rules ) ) {

@@ -674,9 +674,14 @@
             rules: JSON.stringify(rulesArray)
         }, function(res) {
             console.log('[StackBoost TicketGuard] saveConfig AJAX success response:', res);
-            if (feedbackMsg) {
-                var msgText = typeof feedbackMsg === 'string' ? feedbackMsg : (config.i18n ? config.i18n.saved_success : 'Settings saved successfully.');
-                showNotice(msgText, false);
+            if (res && res.success) {
+                if (feedbackMsg) {
+                    var msgText = typeof feedbackMsg === 'string' ? feedbackMsg : (config.i18n ? config.i18n.saved_success : 'Settings saved successfully.');
+                    showNotice(msgText, false);
+                }
+            } else {
+                var errText = (res && res.data && res.data.message) ? res.data.message : (config.i18n ? config.i18n.save_error : 'Failed to save settings.');
+                showNotice(errText, true);
             }
             if (typeof callback === 'function') callback();
         }).fail(function(xhr, status, error) {
