@@ -216,10 +216,14 @@
                 rules.push(ruleObj);
             }
 
+            var isNewRule = !ruleId;
+            var actionType = isNewRule ? 'create' : 'update';
+            var feedbackMsg = isNewRule ? (config.i18n ? config.i18n.created_success || 'Rule created successfully.' : 'Rule created successfully.') : (config.i18n ? config.i18n.updated_success || 'Rule updated successfully.' : 'Rule updated successfully.');
+
             console.log('[StackBoost TicketGuard] Saving rule object:', ruleObj);
             renderRulesTable();
             closeRuleModal();
-            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), 'Rule saved successfully.');
+            saveConfig(rules, $('#stackboost_tg_enabled').is(':checked'), feedbackMsg, null, actionType);
         });
     });
 
@@ -661,7 +665,7 @@
         }
     }
 
-    function saveConfig(rulesArray, isEnabled, feedbackMsg, callback) {
+    function saveConfig(rulesArray, isEnabled, feedbackMsg, callback, actionType) {
         console.log('[StackBoost TicketGuard] saveConfig called. Enabled:', isEnabled, 'Rules:', rulesArray);
 
         $('#sb_tg_enabled_hidden').val(isEnabled ? '1' : '0');
@@ -671,14 +675,13 @@
             action: 'stackboost_tg_save_rules',
             nonce: config.nonce,
             enabled: isEnabled ? 'true' : 'false',
-            rules: JSON.stringify(rulesArray)
+            rules: JSON.stringify(rulesArray),
+            action_type: actionType || 'save'
         }, function(res) {
             console.log('[StackBoost TicketGuard] saveConfig AJAX success response:', res);
             if (res && res.success) {
-                if (feedbackMsg) {
-                    var msgText = typeof feedbackMsg === 'string' ? feedbackMsg : (config.i18n ? config.i18n.saved_success : 'Settings saved successfully.');
-                    showNotice(msgText, false);
-                }
+                var msgText = (res.data && res.data.message) ? res.data.message : (typeof feedbackMsg === 'string' ? feedbackMsg : (config.i18n ? config.i18n.saved_success : 'Settings saved successfully.'));
+                showNotice(msgText, false);
             } else {
                 var errText = (res && res.data && res.data.message) ? res.data.message : (config.i18n ? config.i18n.save_error : 'Failed to save settings.');
                 showNotice(errText, true);

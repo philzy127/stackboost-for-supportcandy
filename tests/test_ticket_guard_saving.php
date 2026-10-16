@@ -46,4 +46,36 @@ if ( $rules_decoded_twice === null ) {
     exit(1);
 }
 
+// 3. Test action_type message resolution ('create' vs 'update')
+function resolve_ajax_message( $action_type ) {
+    $message = 'Ticket Guard rules saved successfully.';
+    if ( 'create' === $action_type ) {
+        $message = 'Rule created successfully.';
+    } elseif ( 'update' === $action_type ) {
+        $message = 'Rule updated successfully.';
+    }
+    return $message;
+}
+
+if ( resolve_ajax_message( 'create' ) === 'Rule created successfully.' ) {
+    echo "[PASS] 'create' action_type resolves to 'Rule created successfully.'\n";
+} else {
+    echo "[FAIL] 'create' action_type resolution failed\n";
+    exit(1);
+}
+
+if ( resolve_ajax_message( 'update' ) === 'Rule updated successfully.' ) {
+    echo "[PASS] 'update' action_type resolves to 'Rule updated successfully.'\n";
+} else {
+    echo "[FAIL] 'update' action_type resolution failed\n";
+    exit(1);
+}
+
+if ( resolve_ajax_message( 'save' ) === 'Ticket Guard rules saved successfully.' ) {
+    echo "[PASS] 'save' action_type resolves to 'Ticket Guard rules saved successfully.'\n";
+} else {
+    echo "[FAIL] Default action_type resolution failed\n";
+    exit(1);
+}
+
 echo "All Ticket Guard saving tests passed successfully!\n";
