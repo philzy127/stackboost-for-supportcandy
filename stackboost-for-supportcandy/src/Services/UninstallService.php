@@ -74,6 +74,7 @@ class UninstallService {
             'sb_last_verified_at',
             'stackboost_last_update_completed_timestamp',
             'stackboost_phone_migration_complete',
+            'stackboost_tg_analytics',
         ];
 
         foreach ( $options as $option ) {

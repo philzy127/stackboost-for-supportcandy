@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+1.6.7
+-----
+*   Added: Ticket Guard Engine - Real-time keyword steering and intake optimization engine for ticket forms.
+*   Added: Ticket Guard Engine - Compound keyword matching (`&` for AND, newlines for OR, `!` prefix for exclusions).
+*   Added: Ticket Guard Engine - Dynamic escalation controls (Disable Submit, Guidance Modals, Inline Warning Banners, Auto Field Swapping).
+*   Added: Ticket Guard Engine - BetterDocs knowledge base steering integration with link or inline article rendering modes.
+*   Added: Ticket Guard Engine - Analytics tracking for intervention metrics and rule triggers saved in dedicated storage.
+*   Updated: Reorganized documentation files and moved Google Sync Setup guide into Documentation directory.
+
 1.6.5
 -----
 *   Added: Unified Ticket Macro (UTM) - Response Placement option (`beside`, `below`, `mobile_only` / Automatic) to position field responses below questions for improved ticket readability, with automatic responsive mobile stacking.

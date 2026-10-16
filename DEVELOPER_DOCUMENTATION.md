@@ -44,7 +44,16 @@ StackBoost extends SupportCandy with modular features. Each feature is encapsula
     *   `Core::get_stackboost_theme_colors()`: A helper that maps Admin Theme slugs to hex codes, allowing the frontend to replicate the admin theme without loading admin assets.
     *   **Frontend Integration:** Uses `wp_enqueue_scripts` to register a virtual style handle (`stackboost-chat-bubbles-frontend`) and attach inline CSS.
 
-### 5. Conditional Options
+### 5. Ticket Guard Engine
+*   **Location:** `src/Modules/TicketGuard/`
+*   **Purpose:** Monitors ticket form input fields in real time to steer submitters away from misclassifications via compound keyword evaluation and dynamic escalation rules.
+*   **Key Components:**
+    *   `Core.php`: Handles rule persistence, dropdown/option reflection, compound keyword matching, and analytics storage in `stackboost_tg_analytics`.
+    *   `admin-rules.js` & `WordPress.php`: Rule builder interface with SelectWoo field integration, TinyMCE guidance modal editor, and AJAX save endpoints.
+    *   `frontend-guard.js`: Real-time frontend DOM watcher supporting live keyword evaluation, submit button locking, modal popups, warning banners, and auto field swaps with SupportCandy form event dispatching.
+*   **Storage:** Analytics persistent in `stackboost_tg_analytics`, master settings in `stackboost_settings`.
+
+### 6. Conditional Options
 *   **Location:** `src/Modules/ConditionalOptions/`
 *   **Purpose:** Enforces granular visibility rules for field options based on user roles.
 *   **Key Logic:**
