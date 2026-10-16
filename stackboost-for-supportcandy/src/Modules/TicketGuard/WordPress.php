@@ -121,9 +121,11 @@ class WordPress extends Module {
 			'nonce'      => wp_create_nonce( 'stackboost_admin_nonce' ),
 			'ajax_url'   => admin_url( 'admin-ajax.php' ),
 			'i18n'       => [
-				'confirm_delete' => __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ),
-				'saved_success'  => __( 'Ticket Guard settings saved successfully.', 'stackboost-for-supportcandy' ),
-				'save_error'     => __( 'An error occurred while saving rules.', 'stackboost-for-supportcandy' ),
+				'confirm_delete'  => __( 'Are you sure you want to delete this rule?', 'stackboost-for-supportcandy' ),
+				'saved_success'   => __( 'Ticket Guard settings saved successfully.', 'stackboost-for-supportcandy' ),
+				'created_success' => __( 'Rule created successfully.', 'stackboost-for-supportcandy' ),
+				'updated_success' => __( 'Rule updated successfully.', 'stackboost-for-supportcandy' ),
+				'save_error'      => __( 'An error occurred while saving rules.', 'stackboost-for-supportcandy' ),
 			]
 		] );
 
@@ -523,9 +525,10 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'stackboost-for-supportcandy' ) ] );
 		}
 
-		$rules_json = Request::get_post( 'rules', '[]', 'raw' );
-		$rules      = json_decode( wp_unslash( $rules_json ), true );
-		$is_enabled = Request::get_post( 'enabled', '', 'text' ) === 'true';
+		$rules_json  = Request::get_post( 'rules', '[]', 'raw' );
+		$rules       = json_decode( $rules_json, true );
+		$is_enabled  = Request::get_post( 'enabled', '', 'text' ) === 'true';
+		$action_type = Request::get_post( 'action_type', 'save', 'text' );
 
 		if ( ! is_array( $rules ) ) {
 			wp_send_json_error( [ 'message' => __( 'Invalid rules data format.', 'stackboost-for-supportcandy' ) ] );
@@ -537,7 +540,14 @@ class WordPress extends Module {
 			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Ticket Guard rules saved successfully.', 'stackboost-for-supportcandy' ) ] );
+		$message = __( 'Ticket Guard rules saved successfully.', 'stackboost-for-supportcandy' );
+		if ( 'create' === $action_type ) {
+			$message = __( 'Rule created successfully.', 'stackboost-for-supportcandy' );
+		} elseif ( 'update' === $action_type ) {
+			$message = __( 'Rule updated successfully.', 'stackboost-for-supportcandy' );
+		}
+
+		wp_send_json_success( [ 'message' => $message ] );
 	}
 
 	/**
